@@ -136,14 +136,15 @@
                     <field name="show_meat"      invisible="1"/>
 
                     <notebook>
+
                         <page name="kitchen" string="Kitchen Planning"
                               invisible="not show_kitchen">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="kitchen_line_ids">
                                 <tree editable="bottom">
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
                                     <field name="date"
-                                        options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -153,11 +154,12 @@
 
                         <page name="madaris" string="Madaris Planning"
                               invisible="not show_madaris">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="madaris_line_ids">
                                 <tree editable="bottom">
-                                    <field name="date" options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
+                                    <field name="date"
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -167,11 +169,12 @@
 
                         <page name="medical" string="Medical Planning"
                               invisible="not show_medical">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="medical_line_ids">
                                 <tree editable="bottom">
-                                    <field name="date" options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
+                                    <field name="date"
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -181,11 +184,12 @@
 
                         <page name="livestock" string="Livestock Planning"
                               invisible="not show_livestock">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="livestock_line_ids">
                                 <tree editable="bottom">
-                                    <field name="date" options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
+                                    <field name="date"
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="location_id"/>
@@ -196,11 +200,12 @@
 
                         <page name="food" string="Food Planning"
                               invisible="not show_food">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="food_line_ids">
                                 <tree editable="bottom">
-                                    <field name="date" options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
+                                    <field name="date"
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -210,11 +215,12 @@
 
                         <page name="ration" string="Ration Planning"
                               invisible="not show_ration">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="ration_line_ids">
                                 <tree editable="bottom">
-                                    <field name="date" options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
+                                    <field name="date"
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -224,11 +230,12 @@
 
                         <page name="meat" string="Meat Planning"
                               invisible="not show_meat">
-                            <field name="min_line_date" invisible="1"/>
-                            <field name="plan_to_date"  invisible="1"/>  
                             <field name="meat_line_ids">
                                 <tree editable="bottom">
-                                    <field name="date" options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="min_line_date" invisible="1"/>
+                                    <field name="plan_to_date"  invisible="1"/>
+                                    <field name="date"
+                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
