@@ -11,6 +11,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        'data/ir_module_category.xml',
         'security/groups.xml',
         'security/ir.model.access.csv',
         'views/rider_shift.xml',
