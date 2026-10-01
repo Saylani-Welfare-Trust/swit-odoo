@@ -75,7 +75,7 @@ class WelfareLine(models.Model):
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
     product_id = fields.Many2one('product.product', string="Product")
-    is_hod = fields.Boolean(related='product_id.product_tmpl_id.is_hod', string="Is HOD")
+    is_hod = fields.Boolean('Is HOD', readonly=True, help="Line added automatically at HOD Approval.")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
