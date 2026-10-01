@@ -22,13 +22,13 @@ class MonthlyPlanning(models.Model):
     from_date = fields.Date(
         string='From Date',
         required=True,
-        default=fields.Date.today,
+        default=lambda self: fields.Date.today() + timedelta(days=1),
         tracking=True,
     )
     to_date = fields.Date(
         string='To Date',
         required=True,
-        default=fields.Date.today,
+        default=lambda self: fields.Date.today() + timedelta(days=30),
         tracking=True,
     )
 
