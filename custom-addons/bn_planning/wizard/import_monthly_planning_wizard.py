@@ -87,6 +87,13 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
 
         mp = self.monthly_planning_id
 
+        # Guard: range must be valid
+        if not mp.from_date or not mp.to_date:
+            raise ValidationError(
+                "Please set both 'From Date' and 'To Date' on the Monthly Planning "
+                "before importing."
+            )
+
         # Read the file
         try:
             raw = base64.b64decode(self.file_data)
@@ -109,7 +116,7 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
             for tab in enabled_tabs:
                 getattr(mp, f"{tab}_line_ids").unlink()
 
-        created = updated = skipped = 0
+        created = updated = skipped = out_of_range = 0
         errors = []
 
         for sheet_name in wb.sheetnames:
@@ -129,9 +136,9 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
                 if not row or all(c is None or str(c).strip() == '' for c in row):
                     continue
 
-                date_val    = row[0] if len(row) > 0 else None
-                product_val = row[1] if len(row) > 1 else None
-                qty_val     = row[2] if len(row) > 2 else None
+                date_val     = row[0] if len(row) > 0 else None
+                product_val  = row[1] if len(row) > 1 else None
+                qty_val      = row[2] if len(row) > 2 else None
                 location_val = row[3] if len(row) > 3 else None
 
                 if not product_val:
@@ -142,6 +149,15 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
                 if not date_obj:
                     errors.append(f"[{sheet_name}] Row {row_idx}: invalid date '{date_val}'")
                     skipped += 1
+                    continue
+
+                # ── NEW: skip anything outside the planning window ──
+                if not (mp.from_date <= date_obj <= mp.to_date):
+                    _logger.info(
+                        "[%s] Row %s: date %s outside planning range %s → %s — skipped.",
+                        sheet_name, row_idx, date_obj, mp.from_date, mp.to_date,
+                    )
+                    out_of_range += 1
                     continue
 
                 product = self._find_product(product_val)
@@ -187,7 +203,8 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
         lines = [
             f"Created: {created}",
             f"Updated: {updated}",
-            f"Skipped: {skipped}",
+            f"Skipped (invalid/missing data): {skipped}",
+            f"Skipped (outside {mp.from_date} → {mp.to_date}): {out_of_range}",
         ]
         if errors:
             lines.append("")
