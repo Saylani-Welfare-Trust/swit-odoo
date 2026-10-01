@@ -141,10 +141,7 @@
                               invisible="not show_kitchen">
                             <field name="kitchen_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -156,10 +153,7 @@
                               invisible="not show_madaris">
                             <field name="madaris_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -171,10 +165,7 @@
                               invisible="not show_medical">
                             <field name="medical_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -186,10 +177,7 @@
                               invisible="not show_livestock">
                             <field name="livestock_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="location_id"/>
@@ -202,10 +190,7 @@
                               invisible="not show_food">
                             <field name="food_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -217,10 +202,7 @@
                               invisible="not show_ration">
                             <field name="ration_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
@@ -232,10 +214,7 @@
                               invisible="not show_meat">
                             <field name="meat_line_ids">
                                 <tree editable="bottom">
-                                    <field name="min_line_date" invisible="1"/>
-                                    <field name="plan_to_date"  invisible="1"/>
-                                    <field name="date"
-                                           options="{'datepicker': {'minDate': min_line_date, 'maxDate': plan_to_date}}"/>
+                                    <field name="date"/>
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="on_hand_qty" readonly="1"/>
                                     <field name="quantity"/>
