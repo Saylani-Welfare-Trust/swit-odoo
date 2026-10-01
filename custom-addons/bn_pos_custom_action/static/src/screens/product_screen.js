@@ -99,8 +99,10 @@ patch(ProductScreen.prototype, {
         ];
 
         if (this.isWelfareOrder) {
+            // Welfare lines can't be edited, only HOD lines can be deleted
+            const canDeleteLine = !!this.pos.get_order().get_selected_orderline()?.welfare_hod_line_id;
             return buttons.map(btn => {
-                if (["payment", "custom_action"].includes(btn.value)) {
+                if (["payment", "custom_action"].includes(btn.value) || (btn.value === "Backspace" && canDeleteLine)) {
                     return { ...btn, disabled: false };
                 }
                 return { ...btn, disabled: true };
@@ -124,6 +126,21 @@ patch(ProductScreen.prototype, {
                 class: this.pos.numpadMode === button.value ? "active border-primary" : "",
             };
         });
+    },
+
+    // An HOD welfare line can't be edited: Backspace/Delete removes it in one press
+    // (by default the first Backspace only sets the quantity to 0)
+    async updateSelectedOrderline({ buffer, key }) {
+        const order = this.pos.get_order();
+        const selectedLine = order?.get_selected_orderline();
+        if (selectedLine?.welfare_hod_line_id) {
+            this.numberBuffer.reset();
+            if (["Backspace", "Delete"].includes(key)) {
+                order.removeOrderline(selectedLine);
+            }
+            return;
+        }
+        return super.updateSelectedOrderline(...arguments);
     },
 
     mounted() {

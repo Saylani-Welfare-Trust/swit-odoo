@@ -25,7 +25,8 @@ state_selection = [
     ('disbursed', 'Disbursed'),
     ('pending', 'Pending'),
     ('collected', 'Collected'),
-    ('return', 'Returned'),  
+    ('return', 'Returned'),
+    ('cancel', 'Cancelled'),
 ]
 
 recurring_duration_selection = [
@@ -74,6 +75,7 @@ class WelfareLine(models.Model):
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
     product_id = fields.Many2one('product.product', string="Product")
+    is_hod = fields.Boolean(related='product_id.product_tmpl_id.is_hod', string="Is HOD")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
@@ -554,7 +556,18 @@ class WelfareLine(models.Model):
                 line.welfare_id._auto_disburse_if_all_lines_delivered()
 
         return True
-                            
+
+    def action_cancel_from_pos(self):
+        """Cancel the HOD lines the cashier removed from the POS order (welfare lines are never deleted)."""
+        lines = self.exists().filtered(lambda l: l.is_hod and l.state == 'draft')
+        for welfare in lines.welfare_id:
+            products = lines.filtered(lambda l: l.welfare_id == welfare).product_id
+            welfare.message_post(body=_("HOD line(s) removed at POS by %s: %s") % (
+                self.env.user.name, ", ".join(products.mapped('display_name'))
+            ))
+        lines.write({'state': 'cancel'})
+        return True
+
     def action_delivered(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
             in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')

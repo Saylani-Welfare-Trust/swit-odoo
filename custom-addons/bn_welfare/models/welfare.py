@@ -620,7 +620,7 @@ class Welfare(models.Model):
         records = self.search([('state', 'in', ['recurring', 'approve'])])
         for rec in records:
             if rec.order_type == 'one_time':
-                lines = rec.welfare_line_ids
+                lines = rec.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
                 if lines and all(l.state == 'disbursed' for l in lines):
                     rec.state = 'disbursed'
             elif rec.order_type == 'recurring':
@@ -1319,9 +1319,28 @@ class Welfare(models.Model):
 
             # Move to HOD approval state
             record.state = 'hod_approve'
-            
+            record._add_hod_lines()
+
             # Add chatter message
             record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
+
+    def _add_hod_lines(self):
+        """Add a disbursement line for every HOD product that is not already requested."""
+        hod_products = self.env['product.product'].search([('product_tmpl_id.is_hod', '=', True)])
+        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        for record in self:
+            new_products = hod_products - record.welfare_line_ids.product_id
+            if not new_products:
+                continue
+            self.env['welfare.line'].create([{
+                'welfare_id': record.id,
+                'product_id': product.id,
+                'disbursement_category_id': cash_category.id if cash_category else False,
+                'collection_point': 'branch',
+                # The field default is frozen at server start; POS only picks lines due this month
+                'collection_date': fields.Date.context_today(record),
+            } for product in new_products])
+
     def action_move_to_member(self):
         for record in self:
             current_user = self.env.user
@@ -1352,7 +1371,10 @@ class Welfare(models.Model):
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             record.state = 'approve'
-        
+
+        # HOD lines may all have been disbursed from POS during Final Approval already
+        self._auto_disburse_if_all_lines_delivered()
+
         # Print report
         return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
     

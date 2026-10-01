@@ -152,10 +152,10 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
 
             // Validate state based on request type
             if (!isRecurring) {
-                // One-time: state must be 'approve' (not 'recurring', not 'disbursed')
-                if (welfareRecord.state !== 'approve') {
+                // One-time: state must be 'approve', or 'mem_approve' to disburse only the HOD lines
+                if (!['approve', 'mem_approve'].includes(welfareRecord.state)) {
                     this.notification.add(
-                        `Unauthorized Request State: ${welfareRecord.state}. Expected 'approve' for one-time disbursement.`,
+                        `Unauthorized Request State: ${welfareRecord.state}. Expected 'approve' (or 'mem_approve' for HOD items) for one-time disbursement.`,
                         { type: 'warning' }
                     );
                     return;
@@ -242,24 +242,28 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         ['collection_point', '=', 'branch'],
                         ['state', '=', 'draft'],
                     ],
-                    ['id', 'product_id', 'total_amount', 'quantity', 'collection_date','state', 'disbursement_category_id'],
+                    ['id', 'product_id', 'total_amount', 'quantity', 'collection_date','state', 'disbursement_category_id', 'is_hod'],
                     {}
                 );
-                // Filter by main welfare order_type
-                const filteredLines = welfareRecord.order_type === 'one_time'
-                    ? lines.filter(l => true) // all lines, since order_type is now on welfare
-                    : [];
+                // HOD lines can be paid from 'mem_approve' on, whatever the order type;
+                // the other lines only once a one-time request is approved
+                const filteredLines = lines.filter(l =>
+                    l.is_hod || (welfareRecord.state === 'approve' && welfareRecord.order_type === 'one_time')
+                );
                 const dueThisMonth = filteredLines.filter(l => {
                     if (!l.collection_date) return false;
                     const [year, month, day] = l.collection_date.split("-").map(Number);
                     return month - 1 === currentMonth && year === currentYear && l.state === 'draft';
                 });
                 if (!dueThisMonth.length) {
-                    this.notification.add("No one-time welfare lines due this month", { type: 'warning' });
+                    const message = welfareRecord.state === 'mem_approve'
+                        ? "No HOD welfare lines due this month"
+                        : "No one-time welfare lines due this month";
+                    this.notification.add(message, { type: 'warning' });
                     return;
                 }
                 // Group lines (kept for welfareLineIds tracking), add the configured product instead of per-line products
-                const grouped = groupLinesByProduct(dueThisMonth, false);
+                const grouped = groupLinesByProduct(dueThisMonth.filter(l => !l.is_hod), false);
                 for (const group of grouped) {
                     // Calculate per-unit price and price_extra
                     const perUnitPrice = group.quantity ? (group.amount / group.quantity) : 0;
@@ -272,12 +276,26 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                         welfareLineIds.push({ id, amount: group.amount });
                     }
                 }
+                // Each HOD line gets its own order line, named after its product, so the cashier can delete it
+                const hodLines = dueThisMonth.filter(l => l.is_hod);
+                for (const line of hodLines) {
+                    const quantity = line.quantity || 1;
+                    const amount = line.total_amount || 0;
+                    await selectedOrder.add_product(configuredProduct, {
+                        quantity: -1 * quantity,
+                        price_extra: amount / quantity - configuredProduct.lst_price,
+                        merge: false,
+                        extras: { welfare_hod_line_id: line.id },
+                    });
+                    selectedOrder.get_selected_orderline().full_product_name = `${configuredProduct.display_name} - ${line.product_id[1]}`;
+                    welfareLineIds.push({ id: line.id, amount, is_hod: true });
+                }
                 if (!welfareLineIds.length) {
                     this.notification.add("No products could be added from welfare lines", { type: 'warning' });
                     return;
                 }
                 this.notification.add(
-                    `Added ${grouped.length} one-time welfare item(s)`,
+                    `Added ${grouped.length + hodLines.length} one-time welfare item(s)`,
                     { type: "success" }
                 );
             } else {

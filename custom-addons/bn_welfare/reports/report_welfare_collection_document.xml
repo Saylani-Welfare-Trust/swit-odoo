@@ -66,7 +66,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="welfare.welfare_line_ids" t-as="line">
+                                    <t t-foreach="welfare.welfare_line_ids.filtered(lambda l: l.state != 'cancel')" t-as="line">
                                         <tr>
                                             <td><t t-esc="line.product_id.display_name"/></td>
                                             <td class="text-center"><t t-esc="line.quantity"/></td>
