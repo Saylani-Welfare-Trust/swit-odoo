@@ -303,15 +303,63 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         default=lambda self: self._default_line_date(),
     )
 
+    # ── Parent dates exposed on the line (used by the date picker) ──
+    plan_from_date = fields.Date(
+        related='monthly_planning_id.from_date',
+        string='Plan From Date',
+        store=False,
+    )
+    plan_to_date = fields.Date(
+        related='monthly_planning_id.to_date',
+        string='Plan To Date',
+        store=False,
+    )
+
+    # ── Earliest date the user may pick = max(today, plan.from_date) ──
+    min_line_date = fields.Date(
+        string='Earliest Allowed Date',
+        compute='_compute_min_line_date',
+        store=False,
+    )
+
+    @api.depends('monthly_planning_id', 'monthly_planning_id.from_date')
+    def _compute_min_line_date(self):
+        today = fields.Date.today()
+        for rec in self:
+            plan_from = rec.monthly_planning_id.from_date
+            rec.min_line_date = plan_from if (plan_from and plan_from > today) else today
+
     @api.model
     def _default_line_date(self):
-        """Default to the parent plan's From Date (or today if there is none)."""
+        """Default to whichever is later: today or the plan's From Date."""
+        today = fields.Date.today()
         parent_id = self.env.context.get('default_monthly_planning_id')
         if parent_id:
             parent = self.env['monthly.planning'].browse(parent_id)
-            if parent.from_date:
+            if parent.from_date and parent.from_date > today:
                 return parent.from_date
-        return fields.Date.today()
+        return today
+
+    @api.constrains('date', 'monthly_planning_id')
+    def _check_line_no_backdate(self):
+        today = fields.Date.today()
+        for rec in self:
+            if not rec.date:
+                continue
+            # Block backdating only on brand-new lines so historical rows
+            # don't become un-editable when you change their quantity.
+            if rec._origin.id is None and rec.date < today:
+                raise ValidationError(
+                    "Line Date cannot be in the past. Earliest allowed: %s." % today
+                )
+            plan = rec.monthly_planning_id
+            if plan and plan.from_date and plan.to_date:
+                if not (plan.from_date <= rec.date <= plan.to_date):
+                    raise ValidationError(
+                        "Line Date %s is outside the planning period %s → %s."
+                        % (rec.date, plan.from_date, plan.to_date)
+                    )
+
     product_id = fields.Many2one('product.product', string="Product")
     quantity = fields.Float(string="Quantity", required=True, default=0.0)
     on_hand_qty = fields.Float(string='On Hand Quantity', compute='_compute_on_hand_qty')
