@@ -1,6 +1,6 @@
 {
     'name': 'Key Management',
-    'version': '17.0.1.1.0',
+    'version': '1.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -9,8 +9,8 @@
         'bn_donation_box'
     ],
     'data': [
-        'security/groups.xml',
         'security/ir.model.access.csv',
+        'security/groups.xml',
         'data/schedule_action.xml',
         'wizards/bulk_key_issuance.xml',
         'wizards/manual_key_issuance.xml',

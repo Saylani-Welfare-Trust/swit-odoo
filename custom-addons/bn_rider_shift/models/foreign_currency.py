@@ -1,8 +1,6 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
 
-EDIT_AMOUNT_GROUP = 'bn_rider_shift.group_foreign_currency_collection'
-
 
 state_selection = [
     ('draft', 'Draft'),
@@ -33,14 +31,6 @@ class ForeignCurrency(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     attachment_ids = fields.Many2many('ir.attachment', string="Attachments")
     rider_collection_id = fields.Many2one('rider.collection', string='Rider Collection', ondelete='set null')
-
-    def write(self, vals):
-        if not self.env.su and 'amount' in vals and not self.env.user.has_group(EDIT_AMOUNT_GROUP):
-            raise UserError(
-                "You are not allowed to edit the Amount of a Foreign Currency line. "
-                "Required access group: Foreign Currency Collection."
-            )
-        return super().write(vals)
 
     def action_convert_amount(self):
         self.exchanged_amount = self.amount * self.conversion_rate
@@ -106,17 +96,6 @@ class ForeignCurrency(models.Model):
             ], limit=1)
 
         if key:
-            if key.state != 'available':
-                raise UserError(
-                    f'Key "{key.name}" is not Available (current status: {key.state}); '
-                    'cannot create an FCB issuance for it.'
-                )
-            key._bn_lock()
-            # Keep key.state consistent with the issuance created below - money is
-            # already collected (via currency conversion), so the key goes straight
-            # to Issued and the issuance record starts at "Donation Received".
-            key._bn_write({'state': 'issued'})
-
             key_issuance_vals = {
                 'rider_id': fc_rider.id,
                 'key_id': key.id,
@@ -125,9 +104,12 @@ class ForeignCurrency(models.Model):
                 'state': 'donation_receive',
                 'action_type': 'manual',
                 'donation_amount': selected_amount,
-                'is_fcb': True,
-                'rider_collection_id': rider_collection.id,
             }
+            
+            # Add rider_collection_id if the field exists
+            if 'rider_collection_id' in self.env['key.issuance']._fields:
+                key_issuance_vals['rider_collection_id'] = rider_collection.id
+            
             self.env['key.issuance'].create(key_issuance_vals)
 
         # CHANGE STATE TO PAYMENT_RECEIVED

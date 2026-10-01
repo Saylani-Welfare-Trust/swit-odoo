@@ -1,7 +1,4 @@
 from odoo import models, fields, api
-from odoo.exceptions import UserError
-
-EDIT_AMOUNT_GROUP = 'bn_rider_shift.group_edit_rider_collection'
 
 
 day_selection = [
@@ -75,20 +72,6 @@ class RiderCollection(models.Model):
     def _compute_is_fcb(self):
         for record in self:
             record.is_fcb = record.remarks == 'FCB'
-
-    def write(self, vals):
-        # 'amount' / 'counterfeit_notes' must only be editable by users in the
-        # "Edit Amount / Notes" group - the view groups=/readonly= attributes alone
-        # are cosmetic and can be bypassed from any screen that doesn't apply them
-        # (e.g. the form view previously had no restriction at all).
-        if not self.env.su and ('amount' in vals or 'counterfeit_notes' in vals):
-            if not self.env.user.has_group(EDIT_AMOUNT_GROUP):
-                raise UserError(
-                    "You are not allowed to edit the Amount / Counterfeit Notes of a "
-                    "Rider Collection. Required access group: Rider Collection / Edit "
-                    "Amount / Notes."
-                )
-        return super().write(vals)
     
     def action_mark_cfb_paid(self):
         """Mark all linked counterfeit notes as paid"""

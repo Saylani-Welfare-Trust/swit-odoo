@@ -1,12 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_key_user,key.user,bn_key_management.model_key,key_management_user_group,1,1,1,0
-access_key_admin,key.admin,bn_key_management.model_key,key_management_admin_group,1,1,1,1
-access_key_audit,key.audit,bn_key_management.model_key,key_management_audit_group,1,0,0,0
-access_key_issuance_user,key.issuance.user,bn_key_management.model_key_issuance,key_management_user_group,1,1,1,0
-access_key_issuance_admin,key.issuance.admin,bn_key_management.model_key_issuance,key_management_admin_group,1,1,1,1
-access_key_issuance_audit,key.issuance.audit,bn_key_management.model_key_issuance,key_management_audit_group,1,0,0,0
-access_key_bunch_user,key.bunch.user,bn_key_management.model_key_bunch,key_management_user_group,1,1,1,0
-access_key_bunch_manager,key.bunch.manager,bn_key_management.model_key_bunch,key_management_manager_group,1,1,1,1
-access_key_bunch_audit,key.bunch.audit,bn_key_management.model_key_bunch,key_management_audit_group,1,0,0,0
-access_bulk_key_issuance_user,bulk.key.issuance.user,bn_key_management.model_bulk_key_issuance,key_management_user_group,1,1,1,1
-access_manual_key_issuance_user,manual.key.issuance.user,bn_key_management.model_manual_key_issuance,key_management_user_group,1,1,1,1
+access_key,key,bn_key_management.model_key,,1,1,1,1
+access_key_issuance,key.issuance,bn_key_management.model_key_issuance,,1,1,1,1
+access_key_bunch,key.bunch,bn_key_management.model_key_bunch,,1,1,1,1
+access_bulk_key_issuance,bulk.key.issuance,bn_key_management.model_bulk_key_issuance,,1,1,1,1
+access_manual_key_issuance,manual.key.issuance,bn_key_management.model_manual_key_issuance,,1,1,1,1

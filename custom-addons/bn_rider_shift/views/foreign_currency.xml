@@ -11,8 +11,8 @@
                 </header>
                 <field name="currency_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="rider_log" />
-                <field name="amount"  readonly="1" groups="!bn_rider_shift.group_foreign_currency_collection" string="Foreign Amount"  />
-                <field name="amount"  groups="bn_rider_shift.group_foreign_currency_collection" string="Foreign Amount"  />
+                <field name="amount"  readonly="1" groups="!bn_rider_shift.group_edit_rider_collection" string="Foreign Amount"  />
+                <field name="amount"  groups="bn_rider_shift.group_edit_rider_collection" string="Foreign Amount"  />
                 <field name="conversion_rate" />
                 <field name="foreign_notes" />
                 <field name="exchanged_amount" string="PKR Amount"  readonly="1"/>

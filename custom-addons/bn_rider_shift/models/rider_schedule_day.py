@@ -20,17 +20,13 @@ class RiderScheduleDay(models.Model):
     name = fields.Char('Name', compute="_set_name")
 
 
-    @api.depends('rider_shift_id', 'rider_shift_id.name', 'city_id', 'zone_id', 'key_bunch_id', 'sub_zone_id')
+    @api.depends('rider_shift_id')
     def _set_name(self):
         for record in self:
-            parts = [
-                record.rider_shift_id.name if record.rider_shift_id else False,
-                record.city_id.name,
-                record.zone_id.name,
-                record.key_bunch_id.name,
-                record.sub_zone_id.name,
-            ]
-            record.name = ' '.join(p for p in parts if p)
+            record.name = ''
+
+            if record.rider_shift_id:
+                record.name = record.rider_shift_id.name + ' ' + record.city_id.name + ' ' + record.zone_id.name + ' ' + record.key_bunch_id.name + ' ' + record.sub_zone_id.name
 
     def _set_key_count(self):
         for rec in self:

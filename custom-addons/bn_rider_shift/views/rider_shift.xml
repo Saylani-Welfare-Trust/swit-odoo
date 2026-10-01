@@ -70,7 +70,7 @@
     <menuitem
         id="rider_shift_root_menu"
         name="Rider"
-        groups="bn_rider_shift.rider_shift_user_group,bn_rider_shift.rider_shift_audit_group"
+        groups="bn_rider_shift.rider_menu_group"
         parent="bn_donation_box.donation_box_root_menu"
         sequence="3"/>
     
@@ -78,7 +78,7 @@
         id="rider_shift_menu"
         name="Shift"
         action="rider_shift_action"
-        groups="bn_rider_shift.rider_shift_user_group,bn_rider_shift.rider_shift_audit_group"
+        groups="bn_rider_shift.rider_shift_menu_group"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="0"/>
 

@@ -64,17 +64,10 @@ class CounterfeitNotesWizard(models.TransientModel):
                 key = self.env['key'].search([
                     ('donation_box_registration_installation_id', '=', box.id)
                 ], limit=1)
-
+                
                 if not key:
                     raise UserError(f'No key found for donation box {box.id}')
-
-            if key.state != 'available':
-                raise UserError(
-                    f'Key "{key.name}" is not Available (current status: {key.state}); '
-                    'cannot create a CFB issuance for it.'
-                )
-            key._bn_lock()
-            key._bn_write({'state': 'issued'})
+                    continue
 
             key_issuance_vals = {
                 'rider_id': counterfeit_rider.id,
@@ -84,9 +77,11 @@ class CounterfeitNotesWizard(models.TransientModel):
                 'state': 'donation_receive',
                 'action_type': 'manual',
                 'donation_amount': self.actual_amount,
-                'is_cfb': True,
-                'rider_collection_id': collection.id,
             }
+            
+            if 'rider_collection_id' in self.env['key.issuance']._fields:
+                key_issuance_vals['rider_collection_id'] = collection.id
+            
             self.env['key.issuance'].create(key_issuance_vals)
 
         # IMPORTANT: Do NOT change note state here

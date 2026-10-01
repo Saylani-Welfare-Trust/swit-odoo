@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo import fields, models
+from odoo.exceptions import ValidationError
 
-from .bn_workflow import in_transition
 
 box_status_selection = [
     ('missing', 'Missing'),
@@ -19,40 +17,31 @@ status_selection = [
     ('resolved', 'Resolved'),
 ]
 
-RESOLVE_GROUP = 'bn_donation_box.donation_box_manager_group'
-
-# Complaint kinds a user can raise (``repaired`` is only ever a *result* of a repair).
-RAISABLE_BOX_STATUS = ('missing', 'broken', 'robbery', 'return')
-
 
 class DonationBoxComplain(models.Model):
     _name = 'donation.box.complain.center'
     _description = 'Donation Box Complain Center'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
-    _bn_guarded_fields = ('status',)
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+
 
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     complain_officer_id = fields.Many2one('hr.employee', string="Complain Officer", tracking=True)
     donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", tracking=True)
-    return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True, copy=False)
-    scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True, copy=False)
-    scrap_return_picking_id = fields.Many2one('stock.picking', string="Scrap Return Picking", tracking=True, copy=False)
+    return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True)
+    scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True)
+    scrap_return_picking_id = fields.Many2one('stock.picking', string="Scrap Return Picking", tracking=True)
 
-    employee_category_id = fields.Many2one(
-        'hr.employee.category', string="Employee Category",
-        default=lambda self: self._default_category_id('bn_donation_box.donation_box_rider_hr_employee_category'))
-    complain_officer_category_id = fields.Many2one(
-        'hr.employee.category', string="Complain Officer Category",
-        default=lambda self: self._default_category_id('bn_donation_box.donation_box_complain_officer_hr_employee_category'))
-
+    employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False) and self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False).id or False)
+    complain_officer_category_id = fields.Many2one('hr.employee.category', string="Complain Officer Category", default=lambda self: self.env.ref('bn_donation_box.donation_box_complain_officer_hr_employee_category', raise_if_not_found=False) and self.env.ref('bn_donation_box.donation_box_complain_officer_hr_employee_category', raise_if_not_found=False).id or False)
+    
     name = fields.Char(related='donation_box_registration_installation_id.name', string='Registration / Installation No.', store=True, tracking=True)
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string='Shop Name', store=True, tracking=True)
     contact_no = fields.Char(related='donation_box_registration_installation_id.contact_no', string='Contact No', store=True, tracking=True)
     location = fields.Char(related='donation_box_registration_installation_id.location', string='Requested Location', store=True, tracking=True)
     contact_person = fields.Char(related='donation_box_registration_installation_id.contact_person', string='Contact Person', store=True, tracking=True)
 
-    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False)
+    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True)
     box_status = fields.Selection(selection=box_status_selection, string="Box Status", tracking=True)
 
     installer_id = fields.Many2one(related='donation_box_registration_installation_id.installer_id', string="Installer")
@@ -72,212 +61,233 @@ class DonationBoxComplain(models.Model):
     box_recovered = fields.Boolean('Box Recovered', default=False, tracking=True)
     active = fields.Boolean('Active', default=True, tracking=True)
 
-    # ------------------------------------------------------------------
-    # Defaults
-    # ------------------------------------------------------------------
-    @api.model
-    def _default_category_id(self, xmlid):
-        category = self.env.ref(xmlid, raise_if_not_found=False)
-        return category.id if category else False
 
-    # ------------------------------------------------------------------
-    # ORM overrides
-    # ------------------------------------------------------------------
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('box_status') and vals['box_status'] not in RAISABLE_BOX_STATUS:
-                raise ValidationError(_('A complaint cannot be raised with the box status "%s".') % vals['box_status'])
-            registration_id = vals.get('donation_box_registration_installation_id')
-            if registration_id:
-                registration = self.env['donation.box.registration.installation'].browse(registration_id)
-                if vals.get('lot_id') and registration.lot_id.id != vals['lot_id']:
-                    raise ValidationError(_('The Box No. does not match the selected registration.'))
-                open_complaint = self.search([
-                    ('donation_box_registration_installation_id', '=', registration_id),
-                    ('status', 'in', ('draft', 'process')),
-                ], limit=1)
-                if open_complaint:
-                    raise ValidationError(_(
-                        'Box "%(lot)s" already has an open complaint (%(status)s).'
-                    ) % {'lot': registration.lot_id.display_name,
-                         'status': open_complaint._bn_selection_label('status', open_complaint.status)})
-        return super().create(vals_list)
-
-    def write(self, vals):
-        if not self.env.su and not in_transition():
-            frozen = [name for name in ('lot_id', 'box_status', 'donation_box_registration_installation_id',
-                                        'rider_id', 'remarks') if name in vals]
-            if frozen:
-                for rec in self:
-                    if rec.status != 'draft':
-                        raise UserError(_(
-                            'The complaint details cannot be edited once the complaint left the Draft status.'))
-            officer_fields = [name for name in ('complain_officer_id', 'complain_officer_remark',
-                                                'box_recovered') if name in vals]
-            if officer_fields:
-                for rec in self:
-                    if rec.status not in ('draft', 'process'):
-                        raise UserError(_('A closed complaint cannot be edited.'))
-        return super().write(vals)
-
-    def unlink(self):
-        if not self.env.su:
-            for rec in self:
-                if rec.status != 'draft':
-                    raise UserError(_('Only complaints in Draft status can be deleted.'))
-        return super().unlink()
-
-    # ------------------------------------------------------------------
-    # Helpers
-    # ------------------------------------------------------------------
-    def _bn_registration(self):
-        self.ensure_one()
-        registration = self.donation_box_registration_installation_id
-        if not registration:
-            raise ValidationError(_("No installation record found for this serial."))
-        if not self.lot_id:
-            raise ValidationError(_("Please select a Serial (Lot) for this complaint."))
-        if registration.lot_id != self.lot_id:
-            raise ValidationError(_("The serial does not match the installation record."))
-        return registration
-
-    def _bn_close_registration(self, registration):
-        if registration.status != 'close':
-            registration._bn_write({'status': 'close'})
-
-    # ------------------------------------------------------------------
-    # Workflow
-    # ------------------------------------------------------------------
     def action_process(self):
-        self._bn_check_state('status', ('draft',), _('Process Complain'))
-        for rec in self:
-            rec._bn_check_required(['rider_id', 'lot_id', 'box_status', 'remarks'])
-            if rec.box_status in ('missing', 'robbery'):
-                rec._bn_check_required(['complain_officer_id'])
-            rec._bn_write({'status': 'process'})
-        return True
-
+        # if self.box_status != 'process':
+        #     raise ValidationError(f"Please contact your firendly administrator as you cannot set box status directly to '{self.box_status}'.")
+        
+        self.status = 'process'
+    
     def action_resolve(self):
-        self._bn_require_group(RESOLVE_GROUP)
-        self._bn_check_state('status', ('process',), _('Complain Resolved'))
-        for rec in self:
-            rec._bn_resolve()
-        return True
+        # Ensure keys are returned before resolution
+        if self.lot_id:
+            keys = self.env['key'].search([('lot_id', '=', self.lot_id.id)])
+            unreturned_keys = keys.filtered(lambda k: k.state in ['issued', 'pending'])
 
-    def _bn_resolve(self):
-        self.ensure_one()
-        registration = self._bn_registration()
+            if unreturned_keys:
+                raise ValidationError(
+                    "❌ Cannot resolve complaint!\n\n"
+                    "Key(s) must be returned before resolution.\n\n"
+                    "Unreturned Keys:\n" +
+                    "\n".join([f"  • {k.name} (Status: {k.state})" for k in unreturned_keys]) +
+                    "\n\nPlease ensure all keys are returned and marked as available."
+                )
 
-        # Every key of the box must be back before the complaint can be resolved.
-        pending_keys = registration._bn_unreturned_key_messages()
-        if pending_keys:
-            raise ValidationError(
-                _("Cannot resolve complaint!\n\nKey(s) must be returned before resolution.\n\n"
-                  "Unreturned Keys:\n%s\n\nPlease ensure all keys are returned and marked as available.")
-                % "\n".join("  • %s" % message for message in pending_keys))
-
-        box_status = self.box_status
-        if box_status in ('missing', 'robbery'):
+        # Handle Missing / Robbery cases
+        if self.box_status in ['missing', 'robbery']:
             if not self.complain_officer_remark:
-                raise ValidationError(_(
-                    "Complain Officer Remark is required before resolving Missing or Robbery cases."))
-            recovered = self.box_recovered
-            self._bn_close_registration(registration)
-            registration._bn_key_close()
-            lot_vals = {'is_not_return': True}
-            if recovered:
-                lot_vals['lot_consume'] = False
-            self.lot_id.write(lot_vals)
-            self._bn_write({'status': 'resolved' if recovered else 'not_recovered'})
-        elif box_status == 'broken':
-            self._bn_do_scrap()
-        elif box_status == 'return':
-            self._bn_write({'status': 'resolved'})
-        else:
-            raise UserError(_('A complaint with the box status "%s" cannot be resolved.')
-                            % self._bn_selection_label('box_status', box_status))
+                raise ValidationError(
+                    "Complain Officer Remark is required before resolving Missing or Robbery cases."
+                )
+
+            registration = self.donation_box_registration_installation_id
+
+            # If box is recovered
+            if self.box_recovered:
+                if registration:
+                    registration.status = 'close'
+
+                if self.lot_id:
+                    self.lot_id.is_not_return = True
+                    self.lot_id.lot_consume = False
+
+                if self.lot_id:
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                        {
+                            'key_bunch_id': False,
+                            'state': 'closed',
+                        }
+                    )
+
+                self.status = 'resolved'
+
+            # If box is NOT recovered
+            else:
+                if registration:
+                    registration.status = 'close'
+
+                if self.lot_id:
+                    self.lot_id.is_not_return = True
+
+                if self.lot_id:
+                    self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                        {
+                            'key_bunch_id': False,
+                            'state': 'closed',
+                        }
+                    )
+
+                self.status = 'not_recovered'
+
+        # Handle broken case separately
+        if self.box_status == 'broken':
+            self.action_scrap()
+            self.status = 'resolved'
 
     def action_return(self):
-        """Return ONLY the selected serial (lot) of the original transfer to stock."""
-        self._bn_require_group(RESOLVE_GROUP)
-        self._bn_check_state('status', ('resolved',), _('Box Return'))
+        """Return ONLY the selected serial (lot) from a multi-line picking."""
         for rec in self:
-            rec._bn_do_return()
-        return True
 
-    def _bn_do_return(self):
-        self.ensure_one()
-        if self.return_picking_id:
-            raise UserError(_('This box has already been returned (%s).') % self.return_picking_id.display_name)
-        eligible = self.box_status == 'return' or (self.box_status in ('missing', 'robbery') and self.box_recovered)
-        if not eligible:
-            raise UserError(_(
-                'Box Return is only available for "Return" complaints and recovered Missing / Robbery boxes.'))
+            if not rec.lot_id:
+                raise ValidationError("Please select a Serial (Lot) to return.")
 
-        registration = self._bn_registration()
-        request = registration.donation_box_request_id
-        picking = request._bn_find_done_picking(request)
-        if not picking:
-            raise ValidationError(_("No completed Stock Picking found for this box."))
+            registration = rec.donation_box_registration_installation_id
+            if not registration:
+                raise ValidationError("No installation record found for this serial.")
 
-        return_picking = request._bn_return_lot(picking, self.lot_id)
+            # 1️⃣ Find original picking
+            picking = registration.donation_box_request_id.picking_id
+            if not picking or picking.state != "done":
+                picking = self.env['stock.picking'].search([
+                    ('origin', '=', registration.donation_box_request_id.name),
+                    ('state', '=', 'done')
+                ], order="id desc", limit=1)
 
-        self._bn_close_registration(registration)
-        registration._bn_key_close()
-        self.lot_id.write({'lot_consume': False, 'is_not_return': False})
-        self._bn_write({'return_picking_id': return_picking.id})
+            if not picking:
+                raise ValidationError("No completed Stock Picking found for this box.")
+
+            # 2️⃣ Find the exact move line for this serial
+            original_ml = picking.move_line_ids.filtered(
+                lambda ml: ml.lot_id.id == rec.lot_id.id
+            )
+
+            if not original_ml:
+                raise ValidationError("This serial does not belong to the selected picking.")
+
+            original_ml = original_ml[0]
+            product = original_ml.product_id
+
+            # 3️⃣ Create return wizard
+            return_wizard = self.env['stock.return.picking'].create({
+                'picking_id': picking.id,
+            })
+
+            # 4️⃣ Return ONLY this product
+            for line in return_wizard.product_return_moves:
+                line.quantity = 1 if line.product_id.id == product.id else 0
+
+            # 5️⃣ Create return picking
+            res = return_wizard.create_returns()
+            return_picking = self.env['stock.picking'].browse(res['res_id'])
+
+            # 6️⃣ KEEP ONLY the move of selected product
+            return_move = return_picking.move_ids_without_package.filtered(
+                lambda m: m.product_id.id == product.id
+            )
+
+            if not return_move:
+                raise ValidationError("Return move not generated.")
+
+            # Delete other product moves completely
+            (return_picking.move_ids_without_package - return_move).unlink()
+
+            # 7️⃣ Fix move line (SERIAL SAFE)
+            return_ml = return_move.move_line_ids[:1]
+
+            # Remove extra move lines
+            (return_move.move_line_ids - return_ml).unlink()
+
+            return_ml.write({
+                'lot_id': rec.lot_id.id,
+                'quantity': 1,
+            })
+
+            # 8️⃣ Validate return picking
+            return_picking.button_validate()
+
+            # 9️⃣ Close installation & complaint
+            registration.status = 'close'
+            rec.status = 'resolved'
+            rec.return_picking_id = return_picking.id
+
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                {
+                    'key_bunch_id': False,
+                    'state': 'closed',
+                }
+            )
+
+            # 🔟 Reset lot flags
+            rec.lot_id.write({
+                'lot_consume': False,
+                'location_id': self.donation_box_request_id.source_location_id.id,
+                'is_not_return': False,
+            })
 
     def action_scrap(self):
-        """Scrap the selected serial (lot) instead of returning it."""
-        self._bn_require_group(RESOLVE_GROUP)
-        self._bn_check_state('status', ('process',), _('Scrap'))
+        """Scrap the selected serial (lot) instead of returning picking."""
         for rec in self:
-            rec._bn_do_scrap()
-        return True
+            if not rec.lot_id:
+                raise ValidationError("Please select a Serial (Lot) to scrap.")
 
-    def _bn_do_scrap(self):
-        self.ensure_one()
-        if self.scrap_picking_id:
-            raise UserError(_('This box has already been scrapped (%s).') % self.scrap_picking_id.display_name)
+            registration = rec.donation_box_registration_installation_id
+            if not registration:
+                raise ValidationError("No installation record found for this serial.")
 
-        registration = self._bn_registration()
-        request = registration.donation_box_request_id
-        picking = request._bn_find_done_picking(request)
-        if not picking:
-            raise ValidationError(_("No completed Stock Picking found for this box."))
+            # 1. Find original picking (delivery)
+            picking = registration.donation_box_request_id.picking_id
 
-        serial_used = picking.move_line_ids.filtered(lambda ml: ml.lot_id == self.lot_id)[:1]
-        if not serial_used:
-            raise ValidationError(_("This serial does not belong to the selected picking."))
+            if not picking or picking.state != "done":
+                picking = self.env['stock.picking'].search([
+                    ('origin', '=', registration.donation_box_request_id.name),
+                    ('state', '=', 'done')
+                ], order="id desc", limit=1)
 
-        scrap_location = self.env['stock.location'].search([
-            ('scrap_location', '=', True),
-            ('company_id', 'in', [picking.company_id.id, False]),
-        ], limit=1)
-        if not scrap_location:
-            raise ValidationError(_("Scrap location not configured in the system."))
+            if not picking:
+                raise ValidationError("No completed Stock Picking found for this box.")
 
-        scrap = self.env['stock.scrap'].create({
-            'product_id': serial_used.product_id.id,
-            'lot_id': self.lot_id.id,
-            'scrap_qty': 1,
-            'product_uom_id': serial_used.product_uom_id.id,
-            'location_id': picking.location_dest_id.id,   # where the box is now
-            'scrap_location_id': scrap_location.id,
-            'company_id': picking.company_id.id,
-            'origin': picking.name,
-        })
-        # action_validate() can return a wizard (insufficient quantity) instead of scrapping.
-        scrap.action_validate()
-        if scrap.state != 'done':
-            raise UserError(_(
-                'The scrap of box "%s" could not be validated. Please check the stock of the box.'
-            ) % self.lot_id.display_name)
+            # 2. Find move line for the selected serial
+            serial_used = picking.move_line_ids.filtered(
+                lambda ml: ml.lot_id.id == rec.lot_id.id
+            )
 
-        self._bn_close_registration(registration)
-        registration._bn_key_close()
-        self._bn_write({'status': 'resolved', 'scrap_picking_id': scrap.id})
+            if not serial_used:
+                raise ValidationError("This serial does not belong to the selected picking.")
+
+            product = serial_used.product_id
+
+            # 3. Determine scrap location
+            scrap_location = self.env['stock.location'].search([
+                ('scrap_location', '=', True),
+            ], limit=1)
+            if not scrap_location:
+                raise ValidationError("Scrap location not configured in the system.")
+
+            # 4. Create Scrap Record
+            scrap = self.env["stock.scrap"].create({
+                "product_id": product.id,
+                "lot_id": rec.lot_id.id,
+                "scrap_qty": 1,
+                "product_uom_id": serial_used.product_uom_id.id,
+                "location_id": picking.location_dest_id.id,   # From where it will be scrapped
+                "scrap_location_id": scrap_location.id,       # To scrap location
+                "company_id": picking.company_id.id,
+                "origin": picking.name,
+            })
+
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                {
+                    'key_bunch_id': False,
+                    'state': 'closed',
+                }
+            )
+
+            # 5. Confirm / Validate the scrap
+            scrap.action_validate()
+
+            # 7. Close complain
+            rec.status = "resolved"
+            rec.scrap_picking_id = scrap.id
 
     def action_return_picking(self):
         return {
@@ -287,7 +297,7 @@ class DonationBoxComplain(models.Model):
             'res_id': self.return_picking_id.id,
             'target': 'current'
         }
-
+    
     def action_scrap_picking(self):
         return {
             'type': 'ir.actions.act_window',
@@ -309,102 +319,137 @@ class DonationBoxComplain(models.Model):
     def action_repair(self):
         """
         Repair broken donation boxes (single or bulk).
-        The scrap is reversed (scrap location -> warehouse stock), so the box becomes
-        available in stock again for a new request.
+        Once repaired, the box becomes available in stock for re-allocation and installation.
         """
-        self._bn_require_group(RESOLVE_GROUP)
-        if not self:
-            raise UserError(_('Please select the complaints to repair.'))
+        broken_records = self.filtered(lambda r: r.box_status in ['broken', 'repaired'])
+        
+        if not broken_records:
+            raise ValidationError("No broken boxes selected for repair. Only boxes with 'Broken' or 'Repaired' status can be repaired.")
 
-        # Validate every selected record first: this action is also reachable from the
-        # list view, where the form's button conditions do not apply.
-        problems = []
-        for rec in self:
-            label = rec.lot_id.display_name or rec.display_name
-            if rec.box_status != 'broken':
-                problems.append(_('%s: only "Broken" boxes can be repaired.') % label)
-            elif rec.status != 'resolved':
-                problems.append(_('%s: the complaint must be resolved (scrapped) first.') % label)
-            elif not rec.scrap_picking_id or rec.scrap_picking_id.state != 'done':
-                problems.append(_('%s: no completed scrap found.') % label)
-            elif rec.scrap_return_picking_id:
-                problems.append(_('%s: already repaired (%s).') % (label, rec.scrap_return_picking_id.display_name))
-        if problems:
-            raise UserError('\n'.join(problems))
+        for rec in broken_records:
+            # 1. Change box status to 'repaired'
+            rec.box_status = 'repaired'
+            
+            # 2. Make the lot available again for re-allocation
+            if rec.lot_id:
+                # Reset lot flags so it becomes available in stock
+                rec.lot_id.lot_consume = False
+                rec.lot_id.is_not_return = False
+            
+            # 3. If there's a scrap record, we need to reverse the scrap
+            # by creating an internal transfer from scrap location back to stock
+            if rec.scrap_picking_id:
+                scrap_record = rec.scrap_picking_id
 
-        for rec in self:
-            rec._bn_do_repair()
+                # Get the warehouse's stock location (lot_stock_id)
+                warehouse = self.env['stock.warehouse'].search([
+                    ('company_id', '=', scrap_record.company_id.id)
+                ], limit=1)
+                
+                if not warehouse:
+                    raise ValidationError("No warehouse found for this company.")
+                
+                stock_location = warehouse.lot_stock_id
 
-        if len(self) > 1:
+                if not stock_location:
+                    raise ValidationError("Cannot determine stock location from warehouse.")
+
+                # Only process if scrap was done
+                if scrap_record.state == 'done':
+                    # Get internal transfer picking type
+                    picking_type = self.env['stock.picking.type'].search([
+                        ('code', '=', 'internal'),
+                        ('warehouse_id', '=', warehouse.id),
+                    ], limit=1)
+                    
+                    if not picking_type:
+                        # Fallback: get any internal picking type
+                        picking_type = self.env['stock.picking.type'].search([
+                            ('code', '=', 'internal'),
+                            ('company_id', '=', scrap_record.company_id.id),
+                        ], limit=1)
+                    
+                    if not picking_type:
+                        raise ValidationError("No internal transfer picking type found.")
+
+                    # 1. Create the picking (internal transfer)
+                    picking_vals = {
+                        'picking_type_id': picking_type.id,
+                        'location_id': scrap_record.scrap_location_id.id,  # From scrap location
+                        'location_dest_id': stock_location.id,             # To warehouse stock
+                        'origin': f'Repair - {rec.name or rec.lot_id.name}',
+                        'company_id': scrap_record.company_id.id,
+                    }
+                    picking = self.env['stock.picking'].create(picking_vals)
+
+                    # 2. Create the stock move
+                    move_vals = {
+                        'name': f'Repair Return: {rec.lot_id.name}',
+                        'product_id': scrap_record.product_id.id,
+                        'product_uom_qty': scrap_record.scrap_qty,
+                        'product_uom': scrap_record.product_uom_id.id,
+                        'location_id': scrap_record.scrap_location_id.id,
+                        'location_dest_id': stock_location.id,
+                        'picking_id': picking.id,
+                        'origin': f'Repair - {rec.name or rec.lot_id.name}',
+                    }
+                    move = self.env['stock.move'].create(move_vals)
+
+                    # 3. Create the move line with lot and quantity BEFORE confirming
+                    move_line = self.env['stock.move.line'].create({
+                        'move_id': move.id,
+                        'picking_id': picking.id,
+                        'product_id': scrap_record.product_id.id,
+                        'product_uom_id': scrap_record.product_uom_id.id,
+                        'quantity': scrap_record.scrap_qty,
+                        'lot_id': rec.lot_id.id,
+                        'location_id': scrap_record.scrap_location_id.id,
+                        'location_dest_id': stock_location.id,
+                    })
+
+                    # 4. Confirm the picking
+                    picking.action_confirm()
+                    picking.action_assign()
+
+                    # 5. Ensure the move line has the lot assigned (in case it got reset)
+                    if not move_line.lot_id:
+                        move_line.lot_id = rec.lot_id.id
+                    
+                    # Set quantity done on move
+                    move.quantity = scrap_record.scrap_qty
+
+                    # 6. Validate the picking with immediate transfer context
+                    picking.with_context(skip_backorder=True).button_validate()
+
+                    # Store the scrap return picking reference
+                    rec.scrap_return_picking_id = picking.id
+
+            # 4. Reopen the installation record so box can be re-allocated
+            if rec.donation_box_registration_installation_id:
+                # raise UserError(_("Reopening the installation record is not allowed."))
+                # Reset the installation status to allow re-allocation
+                rec.donation_box_registration_installation_id.status = 'close'
+            
+            # 5. Delete the key record as a result it will be unlink from the bunch too
+            self.env['key'].search([('lot_id', '=', self.lot_id.id)]).write(
+                {
+                    'key_bunch_id': False,
+                    'state': 'closed',
+                }
+            )
+
+            # 6. Update complain status to resolved
+            rec.status = 'resolved'
+        
+        # Return notification for bulk operations
+        if len(broken_records) > 1:
             return {
                 'type': 'ir.actions.client',
                 'tag': 'display_notification',
                 'params': {
-                    'title': _('Repair Successful'),
-                    'message': _('%s boxes have been repaired and are now available for re-allocation.') % len(self),
+                    'title': 'Repair Successful',
+                    'message': f'{len(broken_records)} boxes have been repaired and are now available for re-allocation.',
                     'type': 'success',
                     'sticky': False,
                 }
             }
-        return True
-
-    def _bn_do_repair(self):
-        self.ensure_one()
-        scrap = self.scrap_picking_id
-        registration = self._bn_registration()
-        request = registration.donation_box_request_id
-        original_picking = request._bn_find_done_picking(request)
-
-        warehouse = original_picking.picking_type_id.warehouse_id or request.warehouse_id
-        stock_location = warehouse.lot_stock_id
-        if not stock_location:
-            raise ValidationError(_("Cannot determine the warehouse stock location for this box."))
-
-        PickingType = self.env['stock.picking.type']
-        picking_type = PickingType.search([
-            ('code', '=', 'internal'), ('warehouse_id', '=', warehouse.id)], limit=1)
-        if not picking_type:
-            picking_type = PickingType.search([
-                ('code', '=', 'internal'), ('company_id', '=', scrap.company_id.id)], limit=1)
-        if not picking_type:
-            raise ValidationError(_("No internal transfer picking type found."))
-
-        origin = _('Repair - %s') % (self.name or self.lot_id.name)
-        picking = self.env['stock.picking'].create({
-            'picking_type_id': picking_type.id,
-            'location_id': scrap.scrap_location_id.id,
-            'location_dest_id': stock_location.id,
-            'origin': origin,
-        })
-        move = self.env['stock.move'].create({
-            'name': _('Repair Return: %s') % self.lot_id.name,
-            'product_id': scrap.product_id.id,
-            'product_uom_qty': scrap.scrap_qty,
-            'product_uom': scrap.product_uom_id.id,
-            'location_id': scrap.scrap_location_id.id,
-            'location_dest_id': stock_location.id,
-            'picking_id': picking.id,
-            'origin': origin,
-            'company_id': picking.company_id.id,
-        })
-        self.env['stock.move.line'].create({
-            'move_id': move.id,
-            'picking_id': picking.id,
-            'product_id': scrap.product_id.id,
-            'product_uom_id': scrap.product_uom_id.id,
-            'quantity': scrap.scrap_qty,
-            'lot_id': self.lot_id.id,
-            'location_id': scrap.scrap_location_id.id,
-            'location_dest_id': stock_location.id,
-        })
-        picking.action_confirm()
-        request._bn_validate_picking(picking)
-
-        self.lot_id.write({'lot_consume': False, 'is_not_return': False})
-        self._bn_close_registration(registration)
-        registration._bn_key_close()
-        self._bn_write({
-            'box_status': 'repaired',
-            'scrap_return_picking_id': picking.id,
-            'status': 'resolved',
-        })

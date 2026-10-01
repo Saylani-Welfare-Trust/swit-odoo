@@ -7,8 +7,8 @@
         <field name="arch" type="xml">
             <form>
                  <header>
-                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
-                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
+                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status in ['approved', 'rejected']" groups="bn_donation_box.donation_box_request_approve_reject_group" />
+                    <button name="action_reject" string="Rejected" type="object" invisible="status in ['approved', 'rejected']" groups="bn_donation_box.donation_box_request_approve_reject_group" />
                     
                     <field name="status" widget="statusbar" statusbar_visible="draft, approved, rejected"/>
                 </header>
@@ -22,22 +22,19 @@
                     <group>
                         <group name="donation_box_request_col_1">
                             <field name="employee_category_id" invisible="1" />
-                            <field name="company_id" invisible="1" />
-                            <field name="rider_id" string="Installer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [employee_category_id])]" required="1" readonly="status != 'draft'" />
-                            <field name="request_date" required="1" readonly="status != 'draft'" />
+                            <field name="rider_id" string="Installer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [employee_category_id])]" required="1" readonly="status == 'approved'" />
+                            <field name="source_location_id" readonly="1" invisible="1" />
+                            <field name="picking_type_id" string="Picking Type" readonly="1" invisible="1" />
                         </group>
                         <group name="donation_box_request_col_2">
-                            <field name="warehouse_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status != 'draft'" />
-                            <field name="picking_type_id" string="Operation Type" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status != 'draft'" />
-                            <field name="source_location_id" readonly="1" />
-                            <field name="destination_location_id" readonly="1" />
+                            <field name="request_date" required="1" readonly="status == 'approved'" />
+                            <field name="destination_location_id" readonly="1" invisible="1" />
                         </group>
                     </group>
                     <notebook>
                         <page name="donation_box_request_lines" string="Issued Boxes">
-                            <field name="donation_box_request_line_ids" readonly="status != 'draft'">
-                                <tree editable="bottom" decoration-muted="is_returned">
-                                    <field name="is_returned" column_invisible="1" />
+                            <field name="donation_box_request_line_ids" readonly="status == 'approved'">
+                                <tree editable="bottom">
                                     <field name="donation_box_request_id" column_invisible="1" />
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box Type" domain="[('is_donation_box', '=', True)]" />
                                     <field name="on_hand_qty"/>
@@ -47,7 +44,7 @@
                                     <field name="old_box_no" />
                                     <field name="key_tag" readonly="1" />
 
-                                    <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved' or is_returned" />
+                                    <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved'" />
                                 </tree>
                             </field>
                         </page>
@@ -64,7 +61,7 @@
                                     <field name="lock_no" />
                                     <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
                                     <field name="installation_date" />
-                                    <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" />
+                                    <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
                                 </tree>
                             </field>
                         </page>
@@ -101,14 +98,12 @@
             <search>
                 <field name="request_date" />
                 <field name="status" string="Status" />
-                <filter string="Draft" name="filter_draft" domain="[('status', '=', 'draft')]" />
-                <filter string="Approved" name="filter_approved" domain="[('status', '=', 'approved')]" />
-                <filter string="Rejected" name="filter_rejected" domain="[('status', '=', 'rejected')]" />
-                <filter string="Request Date" name="filter_request_date" date="request_date" />
+                <filter string="Approved Code Filter" name="status" domain="[('status', '=', 'approved')]" />
+                <filter string="Rejected Filter" name="status" domain="[('status', '=', 'rejected')]" />
+                <filter string="Request Date Filter" name="request_date" date="request_date" />
                 <group string="Group By">
-                    <filter string="Status" name="group_status" domain="[]" context="{'group_by': 'status'}" />
-                    <filter string="Warehouse" name="group_warehouse" domain="[]" context="{'group_by': 'warehouse_id'}" />
-                    <filter string="Request Date" name="group_request_date"  domain="[]" context="{'group_by': 'request_date'}" />
+                    <filter string="Status Group" name="status" domain="[]" context="{'group_by': 'status'}" />
+                    <filter string="Request Date Group" name="request_date"  domain="[]" context="{'group_by': 'request_date'}" />
                 </group>   
             </search>
         </field>
@@ -128,7 +123,7 @@
     <menuitem
         id="donation_box_root_menu"
         name="Donation Box"
-        groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group"
+        groups="bn_donation_box.donation_box_menu_group"
         web_icon="bn_donation_box,static/description/icon.png"
         sequence="5"/>
 
