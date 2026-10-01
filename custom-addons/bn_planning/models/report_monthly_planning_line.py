@@ -103,7 +103,7 @@ class ReportMonthlyPlanningLine(models.Model):
             DROP VIEW IF EXISTS report_monthly_planning_line CASCADE;
 
             CREATE VIEW report_monthly_planning_line AS
-            SELECT ROW_NUMBER() OVER () AS id, *
+            SELECT ROW_NUMBER() OVER () AS id, sub.*
             FROM (
                 SELECT
                     k.id                           AS line_id,
