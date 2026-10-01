@@ -300,8 +300,18 @@ class MonthlyPlanningLineBase(models.AbstractModel):
     date = fields.Date(
         string="Date",
         required=True,
-        default=fields.Date.today
+        default=lambda self: self._default_line_date(),
     )
+
+    @api.model
+    def _default_line_date(self):
+        """Default to the parent plan's From Date (or today if there is none)."""
+        parent_id = self.env.context.get('default_monthly_planning_id')
+        if parent_id:
+            parent = self.env['monthly.planning'].browse(parent_id)
+            if parent.from_date:
+                return parent.from_date
+        return fields.Date.today()
     product_id = fields.Many2one('product.product', string="Product")
     quantity = fields.Float(string="Quantity", required=True, default=0.0)
     on_hand_qty = fields.Float(string='On Hand Quantity', compute='_compute_on_hand_qty')
