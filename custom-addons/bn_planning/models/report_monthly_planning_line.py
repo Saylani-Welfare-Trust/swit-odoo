@@ -19,6 +19,17 @@ class ReportMonthlyPlanningLine(models.Model):
     to_date = fields.Date(
         related='monthly_planning_id.to_date', string='To Date', store=False,
     )
+    planned_qty = fields.Float(string='Planned Qty', readonly=True)
+
+    qty_diff = fields.Float(
+        string='Difference',
+        compute='_compute_qty_diff',
+    )
+
+    @api.depends('quantity', 'planned_qty')
+    def _compute_qty_diff(self):
+        for rec in self:
+            rec.qty_diff = (rec.quantity or 0.0) - (rec.planned_qty or 0.0)
 
     # ── Line info ──────────────────────────────────────
     tab = fields.Selection(
@@ -112,35 +123,36 @@ class ReportMonthlyPlanningLine(models.Model):
                     k.date                         AS date,
                     k.product_id                   AS product_id,
                     NULL::integer                  AS location_id,
-                    k.quantity                     AS quantity
+                    k.quantity                     AS quantity,
+                    k.planned_qty                  AS planned_qty
                 FROM monthly_planning_kitchen k
                 UNION ALL
                 SELECT m.id, m.monthly_planning_id, 'madaris', m.date,
-                    m.product_id, NULL::integer, m.quantity
+                    m.product_id, NULL::integer, m.quantity, m.planned_qty
                 FROM monthly_planning_madaris m
                 UNION ALL
                 SELECT md.id, md.monthly_planning_id, 'medical', md.date,
-                    md.product_id, NULL::integer, md.quantity
+                    md.product_id, NULL::integer, md.quantity, md.planned_qty
                 FROM monthly_planning_medical md
                 UNION ALL
                 SELECT l.id, l.monthly_planning_id, 'livestock', l.date,
-                    l.product_id, l.location_id, l.quantity
+                    l.product_id, l.location_id, l.quantity, l.planned_qty
                 FROM monthly_planning_livestock l
                 UNION ALL
                 SELECT f.id, f.monthly_planning_id, 'food', f.date,
-                    f.product_id, NULL::integer, f.quantity
+                    f.product_id, NULL::integer, f.quantity, f.planned_qty
                 FROM monthly_planning_food f
                 UNION ALL
                 SELECT r.id, r.monthly_planning_id, 'ration', r.date,
-                    r.product_id, NULL::integer, r.quantity
+                    r.product_id, NULL::integer, r.quantity, r.planned_qty
                 FROM monthly_planning_ration r
                 UNION ALL
                 SELECT mt.id, mt.monthly_planning_id, 'meat', mt.date,
-                    mt.product_id, NULL::integer, mt.quantity
+                    mt.product_id, NULL::integer, mt.quantity, mt.planned_qty
                 FROM monthly_planning_meat mt
             ) sub
             JOIN monthly_planning mp ON mp.id = sub.monthly_planning_id
             WHERE sub.product_id IS NOT NULL
               AND sub.monthly_planning_id IS NOT NULL
-              AND mp.state = 'active';       -- ← only Active plans appear
+              AND mp.state = 'active';
         """)

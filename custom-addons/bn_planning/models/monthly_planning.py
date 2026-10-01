@@ -259,6 +259,14 @@ class MonthlyPlanning(models.Model):
                 raise ValidationError(
                     "Please select a Planning Type before activating."
                 )
+            # Freeze the planned quantities into planned_qty
+            for o2m_name in (
+                'kitchen_line_ids', 'madaris_line_ids', 'medical_line_ids',
+                'livestock_line_ids', 'food_line_ids', 'ration_line_ids',
+                'meat_line_ids',
+            ):
+                for line in getattr(rec, o2m_name):
+                    line.planned_qty = line.quantity
             rec.state = 'active'
 
     def action_set_draft(self):
@@ -322,6 +330,17 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         store=False,
     )
 
+    planned_qty = fields.Float(
+        string='Planned Qty',
+        readonly=True,
+        copy=False,
+        help='Snapshot of Quantity taken when the plan was activated. '
+             'It never changes afterwards, so the report can compare '
+             'planned vs. current quantity.',
+    )
+    
+    
+
     @api.depends('monthly_planning_id', 'monthly_planning_id.from_date')
     def _compute_min_line_date(self):
         today = fields.Date.today()
@@ -375,13 +394,24 @@ class MonthlyPlanningLineBase(models.AbstractModel):
             else:
                 rec.on_hand_qty = 0.0
 
-    @api.constrains('quantity', 'product_id')
+    @api.constrains('monthly_planning_id', 'product_id')
     def _check_active_plan(self):
+        """On an Active plan:
+        - You cannot ADD new lines.
+        - You cannot CHANGE the product.
+        - You CAN change the Quantity (to record actual consumption).
+        """
         for rec in self:
-            if rec.monthly_planning_id.state == 'active':
+            if rec.monthly_planning_id.state != 'active':
+                continue
+            if rec._origin.id is None:
                 raise ValidationError(
-                    "This Monthly Planning is Active. Set it back to Draft to edit lines."
+                    "You cannot add new lines to an Active plan. "
+                    "Set it back to Draft first."
                 )
+            # Block product changes on existing lines
+            if 'product_id' in rec._get_product_change_fields():
+                pass  # handled in write()
 
     def write(self, vals):
         for rec in self:
@@ -391,7 +421,25 @@ class MonthlyPlanningLineBase(models.AbstractModel):
                     "Lines cannot be modified."
                     % rec.monthly_planning_id.to_date
                 )
+            if rec.monthly_planning_id.state == 'active' and 'product_id' in vals:
+                raise ValidationError(
+                    "This Monthly Planning is Active. "
+                    "You cannot change the product on an active plan."
+                )
         return super().write(vals)
+    
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            plan_id = vals.get('monthly_planning_id')
+            if plan_id:
+                plan = self.env['monthly.planning'].browse(plan_id)
+                if plan.state == 'active':
+                    raise ValidationError(
+                        "You cannot add new lines to an Active plan. "
+                        "Set it back to Draft first."
+                    )
+        return super().create(vals_list)
 
     def unlink(self):
         for rec in self:
