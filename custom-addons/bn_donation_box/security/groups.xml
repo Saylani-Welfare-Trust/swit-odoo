@@ -1,6 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Old Groups -->
+    <record id="donation_box_menu_group" model="res.groups">
+        <field name="name">Donation Box / Menu</field>
+    </record>
+    
+    <record id="donation_box_registration_admin_group" model="res.groups">
+        <field name="name">Registration or Installation / Admin</field>
+    </record>
+
+    <record id="donation_box_registration_user_group" model="res.groups">
+        <field name="name">Registration or Installation / User</field>
+    </record>
+    
+    <record id="donation_box_registration_installation_approve_group" model="res.groups">
+        <field name="name">Registration or Installation / Approve</field>
+    </record>
+    
+    <record id="donation_box_registration_installation_change_request_group" model="res.groups">
+        <field name="name">Registration or Installation / Change Request</field>
+    </record>
+    
+    <record id="donation_box_request_approve_reject_group" model="res.groups">
+        <field name="name">Request / Approve or Reject</field>
+    </record>
+    
+    <record id="donation_box_complain_center_resolve_group" model="res.groups">
+        <field name="name">Complain Center / Resolve</field>
+    </record>
+    
+    <record id="donation_box_pos_action_group" model="res.groups">
+        <field name="name">Donation Box / POS Action</field>
+    </record>
+    
+    <record id="donation_product_onhand_group" model="res.groups">
+        <field name="name">Donation Products / Inventory</field>
+    </record>
+
+    <!-- New Groups -->
+
     <record id="donation_box_user_group" model="res.groups">
         <field name="name">Donation Box / User</field>
         <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>

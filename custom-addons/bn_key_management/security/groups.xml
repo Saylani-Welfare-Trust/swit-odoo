@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Old Groups -->
+
+    <record id="key_management_menu_group" model="res.groups">
+        <field name="name">Key Managment / Menu</field>
+    </record>
+
+    <!-- New Groups -->
+
     <record id="key_management_user_group" model="res.groups">
         <field name="name">Key Management / User</field>
         <field name="comment">Day-to-day access: issue, return and register keys. Cannot delete.</field>
