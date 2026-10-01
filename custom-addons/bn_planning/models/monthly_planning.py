@@ -107,16 +107,25 @@ class MonthlyPlanning(models.Model):
         copy=False,
     )
 
-    # Default destination (Main Stock) — optional, helps new records
+    # ─── Lock flag (auto, based on to_date) ────────────────
+    is_locked = fields.Boolean(
+        string='Locked (Past Period)',
+        compute='_compute_is_locked',
+        store=True,
+        help='Automatically true when the planning period has ended '
+             '(To Date is today or earlier). Locked plans cannot be edited '
+             'or deleted, and lines cannot be modified.',
+    )
+
+    @api.depends('to_date')
+    def _compute_is_locked(self):
+        today = fields.Date.today()
+        for rec in self:
+            rec.is_locked = bool(rec.to_date and rec.to_date <= today)
+
+    # ─── Default destination ──────────────────────────────
     @api.model
     def _default_location_dest(self):
-        """
-        Resolve the Destination Location automatically:
-            current user  →  hr.employee (via user_id)
-                        →  hr.employee.analytic_account_id  (Branch Location)
-                        →  stock.location where analytic_account_id matches
-        Fallback: Main Stock.
-        """
         employee = self.env['hr.employee'].search(
             [('user_id', '=', self.env.uid)], limit=1
         )
@@ -162,19 +171,37 @@ class MonthlyPlanning(models.Model):
         related='planning_type_id.food', string='Food', store=False,
     )
     show_ration = fields.Boolean(
-        related='planning_type_id.ration', string='Ration',
+        related='planning_type_id.ration', string='Ration', store=False,
     )
     show_meat = fields.Boolean(
         related='planning_type_id.meat', string='Meat', store=False,
     )
 
+    # ─── Constraints ──────────────────────────────────────
     @api.constrains('from_date', 'to_date')
     def _check_date_range(self):
         for rec in self:
             if rec.from_date and rec.to_date and rec.from_date > rec.to_date:
-                raise ValidationError("'From Date' must be earlier than or equal to 'To Date'.")
+                raise ValidationError(
+                    "'From Date' must be earlier than or equal to 'To Date'."
+                )
 
-    # ───── Helper to build virtual line commands ─────
+    @api.constrains('from_date')
+    def _check_no_backdate_on_create(self):
+        """Block creating a NEW Monthly Planning with a From Date in the past.
+
+        Only fires on freshly-created records (rec._origin.id is None);
+        editing an existing record is not affected.
+        """
+        today = fields.Date.today()
+        for rec in self:
+            if rec._origin.id is None and rec.from_date and rec.from_date < today:
+                raise ValidationError(
+                    "You cannot create a Monthly Planning with a 'From Date' "
+                    "in the past.\nEarliest allowed date: %s." % today
+                )
+
+    # ─── Helpers ──────────────────────────────────────────
     def _get_line_commands_for_days(self):
         """Return a list of (0, 0, values) for each day between from_date and to_date."""
         self.ensure_one()
@@ -190,8 +217,20 @@ class MonthlyPlanning(models.Model):
             }))
         return commands
 
+    def is_date_in_range(self, date_val):
+        """Return True if `date_val` falls within [from_date, to_date] (inclusive)."""
+        self.ensure_one()
+        if not date_val or not self.from_date or not self.to_date:
+            return False
+        return self.from_date <= date_val <= self.to_date
+
+    # ─── Actions ──────────────────────────────────────────
     def action_open_import_wizard(self):
         self.ensure_one()
+        if self.is_locked:
+            raise ValidationError(
+                "This Monthly Planning is locked and cannot be modified."
+            )
         if not self.planning_type_id:
             raise ValidationError("Please select a Planning Type first.")
         return {
@@ -205,13 +244,44 @@ class MonthlyPlanning(models.Model):
 
     def action_set_active(self):
         for rec in self:
+            if rec.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked and cannot be modified."
+                )
             if not rec.planning_type_id:
-                raise ValidationError("Please select a Planning Type before activating.")
+                raise ValidationError(
+                    "Please select a Planning Type before activating."
+                )
             rec.state = 'active'
 
     def action_set_draft(self):
         for rec in self:
+            if rec.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked and cannot be modified."
+                )
             rec.state = 'draft'
+
+    # ─── Lock guards on write / unlink ────────────────────
+    def write(self, vals):
+        for rec in self:
+            if rec.is_locked:
+                allowed = {'state'}
+                if not set(vals.keys()).issubset(allowed):
+                    raise ValidationError(
+                        "This Monthly Planning is locked (period ended on %s). "
+                        "Editing is not allowed." % rec.to_date
+                    )
+        return super().write(vals)
+
+    def unlink(self):
+        for rec in self:
+            if rec.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning cannot be deleted because its "
+                    "period ended on %s." % rec.to_date
+                )
+        return super().unlink()
 
 
 # ─── Base class for line models ──────────────────────────────
@@ -248,8 +318,28 @@ class MonthlyPlanningLineBase(models.AbstractModel):
                     "This Monthly Planning is Active. Set it back to Draft to edit lines."
                 )
 
+    def write(self, vals):
+        for rec in self:
+            if rec.monthly_planning_id.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked (period ended on %s). "
+                    "Lines cannot be modified."
+                    % rec.monthly_planning_id.to_date
+                )
+        return super().write(vals)
 
-# ─── Concrete models (existing + new) ──────────────────────────
+    def unlink(self):
+        for rec in self:
+            if rec.monthly_planning_id.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked (period ended on %s). "
+                    "Lines cannot be deleted."
+                    % rec.monthly_planning_id.to_date
+                )
+        return super().unlink()
+
+
+# ─── Concrete models ─────────────────────────────────────────
 class MonthlyPlanningKitchen(models.Model):
     _name = 'monthly.planning.kitchen'
     _inherit = 'monthly.planning.line.base'

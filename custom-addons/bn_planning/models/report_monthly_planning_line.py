@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class ReportMonthlyPlanningLine(models.Model):
@@ -59,6 +60,42 @@ class ReportMonthlyPlanningLine(models.Model):
                 ).qty_available
             else:
                 rec.on_hand_qty = 0.0
+
+    is_locked = fields.Boolean(
+        related='monthly_planning_id.is_locked',
+        string='Locked',
+        store=False,
+    )
+
+    @api.constrains('monthly_planning_id', 'date', 'product_id')
+    def _check_locked_plan(self):
+        for rec in self:
+            if rec.monthly_planning_id.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked (period ended on %s). "
+                    "You cannot add or modify lines."
+                    % rec.monthly_planning_id.to_date
+                )
+                
+    def write(self, vals):
+        for rec in self:
+            if rec.monthly_planning_id.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked (period ended on %s). "
+                    "Lines cannot be modified."
+                    % rec.monthly_planning_id.to_date
+                )
+        return super().write(vals)
+
+    def unlink(self):
+        for rec in self:
+            if rec.monthly_planning_id.is_locked:
+                raise ValidationError(
+                    "This Monthly Planning is locked (period ended on %s). "
+                    "Lines cannot be deleted."
+                    % rec.monthly_planning_id.to_date
+                )
+        return super().unlink()
 
     # ── SQL view definition ────────────────────────────
     def init(self):
