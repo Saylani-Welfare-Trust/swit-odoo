@@ -18,7 +18,7 @@
                         <field name="lot_id" string="Box No." />
                         <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
                         <field name="installation_date" />
-                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" decoration-muted="status == 'close'" />
                     </tree>
                 </field>
             </xpath>
@@ -42,7 +42,7 @@
                         <field name="lot_id" string="Box No." />
                         <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
                         <field name="installation_date" />
-                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" decoration-muted="status == 'close'" />
                     </tree>
                 </field>
             </xpath>

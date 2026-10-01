@@ -10,11 +10,11 @@
                     <field name="box_status" invisible="1"/>
                     <field name="box_recovered" invisible="1"/>
                     <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved','not_recovered']"/>
-                    <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved','not_recovered']" groups="bn_donation_box.donation_box_complain_center_resolve_group"/>
+                    <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved','not_recovered']" groups="bn_donation_box.donation_box_manager_group"/>
                     
-                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="not ((box_status == 'return') or (box_status in ['missing', 'robbery'] and box_recovered)) or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_complain_center_resolve_group"/>
+                    <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="not ((box_status == 'return') or (box_status in ['missing', 'robbery'] and box_recovered)) or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_manager_group"/>
 
-                    <button name="action_repair" string="Repair" type="object" class="btn-primary" invisible="box_status != 'broken' or status != 'resolved'" groups="bn_donation_box.donation_box_complain_center_resolve_group"/>
+                    <button name="action_repair" string="Repair" type="object" class="btn-primary" invisible="box_status != 'broken' or status != 'resolved'" groups="bn_donation_box.donation_box_manager_group"/>
 
                     <field name="status" widget="statusbar" statusbar_visible="draft, process, not_recovered, resolved "/>
                 </header>
@@ -37,20 +37,20 @@
 
                     <div class="oe_title">
                         <label for="rider_id"/>
-                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status in ['not_recovered', 'process']"/></h1>
+                        <h1><field name="rider_id" domain="[('category_ids', 'in', [employee_category_id])]" string="Rider" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" readonly="status != 'draft'"/></h1>
                     </div>
 
                     <group>
                         <group name="donation_box_complain_col_1" >
-                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status in ['not_recovered', 'process']"/>
-                            <field name="box_status" required="1" readonly="status in ['not_recovered', 'process']"/>
-                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
-                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
+                            <field name="lot_id" string="Box No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('lot_consume', '=', True), ('is_not_return', '=', False)]" required="1" readonly="status != 'draft'"/>
+                            <field name="box_status" required="1" readonly="status != 'draft'"/>
+                            <field name="complain_officer_id" string="Complain Officer" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_ids', 'in', [complain_officer_category_id])]" required="box_status in ['missing', 'robbery']" readonly="status not in ['draft', 'process']"/>
+                            <field name="box_recovered" invisible="box_status not in ['missing', 'robbery']" readonly="status not in ['draft', 'process']"/>
                         </group>
                         <group name="donation_box_complain_col_2">
                             <field name="date" readonly="1"/>
-                            <field name="remarks" required="1" readonly="status in ['not_recovered', 'process']"/>
-                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status in ['not_recovered', 'resolved']"/>
+                            <field name="remarks" required="1" readonly="status != 'draft'"/>
+                            <field name="complain_officer_remark" invisible="box_status not in ['missing', 'robbery']" readonly="status not in ['draft', 'process']"/>
                         </group>
                     </group>
 
@@ -90,7 +90,7 @@
         <field name="arch" type="xml">
             <tree create="0">
                 <header>
-                    <button name="action_repair" string="Repair" type="object" class="btn-primary" groups="bn_donation_box.donation_box_complain_center_resolve_group" />
+                    <button name="action_repair" string="Repair" type="object" class="btn-primary" groups="bn_donation_box.donation_box_manager_group" />
                 </header>
                 <field name="rider_id" string="Rider" />
                 <field name="donation_box_registration_installation_id" />
