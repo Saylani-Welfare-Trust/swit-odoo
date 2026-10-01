@@ -1,35 +1,36 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
-    
+
 
 _logger = logging.getLogger(__name__)
 
-MONTH_SELECTION = [
-    ('jan', 'January'),
-    ('feb', 'February'),
-    ('mar', 'March'),
-    ('apr', 'April'),
-    ('may', 'May'),
-    ('jun', 'June'),
-    ('jul', 'July'),
-    ('aug', 'August'),
-    ('sep', 'September'),
-    ('oct', 'October'),
-    ('nov', 'November'),
-    ('dec', 'December'),
-]
 
 class MonthlyPlanning(models.Model):
     _name = 'monthly.planning'
     _description = 'Monthly Planning'
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    month = fields.Selection(selection=MONTH_SELECTION, string="Month", required=True)
-    year = fields.Integer(string="Year", default=lambda self: datetime.today().year, required=True)
-    name = fields.Char('Name', compute='_compute_name', store=True)
+    # ─── Header fields ─────────────────────────────────────
+    name = fields.Char(
+        string='Name',
+        required=True,
+        tracking=True,
+        help='Give the plan a descriptive name, e.g. "January 2026 – Kitchen Plan".',
+    )
+    from_date = fields.Date(
+        string='From Date',
+        required=True,
+        default=fields.Date.today,
+        tracking=True,
+    )
+    to_date = fields.Date(
+        string='To Date',
+        required=True,
+        default=fields.Date.today,
+        tracking=True,
+    )
 
     # Existing tabs
     kitchen_line_ids = fields.One2many('monthly.planning.kitchen', 'monthly_planning_id', string="Kitchen")
@@ -43,10 +44,10 @@ class MonthlyPlanning(models.Model):
     meat_line_ids = fields.One2many('monthly.planning.meat', 'monthly_planning_id', string="Meat")
 
     planning_type_id = fields.Many2one(
-    'planning.type',
-    string='Planning Type',
-    required=True,
-    tracking=True,
+        'planning.type',
+        string='Planning Type',
+        required=True,
+        tracking=True,
     )
 
     created_by = fields.Many2one(
@@ -60,7 +61,7 @@ class MonthlyPlanning(models.Model):
     enabled_tabs = fields.Char(
         string='Enabled Pages',
         compute='_compute_enabled_tabs',
-        store=True,   # so you can sort / group / search on it
+        store=True,
     )
 
     @api.depends(
@@ -93,7 +94,6 @@ class MonthlyPlanning(models.Model):
             ]
             rec.enabled_tabs = ', '.join(names)
 
-
     # ─── State ─────────────────────────────────────────────
     state = fields.Selection(
         selection=[
@@ -117,16 +117,14 @@ class MonthlyPlanning(models.Model):
                         →  stock.location where analytic_account_id matches
         Fallback: Main Stock.
         """
-        # 1) employee linked to the current user
         employee = self.env['hr.employee'].search(
             [('user_id', '=', self.env.uid)], limit=1
         )
 
         if employee and employee.analytic_account_id:
-            # 2) stock location tagged with the same analytic account
             location = self.env['stock.location'].search(
                 [
-                    ('analytic_account_id', '=', employee.analytic_account_id.id),  # ← swap if custom
+                    ('analytic_account_id', '=', employee.analytic_account_id.id),
                     ('usage', 'in', ['internal']),
                 ],
                 limit=1,
@@ -134,12 +132,10 @@ class MonthlyPlanning(models.Model):
             if location:
                 return location.id
 
-        # 3) fallback
         fallback = self.env.ref(
             'stock.stock_location_stock', raise_if_not_found=False
         )
         return fallback.id if fallback else False
-
 
     location_dest_id = fields.Many2one(
         'stock.location',
@@ -147,67 +143,52 @@ class MonthlyPlanning(models.Model):
         domain="[('usage', 'in', ['internal'])]",
         default=lambda self: self._default_location_dest(),
         help='Auto-filled from the analytical account (Branch Location) '
-            'tagged on the employee linked to the current user.',
+             'tagged on the employee linked to the current user.',
     )
 
     show_kitchen = fields.Boolean(
-        related='planning_type_id.kitchen',
-        string='Kitchen',
-        store=False,
+        related='planning_type_id.kitchen', string='Kitchen', store=False,
     )
-
     show_madaris = fields.Boolean(
-        related='planning_type_id.madaris',
-        string='Madaris',
-        store=False,
+        related='planning_type_id.madaris', string='Madaris', store=False,
     )
-
     show_medical = fields.Boolean(
-        related='planning_type_id.medical',
-        string='Medical',
-        store=False,
+        related='planning_type_id.medical', string='Medical', store=False,
     )
-
     show_livestock = fields.Boolean(
-        related='planning_type_id.livestock',
-        string='Livestock',
-        store=False,
+        related='planning_type_id.livestock', string='Livestock', store=False,
     )
-
     show_food = fields.Boolean(
-        related='planning_type_id.food',
-        string='Food',
-        store=False,
+        related='planning_type_id.food', string='Food', store=False,
     )
-
     show_ration = fields.Boolean(
-        related='planning_type_id.ration',
-        string='Ration',
+        related='planning_type_id.ration', string='Ration',
     )
-
     show_meat = fields.Boolean(
-        related='planning_type_id.meat',
-        string='Meat',
-        store=False,
+        related='planning_type_id.meat', string='Meat', store=False,
     )
 
-    @api.depends('month', 'year')
-    def _compute_name(self):
+    @api.constrains('from_date', 'to_date')
+    def _check_date_range(self):
         for rec in self:
-            rec.name = f"{rec.month or '?'} {rec.year}"
+            if rec.from_date and rec.to_date and rec.from_date > rec.to_date:
+                raise ValidationError("'From Date' must be earlier than or equal to 'To Date'.")
 
     # ───── Helper to build virtual line commands ─────
-    def _get_line_commands_for_days(self, days):
-        """Return a list of (0, 0, values) for each day."""
+    def _get_line_commands_for_days(self):
+        """Return a list of (0, 0, values) for each day between from_date and to_date."""
+        self.ensure_one()
         commands = []
-        for day in range(1, days + 1):
-            date_obj = datetime(self.year, list(dict(MONTH_SELECTION).keys()).index(self.month) + 1, day).date()
+        if not self.from_date or not self.to_date:
+            return commands
+        delta = (self.to_date - self.from_date).days
+        for i in range(delta + 1):
+            date_obj = self.from_date + timedelta(days=i)
             commands.append((0, 0, {
                 'date': date_obj,
                 'quantity': 0.0,
             }))
         return commands
-
 
     def action_open_import_wizard(self):
         self.ensure_one()
@@ -231,6 +212,8 @@ class MonthlyPlanning(models.Model):
     def action_set_draft(self):
         for rec in self:
             rec.state = 'draft'
+
+
 # ─── Base class for line models ──────────────────────────────
 class MonthlyPlanningLineBase(models.AbstractModel):
     _name = 'monthly.planning.line.base'
@@ -272,15 +255,18 @@ class MonthlyPlanningKitchen(models.Model):
     _inherit = 'monthly.planning.line.base'
     _description = 'Monthly Planning – Kitchen Line'
 
+
 class MonthlyPlanningMadaris(models.Model):
     _name = 'monthly.planning.madaris'
     _inherit = 'monthly.planning.line.base'
     _description = 'Monthly Planning – Madaris Line'
 
+
 class MonthlyPlanningMedical(models.Model):
     _name = 'monthly.planning.medical'
     _inherit = 'monthly.planning.line.base'
     _description = 'Monthly Planning – Medical Line'
+
 
 class MonthlyPlanningLivestock(models.Model):
     _name = 'monthly.planning.livestock'
@@ -288,16 +274,18 @@ class MonthlyPlanningLivestock(models.Model):
     _description = 'Monthly Planning – Livestock Line'
     location_id = fields.Many2one('stock.location', string="Location")
 
-# NEW models
+
 class MonthlyPlanningFood(models.Model):
     _name = 'monthly.planning.food'
     _inherit = 'monthly.planning.line.base'
     _description = 'Monthly Planning – Food Line'
 
+
 class MonthlyPlanningRation(models.Model):
     _name = 'monthly.planning.ration'
     _inherit = 'monthly.planning.line.base'
     _description = 'Monthly Planning – Ration Line'
+
 
 class MonthlyPlanningMeat(models.Model):
     _name = 'monthly.planning.meat'

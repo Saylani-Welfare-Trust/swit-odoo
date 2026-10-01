@@ -6,9 +6,9 @@
         <field name="model">monthly.planning</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="month"/>
-                <field name="year"/>
                 <field name="name"/>
+                <field name="from_date"/>
+                <field name="to_date"/>
                 <field name="planning_type_id"/>
                 <field name="enabled_tabs"/>
                 <field name="location_dest_id"/>
@@ -30,8 +30,8 @@
 
                 <!-- Searchable fields -->
                 <field name="name" string="Reference"/>
-                <field name="month"/>
-                <field name="year"/>
+                <field name="from_date"/>
+                <field name="to_date"/>
                 <field name="planning_type_id"/>
                 <field name="location_dest_id"/>
 
@@ -44,25 +44,26 @@
                 <separator/>
 
                 <filter name="filter_this_year" string="This Year"
-                        domain="[('year','=', context_today().year)]"/>
+                        domain="[('from_date','&gt;=', context_today().strftime('%Y-01-01')),
+                                 ('from_date','&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <filter name="filter_this_month" string="This Month"
-                        domain="[('year','=', context_today().year),
-                                ('month','=', context_today().strftime('%b').lower())]"/>
+                        domain="[('from_date','&gt;=', context_today().strftime('%Y-%m-01')),
+                                 ('from_date','&lt;=', context_today().strftime('%Y-%m-31'))]"/>
 
                 <separator/>
 
                 <!-- Group By -->
                 <group expand="0" string="Group By">
-                    <filter name="group_state"    string="Status"
+                    <filter name="group_state"     string="Status"
                             context="{'group_by':'state'}"/>
-                    <filter name="group_type"     string="Planning Type"
+                    <filter name="group_type"      string="Planning Type"
                             context="{'group_by':'planning_type_id'}"/>
-                    <filter name="group_dest"     string="Destination"
+                    <filter name="group_dest"      string="Destination"
                             context="{'group_by':'location_dest_id'}"/>
-                    <filter name="group_month"    string="Month"
-                            context="{'group_by':'month'}"/>
-                    <filter name="group_year"     string="Year"
-                            context="{'group_by':'year'}"/>
+                    <filter name="group_from_date" string="From Date"
+                            context="{'group_by':'from_date'}"/>
+                    <filter name="group_to_date"   string="To Date"
+                            context="{'group_by':'to_date'}"/>
                 </group>
 
             </search>
@@ -98,23 +99,28 @@
 
                 <sheet>
                     <div class="oe_title">
-                        <label for="month"/>
+                        <label for="name"/>
                         <h1>
-                            <field name="month" class="oe_inline" required="1"/>
-                            <field name="year" class="oe_inline" required="1" options="{'width': 80}"/>
+                            <field name="name"
+                                   placeholder="e.g. January 2026 Planning"
+                                   required="1"/>
                         </h1>
                     </div>
 
                     <group>
-                        <field name="planning_type_id"
-                               options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                    <group>
-                        <field name="created_by" readonly="1"/>
-                        <field name="location_dest_id"
-                               options="{'no_create': True, 'no_open': True, 'no_create_edit': True}"
-                               required="1"
-                               placeholder="Select destination…"/>
+                        <group>
+                            <field name="planning_type_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="from_date" required="1"/>
+                            <field name="to_date" required="1"/>
+                        </group>
+                        <group>
+                            <field name="created_by" readonly="1"/>
+                            <field name="location_dest_id"
+                                   options="{'no_create': True, 'no_open': True, 'no_create_edit': True}"
+                                   required="1"
+                                   placeholder="Select destination…"/>
+                        </group>
                     </group>
 
                     <field name="show_kitchen"   invisible="1"/>
@@ -241,8 +247,7 @@
                     <!-- Compact header: only the essential info -->
                     <div class="oe_title">
                         <h1>
-                            <field name="month" class="oe_inline" readonly="1"/>
-                            <field name="year" class="oe_inline" readonly="1"/>
+                            <field name="name" class="oe_inline" readonly="1"/>
                         </h1>
                     </div>
 
@@ -250,6 +255,8 @@
                         <group>
                             <field name="planning_type_id" readonly="1"/>
                             <field name="created_by" readonly="1"/>
+                            <field name="from_date" readonly="1"/>
+                            <field name="to_date" readonly="1"/>
                         </group>
                         <group>
                             <field name="location_dest_id" readonly="1"/>
@@ -360,7 +367,7 @@
     </record>
 
     <!-- ═══════════════════ MENUS ═══════════════════ -->
-    
+
     <menuitem
         id="planning_root_menu"
         name="Planning"

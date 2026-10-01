@@ -12,11 +12,11 @@ class ReportMonthlyPlanningLine(models.Model):
     monthly_planning_id = fields.Many2one(
         'monthly.planning', string='Monthly Planning', readonly=True,
     )
-    month = fields.Selection(
-        related='monthly_planning_id.month', string='Month', store=False,
+    from_date = fields.Date(
+        related='monthly_planning_id.from_date', string='From Date', store=False,
     )
-    year = fields.Integer(
-        related='monthly_planning_id.year', string='Year', store=False,
+    to_date = fields.Date(
+        related='monthly_planning_id.to_date', string='To Date', store=False,
     )
 
     # ── Line info ──────────────────────────────────────

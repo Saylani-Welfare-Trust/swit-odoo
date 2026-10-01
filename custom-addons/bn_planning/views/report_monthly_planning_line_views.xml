@@ -8,8 +8,8 @@
         <field name="arch" type="xml">
             <tree create="false" edit="false" delete="false">
                 <field name="monthly_planning_id"/>
-                <field name="month"/>
-                <field name="year"/>
+                <field name="from_date"/>
+                <field name="to_date"/>
                 <field name="tab"/>
                 <field name="date"/>
                 <field name="product_id"/>
@@ -31,6 +31,8 @@
                 <field name="monthly_planning_id"/>
                 <field name="product_id"/>
                 <field name="date"/>
+                <field name="from_date"/>
+                <field name="to_date"/>
                 <field name="tab"/>
 
                 <filter name="filter_kitchen"   string="Kitchen"   domain="[('tab','=','kitchen')]"/>
@@ -61,6 +63,10 @@
                             context="{'group_by':'product_id'}"/>
                     <filter name="group_date" string="Date"
                             context="{'group_by':'date'}"/>
+                    <filter name="group_from_date" string="From Date"
+                            context="{'group_by':'from_date'}"/>
+                    <filter name="group_to_date" string="To Date"
+                            context="{'group_by':'to_date'}"/>
                 </group>
             </search>
         </field>
