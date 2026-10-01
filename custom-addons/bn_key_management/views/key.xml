@@ -21,8 +21,6 @@
         <field name="arch" type="xml">
             <form create="0">
                 <header>
-                    <button string="Available" name="action_available" type="object" class="oe_highlight" invisible="state in ['available', 'issued', 'pending']" />
-
                     <field name="state" widget="statusbar" statusbar_visible="draft, available, issued"/>
                 </header>
 
@@ -30,6 +28,9 @@
                     <div class="oe_title">
                         <label for="lock_no"/>
                         <h1><field name="lock_no" readonly="1" /></h1>
+                        <div class="alert alert-info" role="alert" invisible="state != 'draft'">
+                            A key becomes Available automatically when its Donation Box registration is approved.
+                        </div>
                     </div>
                     <group>
                         <group name="key_col_1">
@@ -78,7 +79,7 @@
     <menuitem
         id="key_root_menu"
         name="Key Management"
-        groups="bn_key_management.key_management_menu_group"
+        groups="bn_key_management.key_management_user_group,bn_key_management.key_management_audit_group"
         parent="bn_donation_box.donation_box_root_menu"
         sequence="2"/>
     

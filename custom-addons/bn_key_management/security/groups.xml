@@ -1,8 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="key_management_menu_group" model="res.groups">
-        <field name="name">Key Managment / Menu</field>
+    <record id="key_management_user_group" model="res.groups">
+        <field name="name">Key Management / User</field>
+        <field name="comment">Day-to-day access: issue, return and register keys. Cannot delete.</field>
+    </record>
+
+    <record id="key_management_manager_group" model="res.groups">
+        <field name="name">Key Management / Manager</field>
+        <field name="comment">Everything User can do, plus retiring (deleting) empty Key Bunches.</field>
+        <field name="implied_ids" eval="[(4, ref('key_management_user_group'))]"/>
+    </record>
+
+    <record id="key_management_audit_group" model="res.groups">
+        <field name="name">Key Management / Audit</field>
+        <field name="comment">Read-only oversight across Keys, Key Issuance and Key Bunches, for reporting. No create, write or delete anywhere.</field>
+    </record>
+
+    <record id="key_management_admin_group" model="res.groups">
+        <field name="name">Key Management / Admin</field>
+        <field name="comment">Full control, including delete.</field>
+        <field name="implied_ids" eval="[(4, ref('key_management_manager_group')), (4, ref('key_management_audit_group'))]"/>
     </record>
 
 </odoo>
