@@ -47,7 +47,8 @@ class HRExpense(models.Model):
                     acc_id = acc_id.strip()
                     if acc_id.isdigit():
                         ids.append(int(acc_id))
-            expense.analytic_account_ids = [(6, 0, list(set(ids)))]
+            # analytic_distribution is plain JSON and can still hold ids of deleted accounts
+            expense.analytic_account_ids = self.env['account.analytic.account'].browse(set(ids)).exists()
 
     @api.depends('analytic_account_ids', 'analytic_account_ids.location_option_id')
     def _compute_analytic_levels(self):
