@@ -139,6 +139,8 @@ class ReportMonthlyPlanningLine(models.Model):
                     mt.product_id, NULL::integer, mt.quantity
                 FROM monthly_planning_meat mt
             ) sub
+            JOIN monthly_planning mp ON mp.id = sub.monthly_planning_id
             WHERE sub.product_id IS NOT NULL
-            AND sub.monthly_planning_id IS NOT NULL;
+              AND sub.monthly_planning_id IS NOT NULL
+              AND mp.state = 'active';       -- ← only Active plans appear
         """)

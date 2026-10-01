@@ -45,15 +45,6 @@
 
                 <separator/>
 
-                <filter name="filter_active"
-                        string="Active Plans"
-                        domain="[('monthly_planning_id.state','=','active')]"/>
-                <filter name="filter_draft"
-                        string="Draft Plans"
-                        domain="[('monthly_planning_id.state','=','draft')]"/>
-
-                <separator/>
-
                 <group expand="0" string="Group By">
                     <filter name="group_tab" string="Tab"
                             context="{'group_by':'tab'}"/>
