@@ -121,7 +121,14 @@ class MonthlyPlanning(models.Model):
     def _compute_is_locked(self):
         today = fields.Date.today()
         for rec in self:
-            rec.is_locked = bool(rec.to_date and rec.to_date <= today)
+            # Never lock a record that hasn't been saved yet — the form
+            # starts with today's date, which would otherwise mark it locked.
+            if not rec.id:
+                rec.is_locked = False
+                continue
+            # Lock only when the period is strictly over (to_date in the past).
+            # A period ending today is still editable today.
+            rec.is_locked = bool(rec.to_date and rec.to_date < today)
 
     # ─── Default destination ──────────────────────────────
     @api.model
