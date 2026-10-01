@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_stock_location" model="ir.module.category">
+        <field name="name">Stock Location</field>
+        <field name="sequence">50</field>
+    </record>
+
     <!-- Not a CRUD-granting tier - stock CRUD itself comes from Odoo's own
          Inventory groups (stock.group_stock_user / stock.group_stock_manager).
          This group only SCOPES which warehouses/locations a person who
@@ -9,6 +14,7 @@
          scope configured. -->
     <record id="stock_location_user_group" model="res.groups">
         <field name="name">Stock Location / Restricted Access</field>
+        <field name="category_id" ref="module_stock_location"/>
         <field name="comment">Row-level restriction: this user only sees their allowed warehouses/locations. Not a CRUD tier - it scopes which records base Inventory access already grants.</field>
     </record>
 

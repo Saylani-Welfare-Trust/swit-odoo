@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_donation_box" model="ir.module.category">
+        <field name="name">Donation Box</field>
+        <field name="sequence">50</field>
+    </record>
+
     <record id="donation_box_user_group" model="res.groups">
         <field name="name">Donation Box / User</field>
+        <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
     </record>
 
     <record id="donation_box_manager_group" model="res.groups">
         <field name="name">Donation Box / Manager</field>
+        <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, Complain Center resolution, and the POS donation-box action.</field>
         <field name="implied_ids" eval="[(4, ref('donation_box_user_group'))]"/>
     </record>
 
     <record id="donation_box_audit_group" model="res.groups">
         <field name="name">Donation Box / Audit</field>
+        <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Read-only oversight across Requests, Registrations and Complaints, for reporting. No create, write or delete anywhere.</field>
     </record>
 
     <record id="donation_box_admin_group" model="res.groups">
         <field name="name">Donation Box / Admin</field>
+        <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Full control: everything Manager can do, plus delete rights and Installation Category / Donation Products configuration.</field>
         <field name="implied_ids" eval="[
             (4, ref('donation_box_manager_group')),
