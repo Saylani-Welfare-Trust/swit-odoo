@@ -19,6 +19,7 @@ class HRExpense(models.Model):
         compute='_compute_analytic_account_ids',
         store=True,
         readonly=True,
+        ondelete='cascade',
     )
 
     analytic_province_id = fields.Many2one(
@@ -40,6 +41,7 @@ class HRExpense(models.Model):
 
     @api.depends('analytic_distribution')
     def _compute_analytic_account_ids(self):
+        AnalyticAccount = self.env['account.analytic.account']
         for expense in self:
             ids = []
             for key in (expense.analytic_distribution or {}).keys():
@@ -47,7 +49,14 @@ class HRExpense(models.Model):
                     acc_id = acc_id.strip()
                     if acc_id.isdigit():
                         ids.append(int(acc_id))
-            expense.analytic_account_ids = [(6, 0, list(set(ids)))]
+
+            # Keep only IDs that actually exist in account.analytic.account
+            if ids:
+                valid_ids = AnalyticAccount.search([('id', 'in', list(set(ids)))]).ids
+            else:
+                valid_ids = []
+
+            expense.analytic_account_ids = [(6, 0, valid_ids)]
 
     @api.depends('analytic_account_ids', 'analytic_account_ids.location_option_id')
     def _compute_analytic_levels(self):
