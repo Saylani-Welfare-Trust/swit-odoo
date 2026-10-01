@@ -10,18 +10,47 @@
                     <field name="monthly_planning_id" readonly="1"/>
                     <field name="clear_existing"/>
                 </group>
+
                 <group string="Excel File">
                     <field name="file_data" filename="file_name"/>
                     <field name="file_name" invisible="1"/>
                 </group>
+
+                <!-- ═══════ File format instructions ═══════ -->
                 <div class="alert alert-info" role="alert" colspan="2">
                     <p><strong>File format:</strong></p>
                     <ul>
                         <li>One sheet per tab (name = <em>Kitchen</em>, <em>Madaris</em>, <em>Medical</em>, <em>Livestock</em>, <em>Food</em>, <em>Ration</em>, <em>Meat</em>).</li>
                         <li>Row 1 = header row.</li>
                         <li>Columns: <code>Date</code>, <code>Product</code> (code or name), <code>Quantity</code>, optional <code>Location</code> (livestock only).</li>
+                        <li>
+                            <strong>Accepted date formats:</strong>
+                            <code>YYYY-MM-DD</code> (2026-10-12),
+                            <code>DD/MM/YYYY</code> (12/10/2026),
+                            <code>MM/DD/YYYY</code> (10/12/2026),
+                            <code>DD-MM-YYYY</code> (12-10-2026),
+                            <code>YYYY/MM/DD</code> (2026/10/12),
+                            or a native Excel date cell.
+                        </li>
                     </ul>
                 </div>
+
+                <!-- ═══════ Warning: out-of-range rows are dropped ═══════ -->
+                <div class="alert alert-warning" role="alert" colspan="2">
+                    <p>
+                        <i class="fa fa-exclamation-triangle" title="Warning"/>
+                        <strong>Important:</strong>
+                        Only rows whose <code>Date</code> falls between the planning's
+                        <em>From Date</em> and <em>To Date</em> (inclusive) will be imported.
+                        Any row outside this range is <strong>silently skipped</strong> —
+                        no line will be created for it.
+                    </p>
+                    <p class="mb-0">
+                        Also confirm that the sheet's tab is enabled on the selected
+                        <em>Planning Type</em>; otherwise the whole sheet is ignored.
+                    </p>
+                </div>
+
                 <footer>
                     <button name="action_import" type="object"
                             string="Import" class="btn-primary"/>
