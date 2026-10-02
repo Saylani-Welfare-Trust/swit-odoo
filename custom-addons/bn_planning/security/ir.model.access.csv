@@ -17,3 +17,5 @@ access_import_monthly_planning_wizard,import.monthly.planning.wizard,model_impor
 
 access_report_monthly_planning_line_user,report.monthly.planning.line.user,model_report_monthly_planning_line,base.group_user,1,0,0,0
 access_report_monthly_planning_line_manager,report.monthly.planning.line.manager,model_report_monthly_planning_line,bn_master_setup.master_setup_group,1,0,0,0
+
+access_monthly_planning_pr_wizard,monthly.planning.pr.wizard,model_monthly_planning_pr_wizard,base.group_user,1,1,1,1
