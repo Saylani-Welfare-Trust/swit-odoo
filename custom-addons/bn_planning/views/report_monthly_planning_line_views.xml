@@ -21,13 +21,14 @@
                 <field name="tab"/>
                 <field name="date"/>
                 <field name="product_id"/>
+                <field name="purchase_requisition_id"/>
                 <field name="on_hand_qty"/>
                 <field name="planned_qty"/>
                 <field name="quantity"/>
                 <field name="qty_diff"/>
                 <field name="location_id"
-                       optional="hide"
-                       invisible="tab != 'livestock'"/>
+                    optional="hide"
+                    invisible="tab != 'livestock'"/>
             </tree>
         </field>
     </record>
@@ -45,6 +46,10 @@
                 <field name="to_date"/>
                 <field name="tab"/>
 
+                <filter name="filter_linked_pr" string="Linked to PR"
+                        domain="[('purchase_requisition_id','!=',False)]"/>
+                <filter name="filter_unlinked_pr" string="Not Yet Ordered"
+                        domain="[('purchase_requisition_id','=',False)]"/>
                 <filter name="filter_kitchen"   string="Kitchen"   domain="[('tab','=','kitchen')]"/>
                 <filter name="filter_madaris"   string="Madaris"   domain="[('tab','=','madaris')]"/>
                 <filter name="filter_medical"   string="Medical"   domain="[('tab','=','medical')]"/>
@@ -68,6 +73,8 @@
                             context="{'group_by':'from_date'}"/>
                     <filter name="group_to_date" string="To Date"
                             context="{'group_by':'to_date'}"/>
+                    <filter name="group_pr" string="Purchase Requisition"
+                            context="{'group_by':'purchase_requisition_id'}"/>
                 </group>
             </search>
         </field>

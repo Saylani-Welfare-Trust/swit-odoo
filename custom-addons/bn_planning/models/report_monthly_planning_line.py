@@ -5,6 +5,15 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+TAB_TO_LINE_MODEL = {
+    'kitchen':   'monthly.planning.kitchen',
+    'madaris':   'monthly.planning.madaris',
+    'medical':   'monthly.planning.medical',
+    'livestock': 'monthly.planning.livestock',
+    'food':      'monthly.planning.food',
+    'ration':    'monthly.planning.ration',
+    'meat':      'monthly.planning.meat',
+}
 
 class ReportMonthlyPlanningLine(models.Model):
     _name = 'report.monthly.planning.line'
@@ -58,6 +67,15 @@ class ReportMonthlyPlanningLine(models.Model):
         string='Locked', store=False,
     )
 
+    line_id = fields.Integer(
+        string='Source Line ID', readonly=True,
+        help='ID of the underlying monthly.planning.* line.',
+    )
+    purchase_requisition_id = fields.Many2one(
+        'purchase.requisition',
+        string='Purchase Requisition',
+        readonly=True,
+    )
     @api.depends('product_id', 'tab')
     def _compute_display_name(self):
         for rec in self:
@@ -84,9 +102,9 @@ class ReportMonthlyPlanningLine(models.Model):
     def action_generate_purchase_requisition(self):
         """Create a draft Purchase Requisition from the selected report lines.
 
-        Works with both the standard purchase.requisition model and the
-        customized one used by bn_procurement_workflow — the method only
-        writes fields it can actually find on the model.
+        - Blocks the action if any selected line is already linked to a PR.
+        - Stores the new PR back onto every underlying planning line so
+          duplicates can be detected next time.
         """
         if not self:
             raise ValidationError(
@@ -94,30 +112,48 @@ class ReportMonthlyPlanningLine(models.Model):
                 "Purchase Requisition."
             )
 
+        # ── 1. Duplicate check ────────────────────────────
+        already_linked = self.filtered(lambda r: r.purchase_requisition_id)
+        if already_linked:
+            # Group by PR so the message is short
+            by_pr = {}
+            for rec in already_linked:
+                pr = rec.purchase_requisition_id
+                by_pr.setdefault(pr.display_name, set()).add(rec.tab)
+            lines = []
+            for pr_name, tabs in by_pr.items():
+                lines.append(
+                    "• %s (used by tabs: %s)"
+                    % (pr_name, ", ".join(sorted(tabs)))
+                )
+            raise ValidationError(
+                "The following selected line(s) have already been used to "
+                "create a Purchase Requisition:\n\n%s\n\n"
+                "Clear the reference on those lines first if you really need "
+                "to regenerate a PR."
+                % "\n".join(lines)
+            )
+
+        # ── 2. Build the PR ───────────────────────────────
         Requisition = self.env['purchase.requisition']
         RequisitionLine = self.env['purchase.requisition.line']
 
-        # ── Date range from selected lines ────────────────
         dates = [ln.date for ln in self if ln.date]
         date_start = min(dates) if dates else fields.Date.today()
         date_end   = max(dates) if dates else fields.Date.today()
 
-        # ── Header values (only set fields that exist) ────
         pr_vals = {'origin': 'Monthly Planning'}
-
         if 'date_start' in Requisition._fields:
             pr_vals['date_start'] = date_start
         if 'date_end' in Requisition._fields:
             pr_vals['date_end'] = date_end
 
-        # If the caller passes a Material Request via context, link it.
         mr_id = self.env.context.get('default_material_request_id')
         if mr_id and 'material_request_id' in Requisition._fields:
             pr_vals['material_request_id'] = mr_id
 
         requisition = Requisition.create(pr_vals)
 
-        # ── Build the line items ──────────────────────────
         line_vals_list = []
         skipped_no_vendor = []
 
@@ -125,7 +161,6 @@ class ReportMonthlyPlanningLine(models.Model):
             product = line.product_id
             if not product:
                 continue
-
             uom = product.uom_po_id or product.uom_id
 
             vals = {
@@ -133,13 +168,10 @@ class ReportMonthlyPlanningLine(models.Model):
                 'product_id': product.id,
                 'product_qty': line.quantity or 0.0,
             }
-
-            # Odoo 17 standard uses product_uom_id
             if 'product_uom_id' in RequisitionLine._fields:
                 vals['product_uom_id'] = uom.id
             elif 'product_uom' in RequisitionLine._fields:
                 vals['product_uom'] = uom.id
-
             if 'date_required' in RequisitionLine._fields and line.date:
                 vals['date_required'] = line.date
             if 'price_unit' in RequisitionLine._fields:
@@ -147,12 +179,10 @@ class ReportMonthlyPlanningLine(models.Model):
 
             line_vals_list.append(vals)
 
-            # Track products missing a vendor — needed for the later RFQ step
             if not product.seller_ids:
                 skipped_no_vendor.append(product.display_name)
 
         if not line_vals_list:
-            # Nothing was created — clean up the empty header and stop
             requisition.unlink()
             raise ValidationError(
                 "No valid products found on the selected lines."
@@ -160,14 +190,25 @@ class ReportMonthlyPlanningLine(models.Model):
 
         RequisitionLine.create(line_vals_list)
 
-        # Chatter warning for products without a vendor
+        # ── 3. Write the PR reference back on the source lines ──
+        for rec in self:
+            if not rec.tab or not rec.line_id:
+                continue
+            model_name = TAB_TO_LINE_MODEL.get(rec.tab)
+            if not model_name:
+                continue
+            self.env[model_name].browse(rec.line_id).write({
+                'purchase_requisition_id': requisition.id,
+            })
+
+        # ── 4. Chatter warning for missing vendors ────────
         if skipped_no_vendor:
             requisition.message_post(body=(
                 "The following products have no vendor configured. "
                 "They will need a vendor before RFQs can be sent: %s"
             ) % ", ".join(skipped_no_vendor))
 
-        # ── Open the newly created Purchase Requisition ───
+        # ── 5. Open the new PR ────────────────────────────
         return {
             'type': 'ir.actions.act_window',
             'name': 'Purchase Requisition',
@@ -193,31 +234,38 @@ class ReportMonthlyPlanningLine(models.Model):
                     k.product_id                   AS product_id,
                     NULL::integer                  AS location_id,
                     k.quantity                     AS quantity,
-                    k.planned_qty                  AS planned_qty
+                    k.planned_qty                  AS planned_qty,
+                    k.purchase_requisition_id      AS purchase_requisition_id
                 FROM monthly_planning_kitchen k
                 UNION ALL
                 SELECT m.id, m.monthly_planning_id, 'madaris', m.date,
-                    m.product_id, NULL::integer, m.quantity, m.planned_qty
+                    m.product_id, NULL::integer, m.quantity, m.planned_qty,
+                    m.purchase_requisition_id
                 FROM monthly_planning_madaris m
                 UNION ALL
                 SELECT md.id, md.monthly_planning_id, 'medical', md.date,
-                    md.product_id, NULL::integer, md.quantity, md.planned_qty
+                    md.product_id, NULL::integer, md.quantity, md.planned_qty,
+                    md.purchase_requisition_id
                 FROM monthly_planning_medical md
                 UNION ALL
                 SELECT l.id, l.monthly_planning_id, 'livestock', l.date,
-                    l.product_id, l.location_id, l.quantity, l.planned_qty
+                    l.product_id, l.location_id, l.quantity, l.planned_qty,
+                    l.purchase_requisition_id
                 FROM monthly_planning_livestock l
                 UNION ALL
                 SELECT f.id, f.monthly_planning_id, 'food', f.date,
-                    f.product_id, NULL::integer, f.quantity, f.planned_qty
+                    f.product_id, NULL::integer, f.quantity, f.planned_qty,
+                    f.purchase_requisition_id
                 FROM monthly_planning_food f
                 UNION ALL
                 SELECT r.id, r.monthly_planning_id, 'ration', r.date,
-                    r.product_id, NULL::integer, r.quantity, r.planned_qty
+                    r.product_id, NULL::integer, r.quantity, r.planned_qty,
+                    r.purchase_requisition_id
                 FROM monthly_planning_ration r
                 UNION ALL
                 SELECT mt.id, mt.monthly_planning_id, 'meat', mt.date,
-                    mt.product_id, NULL::integer, mt.quantity, mt.planned_qty
+                    mt.product_id, NULL::integer, mt.quantity, mt.planned_qty,
+                    mt.purchase_requisition_id
                 FROM monthly_planning_meat mt
             ) sub
             JOIN monthly_planning mp ON mp.id = sub.monthly_planning_id
