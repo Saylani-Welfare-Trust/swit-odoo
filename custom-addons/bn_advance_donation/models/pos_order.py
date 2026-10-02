@@ -7,6 +7,36 @@ _logger = logging.getLogger(__name__)
 class PosOrder(models.Model):
     _inherit = 'pos.order'
 
+    def _process_order(self, order, draft, existing_order):
+        order_id = super()._process_order(order, draft, existing_order)
+        self.browse(order_id)._link_advance_donation_receipts()
+        return order_id
+
+    def _link_advance_donation_receipts(self):
+        """Cash receipts are created from the payment screen before the
+        order reaches the server, so link them to the synced order here
+        and take the favor from the order."""
+        Receipt = self.env['advance.donation.receipt']
+        for order in self:
+            if not order.pos_reference:
+                continue
+            receipts = Receipt.search([
+                ('pos_reference', '=', order.pos_reference),
+                ('order_id', '=', False),
+            ])
+            favor = order.favor if 'favor' in order._fields else False
+            for receipt in receipts:
+                vals = {
+                    'order_id': order.id,
+                    'pos_order_id': order.id,
+                    'pos_session_id': order.session_id.id,
+                }
+                if favor and not receipt.favor:
+                    vals['favor'] = favor
+                if order.partner_id and not receipt.donor_id:
+                    vals['donor_id'] = order.partner_id.id
+                receipt.write(vals)
+
     def action_sync_advance_donation_receipts(self):
         """Backfill advance.donation.receipt records for POS orders that
         sold an advance-donation product by cash but never got a receipt

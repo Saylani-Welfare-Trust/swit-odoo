@@ -14,6 +14,7 @@ class DonationReceipt(models.Model):
     is_donation_id = fields.Boolean('Donation ID?')
     donation_id = fields.Many2one('advance.donation', string='Donation ID')
     order_id = fields.Many2one('pos.order', string='POS Order')
+    pos_reference = fields.Char('POS Reference', copy=False, index=True)
     donor_id = fields.Many2one('res.partner', string='Donor')
     favor = fields.Char('Favor')
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id.id)
@@ -362,6 +363,7 @@ class DonationReceipt(models.Model):
                 'amount': amount,
                 'product_id': data.get('product_id'),
                 'favor': data.get('favor') or False,
+                'pos_reference': data.get('order_name') or False,
             }
 
             payment = self.env['advance.donation.receipt'].create(payment_vals)
