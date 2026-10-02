@@ -15,6 +15,29 @@
         </field>
     </record>
 
+    <record id="key_view_search" model="ir.ui.view">
+        <field name="name">key.view.search</field>
+        <field name="model">key</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Tag" />
+                <field name="lot_id" string="Box No." />
+                <field name="lock_no" />
+                <field name="key_bunch_id" />
+                <separator />
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
+                <filter string="Available" name="filter_available" domain="[('state', '=', 'available')]" />
+                <filter string="Issued" name="filter_issued" domain="[('state', '=', 'issued')]" />
+                <filter string="Pending" name="filter_pending" domain="[('state', '=', 'pending')]" />
+                <filter string="Closed" name="filter_closed" domain="[('state', '=', 'closed')]" />
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
+                    <filter string="Key Bunch" name="group_key_bunch" domain="[]" context="{'group_by': 'key_bunch_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="key_view_form" model="ir.ui.view">
         <field name="name">key.view.form</field>
         <field name="model">key</field>
@@ -79,7 +102,7 @@
     <menuitem
         id="key_root_menu"
         name="Key Management"
-        groups="bn_key_management.key_management_user_group,bn_key_management.key_management_audit_group"
+        groups="bn_key_management.key_management_root_group"
         parent="bn_donation_box.donation_box_root_menu"
         sequence="2"/>
     

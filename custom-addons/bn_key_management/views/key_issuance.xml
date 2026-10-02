@@ -16,6 +16,39 @@
         </field>
     </record>
 
+    <record id="key_issuance_view_search" model="ir.ui.view">
+        <field name="name">key.issuance.view.search</field>
+        <field name="model">key.issuance</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="key_name" string="Key" />
+                <field name="rider_id" />
+                <field name="lot_id" string="Box No." />
+                <field name="shop_name" />
+                <field name="donor_id" />
+                <field name="installer_id" />
+                <field name="key_bunch_id" />
+                <field name="city_id" />
+                <field name="zone_id" />
+                <separator />
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
+                <filter string="Issued" name="filter_issued" domain="[('state', '=', 'issued')]" />
+                <filter string="Donation Received" name="filter_donation_receive" domain="[('state', '=', 'donation_receive')]" />
+                <filter string="Overdue" name="filter_overdue" domain="[('state', '=', 'overdue')]" />
+                <filter string="Pending" name="filter_pending" domain="[('state', '=', 'pending')]" />
+                <filter string="Returned" name="filter_returned" domain="[('state', '=', 'returned')]" />
+                <separator />
+                <filter string="Issued Date" name="filter_issue_date" date="issue_date" />
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
+                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
+                    <filter string="Key Bunch" name="group_key_bunch" domain="[]" context="{'group_by': 'key_bunch_id'}" />
+                    <filter string="Issued Date" name="group_issue_date" domain="[]" context="{'group_by': 'issue_date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="key_issuance_view_form" model="ir.ui.view">
         <field name="name">key.issuance.view.form</field>
         <field name="model">key.issuance</field>

@@ -1,35 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Old Groups -->
-
-    <record id="key_management_menu_group" model="res.groups">
-        <field name="name">Key Managment / Menu</field>
+    <!-- Sole gate on this module's section-root menu (nested under the
+         Donation Box app icon). Also implies bn_donation_box's own root
+         group, so a user with only Key Management access still sees the
+         parent Donation Box app icon needed to reach this section at all. -->
+    <record id="key_management_root_group" model="res.groups">
+        <field name="name">Access Root Menu</field>
+        <field name="category_id" ref="module_key_management"/>
+        <field name="implied_ids" eval="[(4, ref('bn_donation_box.donation_box_root_group'))]"/>
+        <field name="comment">Grants visibility of the Key Management section (and the parent Donation Box app icon). Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
     </record>
 
-    <!-- New Groups -->
-
     <record id="key_management_user_group" model="res.groups">
-        <field name="name">Key Management / User</field>
+        <field name="name">User</field>
         <field name="category_id" ref="module_key_management"/>
+        <field name="implied_ids" eval="[(4, ref('key_management_root_group'))]"/>
         <field name="comment">Day-to-day access: issue, return and register keys. Cannot delete.</field>
     </record>
 
     <record id="key_management_manager_group" model="res.groups">
-        <field name="name">Key Management / Manager</field>
+        <field name="name">Manager</field>
         <field name="category_id" ref="module_key_management"/>
         <field name="comment">Everything User can do, plus retiring (deleting) empty Key Bunches.</field>
         <field name="implied_ids" eval="[(4, ref('key_management_user_group'))]"/>
     </record>
 
     <record id="key_management_audit_group" model="res.groups">
-        <field name="name">Key Management / Audit</field>
+        <field name="name">Audit</field>
         <field name="category_id" ref="module_key_management"/>
+        <field name="implied_ids" eval="[(4, ref('key_management_root_group'))]"/>
         <field name="comment">Read-only oversight across Keys, Key Issuance and Key Bunches, for reporting. No create, write or delete anywhere.</field>
     </record>
 
     <record id="key_management_admin_group" model="res.groups">
-        <field name="name">Key Management / Admin</field>
+        <field name="name">Admin</field>
         <field name="category_id" ref="module_key_management"/>
         <field name="comment">Full control, including delete.</field>
         <field name="implied_ids" eval="[(4, ref('key_management_manager_group')), (4, ref('key_management_audit_group'))]"/>
