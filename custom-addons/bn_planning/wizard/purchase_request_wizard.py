@@ -1,6 +1,16 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
+
+TAB_TO_LINE_MODEL = {
+    'kitchen':   'monthly.planning.kitchen',
+    'madaris':   'monthly.planning.madaris',
+    'medical':   'monthly.planning.medical',
+    'livestock': 'monthly.planning.livestock',
+    'food':      'monthly.planning.food',
+    'ration':    'monthly.planning.ration',
+    'meat':      'monthly.planning.meat',
+}
 class MonthlyPlanningPrWizard(models.TransientModel):
     _name = 'monthly.planning.pr.wizard'
     _description = 'Generate Purchase Requisition from Planning Report'
