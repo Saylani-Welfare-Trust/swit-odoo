@@ -246,6 +246,7 @@ May Allah bless you!
     
             receipt = Receipt.create({
                 'donor_id': self.donor_id.id,
+                'favor': self.favor or False,
                 'amount': amount,
                 'product_id': line.product_id.id,
                 'payment_type': self.payment_type or 'directdeposit',
