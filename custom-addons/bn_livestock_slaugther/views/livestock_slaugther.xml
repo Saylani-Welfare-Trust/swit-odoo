@@ -75,6 +75,7 @@
                             <field name="source_location_id" />
                             <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
                             <field name="transfer_picking_id" invisible="not transfer_picking_id" />
+                            <field name="transfer_remarks" readonly="1" invisible="not transfer_remarks" />
                             <field name="start_time" />
                             <field name="end_time" />
                         </group>

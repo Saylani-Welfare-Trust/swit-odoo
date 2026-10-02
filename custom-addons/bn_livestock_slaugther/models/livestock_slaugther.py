@@ -40,6 +40,7 @@ class LivestockSlaughter(models.Model):
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
+    transfer_remarks = fields.Text('Transfer Remarks', copy=False)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)

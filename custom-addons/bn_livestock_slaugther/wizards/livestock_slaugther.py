@@ -15,6 +15,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
     livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaugther')
     livestock_slaughter_ids = fields.Many2many('livestock.slaugther', string='Selected Livestock')
     is_bulk = fields.Boolean('Bulk Transfer')
+    remarks = fields.Text('Remarks')
     total_quantity = fields.Integer('Total Quantity', compute='_compute_total_quantity')
 
     def _compute_total_quantity(self):
@@ -67,6 +68,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'location_dest_id': self.dest_location_id.id,
             'partner_id': donees.id if len(donees) == 1 else False,
             'origin': ', '.join(records.mapped('name')) or _('Slaughter Transfer'),
+            'note': self.remarks,
             'company_id': self.env.company.id,
         }
         picking = self.env['stock.picking'].create(picking_vals)
@@ -110,6 +112,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'transfer_location': self.dest_location_id.id,
             'transfer_picking_id': picking.id,
             'transfer_bool': True,
+            'transfer_remarks': self.remarks,
         })
 
         if self.is_bulk:

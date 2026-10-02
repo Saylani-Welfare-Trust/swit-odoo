@@ -32,6 +32,9 @@
                             <field name="quantity" sum="Total" />
                         </tree>
                     </field>
+                    <group>
+                        <field name="remarks" placeholder="Remarks..." />
+                    </group>
                 </sheet>
                 <footer>
                     <button name="action_do_transfer" string="Fetch" type="object" class="oe_highlight" invisible="is_bulk"/>
