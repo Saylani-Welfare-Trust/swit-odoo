@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="bn_advance_donation.SelectableX2ManyField" t-inherit="web.X2ManyField" t-inherit-mode="primary">
+        <xpath expr="//div[hasclass('o_x2m_control_panel')]" position="inside">
+            <div t-if="props.printMethod and selectedRecords.length" class="o_cp_buttons gap-1 me-auto">
+                <button type="button" class="btn btn-primary" t-on-click="onPrintSelected">
+                    <i class="fa fa-print me-1"/>
+                    <t t-esc="props.printLabel or 'Print Selected'"/> (<t t-esc="selectedRecords.length"/>)
+                </button>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

@@ -34,6 +34,8 @@
         'web.assets_backend': [
             'bn_advance_donation/static/src/js/advance_donation_statement.js',
             'bn_advance_donation/static/src/xml/advance_donation_statement.xml',
+            'bn_advance_donation/static/src/js/x2many_selectable.js',
+            'bn_advance_donation/static/src/xml/x2many_selectable.xml',
         ],
         'point_of_sale._assets_pos': [
             'bn_advance_donation/static/src/app/**/*.js',

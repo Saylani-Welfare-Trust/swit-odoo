@@ -161,7 +161,7 @@
                             </group>
                         </page>
                         <page string="Disbursement Lines">
-                            <field name="disbursement_line_ids" readonly="1">
+                            <field name="disbursement_line_ids" readonly="1" widget="one2many_selectable" options="{'print_method': 'action_print_line_non_cash_disbursement_report', 'print_label': 'Print Selected Non-Cash Reports'}">
                                 <tree>
                                     <field name="product_id"/>
                                     <field name="date"/>
