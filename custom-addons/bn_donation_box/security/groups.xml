@@ -54,6 +54,7 @@
     <record id="donation_box_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_donation_box"/>
+        <field name="implied_ids" eval="[(4, ref('donation_box_root_group'))]"/>
         <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
     </record>
 
@@ -67,6 +68,7 @@
     <record id="donation_box_audit_group" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_donation_box"/>
+        <field name="implied_ids" eval="[(4, ref('donation_box_root_group'))]"/>
         <field name="comment">Read-only oversight across Requests, Registrations and Complaints, for reporting. No create, write or delete anywhere.</field>
     </record>
 

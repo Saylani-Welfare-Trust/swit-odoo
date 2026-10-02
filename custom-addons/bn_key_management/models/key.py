@@ -31,7 +31,7 @@ class Key(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot", index=True)
     lock_no = fields.Char('Lock No')
 
-    state = fields.Selection(selection=key_status, default='draft', string="Status", tracking=True)
+    state = fields.Selection(selection=key_status, default='draft', string="Status", tracking=True, index=True)
 
     key_issuance_ids = fields.One2many('key.issuance', 'key_id', string="Key Issued")
 

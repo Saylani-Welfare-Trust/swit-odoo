@@ -30,7 +30,7 @@ class ForeignCurrency(models.Model):
     rider_id = fields.Many2one('hr.employee', string="Rider")
     lot_id = fields.Many2one('stock.lot', string="Lot")
 
-    state = fields.Selection(selection=state_selection, string="State", default='draft')
+    state = fields.Selection(selection=state_selection, string="State", default='draft', index=True)
     attachment_ids = fields.Many2many('ir.attachment', string="Attachments")
     rider_collection_id = fields.Many2one('rider.collection', string='Rider Collection', ondelete='set null')
 
