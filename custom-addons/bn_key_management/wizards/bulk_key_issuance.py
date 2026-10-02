@@ -142,11 +142,11 @@ class BulkKeyIssuance(models.TransientModel):
             else:
                 valid_issuances |= issuance
 
-        if invalid_keys:
-            raise ValidationError(_(
-                'Cannot return this Key Bunch!\n\n'
-                'The following keys are not in a returnable state (Donation Received / Pending):\n%s'
-            ) % '\n'.join('  • %s' % k for k in invalid_keys))
+        # if invalid_keys:
+        #     raise ValidationError(_(
+        #         'Cannot return this Key Bunch!\n\n'
+        #         'The following keys are not in a returnable state (Donation Received / Pending):\n%s'
+        #     ) % '\n'.join('  • %s' % k for k in invalid_keys))
 
         for issuance in self.key_bunch_ids.key_ids:
             issuance.action_return()
