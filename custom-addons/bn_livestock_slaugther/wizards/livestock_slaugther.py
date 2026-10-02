@@ -39,8 +39,6 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'res_id': wizard.id,
             'view_mode': 'form',
             'target': 'new',
-            # the Slaugther menu action has edit=0, which would open this wizard readonly
-            'context': {'edit': True},
         }
 
     def action_do_transfer(self):
