@@ -80,81 +80,96 @@ class ReportMonthlyPlanningLine(models.Model):
         for rec in self:
             rec.qty_diff = (rec.quantity or 0.0) - (rec.planned_qty or 0.0)
 
-    # ── RFQ generation ─────────────────────────────────
-    def action_generate_rfq(self):
-        """Create one draft Purchase Order (RFQ) per vendor from the selected lines."""
+    # ── PR generation ─────────────────────────────────
+    def action_generate_purchase_request(self):
+        """Create ONE draft Purchase Request from the selected lines."""
         if not self:
             raise ValidationError(
-                "Please select at least one line before generating an RFQ."
+                "Please select at least one line before generating a Purchase Request."
             )
 
-        vendor_map = {}          # partner -> [report lines]
+        # Optional guard — make sure OCA purchase_request module is installed
+        if 'purchase.request' not in self.env:
+            raise ValidationError(
+                "The Purchase Request module is not installed on this database."
+            )
+
+        PurchaseRequest = self.env['purchase.request']
+        PurchaseRequestLine = self.env['purchase.request.line']
+
+        # Requested by = current user's employee, fallback to current user
+        employee = self.env['hr.employee'].search(
+            [('user_id', '=', self.env.uid)], limit=1
+        )
+
+        # Earliest / latest line dates become the request's date window
+        dates = [ln.date for ln in self if ln.date]
+        date_start = min(dates) if dates else fields.Date.today()
+        date_end = max(dates) if dates else fields.Date.today()
+
+        # ── Build the request header ──────────────────────
+        pr_vals = {
+            'origin': 'Monthly Planning',
+            'date_start': date_start,
+            'date_end': date_end,
+        }
+        # These fields exist in OCA PR — set them if present
+        if 'requested_by' in PurchaseRequest._fields and employee:
+            pr_vals['requested_by'] = employee.id
+        if 'description' in PurchaseRequest._fields:
+            pr_vals['description'] = (
+                "Auto-generated from Monthly Planning report."
+            )
+
+        pr = PurchaseRequest.create(pr_vals)
+
+        # ── Build the request lines ───────────────────────
         no_vendor_products = []
+        created_lines = self.env['purchase.request.line']
 
         for line in self:
             product = line.product_id
             if not product:
                 continue
-            seller = product.seller_ids[:1]     # preferred vendor
-            if not seller:
+
+            # Warn if product has no vendor (useful for the later RFQ step)
+            if not product.seller_ids:
                 no_vendor_products.append(product.display_name)
-                continue
-            vendor_map.setdefault(seller.partner_id, []).append(line)
 
-        if not vendor_map:
-            raise ValidationError(
-                "No vendor found for any of the selected products.\n"
-                "Please configure a supplier on those products first."
-            )
+            uom = product.uom_po_id or product.uom_id
 
-        created_pos = self.env['purchase.order']
+            line_vals = {
+                'request_id': pr.id,
+                'product_id': product.id,
+                'product_qty': line.quantity or 0.0,
+                'product_uom_id': uom.id,
+                'name': product.display_name,
+                'date_required': line.date or fields.Date.today(),
+            }
+            # Some OCA versions expect a different field name
+            if 'uom_id' in PurchaseRequestLine._fields and \
+               'product_uom_id' not in PurchaseRequestLine._fields:
+                line_vals.pop('product_uom_id', None)
+                line_vals['uom_id'] = uom.id
 
-        for vendor, lines in vendor_map.items():
-            order_lines = []
-            for line in lines:
-                product = line.product_id
-                uom = product.uom_po_id or product.uom_id
-                order_lines.append((0, 0, {
-                    'product_id':   product.id,
-                    'name':         product.display_name,
-                    'product_qty':  line.quantity or 0.0,
-                    'product_uom':  uom.id,
-                    'price_unit':   product.standard_price or 0.0,
-                    'date_planned': (
-                        datetime.combine(line.date, dtime(12, 0))
-                        if line.date else datetime.now()
-                    ),
-                }))
+            created_lines |= PurchaseRequestLine.create(line_vals)
 
-            po = self.env['purchase.order'].create({
-                'partner_id': vendor.id,
-                'order_line': order_lines,
-                'origin': 'Monthly Planning',
-            })
-            created_pos |= po
-
-        # Warn about skipped products via the first PO's chatter
-        if no_vendor_products and created_pos:
-            created_pos[0].message_post(
-                body="Skipped products without a vendor: %s"
+        # Log the products without a vendor onto the request's chatter
+        if no_vendor_products:
+            pr.message_post(
+                body="Products without a configured vendor: %s"
                      % ", ".join(no_vendor_products)
             )
 
-        # Return an action that shows the newly created RFQ(s)
-        action = {
+        # ── Open the newly created Purchase Request ───────
+        return {
             'type': 'ir.actions.act_window',
-            'name': 'Request for Quotation',
-            'res_model': 'purchase.order',
-            'view_mode': 'tree,form',
+            'name': 'Purchase Request',
+            'res_model': 'purchase.request',
+            'res_id': pr.id,
+            'view_mode': 'form',
             'target': 'current',
         }
-        if len(created_pos) == 1:
-            action['views'] = [(False, 'form')]
-            action['res_id'] = created_pos.id
-        else:
-            action['domain'] = [('id', 'in', created_pos.ids)]
-
-        return action
 
     # ── SQL view definition ────────────────────────────
     def init(self):
