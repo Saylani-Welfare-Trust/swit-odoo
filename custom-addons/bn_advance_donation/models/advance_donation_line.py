@@ -10,6 +10,7 @@ class AdvanceDonationLine(models.Model):
     # advance_donation_id = fields.Integer(string="Temp Fix")  # 👈 TEMP
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product')
+    description = fields.Char('Description')
     amount = fields.Monetary('Amount', currency_field='currency_id')
     service_charge_amount = fields.Monetary(
         'Service Charge Amount',
