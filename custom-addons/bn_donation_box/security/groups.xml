@@ -1,66 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Old Groups -->
-    <record id="donation_box_menu_group" model="res.groups">
-        <field name="name">Donation Box / Menu</field>
+    <!-- Sole gate on the root app menu. Every tier below implies it, so being
+         in ANY tier is enough to see the app; the tiers then decide what you
+         can actually do once inside. Not meant to be assigned on its own.
+         bn_key_management and bn_rider_shift's own section-root groups also
+         imply this one, since their menus are nested under this app's icon. -->
+    <record id="donation_box_root_group" model="res.groups">
+        <field name="name">Access Root Menu</field>
+        <field name="category_id" ref="module_donation_box"/>
+        <field name="comment">Grants visibility of the Donation Box app menu. Assigned automatically by every tier below (and by Key Management / Rider Shift access) - there is normally no need to assign it directly.</field>
     </record>
-    
-    <record id="donation_box_registration_admin_group" model="res.groups">
-        <field name="name">Registration or Installation / Admin</field>
-    </record>
-
-    <record id="donation_box_registration_user_group" model="res.groups">
-        <field name="name">Registration or Installation / User</field>
-    </record>
-    
-    <record id="donation_box_registration_installation_approve_group" model="res.groups">
-        <field name="name">Registration or Installation / Approve</field>
-    </record>
-    
-    <record id="donation_box_registration_installation_change_request_group" model="res.groups">
-        <field name="name">Registration or Installation / Change Request</field>
-    </record>
-    
-    <record id="donation_box_request_approve_reject_group" model="res.groups">
-        <field name="name">Request / Approve or Reject</field>
-    </record>
-    
-    <record id="donation_box_complain_center_resolve_group" model="res.groups">
-        <field name="name">Complain Center / Resolve</field>
-    </record>
-    
-    <record id="donation_box_pos_action_group" model="res.groups">
-        <field name="name">Donation Box / POS Action</field>
-    </record>
-    
-    <record id="donation_product_onhand_group" model="res.groups">
-        <field name="name">Donation Products / Inventory</field>
-    </record>
-
-    <!-- New Groups -->
 
     <record id="donation_box_user_group" model="res.groups">
-        <field name="name">Donation Box / User</field>
+        <field name="name">User</field>
         <field name="category_id" ref="module_donation_box"/>
+        <field name="implied_ids" eval="[(4, ref('donation_box_root_group'))]"/>
         <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
     </record>
 
     <record id="donation_box_manager_group" model="res.groups">
-        <field name="name">Donation Box / Manager</field>
+        <field name="name">Manager</field>
         <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, Complain Center resolution, and the POS donation-box action.</field>
         <field name="implied_ids" eval="[(4, ref('donation_box_user_group'))]"/>
     </record>
 
     <record id="donation_box_audit_group" model="res.groups">
-        <field name="name">Donation Box / Audit</field>
+        <field name="name">Audit</field>
         <field name="category_id" ref="module_donation_box"/>
+        <field name="implied_ids" eval="[(4, ref('donation_box_root_group'))]"/>
         <field name="comment">Read-only oversight across Requests, Registrations and Complaints, for reporting. No create, write or delete anywhere.</field>
     </record>
 
     <record id="donation_box_admin_group" model="res.groups">
-        <field name="name">Donation Box / Admin</field>
+        <field name="name">Admin</field>
         <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Full control: everything Manager can do, plus delete rights and Installation Category / Donation Products configuration.</field>
         <field name="implied_ids" eval="[
