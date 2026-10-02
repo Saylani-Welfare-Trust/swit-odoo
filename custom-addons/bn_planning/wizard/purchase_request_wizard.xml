@@ -6,6 +6,8 @@
         <field name="model">monthly.planning.pr.wizard</field>
         <field name="arch" type="xml">
             <form string="Generate Purchase Requisition">
+
+                <!-- Form-level fields -->
                 <group>
                     <field name="mode" widget="radio" readonly="1"/>
                     <field name="origin"/>
@@ -33,6 +35,10 @@
 
                 <field name="line_ids">
                     <tree editable="bottom" create="false" delete="false">
+                        <!-- mode is required so modifiers inside the tree
+                             can reference it; the column stays hidden. -->
+                        <field name="mode" column_invisible="1"/>
+
                         <field name="product_id"
                                options="{'no_create': True, 'no_open': True}"/>
                         <field name="uom_id"
