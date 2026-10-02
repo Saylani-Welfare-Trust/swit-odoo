@@ -86,7 +86,13 @@ class AdvanceDonationLine(models.Model):
         if not_disbursed:
             raise UserError(_('Only disbursed lines can be printed. Not disbursed: %s')
                             % ', '.join(not_disbursed.mapped(lambda l: l.serial_no or l.product_id.display_name or str(l.id))))
-        report = 'action_report_advance_donation_line_non_cash' if len(self) == 1 \
-            else 'action_report_advance_donation_line_non_cash_consolidated'
-        return self.env.ref('bn_advance_donation.%s' % report).report_action(self)
+        return self.env.ref('bn_advance_donation.action_report_advance_donation_line_non_cash').report_action(self)
+
+    def _get_receipt_groups(self):
+        """Lines with the same product and disbursement date are merged into one receipt item"""
+        groups = {}
+        for line in self.sorted('id'):
+            key = (line.product_id.id, line.disbursement_date)
+            groups[key] = groups.get(key, self.browse()) | line
+        return list(groups.values())
     

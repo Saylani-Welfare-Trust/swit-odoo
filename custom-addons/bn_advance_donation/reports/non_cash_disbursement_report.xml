@@ -1,13 +1,14 @@
 <odoo>
     <template id="template_advance_donation_disbursement_line">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="line">
+            <!-- Lines of the same donation share one certificate; lines with the same
+                 product and date are merged (quantity and amounts summed) -->
+            <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
+                <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation)"/>
+                <t t-set="line" t-value="lines[:1]"/>
+                <t t-set="groups" t-value="lines._get_receipt_groups()"/>
                 <!-- Helper: Get donee from whichever source is present -->
-                <t t-set="donee" t-value="
-                    (line.welfare_line_id and line.welfare_line_id.welfare_id and line.welfare_line_id.welfare_id.donee_id) or
-                    (line.microfinance_id and line.microfinance_id.donee_id) or
-                    None
-                "/>
+                <t t-set="donees" t-value="lines.mapped(lambda l: l.welfare_line_id.welfare_id.donee_id or l.microfinance_id.donee_id)"/>
                 <div class="page">
                       
 
@@ -25,6 +26,25 @@
                         <div class="col-6">
                             <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donation Information</h5>
                             <table class="table table-borderless">
+                                <t t-foreach="groups" t-as="group">
+                                    <t t-set="sep" t-value="'border-top: 1px solid #D5D8DC;' if not group_first else ''"/>
+                                    <tr>
+                                        <td t-att-style="sep"><strong>Product:</strong></td>
+                                        <td t-att-style="sep"><span t-esc="group[:1].product_id.display_name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Date:</strong></td>
+                                        <td><span t-esc="group[:1].date and group[:1].date.strftime('%Y-%m-%d') or ''"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Quantity:</strong></td>
+                                        <td><span t-esc="len(group)"/></td>
+                                    </tr>
+                                    <tr t-if="len(groups) &gt; 1">
+                                        <td><strong>Disbursed Amount:</strong></td>
+                                        <td><span t-esc="'{:,.2f}'.format(sum(group.mapped('disbursed_amount')))"/> <span t-esc="donation.currency_id.symbol or ''"/></td>
+                                    </tr>
+                                </t>
                                 <!-- <tr>
                                     <td><strong>Application No:</strong></td>
                                     <td><span t-esc="line.advance_donation_id.name"/></td>
@@ -80,7 +100,7 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donee / Beneficiary Information</h5>
-                            <div t-if="donee" class="alert alert-success">
+                            <div t-foreach="donees" t-as="donee" class="alert alert-success">
                                 <table class="table table-borderless">
                                     <tr>
                                         <td width="30%"><strong>Donee Name:</strong></td>
@@ -125,7 +145,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #F39C12;">Advance Donation Amount</h6>
                                             <h4 style="color: #F39C12;">
-                                                <span t-esc="'{:,.2f}'.format(line.advance_amount)"/>
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('advance_amount')))"/>
                                                 <span t-esc="line.advance_donation_id.currency_id.symbol or ''"/>
                                             </h4>
                                         </div>
@@ -136,7 +156,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #27AE60;">Final Disbursed Amount</h6>
                                             <h4 style="color: #27AE60;">
-                                                <span t-esc="'{:,.2f}'.format(line.disbursed_amount)"/>
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('disbursed_amount')))"/>
                                                 <span t-esc="line.advance_donation_id.currency_id.symbol or ''"/>
                                             </h4>
                                         </div>
@@ -156,15 +176,15 @@
                                 <!--    <strong>Welfare Line:</strong>-->
                                 <!--    <span t-esc="line.welfare_line_id.display_name or line.welfare_line_id.welfare_id.name"/>-->
                                 <!--</p>-->
-                                <p t-if="line.welfare_id">
+                                <p t-foreach="lines.mapped('welfare_id')" t-as="welfare">
                                     <!--<strong>Recurring Welfare Line:</strong>-->
-                                    <span t-esc="line.welfare_id.name or line.welfare_id.id"/>
+                                    <span t-esc="welfare.name or welfare.id"/>
                                 </p>
-                                <p t-if="line.microfinance_id">
+                                <p t-foreach="lines.mapped('microfinance_id')" t-as="microfinance">
                                     <strong>Microfinance:</strong>
-                                    <span t-esc="line.microfinance_id.display_name or line.microfinance_id.id"/>
+                                    <span t-esc="microfinance.display_name or microfinance.id"/>
                                 </p>
-                                <p t-if="not (line.welfare_id or line.microfinance_id or line.welfare_line_id)">
+                                <p t-if="not (lines.welfare_id or lines.microfinance_id or lines.welfare_line_id)">
                                     <em>No specific module link recorded.</em>
                                 </p>
                             </div>
@@ -205,122 +225,5 @@
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
         <field name="print_report_name">'Disbursement - %s - %s' % (object.advance_donation_id.name, object.date and object.date.strftime('%Y%m%d') or '')</field>
-    </record>
-
-    <!-- Consolidated report used when several disbursement lines are printed together -->
-    <template id="template_advance_donation_disbursement_line_consolidated">
-        <t t-call="web.html_container">
-            <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
-                <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation).sorted('id')"/>
-                <t t-set="symbol" t-value="donation.currency_id.symbol or ''"/>
-                <div class="page">
-                    <div style="width: 100%; text-align: center;">
-                        <h2 style="color: #2E4053;">Disbursement Certificate</h2>
-                        <h4 style="color: #5D6D7E;">Consolidated Disbursement Lines</h4>
-                        <hr style="border: 2px solid #2E4053;"/>
-                    </div>
-
-                        <div class="row mt-3">
-                            <div class="col-6">
-                                <table class="table table-borderless table-sm">
-                                    <tr>
-                                        <td><strong>Application No:</strong></td>
-                                        <td><span t-esc="donation.name"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Category:</strong></td>
-                                        <td><span t-esc="donation.category_id.name"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Contract Type:</strong></td>
-                                        <td><span t-esc="dict(donation.fields_get(allfields=['contract_type'])['contract_type']['selection']).get(donation.contract_type, '')"/></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div class="col-6">
-                                <table class="table table-borderless table-sm">
-                                    <tr>
-                                        <td><strong>Donor Name:</strong></td>
-                                        <td><span t-esc="donation.donor_id.name"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Approved Date:</strong></td>
-                                        <td><span t-esc="donation.approved_date and donation.approved_date.strftime('%Y-%m-%d') or 'Not Approved'"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>No. of Lines:</strong></td>
-                                        <td><span t-esc="len(lines)"/></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-
-                        <h5 class="mt-3" style="color: #2E4053; border-bottom: 1px solid #2E4053;">Disbursement Details</h5>
-                        <table class="table table-sm table-bordered" style="font-size: 12px;">
-                            <thead>
-                                <tr style="background-color: #2E4053; color: #fff;">
-                                    <th class="text-center">#</th>
-                                    <th>Product</th>
-                                    <th>Date</th>
-                                    <th>Donee</th>
-                                    <th>Linked Record</th>
-                                    <th class="text-end">Advance Amount</th>
-                                    <th class="text-end">Disbursed Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="lines" t-as="line">
-                                    <t t-set="donee" t-value="line.welfare_id.donee_id or line.welfare_line_id.welfare_id.donee_id or line.microfinance_id.donee_id"/>
-                                    <td class="text-center"><t t-esc="line_index + 1"/></td>
-                                    <td><t t-esc="line.product_id.display_name or ''"/></td>
-                                    <td><t t-esc="line.date and line.date.strftime('%Y-%m-%d') or ''"/></td>
-                                    <td><t t-esc="donee.name or ''"/></td>
-                                    <td><t t-esc="line.welfare_id.name or line.microfinance_id.display_name or line.disbursed_record or ''"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.advance_amount)"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.disbursed_amount)"/></td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr style="font-weight: bold;">
-                                    <td colspan="5" class="text-end">Total (<t t-esc="symbol"/>)</td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(lines.mapped('advance_amount')))"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(lines.mapped('disbursed_amount')))"/></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-
-                        <div class="row mt-5">
-                            <div class="col-6">
-                                <p><strong>Issue Date:</strong> <span t-esc="time.strftime('%Y-%m-%d %H:%M:%S')"/></p>
-                                <p><strong>Issued By:</strong> <span t-esc="user.name"/></p>
-                            </div>
-                            <div class="col-6 text-right">
-                                <div style="border-top: 1px solid #000; width: 200px; margin-left: auto;">
-                                    <p class="text-center mt-2"><strong>Authorized Signature</strong></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-4">
-                            <div class="col-12 text-center">
-                                <small style="color: #7F8C8D;">
-                                    This is a computer-generated document. No signature is required.<br/>
-                                    For any queries, please contact the administration office.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </t>
-            </t>
-        </template>
-
-    <record id="action_report_advance_donation_disbursement_line_consolidated" model="ir.actions.report">
-        <field name="name">Advance Donation Disbursement Lines (Consolidated)</field>
-        <field name="model">advance.donation.disbursement.line</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_advance_donation.template_advance_donation_disbursement_line_consolidated</field>
-        <field name="report_file">bn_advance_donation.template_advance_donation_disbursement_line_consolidated</field>
-        <field name="binding_model_id" eval="False"/>
-        <field name="print_report_name">'Disbursements - %s' % object.advance_donation_id.name</field>
     </record>
 </odoo>
