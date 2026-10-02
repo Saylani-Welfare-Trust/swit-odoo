@@ -8,14 +8,24 @@
         <field name="arch" type="xml">
             <form string="Generate Purchase Requisition">
                 <group>
+                    <field name="mode" widget="radio" readonly="1"/>
                     <field name="origin"/>
                 </group>
 
-                <div class="alert alert-info" role="alert">
+                <div class="alert alert-info" role="alert"
+                    invisible="mode != 'difference'">
                     <p class="mb-0">
-                        Order Qty = Demand Qty − On Hand Qty. You can adjust
-                        any row before generating the Purchase Requisition.
-                        Rows with Order Qty = 0 will be skipped.
+                        <strong>Difference mode:</strong> quantities already covered by
+                        prior PRs have been subtracted. Order Qty is the remaining
+                        shortfall only.
+                    </p>
+                </div>
+
+                <div class="alert alert-info" role="alert"
+                    invisible="mode != 'full'">
+                    <p class="mb-0">
+                        Order Qty = Demand Qty − On Hand Qty. You can adjust any row
+                        before generating the Purchase Requisition.
                     </p>
                 </div>
 
@@ -39,9 +49,7 @@
                             type="object"
                             string="Generate PR"
                             class="btn-primary"/>
-                    <button string="Cancel"
-                            special="cancel"
-                            class="btn-secondary"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
         </field>

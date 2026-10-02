@@ -13,7 +13,14 @@
                             string="Generate Purchase Requisition"
                             class="btn-primary"
                             groups="purchase.group_purchase_user"
-                            help="Create a draft Purchase Requisition from the selected report lines."/>
+                            help="Create a Purchase Requisition for the full outstanding demand."/>
+
+                    <button name="action_generate_difference_purchase_requisition"
+                            type="object"
+                            string="Generate Difference PR"
+                            class="btn-secondary"
+                            groups="purchase.group_purchase_user"
+                            help="Top up: create a PR only for the difference between current demand and what has already been ordered via prior PRs."/>
                 </header>
                 <field name="monthly_planning_id"/>
                 <field name="from_date"/>

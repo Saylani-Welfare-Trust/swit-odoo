@@ -21,6 +21,16 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         'monthly.planning.pr.wizard.line', 'wizard_id',
         string='Products',
     )
+    
+    mode = fields.Selection(
+        selection=[
+            ('full',       'Full Demand'),
+            ('difference', 'Difference Only'),
+        ],
+        string='Mode',
+        default='full',
+        required=True,
+    )
 
     @api.model
     def default_get(self, fields_list):
@@ -31,28 +41,33 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         if active_model != 'report.monthly.planning.line' or not active_ids:
             return res
 
+        # Which mode are we in?
+        mode = self.env.context.get('default_mode') or 'full'
+        res['mode'] = mode
+
         report_lines = self.env['report.monthly.planning.line'].browse(active_ids)
 
-        # 1) Duplicate check
-        already_linked = report_lines.filtered(lambda r: r.purchase_requisition_id)
-        if already_linked:
-            by_pr = {}
-            for rec in already_linked:
-                pr = rec.purchase_requisition_id
-                by_pr.setdefault(pr.display_name, set()).add(rec.tab)
-            lines = []
-            for pr_name, tabs in by_pr.items():
-                lines.append(
-                    "• %s (tabs: %s)" % (pr_name, ", ".join(sorted(tabs)))
-                )
-            raise ValidationError(_(
-                "The following selected line(s) have already been used to "
-                "create a Purchase Requisition:\n\n%s\n\n"
-                "Clear the reference on those lines first if you really "
-                "need to regenerate a PR."
-            ) % "\n".join(lines))
+        # ── Duplicate check ONLY in full mode ────────────
+        if mode == 'full':
+            already_linked = report_lines.filtered(lambda r: r.purchase_requisition_id)
+            if already_linked:
+                by_pr = {}
+                for rec in already_linked:
+                    pr = rec.purchase_requisition_id
+                    by_pr.setdefault(pr.display_name, set()).add(rec.tab)
+                lines = []
+                for pr_name, tabs in by_pr.items():
+                    lines.append(
+                        "• %s (tabs: %s)" % (pr_name, ", ".join(sorted(tabs)))
+                    )
+                raise ValidationError(_(
+                    "The following selected line(s) have already been used to "
+                    "create a Purchase Requisition:\n\n%s\n\n"
+                    "Use 'Generate Difference PR' instead if you want to top "
+                    "up quantities."
+                ) % "\n".join(lines))
 
-        # 2) Aggregate by product
+        # ── Aggregate by product (common to both modes) ───
         aggregated = {}
         for line in report_lines:
             product = line.product_id
@@ -67,14 +82,17 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                     'date':    line.date,
                     'price':   product.standard_price or 0.0,
                     'refs':    [],
+                    'prs':     set(),   # PRs referenced by these lines
                 }
                 aggregated[product.id] = entry
             entry['demand'] += line.quantity or 0.0
             if line.date and (not entry['date'] or line.date < entry['date']):
                 entry['date'] = line.date
             entry['refs'].append("%s:%s" % (line.tab, line.line_id))
+            if line.purchase_requisition_id:
+                entry['prs'].add(line.purchase_requisition_id.id)
 
-        # 3) Compute on-hand and order qty
+        # ── Compute on-hand and order qty ────────────────
         source_loc = self.env.ref(
             'stock.stock_location_stock', raise_if_not_found=False
         )
@@ -85,7 +103,22 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 product.with_context(location=source_loc.id).qty_available
                 if source_loc else 0.0
             )
-            order_qty = entry['demand'] - on_hand
+
+            # In difference mode, subtract what has already been ordered via
+            # the PRs these lines are linked to.
+            already_ordered = 0.0
+            if mode == 'difference' and entry['prs']:
+                prs = self.env['purchase.requisition'].browse(list(entry['prs']))
+                for pr in prs:
+                    for pr_line in pr.line_ids:
+                        if pr_line.product_id.id == product.id:
+                            already_ordered += pr_line.product_qty or 0.0
+
+            effective_demand = entry['demand']
+            if mode == 'difference':
+                effective_demand = max(entry['demand'] - already_ordered, 0.0)
+
+            order_qty = effective_demand - on_hand
             if order_qty < 0:
                 order_qty = 0.0
 
@@ -134,6 +167,13 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         requisition = Requisition.create(pr_vals)
 
+        origin_label = (
+            'Monthly Planning (Difference)'
+            if self.mode == 'difference'
+            else 'Monthly Planning'
+        )
+        pr_vals = {'origin': origin_label}
+        
         pr_line_vals = []
         skipped_no_vendor = []
         for l in lines:

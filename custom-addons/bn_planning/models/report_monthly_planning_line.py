@@ -118,6 +118,30 @@ class ReportMonthlyPlanningLine(models.Model):
             },
         }
 
+    def action_generate_difference_purchase_requisition(self):
+        """Open the wizard in 'difference' mode.
+
+        Unlike the normal action, this one ALLOWS already-linked lines to be
+        selected — that's the entire point. The wizard will subtract what has
+        already been ordered via prior PRs and only propose the shortfall.
+        """
+        if not self:
+            raise ValidationError(_(
+                "Please select at least one line before generating a "
+                "difference Purchase Requisition."
+            ))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Generate Difference Purchase Requisition'),
+            'res_model': 'monthly.planning.pr.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_model': 'report.monthly.planning.line',
+                'active_ids': self.ids,
+                'default_mode': 'difference',
+            },
+        }
     # ── SQL view definition ────────────────────────────
     def init(self):
         self.env.cr.execute("""
