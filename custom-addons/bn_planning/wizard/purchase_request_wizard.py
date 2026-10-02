@@ -148,24 +148,36 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 "sufficient stock, or the Order Qty is zero."
             ))
 
+        # ── Block backdated requirements ──────────────────
+        today_check = fields.Date.today()
+        backdated = lines.filtered(
+            lambda l: l.date_required and l.date_required < today_check
+        )
+        if backdated:
+            bullets = "\n".join(
+                "• %s — Required By %s"
+                % (l.product_id.display_name, l.date_required)
+                for l in backdated
+            )
+            raise ValidationError(_(
+                "These lines have a 'Required By' date in the past and "
+                "cannot be included in a Purchase Requisition:\n\n%s\n\n"
+                "Please set the Required By date to today or later."
+            ) % bullets)
+
         Requisition = self.env['purchase.requisition']
         RequisitionLine = self.env['purchase.requisition.line']
 
         # ── Dates ─────────────────────────────────────────
-        #   date_start  = earliest "Required By" on the wizard lines (fallback: today)
-        #   date_end    = TODAY (the day the PR is being generated)
-        #
-        # purchase.requisition.date_start / date_end are Datetime fields in
-        # Odoo 17, so we hand them real datetime objects. Passing a plain
-        # date silently falls through to the model's default (Datetime.now),
-        # which is why the PR used to show "generated on" as its end date.
+        #   date_start  = earliest "Required By" on the wizard lines
+        #   date_end    = TODAY
         today = fields.Date.today()
         rdates = [l.date_required for l in lines if l.date_required]
         start_d = min(rdates) if rdates else today
         end_d   = today
 
-        date_start_dt = datetime.combine(start_d, dtime.min)   # 00:00:00
-        date_end_dt   = datetime.combine(end_d,   dtime.max)   # 23:59:59.999999
+        date_start_dt = datetime.combine(start_d, dtime.min)
+        date_end_dt   = datetime.combine(end_d,   dtime.max)
 
         # ── Origin label ──────────────────────────────────
         origin_label = (
@@ -174,7 +186,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
             else (self.origin or 'Monthly Planning')
         )
 
-        # ── Build the PR header (single, correct dict) ────
         pr_vals = {'origin': origin_label}
         if 'date_start' in Requisition._fields:
             pr_vals['date_start'] = date_start_dt
@@ -187,7 +198,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         requisition = Requisition.create(pr_vals)
 
-        # ── Build the PR lines ────────────────────────────
         pr_line_vals = []
         skipped_no_vendor = []
 
@@ -216,7 +226,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         RequisitionLine.create(pr_line_vals)
 
-        # ── Write the PR back onto the source planning lines ──
         for l in lines:
             if not l.source_refs:
                 continue
@@ -236,14 +245,12 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                     'purchase_requisition_id': requisition.id,
                 })
 
-        # ── Chatter warning for products without a vendor ──
         if skipped_no_vendor:
             requisition.message_post(body=_(
                 "The following products have no vendor configured. They "
                 "will need a vendor before RFQs can be sent: %s"
             ) % ", ".join(skipped_no_vendor))
 
-        # ── Open the new PR ───────────────────────────────
         return {
             'type': 'ir.actions.act_window',
             'name': _('Purchase Requisition'),
