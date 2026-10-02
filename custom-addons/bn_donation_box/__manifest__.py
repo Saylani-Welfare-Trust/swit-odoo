@@ -15,11 +15,12 @@
         'bn_import_donation',
     ],
     'data': [
-        'data/ir_module_category.xml',
         'data/server_action.xml',
         'data/sequence.xml',
         'data/hr_employee_category.xml',
+        'data/ir_module_category.xml',
         'security/groups.xml',
+        'security/access_right.xml',
         'security/ir.model.access.csv',
         'views/donation_box_request.xml',
         'views/donation_box_registration_intallation.xml',
