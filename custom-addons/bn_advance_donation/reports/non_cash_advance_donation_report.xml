@@ -30,6 +30,10 @@
                                     <td><strong>Product:</strong></td>
                                     <td><span t-esc="line.product_id.display_name"/></td>
                                 </tr>
+                                <tr t-if="line.description">
+                                    <td><strong>Description:</strong></td>
+                                    <td><span t-esc="line.description"/></td>
+                                </tr>
                                 <tr>
                                     <td><strong>Status:</strong></td>
                                     <td>
