@@ -331,14 +331,21 @@ class LivestockSlaughter(models.Model):
         elif self.state in ('cutting', 'material_request', 'done'):
             name = 'Livestock Cutting'
         else:
-            return Location
+            # not confirmed yet: still where action_confirm takes it from
+            return self.env['stock.picking.type'].search([
+                ('code', '=', 'internal'),
+                ('warehouse_id.company_id', '=', self.env.company.id)
+            ], limit=1).default_location_src_id
         return Location.search([('name', '=', name)], limit=1)
 
     def _suggest_source_locations(self):
         """Return {record id: location id} with where each product currently
         has stock. The location of the record's last step is preferred, then
         the location holding the most stock. Quantities already given to
-        earlier records are deducted so two records don't take the same unit."""
+        earlier records are deducted so two records don't take the same unit.
+        Without any stock, the location of the record's last step is used,
+        and finally the 'Livestock Slaugther' location."""
+        default_location = self.env['stock.location'].search([('name', 'ilike', 'Livestock Slaugther')], limit=1)
         stock = {
             (product.id, location.id): quantity
             for product, location, quantity in self.env['stock.quant']._read_group(
@@ -365,8 +372,8 @@ class LivestockSlaughter(models.Model):
             elif available:
                 location_id = max(available, key=available.get)
             else:
-                location_id = False
-            if location_id:
+                location_id = expected.id or default_location.id
+            if (rec.product_id.id, location_id) in stock:
                 stock[(rec.product_id.id, location_id)] -= rec.quantity
             result[rec.id] = location_id
         return result
