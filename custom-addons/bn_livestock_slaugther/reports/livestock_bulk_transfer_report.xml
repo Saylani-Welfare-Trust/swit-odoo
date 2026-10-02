@@ -58,14 +58,6 @@
                         </tfoot>
                     </table>
 
-                    <t t-set="remarks" t-value="list(dict.fromkeys(docs.mapped('transfer_remarks')))"/>
-                    <div t-if="remarks" class="mt-2 p-2" style="border: 1px solid #ddd;">
-                        <strong>Remarks:</strong>
-                        <t t-foreach="remarks" t-as="remark">
-                            <div t-esc="remark" style="white-space: pre-wrap;"/>
-                        </t>
-                    </div>
-
                     <div class="row mt-5">
                         <div class="col-4 text-center">
                             <div style="border-top: 1px solid #000; padding-top: 4px;">Issued By</div>

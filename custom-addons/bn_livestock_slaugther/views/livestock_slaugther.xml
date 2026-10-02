@@ -25,7 +25,6 @@
                 <field name="source_location_id" />
                 <field name="transfer_location" optional="show" />
                 <field name="transfer_picking_id" optional="hide" />
-                <field name="transfer_remarks" optional="hide" />
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
 
@@ -76,7 +75,6 @@
                             <field name="source_location_id" />
                             <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
                             <field name="transfer_picking_id" invisible="not transfer_picking_id" />
-                            <field name="transfer_remarks" readonly="1" invisible="not transfer_remarks" />
                             <field name="start_time" />
                             <field name="end_time" />
                         </group>

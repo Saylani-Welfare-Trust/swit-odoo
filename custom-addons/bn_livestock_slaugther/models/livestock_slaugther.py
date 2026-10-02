@@ -40,7 +40,6 @@ class LivestockSlaughter(models.Model):
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
-    transfer_remarks = fields.Text('Transfer Remarks', copy=False)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
@@ -302,7 +301,14 @@ class LivestockSlaughter(models.Model):
         
         self.ensure_one()
         
-        return self.env['livestock.slaugther.wizard']._open_for(self, _('Transfer from Slaughter Stock'))
+        return {
+            'name': _('Transfer from Slaughter Stock'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_livestock_slaughter_id': self.id},
+        }
 
     def action_open_bulk_transfer(self):
         """Open the transfer wizard for all selected records at once"""
@@ -315,61 +321,17 @@ class LivestockSlaughter(models.Model):
                 % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
             )
 
-        return self.env['livestock.slaugther.wizard']._open_for(self, _('Bulk Transfer'), is_bulk=True)
-
-    def _get_expected_location(self):
-        """Location this record's animal was moved to by its last step"""
-        self.ensure_one()
-        Location = self.env['stock.location']
-        if self.state == 'received':
-            if self.is_meat_depart:
-                name = 'Meat'
-            elif self.is_goat_depart:
-                name = 'Goat'
-            else:
-                name = 'Slaughter Stock'
-        elif self.state in ('cutting', 'material_request', 'done'):
-            name = 'Livestock Cutting'
-        else:
-            return Location
-        return Location.search([('name', '=', name)], limit=1)
-
-    def _suggest_source_locations(self):
-        """Return {record id: location id} with where each product currently
-        has stock. The location of the record's last step is preferred, then
-        the location holding the most stock. Quantities already given to
-        earlier records are deducted so two records don't take the same unit."""
-        stock = {
-            (product.id, location.id): quantity
-            for product, location, quantity in self.env['stock.quant']._read_group(
-                [
-                    ('product_id', 'in', self.product_id.ids),
-                    ('location_id.usage', 'in', ['internal', 'transit']),
-                    ('location_id.company_id', 'in', [self.env.company.id, False]),
-                    ('quantity', '>', 0),
-                ],
-                ['product_id', 'location_id'],
-                ['quantity:sum'],
-            )
+        return {
+            'name': _('Bulk Transfer from Slaughter Stock'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_livestock_slaughter_ids': [(6, 0, self.ids)],
+                'default_is_bulk': True,
+            },
         }
-        result = {}
-        for rec in self:
-            available = {
-                location_id: quantity
-                for (product_id, location_id), quantity in stock.items()
-                if product_id == rec.product_id.id and quantity > 0
-            }
-            expected = rec._get_expected_location()
-            if expected and available.get(expected.id, 0) >= rec.quantity:
-                location_id = expected.id
-            elif available:
-                location_id = max(available, key=available.get)
-            else:
-                location_id = False
-            if location_id:
-                stock[(rec.product_id.id, location_id)] -= rec.quantity
-            result[rec.id] = location_id
-        return result
 
     on_hand_qty = fields.Float(
         string='On Hand',
