@@ -1,4 +1,5 @@
 /** @odoo-module */
+import { browser } from "@web/core/browser/browser";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { ListRenderer } from "@web/views/list/list_renderer";
@@ -14,8 +15,14 @@ export class SelectableListRenderer extends ListRenderer {
         return records.length > 0 && records.every((r) => r.selected);
     }
 
-    toggleSelection() {
-        if (!this.canSelectRecord) {
+    // Editable lists: allow ticking while a row is in edition, the row is
+    // left (and validated) first in toggleRecordSelection.
+    get canSelectRecord() {
+        return !this.props.list.model.useSampleModel;
+    }
+
+    async toggleSelection() {
+        if (!this.canSelectRecord || !(await this.props.list.leaveEditMode())) {
             return;
         }
         const value = !this.selectAll;
@@ -24,11 +31,26 @@ export class SelectableListRenderer extends ListRenderer {
         }
     }
 
-    toggleRecordSelection(record) {
-        if (!this.canSelectRecord) {
+    async toggleRecordSelection(record) {
+        if (!this.canSelectRecord || !(await this.props.list.leaveEditMode())) {
             return;
         }
         record.toggleSelection();
+    }
+
+    // Same as ListRenderer.onRowTouchStart, without `list.selection` which
+    // StaticList does not provide.
+    onRowTouchStart(record, ev) {
+        if (this.props.list.records.some((r) => r.selected)) {
+            ev.stopPropagation();
+        }
+        this.touchStartMs = Date.now();
+        if (this.longTouchTimer === null) {
+            this.longTouchTimer = browser.setTimeout(() => {
+                this.toggleRecordSelection(record);
+                this.resetLongTouchTimer();
+            }, this.constructor.LONG_TOUCH_THRESHOLD);
+        }
     }
 }
 
@@ -61,6 +83,10 @@ export class SelectableX2ManyField extends X2ManyField {
     async onPrintSelected() {
         const resIds = this.selectedRecords.map((r) => r.resId);
         if (!resIds.length) {
+            return;
+        }
+        // Like form buttons: persist pending edits before printing from DB.
+        if (!(await this.props.record.save())) {
             return;
         }
         const action = await this.orm.call(this.list.resModel, this.props.printMethod, [resIds]);

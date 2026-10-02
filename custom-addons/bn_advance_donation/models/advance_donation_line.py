@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 from datetime import date as td
 
 
@@ -80,6 +81,10 @@ class AdvanceDonationLine(models.Model):
                 rec.state = 'unpaid'
     
     def action_print_line_non_cash_report(self):
-        """Print non-cash donation report for this specific line"""
+        """Print non-cash donation report for the given line(s)"""
+        not_disbursed = self.filtered(lambda l: not l.is_disbursed)
+        if not_disbursed:
+            raise UserError(_('Only disbursed lines can be printed. Not disbursed: %s')
+                            % ', '.join(not_disbursed.mapped(lambda l: l.serial_no or l.product_id.display_name or str(l.id))))
         return self.env.ref('bn_advance_donation.action_report_advance_donation_line_non_cash').report_action(self)
     
