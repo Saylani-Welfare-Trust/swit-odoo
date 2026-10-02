@@ -1,7 +1,9 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from datetime import datetime, time as dtime
+import logging
 
+_logger = logging.getLogger(__name__)
 
 TAB_TO_LINE_MODEL = {
     'kitchen':   'monthly.planning.kitchen',
@@ -29,9 +31,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
             ('full',       'Full Demand'),
             ('difference', 'Difference Only'),
         ],
-        string='Mode',
-        default='full',
-        required=True,
+        string='Mode', default='full', required=True,
     )
 
     @api.model
@@ -43,7 +43,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         if active_model != 'report.monthly.planning.line' or not active_ids:
             return res
 
-        # Which mode are we in?
         mode = self.env.context.get('default_mode') or 'full'
         res['mode'] = mode
 
@@ -57,9 +56,9 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 for rec in already_linked:
                     pr = rec.purchase_requisition_id
                     by_pr.setdefault(pr.display_name, set()).add(rec.tab)
-                lines = []
+                bullets = []
                 for pr_name, tabs in by_pr.items():
-                    lines.append(
+                    bullets.append(
                         "• %s (tabs: %s)" % (pr_name, ", ".join(sorted(tabs)))
                     )
                 raise ValidationError(_(
@@ -67,38 +66,46 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                     "create a Purchase Requisition:\n\n%s\n\n"
                     "Use 'Generate Difference PR' instead if you want to top "
                     "up quantities."
-                ) % "\n".join(lines))
+                ) % "\n".join(bullets))
 
-        # ── Aggregate by product (common to both modes) ───
+        # ── Aggregate by product ────────────────────────────
         aggregated = {}
         for line in report_lines:
             product = line.product_id
             if not product:
                 continue
+
             entry = aggregated.get(product.id)
             if entry is None:
                 entry = {
-                    'product': product,
-                    'uom':     product.uom_po_id or product.uom_id,
-                    'demand':  0.0,
-                    'date':    line.date,
-                    'price':   product.standard_price or 0.0,
-                    'refs':    [],
-                    'prs':     set(),
+                    'product':  product,
+                    'uom':      product.uom_po_id or product.uom_id,
+                    'demand':   0.0,
+                    'date':     line.date,
+                    'price':    product.standard_price or 0.0,
+                    'refs':     [],
+                    'sources':  [],   # source planning-line records
                 }
                 aggregated[product.id] = entry
+
             entry['demand'] += line.quantity or 0.0
             if line.date and (not entry['date'] or line.date < entry['date']):
                 entry['date'] = line.date
             entry['refs'].append("%s:%s" % (line.tab, line.line_id))
-            if line.purchase_requisition_id:
-                entry['prs'].add(line.purchase_requisition_id.id)
 
-        # ── Compute on-hand and order qty ────────────────
+            # Load the underlying planning line so we can inspect its PR links
+            model_name = TAB_TO_LINE_MODEL.get(line.tab)
+            if model_name and line.line_id:
+                source = self.env[model_name].browse(line.line_id).exists()
+                if source:
+                    entry['sources'].append(source)
+
+        # ── Compute on-hand, already-ordered and order qty ──
         source_loc = self.env.ref(
             'stock.stock_location_stock', raise_if_not_found=False
         )
         wiz_lines = []
+
         for entry in aggregated.values():
             product = entry['product']
             on_hand = (
@@ -106,13 +113,23 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 if source_loc else 0.0
             )
 
+            # Sum already-ordered quantity across every linked PR
             already_ordered = 0.0
-            if mode == 'difference' and entry['prs']:
-                prs = self.env['purchase.requisition'].browse(list(entry['prs']))
-                for pr in prs:
-                    for pr_line in pr.line_ids:
-                        if pr_line.product_id.id == product.id:
-                            already_ordered += pr_line.product_qty or 0.0
+            if mode == 'difference':
+                seen_pr_ids = set()
+                for src in entry['sources']:
+                    # Prefer the M2M; fall back to the single FK for
+                    # records created before the M2M was introduced.
+                    prs = src.purchase_requisition_ids
+                    if not prs and src.purchase_requisition_id:
+                        prs = src.purchase_requisition_id
+                    for pr in prs:
+                        if pr.id in seen_pr_ids:
+                            continue
+                        seen_pr_ids.add(pr.id)
+                        for pr_line in pr.line_ids:
+                            if pr_line.product_id.id == product.id:
+                                already_ordered += pr_line.product_qty or 0.0
 
             effective_demand = entry['demand']
             if mode == 'difference':
@@ -123,14 +140,15 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 order_qty = 0.0
 
             wiz_lines.append((0, 0, {
-                'product_id':    product.id,
-                'uom_id':        entry['uom'].id,
-                'demand_qty':    entry['demand'],
-                'on_hand_qty':   on_hand,
-                'order_qty':     order_qty,
-                'date_required': entry['date'],
-                'price_unit':    entry['price'],
-                'source_refs':   ",".join(entry['refs']),
+                'product_id':          product.id,
+                'uom_id':              entry['uom'].id,
+                'demand_qty':          entry['demand'],
+                'already_ordered_qty': already_ordered,
+                'on_hand_qty':         on_hand,
+                'order_qty':           order_qty,
+                'date_required':       entry['date'],
+                'price_unit':          entry['price'],
+                'source_refs':         ",".join(entry['refs']),
             }))
 
         res['line_ids'] = wiz_lines
@@ -155,8 +173,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         )
         if backdated:
             bullets = "\n".join(
-                "• %s — Required By %s"
-                % (l.product_id.display_name, l.date_required)
+                "• %s — Required By %s" % (l.product_id.display_name, l.date_required)
                 for l in backdated
             )
             raise ValidationError(_(
@@ -165,12 +182,12 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 "Please set the Required By date to today or later."
             ) % bullets)
 
-        Requisition = self.env['purchase.requisition']
+        Requisition     = self.env['purchase.requisition']
         RequisitionLine = self.env['purchase.requisition.line']
 
         # ── Dates ─────────────────────────────────────────
-        #   date_start  = earliest "Required By" on the wizard lines
-        #   date_end    = TODAY
+        #   date_start = earliest Required By (or today)
+        #   date_end   = today
         today = fields.Date.today()
         rdates = [l.date_required for l in lines if l.date_required]
         start_d = min(rdates) if rdates else today
@@ -186,6 +203,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
             else (self.origin or 'Monthly Planning')
         )
 
+        # ── Create the PR header ──────────────────────────
         pr_vals = {'origin': origin_label}
         if 'date_start' in Requisition._fields:
             pr_vals['date_start'] = date_start_dt
@@ -198,6 +216,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         requisition = Requisition.create(pr_vals)
 
+        # ── Create the PR lines ───────────────────────────
         pr_line_vals = []
         skipped_no_vendor = []
 
@@ -226,6 +245,8 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         RequisitionLine.create(pr_line_vals)
 
+        # ── Write the PR back onto the source planning lines ──
+        #    Append to the M2M (full history) AND update the latest FK.
         for l in lines:
             if not l.source_refs:
                 continue
@@ -242,9 +263,11 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 except ValueError:
                     continue
                 self.env[model_name].browse(sid_int).write({
-                    'purchase_requisition_id': requisition.id,
+                    'purchase_requisition_id':  requisition.id,
+                    'purchase_requisition_ids': [(4, requisition.id)],
                 })
 
+        # ── Chatter warning for products without a vendor ──
         if skipped_no_vendor:
             requisition.message_post(body=_(
                 "The following products have no vendor configured. They "
@@ -269,10 +292,14 @@ class MonthlyPlanningPrWizardLine(models.TransientModel):
         'monthly.planning.pr.wizard',
         required=True, ondelete='cascade',
     )
-    # No readonly anywhere — the wizard line is fully editable.
-    product_id    = fields.Many2one('product.product')
-    uom_id        = fields.Many2one('uom.uom', string='UoM')
-    demand_qty    = fields.Float(string='Demand Qty')
+    product_id          = fields.Many2one('product.product')
+    uom_id              = fields.Many2one('uom.uom', string='UoM')
+    demand_qty          = fields.Float(string='Demand Qty')
+    already_ordered_qty = fields.Float(
+        string='Already Ordered Qty',
+        help='Sum of quantities already requested through PRs linked to '
+             'the source planning lines. Only used in Difference mode.',
+    )
     on_hand_qty   = fields.Float(string='On Hand Qty')
     order_qty     = fields.Float(string='Order Qty')
     date_required = fields.Date(string='Required By')

@@ -33,45 +33,35 @@ class MonthlyPlanning(models.Model):
     )
 
     # Existing tabs
-    kitchen_line_ids = fields.One2many('monthly.planning.kitchen', 'monthly_planning_id', string="Kitchen")
-    madaris_line_ids = fields.One2many('monthly.planning.madaris', 'monthly_planning_id', string="Madaris")
-    medical_line_ids = fields.One2many('monthly.planning.medical', 'monthly_planning_id', string="Medical")
+    kitchen_line_ids   = fields.One2many('monthly.planning.kitchen',   'monthly_planning_id', string="Kitchen")
+    madaris_line_ids   = fields.One2many('monthly.planning.madaris',   'monthly_planning_id', string="Madaris")
+    medical_line_ids   = fields.One2many('monthly.planning.medical',   'monthly_planning_id', string="Medical")
     livestock_line_ids = fields.One2many('monthly.planning.livestock', 'monthly_planning_id', string="Livestock")
 
     # NEW tabs
-    food_line_ids = fields.One2many('monthly.planning.food', 'monthly_planning_id', string="Food")
+    food_line_ids   = fields.One2many('monthly.planning.food',   'monthly_planning_id', string="Food")
     ration_line_ids = fields.One2many('monthly.planning.ration', 'monthly_planning_id', string="Ration")
-    meat_line_ids = fields.One2many('monthly.planning.meat', 'monthly_planning_id', string="Meat")
+    meat_line_ids   = fields.One2many('monthly.planning.meat',   'monthly_planning_id', string="Meat")
 
     planning_type_id = fields.Many2one(
-        'planning.type',
-        string='Planning Type',
-        required=True,
-        tracking=True,
+        'planning.type', string='Planning Type', required=True, tracking=True,
     )
 
     created_by = fields.Many2one(
-        'res.users',
-        string='Created By',
+        'res.users', string='Created By',
         default=lambda self: self.env.user,
-        readonly=True,
-        copy=False,
+        readonly=True, copy=False,
         help='User who created this record.',
     )
     enabled_tabs = fields.Char(
-        string='Enabled Pages',
-        compute='_compute_enabled_tabs',
-        store=True,
+        string='Enabled Pages', compute='_compute_enabled_tabs', store=True,
     )
 
     @api.depends(
         'planning_type_id',
-        'planning_type_id.kitchen',
-        'planning_type_id.madaris',
-        'planning_type_id.medical',
-        'planning_type_id.livestock',
-        'planning_type_id.food',
-        'planning_type_id.ration',
+        'planning_type_id.kitchen', 'planning_type_id.madaris',
+        'planning_type_id.medical', 'planning_type_id.livestock',
+        'planning_type_id.food',    'planning_type_id.ration',
         'planning_type_id.meat',
     )
     def _compute_enabled_tabs(self):
@@ -96,22 +86,15 @@ class MonthlyPlanning(models.Model):
 
     # ─── State ─────────────────────────────────────────────
     state = fields.Selection(
-        selection=[
-            ('draft',  'Draft'),
-            ('active', 'Active'),
-        ],
-        string='Status',
-        default='draft',
-        required=True,
-        tracking=True,
-        copy=False,
+        selection=[('draft', 'Draft'), ('active', 'Active')],
+        string='Status', default='draft', required=True,
+        tracking=True, copy=False,
     )
 
     # ─── Lock flag (auto, based on to_date) ────────────────
     is_locked = fields.Boolean(
         string='Locked (Past Period)',
-        compute='_compute_is_locked',
-        store=True,
+        compute='_compute_is_locked', store=True,
         help='Automatically true when the planning period has ended '
              '(To Date is today or earlier). Locked plans cannot be edited '
              'or deleted, and lines cannot be modified.',
@@ -121,13 +104,9 @@ class MonthlyPlanning(models.Model):
     def _compute_is_locked(self):
         today = fields.Date.today()
         for rec in self:
-            # Never lock a record that hasn't been saved yet — the form
-            # starts with today's date, which would otherwise mark it locked.
             if not rec.id:
                 rec.is_locked = False
                 continue
-            # Lock only when the period is strictly over (to_date in the past).
-            # A period ending today is still editable today.
             rec.is_locked = bool(rec.to_date and rec.to_date < today)
 
     # ─── Default destination ──────────────────────────────
@@ -136,7 +115,6 @@ class MonthlyPlanning(models.Model):
         employee = self.env['hr.employee'].search(
             [('user_id', '=', self.env.uid)], limit=1
         )
-
         if employee and employee.analytic_account_id:
             location = self.env['stock.location'].search(
                 [
@@ -147,7 +125,6 @@ class MonthlyPlanning(models.Model):
             )
             if location:
                 return location.id
-
         fallback = self.env.ref(
             'stock.stock_location_stock', raise_if_not_found=False
         )
@@ -162,27 +139,13 @@ class MonthlyPlanning(models.Model):
              'tagged on the employee linked to the current user.',
     )
 
-    show_kitchen = fields.Boolean(
-        related='planning_type_id.kitchen', string='Kitchen', store=False,
-    )
-    show_madaris = fields.Boolean(
-        related='planning_type_id.madaris', string='Madaris', store=False,
-    )
-    show_medical = fields.Boolean(
-        related='planning_type_id.medical', string='Medical', store=False,
-    )
-    show_livestock = fields.Boolean(
-        related='planning_type_id.livestock', string='Livestock', store=False,
-    )
-    show_food = fields.Boolean(
-        related='planning_type_id.food', string='Food', store=False,
-    )
-    show_ration = fields.Boolean(
-        related='planning_type_id.ration', string='Ration', store=False,
-    )
-    show_meat = fields.Boolean(
-        related='planning_type_id.meat', string='Meat', store=False,
-    )
+    show_kitchen   = fields.Boolean(related='planning_type_id.kitchen',   string='Kitchen',   store=False)
+    show_madaris   = fields.Boolean(related='planning_type_id.madaris',   string='Madaris',   store=False)
+    show_medical   = fields.Boolean(related='planning_type_id.medical',   string='Medical',   store=False)
+    show_livestock = fields.Boolean(related='planning_type_id.livestock', string='Livestock', store=False)
+    show_food      = fields.Boolean(related='planning_type_id.food',      string='Food',      store=False)
+    show_ration    = fields.Boolean(related='planning_type_id.ration',    string='Ration',    store=False)
+    show_meat      = fields.Boolean(related='planning_type_id.meat',      string='Meat',      store=False)
 
     # ─── Constraints ──────────────────────────────────────
     @api.constrains('from_date', 'to_date')
@@ -195,11 +158,6 @@ class MonthlyPlanning(models.Model):
 
     @api.constrains('from_date')
     def _check_no_backdate_on_create(self):
-        """Block creating a NEW Monthly Planning with a From Date in the past.
-
-        Only fires on freshly-created records (rec._origin.id is None);
-        editing an existing record is not affected.
-        """
         today = fields.Date.today()
         for rec in self:
             if rec._origin.id is None and rec.from_date and rec.from_date < today:
@@ -210,7 +168,6 @@ class MonthlyPlanning(models.Model):
 
     # ─── Helpers ──────────────────────────────────────────
     def _get_line_commands_for_days(self):
-        """Return a list of (0, 0, values) for each day between from_date and to_date."""
         self.ensure_one()
         commands = []
         if not self.from_date or not self.to_date:
@@ -218,14 +175,10 @@ class MonthlyPlanning(models.Model):
         delta = (self.to_date - self.from_date).days
         for i in range(delta + 1):
             date_obj = self.from_date + timedelta(days=i)
-            commands.append((0, 0, {
-                'date': date_obj,
-                'quantity': 0.0,
-            }))
+            commands.append((0, 0, {'date': date_obj, 'quantity': 0.0}))
         return commands
 
     def is_date_in_range(self, date_val):
-        """Return True if `date_val` falls within [from_date, to_date] (inclusive)."""
         self.ensure_one()
         if not date_val or not self.from_date or not self.to_date:
             return False
@@ -244,8 +197,7 @@ class MonthlyPlanning(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Import Monthly Planning from Excel',
             'res_model': 'import.monthly.planning.wizard',
-            'view_mode': 'form',
-            'target': 'new',
+            'view_mode': 'form', 'target': 'new',
             'context': {'default_monthly_planning_id': self.id},
         }
 
@@ -260,8 +212,6 @@ class MonthlyPlanning(models.Model):
                     "Please select a Planning Type before activating."
                 )
 
-            # Snapshot planned_qty + push the destination location down
-            # onto every line of every enabled tab.
             o2m_names = (
                 'kitchen_line_ids', 'madaris_line_ids', 'medical_line_ids',
                 'livestock_line_ids', 'food_line_ids', 'ration_line_ids',
@@ -311,55 +261,55 @@ class MonthlyPlanningLineBase(models.AbstractModel):
     _description = 'Base Line for Monthly Planning'
 
     monthly_planning_id = fields.Many2one('monthly.planning', string="Monthly Planning")
+
     date = fields.Date(
-        string="Date",
-        required=True,
+        string="Date", required=True,
         default=lambda self: self._default_line_date(),
     )
 
-    # ── Parent dates exposed on the line (used by the date picker) ──
     plan_from_date = fields.Date(
         related='monthly_planning_id.from_date',
-        string='Plan From Date',
-        store=False,
+        string='Plan From Date', store=False,
     )
     plan_to_date = fields.Date(
         related='monthly_planning_id.to_date',
-        string='Plan To Date',
-        store=False,
+        string='Plan To Date', store=False,
     )
 
-    # ── Earliest date the user may pick = max(today, plan.from_date) ──
     min_line_date = fields.Date(
         string='Earliest Allowed Date',
-        compute='_compute_min_line_date',
-        store=False,
+        compute='_compute_min_line_date', store=False,
     )
 
     planned_qty = fields.Float(
-        string='Planned Qty',
-        readonly=True,
-        copy=False,
+        string='Planned Qty', readonly=True, copy=False,
         help='Snapshot of Quantity taken when the plan was activated. '
              'It never changes afterwards, so the report can compare '
              'planned vs. current quantity.',
     )
-    
-    product_id = fields.Many2one('product.product', string="Product")
-    quantity = fields.Float(string="Quantity", required=True, default=0.0)
+
+    product_id  = fields.Many2one('product.product', string="Product")
+    quantity    = fields.Float(string="Quantity", required=True, default=0.0)
     on_hand_qty = fields.Float(string='On Hand Quantity', compute='_compute_on_hand_qty')
 
     purchase_requisition_id = fields.Many2one(
         'purchase.requisition',
-        string='Purchase Requisition',
-        readonly=True,
-        copy=False,
-        help='Purchase Requisition that was generated from this planning line.',
+        string='Latest Purchase Requisition',
+        readonly=True, copy=False,
+        help='Most recent Purchase Requisition generated from this line. '
+             'Kept for convenience; the full history is in Purchase Requisitions.',
+    )
+
+    purchase_requisition_ids = fields.Many2many(
+        'purchase.requisition',
+        string='Purchase Requisitions',
+        readonly=True, copy=False,
+        help='Every Purchase Requisition ever generated from this line. '
+             'Difference mode subtracts the sum of all of them.',
     )
 
     location_id = fields.Many2one(
-        'stock.location',
-        string='Location',
+        'stock.location', string='Location',
         domain="[('usage', 'in', ['internal'])]",
         help='Destination location for this line. Auto-filled from the '
              'plan\'s Destination Location when the plan is activated.',
@@ -374,7 +324,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
 
     @api.model
     def _default_line_date(self):
-        """Default to whichever is later: today or the plan's From Date."""
         today = fields.Date.today()
         parent_id = self.env.context.get('default_monthly_planning_id')
         if parent_id:
@@ -389,8 +338,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         for rec in self:
             if not rec.date:
                 continue
-            # Block backdating only on brand-new lines so historical rows
-            # don't become un-editable when you change their quantity.
             if rec._origin.id is None and rec.date < today:
                 raise ValidationError(
                     "Line Date cannot be in the past. Earliest allowed: %s." % today
@@ -414,25 +361,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
             else:
                 rec.on_hand_qty = 0.0
 
-    @api.constrains('monthly_planning_id', 'product_id')
-    def _check_active_plan(self):
-        """On an Active plan:
-        - You cannot ADD new lines.
-        - You cannot CHANGE the product.
-        - You CAN change the Quantity (to record actual consumption).
-        """
-        for rec in self:
-            if rec.monthly_planning_id.state != 'active':
-                continue
-            if rec._origin.id is None:
-                raise ValidationError(
-                    "You cannot add new lines to an Active plan. "
-                    "Set it back to Draft first."
-                )
-            # Block product changes on existing lines
-            if 'product_id' in rec._get_product_change_fields():
-                pass  # handled in write()
-
     def write(self, vals):
         for rec in self:
             if rec.monthly_planning_id.is_locked:
@@ -447,7 +375,7 @@ class MonthlyPlanningLineBase(models.AbstractModel):
                     "You cannot change the product on an active plan."
                 )
         return super().write(vals)
-    
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
