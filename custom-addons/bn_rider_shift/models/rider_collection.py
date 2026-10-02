@@ -49,7 +49,7 @@ class RiderCollection(models.Model):
     sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
     
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
-    state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
+    state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected', index=True)
 
     is_complain_generated = fields.Boolean('Is Complain Generated', default=False)
     

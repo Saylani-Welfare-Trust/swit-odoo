@@ -52,8 +52,8 @@ class DonationBoxComplain(models.Model):
     location = fields.Char(related='donation_box_registration_installation_id.location', string='Requested Location', store=True, tracking=True)
     contact_person = fields.Char(related='donation_box_registration_installation_id.contact_person', string='Contact Person', store=True, tracking=True)
 
-    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False)
-    box_status = fields.Selection(selection=box_status_selection, string="Box Status", tracking=True)
+    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False, index=True)
+    box_status = fields.Selection(selection=box_status_selection, string="Box Status", tracking=True, index=True)
 
     installer_id = fields.Many2one(related='donation_box_registration_installation_id.installer_id', string="Installer")
     zone_id = fields.Many2one(related='donation_box_registration_installation_id.zone_id', string="Zone", store=True, tracking=True)

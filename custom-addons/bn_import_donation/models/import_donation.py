@@ -44,7 +44,7 @@ class ImportDonation(models.Model):
     journal_entry_id = fields.Many2one('account.move')
     picking_id = fields.Many2one('stock.picking')
 
-    state = fields.Selection(state_selection, default='draft', tracking=True)
+    state = fields.Selection(state_selection, default='draft', tracking=True, index=True)
 
     import_file = fields.Binary('Import File')
 

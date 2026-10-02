@@ -32,7 +32,7 @@ class Donation(models.Model):
 
     is_fee = fields.Boolean('Is Fee', tracking=True)
 
-    state = fields.Selection(selection=state_selection, string="State", default="draft", tracking=True)
+    state = fields.Selection(selection=state_selection, string="State", default="draft", tracking=True, index=True)
 
 
     @api.model_create_multi

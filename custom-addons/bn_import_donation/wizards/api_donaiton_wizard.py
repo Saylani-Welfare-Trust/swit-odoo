@@ -5,7 +5,6 @@ from urllib.parse import urlparse
 import requests
 import logging
 from collections import defaultdict
-from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
@@ -744,7 +743,6 @@ class APIDonationWizard(models.TransientModel):
         
         is_foreign = currency_rec != company_currency
         
-        # raise ValidationError(str(donation_vals.get('donation_item_ids', [])))
         missing_account_products = []
         # Process items
         for it in donation_vals.get('donation_item_ids', []):
@@ -804,7 +802,6 @@ class APIDonationWizard(models.TransientModel):
                 'reason': 'Missing gateway config or account_id',
                 'credit': c,
             })
-        # raise ValidationError(str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast process for normal donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
         missing_account_products = []
@@ -866,7 +863,6 @@ class APIDonationWizard(models.TransientModel):
                 'reason': 'Missing gateway config or account_id',
                 'credit': c,
             })
-        # raise ValidationError(str(missing_account_products))
         self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast for qurbani donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
 
     # ---------------------- Optimized Helper Methods ----------------------
@@ -915,7 +911,6 @@ class APIDonationWizard(models.TransientModel):
 
         lines = []
         company_currency_id = company_currency.id
-        # raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator))
 
         # -----------------------------
         # Debit lines
@@ -975,7 +970,6 @@ class APIDonationWizard(models.TransientModel):
 
         if not lines:
             self.create_fetch_log(history.id, "No journal lines to create.", 'Error', "No journal lines to create.")
-            # raise ValidationError(_("No journal lines to create."))
 
         # -----------------------------
         # Balance check before create
@@ -1007,7 +1001,6 @@ class APIDonationWizard(models.TransientModel):
         # -----------------------------
         # Create & Post Move
         # -----------------------------
-        # raise ValidationError(str(lines))
         move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,

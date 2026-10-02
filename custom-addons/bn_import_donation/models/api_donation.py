@@ -61,7 +61,7 @@ class APIDonation(models.Model):
         ('created', 'Created'),
         ('skipped', 'Skipped'),
         ('failed', 'Failed'),
-    ], string="Partner Status", default='pending', tracking=True)
+    ], string="Partner Status", default='pending', tracking=True, index=True)
     error_message = fields.Text('Error Message', tracking=True)
     
     def action_create_partners_for_selected(self):

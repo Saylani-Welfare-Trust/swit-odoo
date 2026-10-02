@@ -75,8 +75,8 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     complain_center_ids = fields.One2many('donation.box.complain.center', 'donation_box_registration_installation_id', string="Complain Centers")
 
-    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False)
-    box_status = fields.Selection(selection=box_status_selection, string="Box Status", default='not_installed',
+    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False, index=True)
+    box_status = fields.Selection(selection=box_status_selection, string="Box Status", default='not_installed', index=True,
                                   tracking=True, copy=False)
 
     donor_category_ids = fields.Many2many(

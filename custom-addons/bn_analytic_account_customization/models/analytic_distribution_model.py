@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+
 from odoo.addons.analytic.models.analytic_distribution_model import NonMatchingDistribution
 
 
@@ -34,8 +34,6 @@ class AnalyticDistributionModel(models.Model):
         # Now safe to modify
         vals['analytic_account_id'] = self.env.user.employee_id.analytic_account_id.id
 
-        # raise ValidationError(str(vals))
-
         """ Returns the distribution model that has the most fields that corresponds to the vals given
             This method should be called to prefill analytic distribution field on several models """
         domain = []
@@ -46,9 +44,6 @@ class AnalyticDistributionModel(models.Model):
         res = {}
         fnames = set(self._get_fields_to_check())
 
-        # raise ValidationError(str(fnames)+" "+str(vals))
-        # raise ValidationError(str(domain)+" "+str(self)+" "+str(self.search(domain)))
-    
         for rec in self.search(domain):
             try:
                 score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
@@ -61,8 +56,6 @@ class AnalyticDistributionModel(models.Model):
         return res
     
     def _check_score(self, key, value):
-        # raise ValidationError(str(key)+" "+str(value))
-
         self.ensure_one()
 
         if key == 'company_id':
@@ -84,7 +77,6 @@ class AnalyticDistributionModel(models.Model):
         if self.analytic_account_id:
             if self.analytic_distribution:
                 analytic_distribution = self.analytic_distribution
-                # raise ValidationError(str(analytic_distribution))
                 self.analytic_distribution = {}
 
                 for key, value in analytic_distribution.items():
