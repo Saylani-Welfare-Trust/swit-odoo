@@ -40,6 +40,17 @@
 
     <!-- New Groups -->
 
+    <!-- Sole gate on the root app menu. Every tier below implies it, so being
+         in ANY tier is enough to see the app; the tiers then decide what you
+         can actually do once inside. Not meant to be assigned on its own.
+         bn_key_management and bn_rider_shift's own section-root groups also
+         imply this one, since their menus are nested under this app's icon. -->
+    <record id="donation_box_root_group" model="res.groups">
+        <field name="name">Access Root Menu</field>
+        <field name="category_id" ref="module_donation_box"/>
+        <field name="comment">Grants visibility of the Donation Box app menu. Assigned automatically by every tier below (and by Key Management / Rider Shift access) - there is normally no need to assign it directly.</field>
+    </record>
+
     <record id="donation_box_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_donation_box"/>
