@@ -19,3 +19,4 @@ access_report_monthly_planning_line_user,report.monthly.planning.line.user,model
 access_report_monthly_planning_line_manager,report.monthly.planning.line.manager,model_report_monthly_planning_line,bn_master_setup.master_setup_group,1,0,0,0
 
 access_monthly_planning_pr_wizard,monthly.planning.pr.wizard,model_monthly_planning_pr_wizard,base.group_user,1,1,1,1
+access_monthly_planning_pr_wizard_line_user,monthly.planning.pr.wizard.line user,model_monthly_planning_pr_wizard_line,stock.group_stock_user,1,1,1,1
