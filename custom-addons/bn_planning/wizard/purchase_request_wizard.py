@@ -1,7 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
-
 TAB_TO_LINE_MODEL = {
     'kitchen':   'monthly.planning.kitchen',
     'madaris':   'monthly.planning.madaris',
@@ -11,6 +10,8 @@ TAB_TO_LINE_MODEL = {
     'ration':    'monthly.planning.ration',
     'meat':      'monthly.planning.meat',
 }
+
+
 class MonthlyPlanningPrWizard(models.TransientModel):
     _name = 'monthly.planning.pr.wizard'
     _description = 'Generate Purchase Requisition from Planning Report'
@@ -21,7 +22,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         string='Products',
     )
 
-    # ── Populate the wizard from the selected report lines ──
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -103,7 +103,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         res['line_ids'] = wiz_lines
         return res
 
-    # ── Confirm → create the PR ──
     def action_confirm(self):
         self.ensure_one()
 
@@ -162,7 +161,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         RequisitionLine.create(pr_line_vals)
 
-        # Write the PR back on every source line (across tabs)
         for l in lines:
             if not l.source_refs:
                 continue
@@ -206,7 +204,9 @@ class MonthlyPlanningPrWizardLine(models.TransientModel):
         'monthly.planning.pr.wizard',
         required=True, ondelete='cascade',
     )
-    product_id = fields.Many2one('product.product', required=True)
+    # NOT required — the editable tree creates an empty placeholder row
+    # that would otherwise trip the mandatory-field check.
+    product_id = fields.Many2one('product.product')
     uom_id = fields.Many2one('uom.uom', string='UoM')
     demand_qty = fields.Float(string='Demand Qty', readonly=True)
     on_hand_qty = fields.Float(string='On Hand Qty', readonly=True)
