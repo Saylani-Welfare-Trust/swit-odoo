@@ -7,6 +7,14 @@
         <field name="model">report.monthly.planning.line</field>
         <field name="arch" type="xml">
             <tree create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_generate_rfq"
+                            type="object"
+                            string="Generate RFQ"
+                            class="btn-primary"
+                            groups="purchase.group_purchase_user"
+                            help="Create one draft Purchase Order per vendor from the selected lines."/>
+                </header>
                 <field name="monthly_planning_id"/>
                 <field name="from_date"/>
                 <field name="to_date"/>
@@ -16,9 +24,7 @@
                 <field name="on_hand_qty"/>
                 <field name="planned_qty"/>
                 <field name="quantity"/>
-                <field name="qty_diff"
-                       decoration-danger="qty_diff &lt; 0"
-                       decoration-success="qty_diff &gt; 0"/>
+                <field name="qty_diff"/>
                 <field name="location_id"
                        optional="hide"
                        invisible="tab != 'livestock'"/>

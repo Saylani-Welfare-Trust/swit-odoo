@@ -1,5 +1,9 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
+from datetime import datetime, time as dtime
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ReportMonthlyPlanningLine(models.Model):
@@ -107,6 +111,82 @@ class ReportMonthlyPlanningLine(models.Model):
                     % rec.monthly_planning_id.to_date
                 )
         return super().unlink()
+    
+    # RFQ Generation
+    def action_generate_rfq(self):
+        """Create one draft Purchase Order (RFQ) per vendor from the selected lines."""
+        if not self:
+            raise ValidationError(
+                "Please select at least one line before generating an RFQ."
+            )
+
+        vendor_map = {}          # partner -> [report lines]
+        no_vendor_products = []
+
+        for line in self:
+            product = line.product_id
+            if not product:
+                continue
+            seller = product.seller_ids[:1]     # preferred vendor
+            if not seller:
+                no_vendor_products.append(product.display_name)
+                continue
+            vendor_map.setdefault(seller.partner_id, []).append(line)
+
+        if not vendor_map:
+            raise ValidationError(
+                "No vendor found for any of the selected products.\n"
+                "Please configure a supplier on those products first."
+            )
+
+        created_pos = self.env['purchase.order']
+
+        for vendor, lines in vendor_map.items():
+            order_lines = []
+            for line in lines:
+                product = line.product_id
+                uom = product.uom_po_id or product.uom_id
+                order_lines.append((0, 0, {
+                    'product_id':   product.id,
+                    'name':         product.display_name,
+                    'product_qty':  line.quantity or 0.0,
+                    'product_uom':  uom.id,
+                    'price_unit':   product.standard_price or 0.0,
+                    'date_planned': (
+                        datetime.combine(line.date, dtime(12, 0))
+                        if line.date else datetime.now()
+                    ),
+                }))
+
+            po = self.env['purchase.order'].create({
+                'partner_id': vendor.id,
+                'order_line': order_lines,
+                'origin': 'Monthly Planning',
+            })
+            created_pos |= po
+
+        # Return an action that shows the newly created RFQ(s)
+        action = {
+            'type': 'ir.actions.act_window',
+            'name': 'Request for Quotation',
+            'res_model': 'purchase.order',
+            'view_mode': 'tree,form',
+            'target': 'current',
+        }
+        if len(created_pos) == 1:
+            action['views'] = [(False, 'form')]
+            action['res_id'] = created_pos.id
+        else:
+            action['domain'] = [('id', 'in', created_pos.ids)]
+
+        # Optional: warn about products without a vendor
+        if no_vendor_products:
+            _logger.warning(
+                "RFQ generated — skipped products without a vendor: %s",
+                ', '.join(no_vendor_products),
+            )
+
+        return action
 
     # ── SQL view definition ────────────────────────────
     def init(self):
