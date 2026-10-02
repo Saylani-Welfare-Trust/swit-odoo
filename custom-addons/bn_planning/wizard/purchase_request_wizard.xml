@@ -1,4 +1,7 @@
-    <!-- ═══════════════ GENERATE PR WIZARD ═══════════════ -->
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <!-- ═══════════════ GENERATE PR WIZARD ═══════════════ -->
     <record id="monthly_planning_pr_wizard_view_form" model="ir.ui.view">
         <field name="name">monthly.planning.pr.wizard.form</field>
         <field name="model">monthly.planning.pr.wizard</field>
@@ -45,3 +48,5 @@
             </form>
         </field>
     </record>
+
+</odoo>
