@@ -70,6 +70,21 @@ class LivestockSlaugtherWizard(models.TransientModel):
             if line.source_location_id == self.dest_location_id:
                 raise ValidationError(_('Source and destination location are the same for %s.') % rec.name)
 
+        # stock check per product and source location
+        needed = {}
+        for line in lines:
+            if line.product_id.type == 'product':
+                key = (line.product_id, line.source_location_id)
+                needed[key] = needed.get(key, 0) + line.quantity
+        shortages = []
+        for (product, location), quantity in needed.items():
+            available = product.with_context(location=location.id).qty_available
+            if available < quantity:
+                shortages.append(_('%s at %s: need %s, available %s') % (
+                    product.display_name, location.display_name, quantity, available))
+        if shortages:
+            raise ValidationError(_('Not enough stock:\n%s') % '\n'.join(shortages))
+
         # choose internal picking type for the company (fallback to any internal if company-specific not found)
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
