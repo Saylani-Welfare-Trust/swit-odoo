@@ -76,6 +76,9 @@ class ReportMonthlyPlanningLine(models.Model):
         string='Purchase Requisition',
         readonly=True,
     )
+    transfer_picking_id = fields.Many2one(
+            'stock.picking', string='Internal Transfer', readonly=True,
+        )
     @api.depends('product_id', 'tab')
     def _compute_display_name(self):
         for rec in self:
@@ -144,6 +147,60 @@ class ReportMonthlyPlanningLine(models.Model):
         }
     # ── SQL view definition ────────────────────────────
     def init(self):
+        self.env.cr.execute("""
+            DROP VIEW IF EXISTS report_monthly_planning_line CASCADE;
+
+            CREATE VIEW report_monthly_planning_line AS
+            SELECT ROW_NUMBER() OVER () AS id, sub.*
+            FROM (
+                SELECT
+                    k.id                           AS line_id,
+                    k.monthly_planning_id          AS monthly_planning_id,
+                    'kitchen'                      AS tab,
+                    k.date                         AS date,
+                    k.product_id                   AS product_id,
+                    k.location_id                  AS location_id,
+                    k.quantity                     AS quantity,
+                    k.planned_qty                  AS planned_qty,
+                    k.purchase_requisition_id      AS purchase_requisition_id,
+                    k.transfer_picking_id          AS transfer_picking_id
+                FROM monthly_planning_kitchen k
+                UNION ALL
+                SELECT m.id, m.monthly_planning_id, 'madaris', m.date,
+                    m.product_id, m.location_id, m.quantity, m.planned_qty,
+                    m.purchase_requisition_id, m.transfer_picking_id
+                FROM monthly_planning_madaris m
+                UNION ALL
+                SELECT md.id, md.monthly_planning_id, 'medical', md.date,
+                    md.product_id, md.location_id, md.quantity, md.planned_qty,
+                    md.purchase_requisition_id, md.transfer_picking_id
+                FROM monthly_planning_medical md
+                UNION ALL
+                SELECT l.id, l.monthly_planning_id, 'livestock', l.date,
+                    l.product_id, l.location_id, l.quantity, l.planned_qty,
+                    l.purchase_requisition_id, l.transfer_picking_id
+                FROM monthly_planning_livestock l
+                UNION ALL
+                SELECT f.id, f.monthly_planning_id, 'food', f.date,
+                    f.product_id, f.location_id, f.quantity, f.planned_qty,
+                    f.purchase_requisition_id, f.transfer_picking_id
+                FROM monthly_planning_food f
+                UNION ALL
+                SELECT r.id, r.monthly_planning_id, 'ration', r.date,
+                    r.product_id, r.location_id, r.quantity, r.planned_qty,
+                    r.purchase_requisition_id, r.transfer_picking_id
+                FROM monthly_planning_ration r
+                UNION ALL
+                SELECT mt.id, mt.monthly_planning_id, 'meat', mt.date,
+                    mt.product_id, mt.location_id, mt.quantity, mt.planned_qty,
+                    mt.purchase_requisition_id, mt.transfer_picking_id
+                FROM monthly_planning_meat mt
+            ) sub
+            JOIN monthly_planning mp ON mp.id = sub.monthly_planning_id
+            WHERE sub.product_id IS NOT NULL
+              AND sub.monthly_planning_id IS NOT NULL
+              AND mp.state = 'active';
+        """)
         self.env.cr.execute("""
             DROP VIEW IF EXISTS report_monthly_planning_line CASCADE;
 

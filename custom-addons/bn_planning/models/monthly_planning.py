@@ -147,6 +147,152 @@ class MonthlyPlanning(models.Model):
     show_ration    = fields.Boolean(related='planning_type_id.ration',    string='Ration',    store=False)
     show_meat      = fields.Boolean(related='planning_type_id.meat',      string='Meat',      store=False)
 
+    source_location_id = fields.Many2one(
+        'stock.location',
+        string='Source Location',
+        domain="[('usage', 'in', ['internal'])]",
+        default=lambda self: self._default_source_location(),
+        help='Where the stock currently sits. Internal transfers will move '
+             'the products from here to the Destination Location.',
+    )
+
+    @api.model
+    def _default_source_location(self):
+        picking_type = self.env.ref(
+            'stock.picking_type_internal', raise_if_not_found=False
+        )
+        if picking_type and picking_type.default_location_src_id:
+            return picking_type.default_location_src_id.id
+        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        return fallback.id if fallback else False
+    
+    # ─── Internal transfer generation ─────────────────────
+    def _create_internal_transfer_for_lines(self, line_list, dest_location):
+        """Create ONE internal picking that moves every line in `line_list`
+        to `dest_location`. Returns the picking (or an empty recordset).
+
+        `line_list` is a plain Python list of line records — it may hold
+        rows from different tab models (kitchen, madaris, medical, …), so
+        we can't build a single recordset across them.
+        """
+        self.ensure_one()
+
+        StockPicking = self.env['stock.picking']
+        StockMove    = self.env['stock.move']
+
+        # Drop lines already transferred (safety — idempotent)
+        line_list = [l for l in line_list if not l.transfer_picking_id]
+        if not line_list:
+            return StockPicking
+
+        picking_type = self.env.ref(
+            'stock.picking_type_internal', raise_if_not_found=False
+        )
+        if not picking_type:
+            _logger.warning(
+                "Cron: 'stock.picking_type_internal' not found. "
+                "Enable Storage Locations in Inventory settings."
+            )
+            return StockPicking
+
+        src_location = self.source_location_id or picking_type.default_location_src_id
+        if not src_location or not dest_location:
+            _logger.warning(
+                "Cron: skipping plan %s — source (%s) or destination (%s) "
+                "location missing.", self.name, src_location, dest_location,
+            )
+            return StockPicking
+
+        # Sort lines for readability
+        line_list.sort(
+            key=lambda l: (l.product_id.display_name or '',
+                           l.date or fields.Date.today())
+        )
+
+        picking = StockPicking.create({
+            'picking_type_id':  picking_type.id,
+            'location_id':      src_location.id,
+            'location_dest_id': dest_location.id,
+            'origin':           'Monthly Planning: %s' % self.name,
+            'scheduled_date':   fields.Datetime.now(),
+        })
+
+        move_vals = []
+        for line in line_list:
+            product = line.product_id
+            if not product:
+                continue
+            uom = product.uom_id
+            move_vals.append((0, 0, {
+                'name':             product.display_name,
+                'product_id':       product.id,
+                'product_uom_qty':  line.quantity or 0.0,
+                'product_uom':      uom.id,
+                'location_id':      src_location.id,
+                'location_dest_id': dest_location.id,
+                'picking_id':       picking.id,
+            }))
+
+        if not move_vals:
+            picking.unlink()
+            return StockPicking
+
+        StockMove.create(move_vals)
+
+        # Link back so the cron won't pick these lines again
+        for line in line_list:
+            line.transfer_picking_id = picking.id
+
+        return picking
+
+    @api.model
+    def _cron_generate_internal_transfers(self):
+        """Daily job: scan Active plans and create one internal transfer
+        per plan for all not-yet-transferred lines."""
+        o2m_names = (
+            'kitchen_line_ids', 'madaris_line_ids', 'medical_line_ids',
+            'livestock_line_ids', 'food_line_ids', 'ration_line_ids',
+            'meat_line_ids',
+        )
+
+        plans = self.search([
+            ('state', '=', 'active'),
+            ('is_locked', '=', False),
+            ('location_dest_id', '!=', False),
+        ])
+
+        _logger.info(
+            "Cron internal transfers: scanning %d active plan(s).", len(plans)
+        )
+
+        created_total = 0
+        for plan in plans:
+            pending = []
+            for o2m_name in o2m_names:
+                for line in getattr(plan, o2m_name):
+                    if (not line.transfer_picking_id
+                            and line.product_id
+                            and (line.quantity or 0.0) > 0):
+                        pending.append(line)
+
+            if not pending:
+                continue
+
+            picking = plan._create_internal_transfer_for_lines(
+                pending, plan.location_dest_id
+            )
+            if picking:
+                created_total += 1
+                _logger.info(
+                    "Cron internal transfers: created %s for plan %s (%d lines).",
+                    picking.name, plan.name, len(pending),
+                )
+
+        _logger.info(
+            "Cron internal transfers: finished. %d picking(s) created.",
+            created_total,
+        )
+
     # ─── Constraints ──────────────────────────────────────
     @api.constrains('from_date', 'to_date')
     def _check_date_range(self):
@@ -314,6 +460,23 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         help='Destination location for this line. Auto-filled from the '
              'plan\'s Destination Location when the plan is activated.',
     )
+
+    transfer_picking_id = fields.Many2one(
+        'stock.picking',
+        string='Internal Transfer',
+        readonly=True, copy=False,
+        help='Internal transfer that delivered this planning line to its '
+             'destination location.',
+    )
+    transferred = fields.Boolean(
+        string='Transferred',
+        compute='_compute_transferred', store=True,
+    )
+
+    @api.depends('transfer_picking_id')
+    def _compute_transferred(self):
+        for rec in self:
+            rec.transferred = bool(rec.transfer_picking_id)
 
     @api.depends('monthly_planning_id', 'monthly_planning_id.from_date')
     def _compute_min_line_date(self):

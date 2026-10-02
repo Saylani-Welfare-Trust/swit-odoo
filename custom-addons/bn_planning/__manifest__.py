@@ -12,6 +12,7 @@
     ],
     'data': [
         'data/stock_location.xml',
+        'data/ir_cron.xml',
         'security/ir.model.access.csv',
         'views/monthly_planning_views.xml',
         'views/planning_type_view.xml',

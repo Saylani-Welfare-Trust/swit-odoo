@@ -34,6 +34,7 @@
                 <field name="quantity"/>
                 <field name="qty_diff"/>
                 <field name="location_id" optional="hide"/>
+                <field name="transfer_picking_id"/>
             </tree>
         </field>
     </record>
@@ -62,6 +63,10 @@
                 <filter name="filter_food"      string="Food"      domain="[('tab','=','food')]"/>
                 <filter name="filter_ration"    string="Ration"    domain="[('tab','=','ration')]"/>
                 <filter name="filter_meat"      string="Meat"      domain="[('tab','=','meat')]"/>
+                <filter name="filter_not_transferred" string="Not Yet Transferred"
+                        domain="[('transfer_picking_id','=',False)]"/>
+                <filter name="filter_transferred" string="Transferred"
+                        domain="[('transfer_picking_id','!=',False)]"/>
 
                 <separator/>
 
@@ -80,6 +85,7 @@
                             context="{'group_by':'to_date'}"/>
                     <filter name="group_pr" string="Purchase Requisition"
                             context="{'group_by':'purchase_requisition_id'}"/>
+                        
                 </group>
             </search>
         </field>
