@@ -204,13 +204,12 @@ class MonthlyPlanningPrWizardLine(models.TransientModel):
         'monthly.planning.pr.wizard',
         required=True, ondelete='cascade',
     )
-    # NOT required — the editable tree creates an empty placeholder row
-    # that would otherwise trip the mandatory-field check.
+    # No readonly anywhere — the wizard line is fully editable.
     product_id = fields.Many2one('product.product')
     uom_id = fields.Many2one('uom.uom', string='UoM')
-    demand_qty = fields.Float(string='Demand Qty', readonly=True)
-    on_hand_qty = fields.Float(string='On Hand Qty', readonly=True)
+    demand_qty = fields.Float(string='Demand Qty')
+    on_hand_qty = fields.Float(string='On Hand Qty')
     order_qty = fields.Float(string='Order Qty')
     date_required = fields.Date(string='Required By')
     price_unit = fields.Float(string='Unit Price')
-    source_refs = fields.Char(string='Source Refs', readonly=True)
+    source_refs = fields.Char(string='Source Refs')
