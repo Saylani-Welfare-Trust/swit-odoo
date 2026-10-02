@@ -10,6 +10,7 @@
         'mail',
     ],
     'data': [
+        'data/ir_model_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/menu.xml',
