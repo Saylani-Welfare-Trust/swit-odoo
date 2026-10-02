@@ -11,26 +11,6 @@
         </field>
     </record>
 
-    <record id="key_bunch_view_search" model="ir.ui.view">
-        <field name="name">key.bunch.view.search</field>
-        <field name="model">key.bunch</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="name" string="Bunch" />
-                <field name="room_no" />
-                <field name="rack_no" />
-                <field name="city_id" />
-                <field name="zone_id" />
-                <field name="sub_zone_id" />
-                <group string="Group By">
-                    <filter string="City" name="group_city" domain="[]" context="{'group_by': 'city_id'}" />
-                    <filter string="Zone" name="group_zone" domain="[]" context="{'group_by': 'zone_id'}" />
-                    <filter string="Sub Zone" name="group_sub_zone" domain="[]" context="{'group_by': 'sub_zone_id'}" />
-                </group>
-            </search>
-        </field>
-    </record>
-
     <record id="key_bunch_view_form" model="ir.ui.view">
         <field name="name">key.bunch.view.form</field>
         <field name="model">key.bunch</field>

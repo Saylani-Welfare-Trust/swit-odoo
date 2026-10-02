@@ -76,6 +76,7 @@
         id="rider_schedule_menu"
         name="Schedule"
         action="rider_schedule_action"
+        groups="bn_rider_shift.rider_shift_user_group,bn_rider_shift.rider_shift_audit_group"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="1"/>
 

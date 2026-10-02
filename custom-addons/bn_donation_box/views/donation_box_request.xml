@@ -128,7 +128,7 @@
     <menuitem
         id="donation_box_root_menu"
         name="Donation Box"
-        groups="bn_donation_box.donation_box_root_group"
+        groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group"
         web_icon="bn_donation_box,static/description/icon.png"
         sequence="5"/>
 

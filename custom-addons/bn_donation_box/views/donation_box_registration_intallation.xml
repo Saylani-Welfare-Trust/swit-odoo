@@ -100,32 +100,7 @@
         <field name="model">donation.box.registration.installation</field>
         <field name="arch" type="xml">
             <search>
-                <field name="name" string="Registration" />
                 <field name="lot_id" string="Box No." />
-                <field name="shop_name" />
-                <field name="donor_id" />
-                <field name="installer_id" />
-                <field name="installation_category_id" />
-                <field name="city_id" />
-                <field name="zone_id" />
-                <field name="sub_zone_id" />
-                <field name="request_no" string="Request No." />
-                <separator />
-                <filter string="Draft" name="filter_draft" domain="[('status', '=', 'draft')]" />
-                <filter string="Installed" name="filter_installed" domain="[('status', '=', 'installed')]" />
-                <filter string="Available" name="filter_available" domain="[('status', '=', 'available')]" />
-                <filter string="Change Request" name="filter_change_request" domain="[('status', '=', 'change_request')]" />
-                <filter string="Closed" name="filter_closed" domain="[('status', '=', 'close')]" />
-                <separator />
-                <filter string="Installation Date" name="filter_installation_date" date="installation_date" />
-                <group string="Group By">
-                    <filter string="Status" name="group_status" domain="[]" context="{'group_by': 'status'}" />
-                    <filter string="Installer" name="group_installer" domain="[]" context="{'group_by': 'installer_id'}" />
-                    <filter string="Installation Category" name="group_installation_category" domain="[]" context="{'group_by': 'installation_category_id'}" />
-                    <filter string="City" name="group_city" domain="[]" context="{'group_by': 'city_id'}" />
-                    <filter string="Zone" name="group_zone" domain="[]" context="{'group_by': 'zone_id'}" />
-                    <filter string="Installation Date" name="group_installation_date" domain="[]" context="{'group_by': 'installation_date'}" />
-                </group>
             </search>
         </field>
     </record>
