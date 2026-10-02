@@ -39,6 +39,7 @@ class LivestockSlaughter(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
+    transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
@@ -307,6 +308,29 @@ class LivestockSlaughter(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'context': {'default_livestock_slaughter_id': self.id},
+        }
+
+    def action_open_bulk_transfer(self):
+        """Open the transfer wizard for all selected records at once"""
+        if not self:
+            raise ValidationError(_("Please select the records to transfer."))
+        transferred = self.filtered('transfer_bool')
+        if transferred:
+            raise ValidationError(
+                _("These records are already transferred:\n%s")
+                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
+            )
+
+        return {
+            'name': _('Bulk Transfer from Slaughter Stock'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_livestock_slaughter_ids': [(6, 0, self.ids)],
+                'default_is_bulk': True,
+            },
         }
 
     on_hand_qty = fields.Float(

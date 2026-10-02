@@ -26,6 +26,7 @@
         'views/package_type.xml',
         'views/meat_management.xml',
         'views/distribution_center.xml',
+        'reports/livestock_bulk_transfer_report.xml',
         'wizards/livestock_slaugther.xml',
     ],
     'auto_install': False,
