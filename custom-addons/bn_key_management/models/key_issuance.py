@@ -27,8 +27,8 @@ GUARDED_FIELDS = ('state', 'returned_on', 'donation_amount', 'is_fcb', 'is_cfb')
 class KeyIssuance(models.Model):
     _name = 'key.issuance'
     _description = 'Key Issuance'
-    # _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    # _inherit = ["mail.thread", "mail.activity.mixin"]
     _bn_guarded_fields = GUARDED_FIELDS
 
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
