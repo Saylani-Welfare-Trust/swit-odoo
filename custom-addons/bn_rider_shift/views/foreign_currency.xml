@@ -1,30 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="foreign_currency_view_search" model="ir.ui.view">
-        <field name="name">foreign.currency.view.search</field>
-        <field name="model">foreign.currency</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="rider_id" />
-                <field name="lot_id" string="Box No." />
-                <field name="currency_id" />
-                <field name="rider_collection_id" />
-                <separator />
-                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
-                <filter string="Converted" name="filter_converted" domain="[('state', '=', 'converted')]" />
-                <filter string="Payment Received" name="filter_payment_received" domain="[('state', '=', 'payment_received')]" />
-                <filter string="Paid" name="filter_paid" domain="[('state', '=', 'paid')]" />
-                <filter string="Rejected" name="filter_reject" domain="[('state', '=', 'reject')]" />
-                <group string="Group By">
-                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
-                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
-                    <filter string="Currency" name="group_currency" domain="[]" context="{'group_by': 'currency_id'}" />
-                </group>
-            </search>
-        </field>
-    </record>
-
     <record id="foreign_currency_view_tree" model="ir.ui.view">
         <field name="name">foreign.currency.view.tree</field>
         <field name="model">foreign.currency</field>
