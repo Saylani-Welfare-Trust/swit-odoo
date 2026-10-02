@@ -1,7 +1,14 @@
 <odoo>
     <template id="report_advance_donation_line_non_cash">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="line">
+            <!-- Lines of the same donation share one receipt; lines with the same
+                 product and disbursement date are merged (quantity and amounts summed) -->
+            <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
+                <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation)"/>
+                <t t-set="line" t-value="lines[:1]"/>
+                <t t-set="groups" t-value="lines._get_receipt_groups()"/>
+                <t t-set="states" t-value="set(lines.mapped('state'))"/>
+                <t t-set="state" t-value="states.pop() if len(states) == 1 else 'partial'"/>
                 <div class="page">
                     <img t-if="line.env.company.dn_image"
                         t-att-src="image_data_uri(line.env.company.dn_image)"
@@ -24,30 +31,41 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Line Serial No:</strong></td>
-                                    <td><span t-esc="line.serial_no"/></td>
+                                    <td><span t-esc="', '.join(s for s in lines.mapped('serial_no') if s)"/></td>
                                 </tr>
-                                <tr>
-                                    <td><strong>Product:</strong></td>
-                                    <td><span t-esc="line.product_id.display_name"/></td>
-                                </tr>
-                                <tr t-if="line.description">
-                                    <td><strong>Description:</strong></td>
-                                    <td><span t-esc="line.description"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Date:</strong></td>
-                                    <td><span t-esc="line.date and line.date.strftime('%Y-%m-%d') or ''"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Disbursement Date:</strong></td>
-                                    <td><span t-esc="line.disbursement_date and line.disbursement_date.strftime('%Y-%m-%d') or ''"/></td>
-                                </tr>
+                                <t t-foreach="groups" t-as="group">
+                                    <t t-set="sep" t-value="'border-top: 1px solid #D5D8DC;' if not group_first else ''"/>
+                                    <tr>
+                                        <td t-att-style="sep"><strong>Product:</strong></td>
+                                        <td t-att-style="sep"><span t-esc="group[:1].product_id.display_name"/></td>
+                                    </tr>
+                                    <tr t-if="any(group.mapped('description'))">
+                                        <td><strong>Description:</strong></td>
+                                        <td><span t-esc="', '.join(dict.fromkeys(d for d in group.mapped('description') if d))"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Date:</strong></td>
+                                        <td><span t-esc="', '.join(dict.fromkeys(d.strftime('%Y-%m-%d') for d in group.mapped('date') if d))"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Disbursement Date:</strong></td>
+                                        <td><span t-esc="group[:1].disbursement_date and group[:1].disbursement_date.strftime('%Y-%m-%d') or ''"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Quantity:</strong></td>
+                                        <td><span t-esc="len(group)"/></td>
+                                    </tr>
+                                    <tr t-if="len(groups) &gt; 1">
+                                        <td><strong>Amount:</strong></td>
+                                        <td><span t-esc="'{:,.2f}'.format(sum(group.mapped('amount')))"/> <span t-esc="line.currency_id.symbol"/></td>
+                                    </tr>
+                                </t>
                                 <tr>
                                     <td><strong>Status:</strong></td>
                                     <td>
-                                        <span t-if="line.state == 'paid'" style="color: #27AE60; font-weight: bold;">PAID</span>
-                                        <span t-if="line.state == 'partial'" style="color: #F39C12; font-weight: bold;">PARTIAL</span>
-                                        <span t-if="line.state == 'unpaid'" style="color: #E74C3C; font-weight: bold;">UNPAID</span>
+                                        <span t-if="state == 'paid'" style="color: #27AE60; font-weight: bold;">PAID</span>
+                                        <span t-if="state == 'partial'" style="color: #F39C12; font-weight: bold;">PARTIAL</span>
+                                        <span t-if="state == 'unpaid'" style="color: #E74C3C; font-weight: bold;">UNPAID</span>
                                     </td>
                                 </tr>
                             </table>
@@ -84,7 +102,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #3498DB;">Total Amount</h6>
                                             <h4 style="color: #2E4053;">
-                                                <span t-esc="'{:,.2f}'.format(line.amount)"/> 
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('amount')))"/> 
                                                 <span t-esc="line.currency_id.symbol"/>
                                             </h4>
                                         </div>
@@ -95,7 +113,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #27AE60;">Paid Amount</h6>
                                             <h4 style="color: #27AE60;">
-                                                <span t-esc="'{:,.2f}'.format(line.paid_amount)"/> 
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('paid_amount')))"/> 
                                                 <span t-esc="line.currency_id.symbol"/>
                                             </h4>
                                         </div>
@@ -106,7 +124,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #E74C3C;">Remaining Amount</h6>
                                             <h4 style="color: #E74C3C;">
-                                                <span t-esc="'{:,.2f}'.format(line.remaining_amount)"/> 
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('remaining_amount')))"/> 
                                                 <span t-esc="line.currency_id.symbol"/>
                                             </h4>
                                         </div>
@@ -116,12 +134,12 @@
                         </div>
                     </div>
 
-                    <div class="row mt-4" t-if="line.is_disbursed">
+                    <div class="row mt-4" t-if="all(lines.mapped('is_disbursed'))">
                         <div class="col-12">
                             <div class="alert alert-success">
                                 <h5><i class="fa fa-check-circle"></i> Disbursement Information</h5>
                                 <p><strong>Disbursed Amount:</strong> 
-                                    <span t-esc="'{:,.2f}'.format(line.disbursed_amount)"/> 
+                                    <span t-esc="'{:,.2f}'.format(sum(lines.mapped('disbursed_amount')))"/> 
                                     <span t-esc="line.currency_id.symbol"/>
                                 </p>
                                 <p><strong>Disbursement Status:</strong> 
@@ -176,134 +194,6 @@
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
         <field name="print_report_name">'Non-Cash Donation Line - %s-%s' % (object.advance_donation_id.name, object.serial_no)</field>
-        <field name="paperformat_id" ref="advance_donation_line_non_cash_paperformat"/>
-    </record>
-
-    <!-- Consolidated report used when several lines are printed together -->
-    <template id="report_advance_donation_line_non_cash_consolidated">
-        <t t-call="web.html_container">
-            <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
-                <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation).sorted('id')"/>
-                <t t-set="symbol" t-value="donation.currency_id.symbol or ''"/>
-                <div class="page">
-                    <img t-if="donation.env.company.dn_image"
-                        t-att-src="image_data_uri(donation.env.company.dn_image)"
-                        style="width: 100%; height: auto; display: block;"/>
-                    <div style="width: 100%; text-align: center; margin: 20px auto 0 auto;">
-                        <h2 style="color: #2E4053;">Non-Cash Donation Receipt</h2>
-                        <h4 style="color: #5D6D7E;">Consolidated Lines Certificate</h4>
-                        <hr style="border: 2px solid #2E4053;"/>
-                    </div>
-
-                        <div class="row mt-3">
-                            <div class="col-6">
-                                <table class="table table-borderless table-sm">
-                                    <tr>
-                                        <td><strong>Application No:</strong></td>
-                                        <td><span t-esc="donation.name"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Category:</strong></td>
-                                        <td><span t-esc="donation.category_id.name"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Contract Type:</strong></td>
-                                        <td><span t-esc="dict(donation.fields_get(allfields=['contract_type'])['contract_type']['selection']).get(donation.contract_type, '')"/></td>
-                                    </tr>
-                                </table>
-                            </div>
-                            <div class="col-6">
-                                <table class="table table-borderless table-sm">
-                                    <tr>
-                                        <td><strong>Donor Name:</strong></td>
-                                        <td><span t-esc="donation.donor_id.name"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Approved Date:</strong></td>
-                                        <td><span t-esc="donation.approved_date and donation.approved_date.strftime('%Y-%m-%d') or 'Not Approved'"/></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>No. of Lines:</strong></td>
-                                        <td><span t-esc="len(lines)"/></td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-
-                        <h5 class="mt-3" style="color: #2E4053; border-bottom: 1px solid #2E4053;">Line Details</h5>
-                        <table class="table table-sm table-bordered" style="font-size: 12px;">
-                            <thead>
-                                <tr style="background-color: #2E4053; color: #fff;">
-                                    <th class="text-center">#</th>
-                                    <th>Serial No.</th>
-                                    <th>Product</th>
-                                    <th>Description</th>
-                                    <th>Date</th>
-                                    <th>Disbursement Date</th>
-                                    <th class="text-end">Amount</th>
-                                    <th class="text-end">Paid</th>
-                                    <th class="text-end">Remaining</th>
-                                    <th class="text-end">Disbursed</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="lines" t-as="line">
-                                    <td class="text-center"><t t-esc="line_index + 1"/></td>
-                                    <td><t t-esc="line.serial_no or ''"/></td>
-                                    <td><t t-esc="line.product_id.display_name or ''"/></td>
-                                    <td><t t-esc="line.description or ''"/></td>
-                                    <td><t t-esc="line.date and line.date.strftime('%Y-%m-%d') or ''"/></td>
-                                    <td><t t-esc="line.disbursement_date and line.disbursement_date.strftime('%Y-%m-%d') or ''"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.amount)"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.paid_amount)"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.remaining_amount)"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(line.disbursed_amount)"/></td>
-                                </tr>
-                            </tbody>
-                            <tfoot>
-                                <tr style="font-weight: bold;">
-                                    <td colspan="6" class="text-end">Total (<t t-esc="symbol"/>)</td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(lines.mapped('amount')))"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(lines.mapped('paid_amount')))"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(lines.mapped('remaining_amount')))"/></td>
-                                    <td class="text-end"><t t-esc="'{:,.2f}'.format(sum(lines.mapped('disbursed_amount')))"/></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-
-                        <div class="row mt-5">
-                            <div class="col-6">
-                                <p><strong>Issue Date:</strong> <span t-esc="time.strftime('%Y-%m-%d %H:%M:%S')"/></p>
-                                <p><strong>Issued By:</strong> <span t-esc="user.name"/></p>
-                            </div>
-                            <div class="col-6 text-right">
-                                <div style="border-top: 1px solid #000; width: 200px; margin-left: auto;">
-                                    <p class="text-center mt-2"><strong>Authorized Signature</strong></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-4">
-                            <div class="col-12 text-center">
-                                <small style="color: #7F8C8D;">
-                                    This is a computer-generated document. No signature is required.<br/>
-                                    For any queries, please contact the administration office.
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </t>
-            </t>
-        </template>
-
-    <record id="action_report_advance_donation_line_non_cash_consolidated" model="ir.actions.report">
-        <field name="name">Non-Cash Donation Lines (Consolidated)</field>
-        <field name="model">advance.donation.lines</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_advance_donation.report_advance_donation_line_non_cash_consolidated</field>
-        <field name="report_file">bn_advance_donation.report_advance_donation_line_non_cash_consolidated</field>
-        <field name="binding_model_id" eval="False"/>
-        <field name="print_report_name">'Non-Cash Donation Lines - %s' % object.advance_donation_id.name</field>
         <field name="paperformat_id" ref="advance_donation_line_non_cash_paperformat"/>
     </record>
 </odoo>

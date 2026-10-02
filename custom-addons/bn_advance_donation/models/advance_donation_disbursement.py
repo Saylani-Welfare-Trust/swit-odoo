@@ -22,7 +22,13 @@ class AdvanceDonationDisbursementLine(models.Model):
     disbursed_record= fields.Char(string="Disbursed Record", help="Reference to the record where this disbursement is recorded (e.g., welfare line, microfinance record)")
     
     def action_print_line_non_cash_disbursement_report(self):
-        """Print the disbursement certificate, consolidated when several lines are selected"""
-        report = 'action_report_advance_donation_disbursement_line' if len(self) == 1 \
-            else 'action_report_advance_donation_disbursement_line_consolidated'
-        return self.env.ref('bn_advance_donation.%s' % report).report_action(self)
+        """Print the disbursement certificate for the given line(s)"""
+        return self.env.ref('bn_advance_donation.action_report_advance_donation_disbursement_line').report_action(self)
+
+    def _get_receipt_groups(self):
+        """Lines with the same product and date are merged into one certificate item"""
+        groups = {}
+        for line in self.sorted('id'):
+            key = (line.product_id.id, line.date)
+            groups[key] = groups.get(key, self.browse()) | line
+        return list(groups.values())
