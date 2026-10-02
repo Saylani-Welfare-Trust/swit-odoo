@@ -1,0 +1,47 @@
+    <!-- ═══════════════ GENERATE PR WIZARD ═══════════════ -->
+    <record id="monthly_planning_pr_wizard_view_form" model="ir.ui.view">
+        <field name="name">monthly.planning.pr.wizard.form</field>
+        <field name="model">monthly.planning.pr.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate Purchase Requisition">
+                <group>
+                    <field name="origin"/>
+                </group>
+
+                <div class="alert alert-info" role="alert">
+                    <p class="mb-0">
+                        Order Qty = Demand Qty − On Hand Qty. You can adjust
+                        any row before generating the Purchase Requisition.
+                        Rows with Order Qty = 0 will be skipped.
+                    </p>
+                </div>
+
+                <field name="line_ids">
+                    <tree editable="bottom" create="false" delete="false">
+                        <field name="product_id"
+                               readonly="1"
+                               options="{'no_create': True, 'no_open': True}"/>
+                        <field name="uom_id"
+                               readonly="1"
+                               options="{'no_create': True, 'no_open': True}"/>
+                        <field name="demand_qty"   readonly="1"/>
+                        <field name="on_hand_qty"  readonly="1"/>
+                        <field name="order_qty"/>
+                        <field name="date_required"/>
+                        <field name="price_unit"/>
+                        <field name="source_refs" invisible="1"/>
+                    </tree>
+                </field>
+
+                <footer>
+                    <button name="action_confirm"
+                            type="object"
+                            string="Generate PR"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>

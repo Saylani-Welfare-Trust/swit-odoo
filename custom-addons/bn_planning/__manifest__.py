@@ -18,6 +18,7 @@
         'views/report_monthly_planning_line_views.xml',
         
         'wizard/import_monthly_planning_wizard_views.xml',
+        'wizard/purchase_request_wizard.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -100,152 +100,22 @@ class ReportMonthlyPlanningLine(models.Model):
 
     # ── PR generation ─────────────────────────────────
     def action_generate_purchase_requisition(self):
-        """Create a draft Purchase Requisition from the selected report lines.
-
-        - Blocks the action if any selected line is already linked to a PR.
-        - Aggregates all selected lines by product → ONE PR line per product
-          with the total quantity.
-        - Stores the new PR back onto every underlying planning line.
-        """
+        """Open the wizard that shows Demand / On Hand / Order Qty."""
         if not self:
             raise ValidationError(
-                "Please select at least one line before generating a "
-                "Purchase Requisition."
+                _("Please select at least one line before generating a "
+                  "Purchase Requisition.")
             )
-
-        # ── 1. Duplicate check ────────────────────────────
-        already_linked = self.filtered(lambda r: r.purchase_requisition_id)
-        if already_linked:
-            by_pr = {}
-            for rec in already_linked:
-                pr = rec.purchase_requisition_id
-                by_pr.setdefault(pr.display_name, set()).add(rec.tab)
-            lines = []
-            for pr_name, tabs in by_pr.items():
-                lines.append(
-                    "• %s (used by tabs: %s)"
-                    % (pr_name, ", ".join(sorted(tabs)))
-                )
-            raise ValidationError(
-                "The following selected line(s) have already been used to "
-                "create a Purchase Requisition:\n\n%s\n\n"
-                "Clear the reference on those lines first if you really need "
-                "to regenerate a PR."
-                % "\n".join(lines)
-            )
-
-        # ── 2. Aggregate the selected lines by product ────
-        #    product_id  →  {
-        #       'product':  product.product record,
-        #       'uom':      uom.product.uom,
-        #       'qty':      summed float,
-        #       'date':     earliest date found (for date_required),
-        #       'price':    product.standard_price,
-        #    }
-        aggregated = {}
-
-        for line in self:
-            product = line.product_id
-            if not product:
-                continue
-            key = product.id
-            entry = aggregated.get(key)
-            if entry is None:
-                entry = {
-                    'product': product,
-                    'uom':     product.uom_po_id or product.uom_id,
-                    'qty':     0.0,
-                    'date':    line.date,
-                    'price':   product.standard_price or 0.0,
-                }
-                aggregated[key] = entry
-
-            entry['qty'] += line.quantity or 0.0
-
-            # keep the earliest date_required among duplicates
-            if line.date and (not entry['date'] or line.date < entry['date']):
-                entry['date'] = line.date
-
-        if not aggregated:
-            raise ValidationError(
-                "No valid products found on the selected lines."
-            )
-
-        # ── 3. Build the PR header ────────────────────────
-        Requisition = self.env['purchase.requisition']
-        RequisitionLine = self.env['purchase.requisition.line']
-
-        all_dates = [e['date'] for e in aggregated.values() if e['date']]
-        date_start = min(all_dates) if all_dates else fields.Date.today()
-        date_end   = max(all_dates) if all_dates else fields.Date.today()
-
-        pr_vals = {'origin': 'Monthly Planning'}
-        if 'date_start' in Requisition._fields:
-            pr_vals['date_start'] = date_start
-        if 'date_end' in Requisition._fields:
-            pr_vals['date_end'] = date_end
-
-        mr_id = self.env.context.get('default_material_request_id')
-        if mr_id and 'material_request_id' in Requisition._fields:
-            pr_vals['material_request_id'] = mr_id
-
-        requisition = Requisition.create(pr_vals)
-
-        # ── 4. One PR line per product ────────────────────
-        line_vals_list = []
-        skipped_no_vendor = []
-
-        for entry in aggregated.values():
-            product = entry['product']
-            uom = entry['uom']
-
-            vals = {
-                'requisition_id': requisition.id,
-                'product_id': product.id,
-                'product_qty': entry['qty'],
-            }
-            if 'product_uom_id' in RequisitionLine._fields:
-                vals['product_uom_id'] = uom.id
-            elif 'product_uom' in RequisitionLine._fields:
-                vals['product_uom'] = uom.id
-            if 'date_required' in RequisitionLine._fields and entry['date']:
-                vals['date_required'] = entry['date']
-            if 'price_unit' in RequisitionLine._fields:
-                vals['price_unit'] = entry['price']
-
-            line_vals_list.append(vals)
-
-            if not product.seller_ids:
-                skipped_no_vendor.append(product.display_name)
-
-        RequisitionLine.create(line_vals_list)
-
-        # ── 5. Write the PR reference back on the source lines ──
-        for rec in self:
-            if not rec.tab or not rec.line_id:
-                continue
-            model_name = TAB_TO_LINE_MODEL.get(rec.tab)
-            if not model_name:
-                continue
-            self.env[model_name].browse(rec.line_id).write({
-                'purchase_requisition_id': requisition.id,
-            })
-
-        # ── 6. Chatter warning for missing vendors ────────
-        if skipped_no_vendor:
-            requisition.message_post(body=(
-                "The following products have no vendor configured. "
-                "They will need a vendor before RFQs can be sent: %s"
-            ) % ", ".join(skipped_no_vendor))
-
-        # ── 7. Open the new PR ────────────────────────────
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Purchase Requisition',
-            'res_model': 'purchase.requisition',
-            'res_id': requisition.id,
+            'name': _('Generate Purchase Requisition'),
+            'res_model': 'monthly.planning.pr.wizard',
             'view_mode': 'form',
-            'target': 'current',
+            'target': 'new',
+            'context': {
+                'active_model': 'report.monthly.planning.line',
+                'active_ids': self.ids,
+            },
         }
 
     # ── SQL view definition ────────────────────────────
