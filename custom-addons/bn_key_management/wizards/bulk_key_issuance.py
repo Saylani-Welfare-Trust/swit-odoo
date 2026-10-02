@@ -148,6 +148,6 @@ class BulkKeyIssuance(models.TransientModel):
         #         'The following keys are not in a returnable state (Donation Received / Pending):\n%s'
         #     ) % '\n'.join('  • %s' % k for k in invalid_keys))
 
-        for issuance in self.key_bunch_ids.key_ids:
+        for issuance in all_issuances:
             issuance.action_return()
         return True
