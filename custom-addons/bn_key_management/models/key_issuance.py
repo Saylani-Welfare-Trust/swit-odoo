@@ -147,7 +147,7 @@ class KeyIssuance(models.Model):
 
     def _bn_do_return(self):
         self.ensure_one()
-        if self.state != 'returned' and self.state not in ('donation_receive', 'pending'):
+        if self.state not in ('donation_receive', 'pending', 'returned'):
             raise UserError(_(
                 'Issuance "%(name)s" cannot be returned from status "%(state)s".'
             ) % {'name': self.display_name, 'state': self._bn_selection_label('state', self.state)})
