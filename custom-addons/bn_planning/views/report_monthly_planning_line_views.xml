@@ -33,9 +33,7 @@
                 <field name="planned_qty"/>
                 <field name="quantity"/>
                 <field name="qty_diff"/>
-                <field name="location_id"
-                    optional="hide"
-                    invisible="tab != 'livestock'"/>
+                <field name="location_id" optional="hide"/>
             </tree>
         </field>
     </record>

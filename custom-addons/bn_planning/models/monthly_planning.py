@@ -259,14 +259,20 @@ class MonthlyPlanning(models.Model):
                 raise ValidationError(
                     "Please select a Planning Type before activating."
                 )
-            # Freeze the planned quantities into planned_qty
-            for o2m_name in (
+
+            # Snapshot planned_qty + push the destination location down
+            # onto every line of every enabled tab.
+            o2m_names = (
                 'kitchen_line_ids', 'madaris_line_ids', 'medical_line_ids',
                 'livestock_line_ids', 'food_line_ids', 'ration_line_ids',
                 'meat_line_ids',
-            ):
+            )
+            for o2m_name in o2m_names:
                 for line in getattr(rec, o2m_name):
                     line.planned_qty = line.quantity
+                    if rec.location_dest_id:
+                        line.location_id = rec.location_dest_id
+
             rec.state = 'active'
 
     def action_set_draft(self):
@@ -350,7 +356,14 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         copy=False,
         help='Purchase Requisition that was generated from this planning line.',
     )
-    
+
+    location_id = fields.Many2one(
+        'stock.location',
+        string='Location',
+        domain="[('usage', 'in', ['internal'])]",
+        help='Destination location for this line. Auto-filled from the '
+             'plan\'s Destination Location when the plan is activated.',
+    )
 
     @api.depends('monthly_planning_id', 'monthly_planning_id.from_date')
     def _compute_min_line_date(self):
@@ -482,7 +495,6 @@ class MonthlyPlanningLivestock(models.Model):
     _name = 'monthly.planning.livestock'
     _inherit = 'monthly.planning.line.base'
     _description = 'Monthly Planning – Livestock Line'
-    location_id = fields.Many2one('stock.location', string="Location")
 
 
 class MonthlyPlanningFood(models.Model):

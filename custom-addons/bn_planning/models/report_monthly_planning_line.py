@@ -156,19 +156,19 @@ class ReportMonthlyPlanningLine(models.Model):
                     'kitchen'                      AS tab,
                     k.date                         AS date,
                     k.product_id                   AS product_id,
-                    NULL::integer                  AS location_id,
+                    k.location_id                  AS location_id,
                     k.quantity                     AS quantity,
                     k.planned_qty                  AS planned_qty,
                     k.purchase_requisition_id      AS purchase_requisition_id
                 FROM monthly_planning_kitchen k
                 UNION ALL
                 SELECT m.id, m.monthly_planning_id, 'madaris', m.date,
-                    m.product_id, NULL::integer, m.quantity, m.planned_qty,
+                    m.product_id, m.location_id, m.quantity, m.planned_qty,
                     m.purchase_requisition_id
                 FROM monthly_planning_madaris m
                 UNION ALL
                 SELECT md.id, md.monthly_planning_id, 'medical', md.date,
-                    md.product_id, NULL::integer, md.quantity, md.planned_qty,
+                    md.product_id, md.location_id, md.quantity, md.planned_qty,
                     md.purchase_requisition_id
                 FROM monthly_planning_medical md
                 UNION ALL
@@ -178,17 +178,17 @@ class ReportMonthlyPlanningLine(models.Model):
                 FROM monthly_planning_livestock l
                 UNION ALL
                 SELECT f.id, f.monthly_planning_id, 'food', f.date,
-                    f.product_id, NULL::integer, f.quantity, f.planned_qty,
+                    f.product_id, f.location_id, f.quantity, f.planned_qty,
                     f.purchase_requisition_id
                 FROM monthly_planning_food f
                 UNION ALL
                 SELECT r.id, r.monthly_planning_id, 'ration', r.date,
-                    r.product_id, NULL::integer, r.quantity, r.planned_qty,
+                    r.product_id, r.location_id, r.quantity, r.planned_qty,
                     r.purchase_requisition_id
                 FROM monthly_planning_ration r
                 UNION ALL
                 SELECT mt.id, mt.monthly_planning_id, 'meat', mt.date,
-                    mt.product_id, NULL::integer, mt.quantity, mt.planned_qty,
+                    mt.product_id, mt.location_id, mt.quantity, mt.planned_qty,
                     mt.purchase_requisition_id
                 FROM monthly_planning_meat mt
             ) sub
