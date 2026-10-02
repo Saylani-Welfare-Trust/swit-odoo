@@ -20,6 +20,7 @@
         'data/hr_employee_category.xml',
         'data/ir_module_category.xml',
         'security/groups.xml',
+        'security/access_right.xml',
         'security/ir.model.access.csv',
         'views/donation_box_request.xml',
         'views/donation_box_registration_intallation.xml',
