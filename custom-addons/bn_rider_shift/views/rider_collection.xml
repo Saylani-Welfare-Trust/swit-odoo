@@ -58,7 +58,6 @@
                 <filter string="Pending" name="filter_pending" domain="[('state', '=', 'pending')]" />
                 <filter string="Paid" name="filter_paid" domain="[('state', '=', 'paid')]" />
                 <separator />
-                <filter string="FCB" name="filter_fcb" domain="[('is_fcb', '=', True)]" />
                 <filter string="Complaint Generated" name="filter_complain_generated" domain="[('is_complain_generated', '=', True)]" />
                 <separator />
                 <filter string="Date" name="filter_date" date="date" />
