@@ -14,6 +14,30 @@
         </field>
     </record>
 
+    <record id="fetch_log_view_search" model="ir.ui.view">
+        <field name="name">fetch.log.view.search</field>
+        <field name="model">fetch.log</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="status" />
+                <field name="reason" />
+                <field name="fetch_history_id" />
+                <separator />
+                <filter string="Error" name="filter_error" domain="[('status', '=', 'Error')]" />
+                <filter string="Processing" name="filter_processing" domain="[('status', '=', 'Processing')]" />
+                <filter string="Skipped" name="filter_skipped" domain="[('status', '=', 'Skipped')]" />
+                <separator />
+                <filter string="Date" name="filter_create_date" date="create_date" />
+                <group string="Group By">
+                    <filter string="Status" name="group_status" domain="[]" context="{'group_by': 'status'}" />
+                    <filter string="Fetch History" name="group_fetch_history" domain="[]" context="{'group_by': 'fetch_history_id'}" />
+                    <filter string="Date" name="group_create_date" domain="[]" context="{'group_by': 'create_date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="fetch_all_log_action" model="ir.actions.act_window">
         <field name="name">Fetch All Logs</field>
         <field name="res_model">fetch.log</field>

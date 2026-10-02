@@ -41,6 +41,37 @@
         </field>
     </record>
 
+    <record id="rider_collection_view_search" model="ir.ui.view">
+        <field name="name">rider.collection.view.search</field>
+        <field name="model">rider.collection</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="rider_id" />
+                <field name="shop_name" />
+                <field name="lot_id" string="Box No." />
+                <field name="key_bunch_id" />
+                <field name="sub_zone_id" />
+                <separator />
+                <filter string="Not Collected" name="filter_not_collected" domain="[('state', '=', 'donation_not_collected')]" />
+                <filter string="Collected" name="filter_collected" domain="[('state', '=', 'donation_collected')]" />
+                <filter string="Submitted" name="filter_submitted" domain="[('state', '=', 'donation_submit')]" />
+                <filter string="Pending" name="filter_pending" domain="[('state', '=', 'pending')]" />
+                <filter string="Paid" name="filter_paid" domain="[('state', '=', 'paid')]" />
+                <separator />
+                <filter string="FCB" name="filter_fcb" domain="[('is_fcb', '=', True)]" />
+                <filter string="Complaint Generated" name="filter_complain_generated" domain="[('is_complain_generated', '=', True)]" />
+                <separator />
+                <filter string="Date" name="filter_date" date="date" />
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
+                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
+                    <filter string="Day" name="group_day" domain="[]" context="{'group_by': 'day'}" />
+                    <filter string="Date" name="group_date" domain="[]" context="{'group_by': 'date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="rider_collection_view_tree" model="ir.ui.view">
         <field name="name">rider.collection.view.tree</field>
         <field name="model">rider.collection</field>

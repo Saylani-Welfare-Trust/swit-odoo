@@ -1,6 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="rider_shift_view_search" model="ir.ui.view">
+        <field name="name">rider.shift.view.search</field>
+        <field name="model">rider.shift</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="rider_id" />
+                <separator />
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
+                <filter string="Done" name="filter_done" domain="[('state', '=', 'done')]" />
+                <separator />
+                <filter string="Start Date" name="filter_start_date" date="start_date" />
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
+                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
+                    <filter string="Start Date" name="group_start_date" domain="[]" context="{'group_by': 'start_date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="rider_shift_view_tree" model="ir.ui.view">
         <field name="name">rider.shift.view.tree</field>
         <field name="model">rider.shift</field>

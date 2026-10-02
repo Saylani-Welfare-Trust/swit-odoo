@@ -37,6 +37,36 @@
         <field name="groups_id" eval="[(4, ref('bn_import_donation.import_donation_manager_group'))]"/>
     </record>   
     
+    <record id="api_donation_view_search" model="ir.ui.view">
+        <field name="name">api.donation.view.search</field>
+        <field name="model">api.donation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="dn_number" />
+                <field name="donation_id" />
+                <field name="phone" />
+                <field name="email" />
+                <field name="cnic" />
+                <field name="donor_id" />
+                <field name="fetch_history_id" />
+                <separator />
+                <filter string="Partner Created" name="filter_created" domain="[('partner_creation_status', '=', 'created')]" />
+                <filter string="Partner Pending" name="filter_pending" domain="[('partner_creation_status', '=', 'pending')]" />
+                <filter string="Partner Skipped" name="filter_skipped" domain="[('partner_creation_status', '=', 'skipped')]" />
+                <filter string="Partner Failed" name="filter_failed" domain="[('partner_creation_status', '=', 'failed')]" />
+                <separator />
+                <filter string="Qurbani" name="filter_qurbani" domain="[('qurbani', '=', True)]" />
+                <filter string="Recurring" name="filter_recurring" domain="[('is_recurring', '=', True)]" />
+                <group string="Group By">
+                    <filter string="Partner Status" name="group_partner_status" domain="[]" context="{'group_by': 'partner_creation_status'}" />
+                    <filter string="Fetch History" name="group_fetch_history" domain="[]" context="{'group_by': 'fetch_history_id'}" />
+                    <filter string="Donation Type" name="group_donation_type" domain="[]" context="{'group_by': 'donation_type'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="api_donation_form_view" model="ir.ui.view">
         <field name="name">api.donation.form.view</field>
         <field name="model">api.donation</field>

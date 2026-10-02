@@ -13,6 +13,29 @@
         </field>
     </record>
 
+    <record id="import_donation_view_search" model="ir.ui.view">
+        <field name="name">import.donation.view.search</field>
+        <field name="model">import.donation</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="gateway_config_id" />
+                <field name="warehouse_id" />
+                <separator />
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
+                <filter string="Validated" name="filter_validated" domain="[('state', '=', 'validated')]" />
+                <filter string="Uploaded" name="filter_uploaded" domain="[('state', '=', 'uploaded')]" />
+                <filter string="Sync Donor" name="filter_sync_donor" domain="[('state', '=', 'sync_donor')]" />
+                <filter string="Confirmed" name="filter_confirmed" domain="[('state', '=', 'confirmed')]" />
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
+                    <filter string="Gateway Config" name="group_gateway_config" domain="[]" context="{'group_by': 'gateway_config_id'}" />
+                    <filter string="Warehouse" name="group_warehouse" domain="[]" context="{'group_by': 'warehouse_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="import_donation_view_form" model="ir.ui.view">
         <field name="name">import.donation.view.form</field>
         <field name="model">import.donation</field>
