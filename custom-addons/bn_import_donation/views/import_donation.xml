@@ -143,7 +143,7 @@
     <menuitem
         id="import_donation_root_menu"
         name="Donation (Inflows)"
-        groups="bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_audit_group"
+        groups="bn_import_donation.import_donation_root_group"
         web_icon="bn_import_donation,static/description/icon.png"
         sequence="6"/>
 

@@ -1,40 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="module_profile_management" model="ir.module.category">
-        <field name="name">Profile Management</field>
-        <field name="sequence">50</field>
+    <!-- Sole gate on the root app menu. Every tier below implies it, so being
+         in ANY tier is enough to see the app; the tiers then decide what you
+         can actually do once inside. Not meant to be assigned on its own. -->
+    <record id="profile_management_root_group" model="res.groups">
+        <field name="name">Access Root Menu</field>
+        <field name="category_id" ref="module_profile_management"/>
+        <field name="comment">Grants visibility of the Profile Management app menu. Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
     </record>
 
     <!-- Row-level scope restriction (can only edit Donor-tagged contacts) -
          a genuinely different kind of group from the CRUD tiers below, so
          it stays separate rather than being folded into them. -->
     <record id="profile_management_edit_donor_access_group" model="res.groups">
-        <field name="name">Profile Management / Edit Donor</field>
+        <field name="name">Edit Donor</field>
         <field name="category_id" ref="module_profile_management"/>
     </record>
 
     <record id="profile_management_user_group" model="res.groups">
-        <field name="name">Profile Management / User</field>
+        <field name="name">User</field>
         <field name="category_id" ref="module_profile_management"/>
+        <field name="implied_ids" eval="[(4, ref('profile_management_root_group'))]"/>
         <field name="comment">Day-to-day access: create, edit and read contacts. Cannot delete, and cannot change which fields/pages a profile type shows.</field>
     </record>
 
     <record id="profile_management_manager_group" model="res.groups">
-        <field name="name">Profile Management / Manager</field>
+        <field name="name">Manager</field>
         <field name="category_id" ref="module_profile_management"/>
         <field name="comment">Everything User can do, plus configuring profile types: Area, and which fields/pages each tag shows (Configuration menu).</field>
         <field name="implied_ids" eval="[(4, ref('profile_management_user_group'))]"/>
     </record>
 
     <record id="profile_management_audit_group" model="res.groups">
-        <field name="name">Profile Management / Audit</field>
+        <field name="name">Audit</field>
         <field name="category_id" ref="module_profile_management"/>
+        <field name="implied_ids" eval="[(4, ref('profile_management_root_group'))]"/>
         <field name="comment">Read-only oversight of contacts and profile-type configuration, for reporting. No create, write or delete anywhere.</field>
     </record>
 
     <record id="profile_management_admin_group" model="res.groups">
-        <field name="name">Profile Management / Admin</field>
+        <field name="name">Admin</field>
         <field name="category_id" ref="module_profile_management"/>
         <field name="comment">Full control, including delete, plus everything Manager can configure.</field>
         <field name="implied_ids" eval="[

@@ -58,6 +58,7 @@
                 <filter string="Pending" name="filter_pending" domain="[('state', '=', 'pending')]" />
                 <filter string="Paid" name="filter_paid" domain="[('state', '=', 'paid')]" />
                 <separator />
+                <filter string="FCB" name="filter_fcb" domain="[('is_fcb', '=', True)]" />
                 <filter string="Complaint Generated" name="filter_complain_generated" domain="[('is_complain_generated', '=', True)]" />
                 <separator />
                 <filter string="Date" name="filter_date" date="date" />
@@ -116,7 +117,6 @@
         id="rider_collection_menu"
         name="Collection"
         action="rider_collection_action"
-        groups="bn_rider_shift.rider_shift_user_group,bn_rider_shift.rider_shift_audit_group"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="1"/>
 

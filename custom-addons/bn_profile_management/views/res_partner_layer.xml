@@ -348,7 +348,7 @@
         id="profile_management_menu"
         name="Profile Management"
         web_icon="bn_profile_management,static/description/icon.png"
-        groups="bn_profile_management.profile_management_user_group,bn_profile_management.profile_management_audit_group"
+        groups="bn_profile_management.profile_management_root_group"
         sequence="6"/>
     
     <menuitem

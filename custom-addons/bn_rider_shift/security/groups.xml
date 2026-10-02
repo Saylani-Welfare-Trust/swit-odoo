@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="module_rider_shift" model="ir.module.category">
-        <field name="name">Rider Shift</field>
-        <field name="sequence">50</field>
+    <!-- Sole gate on this module's section-root menu (nested under the
+         Donation Box app icon). Also implies bn_donation_box's own root
+         group, so a user with only Rider Shift access still sees the
+         parent Donation Box app icon needed to reach this section at all. -->
+    <record id="rider_shift_root_group" model="res.groups">
+        <field name="name">Access Root Menu</field>
+        <field name="category_id" ref="module_rider_shift"/>
+        <field name="implied_ids" eval="[(4, ref('bn_donation_box.donation_box_root_group'))]"/>
+        <field name="comment">Grants visibility of the Rider section (and the parent Donation Box app icon). Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
     </record>
 
     <!-- Distinct capability groups, kept separate since they're referenced
@@ -22,13 +28,14 @@
     <!-- CRUD tiers for this module's own models, matching the User/Admin
          convention used everywhere else. -->
     <record id="rider_shift_user_group" model="res.groups">
-        <field name="name">Rider Shift / User</field>
+        <field name="name">User</field>
         <field name="category_id" ref="module_rider_shift"/>
+        <field name="implied_ids" eval="[(4, ref('rider_shift_root_group'))]"/>
         <field name="comment">Day-to-day access to shifts, schedules and collections. Cannot delete or edit collected amounts.</field>
     </record>
 
     <record id="rider_shift_manager_group" model="res.groups">
-        <field name="name">Rider Shift / Manager</field>
+        <field name="name">Manager</field>
         <field name="category_id" ref="module_rider_shift"/>
         <field name="comment">Everything User can do, plus editing collected Amount / Notes and Foreign Currency Collection entries.</field>
         <field name="implied_ids" eval="[
@@ -38,13 +45,14 @@
     </record>
 
     <record id="rider_shift_audit_group" model="res.groups">
-        <field name="name">Rider Shift / Audit</field>
+        <field name="name">Audit</field>
         <field name="category_id" ref="module_rider_shift"/>
+        <field name="implied_ids" eval="[(4, ref('rider_shift_root_group'))]"/>
         <field name="comment">Read-only oversight across shifts, schedules and collections, for reporting. No create, write or delete anywhere.</field>
     </record>
 
     <record id="rider_shift_admin_group" model="res.groups">
-        <field name="name">Rider Shift / Admin</field>
+        <field name="name">Admin</field>
         <field name="category_id" ref="module_rider_shift"/>
         <field name="comment">Full control, including delete.</field>
         <field name="implied_ids" eval="[(4, ref('rider_shift_manager_group')), (4, ref('rider_shift_audit_group'))]"/>

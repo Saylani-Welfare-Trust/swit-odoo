@@ -4,7 +4,7 @@
     <menuitem
         id="master_setup_menu"
         name="Master Setup"
-        groups="bn_master_setup.master_setup_user_group,bn_master_setup.master_setup_audit_group"
+        groups="bn_master_setup.master_setup_root_group"
         web_icon="bn_master_setup,static/description/icon.png"
         sequence="100"/>
 

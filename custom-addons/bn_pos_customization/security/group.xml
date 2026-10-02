@@ -1,16 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="module_pos_customization" model="ir.module.category">
-        <field name="name">POS Customization</field>
-        <field name="sequence">50</field>
-    </record>
-
     <!-- Not a CRUD-granting tier - POS Order/Session/Payment/Config CRUD comes
          from Odoo's own point_of_sale groups. This group scopes visibility
          to a cashier's own shop, orders, sessions and payments only. -->
     <record id="pos_customization_user_group" model="res.groups">
-        <field name="name">POS Customization / Own Shop Only</field>
+        <field name="name">Own Shop Only</field>
         <field name="category_id" ref="module_pos_customization"/>
         <field name="comment">Row-level restriction: this user only sees their own POS shop, orders, sessions and payments. Not a CRUD tier.</field>
     </record>

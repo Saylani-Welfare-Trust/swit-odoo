@@ -11,6 +11,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        'data/ir_module_category.xml',
         'data/server_action.xml',
         'data/res_partner_category.xml',
         'data/profile_management_page.xml',
