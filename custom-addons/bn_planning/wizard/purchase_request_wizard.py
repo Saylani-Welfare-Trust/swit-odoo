@@ -305,3 +305,9 @@ class MonthlyPlanningPrWizardLine(models.TransientModel):
     date_required = fields.Date(string='Required By')
     price_unit    = fields.Float(string='Unit Price')
     source_refs   = fields.Char(string='Source Refs')
+    
+    mode = fields.Selection(
+        related='wizard_id.mode',
+        string='Mode',
+        store=False,
+    )
