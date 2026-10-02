@@ -8,12 +8,12 @@
         <field name="arch" type="xml">
             <tree create="false" edit="false" delete="false">
                 <header>
-                    <button name="action_generate_purchase_request"
+                    <button name="action_generate_purchase_requisition"
                             type="object"
-                            string="Generate Purchase Request"
+                            string="Generate Purchase Requisition"
                             class="btn-primary"
                             groups="purchase.group_purchase_user"
-                            help="Create a draft Purchase Request from the selected report lines."/>
+                            help="Create a draft Purchase Requisition from the selected report lines."/>
                 </header>
                 <field name="monthly_planning_id"/>
                 <field name="from_date"/>
