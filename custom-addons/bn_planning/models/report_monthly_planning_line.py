@@ -81,92 +81,98 @@ class ReportMonthlyPlanningLine(models.Model):
             rec.qty_diff = (rec.quantity or 0.0) - (rec.planned_qty or 0.0)
 
     # ── PR generation ─────────────────────────────────
-    def action_generate_purchase_request(self):
-        """Create ONE draft Purchase Request from the selected lines."""
+    def action_generate_purchase_requisition(self):
+        """Create a draft Purchase Requisition from the selected report lines.
+
+        Works with both the standard purchase.requisition model and the
+        customized one used by bn_procurement_workflow — the method only
+        writes fields it can actually find on the model.
+        """
         if not self:
             raise ValidationError(
-                "Please select at least one line before generating a Purchase Request."
+                "Please select at least one line before generating a "
+                "Purchase Requisition."
             )
 
-        # Optional guard — make sure OCA purchase_request module is installed
-        if 'purchase.request' not in self.env:
-            raise ValidationError(
-                "The Purchase Request module is not installed on this database."
-            )
+        Requisition = self.env['purchase.requisition']
+        RequisitionLine = self.env['purchase.requisition.line']
 
-        PurchaseRequest = self.env['purchase.request']
-        PurchaseRequestLine = self.env['purchase.request.line']
-
-        # Requested by = current user's employee, fallback to current user
-        employee = self.env['hr.employee'].search(
-            [('user_id', '=', self.env.uid)], limit=1
-        )
-
-        # Earliest / latest line dates become the request's date window
+        # ── Date range from selected lines ────────────────
         dates = [ln.date for ln in self if ln.date]
         date_start = min(dates) if dates else fields.Date.today()
-        date_end = max(dates) if dates else fields.Date.today()
+        date_end   = max(dates) if dates else fields.Date.today()
 
-        # ── Build the request header ──────────────────────
-        pr_vals = {
-            'origin': 'Monthly Planning',
-            'date_start': date_start,
-            'date_end': date_end,
-        }
-        # These fields exist in OCA PR — set them if present
-        if 'requested_by' in PurchaseRequest._fields and employee:
-            pr_vals['requested_by'] = employee.id
-        if 'description' in PurchaseRequest._fields:
-            pr_vals['description'] = (
-                "Auto-generated from Monthly Planning report."
-            )
+        # ── Header values (only set fields that exist) ────
+        pr_vals = {'origin': 'Monthly Planning'}
 
-        pr = PurchaseRequest.create(pr_vals)
+        if 'date_start' in Requisition._fields:
+            pr_vals['date_start'] = date_start
+        if 'date_end' in Requisition._fields:
+            pr_vals['date_end'] = date_end
 
-        # ── Build the request lines ───────────────────────
-        no_vendor_products = []
-        created_lines = self.env['purchase.request.line']
+        # If the caller passes a Material Request via context, link it.
+        mr_id = self.env.context.get('default_material_request_id')
+        if mr_id and 'material_request_id' in Requisition._fields:
+            pr_vals['material_request_id'] = mr_id
+
+        requisition = Requisition.create(pr_vals)
+
+        # ── Build the line items ──────────────────────────
+        line_vals_list = []
+        skipped_no_vendor = []
 
         for line in self:
             product = line.product_id
             if not product:
                 continue
 
-            # Warn if product has no vendor (useful for the later RFQ step)
-            if not product.seller_ids:
-                no_vendor_products.append(product.display_name)
-
             uom = product.uom_po_id or product.uom_id
 
-            line_vals = {
-                'request_id': pr.id,
+            vals = {
+                'requisition_id': requisition.id,
                 'product_id': product.id,
                 'product_qty': line.quantity or 0.0,
-                'product_uom_id': uom.id,
-                'name': product.display_name,
-                'date_required': line.date or fields.Date.today(),
             }
-            # Some OCA versions expect a different field name
-            if 'uom_id' in PurchaseRequestLine._fields and \
-               'product_uom_id' not in PurchaseRequestLine._fields:
-                line_vals.pop('product_uom_id', None)
-                line_vals['uom_id'] = uom.id
 
-            created_lines |= PurchaseRequestLine.create(line_vals)
+            # Odoo 17 standard uses product_uom_id
+            if 'product_uom_id' in RequisitionLine._fields:
+                vals['product_uom_id'] = uom.id
+            elif 'product_uom' in RequisitionLine._fields:
+                vals['product_uom'] = uom.id
 
-        # Log the products without a vendor onto the request's chatter
-        if no_vendor_products:
-            pr.message_post(
-                body="Products without a configured vendor: %s"
-                     % ", ".join(no_vendor_products)
+            if 'date_required' in RequisitionLine._fields and line.date:
+                vals['date_required'] = line.date
+            if 'price_unit' in RequisitionLine._fields:
+                vals['price_unit'] = product.standard_price or 0.0
+
+            line_vals_list.append(vals)
+
+            # Track products missing a vendor — needed for the later RFQ step
+            if not product.seller_ids:
+                skipped_no_vendor.append(product.display_name)
+
+        if not line_vals_list:
+            # Nothing was created — clean up the empty header and stop
+            requisition.unlink()
+            raise ValidationError(
+                "No valid products found on the selected lines."
             )
 
-        # ── Open the newly created Purchase Request ───────
+        RequisitionLine.create(line_vals_list)
+
+        # Chatter warning for products without a vendor
+        if skipped_no_vendor:
+            requisition.message_post(body=(
+                "The following products have no vendor configured. "
+                "They will need a vendor before RFQs can be sent: %s"
+            ) % ", ".join(skipped_no_vendor))
+
+        # ── Open the newly created Purchase Requisition ───
         return {
             'type': 'ir.actions.act_window',
-            'name': 'Purchase Request',
-            'res_model': 'purchase.request',
-            'res_id': pr.id,
+            'name': 'Purchase Requisition',
+            'res_model': 'purchase.requisition',
+            'res_id': requisition.id,
             'view_mode': 'form',
             'target': 'current',
         }
