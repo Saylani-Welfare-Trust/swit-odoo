@@ -23,17 +23,6 @@ class ReportMonthlyPlanningLine(models.Model):
     to_date = fields.Date(
         related='monthly_planning_id.to_date', string='To Date', store=False,
     )
-    planned_qty = fields.Float(string='Planned Qty', readonly=True)
-
-    qty_diff = fields.Float(
-        string='Difference',
-        compute='_compute_qty_diff',
-    )
-
-    @api.depends('quantity', 'planned_qty')
-    def _compute_qty_diff(self):
-        for rec in self:
-            rec.qty_diff = (rec.quantity or 0.0) - (rec.planned_qty or 0.0)
 
     # ── Line info ──────────────────────────────────────
     tab = fields.Selection(
@@ -52,11 +41,21 @@ class ReportMonthlyPlanningLine(models.Model):
     product_id = fields.Many2one('product.product', string='Product', readonly=True)
     location_id = fields.Many2one('stock.location', string='Location', readonly=True)
     quantity = fields.Float(string='Quantity', readonly=True)
+    planned_qty = fields.Float(string='Planned Qty', readonly=True)
 
     display_name = fields.Char(compute='_compute_display_name')
 
     on_hand_qty = fields.Float(
         string='On Hand', compute='_compute_on_hand_qty',
+    )
+
+    qty_diff = fields.Float(
+        string='Difference', compute='_compute_qty_diff',
+    )
+
+    is_locked = fields.Boolean(
+        related='monthly_planning_id.is_locked',
+        string='Locked', store=False,
     )
 
     @api.depends('product_id', 'tab')
@@ -76,43 +75,12 @@ class ReportMonthlyPlanningLine(models.Model):
             else:
                 rec.on_hand_qty = 0.0
 
-    is_locked = fields.Boolean(
-        related='monthly_planning_id.is_locked',
-        string='Locked',
-        store=False,
-    )
+    @api.depends('quantity', 'planned_qty')
+    def _compute_qty_diff(self):
+        for rec in self:
+            rec.qty_diff = (rec.quantity or 0.0) - (rec.planned_qty or 0.0)
 
-    @api.constrains('monthly_planning_id', 'date', 'product_id')
-    def _check_locked_plan(self):
-        for rec in self:
-            if rec.monthly_planning_id.is_locked:
-                raise ValidationError(
-                    "This Monthly Planning is locked (period ended on %s). "
-                    "You cannot add or modify lines."
-                    % rec.monthly_planning_id.to_date
-                )
-                
-    def write(self, vals):
-        for rec in self:
-            if rec.monthly_planning_id.is_locked:
-                raise ValidationError(
-                    "This Monthly Planning is locked (period ended on %s). "
-                    "Lines cannot be modified."
-                    % rec.monthly_planning_id.to_date
-                )
-        return super().write(vals)
-
-    def unlink(self):
-        for rec in self:
-            if rec.monthly_planning_id.is_locked:
-                raise ValidationError(
-                    "This Monthly Planning is locked (period ended on %s). "
-                    "Lines cannot be deleted."
-                    % rec.monthly_planning_id.to_date
-                )
-        return super().unlink()
-    
-    # RFQ Generation
+    # ── RFQ generation ─────────────────────────────────
     def action_generate_rfq(self):
         """Create one draft Purchase Order (RFQ) per vendor from the selected lines."""
         if not self:
@@ -165,6 +133,13 @@ class ReportMonthlyPlanningLine(models.Model):
             })
             created_pos |= po
 
+        # Warn about skipped products via the first PO's chatter
+        if no_vendor_products and created_pos:
+            created_pos[0].message_post(
+                body="Skipped products without a vendor: %s"
+                     % ", ".join(no_vendor_products)
+            )
+
         # Return an action that shows the newly created RFQ(s)
         action = {
             'type': 'ir.actions.act_window',
@@ -178,13 +153,6 @@ class ReportMonthlyPlanningLine(models.Model):
             action['res_id'] = created_pos.id
         else:
             action['domain'] = [('id', 'in', created_pos.ids)]
-
-        # Optional: warn about products without a vendor
-        if no_vendor_products:
-            _logger.warning(
-                "RFQ generated — skipped products without a vendor: %s",
-                ', '.join(no_vendor_products),
-            )
 
         return action
 
