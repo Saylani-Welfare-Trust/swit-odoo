@@ -1,5 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from datetime import datetime, time as dtime
+
 
 TAB_TO_LINE_MODEL = {
     'kitchen':   'monthly.planning.kitchen',
@@ -21,7 +23,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         'monthly.planning.pr.wizard.line', 'wizard_id',
         string='Products',
     )
-    
+
     mode = fields.Selection(
         selection=[
             ('full',       'Full Demand'),
@@ -82,7 +84,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                     'date':    line.date,
                     'price':   product.standard_price or 0.0,
                     'refs':    [],
-                    'prs':     set(),   # PRs referenced by these lines
+                    'prs':     set(),
                 }
                 aggregated[product.id] = entry
             entry['demand'] += line.quantity or 0.0
@@ -104,8 +106,6 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                 if source_loc else 0.0
             )
 
-            # In difference mode, subtract what has already been ordered via
-            # the PRs these lines are linked to.
             already_ordered = 0.0
             if mode == 'difference' and entry['prs']:
                 prs = self.env['purchase.requisition'].browse(list(entry['prs']))
@@ -151,15 +151,35 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         Requisition = self.env['purchase.requisition']
         RequisitionLine = self.env['purchase.requisition.line']
 
-        dates = [l.date_required for l in lines if l.date_required]
-        date_start = min(dates) if dates else fields.Date.today()
-        date_end   = max(dates) if dates else fields.Date.today()
+        # ── Dates ─────────────────────────────────────────
+        #   date_start  = earliest "Required By" on the wizard lines (fallback: today)
+        #   date_end    = TODAY (the day the PR is being generated)
+        #
+        # purchase.requisition.date_start / date_end are Datetime fields in
+        # Odoo 17, so we hand them real datetime objects. Passing a plain
+        # date silently falls through to the model's default (Datetime.now),
+        # which is why the PR used to show "generated on" as its end date.
+        today = fields.Date.today()
+        rdates = [l.date_required for l in lines if l.date_required]
+        start_d = min(rdates) if rdates else today
+        end_d   = today
 
-        pr_vals = {'origin': self.origin or 'Monthly Planning'}
+        date_start_dt = datetime.combine(start_d, dtime.min)   # 00:00:00
+        date_end_dt   = datetime.combine(end_d,   dtime.max)   # 23:59:59.999999
+
+        # ── Origin label ──────────────────────────────────
+        origin_label = (
+            'Monthly Planning (Difference)'
+            if self.mode == 'difference'
+            else (self.origin or 'Monthly Planning')
+        )
+
+        # ── Build the PR header (single, correct dict) ────
+        pr_vals = {'origin': origin_label}
         if 'date_start' in Requisition._fields:
-            pr_vals['date_start'] = date_start
+            pr_vals['date_start'] = date_start_dt
         if 'date_end' in Requisition._fields:
-            pr_vals['date_end'] = date_end
+            pr_vals['date_end'] = date_end_dt
 
         mr_id = self.env.context.get('default_material_request_id')
         if mr_id and 'material_request_id' in Requisition._fields:
@@ -167,15 +187,10 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         requisition = Requisition.create(pr_vals)
 
-        origin_label = (
-            'Monthly Planning (Difference)'
-            if self.mode == 'difference'
-            else 'Monthly Planning'
-        )
-        pr_vals = {'origin': origin_label}
-        
+        # ── Build the PR lines ────────────────────────────
         pr_line_vals = []
         skipped_no_vendor = []
+
         for l in lines:
             product = l.product_id
             uom = l.uom_id or product.uom_po_id or product.uom_id
@@ -201,6 +216,7 @@ class MonthlyPlanningPrWizard(models.TransientModel):
 
         RequisitionLine.create(pr_line_vals)
 
+        # ── Write the PR back onto the source planning lines ──
         for l in lines:
             if not l.source_refs:
                 continue
@@ -220,12 +236,14 @@ class MonthlyPlanningPrWizard(models.TransientModel):
                     'purchase_requisition_id': requisition.id,
                 })
 
+        # ── Chatter warning for products without a vendor ──
         if skipped_no_vendor:
             requisition.message_post(body=_(
                 "The following products have no vendor configured. They "
                 "will need a vendor before RFQs can be sent: %s"
             ) % ", ".join(skipped_no_vendor))
 
+        # ── Open the new PR ───────────────────────────────
         return {
             'type': 'ir.actions.act_window',
             'name': _('Purchase Requisition'),
@@ -245,11 +263,11 @@ class MonthlyPlanningPrWizardLine(models.TransientModel):
         required=True, ondelete='cascade',
     )
     # No readonly anywhere — the wizard line is fully editable.
-    product_id = fields.Many2one('product.product')
-    uom_id = fields.Many2one('uom.uom', string='UoM')
-    demand_qty = fields.Float(string='Demand Qty')
-    on_hand_qty = fields.Float(string='On Hand Qty')
-    order_qty = fields.Float(string='Order Qty')
+    product_id    = fields.Many2one('product.product')
+    uom_id        = fields.Many2one('uom.uom', string='UoM')
+    demand_qty    = fields.Float(string='Demand Qty')
+    on_hand_qty   = fields.Float(string='On Hand Qty')
+    order_qty     = fields.Float(string='Order Qty')
     date_required = fields.Date(string='Required By')
-    price_unit = fields.Float(string='Unit Price')
-    source_refs = fields.Char(string='Source Refs')
+    price_unit    = fields.Float(string='Unit Price')
+    source_refs   = fields.Char(string='Source Refs')
