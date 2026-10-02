@@ -529,7 +529,6 @@ patch(PaymentScreen.prototype, {
                         'order_name': currentOrder.name,  // Use order name as donation identifier
                         'amount': donationAmount,
                         'donor_id': partner ? partner.id : null,
-                        'favor': currentOrder.favor || false,
                         'product_id': donationLine.product.id,
                     };
                     

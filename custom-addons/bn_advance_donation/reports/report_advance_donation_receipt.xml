@@ -88,7 +88,7 @@
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <div><strong>Receipt #:</strong> <t t-esc="receipt.name or '--'"/></div>
-                                    <div name="donor_name"><strong>Donor Name:</strong> <t t-esc="receipt.favor or receipt.donor_id.name or '-'"/></div>
+                                    <div name="donor_name"><strong>Donor Name:</strong> <t t-esc="receipt.donor_id.name or '-'"/></div>
                                     <!-- Donor Mobile Number -->
                                     <div t-if="receipt.donor_id.mobile">
                                         <strong>Mobile Number:</strong> <t t-esc="receipt.donor_id.mobile or '-'"/>
@@ -196,7 +196,7 @@
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <div><strong>Receipt #:</strong> <t t-esc="receipt.name or '--'"/></div>
-                                    <div><strong>Donor Name:</strong> <t t-esc="receipt.favor or receipt.donor_id.name or '-'"/></div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="receipt.donor_id.name or '-'"/></div>
                                     <!-- Donor Mobile Number in Footer -->
                                     <div t-if="receipt.donor_id.mobile">
                                         <strong>Mobile Number:</strong> <t t-esc="receipt.donor_id.mobile"/>

@@ -52,7 +52,6 @@ class PosOrder(models.Model):
                     'amount': line.price_subtotal_incl,
                     'product_id': line.product_id.id,
                     'donor_id': order.partner_id.id if order.partner_id else False,
-                    'favor': order.favor if 'favor' in order._fields else False,
                     'date': order.date_order.date() if order.date_order else fields.Date.today(),
                     'order_id': order.id,
                     'pos_order_id': order.id,

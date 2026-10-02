@@ -81,8 +81,6 @@ class POSCheque(models.Model):
         donor_lines = self._get_donor_account_order_lines()
         Receipt = self.env['advance.donation.receipt']
         created = Receipt
-        pos_order = donor_lines[:1].order_id
-        favor = pos_order.favor if 'favor' in pos_order._fields else False
     
         for line in donor_lines:
             amount = line.price_subtotal_incl
@@ -91,7 +89,6 @@ class POSCheque(models.Model):
     
             receipt = Receipt.create({
                 'donor_id': self.donor_id.id,
-                'favor': favor or False,
                 'amount': amount,
                 'product_id': line.product_id.id,
                 'payment_type': 'cheque',
