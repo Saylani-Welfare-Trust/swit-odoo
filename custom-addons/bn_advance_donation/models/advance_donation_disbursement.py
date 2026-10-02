@@ -22,5 +22,7 @@ class AdvanceDonationDisbursementLine(models.Model):
     disbursed_record= fields.Char(string="Disbursed Record", help="Reference to the record where this disbursement is recorded (e.g., welfare line, microfinance record)")
     
     def action_print_line_non_cash_disbursement_report(self):
-        """Print non-cash donation report for this specific line"""
-        return self.env.ref('bn_advance_donation.action_report_advance_donation_disbursement_line').report_action(self)
+        """Print the disbursement certificate, consolidated when several lines are selected"""
+        report = 'action_report_advance_donation_disbursement_line' if len(self) == 1 \
+            else 'action_report_advance_donation_disbursement_line_consolidated'
+        return self.env.ref('bn_advance_donation.%s' % report).report_action(self)

@@ -86,5 +86,7 @@ class AdvanceDonationLine(models.Model):
         if not_disbursed:
             raise UserError(_('Only disbursed lines can be printed. Not disbursed: %s')
                             % ', '.join(not_disbursed.mapped(lambda l: l.serial_no or l.product_id.display_name or str(l.id))))
-        return self.env.ref('bn_advance_donation.action_report_advance_donation_line_non_cash').report_action(self)
+        report = 'action_report_advance_donation_line_non_cash' if len(self) == 1 \
+            else 'action_report_advance_donation_line_non_cash_consolidated'
+        return self.env.ref('bn_advance_donation.%s' % report).report_action(self)
     
