@@ -9,7 +9,7 @@
         'bn_welfare',
         'bn_advance_donation',
         'bn_microfinance',
-        'bn_livestock_slaugther'
+        'bn_livestock_slaugther',
         
     ],
     'data': [
