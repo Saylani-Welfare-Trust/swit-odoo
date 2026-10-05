@@ -13,6 +13,7 @@
                 <field name="journal_id" string="Journal" />
                 <field name="amount" />
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'posted'" />
+                <field name="notification_state" widget="badge" decoration-warning="notification_state == 'pending'" decoration-success="notification_state == 'sent'" decoration-danger="notification_state == 'failed'" optional="show" />
             </tree>
         </field>
     </record>
@@ -50,6 +51,8 @@
                             <field name="gateway_config_id" string="Gateway/File Ref" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
                             <field name="amount" readonly="state == 'posted'" />
                             <field name="reference" readonly="state == 'posted'" />
+                            <field name="notification_state" readonly="1" invisible="not notification_state" />
+                            <field name="notification_result" readonly="1" invisible="not notification_state" />
                         </group>
                     </group>
                 </sheet>

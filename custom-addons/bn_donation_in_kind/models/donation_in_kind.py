@@ -67,16 +67,15 @@ class DonationInKind(models.Model):
 
     # ---------- DONATION NOTIFICATION ----------
     def _build_din_receipt_message(self):
-        self.ensure_one()
         donation_items = ""
         for line in self.donation_in_kind_line_ids:
             donation_items += f"{line.quantity} x {line.product_id.name}\n"
 
-        return f"""Dear {self.donor_id.name},
+        return f"""Dear {self.donor_id[:1].name},
 
 Thank you for your donation!
 
-Reference: {self.name}
+Reference: {', '.join(self.mapped('name'))}
 Items:
 {donation_items}
 
@@ -88,7 +87,7 @@ May Allah bless you!
         try:
             pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
                 'bn_donation_in_kind.donation_in_kind_report',   # <- was 'bn_donation_in_kind.report_donation_in_kind'
-                [self.id]
+                self.ids
             )
             return pdf_data
         except Exception as e:
@@ -124,12 +123,14 @@ May Allah bless you!
         return attachment, pdf_url
 
     def _send_din_notification(self):
-        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when a
-        Donation In Kind record is created from POS."""
-        self.ensure_one()
-        donor = self.donor_id
+        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when
+        Donation In Kind records are created from POS. A POS order creates
+        one record per order line, so self holds all of them and the donor
+        gets a single message covering the whole order."""
+        names = ', '.join(self.mapped('name'))
+        donor = self.donor_id[:1]
         if not donor:
-            _logger.warning('DIN %s created with no donor_id set - skipping notification', self.name)
+            _logger.warning('DIN %s created with no donor_id set - skipping notification', names)
             return {'status': 'error', 'message': 'No donor on this record'}
 
         message = self._build_din_receipt_message()
@@ -145,19 +146,19 @@ May Allah bless you!
                 if not pdf_data or not pdf_data.startswith(b'%PDF'):
                     raise Exception("Invalid PDF generated")
 
-                attachment, pdf_url = self._save_din_receipt_attachment(pdf_data)
+                attachment, pdf_url = self[-1]._save_din_receipt_attachment(pdf_data)
                 _logger.info('DIN receipt PDF URL: %s', pdf_url)
 
                 self.env['whatsapp.service'].send_template_message(
                     donor.whatsapp,
                     pdf_url,
-                    f"Receipt_{self.name}.pdf"
+                    attachment.name
                 )
                 whatsapp_ok = True
-                _logger.info('DIN WhatsApp sent successfully for %s', self.name)
+                _logger.info('DIN WhatsApp sent successfully for %s', names)
             except Exception as e:
                 whatsapp_error = str(e)
-                _logger.error('DIN WhatsApp failed for %s: %s', self.name, whatsapp_error)
+                _logger.error('DIN WhatsApp failed for %s: %s', names, whatsapp_error)
         else:
             whatsapp_error = "No WhatsApp number"
 
@@ -166,10 +167,10 @@ May Allah bless you!
             try:
                 self.env['sms.service'].send_sms(mobile, message)
                 sms_ok = True
-                _logger.info('DIN SMS sent successfully for %s', self.name)
+                _logger.info('DIN SMS sent successfully for %s', names)
             except Exception as e:
                 sms_error = str(e)
-                _logger.error('DIN SMS failed for %s: %s', self.name, sms_error)
+                _logger.error('DIN SMS failed for %s: %s', names, sms_error)
         else:
             sms_error = "No contact number"
 
@@ -585,6 +586,7 @@ May Allah bless you!
     @api.model
     def create_din_record(self, data):
         din = None
+        dins = self.browse()
         
         if not data:
             return {
@@ -604,11 +606,11 @@ May Allah bless you!
                     'remarks': line['remarks'],
                 })]
             })
-
-        din.set_remarks()
+            din.set_remarks()
+            dins |= din
 
         try:
-            din._send_din_notification()
+            dins._send_din_notification()
         except Exception as e:
             _logger.error('DIN %s: notification step failed: %s', din.name, str(e))
 

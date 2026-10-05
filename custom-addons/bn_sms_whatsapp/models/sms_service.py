@@ -16,7 +16,7 @@ class SmsService(models.Model):
             "mobileno": mobile
         }
 
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=30)
 
         if response.status_code != 200:
             raise Exception(response.text)

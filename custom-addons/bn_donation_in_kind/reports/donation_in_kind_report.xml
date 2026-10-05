@@ -9,7 +9,7 @@
             <t t-call="web.basic_layout">
                 <t t-foreach="docs" t-as="o">
                     <!-- PAGE WRAPPER -->
-                    <div class="page" style="position:relative;">
+                    <div class="page" t-attf-style="position:relative;#{'' if o_first else ' page-break-before:always;'}">
 
                             <!-- ===== STYLES ===== -->
                             <style>
