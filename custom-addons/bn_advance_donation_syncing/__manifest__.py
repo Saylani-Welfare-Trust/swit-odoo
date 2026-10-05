@@ -18,6 +18,7 @@
         'views/advance_donation_line_views.xml',
         'views/welfare_line_views.xml',
         'views/welfare_recurring_line_views.xml',
+        'views/livestock_slaughter_views.xml',
     ],
     'license': 'AGPL-3',
     'installable': True,
