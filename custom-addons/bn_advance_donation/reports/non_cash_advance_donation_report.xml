@@ -64,7 +64,7 @@
                 }
             </style>
             <!-- Lines of the same donation share one receipt; lines with the same
-                 product and day are merged (quantity and amounts summed). The day is
+                 product and day are merged (line quantities and amounts summed). The day is
                  printed on the row only when a product has rows for several days -->
             <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
                 <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation)"/>
@@ -128,7 +128,7 @@
                                 <td>Remarks</td>
                                 <td colspan="3">:
                                     <span t-if="descriptions" t-esc="', '.join(descriptions)"/>
-                                    <span t-else="" t-esc="', '.join('%s %s X %s' % (g[:1].product_id.name, fmt(sum(g.mapped('amount')) / len(g)), len(g)) for g in product_groups)"/>
+                                    <span t-else="" t-esc="', '.join('%s %s X %s' % (g[:1].product_id.name, fmt(sum(g.mapped('amount')) / (sum(g.mapped('quantity')) or len(g))), sum(g.mapped('quantity')) or len(g)) for g in product_groups)"/>
                                 </td>
                             </tr>
                         </table>
@@ -146,9 +146,10 @@
                         <tbody>
                             <tr t-foreach="groups" t-as="group">
                                 <t t-set="day" t-value="show_day and group[:1]._get_receipt_day()"/>
+                                <t t-set="qty" t-value="sum(group.mapped('quantity')) or len(group)"/>
                                 <td><span t-esc="group[:1].product_id.display_name"/><span t-if="day"> (<t t-esc="day.strftime('%d-%m-%Y')"/>)</span></td>
-                                <td style="text-align: center;"><span t-esc="len(group)"/></td>
-                                <td style="text-align: center;"><span t-esc="fmt(sum(group.mapped('amount')) / len(group))"/></td>
+                                <td style="text-align: center;"><span t-esc="'{:,}'.format(qty)"/></td>
+                                <td style="text-align: center;"><span t-esc="fmt(sum(group.mapped('amount')) / qty)"/></td>
                                 <td style="text-align: right;"><span t-esc="fmt(sum(group.mapped('amount')))"/></td>
                             </tr>
                             <tr class="dnac-total">
@@ -214,7 +215,7 @@
                                         <tr t-foreach="groups" t-as="group">
                                             <t t-set="day" t-value="show_day and group[:1]._get_receipt_day()"/>
                                             <td><span t-esc="group[:1].product_id.display_name"/><span t-if="day"> (<t t-esc="day.strftime('%d-%m-%Y')"/>)</span></td>
-                                            <td style="width: 22%; text-align: center;"><span t-esc="len(group)"/></td>
+                                            <td style="width: 22%; text-align: center;"><span t-esc="'{:,}'.format(sum(group.mapped('quantity')) or len(group))"/></td>
                                         </tr>
                                     </table>
                                 </td>

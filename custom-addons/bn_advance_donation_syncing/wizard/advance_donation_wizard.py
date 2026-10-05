@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+from odoo.tools import float_compare
 
 
 class AdvanceDonationWizard(models.TransientModel):
@@ -50,11 +51,9 @@ class AdvanceDonationWizard(models.TransientModel):
         if not donation_lines:
             raise UserError(_("No donation lines found for this product."))
 
-        available_line = donation_lines.filtered(lambda l: not l.is_reserved)
-        if not available_line:
+        available_lines = donation_lines.filtered(lambda l: not l.is_reserved)
+        if not available_lines:
             raise UserError(_("All donation lines for this product are already reserved."))
-
-        available_line = available_line[0]
 
         # ---------------- Target selection ----------------
         if self.welfare_line_id:
@@ -76,14 +75,24 @@ class AdvanceDonationWizard(models.TransientModel):
                 and target_model.advance_donation_id.id == self.advance_donation_id.id):
             raise UserError(_("This Advance Donation is already linked to this record."))
 
-        # Use available_line.amount instead of paid_amount
-        # paid_amount is 0 before payment allocation; amount is the installment value
-        line_amount = available_line.amount
+        rounding = self.advance_donation_id.currency_id.rounding or 0.01
+        is_open_contract = self.advance_donation_id.contract_type == 'open_contract'
 
-        if self.advance_donation_id.contract_type == 'open_contract':
+        if is_open_contract:
+            # An open contract can have one line per day: use the first one that still covers the amount
             donation_amount_to_use = limit_amount
+            available_line = available_lines.filtered(
+                lambda l: float_compare(l.amount - l.reserved_amount, donation_amount_to_use, precision_rounding=rounding) >= 0
+            )[:1]
+            if not available_line:
+                raise UserError(_("Not enough available amount in the selected donation line."))
         else:
-            donation_amount_to_use = min(line_amount, limit_amount)
+            available_line = available_lines[0]
+            # Use available_line.amount instead of paid_amount
+            # paid_amount is 0 before payment allocation; amount is the installment value
+            # A consolidated line (one per day) holds several products: a record takes one of them
+            line_amount = available_line.amount / (available_line.quantity or 1)
+            donation_amount_to_use = min(line_amount, available_line.amount - available_line.reserved_amount, limit_amount)
 
         vals = {
             'advance_donation_id': self.advance_donation_id.id,
@@ -98,14 +107,19 @@ class AdvanceDonationWizard(models.TransientModel):
 
         target_model.write(vals)
 
-        if self.advance_donation_id.contract_type != 'open_contract':
-            available_line.write({'is_reserved': True})
-        else:
-            if available_line.reserved_amount + donation_amount_to_use > available_line.amount:
-                raise UserError(_("Not enough available amount in the selected donation line."))
+        if is_open_contract:
             available_line.write({
                 'reserved_amount': available_line.reserved_amount + donation_amount_to_use
             })
+        elif available_line.quantity > 1:
+            # Consolidated line: reserved only once all of its amount is used
+            reserved_amount = available_line.reserved_amount + donation_amount_to_use
+            available_line.write({
+                'reserved_amount': reserved_amount,
+                'is_reserved': float_compare(reserved_amount, available_line.amount, precision_rounding=rounding) >= 0,
+            })
+        else:
+            available_line.write({'is_reserved': True})
 
         return {'type': 'ir.actions.act_window_close'}
 

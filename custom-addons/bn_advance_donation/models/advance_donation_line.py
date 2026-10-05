@@ -13,6 +13,11 @@ class AdvanceDonationLine(models.Model):
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product')
     description = fields.Char('Description')
+    quantity = fields.Integer(
+        'Quantity',
+        default=1,
+        help='Number of products this line stands for (frequency based contracts have one line per day)',
+    )
     amount = fields.Monetary('Amount', currency_field='currency_id')
     service_charge_amount = fields.Monetary(
         'Service Charge Amount',
