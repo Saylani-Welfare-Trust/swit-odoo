@@ -110,7 +110,7 @@
                                     <field name="disbursed_amount" readonly="1"/>
                                     <field name="is_disbursed" readonly="0"/>
 
-                                    <field name="disbursement_date"/> 
+                                    <field name="disbursement_date" readonly="0"/> 
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
