@@ -89,7 +89,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
         await this.processPOSOrderRecord(selectedOrder, orderID);
         
         if (this.success) {
-            this.pos.pos_cheque_order_id = orderID;
+            selectedOrder.set_pos_cheque_order_id(orderID);
         }
     }
 
