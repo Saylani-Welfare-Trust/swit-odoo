@@ -129,6 +129,9 @@ class Microfinance(models.Model):
 
     installment_period = fields.Integer('Installment Period',  compute="_set_installment_period", default=1, store=True)
 
+    installment_domain = fields.Many2many('loan.product.installment', string="Installment Domain", compute="_compute_installment_domain")
+    no_of_installment_id = fields.Many2one('loan.product.installment', string="No. of Installments", compute="_compute_no_of_installment_id", store=True, readonly=False)
+
     delivery_date = fields.Date('Delivery Date')
 
     application_form = fields.Binary('Application Form')
@@ -351,7 +354,29 @@ class Microfinance(models.Model):
 
             # Set Many2many properly
             rec.product_domain = [(6, 0, product_ids)]
-    
+
+    @api.depends('microfinance_scheme_line_id', 'product_id')
+    def _compute_installment_domain(self):
+        for rec in self:
+            if not rec.microfinance_scheme_line_id or not rec.product_id:
+                rec.installment_domain = [(5, 0, 0)]
+                continue
+
+            # Fetch the No. of Installments configured for the selected product
+            line = self.env['loan.product.line'].search([
+                ('microfinance_scheme_line_id', '=', rec.microfinance_scheme_line_id.id),
+                ('product_id', '=', rec.product_id.id)
+            ], limit=1)
+
+            rec.installment_domain = [(6, 0, line.installment_ids.ids)]
+
+    @api.depends('microfinance_scheme_line_id', 'product_id')
+    def _compute_no_of_installment_id(self):
+        for rec in self:
+            # Clear the selection when it does not belong to the selected product
+            if rec.no_of_installment_id not in rec.installment_domain:
+                rec.no_of_installment_id = False
+
     @api.depends('product_id')
     def _set_amount_and_sd(self):
         for rec in self:
@@ -375,7 +400,7 @@ class Microfinance(models.Model):
         for rec in self:
             rec.total_amount = rec.product_amount - rec.security_deposit - rec.advance_donation_amount
     
-    @api.depends('product_id')
+    @api.depends('product_id', 'no_of_installment_id', 'total_amount')
     def _set_installment_amount(self):
         for rec in self:
             rec.installment_amount = 0
@@ -393,12 +418,18 @@ class Microfinance(models.Model):
                     rec.installment_amount = 0
                     rec.security_deposit = 0
 
-    @api.depends('installment_amount', 'total_amount')
+            # Selected No. of Installments splits the total amount equally
+            if rec.no_of_installment_id.no_of_installment > 0:
+                rec.installment_amount = rec.total_amount / rec.no_of_installment_id.no_of_installment
+
+    @api.depends('installment_amount', 'total_amount', 'no_of_installment_id')
     def _set_installment_period(self):
         for rec in self:
             rec.installment_period = 0
 
-            if rec.installment_amount > 0:
+            if rec.no_of_installment_id.no_of_installment > 0:
+                rec.installment_period = rec.no_of_installment_id.no_of_installment
+            elif rec.installment_amount > 0:
                 rec.installment_period = math.ceil(rec.total_amount / rec.installment_amount)
     
     @api.depends('product_id')
