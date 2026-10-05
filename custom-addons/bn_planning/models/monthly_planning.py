@@ -223,7 +223,7 @@ class MonthlyPlanning(models.Model):
             if not product:
                 continue
             uom = product.uom_id
-            move_vals.append((0, 0, {
+            move_vals.append({
                 'name':             product.display_name,
                 'product_id':       product.id,
                 'product_uom_qty':  line.quantity or 0.0,
@@ -231,7 +231,10 @@ class MonthlyPlanning(models.Model):
                 'location_id':      src_location.id,
                 'location_dest_id': dest_location.id,
                 'picking_id':       picking.id,
-            }))
+                # picking_type_id helps Odoo fill in defaults like
+                # 'warehouse_id' and 'reference' without warnings
+                'picking_type_id':  picking_type.id,
+            })
 
         if not move_vals:
             picking.unlink()
