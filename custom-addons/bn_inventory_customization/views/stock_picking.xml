@@ -14,6 +14,42 @@
         </field>
     </record>
 
+    <!-- Receipts: replace Validate with Receive Product, then Create Bill -->
+    <record id="view_picking_form_inherit_receive_product_create_bill" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.receive.product.create.bill</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='button_validate'][hasclass('oe_highlight')]" position="attributes">
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="attributes">
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel')</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="after">
+                <button name="button_validate"
+                        type="object"
+                        string="Receive Product"
+                        class="oe_highlight"
+                        groups="stock.group_stock_user"
+                        invisible="picking_type_code != 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')"
+                        data-hotkey="v"/>
+                <button name="button_validate"
+                        type="object"
+                        string="Receive Product"
+                        groups="stock.group_stock_user"
+                        invisible="picking_type_code != 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel')"
+                        data-hotkey="v"/>
+                <field name="show_create_bill" invisible="1"/>
+                <button name="action_create_bill"
+                        type="object"
+                        string="Create Bill"
+                        class="oe_highlight"
+                        invisible="not show_create_bill"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Add Receive by Weight button to stock picking form -->
     <record id="stock_view_picking_form_inherit_bn_inventory_customization" model="ir.ui.view">
         <field name="name">stock.view.picking.form.inherit.bn.inventory.customization</field>

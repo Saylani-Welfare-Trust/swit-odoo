@@ -1,76 +1,38 @@
-import logging
-
-from odoo import models, fields, _
+from odoo import api, models, fields, _
 from odoo.exceptions import ValidationError
 from odoo.exceptions import UserError
-
-_logger = logging.getLogger(__name__)
 
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
     
-    def button_validate(self):
-        """Standard validation, then auto-create the vendor bill for
-        incoming receipts that are linked to a purchase order.
+    bill_amount = fields.Float("Bill Amount")
 
-        NOTE: button_validate() can return an action dict instead of True
-        when Odoo needs to show an intermediate wizard (backorder
-        confirmation, immediate transfer confirmation, etc). In that case
-        the picking is NOT yet in state 'done', so we simply skip bill
-        creation here - checking picking.state == 'done' below already
-        guards against that automatically.
+    show_create_bill = fields.Boolean(
+        string="Show Create Bill Button",
+        compute="_compute_show_create_bill"
+    )
+
+    @api.depends('state', 'picking_type_code', 'purchase_id.invoice_status')
+    def _compute_show_create_bill(self):
+        """The bill is created from the receipt, once the products have been
+        received and as long as the purchase order has something left to bill.
         """
-        res = super().button_validate()
-
         for picking in self:
-            if (
+            picking.show_create_bill = (
                 picking.state == 'done'
-                and picking.picking_type_id.code == 'incoming'
-                and picking.purchase_id
-            ):
-                picking._roq_create_vendor_bill_from_purchase()
+                and picking.picking_type_code == 'incoming'
+                and picking.purchase_id.invoice_status == 'to invoice'
+            )
 
-        return res
-
-    def _roq_create_vendor_bill_from_purchase(self):
-        """Create the vendor bill for this receipt's purchase order,
-        reusing the standard purchase.order.action_create_invoice() flow.
+    def action_create_bill(self):
+        """Create the vendor bill for this receipt's purchase order, reusing
+        the standard purchase.order.action_create_invoice() flow, and open it.
         """
         self.ensure_one()
-        purchase = self.purchase_id
-
-        if not purchase or purchase.state not in ('purchase', 'done'):
-            purchase and purchase.message_post(body=_(
-                'No vendor bill created on receipt %(picking)s: the purchase order is in state "%(state)s".',
-                picking=self.name, state=purchase.state))
-            return
-
-        # Nothing left to bill (e.g. fully invoiced already, or invoicing
-        # policy is "ordered quantity" and it was already billed at
-        # confirmation) - nothing to do.
-        if purchase.invoice_status != 'to invoice':
-            purchase.message_post(body=_(
-                'No vendor bill created on receipt %(picking)s: the purchase order billing status is "%(status)s", not "To Bill".',
-                picking=self.name, status=purchase.invoice_status))
-            return
-
-        try:
-            # Savepoint so a failed attempt leaves no half-created bill behind.
-            with self.env.cr.savepoint():
-                purchase.action_create_invoice()
-        except UserError as e:
-            # Don't block/undo the receipt validation if a bill can't be
-            # generated (e.g. missing vendor bill reference requirements).
-            # The user can still create it manually from the PO afterwards.
-            _logger.warning('Vendor bill for %s was not created on receipt %s: %s', purchase.name, self.name, e)
-            purchase.message_post(body=_(
-                'Vendor bill could not be created on receipt %(picking)s: %(error)s',
-                picking=self.name, error=str(e)))
-
-
-
-    bill_amount = fields.Float("Bill Amount")
+        if not self.show_create_bill:
+            raise UserError(_('There is nothing to bill for this receipt.'))
+        return self.purchase_id.action_create_invoice()
 
     show_receive_by_weight = fields.Boolean(
         string="Show Receive by Weight Button",
