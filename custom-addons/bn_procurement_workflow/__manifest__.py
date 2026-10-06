@@ -12,6 +12,7 @@
         'bn_purchase_customization',
         'bn_material_request',
         'bn_shariah_law',
+        'bn_inventory_customization',
     ],
     'data': [
         'security/group.xml',
@@ -21,6 +22,7 @@
         'views/purchase_requisition_views.xml',
         'views/material_request_views.xml',
         'views/purchase_order_views.xml',
+        'views/stock_picking_views.xml',
     ],
     'installable': True,
     'auto_install': False,
