@@ -75,7 +75,8 @@
                 <t t-set="total" t-value="sum(lines.mapped('amount'))"/>
                 <!-- Whole amounts are printed without decimals, like the manual receipt -->
                 <t t-set="fmt" t-value="lambda v: '{:,.2f}'.format(v).replace('.00', '')"/>
-                <t t-set="receipt_date" t-value="', '.join(dict.fromkeys(d.strftime('%d-%m-%Y') for d in lines.mapped('date') if d))"/>
+                <!-- Lines without a date (quantity based contracts): today's date -->
+                <t t-set="receipt_date" t-value="', '.join(dict.fromkeys(d.strftime('%d-%m-%Y') for d in lines.mapped('date') if d)) or context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y')"/>
                 <t t-set="ref_date" t-value="', '.join(dict.fromkeys(d.strftime('%d-%m-%Y') for d in lines.mapped('disbursement_date') if d))"/>
                 <t t-set="donor_acc" t-value="' - '.join(n for n in (donation.donor_id.name, donation.category_id.name) if n)"/>
                 <t t-set="descriptions" t-value="list(dict.fromkeys(d for d in lines.mapped('description') if d))"/>
