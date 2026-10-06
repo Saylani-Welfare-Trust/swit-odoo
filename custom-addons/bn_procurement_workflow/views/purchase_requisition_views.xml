@@ -50,7 +50,7 @@
             <!-- RFQs can only ever be created while state == 'procurement_approval' -
                  action_create_rfqs() on the wizard enforces this unconditionally, so
                  showing the button in any other state (e.g. after _release_po() has
-                 already moved the requisition to 'in_progress') is a guaranteed dead end. -->
+                 already closed the requisition) is a guaranteed dead end. -->
             <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
                 <attribute name="invisible">state != 'procurement_approval'</attribute>
                 <attribute name="groups">bn_procurement_workflow.group_procurement_manager</attribute>

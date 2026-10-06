@@ -371,3 +371,39 @@ class PurchaseOrder(models.Model):
                     'RFQ %s cannot be confirmed until it has CFO approval.'
                 ) % order.display_name)
         return super().button_confirm()
+
+    def button_approve(self, force=False):
+        pending = self.filtered(lambda order: order.state not in ('purchase', 'done'))
+        res = super().button_approve(force=force)
+        pending.filtered(lambda order: order.state in ('purchase', 'done'))._close_purchase_request()
+        return res
+
+    def _close_purchase_request(self):
+        """A Purchase Request is finished once its PO is confirmed: the quotes of
+        the other vendors are cancelled and the request is closed, so nothing
+        more can be ordered from it. A Blanket Order stays open - it is there to
+        be ordered from again."""
+        for order in self:
+            # sudo: whoever gives the last approval need not be a purchase user.
+            requisition = order.requisition_id.sudo()
+            if not requisition or requisition.state in ('done', 'cancel'):
+                continue
+            # What makes a Blanket Order is its vendor, as in action_in_progress():
+            # a Purchase Request has the same default type but never a vendor.
+            if requisition.state == 'ongoing' or (
+                    requisition.type_id.quantity_copy == 'none' and requisition.vendor_id):
+                continue
+            other_rfqs = requisition.purchase_ids.filtered(
+                lambda rfq: rfq != order and rfq.state in ('draft', 'sent', 'to approve'))
+            if other_rfqs:
+                # An RFQ waiting for the CFO must not keep its "Waiting for CFO" banner once cancelled.
+                other_rfqs.write({'shariah_hold': False, 'shariah_hold_reason': False})
+                other_rfqs.button_cancel()
+                for rfq in other_rfqs:
+                    rfq.message_post(body=_(
+                        'Cancelled - %(order)s was confirmed for Purchase Request %(request)s.'
+                    ) % {'order': order.display_name, 'request': requisition.display_name})
+            requisition.action_done()
+            requisition.message_post(body=_(
+                'Closed - Purchase Order %(order)s confirmed. %(count)s other RFQ(s) cancelled.'
+            ) % {'order': order.display_name, 'count': len(other_rfqs)})

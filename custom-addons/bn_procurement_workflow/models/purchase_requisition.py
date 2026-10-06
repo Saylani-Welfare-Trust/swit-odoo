@@ -244,7 +244,8 @@ class PurchaseRequisition(models.Model):
         }
 
     def _release_po(self):
-        """Confirm the winning RFQ and mark the requisition as Confirmed.
+        """Confirm the winning RFQ, which closes the requisition
+        (purchase.order._close_purchase_request()).
 
         button_confirm() (bn_purchase_customization) already requires the RFQ
         itself to be CXO and HOD approved, so this simply calls it - if
@@ -262,5 +263,7 @@ class PurchaseRequisition(models.Model):
         # The CFO / Shariah Dept has just made the funds decision for this RFQ
         # at the gate, so it must not be put on a second Shariah Hold here.
         self.selected_rfq_id.shariah_override = True
-        self.selected_rfq_id.button_confirm()
+        # Before the confirmation, not after: this gives the requisition its
+        # number, and would reopen it if it ran once the PO has closed it.
         self.action_in_progress()
+        self.selected_rfq_id.button_confirm()
