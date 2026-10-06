@@ -360,86 +360,157 @@
                                         <t t-set="current_group" t-value="null"/>
                                         <t t-set="i" t-value="0"/>
                                         <t t-foreach="state.data"
-                                           t-as="move_line"
-                                           t-key="move_line_index">
+                                        t-as="move_line"
+                                        t-key="move_line_index">
                                             <t t-set="i" t-value="i + 1"/>
+
+                                            <!-- New group starts: close the previous group's subtotal row first -->
                                             <t t-if="move_line.group_label !== current_group">
-                                                <tr style="background:#EAEAEA;">
-                                                    <th colspan="11">
+                                                <t t-if="current_group !== null">
+                                                    <!-- Subtotal row for the PREVIOUS group -->
+                                                    <tr style="font-weight:bold;border-top:1px solid #000;">
+                                                        <th/>
+                                                        <th colspan="5" style="text-align:left;">Total</th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'initial_balance'))"/>
+                                                        </th>
+                                                        <t t-if="state.apply_comparison == true">
+                                                            <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                            <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
+                                                                <th style="text-align:center;">
+                                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
+                                                                </th>
+                                                                <th style="text-align:center;">
+                                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
+                                                                </th>
+                                                            </t>
+                                                        </t>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'end_balance'))"/>
+                                                        </th>
+                                                    </tr>
+                                                </t>
+
+                                                <!-- New group header, clickable to collapse -->
+                                                <tr style="background:#EAEAEA;cursor:pointer;"
+                                                    t-on-click="() => this.toggleGroup(move_line.group_label || 'Other')">
+                                                    <th colspan="11" style="text-align:left;">
+                                                        <span class="toggle-icon" style="margin-right:6px;">
+                                                            <i t-att-class="this.isGroupCollapsed(move_line.group_label || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
+                                                        </span>
                                                         <t t-esc="move_line.group_label || 'Other'"/>
                                                     </th>
                                                 </tr>
-                                                <t t-set="current_group" t-value="move_line.group_label"/>
+                                                <t t-set="current_group" t-value="move_line.group_label || 'Other'"/>
                                             </t>
-                                            <tr class="border-bottom"
-                                                style="border-spacing: 0 10px;">
-                                                <th style="text-align:left;">
-                                                    <t t-esc="move_line['account_code']"/>
-                                                </th>
-                                                <th colspan="5" style="text-align:left;">
-                                                    <span class="dropdown">
-                                                        <a class="dropdown-toggle" data-bs-toggle="dropdown" style="color: black;">
-                                                            <span><t t-esc="move_line['account_name']"/></span>
-                                                        </a>
-                                                        <span class="dropdown-menu">
-                                                            <a role="menuitem"
-                                                            t-att-data-account-id="move_line['account_id']"
-                                                            t-att-data-account-name="move_line['account']"
-                                                            t-on-click="show_gl"
-                                                            class="show_gl">
-                                                                General Ledger (this period)
+
+                                            <!-- Account row: hidden while its group is collapsed -->
+                                            <t t-if="!this.isGroupCollapsed(move_line.group_label || 'Other')">
+                                                <tr class="border-bottom"
+                                                    style="border-spacing: 0 10px;">
+                                                    <th style="text-align:left;">
+                                                        <t t-esc="move_line['account_code']"/>
+                                                    </th>
+                                                    <th colspan="5" style="text-align:left;">
+                                                        <span class="dropdown">
+                                                            <a class="dropdown-toggle" data-bs-toggle="dropdown" style="color: black;">
+                                                                <span><t t-esc="move_line['account_name']"/></span>
                                                             </a>
-                                                            <div role="separator" class="dropdown-divider"/>
-                                                            <a role="menuitem"
-                                                            t-att-data-id="move_line['account_id']"
-                                                            t-on-click="gotoJournalItem" class="show_gl">
-                                                                Journal Items
-                                                            </a>
+                                                            <span class="dropdown-menu">
+                                                                <a role="menuitem"
+                                                                t-att-data-account-id="move_line['account_id']"
+                                                                t-att-data-account-name="move_line['account']"
+                                                                t-on-click="show_gl"
+                                                                class="show_gl">
+                                                                    General Ledger (this period)
+                                                                </a>
+                                                                <div role="separator" class="dropdown-divider"/>
+                                                                <a role="menuitem"
+                                                                t-att-data-id="move_line['account_id']"
+                                                                t-on-click="gotoJournalItem" class="show_gl">
+                                                                    Journal Items
+                                                                </a>
+                                                            </span>
                                                         </span>
-                                                    </span>
-                                                </th>
+                                                    </th>
+                                                    <th style="text-align:center;">
+                                                        <t t-esc="this.formatAmount(move_line.initial_balance)"/>
+                                                    </th>
+                                                    <t t-if="state.apply_comparison == true">
+                                                        <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                        <t t-foreach="number_of_periods" t-as="num" t-key="num">
+                                                            <th style="text-align:center;">
+                                                                <t t-if="move_line['dynamic_total_debit_' + num]"
+                                                                t-esc="this.formatAmount(move_line['dynamic_total_debit_' + num])"/>
+                                                            </th>
+                                                            <th style="text-align:center;">
+                                                                <t t-if="move_line['dynamic_total_credit_' + num]"
+                                                                t-esc="this.formatAmount(move_line['dynamic_total_credit_' + num])"/>
+                                                            </th>
+                                                        </t>
+                                                    </t>
+                                                    <th style="text-align:center;">
+                                                        <t t-if="move_line['total_debit']"
+                                                        t-esc="this.formatAmount(move_line['total_debit'])"/>
+                                                    </th>
+                                                    <th style="text-align:center;">
+                                                        <t t-if="move_line['total_credit']"
+                                                        t-esc="this.formatAmount(move_line['total_credit'])"/>
+                                                    </th>
+                                                    <th style="text-align:center;">
+                                                        <t t-esc="this.formatAmount(move_line['end_balance'])"/>
+                                                    </th>
+                                                </tr>
+                                            </t>
+                                        </t>
+
+                                        <!-- Subtotal row for the LAST group (loop ends before the closing-group logic fires again) -->
+                                        <t t-if="current_group !== null">
+                                            <tr style="font-weight:bold;border-top:1px solid #000;">
+                                                <th/>
+                                                <th colspan="5" style="text-align:left;">Total</th>
                                                 <th style="text-align:center;">
-                                                    <t t-esc="this.formatAmount(move_line.initial_balance)"/>
+                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'initial_balance'))"/>
                                                 </th>
                                                 <t t-if="state.apply_comparison == true">
-                                                    <t t-set="number_of_periods"
-                                                       t-value="comparison_number_range"/>
-                                                    <t t-foreach="number_of_periods"
-                                                       t-as="num" t-key="num">
+                                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                    <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
                                                         <th style="text-align:center;">
-                                                            <t t-if="move_line['dynamic_total_debit_' + num]"
-                                                               t-esc="this.formatAmount(move_line['dynamic_total_debit_' + num])"/>
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
                                                         </th>
                                                         <th style="text-align:center;">
-                                                            <t t-if="move_line['dynamic_total_credit_' + num]"
-                                                               t-esc="this.formatAmount(move_line['dynamic_total_credit_' + num])"/>
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
                                                         </th>
                                                     </t>
                                                 </t>
                                                 <th style="text-align:center;">
-                                                    <t t-if="move_line['total_debit']"
-                                                       t-esc="this.formatAmount(move_line['total_debit'])"/>
+                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
                                                 </th>
                                                 <th style="text-align:center;">
-                                                    <t t-if="move_line['total_credit']"
-                                                       t-esc="this.formatAmount(move_line['total_credit'])"/>
+                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
                                                 </th>
                                                 <th style="text-align:center;">
-                                                    <t t-esc="this.formatAmount(move_line['end_balance'])"/>
+                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'end_balance'))"/>
                                                 </th>
                                             </tr>
                                         </t>
-                                        <tr class="border-bottom" style="border-spacing: 0 10px;color:#000">
+
+                                        <!-- Grand total row across ALL groups -->
+                                        <tr class="border-bottom" style="border-spacing: 0 10px;color:#000;background:#DDD;">
                                             <th/>
-                                            <th colspan="5">Total</th>
+                                            <th colspan="5">Grand Total</th>
                                             <th style="text-align:center;">
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'initial_balance'))"/>
                                             </th>
                                             <t t-if="state.apply_comparison == true">
-                                                <t t-set="number_of_periods"
-                                                   t-value="comparison_number_range"/>
-                                                <t t-foreach="number_of_periods"
-                                                   t-as="nb" t-key="nb">
+                                                <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
                                                     <th style="text-align:center;">
                                                         <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_debit_' + nb))"/>
                                                     </th>
