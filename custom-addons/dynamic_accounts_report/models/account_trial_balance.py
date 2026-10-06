@@ -29,29 +29,42 @@ from odoo import api, fields, models
 from odoo.tools.date_utils import get_month, get_fiscal_year, \
     get_quarter_number, subtract
 
+# Mirrors Odoo's native two-level Chart of Accounts grouping:
+#   Internal Group  (Asset / Liability / Equity / Income / Expense)
+#     └── Account Type  (Bank and Cash, Current Assets, Receivable, ...)
+# internal_group_order matches Odoo's own alphabetical default
+# (Asset, Equity, Expense, Income, Liability); group_order matches the
+# sub-type order seen in Odoo's own Chart of Accounts list.
 ACCOUNT_TYPE_GROUPS = {
-    'asset_receivable':      ('Receivable', 1),
-    'asset_cash':             ('Bank and Cash', 2),
-    'asset_current':          ('Current Assets', 3),
-    'asset_non_current':      ('Non-current Assets', 4),
-    'asset_prepayments':      ('Prepayments', 5),
-    'asset_fixed':            ('Fixed Assets', 6),
-    'liability_payable':      ('Payable', 7),
-    'liability_credit_card':  ('Credit Card', 8),
-    'liability_current':      ('Current Liabilities', 9),
-    'liability_non_current':  ('Non-current Liabilities', 10),
-    'equity':                 ('Equity', 11),
-    'equity_unaffected':      ('Current Year Earnings', 12),
-    'income':                 ('Income', 13),
-    'income_other':           ('Other Income', 14),
-    'expense':                ('Expenses', 15),
-    'expense_depreciation':   ('Depreciation', 16),
-    'expense_direct_cost':    ('Cost of Revenue', 17),
-    'off_balance':            ('Off-Balance Sheet', 18),
+    'asset_cash':             ('Asset', 1, 'Bank and Cash', 1),
+    'asset_current':          ('Asset', 1, 'Current Assets', 2),
+    'asset_non_current':      ('Asset', 1, 'Non-current Assets', 3),
+    'asset_receivable':       ('Asset', 1, 'Receivable', 4),
+    'asset_prepayments':      ('Asset', 1, 'Prepayments', 5),
+    'asset_fixed':            ('Asset', 1, 'Fixed Assets', 6),
+
+    'equity':                 ('Equity', 2, 'Equity', 1),
+    'equity_unaffected':      ('Equity', 2, 'Current Year Earnings', 2),
+
+    'expense':                ('Expense', 3, 'Expenses', 1),
+    'expense_direct_cost':    ('Expense', 3, 'Cost of Revenue', 2),
+    'expense_depreciation':   ('Expense', 3, 'Depreciation', 3),
+
+    'income':                 ('Income', 4, 'Income', 1),
+    'income_other':           ('Income', 4, 'Other Income', 2),
+
+    'liability_current':      ('Liability', 5, 'Current Liabilities', 1),
+    'liability_non_current':  ('Liability', 5, 'Non-current Liabilities', 2),
+    'liability_payable':      ('Liability', 5, 'Payable', 3),
+    'liability_credit_card':  ('Liability', 5, 'Credit Card', 4),
+
+    'off_balance':            ('Off Balance', 6, 'Off-Balance Sheet', 1),
 }
 
+
 def _group_info(account_type):
-    return ACCOUNT_TYPE_GROUPS.get(account_type, ('Other', 99))
+    """Returns (internal_group, internal_group_order, group_label, group_order)."""
+    return ACCOUNT_TYPE_GROUPS.get(account_type, ('Other', 99, 'Other', 99))
 
 class AccountTrialBalance(models.TransientModel):
     """For creating Trial Balance report"""
@@ -104,13 +117,15 @@ class AccountTrialBalance(models.TransientModel):
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
 
-            group_label, group_order = _group_info(account.account_type)
+            internal_group, internal_group_order, group_label, group_order = _group_info(account.account_type)
 
             move_line_list.append({
                 'account': account.display_name,
-                'account_name': account.name,  
+                'account_name': account.name,
                 'account_id': account_id,
                 'account_code': account.code or '',
+                'internal_group': internal_group,
+                'internal_group_order': internal_group_order,
                 'group_label': group_label,
                 'group_order': group_order,
                 'journal_ids': self.env['account.journal'].search_read([], ['name']),
@@ -125,7 +140,7 @@ class AccountTrialBalance(models.TransientModel):
                 'end_balance': end_total_debit - end_total_credit,
             })
 
-        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
+        move_line_list.sort(key=lambda d: (d['internal_group_order'], d['group_order'], d['account_code']))
         return move_line_list
 
     @api.model
