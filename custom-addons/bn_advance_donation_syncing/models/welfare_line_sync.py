@@ -45,8 +45,9 @@ class WelfareLineSync(models.Model):
     #     return super(WelfareLineSync, self).action_disburse()
     
     def unlink(self):
-        # For each welfare line being deleted, unlink the associated donation line's reserved status
-        for record in self:
-            if record.advance_donation_line_id and record.advance_donation_line_id.is_reserved:
-                record.advance_donation_line_id.write({'is_reserved': False})
-        return super(WelfareLineSync, self).unlink()
+        raise UserError(_('You cannot delete a welfare line.'))
+        ## For each welfare line being deleted, unlink the associated donation line's reserved status
+        # for record in self:
+        #     if record.advance_donation_line_id and record.advance_donation_line_id.is_reserved:
+        #         record.advance_donation_line_id.write({'is_reserved': False})
+        # return super(WelfareLineSync, self).unlink()
