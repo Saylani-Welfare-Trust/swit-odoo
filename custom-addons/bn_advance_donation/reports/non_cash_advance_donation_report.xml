@@ -80,6 +80,8 @@
                 <t t-set="ref_date" t-value="', '.join(dict.fromkeys(d.strftime('%d-%m-%Y') for d in lines.mapped('disbursement_date') if d))"/>
                 <t t-set="donor_acc" t-value="' - '.join(n for n in (donation.donor_id.name, donation.category_id.name) if n)"/>
                 <t t-set="descriptions" t-value="list(dict.fromkeys(d for d in lines.mapped('description') if d))"/>
+                <!-- Remarks (line descriptions) are printed in place of the donor name -->
+                <t t-set="donor_name" t-value="', '.join(descriptions) or donation.donor_id.name"/>
                 <t t-set="entered_by" t-value="donation.create_uid"/>
                 <t t-set="branch" t-value="entered_by.employee_id.analytic_account_id.name or user.employee_id.analytic_account_id.name or ''"/>
                 <t t-set="printed_on" t-value="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %I:%M %p')"/>
@@ -111,7 +113,7 @@
                             </tr>
                             <tr>
                                 <td>Donor Name</td>
-                                <td>: <span t-esc="donation.donor_id.name"/></td>
+                                <td>: <span t-esc="donor_name"/></td>
                                 <td>Ref. #</td>
                                 <td>: <span t-esc="', '.join(s for s in lines.mapped('serial_no') if s)"/></td>
                             </tr>
@@ -124,13 +126,6 @@
                             <tr>
                                 <td>Amount</td>
                                 <td colspan="3">: <span t-esc="fmt(total)"/></td>
-                            </tr>
-                            <tr>
-                                <td>Remarks</td>
-                                <td colspan="3">:
-                                    <span t-if="descriptions" t-esc="', '.join(descriptions)"/>
-                                    <span t-else="" t-esc="', '.join('%s %s X %s' % (g[:1].product_id.name, fmt(sum(g.mapped('amount')) / (sum(g.mapped('quantity')) or len(g))), sum(g.mapped('quantity')) or len(g)) for g in product_groups)"/>
-                                </td>
                             </tr>
                         </table>
                     </div>
@@ -194,12 +189,8 @@
                                             <td>: <span t-esc="donation.name"/><span style="padding-left: 14px;" t-esc="receipt_date"/></td>
                                         </tr>
                                         <tr>
-                                            <td>Printed By</td>
-                                            <td>: <span t-esc="user.name"/><span style="padding-left: 14px;" t-esc="printed_on"/></td>
-                                        </tr>
-                                        <tr>
                                             <td>Donor Name</td>
-                                            <td>: <span t-esc="donation.donor_id.name"/></td>
+                                            <td>: <span t-esc="donor_name"/></td>
                                         </tr>
                                         <tr>
                                             <td>Total Amount</td>
