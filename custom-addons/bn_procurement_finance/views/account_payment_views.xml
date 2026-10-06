@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="account_payment_view_form_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">account.payment.view.form.inherit.bn.procurement.finance</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_po_advance_reviewed" string="Mark as Reviewed" type="object"
+                        groups="bn_procurement_finance.group_finance"
+                        invisible="not po_review_required"/>
+            </xpath>
+
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert" invisible="not po_review_required">
+                    <strong>Finance review required</strong> - this advance payment was not changed automatically.
+                    <field name="po_review_reason" nolabel="1"/>
+                </div>
+            </xpath>
+
+            <!-- An advance payment generated from a Purchase Order keeps the vendor and the amount of that order:
+                 nobody can change the vendor, only Finance the amount -->
+            <xpath expr="//field[@name='is_internal_transfer']" position="attributes">
+                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
+            </xpath>
+            <xpath expr="//field[@name='payment_type']" position="attributes">
+                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
+            </xpath>
+            <xpath expr="//group[@name='group1']/field[@name='partner_id'][1]" position="attributes">
+                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
+            </xpath>
+            <xpath expr="//group[@name='group1']/field[@name='partner_id'][2]" position="attributes">
+                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
+            </xpath>
+            <xpath expr="//div[@name='amount_div']/field[@name='amount']" position="attributes">
+                <attribute name="readonly">state != 'draft' or po_advance_amount_locked</attribute>
+            </xpath>
+            <xpath expr="//div[@name='amount_div']/field[@name='currency_id']" position="attributes">
+                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
+            </xpath>
+
+            <xpath expr="//group[@name='group2']" position="after">
+                <group name="po_advance" string="Purchase Order Advance" invisible="not purchase_order_id">
+                    <field name="purchase_order_id" string="Purchase Order"/>
+                    <field name="po_payment_term_id" string="Payment Term"/>
+                    <field name="po_milestone"/>
+                    <field name="po_amount_total"/>
+                    <field name="po_advance_amount"/>
+                    <field name="po_advance_amount_locked" invisible="1"/>
+                    <field name="po_review_required" invisible="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account_payment_view_tree_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">account.payment.view.tree.inherit.bn.procurement.finance</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="purchase_order_id" optional="hide"/>
+                <field name="po_milestone" optional="hide"/>
+                <field name="po_review_required" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="account_payment_view_search_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">account.payment.view.search.inherit.bn.procurement.finance</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='journal_id']" position="after">
+                <field name="purchase_order_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='transfers_filter']" position="after">
+                <separator/>
+                <filter string="PO Advance" name="po_advance" domain="[('purchase_order_id', '!=', False)]"/>
+                <filter string="Needs Review" name="po_review_required" domain="[('po_review_required', '=', True)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='journal']" position="after">
+                <filter string="Purchase Order" name="groupby_purchase_order" domain="[]" context="{'group_by': 'purchase_order_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_po_advance_payments" model="ir.actions.act_window">
+        <field name="name">PO Advance Payments</field>
+        <field name="res_model">account.payment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="account.view_account_supplier_payment_tree"/>
+        <field name="domain">[('purchase_order_id', '!=', False)]</field>
+        <field name="context">{'create': False, 'search_default_state_draft': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No advance payment to process
+            </p><p>
+                A draft advance payment is created here when a Purchase Order whose Payment Term has an
+                "Advance Payment" milestone is confirmed.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_po_advance_payments" name="PO Advance Payments"
+              parent="account.menu_finance_payables" action="action_po_advance_payments"
+              sequence="21"/>
+</odoo>

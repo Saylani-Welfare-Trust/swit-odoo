@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="payment_term_50_advance_50_delivery" model="account.payment.term">
+        <field name="name">50% Advance + 50% on Delivery</field>
+        <field name="note">Payment terms: 50% Advance Payment, 50% Payment on Delivery</field>
+        <field name="line_ids" eval="[
+            Command.clear(),
+            Command.create({'value': 'percent', 'value_amount': 50.0, 'nb_days': 0, 'milestone_type': 'advance'}),
+            Command.create({'value': 'percent', 'value_amount': 50.0, 'nb_days': 0, 'milestone_type': 'delivery'})]"/>
+    </record>
+</odoo>

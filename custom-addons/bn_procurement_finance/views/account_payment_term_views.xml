@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="account_payment_term_view_form_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">account.payment.term.view.form.inherit.bn.procurement.finance</field>
+        <field name="model">account.payment.term</field>
+        <field name="inherit_id" ref="account.view_payment_term_form"/>
+        <field name="arch" type="xml">
+            <!-- An "Advance Payment" line creates a draft vendor payment when a Purchase Order using the term is confirmed -->
+            <xpath expr="//field[@name='line_ids']/tree/field[@name='delay_type']" position="after">
+                <field name="milestone_type"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

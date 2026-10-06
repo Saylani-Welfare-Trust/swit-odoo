@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, _
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
+from odoo.tools import format_amount
 
 
 class AccountMove(models.Model):
@@ -36,5 +37,41 @@ class AccountMove(models.Model):
         })
         self.action_post()
         return True
+
+    def _post(self, soft=True):
+        posted = super()._post(soft)
+        posted.filtered(lambda move: move.move_type == 'in_invoice')._apply_po_advance_payments()
+        return posted
+
+    def _apply_po_advance_payments(self):
+        """Deduct the advance already paid on the bill's Purchase Order(s), so the
+        vendor is only paid the remainder. An advance that is still a draft cannot
+        be deducted yet: it is when it gets posted."""
+        for bill in self:
+            orders = bill.line_ids.purchase_line_id.order_id
+            if not orders:
+                continue
+            # sudo: whoever posts the bill may not be allowed to read payments.
+            payments = self.env['account.payment'].sudo().search([('purchase_order_id', 'in', orders.ids)])
+            payments.filtered(lambda p: p.state == 'posted')._reconcile_po_advance(bills=bill)
+            draft = payments.filtered(lambda p: p.state == 'draft')
+            if draft:
+                bill.message_post(body=_(
+                    'An advance payment of %(amount)s for %(orders)s is still in draft and is not deducted '
+                    'from this bill yet. It is deducted automatically once Finance posts it.',
+                    amount=', '.join(format_amount(self.env, p.amount, p.currency_id) for p in draft),
+                    orders=', '.join(draft.purchase_order_id.mapped('name'))))
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_except_po_advance_payment(self):
+        # force_delete: the payment itself is being deleted, which has its own check.
+        if self.env.context.get('force_delete'):
+            return
+        for move in self:
+            payment = move.sudo().payment_id
+            if payment.purchase_order_id and move.state != 'cancel':
+                raise UserError(_(
+                    'This is the journal entry of the advance payment of Purchase Order %s and cannot be '
+                    'deleted. Cancel the payment instead.', payment.purchase_order_id.display_name))
 
 
