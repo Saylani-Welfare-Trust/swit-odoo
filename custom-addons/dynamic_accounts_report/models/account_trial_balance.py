@@ -351,12 +351,14 @@ class AccountTrialBalance(models.TransientModel):
             else:
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
-            group_label, group_order = _group_info(account_id.account_type)
+            internal_group, internal_group_order, group_label, group_order = _group_info(account_id.account_type)
             data = {
                 'account': account_id.display_name,
-                'account_name': account_id.name, 
+                'account_name': account_id.name,
                 'account_id': account_id.id,
                 'account_code': account_id.code or '',
+                'internal_group': internal_group,
+                'internal_group_order': internal_group_order,
                 'group_label': group_label,
                 'group_order': group_order,
                 'journal_ids': self.env['account.journal'].search_read([], [
@@ -383,7 +385,9 @@ class AccountTrialBalance(models.TransientModel):
                         0.0)
             move_line_list.append(data)
 
-        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
+        move_line_list.sort(
+            key=lambda d: (d['internal_group_order'], d['group_order'], d['account_code'])
+        )
         return move_line_list
 
     @api.model
@@ -498,115 +502,135 @@ class AccountTrialBalance(models.TransientModel):
         sheet.write(10, col + i, '', sub_heading)
         # sheet.write(10, col + (i + 1), 'Credit', sub_heading)
 
-        if data:
-            if report_action == 'dynamic_accounts_report.action_trial_balance':
-                row = 11
-                current_group = None
-                group_rows_start = None  # track first data row of current group for subtotal sum
+        if data and report_action == 'dynamic_accounts_report.action_trial_balance':
+            row = 11
+            apply_cmp = data['apply_comparison']
+            periods = data['comparison_number_range'] if apply_cmp else []
+            last_col = col + 5 + (2 * len(data['date_viewed']))
 
-                def write_group_subtotal(group_rows):
-                    """Write a bold subtotal row summing the given list of move_line dicts."""
-                    nonlocal row
-                    sheet.write(row, col, '', sub_heading)
-                    sheet.write(row, col + 1, 'Total', sub_heading)
-                    sheet.write(row, col + 2,
-                                sum(m.get('initial_balance', 0.0) for m in group_rows),
-                                num_fmt_whole)
-                    j = 3
-                    if data['apply_comparison']:
-                        number_of_periods = data['comparison_number_range']
-                        for num in number_of_periods:
-                            sheet.write(row, col + j,
-                                        sum(m.get('dynamic_total_debit_' + str(num), 0.0) for m in group_rows),
-                                        num_fmt_whole)
-                            sheet.write(row, col + j + 1,
-                                        sum(m.get('dynamic_total_credit_' + str(num), 0.0) for m in group_rows),
-                                        num_fmt_whole)
-                            j += 2
-                    sheet.write(row, col + j,
-                                sum(m.get('total_debit', 0.0) for m in group_rows),
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 1,
-                                sum(m.get('total_credit', 0.0) for m in group_rows),
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 2,
-                                sum(m.get('end_balance', 0.0) for m in group_rows),
-                                num_fmt_whole)
-                    row += 1
+            group_header_fmt = workbook.add_format(
+                {'bold': True, 'font_size': '10px', 'bg_color': '#EAEAEA',
+                 'border': 1})
+            internal_header_fmt = workbook.add_format(
+                {'bold': True, 'font_size': '11px', 'bg_color': '#CFCFCF',
+                 'border': 1})
+            group_total_fmt = workbook.add_format(
+                {'bold': True, 'font_size': '10px', 'border': 1,
+                 'top': 1, 'num_format': '#,##0'})
+            internal_total_fmt = workbook.add_format(
+                {'bold': True, 'font_size': '11px', 'bg_color': '#DADADA',
+                 'border': 1, 'top': 2, 'num_format': '#,##0'})
+            grand_fmt = workbook.add_format(
+                {'bold': True, 'font_size': '11px', 'bg_color': '#999999',
+                 'font_color': 'white', 'border': 1, 'num_format': '#,##0'})
 
-                group_members = []
-                for move_line in data['data']:
-                    group_label = move_line.get('group_label', 'Other')
-                    if group_label != current_group:
-                        # Close out the previous group's subtotal first
-                        if current_group is not None and group_members:
-                            write_group_subtotal(group_members)
-                            group_members = []
+            def _s(rows, key):
+                return sum(m.get(key, 0.0) for m in rows)
 
-                        last_col = col + 3 + (2 * len(data['date_viewed'])) + 1
-                        sheet.merge_range(row, col, row, last_col,
-                                          group_label, group_header_fmt)
-                        row += 1
-                        current_group = group_label
-
-                    sheet.write(row, col, move_line.get('account_code', ''), txt_name)
-                    sheet.write(row, col + 1, move_line.get('account_name',
-                                        move_line['account']), side_heading_sub)
-                    sheet.write(row, col + 2,
-                                move_line.get('initial_balance', 0.0),
-                                num_fmt_whole)
-                    j = 3
-                    if data['apply_comparison']:
-                        number_of_periods = data['comparison_number_range']
-                        for num in number_of_periods:
-                            sheet.write(row, col + j, move_line[
-                                'dynamic_total_debit_' + str(num)], num_fmt_whole)
-                            sheet.write(row, col + j + 1, move_line[
-                                'dynamic_total_credit_' + str(num)], num_fmt_whole)
-                            j += 2
-                    sheet.write(row, col + j, move_line['total_debit'],
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 1, move_line['total_credit'],
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 2,
-                        move_line.get('end_balance', 0.0), num_fmt_whole)
-                    row += 1
-                    group_members.append(move_line)
-
-                # Subtotal for the LAST group
-                if current_group is not None and group_members:
-                    write_group_subtotal(group_members)
-
-                # Grand total row across all accounts
-                grand_fmt = workbook.add_format(
-                    {'bold': True, 'font_size': '11px', 'bg_color': '#CFCFCF',
-                     'border': 1, 'num_format': '#,##0'})
-                sheet.write(row, col, '', grand_fmt)
-                sheet.write(row, col + 1, 'Grand Total', grand_fmt)
-                sheet.write(row, col + 2,
-                            sum(m.get('initial_balance', 0.0) for m in data['data']),
-                            grand_fmt)
-                j = 3
-                if data['apply_comparison']:
-                    number_of_periods = data['comparison_number_range']
-                    for num in number_of_periods:
-                        sheet.write(row, col + j,
-                                    sum(m.get('dynamic_total_debit_' + str(num), 0.0) for m in data['data']),
-                                    grand_fmt)
-                        sheet.write(row, col + j + 1,
-                                    sum(m.get('dynamic_total_credit_' + str(num), 0.0) for m in data['data']),
-                                    grand_fmt)
-                        j += 2
-                sheet.write(row, col + j,
-                            sum(m.get('total_debit', 0.0) for m in data['data']),
-                            grand_fmt)
-                sheet.write(row, col + j + 1,
-                            sum(m.get('total_credit', 0.0) for m in data['data']),
-                            grand_fmt)
-                sheet.write(row, col + j + 2,
-                            sum(m.get('end_balance', 0.0) for m in data['data']),
-                            grand_fmt)
+            def write_header(label, fmt):
+                nonlocal row
+                sheet.merge_range(row, col, row, last_col, label, fmt)
                 row += 1
+
+            def write_total(label, rows, fmt):
+                nonlocal row
+                sheet.write(row, col, '', fmt)
+                sheet.write(row, col + 1, label, fmt)
+                sheet.write(row, col + 2, _s(rows, 'initial_balance'), fmt)
+                j = 3
+                if apply_cmp:
+                    for num in periods:
+                        sheet.write(row, col + j,
+                                    _s(rows, 'dynamic_total_debit_' + str(num)), fmt)
+                        sheet.write(row, col + j + 1,
+                                    _s(rows, 'dynamic_total_credit_' + str(num)), fmt)
+                        j += 2
+                sheet.write(row, col + j,     _s(rows, 'total_debit'), fmt)
+                sheet.write(row, col + j + 1, _s(rows, 'total_credit'), fmt)
+                sheet.write(row, col + j + 2, _s(rows, 'end_balance'), fmt)
+                row += 1
+
+            def write_account(move_line):
+                nonlocal row
+                sheet.write(row, col, move_line.get('account_code', ''), txt_name)
+                sheet.write(row, col + 1,
+                            move_line.get('account_name', move_line['account']),
+                            side_heading_sub)
+                sheet.write(row, col + 2,
+                            move_line.get('initial_balance', 0.0), num_fmt_whole)
+                j = 3
+                if apply_cmp:
+                    for num in periods:
+                        sheet.write(row, col + j,
+                                    move_line.get('dynamic_total_debit_' + str(num), 0.0),
+                                    num_fmt_whole)
+                        sheet.write(row, col + j + 1,
+                                    move_line.get('dynamic_total_credit_' + str(num), 0.0),
+                                    num_fmt_whole)
+                        j += 2
+                sheet.write(row, col + j,     move_line.get('total_debit', 0.0),  num_fmt_whole)
+                sheet.write(row, col + j + 1, move_line.get('total_credit', 0.0), num_fmt_whole)
+                sheet.write(row, col + j + 2, move_line.get('end_balance', 0.0),  num_fmt_whole)
+                row += 1
+
+            current_internal_group = None
+            current_group = None
+            internal_group_rows = []
+            group_rows = []
+
+            for move_line in data['data']:
+                ig = move_line.get('internal_group') or 'Other'
+                gl = move_line.get('group_label') or 'Other'
+
+                # Internal group boundary
+                if ig != current_internal_group:
+                    if current_group is not None and group_rows:
+                        write_total('Total', group_rows, group_total_fmt)
+                        group_rows = []
+                    if current_internal_group is not None and internal_group_rows:
+                        write_total(f'{current_internal_group} Total',
+                                    internal_group_rows, internal_total_fmt)
+                        internal_group_rows = []
+                    write_header(ig.upper(), internal_header_fmt)
+                    current_internal_group = ig
+                    current_group = None
+
+                # Sub-group boundary
+                if gl != current_group:
+                    if current_group is not None and group_rows:
+                        write_total('Total', group_rows, group_total_fmt)
+                        group_rows = []
+                    write_header(gl, group_header_fmt)
+                    current_group = gl
+
+                write_account(move_line)
+                group_rows.append(move_line)
+                internal_group_rows.append(move_line)
+
+            # Close last sub-group and last internal group
+            if current_group is not None and group_rows:
+                write_total('Total', group_rows, group_total_fmt)
+            if current_internal_group is not None and internal_group_rows:
+                write_total(f'{current_internal_group} Total',
+                            internal_group_rows, internal_total_fmt)
+
+            # Grand total
+            all_rows = data['data']
+            sheet.write(row, col, '', grand_fmt)
+            sheet.write(row, col + 1, 'Grand Total', grand_fmt)
+            sheet.write(row, col + 2, _s(all_rows, 'initial_balance'), grand_fmt)
+            j = 3
+            if apply_cmp:
+                for num in periods:
+                    sheet.write(row, col + j,
+                                _s(all_rows, 'dynamic_total_debit_' + str(num)), grand_fmt)
+                    sheet.write(row, col + j + 1,
+                                _s(all_rows, 'dynamic_total_credit_' + str(num)), grand_fmt)
+                    j += 2
+            sheet.write(row, col + j,     _s(all_rows, 'total_debit'),  grand_fmt)
+            sheet.write(row, col + j + 1, _s(all_rows, 'total_credit'), grand_fmt)
+            sheet.write(row, col + j + 2, _s(all_rows, 'end_balance'),  grand_fmt)
+            row += 1
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())
