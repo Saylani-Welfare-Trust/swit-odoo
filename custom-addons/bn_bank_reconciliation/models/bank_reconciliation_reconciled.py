@@ -204,7 +204,7 @@ class BankReconciliationReconciled(models.Model):
                 'reconciled_date': False,
                 'reconciled_by': False,
             })
-            if len(released_lines) > 1:
+            if len(released_lines.mapped('move_id')) > 1:
                 # Only one entry is kept as the pending match, so a match made
                 # against several entries has to be done again
                 self.transaction_id.action_reject_match()

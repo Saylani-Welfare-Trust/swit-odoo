@@ -250,17 +250,14 @@ class BankReconciliationMaster(models.Model):
             record.closing_balance = record.opening_balance + total_debit - total_credit
 
     def _get_candidate_move_line_domain(self, transaction=None):
-        """Journal items a statement line can be compared with: posted, not yet
-        bank reconciled, on the bank side of the selected journal. Only the bank
-        side is used so that an entry is compared once, not once per line."""
+        """Journal items a statement line can be compared with: the items of the
+        selected journal's entries, whatever their account, that are not bank
+        reconciled yet. A statement line is reconciled with whole entries, so an
+        entry is offered only once. Income and expense items are left out: the
+        bank movement is the other side of the entry (bank, settlement...)."""
         self.ensure_one()
         journal = self.journal_id
-        accounts = (
-            journal.default_account_id
-            | journal._get_journal_inbound_outstanding_payment_accounts()
-            | journal._get_journal_outbound_outstanding_payment_accounts()
-        )
-        # Items waiting on another statement line's match are not available
+        # Entries waiting on another statement line's match are not available
         matched_domain = [
             ('state', '=', 'matched'),
             ('matched_move_line_id', '!=', False),
@@ -268,17 +265,17 @@ class BankReconciliationMaster(models.Model):
         ]
         if transaction:
             matched_domain.append(('id', '!=', transaction.id))
-        matched_lines = self.env['bank.reconciliation.transaction'].search(
+        matched_moves = self.env['bank.reconciliation.transaction'].search(
             matched_domain
-        ).mapped('matched_move_line_id')
+        ).mapped('matched_move_line_id.move_id')
         return [
             ('journal_id', '=', journal.id),
-            ('account_id', 'in', accounts.ids),
-            ('parent_state', '=', 'posted'),
+            ('account_id.internal_group', 'not in', ['income', 'expense']),
+            ('parent_state', '!=', 'cancel'),
             ('is_bank_reconciled', '=', False),
             ('reconciled', '=', False),
             ('company_id', '=', self.company_id.id),
-            ('id', 'not in', matched_lines.ids),
+            ('move_id', 'not in', matched_moves.ids),
         ]
 
     def action_import_statement(self):
@@ -368,12 +365,15 @@ class BankReconciliationMaster(models.Model):
                 'Please reconcile or reject them first.'
             ) % len(unreconciled))
         
-        not_posted = self.reconciled_ids.filtered(lambda r: not r.is_posted)
+        # Draft entries can be matched, but they must be posted to complete
+        not_posted = self.reconciled_ids.filtered(lambda r: r.matched_move_id.state != 'posted')
         if not_posted:
             raise UserError(_(
                 'Some reconciled transactions are not posted to accounting.\n'
-                'Please post them first or enable auto-posting.'
-            ))
+                'Please post them first or enable auto-posting.\n'
+                'Entries: %s'
+            ) % ', '.join(move.ref or move.name for move in not_posted.mapped('matched_move_id')))
+        self.reconciled_ids.write({'is_posted': True})
         
         # The statement is only compared with the journal's existing entries,
         # so no journal entry is created (_create_reconciliation_journal_entry
