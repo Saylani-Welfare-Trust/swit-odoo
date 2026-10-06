@@ -96,10 +96,12 @@
                     </group>
                     <notebook>
                         <page string="Donation Lines">
-                            <field name="advance_donation_lines" force_save="1">
+                            <field name="advance_donation_lines" force_save="1" widget="one2many_selectable" options="{'print_method': 'action_print_line_non_cash_report', 'print_label': 'Print Selected Non-Cash Reports'}">
                                 <tree editable="bottom">
                                     <field name="serial_no" readonly="1"/>
                                     <field name="product_id" readonly="1"/>
+                                    <field name="quantity" readonly="1"/>
+                                    <field name="description"/>
                                     <field name="amount" readonly="1"/>
                                     <field name="service_charge_amount" readonly="1"/>
                                     <field name="paid_amount" readonly="1" />
@@ -109,7 +111,7 @@
                                     <field name="disbursed_amount" readonly="1"/>
                                     <field name="is_disbursed" readonly="0"/>
 
-                                    <field name="disbursement_date"/> 
+                                    <field name="disbursement_date" readonly="0"/> 
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
@@ -160,7 +162,7 @@
                             </group>
                         </page>
                         <page string="Disbursement Lines">
-                            <field name="disbursement_line_ids" readonly="1">
+                            <field name="disbursement_line_ids" readonly="1" widget="one2many_selectable" options="{'print_method': 'action_print_line_non_cash_disbursement_report', 'print_label': 'Print Selected Non-Cash Reports'}">
                                 <tree>
                                     <field name="product_id"/>
                                     <field name="date"/>

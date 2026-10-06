@@ -1,143 +1,226 @@
 <odoo>
     <template id="report_advance_donation_line_non_cash">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="line">
-                <div class="page">
-                    <img t-if="line.env.company.dn_image"
-                        t-att-src="image_data_uri(line.env.company.dn_image)"
+        <t t-call="web.basic_layout">
+            <style>
+                .dnac {
+                    font-family: Helvetica, Arial, sans-serif;
+                    font-size: 14px;
+                    line-height: 1.3;
+                    color: #000;
+                }
+
+                .dnac table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                /* wkhtmltopdf draws hairlines for Bootstrap's zero-width solid borders */
+                .dnac thead, .dnac tbody, .dnac tr, .dnac td, .dnac th {
+                    border: 0 none;
+                }
+
+                .dnac td, .dnac th {
+                    padding: 1px 4px;
+                    vertical-align: baseline;
+                }
+
+                .dnac-title td {
+                    font-family: 'Times New Roman', Times, serif;
+                    font-size: 20px;
+                    font-weight: bold;
+                    padding: 10px 4px 4px 4px;
+                }
+
+                .dnac-box {
+                    border: 1px solid #000;
+                    padding: 3px 10px 6px 10px;
+                }
+
+                .dnac-items {
+                    margin-top: 14px;
+                }
+
+                .dnac-items th {
+                    border: 1px solid #000;
+                    text-align: center;
+                }
+
+                .dnac-items td {
+                    padding: 4px;
+                }
+
+                .dnac-total td {
+                    border-top: 1px solid #000;
+                    font-weight: bold;
+                }
+
+                .dnac-cut {
+                    border-top: 1px solid #000;
+                    margin: 26px 0 20px 0;
+                }
+
+                .dnac-stub-items td {
+                    border: 1px solid #000;
+                }
+            </style>
+            <!-- Lines of the same donation share one receipt; lines with the same
+                 product and day are merged (line quantities and amounts summed). The day is
+                 printed on the row only when a product has rows for several days -->
+            <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
+                <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation)"/>
+                <t t-set="groups" t-value="lines._get_receipt_groups()"/>
+                <t t-set="product_groups" t-value="lines._get_receipt_groups(per_day=False)"/>
+                <t t-set="show_day" t-value="len(groups) != len(product_groups)"/>
+                <t t-set="slips" t-value="donation.donation_slip_usage_lines.mapped('donation_slip_id')"/>
+                <t t-set="total" t-value="sum(lines.mapped('amount'))"/>
+                <!-- Whole amounts are printed without decimals, like the manual receipt -->
+                <t t-set="fmt" t-value="lambda v: '{:,.2f}'.format(v).replace('.00', '')"/>
+                <t t-set="receipt_date" t-value="', '.join(dict.fromkeys(d.strftime('%d-%m-%Y') for d in lines.mapped('date') if d))"/>
+                <t t-set="ref_date" t-value="', '.join(dict.fromkeys(d.strftime('%d-%m-%Y') for d in lines.mapped('disbursement_date') if d))"/>
+                <t t-set="donor_acc" t-value="' - '.join(n for n in (donation.donor_id.name, donation.category_id.name) if n)"/>
+                <t t-set="descriptions" t-value="list(dict.fromkeys(d for d in lines.mapped('description') if d))"/>
+                <t t-set="entered_by" t-value="donation.create_uid"/>
+                <t t-set="branch" t-value="entered_by.employee_id.analytic_account_id.name or user.employee_id.analytic_account_id.name or ''"/>
+                <t t-set="printed_on" t-value="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %I:%M %p')"/>
+                <div class="page dnac" t-att-style="'page-break-after: always;' if not donation_last else ''">
+                    <img t-if="donation.env.company.dn_image"
+                        t-att-src="image_data_uri(donation.env.company.dn_image)"
                         style="width: 100%; height: auto; display: block;"/>
-                    <div>               
-                        <div style="width: 100%; text-align: center; margin: 20px auto 0 auto;">                            
-                            <h2 style="color: #2E4053;">Non-Cash Donation Receipt</h2>
-                            <h4 style="color: #5D6D7E;">Individual Line Certificate</h4>
-                            <hr style="border: 2px solid #2E4053;"/>
-                        </div>
-                    </div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-6">
-                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donation Information</h5>
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong>Application No:</strong></td>
-                                    <td><span t-esc="line.advance_donation_id.name"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Line Serial No:</strong></td>
-                                    <td><span t-esc="line.serial_no"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Product:</strong></td>
-                                    <td><span t-esc="line.product_id.display_name"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Status:</strong></td>
-                                    <td>
-                                        <span t-if="line.state == 'paid'" style="color: #27AE60; font-weight: bold;">PAID</span>
-                                        <span t-if="line.state == 'partial'" style="color: #F39C12; font-weight: bold;">PARTIAL</span>
-                                        <span t-if="line.state == 'unpaid'" style="color: #E74C3C; font-weight: bold;">UNPAID</span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-6">
-                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donor Information</h5>
-                            <table class="table table-borderless">
-                                <tr>
-                                    <td><strong>Donor Name:</strong></td>
-                                    <td><span t-esc="line.advance_donation_id.donor_id.name"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Category:</strong></td>
-                                    <td><span t-esc="line.advance_donation_id.category_id.name"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Contract Type:</strong></td>
-                                    <td><span t-esc="dict(line.advance_donation_id.fields_get(allfields=['contract_type'])['contract_type']['selection'])[line.advance_donation_id.contract_type]"/></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Approved Date:</strong></td>
-                                    <td><span t-esc="line.approved_date and line.approved_date.strftime('%Y-%m-%d') or 'Not Approved'"/></td>
-                                </tr>
-                            </table>
-                        </div>
+
+                    <table class="dnac-title">
+                        <tr>
+                            <td>DONOR ACCOUNT (NON-CASH)</td>
+                            <td style="text-align: right; text-transform: uppercase;"><span t-esc="branch"/></td>
+                        </tr>
+                    </table>
+
+                    <div class="dnac-box">
+                        <table>
+                            <tr>
+                                <td style="width: 14%;">Receipt #</td>
+                                <td style="width: 36%;">: <span t-esc="donation.name"/></td>
+                                <td style="width: 12%;">Donor Acc.</td>
+                                <td style="width: 38%;">: <span t-esc="donor_acc"/></td>
+                            </tr>
+                            <tr>
+                                <td>Receipt Date</td>
+                                <td>: <span t-esc="receipt_date"/></td>
+                                <td>Ref. Date</td>
+                                <td>: <span t-esc="ref_date"/></td>
+                            </tr>
+                            <tr>
+                                <td>Donor Name</td>
+                                <td>: <span t-esc="donation.donor_id.name"/></td>
+                                <td>Ref. #</td>
+                                <td>: <span t-esc="', '.join(s for s in lines.mapped('serial_no') if s)"/></td>
+                            </tr>
+                            <tr>
+                                <td>DN Ref. #</td>
+                                <td>: <span t-esc="', '.join(slips.mapped('name'))"/></td>
+                                <td>Bank</td>
+                                <td>: <span t-esc="', '.join(slips.mapped('bank_id').mapped('name'))"/></td>
+                            </tr>
+                            <tr>
+                                <td>Amount</td>
+                                <td colspan="3">: <span t-esc="fmt(total)"/></td>
+                            </tr>
+                            <tr>
+                                <td>Remarks</td>
+                                <td colspan="3">:
+                                    <span t-if="descriptions" t-esc="', '.join(descriptions)"/>
+                                    <span t-else="" t-esc="', '.join('%s %s X %s' % (g[:1].product_id.name, fmt(sum(g.mapped('amount')) / (sum(g.mapped('quantity')) or len(g))), sum(g.mapped('quantity')) or len(g)) for g in product_groups)"/>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-12">
-                            <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Financial Details</h5>
-                            <div class="row">
-                                <div class="col-4">
-                                    <div class="card" style="border: 2px solid #3498DB;">
-                                        <div class="card-body text-center">
-                                            <h6 style="color: #3498DB;">Total Amount</h6>
-                                            <h4 style="color: #2E4053;">
-                                                <span t-esc="'{:,.2f}'.format(line.amount)"/> 
-                                                <span t-esc="line.currency_id.symbol"/>
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="card" style="border: 2px solid #27AE60;">
-                                        <div class="card-body text-center">
-                                            <h6 style="color: #27AE60;">Paid Amount</h6>
-                                            <h4 style="color: #27AE60;">
-                                                <span t-esc="'{:,.2f}'.format(line.paid_amount)"/> 
-                                                <span t-esc="line.currency_id.symbol"/>
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="card" style="border: 2px solid #E74C3C;">
-                                        <div class="card-body text-center">
-                                            <h6 style="color: #E74C3C;">Remaining Amount</h6>
-                                            <h4 style="color: #E74C3C;">
-                                                <span t-esc="'{:,.2f}'.format(line.remaining_amount)"/> 
-                                                <span t-esc="line.currency_id.symbol"/>
-                                            </h4>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <table class="dnac-items">
+                        <thead>
+                            <tr>
+                                <th style="width: 48%;">Account Title</th>
+                                <th style="width: 15%;">Quantity</th>
+                                <th style="width: 15%;">Rate</th>
+                                <th style="width: 22%;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="groups" t-as="group">
+                                <t t-set="day" t-value="show_day and group[:1]._get_receipt_day()"/>
+                                <t t-set="qty" t-value="sum(group.mapped('quantity')) or len(group)"/>
+                                <td><span t-esc="group[:1].product_id.display_name"/><span t-if="day"> (<t t-esc="day.strftime('%d-%m-%Y')"/>)</span></td>
+                                <td style="text-align: center;"><span t-esc="'{:,}'.format(qty)"/></td>
+                                <td style="text-align: center;"><span t-esc="fmt(sum(group.mapped('amount')) / qty)"/></td>
+                                <td style="text-align: right;"><span t-esc="fmt(sum(group.mapped('amount')))"/></td>
+                            </tr>
+                            <tr class="dnac-total">
+                                <td/>
+                                <td colspan="2" style="text-align: center;">Total Amount :</td>
+                                <td style="text-align: right;"><span t-esc="'{:,.2f}'.format(total)"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div style="padding: 4px 8px;">
+                        <strong>Amount In Words :</strong>
+                        <span t-esc="donation.currency_id.amount_to_text(total)"/> Only
                     </div>
 
-                    <div class="row mt-4" t-if="line.is_disbursed">
-                        <div class="col-12">
-                            <div class="alert alert-success">
-                                <h5><i class="fa fa-check-circle"></i> Disbursement Information</h5>
-                                <p><strong>Disbursed Amount:</strong> 
-                                    <span t-esc="'{:,.2f}'.format(line.disbursed_amount)"/> 
-                                    <span t-esc="line.currency_id.symbol"/>
-                                </p>
-                                <p><strong>Disbursement Status:</strong> 
-                                    <span style="color: #27AE60; font-weight: bold;">COMPLETED</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <table style="margin-top: 6px;">
+                        <tr>
+                            <td style="width: 14%; padding-left: 12px;">Printed By :</td>
+                            <td style="width: 15%;"><span t-esc="user.name"/></td>
+                            <td style="width: 20%;"><span t-esc="printed_on"/></td>
+                            <td style="width: 12%;">Entered By :</td>
+                            <td style="width: 17%;"><span t-esc="entered_by.name"/></td>
+                            <td style="width: 22%; text-align: right;"><span t-esc="donation.create_date and context_timestamp(donation.create_date).strftime('%d-%m-%Y %I:%M:%S %p') or ''"/></td>
+                        </tr>
+                    </table>
 
-                    <div class="row mt-5">
-                        <div class="col-6">
-                            <p><strong>Issue Date:</strong> <span t-esc="time.strftime('%Y-%m-%d %H:%M:%S')"/></p>
-                            <p><strong>Issued By:</strong> <span t-esc="user.name"/></p>
-                        </div>
-                        <div class="col-6 text-right">
-                            <div style="border-top: 1px solid #000; width: 200px; margin-left: auto;">
-                                <p class="text-center mt-2"><strong>Authorized Signature</strong></p>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="dnac-cut"/>
 
-                    <div class="row mt-4">
-                        <div class="col-12 text-center">
-                            <small style="color: #7F8C8D;">
-                                This is a computer-generated document. No signature is required.<br/>
-                                For any queries, please contact the administration office.
-                            </small>
-                        </div>
+                    <!-- Counterfoil -->
+                    <div class="dnac-box">
+                        <table>
+                            <tr>
+                                <td style="width: 58%; padding: 0; vertical-align: top;">
+                                    <table>
+                                        <tr>
+                                            <td style="width: 24%;">Branch</td>
+                                            <td style="text-transform: uppercase;">: <span t-esc="branch"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Receipt #</td>
+                                            <td>: <span t-esc="donation.name"/><span style="padding-left: 14px;" t-esc="receipt_date"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Printed By</td>
+                                            <td>: <span t-esc="user.name"/><span style="padding-left: 14px;" t-esc="printed_on"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Donor Name</td>
+                                            <td>: <span t-esc="donation.donor_id.name"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Amount</td>
+                                            <td>: <span t-esc="fmt(total)"/></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Donor Acc.</td>
+                                            <td>: <span t-esc="donor_acc"/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td style="width: 42%; padding: 2px 0 0 0; vertical-align: top;">
+                                    <table class="dnac-stub-items">
+                                        <tr t-foreach="groups" t-as="group">
+                                            <t t-set="day" t-value="show_day and group[:1]._get_receipt_day()"/>
+                                            <td><span t-esc="group[:1].product_id.display_name"/><span t-if="day"> (<t t-esc="day.strftime('%d-%m-%Y')"/>)</span></td>
+                                            <td style="width: 22%; text-align: center;"><span t-esc="'{:,}'.format(sum(group.mapped('quantity')) or len(group))"/></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </t>
@@ -147,14 +230,14 @@
         <field name="name">A4 - Non-Cash Donation Line Report</field>
         <field name="format">A4</field>
         <field name="orientation">Portrait</field>
-        <field name="margin_top">12</field>
-        <field name="margin_bottom">30</field>
+        <field name="margin_top">4</field>
+        <field name="margin_bottom">8</field>
         <field name="margin_left">4</field>
         <field name="margin_right">4</field>
-        <field name="header_spacing">5</field>
+        <field name="header_spacing">0</field>
         <field name="dpi">90</field>
     </record>
-    
+
     <record id="action_report_advance_donation_line_non_cash" model="ir.actions.report">
         <field name="name">Non-Cash Donation Line Report</field>
         <field name="model">advance.donation.lines</field>
