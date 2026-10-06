@@ -86,7 +86,7 @@ May Allah bless you!
     def _generate_din_receipt_pdf(self):
         try:
             pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_donation_in_kind.donation_in_kind_report',   # <- was 'bn_donation_in_kind.report_donation_in_kind'
+                'bn_donation_in_kind.donation_in_kind_whatsapp_report',
                 self.ids
             )
             return pdf_data
