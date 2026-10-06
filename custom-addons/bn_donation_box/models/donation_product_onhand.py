@@ -1,5 +1,4 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api
 
 
 class DonationProductOnhand(models.Model):
@@ -24,44 +23,62 @@ class DonationProductOnhand(models.Model):
 
     @api.model
     def _get_onhand_data(self):
-        """Get on-hand quantity data for donation products"""
-        # Get the current user's employee analytic account
+        """Get on-hand quantity data for donation products.
+
+        Builds the product x location grid in Python (cheap - no DB round
+        trip) and fetches every quantity with ONE aggregated query, instead
+        of a separate stock.quant search per product variant per location.
+        The previous version could issue hundreds of individual queries for
+        a single page load (product count x location count x variant count,
+        and this method is called from several places per request).
+        """
         user_analytic = self._get_user_analytic_account()
         user_analytic_id = user_analytic.id if user_analytic else None
-        
-        # Get all donation products
+
         donation_products = self.env['product.template'].search([
             ('is_donation_box', '=', True)
         ])
-        
-        # Get all internal stock locations
+        if not donation_products:
+            return []
+
         locations = self.env['stock.location'].search([('usage', '=', 'internal')])
-        
-        # Filter by user's analytic account in Python (more robust)
         if user_analytic_id:
-            locations = locations.filtered(lambda loc: loc.analytic_account_id and loc.analytic_account_id.id == user_analytic_id)
-        
+            locations = locations.filtered(
+                lambda loc: loc.analytic_account_id and loc.analytic_account_id.id == user_analytic_id)
+        if not locations:
+            return []
+
+        # One query for every variant of every donation product template,
+        # instead of a search per template (and a fallback search when a
+        # template happened to have no variants loaded).
+        variants = self.env['product.product'].search([
+            ('product_tmpl_id', 'in', donation_products.ids)
+        ])
+        if not variants:
+            return []
+
+        # One aggregated query for every (product, location) quantity instead
+        # of one search per combination. Uses the long-stable public
+        # read_group() API rather than the private _read_group(), whose exact
+        # tuple-based signature has shifted across Odoo 17 point releases.
+        grouped = self.env['stock.quant'].read_group(
+            domain=[('product_id', 'in', variants.ids), ('location_id', 'in', locations.ids)],
+            fields=['available_quantity:sum'],
+            groupby=['product_id', 'location_id'],
+            lazy=False,
+        )
+        qty_by_product_location = {
+            (g['product_id'][0], g['location_id'][0]): g['available_quantity']
+            for g in grouped
+        }
+
         records = []
         record_id = 1
-        
-        # Build records for each product-location combination
         for product_tmpl in donation_products:
+            template_variants = variants.filtered(lambda p: p.product_tmpl_id == product_tmpl)
             for location in locations:
-                # Get on-hand quantity for each product variant
-                product_variants = product_tmpl.product_variant_ids if product_tmpl.product_variant_ids else [
-                    self.env['product.product'].search([('product_tmpl_id', '=', product_tmpl.id)], limit=1)
-                ]
-                
-                for product in product_variants:
-                    if not product:
-                        continue
-                        
-                    stock_quants = self.env['stock.quant'].search([
-                        ('product_id', '=', product.id),
-                        ('location_id', '=', location.id),
-                    ])
-                    on_hand_qty = sum(stock_quants.mapped('available_quantity'))
-                    
+                for product in template_variants:
+                    on_hand_qty = qty_by_product_location.get((product.id, location.id), 0.0)
                     records.append({
                         'id': record_id,
                         'product_id': product.id,
@@ -72,7 +89,7 @@ class DonationProductOnhand(models.Model):
                         'analytic_account_id': location.analytic_account_id.id if location.analytic_account_id else None,
                     })
                     record_id += 1
-        
+
         return records
 
     @api.model

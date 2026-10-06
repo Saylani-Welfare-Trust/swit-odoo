@@ -10,6 +10,7 @@
         'product',
         'base_accounting_kit',
         'bn_profile_management',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'data/sequence.xml',

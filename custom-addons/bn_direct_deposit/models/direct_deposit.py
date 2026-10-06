@@ -62,8 +62,21 @@ class DirectDeposit(models.Model):
     ], string="Source Type")
     source_record_id = fields.Integer(string="Source Record ID")
 
-    welfare_line_ids = fields.Many2many('welfare.line', string="Welfare Lines")
-    welfare_recurring_line_ids = fields.Many2many('welfare.recurring.line', string="Welfare Recurring Lines")
+    welfare_line_ids = fields.Many2many(
+        'welfare.line',
+        'direct_deposit_welfare_line_rel',
+        'direct_deposit_id',
+        'welfare_line_id',
+        string="Welfare Lines",
+    )
+
+    welfare_recurring_line_ids = fields.Many2many(
+        'welfare.recurring.line',
+        'direct_deposit_welfare_recurring_line_rel',
+        'direct_deposit_id',
+        'welfare_recurring_line_id',
+        string="Welfare Recurring Lines",
+    )
     medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")
 
     # ---------- CLEAR NOTIFICATION ----------

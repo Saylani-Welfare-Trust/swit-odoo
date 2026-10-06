@@ -13,6 +13,8 @@ class LoanProductLine(models.Model):
     inst_amount = fields.Float('Ins. Amount')
 
     product_ids = fields.Many2many('product.product', string='Products')
-    
+
+    installment_ids = fields.One2many('loan.product.installment', 'loan_product_line_id', string='No. of Installments')
+
     is_recover = fields.Boolean('Is Recover?')
     

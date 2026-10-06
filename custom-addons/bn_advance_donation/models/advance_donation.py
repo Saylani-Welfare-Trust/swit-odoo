@@ -169,7 +169,7 @@ class AdvanceDonation(models.Model):
         unit_service_charge = self.service_charge_amount or 0.0 if self.service_charges else 0.0
 
         dates = []
-        if self.contract_type == 'frequency' and self.contract_start_date and self.contract_end_date:
+        if self.contract_type in ('frequency', 'open_contract') and self.contract_start_date and self.contract_end_date:
             start_date = fields.Date.from_string(self.contract_start_date)
             end_date = fields.Date.from_string(self.contract_end_date)
             if self.contract_frequency == 'daily':
@@ -185,19 +185,42 @@ class AdvanceDonation(models.Model):
         total_lines = 0
 
         if self.contract_type == 'frequency' and dates:
-            for date in dates:
-                for _ in range(self.no_of_product):
+            # One consolidated line per day (or week) for all the products of that day
+            if self.no_of_product > 0:
+                for line_date in dates:
                     self.advance_donation_lines.create({
                         'serial_no': serial,
                         'product_id': self.product_id.id,
-                        'amount': amount,
-                        'service_charge_amount': line_service_charge,
-                        'remaining_amount': amount + line_service_charge,
+                        'quantity': self.no_of_product,
+                        'amount': amount * self.no_of_product,
+                        'service_charge_amount': line_service_charge * self.no_of_product,
+                        'remaining_amount': (amount + line_service_charge) * self.no_of_product,
                         'advance_donation_id': self.id,
-                        'date': date,
+                        'date': line_date,
                     })
                     serial += 1
                     total_lines += 1
+        elif self.contract_type == 'open_contract' and dates:
+            # The total is spread over the days (or weeks), the last line takes the rounding difference
+            currency = self.currency_id or self.env.company.currency_id
+            count = len(dates)
+            share = currency.round(self.total_product_amount / count)
+            charge_share = currency.round(line_service_charge / count)
+            for line_date in dates:
+                last = serial == count
+                line_amount = self.total_product_amount - share * (count - 1) if last else share
+                line_charge = line_service_charge - charge_share * (count - 1) if last else charge_share
+                self.advance_donation_lines.create({
+                    'serial_no': serial,
+                    'product_id': self.product_id.id,
+                    'amount': line_amount,
+                    'service_charge_amount': line_charge,
+                    'remaining_amount': line_amount + line_charge,
+                    'advance_donation_id': self.id,
+                    'date': line_date,
+                })
+                serial += 1
+                total_lines += 1
         else:
             if self.contract_type != 'open_contract':
                 for i in range(self.total_no_of_product):

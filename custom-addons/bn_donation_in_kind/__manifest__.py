@@ -7,7 +7,8 @@
     'category': 'BytesNode/Donation In Kind',
     'depends': [
         'bn_import_donation',
-        'bn_pos_custom_action'
+        'bn_pos_custom_action',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'data/data.xml',
@@ -16,6 +17,7 @@
         'data/server_action.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        'security/access_right.xml',
         'reports/donation_in_kind_report.xml',
         'reports/donation_in_kind_transfer_report.xml',
         'views/donation_in_kind.xml',

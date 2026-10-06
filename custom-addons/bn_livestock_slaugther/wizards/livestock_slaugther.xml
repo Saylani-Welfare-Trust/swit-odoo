@@ -8,13 +8,37 @@
             <form>
                 <sheet>
                     <field name="livestock_slaughter_id" invisible="1" />
+                    <field name="is_bulk" invisible="1" />
                     <div class="oe_title">
                         <label for="dest_location_id"/>
                         <h1><field name="dest_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
                     </div>
+                    <group invisible="not is_bulk">
+                        <group>
+                            <field name="source_location_id" options="{'no_open': True}" force_save="1" />
+                        </group>
+                        <group>
+                            <field name="total_quantity" />
+                        </group>
+                    </group>
+                    <field name="livestock_slaughter_ids" invisible="not is_bulk" readonly="1" force_save="1">
+                        <tree create="0" delete="0">
+                            <field name="name" />
+                            <field name="product_id" />
+                            <field name="code" optional="hide" />
+                            <field name="donee_id" />
+                            <field name="ref" optional="show" />
+                            <field name="on_hand_qty" />
+                            <field name="quantity" sum="Total" />
+                        </tree>
+                    </field>
+                    <group>
+                        <field name="remarks" placeholder="Remarks..." />
+                    </group>
                 </sheet>
                 <footer>
-                    <button name="action_do_transfer" string="Fetch" type="object" class="oe_highlight"/>
+                    <button name="action_do_transfer" string="Fetch" type="object" class="oe_highlight" invisible="is_bulk"/>
+                    <button name="action_do_transfer" string="Transfer &amp; Print" type="object" class="oe_highlight" invisible="not is_bulk"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

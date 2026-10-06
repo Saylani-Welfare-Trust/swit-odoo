@@ -10,6 +10,7 @@
         'product',
         'stock',
         'purchase',
+        'purchase_stock',
         'analytic',
         'bn_shariah_law',
         'bn_donation_home_service',

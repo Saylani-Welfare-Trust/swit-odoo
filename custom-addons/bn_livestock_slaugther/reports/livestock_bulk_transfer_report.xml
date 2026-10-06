@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_livestock_bulk_transfer">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-set="company" t-value="docs[:1].env.company"/>
+                <t t-set="sources" t-value="docs.mapped('source_location_id')"/>
+                <t t-set="destinations" t-value="docs.mapped('transfer_location')"/>
+                <t t-set="pickings" t-value="docs.mapped('transfer_picking_id')"/>
+                <div class="page">
+                    <h3 class="text-center mb-3">Livestock Bulk Transfer</h3>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div><strong>Source Location:</strong> <t t-esc="', '.join(sources.mapped('display_name')) or '-'"/></div>
+                            <div><strong>Destination Location:</strong> <t t-esc="', '.join(destinations.mapped('display_name')) or '-'"/></div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <div><strong>Transfer #:</strong> <t t-esc="', '.join(pickings.mapped('name')) or '-'"/></div>
+                            <div><strong>Date:</strong> <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %H:%M')"/></div>
+                            <div><strong>Printed by:</strong> <t t-esc="user.name"/></div>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="text-center">#</th>
+                                <th>Reference</th>
+                                <th>Product</th>
+                                <th>Donee</th>
+                                <th>Source Document</th>
+                                <th>Source Location</th>
+                                <th>Destination Location</th>
+                                <th class="text-end">Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="docs" t-as="rec">
+                                <tr>
+                                    <td class="text-center"><t t-esc="rec_index + 1"/></td>
+                                    <td><t t-esc="rec.name"/></td>
+                                    <td><t t-esc="rec.product_id.display_name"/></td>
+                                    <td><t t-esc="rec.donee_id.name or '-'"/></td>
+                                    <td><t t-esc="rec.ref or '-'"/></td>
+                                    <td><t t-esc="rec.source_location_id.display_name or '-'"/></td>
+                                    <td><t t-esc="rec.transfer_location.display_name or '-'"/></td>
+                                    <td class="text-end"><t t-esc="rec.quantity"/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="7" class="text-end"><strong>Total</strong></td>
+                                <td class="text-end"><strong><t t-esc="sum(docs.mapped('quantity'))"/></strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+
+                    <t t-set="remarks" t-value="list(dict.fromkeys(r for r in docs.mapped('transfer_remarks') if r))"/>
+                    <div t-if="remarks" class="mt-3">
+                        <strong>Remarks:</strong>
+                        <div style="white-space: pre-wrap;"><t t-esc="'\n'.join(remarks)"/></div>
+                    </div>
+
+                    <div class="row mt-5">
+                        <div class="col-4 text-center">
+                            <div style="border-top: 1px solid #000; padding-top: 4px;">Issued By</div>
+                        </div>
+                        <div class="col-4"/>
+                        <div class="col-4 text-center">
+                            <div style="border-top: 1px solid #000; padding-top: 4px;">Received By</div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_livestock_bulk_transfer" model="ir.actions.report">
+        <field name="name">Bulk Transfer</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_livestock_slaugther.report_livestock_bulk_transfer</field>
+        <field name="report_file">bn_livestock_slaugther.report_livestock_bulk_transfer</field>
+        <field name="binding_model_id" ref="model_livestock_slaugther"/>
+        <field name="binding_type">report</field>
+        <field name="print_report_name">'Livestock Bulk Transfer'</field>
+    </record>
+
+</odoo>

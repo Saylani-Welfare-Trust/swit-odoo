@@ -44,7 +44,7 @@ class KeyIssuance(models.Model):
     issue_date = fields.Date('Issued Date', default=fields.Date.today)
     returned_on = fields.Datetime('Returned On')
 
-    state = fields.Selection(selection=key_selection, default='draft', string="Status", tracking=True)
+    state = fields.Selection(selection=key_selection, default='draft', string="Status", tracking=True, index=True)
     action_type = fields.Selection(selection=action_type_selection, default='bulk', string="Action Type")
 
     donation_amount = fields.Float('Donation Amount')
@@ -146,7 +146,7 @@ class KeyIssuance(models.Model):
 
     def _bn_do_return(self):
         self.ensure_one()
-        if self.state not in ('donation_receive', 'pending'):
+        if self.state not in ('donation_receive', 'pending', 'returned'):
             raise UserError(_(
                 'Issuance "%(name)s" cannot be returned from status "%(state)s".'
             ) % {'name': self.display_name, 'state': self._bn_selection_label('state', self.state)})

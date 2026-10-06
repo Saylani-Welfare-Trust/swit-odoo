@@ -1,13 +1,14 @@
 <odoo>
     <template id="template_advance_donation_disbursement_line">
         <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="line">
+            <!-- Lines of the same donation share one certificate; lines with the same
+                 product and date are merged (quantity and amounts summed) -->
+            <t t-foreach="docs.mapped('advance_donation_id')" t-as="donation">
+                <t t-set="lines" t-value="docs.filtered(lambda l: l.advance_donation_id == donation)"/>
+                <t t-set="line" t-value="lines[:1]"/>
+                <t t-set="groups" t-value="lines._get_receipt_groups()"/>
                 <!-- Helper: Get donee from whichever source is present -->
-                <t t-set="donee" t-value="
-                    (line.welfare_line_id and line.welfare_line_id.welfare_id and line.welfare_line_id.welfare_id.donee_id) or
-                    (line.microfinance_id and line.microfinance_id.donee_id) or
-                    None
-                "/>
+                <t t-set="donees" t-value="lines.mapped(lambda l: l.welfare_line_id.welfare_id.donee_id or l.microfinance_id.donee_id)"/>
                 <div class="page">
                       
 
@@ -25,6 +26,25 @@
                         <div class="col-6">
                             <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donation Information</h5>
                             <table class="table table-borderless">
+                                <t t-foreach="groups" t-as="group">
+                                    <t t-set="sep" t-value="'border-top: 1px solid #D5D8DC;' if not group_first else ''"/>
+                                    <tr>
+                                        <td t-att-style="sep"><strong>Product:</strong></td>
+                                        <td t-att-style="sep"><span t-esc="group[:1].product_id.display_name"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Date:</strong></td>
+                                        <td><span t-esc="group[:1].date and group[:1].date.strftime('%Y-%m-%d') or ''"/></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Quantity:</strong></td>
+                                        <td><span t-esc="len(group)"/></td>
+                                    </tr>
+                                    <tr t-if="len(groups) &gt; 1">
+                                        <td><strong>Disbursed Amount:</strong></td>
+                                        <td><span t-esc="'{:,.2f}'.format(sum(group.mapped('disbursed_amount')))"/> <span t-esc="donation.currency_id.symbol or ''"/></td>
+                                    </tr>
+                                </t>
                                 <!-- <tr>
                                     <td><strong>Application No:</strong></td>
                                     <td><span t-esc="line.advance_donation_id.name"/></td>
@@ -80,7 +100,7 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Donee / Beneficiary Information</h5>
-                            <div t-if="donee" class="alert alert-success">
+                            <div t-foreach="donees" t-as="donee" class="alert alert-success">
                                 <table class="table table-borderless">
                                     <tr>
                                         <td width="30%"><strong>Donee Name:</strong></td>
@@ -125,7 +145,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #F39C12;">Advance Donation Amount</h6>
                                             <h4 style="color: #F39C12;">
-                                                <span t-esc="'{:,.2f}'.format(line.advance_amount)"/>
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('advance_amount')))"/>
                                                 <span t-esc="line.advance_donation_id.currency_id.symbol or ''"/>
                                             </h4>
                                         </div>
@@ -136,7 +156,7 @@
                                         <div class="card-body text-center">
                                             <h6 style="color: #27AE60;">Final Disbursed Amount</h6>
                                             <h4 style="color: #27AE60;">
-                                                <span t-esc="'{:,.2f}'.format(line.disbursed_amount)"/>
+                                                <span t-esc="'{:,.2f}'.format(sum(lines.mapped('disbursed_amount')))"/>
                                                 <span t-esc="line.advance_donation_id.currency_id.symbol or ''"/>
                                             </h4>
                                         </div>
@@ -156,15 +176,15 @@
                                 <!--    <strong>Welfare Line:</strong>-->
                                 <!--    <span t-esc="line.welfare_line_id.display_name or line.welfare_line_id.welfare_id.name"/>-->
                                 <!--</p>-->
-                                <p t-if="line.welfare_id">
+                                <p t-foreach="lines.mapped('welfare_id')" t-as="welfare">
                                     <!--<strong>Recurring Welfare Line:</strong>-->
-                                    <span t-esc="line.welfare_id.name or line.welfare_id.id"/>
+                                    <span t-esc="welfare.name or welfare.id"/>
                                 </p>
-                                <p t-if="line.microfinance_id">
+                                <p t-foreach="lines.mapped('microfinance_id')" t-as="microfinance">
                                     <strong>Microfinance:</strong>
-                                    <span t-esc="line.microfinance_id.display_name or line.microfinance_id.id"/>
+                                    <span t-esc="microfinance.display_name or microfinance.id"/>
                                 </p>
-                                <p t-if="not (line.welfare_id or line.microfinance_id or line.welfare_line_id)">
+                                <p t-if="not (lines.welfare_id or lines.microfinance_id or lines.welfare_line_id)">
                                     <em>No specific module link recorded.</em>
                                 </p>
                             </div>

@@ -29,6 +29,27 @@ class ImportDonation(models.Model):
     journal_entry_id = fields.Many2one('account.move')
     picking_id = fields.Many2one('stock.picking')
 
+    picking_type_id = fields.Many2one(
+        'stock.picking.type',
+        string="Picking Type",
+        default=lambda self: self.env.ref(
+            'bn_import_donation.online_donation_stock_picking_type',
+            raise_if_not_found=False
+        ).id
+    )
+
+    source_location_id = fields.Many2one(
+        related='picking_type_id.default_location_src_id',
+        string="Source Location",
+        store=True
+    )
+
+    destination_location_id = fields.Many2one(
+        related='picking_type_id.default_location_dest_id',
+        string="Destination Location",
+        store=True
+    )
+
     state = fields.Selection(state_selection, default='draft', tracking=True)
 
     import_file = fields.Binary('Import File')
@@ -384,7 +405,30 @@ class ImportDonation(models.Model):
         self.journal_entry_id = move.id
         self.picking_id = picking.id if picking else False
         self.state = 'confirmed'
-    
+
+        self._queue_donation_notifications(donations)
+
+    def _queue_donation_notifications(self, donations):
+        """Hand the confirmed donations over to the WhatsApp / SMS cron.
+        A donation is only queued when its donor has the same cell number
+        as the file row: a row without a number is matched to a donor by
+        CNIC / email / name, and that donor may not be the person who paid."""
+        file_mobiles = {
+            line.transaction_id: line.mobile
+            for line in self.valid_import_donation_ids
+        }
+
+        donations = donations.filtered(
+            lambda d: not d.is_fee
+            and not d.notification_state
+            and d.donor_id.mobile
+            and d.donor_id.mobile == file_mobiles.get(d.transaction_id)
+        )
+
+        if donations:
+            donations.write({'notification_state': 'pending'})
+            self.env.ref('bn_import_donation.send_donation_notification_cron')._trigger()
+
     def action_show_donations(self):
         return {
             'type': 'ir.actions.act_window',

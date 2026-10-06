@@ -129,18 +129,13 @@ class PurchaseOrderLine(models.Model):
     def _prepare_account_move_line(self, move=False):
         res = super(PurchaseOrderLine, self)._prepare_account_move_line(move)
 
-        # res['price_unit'] = 0
         product_id = res['product_id']
-
         product = self.env['product.product'].browse(product_id)
 
-        print('knkn', product.name)
-        print('knkn', product.check_stock)
-
         if product and product.check_stock == True:
-            print(self.move_ids.picking_id.bill_amount)
-            bill_amt = self.move_ids.picking_id.bill_amount
-            qty = res['quantity']
-            res['price_unit'] = bill_amt/qty
+            bill_amt = sum(self.move_ids.picking_id.mapped('bill_amount'))
+            qty = res.get('quantity') or 0.0
+            if bill_amt and qty:
+                res['price_unit'] = bill_amt / qty
         return res
 

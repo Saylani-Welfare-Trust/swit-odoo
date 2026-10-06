@@ -49,7 +49,7 @@ class DonationBoxRequest(models.Model):
     request_date = fields.Datetime(string='Request Date', default=fields.Datetime.now, tracking=True)
 
     status = fields.Selection(selection=status_selection, string='Status', default='draft',
-                              tracking=True, copy=False)
+                              tracking=True, copy=False, index=True)
 
     key_tag_assign = fields.Boolean('Key Tag Assign', default=False, copy=False)
 
