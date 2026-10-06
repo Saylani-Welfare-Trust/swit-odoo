@@ -43,6 +43,7 @@ class TrialBalance extends owl.Component {
                         'accural': true
                     },
             collapsed_groups: {},
+            collapsed_internal_groups: {},
         });
         onMounted(() => {
             this.load_data();
