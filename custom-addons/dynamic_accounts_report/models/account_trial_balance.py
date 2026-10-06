@@ -30,24 +30,24 @@ from odoo.tools.date_utils import get_month, get_fiscal_year, \
     get_quarter_number, subtract
 
 ACCOUNT_TYPE_GROUPS = {
-    'asset_receivable': ('Assets', 1),
-    'asset_cash': ('Assets', 1),
-    'asset_current': ('Assets', 1),
-    'asset_non_current': ('Assets', 1),
-    'asset_prepayments': ('Assets', 1),
-    'asset_fixed': ('Assets', 1),
-    'liability_payable': ('Liabilities', 2),
-    'liability_credit_card': ('Liabilities', 2),
-    'liability_current': ('Liabilities', 2),
-    'liability_non_current': ('Liabilities', 2),
-    'equity': ('Equity', 3),
-    'equity_unaffected': ('Equity', 3),
-    'income': ('Income', 4),
-    'income_other': ('Income', 4),
-    'expense': ('Expenses', 5),
-    'expense_depreciation': ('Expenses', 5),
-    'expense_direct_cost': ('Expenses', 5),
-    'off_balance': ('Off Balance', 6),
+    'asset_receivable':      ('Receivable', 1),
+    'asset_cash':             ('Bank and Cash', 2),
+    'asset_current':          ('Current Assets', 3),
+    'asset_non_current':      ('Non-current Assets', 4),
+    'asset_prepayments':      ('Prepayments', 5),
+    'asset_fixed':            ('Fixed Assets', 6),
+    'liability_payable':      ('Payable', 7),
+    'liability_credit_card':  ('Credit Card', 8),
+    'liability_current':      ('Current Liabilities', 9),
+    'liability_non_current':  ('Non-current Liabilities', 10),
+    'equity':                 ('Equity', 11),
+    'equity_unaffected':      ('Current Year Earnings', 12),
+    'income':                 ('Income', 13),
+    'income_other':           ('Other Income', 14),
+    'expense':                ('Expenses', 15),
+    'expense_depreciation':   ('Depreciation', 16),
+    'expense_direct_cost':    ('Cost of Revenue', 17),
+    'off_balance':            ('Off-Balance Sheet', 18),
 }
 
 def _group_info(account_type):
@@ -487,9 +487,47 @@ class AccountTrialBalance(models.TransientModel):
             if report_action == 'dynamic_accounts_report.action_trial_balance':
                 row = 11
                 current_group = None
+                group_rows_start = None  # track first data row of current group for subtotal sum
+
+                def write_group_subtotal(group_rows):
+                    """Write a bold subtotal row summing the given list of move_line dicts."""
+                    nonlocal row
+                    sheet.write(row, col, '', sub_heading)
+                    sheet.write(row, col + 1, 'Total', sub_heading)
+                    sheet.write(row, col + 2,
+                                sum(m.get('initial_balance', 0.0) for m in group_rows),
+                                num_fmt_whole)
+                    j = 3
+                    if data['apply_comparison']:
+                        number_of_periods = data['comparison_number_range']
+                        for num in number_of_periods:
+                            sheet.write(row, col + j,
+                                        sum(m.get('dynamic_total_debit_' + str(num), 0.0) for m in group_rows),
+                                        num_fmt_whole)
+                            sheet.write(row, col + j + 1,
+                                        sum(m.get('dynamic_total_credit_' + str(num), 0.0) for m in group_rows),
+                                        num_fmt_whole)
+                            j += 2
+                    sheet.write(row, col + j,
+                                sum(m.get('total_debit', 0.0) for m in group_rows),
+                                num_fmt_whole)
+                    sheet.write(row, col + j + 1,
+                                sum(m.get('total_credit', 0.0) for m in group_rows),
+                                num_fmt_whole)
+                    sheet.write(row, col + j + 2,
+                                sum(m.get('end_balance', 0.0) for m in group_rows),
+                                num_fmt_whole)
+                    row += 1
+
+                group_members = []
                 for move_line in data['data']:
                     group_label = move_line.get('group_label', 'Other')
                     if group_label != current_group:
+                        # Close out the previous group's subtotal first
+                        if current_group is not None and group_members:
+                            write_group_subtotal(group_members)
+                            group_members = []
+
                         last_col = col + 3 + (2 * len(data['date_viewed'])) + 1
                         sheet.merge_range(row, col, row, last_col,
                                           group_label, group_header_fmt)
@@ -518,6 +556,42 @@ class AccountTrialBalance(models.TransientModel):
                     sheet.write(row, col + j + 2,
                         move_line.get('end_balance', 0.0), num_fmt_whole)
                     row += 1
+                    group_members.append(move_line)
+
+                # Subtotal for the LAST group
+                if current_group is not None and group_members:
+                    write_group_subtotal(group_members)
+
+                # Grand total row across all accounts
+                grand_fmt = workbook.add_format(
+                    {'bold': True, 'font_size': '11px', 'bg_color': '#CFCFCF',
+                     'border': 1, 'num_format': '#,##0'})
+                sheet.write(row, col, '', grand_fmt)
+                sheet.write(row, col + 1, 'Grand Total', grand_fmt)
+                sheet.write(row, col + 2,
+                            sum(m.get('initial_balance', 0.0) for m in data['data']),
+                            grand_fmt)
+                j = 3
+                if data['apply_comparison']:
+                    number_of_periods = data['comparison_number_range']
+                    for num in number_of_periods:
+                        sheet.write(row, col + j,
+                                    sum(m.get('dynamic_total_debit_' + str(num), 0.0) for m in data['data']),
+                                    grand_fmt)
+                        sheet.write(row, col + j + 1,
+                                    sum(m.get('dynamic_total_credit_' + str(num), 0.0) for m in data['data']),
+                                    grand_fmt)
+                        j += 2
+                sheet.write(row, col + j,
+                            sum(m.get('total_debit', 0.0) for m in data['data']),
+                            grand_fmt)
+                sheet.write(row, col + j + 1,
+                            sum(m.get('total_credit', 0.0) for m in data['data']),
+                            grand_fmt)
+                sheet.write(row, col + j + 2,
+                            sum(m.get('end_balance', 0.0) for m in data['data']),
+                            grand_fmt)
+                row += 1
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())
