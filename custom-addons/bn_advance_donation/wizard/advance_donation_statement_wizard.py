@@ -1,4 +1,5 @@
 from odoo import models, api
+from datetime import datetime
 
 
 class AdvanceDonationStatementWizard(models.TransientModel):
@@ -7,47 +8,75 @@ class AdvanceDonationStatementWizard(models.TransientModel):
 
     @api.model
     def get_statement_data(self, date_from=None, date_to=None, donor_id=False):
-        Receipt = self.env['advance.donation.receipt']
-        Welfare = self.env['welfare.line']
-        Micro   = self.env['microfinance']
+        Receipt    = self.env['advance.donation.receipt']
+        DonLine    = self.env['advance.donation.lines']
+        Welfare    = self.env['welfare.line']
+        Micro      = self.env['microfinance']
 
-        # ---------- domains ------------------------------------------------
+        df = self._to_date(date_from) if date_from else None
+        dt = self._to_date(date_to)   if date_to   else None
+
+        # ---------------- IN side : receipts -----------------------------
         rec_domain = [('state', '=', 'paid')]
-        if date_from:
-            rec_domain.append(('date', '>=', date_from))
-        if date_to:
-            rec_domain.append(('date', '<=', date_to))
+        if df:
+            rec_domain.append(('date', '>=', df))
+        if dt:
+            rec_domain.append(('date', '<=', dt))
         if donor_id:
             rec_domain.append(('donor_id', '=', donor_id))
 
         receipts = Receipt.search(rec_domain)
 
-        # Welfare / microfinance lines that actually consumed an advance
-        # donation.  We filter by the linked donation line, not by date,
-        # because welfare lines may not carry a natural "date" field.
+        # ---------------- OUT side : welfare / microfinance --------------
         welfare_lines = Welfare.search([('advance_donation_line_id', '!=', False)])
         micro_records = Micro.search([('advance_donation_line_id', '!=', False)])
 
-        # Optional date + donor filter on the out-side
         def _keep(rec):
-            d = (rec.advance_donation_line_id
-                 and rec.advance_donation_line_id.advance_donation_id)
+            d = rec.advance_donation_line_id.advance_donation_id
             if not d:
                 return False
             if donor_id and d.donor_id.id != donor_id:
                 return False
-            if date_from and rec.create_date and \
-                    rec.create_date.date() < self._to_date(date_from):
+            # Prefer a real date field if it exists, otherwise fall back to create_date
+            rd = None
+            for fname in ('date', 'disbursement_date', 'create_date'):
+                if fname in rec._fields and rec[fname]:
+                    v = rec[fname]
+                    rd = v.date() if isinstance(v, datetime) else v
+                    break
+            if df and rd and rd < df:
                 return False
-            if date_to and rec.create_date and \
-                    rec.create_date.date() > self._to_date(date_to):
+            if dt and rd and rd > dt:
                 return False
             return True
 
         welfare_lines = welfare_lines.filtered(_keep)
         micro_records = micro_records.filtered(_keep)
 
-        # ---------- assemble movements ------------------------------------
+        # ---------------- OUT side : disbursed donation lines -----------
+        # This is the important addition. Even if no welfare / microfinance
+        # record links back, the donation line itself carries the flag.
+        disb_domain = [('is_disbursed', '=', True)]
+        if donor_id:
+            disb_domain.append(('advance_donation_id.donor_id', '=', donor_id))
+        if df:
+            disb_domain.append(('disbursement_date', '>=', df))
+        if dt:
+            disb_domain.append(('disbursement_date', '<=', dt))
+
+        disbursed_lines = DonLine.search(disb_domain)
+
+        # Lines already represented by a welfare / microfinance row (avoid
+        # double counting). We key them by the donation‑line id.
+        linked_line_ids = set()
+        for w in welfare_lines:
+            if w.advance_donation_line_id:
+                linked_line_ids.add(w.advance_donation_line_id.id)
+        for m in micro_records:
+            if m.advance_donation_line_id:
+                linked_line_ids.add(m.advance_donation_line_id.id)
+
+        # ---------------- assemble movements ----------------------------
         lines = []
 
         for r in receipts:
@@ -74,10 +103,8 @@ class AdvanceDonationStatementWizard(models.TransientModel):
             if not amount:
                 continue
             lines.append({
-                'date':         (w.create_date.strftime('%Y-%m-%d')
-                                 if w.create_date else
-                                 (w.date.strftime('%Y-%m-%d')
-                                  if getattr(w, 'date', False) else '')),
+                'date':         self._rec_date(w).strftime('%Y-%m-%d')
+                                 if self._rec_date(w) else '',
                 'reference':    w.display_name,
                 'partner':      d.donor_id.name or '',
                 'type':         'Disbursement',
@@ -100,8 +127,8 @@ class AdvanceDonationStatementWizard(models.TransientModel):
             if not amount:
                 continue
             lines.append({
-                'date':         (m.create_date.strftime('%Y-%m-%d')
-                                 if m.create_date else ''),
+                'date':         self._rec_date(m).strftime('%Y-%m-%d')
+                                 if self._rec_date(m) else '',
                 'reference':    m.display_name,
                 'partner':      d.donor_id.name or '',
                 'type':         'Disbursement',
@@ -114,7 +141,31 @@ class AdvanceDonationStatementWizard(models.TransientModel):
                 'amount_out':   amount,
             })
 
-        # ---------- sort + running balance --------------------------------
+        # ---- NEW: disbursed donation lines without a welfare/micro link ----
+        for line in disbursed_lines:
+            if line.id in linked_line_ids:
+                continue  # already accounted for above
+            donation = line.advance_donation_id
+            amount   = float(line.paid_amount or line.amount or 0.0)
+            if amount <= 0:
+                continue
+            lines.append({
+                'date':         line.disbursement_date.strftime('%Y-%m-%d')
+                                 if line.disbursement_date else '',
+                'reference':    donation.name or '',
+                'partner':      donation.donor_id.name or '',
+                'type':         'Disbursement',
+                'direction':    'out',
+                'purpose':      'Advance Donation Disbursement',
+                'beneficiary':  donation.donor_id.name or '',
+                'description':  (line.product_id.display_name
+                                 if line.product_id else
+                                 (line.description or '')),
+                'amount_in':    0.0,
+                'amount_out':   amount,
+            })
+
+        # ---------------- sort + running balance ------------------------
         lines.sort(key=lambda x: (x['date'] or '0000-00-00',
                                   0 if x['direction'] == 'in' else 1))
 
@@ -134,9 +185,8 @@ class AdvanceDonationStatementWizard(models.TransientModel):
             'currency':  self.env.company.currency_id.name,
         }
 
-    # ---------- helpers ---------------------------------------------------
+    # ---------- helpers --------------------------------------------------
     def _pick_amount(self, rec, field_names):
-        """Return the first non-zero numeric field from the list."""
         for f in field_names:
             if f in rec._fields:
                 v = rec[f]
@@ -144,6 +194,17 @@ class AdvanceDonationStatementWizard(models.TransientModel):
                     return float(v)
         return 0.0
 
+    def _rec_date(self, rec):
+        """Best-effort date for a welfare / microfinance record."""
+        for fname in ('date', 'disbursement_date', 'create_date'):
+            if fname in rec._fields and rec[fname]:
+                v = rec[fname]
+                return v.date() if isinstance(v, datetime) else v
+        return None
+
     def _to_date(self, s):
-        from datetime import datetime
+        if not s:
+            return None
+        if isinstance(s, datetime):
+            return s.date()
         return datetime.strptime(s, '%Y-%m-%d').date()
