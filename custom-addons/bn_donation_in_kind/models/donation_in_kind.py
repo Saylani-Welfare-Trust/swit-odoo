@@ -1,10 +1,11 @@
-import logging
-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
-_logger = logging.getLogger(__name__)
-from markupsafe import Markup
 
+from markupsafe import Markup
+import base64
+import logging
+
+_logger = logging.getLogger(__name__)
 
 status_selection = [
     ('draft', 'Draft'),
