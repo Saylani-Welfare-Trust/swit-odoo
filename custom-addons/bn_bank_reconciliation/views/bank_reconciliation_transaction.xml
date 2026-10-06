@@ -86,7 +86,7 @@
                             <field name="debit"/>
                             <field name="credit"/>
                             <field name="amount" readonly="1"/>
-                            <field name="account_id" required="1"/>
+                            <field name="account_id"/>
                             <field name="state" widget="badge"/>
                             <field name="confidence_level" widget="badge"/>
                             <field name="match_score"/>

@@ -24,12 +24,6 @@ class BankReconciliationMaster(models.Model):
         required=True,
         default=fields.Date.context_today
     )
-    account_id = fields.Many2one(
-        'account.account',
-        string='Bank Account',
-        required=True,
-        domain="[('deprecated', '=', False)]"
-    )
     journal_id = fields.Many2one(
         'account.journal',
         string='Journal',
@@ -181,20 +175,13 @@ class BankReconciliationMaster(models.Model):
     match_tolerance_days = fields.Integer(string='Date Tolerance (Days)', default=3)
     match_tolerance_amount = fields.Float(string='Amount Tolerance', default=0.01)
 
-    @api.constrains('account_id', 'posted_account_id')
-    def _check_accounts(self):
-        for record in self:
-            if record.account_id and record.posted_account_id:
-                if record.account_id.id == record.posted_account_id.id:
-                    raise ValidationError(_('Bank Account and Posted Account cannot be the same.'))
-
     @api.constrains('date')
     def _check_date(self):
         for record in self:
             if record.date and record.date > fields.Date.context_today(record):
                 raise ValidationError(_('Statement Date cannot be in the future.'))
 
-    file = fields.Binary(string='File', required=True, attachment=True)
+    file = fields.Binary(string='File', attachment=True)
     file_name = fields.Char(string='File Name')
     # file_type = fields.Selection([
     #     ('csv', 'CSV'),
@@ -230,7 +217,7 @@ class BankReconciliationMaster(models.Model):
             vals['name'] = self.env['ir.sequence'].next_by_code('bank.reconciliation.master') or _('New')
         return super(BankReconciliationMaster, self).create(vals)
 
-    @api.depends('transaction_ids', 'transaction_ids.state', 'reconciled_ids')
+    @api.depends('transaction_ids', 'transaction_ids.state', 'reconciled_ids', 'reconciled_ids.active')
     def _compute_transaction_counts(self):
         for record in self:
             total = len(record.transaction_ids)
@@ -261,6 +248,38 @@ class BankReconciliationMaster(models.Model):
             record.total_credit = total_credit
             record.total_amount = total_amount
             record.closing_balance = record.opening_balance + total_debit - total_credit
+
+    def _get_candidate_move_line_domain(self, transaction=None):
+        """Journal items a statement line can be compared with: posted, not yet
+        bank reconciled, on the bank side of the selected journal. Only the bank
+        side is used so that an entry is compared once, not once per line."""
+        self.ensure_one()
+        journal = self.journal_id
+        accounts = (
+            journal.default_account_id
+            | journal._get_journal_inbound_outstanding_payment_accounts()
+            | journal._get_journal_outbound_outstanding_payment_accounts()
+        )
+        # Items waiting on another statement line's match are not available
+        matched_domain = [
+            ('state', '=', 'matched'),
+            ('matched_move_line_id', '!=', False),
+            ('master_id.journal_id', '=', journal.id),
+        ]
+        if transaction:
+            matched_domain.append(('id', '!=', transaction.id))
+        matched_lines = self.env['bank.reconciliation.transaction'].search(
+            matched_domain
+        ).mapped('matched_move_line_id')
+        return [
+            ('journal_id', '=', journal.id),
+            ('account_id', 'in', accounts.ids),
+            ('parent_state', '=', 'posted'),
+            ('is_bank_reconciled', '=', False),
+            ('reconciled', '=', False),
+            ('company_id', '=', self.company_id.id),
+            ('id', 'not in', matched_lines.ids),
+        ]
 
     def action_import_statement(self):
         self.ensure_one()
@@ -306,16 +325,6 @@ class BankReconciliationMaster(models.Model):
             raise UserError(_('This reconciliation is already completed.'))
         if self.state == 'cancelled':
             raise UserError(_('This reconciliation is cancelled.'))
-        
-        unmatched_no_account = self.transaction_ids.filtered(
-            lambda t: t.state == 'unmatched' and not t.account_id
-        )
-        if unmatched_no_account:
-            raise UserError(_(
-                'Some unmatched transactions do not have an account selected. '
-                'Please select accounts for all unmatched transactions first.\n'
-                'Transactions: %s' % ', '.join(unmatched_no_account.mapped('description'))
-            ))
         
         matched_transactions = self.transaction_ids.filtered(lambda t: t.state == 'matched')
         if not matched_transactions:
@@ -366,8 +375,9 @@ class BankReconciliationMaster(models.Model):
                 'Please post them first or enable auto-posting.'
             ))
         
-        self._create_reconciliation_journal_entry()
-        
+        # The statement is only compared with the journal's existing entries,
+        # so no journal entry is created (_create_reconciliation_journal_entry
+        # moved the totals from the Bank Account to the Posted Account).
         self.write({
             'state': 'completed',
             'reconciled_by': self.env.user.id,
@@ -491,7 +501,9 @@ class BankReconciliationMaster(models.Model):
             except Exception as e:
                 raise UserError(_('Error removing journal entry: %s') % str(e))
         
-        self.reconciled_ids.unlink()
+        # Reconciled records are never deleted: archive them to keep the history
+        self.reconciled_ids.write({'active': False})
+        self.transaction_ids._release_move_lines()
         
         self.transaction_ids.write({
             'state': 'draft',

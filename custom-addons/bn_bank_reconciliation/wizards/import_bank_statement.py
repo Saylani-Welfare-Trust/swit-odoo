@@ -27,7 +27,6 @@ class BankStatementImportWizard(models.TransientModel):
     name = fields.Char(string='Reference', help='Leave empty for auto-sequence')
     date = fields.Date(related='master_id.date', string='Date', store=True)
     
-    account_id = fields.Many2one(related='master_id.account_id', string='Account', store=True)
     journal_id = fields.Many2one(related='master_id.journal_id', string='Journal', store=True)
     posted_account_id = fields.Many2one(related='master_id.posted_account_id', string='Posted Account', store=True)
     opening_balance = fields.Monetary(related='master_id.opening_balance', string='Opening Balance', store=True)
@@ -49,13 +48,18 @@ class BankStatementImportWizard(models.TransientModel):
         ('\t', 'Tab'),
     ], string='CSV Delimiter', default=',')
 
+    @api.depends('file_name')
+    def _compute_file_type(self):
+        for rec in self:
+            ext = (rec.file_name or '').lower().split('.')[-1]
+            rec.file_type = ext if ext in ('csv', 'xls', 'xlsx') else False
 
     def action_import(self):
         self.ensure_one()
-        if not self.master_id.file:
+        if not self.file:
             raise UserError(_('Please select a file to upload.'))
 
-        ext = self.master_id.file_name.lower().split('.')[-1]
+        ext = (self.file_name or '').lower().split('.')[-1]
         if ext == 'csv':
             data = self._parse_csv()
         elif ext in ('xls', 'xlsx'):
@@ -76,8 +80,9 @@ class BankStatementImportWizard(models.TransientModel):
                 'description': row.get('Description', ''),
                 'debit': row.get('Debit', 0.0),
                 'credit': row.get('Credit', 0.0),
-                'account_id': self.account_id.id,
-                'reference': row.get('Reference', ''),
+                # No reference must stay empty (not ''), or two same-day lines of
+                # the same amount would be rejected as duplicates
+                'reference': row.get('Reference') or False,
                 'payment_reference': row.get('Payment Reference', ''),
                 'invoice_number': row.get('Invoice Number', ''),
             }
@@ -92,14 +97,18 @@ class BankStatementImportWizard(models.TransientModel):
 
         master._compute_transaction_counts()
         master._compute_totals()
-        master.state = 'uploaded'
+        # Keep the uploaded statement on the reconciliation
+        master.write({
+            'file': self.file,
+            'file_name': self.file_name,
+            'state': 'uploaded',
+        })
 
     def _get_or_create_master(self):
         if self.master_id:
             return self.master_id
         vals = {
             'date': self.date,
-            'account_id': self.account_id.id,
             'journal_id': self.journal_id.id,
             'company_id': self.company_id.id,
             'opening_balance': self.opening_balance or 0.0,
@@ -132,12 +141,12 @@ class BankStatementImportWizard(models.TransientModel):
 
             header_map = {
                 line.header_type_id.name: line.position
-                for line in config.header_ids
+                for line in config.bank_statement_header_line_ids
             }
 
             def get(row, key):
                 index = header_map.get(key)
-                if index is None or index >= len(row):
+                if index is None or index < 0 or index >= len(row):
                     return ""
                 return row[index]
 
@@ -198,7 +207,7 @@ class BankStatementImportWizard(models.TransientModel):
         data = []
 
         try:
-            file_content = base64.b64decode(self.master_id.file)
+            file_content = base64.b64decode(self.file)
             book = xlrd.open_workbook(file_contents=file_content)
             sheet = book.sheet_by_index(0)
 
@@ -209,12 +218,12 @@ class BankStatementImportWizard(models.TransientModel):
 
             header_map = {
                 line.header_type_id.name: line.position
-                for line in config.header_ids
+                for line in config.bank_statement_header_line_ids
             }
 
             def get(row, key):
                 index = header_map.get(key)
-                if index is None or index >= len(row):
+                if index is None or index < 0 or index >= len(row):
                     return ""
                 return row[index].value
 

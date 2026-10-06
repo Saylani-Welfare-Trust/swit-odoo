@@ -8,7 +8,6 @@
             <tree string="Bank Reconciliations">
                 <field name="name"/>
                 <field name="date"/>
-                <field name="account_id"/>
                 <field name="journal_id"/>
                 <field name="state" widget="badge"/>
                 <field name="total_transactions"/>
@@ -36,7 +35,6 @@
                             invisible="state != 'uploaded'"/>
                     <button name="action_master_reconcile" string="Master Reconcile" type="object"
                             class="btn-primary"
-                            context="{'default_account_id': account_id}"
                             invisible="state != 'in_progress'"/>
                     <button name="action_validate_reconciliation" string="Validate &amp; Complete" type="object"
                             class="btn-success"
@@ -59,9 +57,10 @@
                         <group>
                             <field name="date"/>
                             <field name="bank_statement_config_id" string="Bank Statement" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                            <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state != 'draft'"/>
                             <field name="posted_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="0"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="file" string="Statement File" filename="file_name" readonly="1" invisible="not file"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="currency_id"/>
                         </group>
@@ -192,7 +191,6 @@
         <field name="arch" type="xml">
             <search>
                 <field name="name"/>
-                <field name="account_id"/>
                 <field name="journal_id"/>
                 <field name="state"/>
                 <filter name="state_draft" string="Draft" domain="[('state','=','draft')]"/>
@@ -207,7 +205,6 @@
                 <group expand="0" string="Group By">
                     <filter name="group_state" string="State" domain="[]" context="{'group_by':'state'}"/>
                     <filter name="group_date" string="Date" domain="[]" context="{'group_by':'date'}"/>
-                    <filter name="group_account" string="Account" domain="[]" context="{'group_by':'account_id'}"/>
                     <filter name="group_journal" string="Journal" domain="[]" context="{'group_by':'journal_id'}"/>
                     <filter name="group_created_by" string="Created By" domain="[]" context="{'group_by':'created_by'}"/>
                 </group>

@@ -139,11 +139,15 @@ class BankReconciliationReconciled(models.Model):
     matched_by_date = fields.Boolean(string='Matched by Date', default=False)
     matched_by_description = fields.Boolean(string='Matched by Description', default=False)
     matched_by_manual = fields.Boolean(string='Matched Manually', default=False)
+    # Unreconciling archives the record instead of deleting it
+    active = fields.Boolean(string='Active', default=True)
 
-    _sql_constraints = [
-        ('unique_transaction_id', 'unique(transaction_id)',
-         'This transaction is already reconciled. Only one reconciled record per transaction is allowed.'),
-    ]
+    def init(self):
+        # Only one live reconciled record per transaction; archived ones are history
+        self.env.cr.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS bank_reconciliation_reconciled_active_transaction_uniq
+            ON bank_reconciliation_reconciled (transaction_id) WHERE active
+        """)
 
     @api.constrains('debit', 'credit')
     def _check_amounts(self):
@@ -187,30 +191,24 @@ class BankReconciliationReconciled(models.Model):
         if self.master_id.state == 'completed':
             raise UserError(_('Cannot unreconcile from a completed reconciliation.'))
         
-        if self.matched_move_id:
-            if self.matched_move_id.state == 'posted':
-                try:
-                    self.matched_move_id.button_cancel()
-                except Exception as e:
-                    raise UserError(_('Error cancelling journal entry: %s') % str(e))
-            self.matched_move_id.unlink()
+        # Reconciled records are never deleted: archive to keep the history
+        self.active = False
         
-        if self.matched_move_line_id:
-            self.matched_move_line_id.write({
-                'is_bank_reconciled': False,
-                'bank_reconciliation_id': False,
-                'bank_reconciliation_date': False
-            })
-        
+        # The matched entry is the journal's own accounting entry: it is only
+        # released for matching again, never cancelled or deleted.
         if self.transaction_id:
+            released_lines = self.transaction_id._release_move_lines()
             self.transaction_id.write({
                 'state': 'matched',
                 'reconciled': False,
                 'reconciled_date': False,
                 'reconciled_by': False,
             })
+            if len(released_lines) > 1:
+                # Only one entry is kept as the pending match, so a match made
+                # against several entries has to be done again
+                self.transaction_id.action_reject_match()
         
-        self.unlink()
         return True
 
     @api.model
