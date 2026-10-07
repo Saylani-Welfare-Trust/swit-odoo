@@ -31,7 +31,14 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="sub_container_right">
+                        <div class="sub_container_right"
+                                style="display: flex;
+                                        flex-direction: row;
+                                        align-items: center;
+                                        justify-content: flex-end;
+                                        flex-wrap: wrap;
+                                        gap: 14px;
+                                        width: 100%;">
                             <!-- Account Filter -->
                             <div class="account" style="">
                                 <a type="button" class="dropdown-toggle"
