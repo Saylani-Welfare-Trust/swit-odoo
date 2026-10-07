@@ -5,26 +5,27 @@
             <div class="fin_report">
                 <div class="filter_view_gl">
                     <div class="">
-                        <h1 style="padding:10px"><t t-esc="props.action.name"/></h1>
+                        <h1 style="padding:10px">
+                            <t t-esc="props.action.name"/>
+                        </h1>
                     </div>
                     <div style="margin-right: 10px; margin-left: 10px;margin-bottom: 15px;display: flex;">
                         <div class="sub_container_left" style="width:70%;">
                             <div class="report_print">
-                                <button type="button" class="btn btn-info btn-report-print"
-                                        t-on-click="printPdf" style="margin-right: 8px;">Print (PDF)</button>
-                                <button type="button" class="btn btn-info btn-report-print"
-                                        t-on-click="print_xlsx">Export (XLSX)</button>
+                                <button type="button" class="btn btn-info btn-report-print" t-on-click="printPdf" style="margin-right: 8px;">Print (PDF)</button>
+                                <button type="button" class="btn btn-info btn-report-print" t-on-click="print_xlsx">Export (XLSX)</button>
                             </div>
                         </div>
                         <div class="sub_container_right">
                             <!-- ======================= ACCOUNT FILTER ======================= -->
                             <div class="account">
-                                <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown"
-                                   style="display:flex;flex-direction:row;align-items:center;justify-content:flex-start;min-width:105px;">
-                                    <span class="fa fa-list" title="Accounts" role="img"/> Accounts
+                                <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown" style="display:flex;flex-direction:row;align-items:center;justify-content:flex-start;min-width:105px;">
+                                    <span class="fa fa-list" title="Accounts" role="img"/>
+ Accounts
                                     <t t-if="state.selected_analytic_account_rec.length">:
                                         <t t-foreach="state.selected_analytic_account_rec" t-as="acc" t-key="acc.id">
-                                            <t t-esc="acc.code"/> <t t-esc="acc.name"/>
+                                            <t t-esc="acc.code"/>
+                                            <t t-esc="acc.name"/>
                                             <t t-if="acc_index != state.selected_analytic_account_rec.length - 1">, </t>
                                         </t>
                                     </t>
@@ -33,22 +34,23 @@
                                     <div class="list-group">
                                         <t t-if="state.accounts and state.accounts.length">
                                             <t t-foreach="state.accounts" t-as="account" t-key="account.id">
-                                                <button class="report-filter-button"
-                                                        t-att-data-value="'account'" t-att-data-id="account.id"
-                                                        t-attf-class="report-filter-button #{state.selected_analytic.includes(account.id) ? 'selected-filter' : ''}"
-                                                        type="button" t-on-click="applyFilter">
-                                                    <t t-esc="account.code"/> — <t t-esc="account.name"/>
+                                                <button class="report-filter-button" t-att-data-value="'account'" t-att-data-id="account.id" t-attf-class="report-filter-button #{state.selected_analytic.includes(account.id) ? 'selected-filter' : ''}" type="button" t-on-click="applyFilter">
+                                                    <t t-esc="account.code"/>
+ —                                                    <t t-esc="account.name"/>
                                                 </button>
                                             </t>
                                         </t>
-                                        <t t-else=""><div class="text-muted" style="padding:6px 10px;">No accounts</div></t>
+                                        <t t-else="">
+                                            <div class="text-muted" style="padding:6px 10px;">No accounts</div>
+                                        </t>
                                     </div>
                                 </div>
                             </div>
                             <!-- ======================= DATE RANGE ======================= -->
                             <div class="time_range">
                                 <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown">
-                                    <span class="fa fa-calendar" title="Dates" role="img"/> Date Range
+                                    <span class="fa fa-calendar" title="Dates" role="img"/>
+ Date Range
                                 </a>
                                 <div class="dropdown-menu" role="menu">
                                     <div class="list-group">
@@ -62,17 +64,11 @@
                                         <div role="separator" class="dropdown-divider"/>
                                         <label for="date_from">Start Date :</label>
                                         <div class="input-group date">
-                                            <input type="date" id="start_date" t-on-change="applyFilter"
-                                                   t-ref="date_from"
-                                                   style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;"
-                                                   name="start_date"/>
+                                            <input type="date" id="start_date" t-on-change="applyFilter" t-ref="date_from" style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;" name="start_date"/>
                                         </div>
                                         <label for="date_to">End Date :</label>
                                         <div class="input-group date">
-                                            <input type="date" id="end_date" t-on-change="applyFilter"
-                                                   t-ref="date_to"
-                                                   style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;"
-                                                   name="end_date"/>
+                                            <input type="date" id="end_date" t-on-change="applyFilter" t-ref="date_to" style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;" name="end_date"/>
                                         </div>
                                     </div>
                                 </div>
@@ -80,50 +76,44 @@
                             <!-- ======================= COMPARISON ======================= -->
                             <div class="comparison_range">
                                 <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown">
-                                    <span class="fa fa-signal" title="Comparison" role="img"/> Comparison
+                                    <span class="fa fa-signal" title="Comparison" role="img"/>
+ Comparison
                                 </a>
                                 <div class="dropdown-menu" role="menu">
                                     <div class="list-group">
-                                        <button class="report-filter-button" t-att-data-value="'no comparison'"
-                                                type="button" t-on-click="applyComparison">No Comparison</button>
+                                        <button class="report-filter-button" t-att-data-value="'no comparison'" type="button" t-on-click="applyComparison">No Comparison</button>
                                         <div role="separator" class="dropdown-divider"/>
                                         <label for="periods" style="display:flex;padding:4px 20px;color:#000;">
-                                            Previous Period<br/>Number of Periods:
+                                            Previous Period<br/>
+Number of Periods:
                                         </label>
                                         <div class="input-group comparison">
-                                            <input type="number" t-ref="periods" min="1"
-                                                   t-on-input="onPeriodChange"
-                                                   style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;"
-                                                   name="previous_period"/>
+                                            <input type="number" t-ref="periods" min="1" t-on-input="onPeriodChange" style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;" name="previous_period"/>
                                         </div>
-                                        <button class="btn btn-primary" type="button"
-                                                style="margin-left:19px;margin-top:4px;"
-                                                t-on-click="applyComparisonPeriod">Apply</button>
+                                        <button class="btn btn-primary" type="button" style="margin-left:19px;margin-top:4px;" t-on-click="applyComparisonPeriod">Apply</button>
                                         <div role="separator" class="dropdown-divider"/>
                                         <label for="period_year" style="display:flex;padding:4px 20px;color:#000;">
-                                            Same Period Last Year<br/>Number of Periods:
+                                            Same Period Last Year<br/>
+Number of Periods:
                                         </label>
                                         <div class="input-group comparison">
-                                            <input type="number" t-ref="period_year" min="1"
-                                                   t-on-input="onPeriodYearChange"
-                                                   style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;"
-                                                   name="period_year"/>
+                                            <input type="number" t-ref="period_year" min="1" t-on-input="onPeriodYearChange" style="border:none;border-bottom:1px solid #000;padding:5px;outline:none;" name="period_year"/>
                                         </div>
-                                        <button class="btn btn-primary" type="button"
-                                                style="margin-left:19px;margin-top:4px;"
-                                                t-on-click="applyComparisonYear">Apply</button>
+                                        <button class="btn btn-primary" type="button" style="margin-left:19px;margin-top:4px;" t-on-click="applyComparisonYear">Apply</button>
                                     </div>
                                 </div>
                             </div>
                             <!-- ======================= JOURNALS ======================= -->
                             <div class="journal">
-                                <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown"
-                                   style="display:flex;flex-direction:row;align-items:center;justify-content:flex-start;min-width:105px;">
-                                    <span class="fa fa-book" title="Journals" role="img"/> Journals
+                                <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown" style="display:flex;flex-direction:row;align-items:center;justify-content:flex-start;min-width:105px;">
+                                    <span class="fa fa-book" title="Journals" role="img"/>
+ Journals
                                     <t t-if="state.selected_journal_list">:
                                         <t t-foreach="state.selected_journal_list" t-as="Journal_key" t-key="Journal_key_index">
                                             <t t-foreach="state.journals" t-as="Journal" t-key="Journal_index">
-                                                <t t-if="Journal['id'] == Journal_key"><t t-esc="Journal['name']"/></t>
+                                                <t t-if="Journal['id'] == Journal_key">
+                                                    <t t-esc="Journal['name']"/>
+                                                </t>
                                             </t>
                                             <t t-if="Journal_key_index != Object.keys(state.selected_journal_list).length - 1">, </t>
                                         </t>
@@ -133,9 +123,7 @@
                                     <div class="list-group">
                                         <t t-if="state.journals">
                                             <t t-foreach="state.journals" t-as="journal" t-key="journal.id">
-                                                <button class="report-filter-button"
-                                                        t-att-data-value="'journal'" t-att-data-id="journal.id"
-                                                        type="button" t-on-click="applyFilter">
+                                                <button class="report-filter-button" t-att-data-value="'journal'" t-att-data-id="journal.id" type="button" t-on-click="applyFilter">
                                                     <t t-esc="journal.name"/>
                                                 </button>
                                             </t>
@@ -152,10 +140,8 @@
                                 </a>
                                 <div class="dropdown-menu" role="menu">
                                     <div class="list-group">
-                                        <button class="report-filter-button" t-att-data-value="'draft'"
-                                                type="button" t-on-click="applyFilter">Include Draft Entries</button>
-                                        <button class="report-filter-button" t-att-data-value="'cash-basis'"
-                                                type="button" t-on-click="applyFilter">Cash basis method</button>
+                                        <button class="report-filter-button" t-att-data-value="'draft'" type="button" t-on-click="applyFilter">Include Draft Entries</button>
+                                        <button class="report-filter-button" t-att-data-value="'cash-basis'" type="button" t-on-click="applyFilter">Cash basis method</button>
                                     </div>
                                 </div>
                             </div>
@@ -164,87 +150,44 @@
                 </div>
             </div>
 
-            <div class="table_style" style="height: 650px; overflow-y: scroll;">
-                <div class="table_view_gl" style="right:20px;width:100%;" t-ref="table_view_gl">
-                    <div><div class="table_main_view">
-                        <table cellspacing="0" width="100%">
-                            <thead>
-                                <tr class="o_heading" style="text-align:center;">
-                                    <th>Code</th>
-                                    <th colspan="5">Account</th>
-                                    <t t-if="state.date_viewed.length != 0">
-                                        <t t-foreach="state.date_viewed" t-as="date_view" t-key="date_view_index">
-                                            <th colspan="2"><t t-esc="date_view"/></th>
-                                        </t>
-                                    </t>
-                                </tr>
-                                <tr class="o_heading" style="text-align:center;">
-                                    <th colspan="6"/>
-                                    <t t-if="state.apply_comparison == true">
-                                        <t t-set="number_of_periods" t-value="comparison_number_range"/>
-                                        <t t-foreach="number_of_periods" t-as="number" t-key="number">
-                                            <th>Debit</th><th>Credit</th>
-                                        </t>
-                                    </t>
-                                    <th>Debit</th>
-                                    <th>Credit</th>
-                                </tr>
-                            </thead>
-                            <tbody t-ref="tbody">
-                                <t t-if="state.data">
-                                    <t t-set="current_internal_group" t-value="null"/>
-                                    <t t-set="current_group" t-value="null"/>
-                                    <t t-foreach="state.data" t-as="move_line" t-key="move_line_index">
-
-                                        <!-- ============ Internal Group boundary ============ -->
-                                        <t t-if="(move_line.internal_group || 'Other') !== current_internal_group">
-                                            <t t-if="current_group !== null">
-                                                <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
-                                                    <th/>
-                                                    <th colspan="5" style="text-align:left;">Total</th>
-                                                    <t t-if="state.apply_comparison == true">
-                                                        <t t-set="number_of_periods" t-value="comparison_number_range"/>
-                                                        <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/></th>
-                                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/></th>
-                                                        </t>
-                                                    </t>
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/></th>
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/></th>
-                                                </tr>
-                                            </t>
-                                            <t t-if="current_internal_group !== null">
-                                                <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
-                                                    <th/>
-                                                    <th colspan="5" style="text-align:left;"><t t-esc="current_internal_group"/> Total</th>
-                                                    <t t-if="state.apply_comparison == true">
-                                                        <t t-set="number_of_periods" t-value="comparison_number_range"/>
-                                                        <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_debit_' + nb))"/></th>
-                                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_credit_' + nb))"/></th>
-                                                        </t>
-                                                    </t>
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_debit'))"/></th>
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_credit'))"/></th>
-                                                </tr>
-                                            </t>
-                                            <tr style="background:#CFCFCF;cursor:pointer;font-weight:700;font-size:16px;"
-                                                t-on-click="() => this.toggleInternalGroup(move_line.internal_group || 'Other')">
-                                                <th colspan="11" style="text-align:left;padding:10px 8px;letter-spacing:0.5px;">
-                                                    <span class="toggle-icon" style="margin-right:8px;font-size:14px;">
-                                                        <i t-att-class="this.isInternalGroupCollapsed(move_line.internal_group || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
-                                                    </span>
-                                                    <t t-esc="(move_line.internal_group || 'Other').toUpperCase()"/>
+            <div class="table_style" style="height: 650px; overflow: auto; overflow-x: auto; overflow-y: auto;">
+                <div class="table_view_gl" style="width:100%;" t-ref="table_view_gl">
+                    <div>
+                        <div class="table_main_view">
+                            <table cellspacing="0" style="min-width: max-content; width: 100%; border-collapse: collapse;">
+                                <thead>
+                                    <tr class="o_heading" style="text-align:center;">
+                                        <th>Code</th>
+                                        <th colspan="5">Account</th>
+                                        <t t-if="state.date_viewed.length != 0">
+                                            <t t-foreach="state.date_viewed" t-as="date_view" t-key="date_view_index">
+                                                <th colspan="2">
+                                                    <t t-esc="date_view"/>
                                                 </th>
-                                            </tr>
-                                            <t t-set="current_internal_group" t-value="move_line.internal_group || 'Other'"/>
-                                            <t t-set="current_group" t-value="null"/>
+                                            </t>
                                         </t>
+                                    </tr>
+                                    <tr class="o_heading" style="text-align:center;">
+                                        <th colspan="6"/>
+                                        <t t-if="state.apply_comparison == true">
+                                            <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                            <t t-foreach="number_of_periods" t-as="number" t-key="number">
+                                                <th>Debit</th>
+                                                <th>Credit</th>
+                                            </t>
+                                        </t>
+                                        <th>Debit</th>
+                                        <th>Credit</th>
+                                    </tr>
+                                </thead>
+                                <tbody t-ref="tbody">
+                                    <t t-if="state.data">
+                                        <t t-set="current_internal_group" t-value="null"/>
+                                        <t t-set="current_group" t-value="null"/>
+                                        <t t-foreach="state.data" t-as="move_line" t-key="move_line_index">
 
-                                        <t t-if="!this.isInternalGroupCollapsed(current_internal_group)">
-
-                                            <!-- ============ Sub-group boundary ============ -->
-                                            <t t-if="(move_line.group_label || 'Other') !== current_group">
+                                            <!-- ============ Internal Group boundary ============ -->
+                                            <t t-if="(move_line.internal_group || 'Other') !== current_internal_group">
                                                 <t t-if="current_group !== null">
                                                     <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
                                                         <th/>
@@ -252,136 +195,221 @@
                                                         <t t-if="state.apply_comparison == true">
                                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                             <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                                <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/></th>
-                                                                <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/></th>
+                                                                <th style="text-align:center;">
+                                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
+                                                                </th>
+                                                                <th style="text-align:center;">
+                                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
+                                                                </th>
                                                             </t>
                                                         </t>
-                                                        <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/></th>
-                                                        <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/></th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
+                                                        </th>
                                                     </tr>
                                                 </t>
-                                                <tr style="background:#EAEAEA;cursor:pointer;font-weight:700;font-size:14px;"
-                                                    t-on-click="() => this.toggleGroup(move_line.group_label || 'Other')">
-                                                    <th colspan="11" style="text-align:left;padding:8px 8px 8px 28px;">
-                                                        <span class="toggle-icon" style="margin-right:8px;font-size:12px;">
-                                                            <i t-att-class="this.isGroupCollapsed(move_line.group_label || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
-                                                        </span>
-                                                        <t t-esc="move_line.group_label || 'Other'"/>
-                                                    </th>
-                                                </tr>
-                                                <t t-set="current_group" t-value="move_line.group_label || 'Other'"/>
-                                            </t>
-
-                                            <!-- ============ Account row ============ -->
-                                            <t t-if="!this.isGroupCollapsed(current_group)">
-                                                <tr class="border-bottom" style="border-spacing: 0 10px;">
-                                                    <th style="text-align:left;"><t t-esc="move_line['account_code']"/></th>
-                                                    <th colspan="5" style="text-align:left;padding-left:20px;">
-                                                        <span class="dropdown">
-                                                            <a class="dropdown-toggle" data-bs-toggle="dropdown" style="color: black;">
-                                                                <span><t t-esc="move_line['account_name']"/></span>
-                                                            </a>
-                                                            <span class="dropdown-menu">
-                                                                <a role="menuitem"
-                                                                   t-att-data-account-id="move_line['account_id']"
-                                                                   t-att-data-account-name="move_line['account']"
-                                                                   t-on-click="show_gl" class="show_gl">
-                                                                    General Ledger (this period)
-                                                                </a>
-                                                                <div role="separator" class="dropdown-divider"/>
-                                                                <a role="menuitem"
-                                                                   t-att-data-id="move_line['account_id']"
-                                                                   t-on-click="gotoJournalItem" class="show_gl">
-                                                                    Journal Items
-                                                                </a>
-                                                            </span>
-                                                        </span>
-                                                    </th>
-                                                    <t t-if="state.apply_comparison == true">
-                                                        <t t-set="number_of_periods" t-value="comparison_number_range"/>
-                                                        <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                            <th style="text-align:center;">
-                                                                <t t-if="move_line['dynamic_total_debit_' + num]"
-                                                                   t-esc="this.formatAmount(move_line['dynamic_total_debit_' + num])"/>
-                                                            </th>
-                                                            <th style="text-align:center;">
-                                                                <t t-if="move_line['dynamic_total_credit_' + num]"
-                                                                   t-esc="this.formatAmount(move_line['dynamic_total_credit_' + num])"/>
-                                                            </th>
+                                                <t t-if="current_internal_group !== null">
+                                                    <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
+                                                        <th/>
+                                                        <th colspan="5" style="text-align:left;">
+                                                            <t t-esc="current_internal_group"/>
+ Total</th>
+                                                        <t t-if="state.apply_comparison == true">
+                                                            <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                            <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
+                                                                <th style="text-align:center;">
+                                                                    <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_debit_' + nb))"/>
+                                                                </th>
+                                                                <th style="text-align:center;">
+                                                                    <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_credit_' + nb))"/>
+                                                                </th>
+                                                            </t>
                                                         </t>
-                                                    </t>
-                                                    <th style="text-align:center;">
-                                                        <t t-if="move_line['total_debit']"
-                                                           t-esc="this.formatAmount(move_line['total_debit'])"/>
-                                                    </th>
-                                                    <th style="text-align:center;">
-                                                        <t t-if="move_line['total_credit']"
-                                                           t-esc="this.formatAmount(move_line['total_credit'])"/>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_debit'))"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_credit'))"/>
+                                                        </th>
+                                                    </tr>
+                                                </t>
+                                                <tr style="background:#CFCFCF;cursor:pointer;font-weight:700;font-size:16px;" t-on-click="() => this.toggleInternalGroup(move_line.internal_group || 'Other')">
+                                                    <th colspan="11" style="text-align:left;padding:10px 8px;letter-spacing:0.5px;">
+                                                        <span class="toggle-icon" style="margin-right:8px;font-size:14px;">
+                                                            <i t-att-class="this.isInternalGroupCollapsed(move_line.internal_group || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
+                                                        </span>
+                                                        <t t-esc="(move_line.internal_group || 'Other').toUpperCase()"/>
                                                     </th>
                                                 </tr>
+                                                <t t-set="current_internal_group" t-value="move_line.internal_group || 'Other'"/>
+                                                <t t-set="current_group" t-value="null"/>
+                                            </t>
+
+                                            <t t-if="!this.isInternalGroupCollapsed(current_internal_group)">
+
+                                                <!-- ============ Sub-group boundary ============ -->
+                                                <t t-if="(move_line.group_label || 'Other') !== current_group">
+                                                    <t t-if="current_group !== null">
+                                                        <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
+                                                            <th/>
+                                                            <th colspan="5" style="text-align:left;">Total</th>
+                                                            <t t-if="state.apply_comparison == true">
+                                                                <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                                <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
+                                                                    <th style="text-align:center;">
+                                                                        <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
+                                                                    </th>
+                                                                    <th style="text-align:center;">
+                                                                        <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
+                                                                    </th>
+                                                                </t>
+                                                            </t>
+                                                            <th style="text-align:center;">
+                                                                <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
+                                                            </th>
+                                                            <th style="text-align:center;">
+                                                                <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
+                                                            </th>
+                                                        </tr>
+                                                    </t>
+                                                    <tr style="background:#EAEAEA;cursor:pointer;font-weight:700;font-size:14px;" t-on-click="() => this.toggleGroup(move_line.group_label || 'Other')">
+                                                        <th colspan="11" style="text-align:left;padding:8px 8px 8px 28px;">
+                                                            <span class="toggle-icon" style="margin-right:8px;font-size:12px;">
+                                                                <i t-att-class="this.isGroupCollapsed(move_line.group_label || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
+                                                            </span>
+                                                            <t t-esc="move_line.group_label || 'Other'"/>
+                                                        </th>
+                                                    </tr>
+                                                    <t t-set="current_group" t-value="move_line.group_label || 'Other'"/>
+                                                </t>
+
+                                                <!-- ============ Account row ============ -->
+                                                <t t-if="!this.isGroupCollapsed(current_group)">
+                                                    <tr class="border-bottom" style="border-spacing: 0 10px;">
+                                                        <th style="text-align:left;">
+                                                            <t t-esc="move_line['account_code']"/>
+                                                        </th>
+                                                        <th colspan="5" style="text-align:left;padding-left:20px;">
+                                                            <span class="dropdown">
+                                                                <a class="dropdown-toggle" data-bs-toggle="dropdown" style="color: black;">
+                                                                    <span>
+                                                                        <t t-esc="move_line['account_name']"/>
+                                                                    </span>
+                                                                </a>
+                                                                <span class="dropdown-menu">
+                                                                    <a role="menuitem" t-att-data-account-id="move_line['account_id']" t-att-data-account-name="move_line['account']" t-on-click="show_gl" class="show_gl">
+                                                                    General Ledger (this period)
+                                                                    </a>
+                                                                    <div role="separator" class="dropdown-divider"/>
+                                                                    <a role="menuitem" t-att-data-id="move_line['account_id']" t-on-click="gotoJournalItem" class="show_gl">
+                                                                    Journal Items
+                                                                    </a>
+                                                                </span>
+                                                            </span>
+                                                        </th>
+                                                        <t t-if="state.apply_comparison == true">
+                                                            <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                            <t t-foreach="number_of_periods" t-as="num" t-key="num">
+                                                                <th style="text-align:center;">
+                                                                    <t t-if="move_line['dynamic_total_debit_' + num]" t-esc="this.formatAmount(move_line['dynamic_total_debit_' + num])"/>
+                                                                </th>
+                                                                <th style="text-align:center;">
+                                                                    <t t-if="move_line['dynamic_total_credit_' + num]" t-esc="this.formatAmount(move_line['dynamic_total_credit_' + num])"/>
+                                                                </th>
+                                                            </t>
+                                                        </t>
+                                                        <th style="text-align:center;">
+                                                            <t t-if="move_line['total_debit']" t-esc="this.formatAmount(move_line['total_debit'])"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-if="move_line['total_credit']" t-esc="this.formatAmount(move_line['total_credit'])"/>
+                                                        </th>
+                                                    </tr>
+                                                </t>
                                             </t>
                                         </t>
-                                    </t>
 
-                                    <!-- Close last sub-group -->
-                                    <t t-if="current_group !== null and !this.isInternalGroupCollapsed(current_internal_group)">
-                                        <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
+                                        <!-- Close last sub-group -->
+                                        <t t-if="current_group !== null and !this.isInternalGroupCollapsed(current_internal_group)">
+                                            <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
+                                                <th/>
+                                                <th colspan="5" style="text-align:left;">Total</th>
+                                                <t t-if="state.apply_comparison == true">
+                                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                    <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
+                                                        </th>
+                                                    </t>
+                                                </t>
+                                                <th style="text-align:center;">
+                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
+                                                </th>
+                                                <th style="text-align:center;">
+                                                    <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
+                                                </th>
+                                            </tr>
+                                        </t>
+                                        <!-- Close last internal group -->
+                                        <t t-if="current_internal_group !== null">
+                                            <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
+                                                <th/>
+                                                <th colspan="5" style="text-align:left;">
+                                                    <t t-esc="current_internal_group"/>
+ Total</th>
+                                                <t t-if="state.apply_comparison == true">
+                                                    <t t-set="number_of_periods" t-value="comparison_number_range"/>
+                                                    <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_debit_' + nb))"/>
+                                                        </th>
+                                                        <th style="text-align:center;">
+                                                            <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_credit_' + nb))"/>
+                                                        </th>
+                                                    </t>
+                                                </t>
+                                                <th style="text-align:center;">
+                                                    <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_debit'))"/>
+                                                </th>
+                                                <th style="text-align:center;">
+                                                    <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_credit'))"/>
+                                                </th>
+                                            </tr>
+                                        </t>
+
+                                        <!-- Grand Total -->
+                                        <tr class="border-bottom" style="border-spacing: 0 10px;color:#000;background:#999;font-weight:700;font-size:16px;">
                                             <th/>
-                                            <th colspan="5" style="text-align:left;">Total</th>
+                                            <th colspan="5" style="color:#fff;padding:10px 8px;">Grand Total</th>
                                             <t t-if="state.apply_comparison == true">
                                                 <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                 <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/></th>
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/></th>
+                                                    <th style="text-align:center;color:#fff;">
+                                                        <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_debit_' + nb))"/>
+                                                    </th>
+                                                    <th style="text-align:center;color:#fff;">
+                                                        <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_credit_' + nb))"/>
+                                                    </th>
                                                 </t>
                                             </t>
-                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/></th>
-                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/></th>
+                                            <th style="text-align:center;color:#fff;">
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'total_debit'))"/>
+                                            </th>
+                                            <th style="text-align:center;color:#fff;">
+                                                <t t-esc="this.formatAmount(sumByKey(state.data, 'total_credit'))"/>
+                                            </th>
                                         </tr>
                                     </t>
-                                    <!-- Close last internal group -->
-                                    <t t-if="current_internal_group !== null">
-                                        <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
-                                            <th/>
-                                            <th colspan="5" style="text-align:left;"><t t-esc="current_internal_group"/> Total</th>
-                                            <t t-if="state.apply_comparison == true">
-                                                <t t-set="number_of_periods" t-value="comparison_number_range"/>
-                                                <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_debit_' + nb))"/></th>
-                                                    <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_credit_' + nb))"/></th>
-                                                </t>
-                                            </t>
-                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_debit'))"/></th>
-                                            <th style="text-align:center;"><t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_credit'))"/></th>
-                                        </tr>
-                                    </t>
-
-                                    <!-- Grand Total -->
-                                    <tr class="border-bottom" style="border-spacing: 0 10px;color:#000;background:#999;font-weight:700;font-size:16px;">
-                                        <th/>
-                                        <th colspan="5" style="color:#fff;padding:10px 8px;">Grand Total</th>
-                                        <t t-if="state.apply_comparison == true">
-                                            <t t-set="number_of_periods" t-value="comparison_number_range"/>
-                                            <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                <th style="text-align:center;color:#fff;">
-                                                    <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_debit_' + nb))"/>
-                                                </th>
-                                                <th style="text-align:center;color:#fff;">
-                                                    <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_credit_' + nb))"/>
-                                                </th>
-                                            </t>
-                                        </t>
-                                        <th style="text-align:center;color:#fff;">
-                                            <t t-esc="this.formatAmount(sumByKey(state.data, 'total_debit'))"/>
-                                        </th>
-                                        <th style="text-align:center;color:#fff;">
-                                            <t t-esc="this.formatAmount(sumByKey(state.data, 'total_credit'))"/>
-                                        </th>
-                                    </tr>
-                                </t>
-                            </tbody>
-                        </table>
-                    </div></div>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
