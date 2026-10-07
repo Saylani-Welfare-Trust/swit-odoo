@@ -6,7 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Purchase Customization',
     'depends': [
-        'purchase_requisition','bn_pos_customization',
+        'purchase_requisition'
     ],
     'data': [
         'data/sequence.xml',

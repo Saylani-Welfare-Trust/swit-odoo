@@ -30,9 +30,17 @@ class PurchaseRequisition(models.Model):
     state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES, compute='_set_state')
 
 
+    def _assign_reference_number(self):
+        """Give the requisition its number, if it has none yet: the Purchase
+        Request sequence for a Purchase Request, otherwise the one
+        action_in_progress() takes."""
+        for requisition in self.filtered(lambda r: r.name == 'New'):
+            code = 'purchase_request_sequence' if requisition.type_id.name == 'Purchase Request' \
+                else 'purchase.requisition.blanket.order'
+            requisition.name = self.env['ir.sequence'].with_company(requisition.company_id).next_by_code(code)
+
     def action_in_progress(self):
-        if self.name == 'New' and self.type_id.name == 'Purchase Request':
-            self.name = self.env['ir.sequence'].with_company(self.company_id).next_by_code('purchase_request_sequence')
+        self._assign_reference_number()
 
         super(PurchaseRequisition, self).action_in_progress()
 
