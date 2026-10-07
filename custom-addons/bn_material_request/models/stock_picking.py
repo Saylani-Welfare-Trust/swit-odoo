@@ -1,8 +1,27 @@
-from odoo import models
+from odoo import api, fields, models
 
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
+
+    # Copied on purpose, so that a backorder keeps the request of its transfer.
+    material_request_id = fields.Many2one(
+        'material.request', string='Material Request', readonly=True, index=True,
+        help='Material Request this internal transfer was created for.')
+    requesting_department_id = fields.Many2one(
+        related='material_request_id.department_id', string='Requesting Department', store=True)
+
+    @api.model
+    def _backfill_material_request(self):
+        """Link the transfers that were created before material_request_id existed."""
+        # sudo: the Material Request record rule hides requests the user didn't create.
+        requests = self.env['material.request'].sudo().search([
+            '|', ('picking_id', '!=', False), ('shortage_picking_id', '!=', False),
+        ])
+        for request in requests:
+            pickings = (request.picking_id | request.shortage_picking_id).filtered(
+                lambda picking: not picking.material_request_id)
+            pickings.material_request_id = request
 
     def button_validate(self):
         res = super().button_validate()

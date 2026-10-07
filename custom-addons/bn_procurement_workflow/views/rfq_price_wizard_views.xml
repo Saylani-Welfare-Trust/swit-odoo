@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="rfq_price_wizard_view_form_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">rfq.price.wizard.view.form.inherit.bn.procurement.workflow</field>
+        <field name="model">rfq.price.wizard</field>
+        <field name="inherit_id" ref="bn_material_request.rfq_price_wizard_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Prices can be entered by anyone using the wizard; selecting the winning quote
+                 is reserved to the RFQ Selection group (action_confirm_selected() enforces it) -->
+            <xpath expr="//div[hasclass('alert-warning')]" position="attributes">
+                <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
+            </xpath>
+            <xpath expr="//field[@name='rfq_line_ids']/tree/field[@name='select_for_confirm']" position="attributes">
+                <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/tree/field[@name='to_confirm']" position="attributes">
+                <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_confirm_selected']" position="attributes">
+                <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

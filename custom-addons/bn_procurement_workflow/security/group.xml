@@ -12,4 +12,8 @@
         <field name="name">Procurement / CFO-Shariah Fund Transfer</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
+    <record id="group_rfq_selection" model="res.groups">
+        <field name="name">Procurement / RFQ Selection</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
 </odoo>

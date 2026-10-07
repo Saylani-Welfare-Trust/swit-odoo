@@ -76,7 +76,16 @@ class PurchaseOrder(models.Model):
                     'purchase.order'
                 ) or '/'
         return super().button_confirm()
-        
+
+    def button_approve(self, force=False):
+        """A confirmed order is locked straight away, whatever the company's
+        "Lock Confirmed Orders" setting: nothing on it can be edited any more
+        unless a Purchase Administrator unlocks it."""
+        pending = self.filtered(lambda order: order.state not in ('purchase', 'done'))
+        res = super().button_approve(force=force)
+        pending.filtered(lambda order: order.state == 'purchase').write({'state': 'done'})
+        return res
+
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
@@ -105,7 +114,7 @@ class PurchaseOrderLine(models.Model):
                 continue
 
             domain = [
-                ('state', '=', 'purchase'),
+                ('state', 'in', ('purchase', 'done')),
                 ('order_line.product_id', '=', line.product_id.id),
             ]
 

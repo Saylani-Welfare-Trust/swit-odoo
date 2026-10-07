@@ -1,9 +1,20 @@
 # -*- coding: utf-8 -*-
-from odoo import models
+from odoo import models, _
+from odoo.exceptions import ValidationError
+
+RFQ_SELECTION_GROUP = 'bn_procurement_workflow.group_rfq_selection'
 
 
 class RFQPriceWizard(models.TransientModel):
     _inherit = 'rfq.price.wizard'
+
+    def action_confirm_selected(self):
+        """Entering prices is open to everyone who can use the wizard; picking
+        the winning quote needs the RFQ Selection right - matching the
+        visibility of the selection boxes and of the button."""
+        if not self.env.user.has_group(RFQ_SELECTION_GROUP):
+            raise ValidationError(_('Only a user with the RFQ Selection right can select the winning quote.'))
+        return super().action_confirm_selected()
 
     def _confirm_rfq(self, rfq):
         """RFQs linked to a requisition under the Procurement workflow are not
