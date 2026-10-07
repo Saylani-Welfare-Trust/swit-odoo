@@ -71,6 +71,7 @@ class BankStatementImportWizard(models.TransientModel):
             raise UserError(_('No data found in the file.'))
 
         master = self._get_or_create_master()
+        self._check_duplicate_rows(data, master)
 
         Transaction = self.env['bank.reconciliation.transaction']
         for row in data:
@@ -103,6 +104,37 @@ class BankStatementImportWizard(models.TransientModel):
             'file_name': self.file_name,
             'state': 'uploaded',
         })
+
+    def _check_duplicate_rows(self, data, master):
+        """A reconciliation cannot hold two lines with the same reference, date
+        and amounts. Name the rows of the file that clash, instead of letting the
+        import fail on the first one without saying which it is."""
+        currency = master.currency_id
+        seen = {
+            (line.reference, line.date, line.debit, line.credit): _('a line already in this reconciliation')
+            for line in master.transaction_ids if line.reference
+        }
+        clashes = []
+        for row in data:
+            if not row['Reference']:
+                continue
+            key = (row['Reference'], row['Date'], currency.round(row['Debit']), currency.round(row['Credit']))
+            if key in seen:
+                clashes.append(_('Row %s is the same as %s: reference %s, date %s, debit %s, credit %s') % (
+                    row['Row'], seen[key], key[0], key[1], key[2], key[3]
+                ))
+            else:
+                seen[key] = _('row %s') % row['Row']
+        if clashes:
+            shown = '\n'.join(clashes[:10])
+            if len(clashes) > 10:
+                shown += _('\n... and %s more') % (len(clashes) - 10)
+            raise UserError(_(
+                'Some rows of the file have the same reference, date and amount as another row:\n%s\n\n'
+                'If they are different transactions, the column used as Reference is not unique for '
+                'each transaction. In the Bank Statement configuration, set the Reference header to the '
+                'column holding the transaction ID, or remove it, then upload again.'
+            ) % shown)
 
     def _get_or_create_master(self):
         if self.master_id:
@@ -150,7 +182,7 @@ class BankStatementImportWizard(models.TransientModel):
                     return ""
                 return row[index]
 
-            for row in rows[1:]:
+            for row_number, row in enumerate(rows[1:], start=2):
 
                 date_str = str(get(row, "Date")).strip()
 
@@ -164,6 +196,7 @@ class BankStatementImportWizard(models.TransientModel):
                     "%d/%m/%Y",
                     "%m/%d/%Y",
                     "%d-%m-%Y",
+                    "%d-%b-%Y",
                 ):
                     try:
                         date_obj = datetime.strptime(date_str, fmt).date()
@@ -185,6 +218,7 @@ class BankStatementImportWizard(models.TransientModel):
                     credit = 0.0
 
                 data.append({
+                    "Row": row_number,
                     "Date": date_obj,
                     "Description": str(get(row, "Description") or "").strip(),
                     "Debit": debit,
@@ -227,6 +261,13 @@ class BankStatementImportWizard(models.TransientModel):
                     return ""
                 return row[index].value
 
+            def text(row, key):
+                value = get(row, key)
+                # An ID typed as a number comes back as 12338204.0
+                if isinstance(value, float) and value.is_integer():
+                    value = int(value)
+                return str(value or "").strip()
+
             for row_no in range(1, sheet.nrows):
                 row = sheet.row(row_no)
 
@@ -250,6 +291,7 @@ class BankStatementImportWizard(models.TransientModel):
                         "%d/%m/%Y",
                         "%m/%d/%Y",
                         "%d-%m-%Y",
+                        "%d-%b-%Y",
                     ):
                         try:
                             date_obj = datetime.strptime(
@@ -274,14 +316,15 @@ class BankStatementImportWizard(models.TransientModel):
                     credit = 0.0
 
                 data.append({
+                    "Row": row_no + 1,
                     "Date": date_obj,
-                    "Description": str(get(row, "Description") or "").strip(),
+                    "Description": text(row, "Description"),
                     "Debit": debit,
                     "Credit": credit,
-                    "Reference": str(get(row, "Reference") or "").strip(),
-                    "Payment Reference": str(get(row, "Payment Reference") or "").strip(),
-                    "Partner": str(get(row, "Partner") or "").strip(),
-                    "Invoice Number": str(get(row, "Invoice Number") or "").strip(),
+                    "Reference": text(row, "Reference"),
+                    "Payment Reference": text(row, "Payment Reference"),
+                    "Partner": text(row, "Partner"),
+                    "Invoice Number": text(row, "Invoice Number"),
                 })
 
         except Exception as e:
