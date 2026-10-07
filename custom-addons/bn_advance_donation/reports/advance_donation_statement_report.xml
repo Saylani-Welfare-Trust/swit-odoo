@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="advance_donation_statement_report">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <t t-set="data_report_margin_top" t-value="12"/>
+                <t t-set="data_report_header_spacing" t-value="9"/>
+                <t t-set="data_report_dpi" t-value="110"/>
+
+                <div class="page">
+                    <h3 class="text-center mb-1">
+                        <b><t t-esc="report_name"/></b>
+                    </h3>
+                    <div class="text-center text-muted small mb-3">
+                        From <t t-esc="date_from"/> to <t t-esc="date_to"/>
+                        <t t-if="search"> — filtered by: "<t t-esc="search"/>"</t>
+                    </div>
+
+                    <!-- Summary band -->
+                    <table class="table table-sm mb-3" style="width:100%;">
+                        <thead style="background:#808080;color:#fff;">
+                            <tr>
+                                <th style="text-align:right;">Total In</th>
+                                <th style="text-align:right;">Total Out</th>
+                                <th style="text-align:right;">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="text-align:right;">
+                                    <t t-esc="currency"/> <t t-esc="'{:,.2f}'.format(total_in)"/>
+                                </td>
+                                <td style="text-align:right;">
+                                    <t t-esc="currency"/> <t t-esc="'{:,.2f}'.format(total_out)"/>
+                                </td>
+                                <td style="text-align:right;">
+                                    <t t-esc="currency"/> <t t-esc="'{:,.2f}'.format(balance)"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div t-if="search" class="small text-muted mb-2">
+                        Showing <b><t t-esc="filtered_lines_count"/></b>
+                        of <b><t t-esc="all_lines_count"/></b> movements.
+                    </div>
+
+                    <!-- Detail table -->
+                    <table class="table table-sm table-bordered" style="width:100%;">
+                        <thead style="background:#D3D3D3;">
+                            <tr>
+                                <th style="text-align:left;">Date</th>
+                                <th style="text-align:left;">Reference</th>
+                                <th style="text-align:left;">Donor</th>
+                                <th style="text-align:left;">Type</th>
+                                <th style="text-align:left;">Purpose</th>
+                                <th style="text-align:left;">Beneficiary</th>
+                                <th style="text-align:left;">Description</th>
+                                <th style="text-align:right;">In</th>
+                                <th style="text-align:right;">Out</th>
+                                <th style="text-align:right;">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-if="not lines">
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted">
+                                        No movements.
+                                    </td>
+                                </tr>
+                            </t>
+                            <t t-foreach="lines" t-as="l" t-key="l_index">
+                                <tr t-att-style="l.get('direction') == 'out' and 'background:#FAFAFA;' or ''">
+                                    <td><t t-esc="l.get('date')"/></td>
+                                    <td><t t-esc="l.get('reference')"/></td>
+                                    <td><t t-esc="l.get('partner')"/></td>
+                                    <td><t t-esc="l.get('type')"/></td>
+                                    <td><t t-esc="l.get('purpose')"/></td>
+                                    <td><t t-esc="l.get('beneficiary')"/></td>
+                                    <td><t t-esc="l.get('description')"/></td>
+                                    <td style="text-align:right;">
+                                        <t t-if="l.get('amount_in')"
+                                           t-esc="'{:,.2f}'.format(l.get('amount_in') or 0)"/>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <t t-if="l.get('amount_out')"
+                                           t-esc="'{:,.2f}'.format(l.get('amount_out') or 0)"/>
+                                    </td>
+                                    <td style="text-align:right;">
+                                        <t t-esc="'{:,.2f}'.format(l.get('balance') or 0)"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold;border-top:2px solid #000;">
+                                <td colspan="7" style="text-align:right;">Totals</td>
+                                <td style="text-align:right;">
+                                    <t t-esc="'{:,.2f}'.format(total_in)"/>
+                                </td>
+                                <td style="text-align:right;">
+                                    <t t-esc="'{:,.2f}'.format(total_out)"/>
+                                </td>
+                                <td style="text-align:right;">
+                                    <t t-esc="'{:,.2f}'.format(balance)"/>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <!-- Paper format + report action -->
+    <record id="paperformat_advance_donation_statement" model="report.paperformat">
+        <field name="name">Advance Donation Statement Landscape</field>
+        <field name="default" eval="False"/>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">10</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">5</field>
+    </record>
+
+    <record id="action_report_advance_donation_statement" model="ir.actions.report">
+        <field name="name">Advance Donation Statement</field>
+        <field name="model">advance.donation.statement.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_advance_donation.advance_donation_statement_report</field>
+        <field name="report_file">bn_advance_donation.advance_donation_statement_report</field>
+        <field name="paperformat_id" ref="paperformat_advance_donation_statement"/>
+        <field name="print_report_name">'Advance Donation Statement'</field>
+        <field name="binding_model_id" eval="False"/>
+    </record>
+</odoo>

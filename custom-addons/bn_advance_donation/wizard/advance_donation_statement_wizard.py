@@ -1,3 +1,6 @@
+import io
+import json
+import xlsxwriter
 from odoo import models, api
 from datetime import datetime
 
@@ -208,3 +211,85 @@ class AdvanceDonationStatementWizard(models.TransientModel):
         if isinstance(s, datetime):
             return s.date()
         return datetime.strptime(s, '%Y-%m-%d').date()
+    
+    @api.model
+    def get_xlsx_report(self, data, response, report_name, report_action):
+        """
+        XLSX export for the Advance Donation Statement.
+        `data` is the JSON string sent from the OWL component.
+        """
+        payload = json.loads(data)
+        lines        = payload.get("lines", [])
+        currency     = payload.get("currency", "")
+        date_from    = payload.get("date_from", "")
+        date_to      = payload.get("date_to", "")
+        search       = payload.get("search", "")
+        total_in     = payload.get("total_in", 0)
+        total_out    = payload.get("total_out", 0)
+        balance      = payload.get("balance", 0)
+
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {"in_memory": True})
+        sheet = workbook.add_worksheet("Advance Donation")
+
+        # -------- formats --------
+        head_fmt       = workbook.add_format({"bold": True, "font_size": 15, "align": "center"})
+        sub_fmt        = workbook.add_format({"font_size": 10, "align": "center", "italic": True})
+        th_fmt         = workbook.add_format({"bold": True, "font_size": 10,
+                                              "align": "center", "border": 1,
+                                              "bg_color": "#D3D3D3"})
+        cell_left      = workbook.add_format({"font_size": 10, "border": 1, "align": "left"})
+        cell_right_num = workbook.add_format({"font_size": 10, "border": 1,
+                                              "align": "right", "num_format": "#,##0.00"})
+        total_fmt      = workbook.add_format({"bold": True, "font_size": 11,
+                                              "align": "right", "border": 1,
+                                              "num_format": "#,##0.00",
+                                              "bg_color": "#EFEFEF"})
+        total_lbl_fmt  = workbook.add_format({"bold": True, "font_size": 11,
+                                              "align": "right", "border": 1,
+                                              "bg_color": "#EFEFEF"})
+
+        # -------- column widths --------
+        widths = [12, 18, 26, 14, 26, 24, 34, 14, 14, 14]
+        for i, w in enumerate(widths):
+            sheet.set_column(i, i, w)
+
+        # -------- title --------
+        sheet.merge_range(0, 0, 0, 9, report_name or "Advance Donation Statement", head_fmt)
+        sub_txt = f"{date_from}  →  {date_to}"
+        if search:
+            sub_txt += f'   |   search: "{search}"'
+        sheet.merge_range(1, 0, 1, 9, sub_txt, sub_fmt)
+
+        # -------- header row --------
+        headers = ["Date", "Reference", "Donor", "Type", "Purpose",
+                   "Beneficiary", "Description", "In", "Out", "Balance"]
+        row = 3
+        for i, h in enumerate(headers):
+            sheet.write(row, i, h, th_fmt)
+        row += 1
+
+        # -------- data rows --------
+        for l in lines:
+            sheet.write(row, 0, l.get("date") or "", cell_left)
+            sheet.write(row, 1, l.get("reference") or "", cell_left)
+            sheet.write(row, 2, l.get("partner") or "", cell_left)
+            sheet.write(row, 3, l.get("type") or "", cell_left)
+            sheet.write(row, 4, l.get("purpose") or "", cell_left)
+            sheet.write(row, 5, l.get("beneficiary") or "", cell_left)
+            sheet.write(row, 6, l.get("description") or "", cell_left)
+            sheet.write(row, 7, float(l.get("amount_in") or 0), cell_right_num)
+            sheet.write(row, 8, float(l.get("amount_out") or 0), cell_right_num)
+            sheet.write(row, 9, float(l.get("balance") or 0), cell_right_num)
+            row += 1
+
+        # -------- totals --------
+        sheet.merge_range(row, 0, row, 6, "Totals", total_lbl_fmt)
+        sheet.write(row, 7, float(total_in),  total_fmt)
+        sheet.write(row, 8, float(total_out), total_fmt)
+        sheet.write(row, 9, float(balance),   total_fmt)
+
+        workbook.close()
+        output.seek(0)
+        response.stream.write(output.read())
+        output.close()

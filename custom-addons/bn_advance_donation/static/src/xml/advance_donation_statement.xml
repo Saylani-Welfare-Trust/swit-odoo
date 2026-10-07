@@ -56,6 +56,19 @@
                         </button>
                     </div>
                 </div>
+                <div class="d-flex gap-2 align-items-end">
+                    <button type="button"
+                            class="btn btn-info btn-report-print"
+                            t-on-click="printPdf"
+                            style="margin-right: 8px;">
+                        <i class="fa fa-print me-1"/> Print (PDF)
+                    </button>
+                    <button type="button"
+                            class="btn btn-info btn-report-print"
+                            t-on-click="printXlsx">
+                        <i class="fa fa-file-excel-o me-1"/> Export (XLSX)
+                    </button>
+                </div>
 
                 <div class="ms-auto d-flex gap-2">
                     <div class="text-end">

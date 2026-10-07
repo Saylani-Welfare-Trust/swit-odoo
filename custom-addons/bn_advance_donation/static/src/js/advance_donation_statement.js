@@ -2,6 +2,8 @@
 import { Component, useState, onWillStart } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { download } from "@web/core/network/download";
+import { BlockUI } from "@web/core/ui/block_ui";
 
 
 export class AdvanceDonationStatement extends Component {
@@ -35,6 +37,65 @@ export class AdvanceDonationStatement extends Component {
 
     _fmt(d) {
         return d.toISOString().slice(0, 10);
+    }
+
+        // ------------------------------------------------------------------
+    //  Print (PDF)
+    // ------------------------------------------------------------------
+    async printPdf() {
+        const self = this;
+        return self.action.doAction({
+            type: "ir.actions.report",
+            report_type: "qweb-pdf",
+            report_name: "bn_advance_donation.advance_donation_statement_report",
+            report_file: "bn_advance_donation.advance_donation_statement_report",
+            name: self.props.action.display_name || "Advance Donation Statement",
+            display_name: self.props.action.display_name || "Advance Donation Statement",
+            data: self._buildReportPayload(),
+        });
+    }
+
+    // ------------------------------------------------------------------
+    //  Export (XLSX)
+    // ------------------------------------------------------------------
+    async printXlsx() {
+        const self = this;
+        const payload = {
+            model: "advance.donation.statement.wizard",
+            data: JSON.stringify(self._buildReportPayload()),
+            output_format: "xlsx",
+            report_action: self.props.action.xml_id || "bn_advance_donation.action_advance_donation_statement",
+            report_name: self.props.action.display_name || "Advance Donation Statement",
+        };
+        BlockUI;
+        await download({
+            url: "/xlsx_report",
+            data: payload,
+            complete: () => unblockUI,
+            error: (err) => self.call("crash_manager", "rpc_error", err),
+        });
+    }
+
+    // ------------------------------------------------------------------
+    //  Common payload for PDF / XLSX
+    // ------------------------------------------------------------------
+    _buildReportPayload() {
+        const totals = this.filteredTotals;
+        return {
+            lines: this.filteredLines,
+            search: this.state.search || "",
+            currency: this.state.currency || "",
+            date_from: this.state.date_from,
+            date_to: this.state.date_to,
+            donor_id: this.state.donor_id || false,
+            donors: this.state.donors,
+            total_in: totals.in,
+            total_out: totals.out,
+            balance: totals.balance,
+            all_lines_count: this.state.lines.length,
+            filtered_lines_count: this.filteredLines.length,
+            report_name: this.props.action.display_name || "Advance Donation Statement",
+        };
     }
 
     async _loadDonors() {
