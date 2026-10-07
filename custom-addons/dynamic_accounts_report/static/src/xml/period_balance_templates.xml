@@ -151,7 +151,13 @@ Number of Periods:
                 </div>
             </div>
 
-            <div class="table_style" style="height: 650px; overflow: auto; overflow-x: auto; overflow-y: auto;">
+            <div class="table_style"
+                style="max-height: calc(100vh - 240px);
+                        height: auto;
+                        overflow: auto;
+                        overflow-x: auto;
+                        overflow-y: auto;
+                        border: 1px solid #ddd;">
                 <div class="table_view_gl" style="width:100%;" t-ref="table_view_gl">
                     <div>
                         <div class="table_main_view">
