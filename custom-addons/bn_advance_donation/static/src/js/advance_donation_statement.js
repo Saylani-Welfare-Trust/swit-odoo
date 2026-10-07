@@ -30,17 +30,13 @@ export class AdvanceDonationStatement extends Component {
 
             // -------- extra filters --------
             filter_type:        '',
-            filter_purpose:     '',
             filter_beneficiary: '',
-            filter_method:      '',
             amount_min:         '',
             amount_max:         '',
 
             // options derived from loaded data
             type_options:        [],
-            purpose_options:     [],
             beneficiary_options: [],
-            method_options:      [],
 
             // ui toggle
             show_more_filters:   false,
@@ -96,9 +92,7 @@ export class AdvanceDonationStatement extends Component {
     _updateFilterOptions() {
         const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort();
         this.state.type_options        = uniq(this.state.lines.map(l => l.type));
-        this.state.purpose_options     = uniq(this.state.lines.map(l => l.purpose));
         this.state.beneficiary_options = uniq(this.state.lines.map(l => l.beneficiary));
-        this.state.method_options      = uniq(this.state.lines.map(l => l.description));
     }
 
     onDateChange(ev) {
@@ -138,9 +132,7 @@ export class AdvanceDonationStatement extends Component {
     }
     clearExtraFilters() {
         this.state.filter_type        = '';
-        this.state.filter_purpose     = '';
         this.state.filter_beneficiary = '';
-        this.state.filter_method      = '';
         this.state.amount_min         = '';
         this.state.amount_max         = '';
     }
@@ -155,9 +147,7 @@ export class AdvanceDonationStatement extends Component {
     get extraFiltersCount() {
         let n = 0;
         if (this.state.filter_type)        n++;
-        if (this.state.filter_purpose)     n++;
         if (this.state.filter_beneficiary) n++;
-        if (this.state.filter_method)      n++;
         if (this.state.amount_min !== '' && !isNaN(parseFloat(this.state.amount_min))) n++;
         if (this.state.amount_max !== '' && !isNaN(parseFloat(this.state.amount_max))) n++;
         return n;
@@ -190,22 +180,14 @@ export class AdvanceDonationStatement extends Component {
             rows = rows.filter(l => (l.type || '') === this.state.filter_type);
         }
 
-        // 3) Purpose
-        if (this.state.filter_purpose) {
-            rows = rows.filter(l => (l.purpose || '') === this.state.filter_purpose);
-        }
 
-        // 4) Beneficiary
+
+        // 3) Beneficiary
         if (this.state.filter_beneficiary) {
             rows = rows.filter(l => (l.beneficiary || '') === this.state.filter_beneficiary);
         }
 
-        // 5) Payment method (Description column)
-        if (this.state.filter_method) {
-            rows = rows.filter(l => (l.description || '') === this.state.filter_method);
-        }
-
-        // 6) Amount range (transaction size = in + out)
+        // 4) Amount range (transaction size = in + out)
         const min = parseFloat(this.state.amount_min);
         const max = parseFloat(this.state.amount_max);
         if (!isNaN(min)) {
@@ -299,9 +281,7 @@ export class AdvanceDonationStatement extends Component {
             filtered_lines_count: this.filteredLines.length,
             // active filters snapshot for the report header
             filter_type:        this.state.filter_type || "",
-            filter_purpose:     this.state.filter_purpose || "",
             filter_beneficiary: this.state.filter_beneficiary || "",
-            filter_method:      this.state.filter_method || "",
             amount_min:         this.state.amount_min || "",
             amount_max:         this.state.amount_max || "",
             report_name: this.props.action.display_name || "Advance Donation Statement",

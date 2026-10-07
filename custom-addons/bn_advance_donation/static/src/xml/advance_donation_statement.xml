@@ -27,7 +27,8 @@
                                t-on-change="onDateChange"/>
                     </div>
 
-                    <div style="min-width:220px;">
+                    <!-- Donor (narrower) -->
+                    <div style="min-width:160px; max-width:180px;">
                         <label class="d-block small text-muted">Donor</label>
                         <select class="form-select" t-on-change="onDonorChange">
                             <option value="">All donors</option>
@@ -35,6 +36,22 @@
                                 <option t-att-value="d.id"
                                         t-att-selected="state.donor_id === d.id">
                                     <t t-esc="d.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <!-- Type (moved next to Donor) -->
+                    <div style="min-width:140px; max-width:160px;">
+                        <label class="d-block small text-muted">Type</label>
+                        <select class="form-select"
+                                name="filter_type"
+                                t-on-change="onFilterChange">
+                            <option value="">All types</option>
+                            <t t-foreach="state.type_options" t-as="opt" t-key="opt_index">
+                                <option t-att-value="opt"
+                                        t-att-selected="state.filter_type === opt">
+                                    <t t-esc="opt"/>
                                 </option>
                             </t>
                         </select>
@@ -123,36 +140,6 @@
                      class="d-flex flex-wrap align-items-end gap-3 mt-3 pt-3"
                      style="border-top:1px dashed #d5d5d5;">
 
-                    <div style="min-width:180px;">
-                        <label class="d-block small text-muted">Type</label>
-                        <select class="form-select"
-                                name="filter_type"
-                                t-on-change="onFilterChange">
-                            <option value="">All types</option>
-                            <t t-foreach="state.type_options" t-as="opt" t-key="opt_index">
-                                <option t-att-value="opt"
-                                        t-att-selected="state.filter_type === opt">
-                                    <t t-esc="opt"/>
-                                </option>
-                            </t>
-                        </select>
-                    </div>
-
-                    <div style="min-width:220px;">
-                        <label class="d-block small text-muted">Purpose</label>
-                        <select class="form-select"
-                                name="filter_purpose"
-                                t-on-change="onFilterChange">
-                            <option value="">All purposes</option>
-                            <t t-foreach="state.purpose_options" t-as="opt" t-key="opt_index">
-                                <option t-att-value="opt"
-                                        t-att-selected="state.filter_purpose === opt">
-                                    <t t-esc="opt"/>
-                                </option>
-                            </t>
-                        </select>
-                    </div>
-
                     <div style="min-width:220px;">
                         <label class="d-block small text-muted">Beneficiary</label>
                         <select class="form-select"
@@ -162,21 +149,6 @@
                             <t t-foreach="state.beneficiary_options" t-as="opt" t-key="opt_index">
                                 <option t-att-value="opt"
                                         t-att-selected="state.filter_beneficiary === opt">
-                                    <t t-esc="opt"/>
-                                </option>
-                            </t>
-                        </select>
-                    </div>
-
-                    <div style="min-width:180px;">
-                        <label class="d-block small text-muted">Payment Method</label>
-                        <select class="form-select"
-                                name="filter_method"
-                                t-on-change="onFilterChange">
-                            <option value="">All methods</option>
-                            <t t-foreach="state.method_options" t-as="opt" t-key="opt_index">
-                                <option t-att-value="opt"
-                                        t-att-selected="state.filter_method === opt">
                                     <t t-esc="opt"/>
                                 </option>
                             </t>
