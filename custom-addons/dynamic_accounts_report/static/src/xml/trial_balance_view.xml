@@ -320,7 +320,13 @@
                     </div>
                 </div>
             </div>
-            <div class="table_style" style="height: 650px; overflow-y: scroll;">
+            <div class="table_style"
+                style="max-height: calc(100vh - 240px);
+                        height: auto;
+                        overflow: auto;
+                        overflow-x: auto;
+                        overflow-y: auto;
+                        border: 1px solid #ddd;">
                 <!-- Table View -->
                 <div class="table_view_gl" style="right:20px;width:100%;"
                      t-ref="table_view_gl">
