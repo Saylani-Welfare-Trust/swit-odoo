@@ -250,8 +250,8 @@ class RFQPriceWizard(models.TransientModel):
         
         # Check if any non-suggested RFQ is being confirmed - if so, remarks are mandatory
         suggested_rfq_id = self.selected_rfq_id.id if self.selected_rfq_id else False
-                
-        if  not self.remarks:
+
+        if all_lines_to_confirm.rfq_id.filtered(lambda rfq: rfq.id != suggested_rfq_id) and not self.remarks:
             raise ValidationError(_('Remarks are required when confirming non-suggested RFQs.'))
         
         # Group lines by RFQ
