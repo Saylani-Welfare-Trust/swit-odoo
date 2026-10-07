@@ -1,39 +1,36 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <templates>
     <t t-name="trl_b_template_new" owl="1">
-        <!-- Section contains a structure for the Trial Balance report, including a filter
-        view and a table view. It has div elements for the filter view and table view,
-         with respective classes for styling.-->
-        <div class="w-100">
-            <div class="fin_report">
+        <div class="container-fluid px-0">
                 <!--  Filter View  -->
-                <div class="filter_view_gl">
-                    <div class="">
-                        <h1 style="padding:10px">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header">
+                        <h1 class="h4 mb-0">
                             <t t-esc="props.action.name"/>
                         </h1>
                     </div>
-                    <div style="margin-right: 10px; margin-left: 10px;margin-bottom: 15px;display: flex;">
-                        <div class="sub_container_left" style="width:70%;">
-                            <div class="report_print">
+                    <div class="card-body">
+                        <div class="row align-items-start g-3">
+                        <div class="col-12 col-xl-3">
+                            <div class="d-flex flex-wrap gap-2">
                                 <!-- Print (PDF) Button -->
                                 <button type="button"
-                                        class="btn btn-info btn-report-print"
-                                        t-on-click="printPdf"
-                                        style="margin-right: 8px;">
+                                        class="btn btn-primary"
+                                        t-on-click="printPdf">
                                     Print (PDF)
                                 </button>
                                 <!-- Export (XLSX) Button -->
                                 <button type="button"
-                                        class="btn btn-info btn-report-print"
+                                        class="btn btn-outline-primary"
                                         t-on-click="print_xlsx">
                                     Export (XLSX)
                                 </button>
                             </div>
                         </div>
-                        <div class="sub_container_right">
+                        <div class="col-12 col-xl-9">
+                            <div class="row g-2">
                             <!-- Account Filter -->
-                            <div class="account" style="">
+                            <div class="dropdown">
                                 <a type="button" class="dropdown-toggle"
                                 data-bs-toggle="dropdown" style="display: flex;
                                                                     text-wrap: wrap;
@@ -54,17 +51,17 @@
                                         </t>
                                     </t>
                                 </a>
-                                <div class="dropdown-menu" role="menu"
+                                <div class="dropdown-menu w-100" role="menu"
                                     style="max-height: 420px; overflow-y: auto; min-width: 260px;">
                                     <div class="list-group">
                                         <t t-if="state.accounts and state.accounts.length">
                                             <t t-foreach="state.accounts"
                                             t-as="account"
                                             t-key="account.id">
-                                                <button class="report-filter-button"
+                                                <button class="dropdown-item"
                                                         t-att-data-value="'account'"
                                                         t-att-data-id="account.id"
-                                                        t-attf-class="report-filter-button #{state.selected_analytic.includes(account.id) ? 'selected-filter' : ''}"
+                                                        t-attf-class="dropdown-item #{state.selected_analytic.includes(account.id) ? 'active' : ''}"
                                                         type="button"
                                                         t-on-click="applyFilter">
                                                     <t t-esc="account.code"/> — <t t-esc="account.name"/>
@@ -72,7 +69,7 @@
                                             </t>
                                         </t>
                                         <t t-else="">
-                                            <div class="text-muted" style="padding: 6px 10px;">
+                                            <div class="text-muted px-3 py-2">
                                                 No accounts
                                             </div>
                                         </t>
@@ -80,7 +77,7 @@
                                 </div>
                             </div>
                             <!-- Time Range -->
-                            <div class="time_range" style="">
+                            <div class="dropdown">
                                 <a type="button" class="dropdown-toggle"
                                    data-bs-toggle="dropdown">
                                     <!-- Date Range Dropdown -->
@@ -89,25 +86,25 @@
                                           aria-label="Dates"/>
                                     Date Range
                                 </a>
-                                <div class="dropdown-menu" role="menu">
+                                <div class="dropdown-menu w-100" role="menu">
                                     <!-- Date Range Options -->
                                     <div class="list-group">
                                         <!-- This Month Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'month'"
                                                 type="button"
                                                 t-on-click="applyFilter">
                                             This Month
                                         </button>
                                         <!-- This Quarter Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'quarter'"
                                                 type="button"
                                                 t-on-click="applyFilter">
                                             This Quarter
                                         </button>
                                         <!-- This Year Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'year'"
                                                 type="button"
                                                 t-on-click="applyFilter">
@@ -117,21 +114,21 @@
                                         <div role="separator"
                                              class="dropdown-divider"/>
                                         <!-- Last Month Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'last-month'"
                                                 type="button"
                                                 t-on-click="applyFilter">
                                             Last month
                                         </button>
                                         <!-- Last Quarter Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'last-quarter'"
                                                 type="button"
                                                 t-on-click="applyFilter">
                                             Last quarter
                                         </button>
                                         <!-- Last Year Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'last-year'"
                                                 type="button"
                                                 t-on-click="applyFilter">
@@ -141,34 +138,26 @@
                                         <div role="separator"
                                              class="dropdown-divider"/>
                                         <!-- Start Date -->
-                                        <label class="" for="date_from">Start
+                                        <label  for="date_from">Start
                                             Date :
                                         </label>
                                         <div class="input-group date"
                                              data-target-input="nearest">
 
-                                            <input type="date" id="start_date"
-                                                   t-on-change="applyFilter"
-                                                   t-ref="date_from"
-                                                   style="border:none;border-bottom: 1px solid #000;padding: 5px;outline: none;"
-                                                   name="start_date"/>
+                                            <input type="date" id="start_date" class="form-control" t-on-change="applyFilter" t-ref="date_from" name="start_date"/>
                                         </div>
                                         <!-- End Date -->
-                                        <label class="" for="date_to">End Date
+                                        <label  for="date_to">End Date
                                             :
                                         </label>
                                         <div class="input-group date"
                                              data-target-input="nearest">
-                                            <input type="date" id="end_date"
-                                                   t-on-change="applyFilter"
-                                                   t-ref="date_to"
-                                                   style="border:none;border-bottom: 1px solid #000;padding: 5px;outline: none;"
-                                                   name="end_date"/>
+                                            <input type="date" id="end_date" class="form-control" t-on-change="applyFilter" t-ref="date_to" name="end_date"/>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="comparison_range" style="">
+                            <div class="dropdown">
                                 <a type="button" class="dropdown-toggle"
                                    data-bs-toggle="dropdown">
                                     <span class="fa fa-signal"
@@ -177,9 +166,9 @@
                                           aria-label="Comparison"/>
                                     Comparison
                                 </a>
-                                <div class="dropdown-menu" role="menu">
+                                <div class="dropdown-menu w-100" role="menu">
                                     <div class="list-group">
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'no comparison'"
                                                 type="button"
                                                 t-on-click="applyComparison">
@@ -187,21 +176,16 @@
                                         </button>
                                         <div role="separator"
                                              class="dropdown-divider"/>
-                                        <label class="" for="periods"
+                                        <label  for="periods"
                                                style="display: flex;padding: 4px 20px;color: #000;">
                                             Previous Period
                                             <br/>
                                             Number of Periods:
                                         </label>
-                                        <div class="input-group comparison"
+                                        <div class="input-group"
                                              data-target-input="nearest">
 
-                                            <input type="number"
-                                                   t-ref="periods"
-                                                   min="1"
-                                                   t-on-input="onPeriodChange"
-                                                   style="border:none;border-bottom: 1px solid #000;padding: 5px;outline: none;"
-                                                   name="previous_period"/>
+                                            <input type="number" class="form-control" t-ref="periods" min="1" t-on-input="onPeriodChange" name="previous_period"/>
                                         </div>
                                         <button class="btn btn-primary"
                                                 type="button"
@@ -211,20 +195,15 @@
                                         </button>
                                         <div role="separator"
                                              class="dropdown-divider"/>
-                                        <label class="" for="period_year"
+                                        <label  for="period_year"
                                                style="display: flex;padding: 4px 20px;color: #000;">
                                             Same Period Last Year
                                             <br/>
                                             Number of Periods:
                                         </label>
-                                        <div class="input-group comparison"
+                                        <div class="input-group"
                                              data-target-input="nearest">
-                                            <input type="number"
-                                                   t-ref="period_year"
-                                                   t-on-input="onPeriodYearChange"
-                                                   min="1"
-                                                   style="border:none;border-bottom: 1px solid #000;padding: 5px;outline: none;"
-                                                   name="period_year"/>
+                                            <input type="number" class="form-control" t-ref="period_year" t-on-input="onPeriodYearChange" min="1" name="period_year"/>
                                         </div>
                                         <button class="btn btn-primary"
                                                 type="button"
@@ -235,7 +214,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="journal" style="">
+                            <div class="dropdown">
                                 <a type="button" class="dropdown-toggle"
                                    data-bs-toggle="dropdown" style="display: flex;
                                                                     text-wrap: wrap;
@@ -263,13 +242,13 @@
                                         </t>
                                     </t>
                                 </a>
-                                <div class="dropdown-menu" role="menu">
+                                <div class="dropdown-menu w-100" role="menu">
                                     <div class="list-group">
                                         <t t-if="state.journals">
                                             <t t-foreach="state.journals"
                                                t-as="journal"
                                                t-key="journal.id">
-                                                <button class="report-filter-button"
+                                                <button class="dropdown-item"
                                                         t-att-data-value="'journal'"
                                                         t-att-data-id="journal.id"
                                                         type="button"
@@ -282,7 +261,7 @@
                                 </div>
                             </div>
                             <!-- Options Dropdown -->
-                            <div class="option" style="">
+                            <div class="dropdown">
                                 <a type="button" class="dropdown-toggle"
                                    data-bs-toggle="dropdown">
                                     <span class="fa fa-glass" title="Accounts"
@@ -291,16 +270,16 @@
                                     Options : Posted Entries ,
                                     <t t-esc="Object.keys(state.method)[(Object.keys(state.method).length)-1]"/>
                                 </a>
-                                <div class="dropdown-menu" role="menu">
+                                <div class="dropdown-menu w-100" role="menu">
                                     <div class="list-group">
                                         <!-- Include Draft Entries Button -->
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'draft'"
                                                 type="button"
                                                 t-on-click="applyFilter">
                                             Include Draft Entries
                                         </button>
-                                        <button class="report-filter-button"
+                                        <button class="dropdown-item"
                                                 t-att-data-value="'cash-basis'"
                                                 type="button"
                                                 t-on-click="applyFilter">
@@ -312,17 +291,13 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="table_style" style="height: 650px; overflow-y: scroll;">
-                <!-- Table View -->
-                <div class="table_view_gl" style="right:20px;width:100%;"
-                     t-ref="table_view_gl">
-                    <div>
-                        <div class="table_main_view">
-                            <table cellspacing="0" width="100%">
+                </div>
+                </div>
+            <div class="table-responsive border rounded shadow-sm" style="height: 650px; overflow-y: auto;">
+                <div t-ref="table_view_gl">
+                    <table class="table table-hover table-bordered table-sm align-middle mb-0" cellspacing="0" width="100%">
                                                                 <thead>
-                                    <tr class="o_heading"
-                                        style="text-align:center;">
+                                    <tr class="table-light text-center align-middle">
                                         <th>Code</th>
                                         <th colspan="5">Account</th>
                                         <th>Initial Balance</th>
@@ -337,8 +312,7 @@
                                         </t>
                                         <th>End Balance</th>
                                     </tr>
-                                    <tr class="o_heading"
-                                        style="text-align:center;">
+                                    <tr class="table-light text-center align-middle">
                                         <th colspan="6"/>
                                         <th/>                                   <!-- empty cell under Initial Balance -->
                                         <t t-if="state.apply_comparison == true">
@@ -367,72 +341,72 @@
                                             <t t-if="(move_line.internal_group || 'Other') !== current_internal_group">
                                                 <t t-if="current_group !== null">
                                                     <!-- close the last sub-group of the PREVIOUS internal group -->
-                                                    <tr style="font-weight:bold;border-top:1px solid #000;">
+                                                    <tr class="fw-bold border-top">
                                                         <th/>
-                                                        <th colspan="5" style="text-align:left;">Total</th>
-                                                        <th style="text-align:center;">
+                                                        <th colspan="5" class="text-start">Total</th>
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'initial_balance'))"/>
                                                         </th>
                                                         <t t-if="state.apply_comparison == true">
                                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                             <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                                <th style="text-align:center;">
+                                                                <th class="text-center">
                                                                     <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
                                                                 </th>
-                                                                <th style="text-align:center;">
+                                                                <th class="text-center">
                                                                     <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
                                                                 </th>
                                                             </t>
                                                         </t>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'end_balance'))"/>
                                                         </th>
                                                     </tr>
                                                 </t>
                                                 <t t-if="current_internal_group !== null">
                                                     <!-- Internal-group grand subtotal (e.g. all of "Asset") -->
-                                                    <tr style="font-weight:bold;background:#DADADA;border-top:2px solid #000;">
+                                                    <tr class="fw-bold table-secondary border-top border-2">
                                                         <th/>
-                                                        <th colspan="5" style="text-align:left;">
+                                                        <th colspan="5" class="text-start">
                                                             <t t-esc="current_internal_group"/> Total
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'initial_balance'))"/>
                                                         </th>
                                                         <t t-if="state.apply_comparison == true">
                                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                             <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                                <th style="text-align:center;">
+                                                                <th class="text-center">
                                                                     <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_debit_' + nb))"/>
                                                                 </th>
-                                                                <th style="text-align:center;">
+                                                                <th class="text-center">
                                                                     <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_credit_' + nb))"/>
                                                                 </th>
                                                             </t>
                                                         </t>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_debit'))"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_credit'))"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'end_balance'))"/>
                                                         </th>
                                                     </tr>
                                                 </t>
 
                                                 <!-- New internal-group header -->
-                                                <tr style="background:#CFCFCF;cursor:pointer;font-weight:700;font-size:16px;"
+                                                <tr class="table-secondary fw-bold" style="cursor:pointer;"
                                                     t-on-click="() => this.toggleInternalGroup(move_line.internal_group || 'Other')">
-                                                    <th colspan="11" style="text-align:left;padding:10px 8px;letter-spacing:0.5px;">
-                                                        <span class="toggle-icon" style="margin-right:8px;font-size:14px;">
+                                                    <th colspan="11" class="text-start" style="padding:10px 8px;letter-spacing:0.5px;">
+                                                        <span class="me-2" style="margin-right:8px;font-size:14px;">
                                                             <i t-att-class="this.isInternalGroupCollapsed(move_line.internal_group || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
                                                         </span>
                                                         <t t-esc="(move_line.internal_group || 'Other').toUpperCase()"/>
@@ -449,38 +423,38 @@
                                                 <t t-if="(move_line.group_label || 'Other') !== current_group">
                                                     <t t-if="current_group !== null">
                                                         <!-- Subtotal for the PREVIOUS sub-group -->
-                                                        <tr style="font-weight:bold;border-top:1px solid #000;">
+                                                        <tr class="fw-bold border-top">
                                                             <th/>
-                                                            <th colspan="5" style="text-align:left;">Total</th>
-                                                            <th style="text-align:center;">
+                                                            <th colspan="5" class="text-start">Total</th>
+                                                            <th class="text-center">
                                                                 <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'initial_balance'))"/>
                                                             </th>
                                                             <t t-if="state.apply_comparison == true">
                                                                 <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                                 <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                                    <th style="text-align:center;">
+                                                                    <th class="text-center">
                                                                         <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
                                                                     </th>
-                                                                    <th style="text-align:center;">
+                                                                    <th class="text-center">
                                                                         <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
                                                                     </th>
                                                                 </t>
                                                             </t>
-                                                            <th style="text-align:center;">
+                                                            <th class="text-center">
                                                                 <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
                                                             </th>
-                                                            <th style="text-align:center;">
+                                                            <th class="text-center">
                                                                 <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
                                                             </th>
-                                                            <th style="text-align:center;">
+                                                            <th class="text-center">
                                                                 <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'end_balance'))"/>
                                                             </th>
                                                         </tr>
                                                     </t>
-                                                    <tr style="background:#EAEAEA;cursor:pointer;font-weight:700;font-size:14px;"
+                                                    <tr class="table-light fw-bold" style="cursor:pointer;"
                                                         t-on-click="() => this.toggleGroup(move_line.group_label || 'Other')">
-                                                        <th colspan="11" style="text-align:left;padding:8px 8px 8px 28px;">
-                                                            <span class="toggle-icon" style="margin-right:8px;font-size:12px;">
+                                                        <th colspan="11" class="text-start" style="padding:8px 8px 8px 28px;">
+                                                            <span class="me-2" style="margin-right:8px;font-size:12px;">
                                                                 <i t-att-class="this.isGroupCollapsed(move_line.group_label || 'Other') ? 'fa fa-caret-right' : 'fa fa-caret-down'"/>
                                                             </span>
                                                             <t t-esc="move_line.group_label || 'Other'"/>
@@ -492,56 +466,56 @@
                                                 <!-- Account row: hidden while its sub-group is collapsed -->
                                                 <t t-if="!this.isGroupCollapsed(current_group)">
                                                     <tr class="border-bottom" style="border-spacing: 0 10px;">
-                                                        <th style="text-align:left;">
+                                                        <th class="text-start">
                                                             <t t-esc="move_line['account_code']"/>
                                                         </th>
-                                                        <th colspan="5" style="text-align:left;padding-left:20px;">
-                                                            <span class="dropdown">
+                                                        <th colspan="5" class="text-start" style="padding-left:20px;">
+                                                            <div class="dropdown">
                                                                 <a class="dropdown-toggle" data-bs-toggle="dropdown" style="color: black;">
                                                                     <span><t t-esc="move_line['account_name']"/></span>
                                                                 </a>
-                                                                <span class="dropdown-menu">
+                                                                <div class="dropdown-menu">
                                                                     <a role="menuitem"
                                                                     t-att-data-account-id="move_line['account_id']"
                                                                     t-att-data-account-name="move_line['account']"
                                                                     t-on-click="show_gl"
-                                                                    class="show_gl">
+                                                                    class="dropdown-item">
                                                                         General Ledger (this period)
                                                                     </a>
                                                                     <div role="separator" class="dropdown-divider"/>
                                                                     <a role="menuitem"
                                                                     t-att-data-id="move_line['account_id']"
-                                                                    t-on-click="gotoJournalItem" class="show_gl">
+                                                                    t-on-click="gotoJournalItem" class="dropdown-item">
                                                                         Journal Items
                                                                     </a>
-                                                                </span>
-                                                            </span>
+                                                                </div>
+                                                            </div>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(move_line.initial_balance)"/>
                                                         </th>
                                                         <t t-if="state.apply_comparison == true">
                                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                             <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                                <th style="text-align:center;">
+                                                                <th class="text-center">
                                                                     <t t-if="move_line['dynamic_total_debit_' + num]"
                                                                     t-esc="this.formatAmount(move_line['dynamic_total_debit_' + num])"/>
                                                                 </th>
-                                                                <th style="text-align:center;">
+                                                                <th class="text-center">
                                                                     <t t-if="move_line['dynamic_total_credit_' + num]"
                                                                     t-esc="this.formatAmount(move_line['dynamic_total_credit_' + num])"/>
                                                                 </th>
                                                             </t>
                                                         </t>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-if="move_line['total_debit']"
                                                             t-esc="this.formatAmount(move_line['total_debit'])"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-if="move_line['total_credit']"
                                                             t-esc="this.formatAmount(move_line['total_credit'])"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(move_line['end_balance'])"/>
                                                         </th>
                                                     </tr>
@@ -551,99 +525,97 @@
 
                                         <!-- Close out the very last sub-group + internal-group -->
                                         <t t-if="current_group !== null and !this.isInternalGroupCollapsed(current_internal_group)">
-                                            <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
+                                            <tr class="fw-bold border-top">
                                                 <th/>
-                                                <th colspan="5" style="text-align:left;">Total</th>
-                                                <th style="text-align:center;">
+                                                <th colspan="5" class="text-start">Total</th>
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'initial_balance'))"/>
                                                 </th>
                                                 <t t-if="state.apply_comparison == true">
                                                     <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                     <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_debit_' + nb))"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'dynamic_total_credit_' + nb))"/>
                                                         </th>
                                                     </t>
                                                 </t>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_debit'))"/>
                                                 </th>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'total_credit'))"/>
                                                 </th>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.groupSumByKey(state.data, current_group, 'end_balance'))"/>
                                                 </th>
                                             </tr>
                                         </t>
                                         <t t-if="current_internal_group !== null">
-                                            <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
+                                            <tr class="fw-bold table-secondary border-top border-2">
                                                 <th/>
-                                                <th colspan="5" style="text-align:left;">
+                                                <th colspan="5" class="text-start">
                                                     <t t-esc="current_internal_group"/> Total
                                                 </th>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'initial_balance'))"/>
                                                 </th>
                                                 <t t-if="state.apply_comparison == true">
                                                     <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                     <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_debit_' + nb))"/>
                                                         </th>
-                                                        <th style="text-align:center;">
+                                                        <th class="text-center">
                                                             <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'dynamic_total_credit_' + nb))"/>
                                                         </th>
                                                     </t>
                                                 </t>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_debit'))"/>
                                                 </th>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'total_credit'))"/>
                                                 </th>
-                                                <th style="text-align:center;">
+                                                <th class="text-center">
                                                     <t t-esc="this.formatAmount(this.internalGroupSumByKey(state.data, current_internal_group, 'end_balance'))"/>
                                                 </th>
                                             </tr>
                                         </t>
 
                                         <!-- Grand total across everything -->
-                                        <tr class="border-bottom" style="border-spacing: 0 10px;color:#000;background:#999;font-weight:700;font-size:16px;">
+                                        <tr class="table-dark fw-bold fs-6 border-bottom">
                                             <th/>
-                                            <th colspan="5" style="color:#fff;padding:10px 8px;">Grand Total</th>
-                                            <th style="text-align:center;color:#fff;">
+                                            <th colspan="5" class="text-start">Grand Total</th>
+                                            <th class="text-end">
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'initial_balance'))"/>
                                             </th>
                                             <t t-if="state.apply_comparison == true">
                                                 <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                 <t t-foreach="number_of_periods" t-as="nb" t-key="nb">
-                                                    <th style="text-align:center;color:#fff;">
+                                                    <th class="text-end">
                                                         <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_debit_' + nb))"/>
                                                     </th>
-                                                    <th style="text-align:center;color:#fff;">
+                                                    <th class="text-end">
                                                         <t t-esc="this.formatAmount(sumByKey(state.data, 'dynamic_total_credit_' + nb))"/>
                                                     </th>
                                                 </t>
                                             </t>
-                                            <th style="text-align:center;color:#fff;">
+                                            <th class="text-end">
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'total_debit'))"/>
                                             </th>
-                                            <th style="text-align:center;color:#fff;">
+                                            <th class="text-end">
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'total_credit'))"/>
                                             </th>
-                                            <th style="text-align:center;color:#fff;">
+                                            <th class="text-end">
                                                 <t t-esc="this.formatAmount(sumByKey(state.data, 'end_balance'))"/>
                                             </th>
                                         </tr>
                                     </t>
                                 </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    </table>
                 </div>
             </div>
         </div>
