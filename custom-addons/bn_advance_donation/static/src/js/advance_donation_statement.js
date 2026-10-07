@@ -26,7 +26,24 @@ export class AdvanceDonationStatement extends Component {
             currency:  '',
             loading:   true,
             error:     null,
-            search:    '',          // search term (client side)
+            search:    '',
+
+            // -------- extra filters --------
+            filter_type:        '',
+            filter_purpose:     '',
+            filter_beneficiary: '',
+            filter_method:      '',
+            amount_min:         '',
+            amount_max:         '',
+
+            // options derived from loaded data
+            type_options:        [],
+            purpose_options:     [],
+            beneficiary_options: [],
+            method_options:      [],
+
+            // ui toggle
+            show_more_filters:   false,
         });
 
         onWillStart(async () => {
@@ -39,7 +56,196 @@ export class AdvanceDonationStatement extends Component {
         return d.toISOString().slice(0, 10);
     }
 
-        // ------------------------------------------------------------------
+    async _loadDonors() {
+        this.state.donors = await this.orm.searchRead(
+            "res.partner",
+            [["category_id.name", "=", "Donor"]],
+            ["id", "name"],
+            { limit: 500, order: "name" }
+        );
+    }
+
+    async _loadData() {
+        this.state.loading = true;
+        try {
+            const data = await this.orm.call(
+                "advance.donation.statement.wizard",
+                "get_statement_data",
+                [],
+                {
+                    date_from: this.state.date_from,
+                    date_to:   this.state.date_to,
+                    donor_id:  this.state.donor_id || false,
+                }
+            );
+            this.state.lines     = data.lines     || [];
+            this.state.total_in  = data.total_in  || 0;
+            this.state.total_out = data.total_out || 0;
+            this.state.balance   = data.balance   || 0;
+            this.state.currency  = data.currency  || '';
+            this.state.error     = null;
+
+            this._updateFilterOptions();
+        } catch (e) {
+            this.state.error = e.message || String(e);
+        } finally {
+            this.state.loading = false;
+        }
+    }
+
+    _updateFilterOptions() {
+        const uniq = (arr) => [...new Set(arr.filter(Boolean))].sort();
+        this.state.type_options        = uniq(this.state.lines.map(l => l.type));
+        this.state.purpose_options     = uniq(this.state.lines.map(l => l.purpose));
+        this.state.beneficiary_options = uniq(this.state.lines.map(l => l.beneficiary));
+        this.state.method_options      = uniq(this.state.lines.map(l => l.description));
+    }
+
+    onDateChange(ev) {
+        this.state[ev.target.name] = ev.target.value;
+        this._loadData();
+    }
+
+    onDonorChange(ev) {
+        const v = ev.target.value;
+        this.state.donor_id = v ? parseInt(v, 10) : false;
+        this._loadData();
+    }
+
+    clearDonor() {
+        this.state.donor_id = false;
+        this._loadData();
+    }
+
+    // ------------------------------------------------------------------
+    //  Search
+    // ------------------------------------------------------------------
+    onSearchInput(ev)  { this.state.search = ev.target.value; }
+    onSearchKeydown(ev) {
+        if (ev.key === "Escape") { this.clearSearch(); ev.target.blur(); }
+    }
+    clearSearch() { this.state.search = ""; }
+
+    // ------------------------------------------------------------------
+    //  Extra filter handlers
+    // ------------------------------------------------------------------
+    onFilterChange(ev) {
+        const name = ev.target.name;
+        this.state[name] = ev.target.value;
+    }
+    toggleMoreFilters() {
+        this.state.show_more_filters = !this.state.show_more_filters;
+    }
+    clearExtraFilters() {
+        this.state.filter_type        = '';
+        this.state.filter_purpose     = '';
+        this.state.filter_beneficiary = '';
+        this.state.filter_method      = '';
+        this.state.amount_min         = '';
+        this.state.amount_max         = '';
+    }
+    clearAllFilters() {
+        this.clearExtraFilters();
+        this.state.search = '';
+    }
+
+    // ------------------------------------------------------------------
+    //  Filter state getters
+    // ------------------------------------------------------------------
+    get extraFiltersCount() {
+        let n = 0;
+        if (this.state.filter_type)        n++;
+        if (this.state.filter_purpose)     n++;
+        if (this.state.filter_beneficiary) n++;
+        if (this.state.filter_method)      n++;
+        if (this.state.amount_min !== '' && !isNaN(parseFloat(this.state.amount_min))) n++;
+        if (this.state.amount_max !== '' && !isNaN(parseFloat(this.state.amount_max))) n++;
+        return n;
+    }
+
+    get hasActiveFilters() {
+        return !!(this.state.search || this.extraFiltersCount);
+    }
+
+    // ------------------------------------------------------------------
+    //  Filtered lines (all filters compose)
+    // ------------------------------------------------------------------
+    get filteredLines() {
+        let rows = this.state.lines;
+
+        // 1) Search
+        const q = (this.state.search || "").trim().toLowerCase();
+        if (q) {
+            rows = rows.filter((l) => {
+                const hay = [
+                    l.date, l.reference, l.partner, l.type,
+                    l.purpose, l.beneficiary, l.description,
+                ].map((v) => (v == null ? "" : String(v))).join(" ").toLowerCase();
+                return hay.includes(q);
+            });
+        }
+
+        // 2) Type
+        if (this.state.filter_type) {
+            rows = rows.filter(l => (l.type || '') === this.state.filter_type);
+        }
+
+        // 3) Purpose
+        if (this.state.filter_purpose) {
+            rows = rows.filter(l => (l.purpose || '') === this.state.filter_purpose);
+        }
+
+        // 4) Beneficiary
+        if (this.state.filter_beneficiary) {
+            rows = rows.filter(l => (l.beneficiary || '') === this.state.filter_beneficiary);
+        }
+
+        // 5) Payment method (Description column)
+        if (this.state.filter_method) {
+            rows = rows.filter(l => (l.description || '') === this.state.filter_method);
+        }
+
+        // 6) Amount range (transaction size = in + out)
+        const min = parseFloat(this.state.amount_min);
+        const max = parseFloat(this.state.amount_max);
+        if (!isNaN(min)) {
+            rows = rows.filter(l => (Number(l.amount_in || 0) + Number(l.amount_out || 0)) >= min);
+        }
+        if (!isNaN(max)) {
+            rows = rows.filter(l => (Number(l.amount_in || 0) + Number(l.amount_out || 0)) <= max);
+        }
+
+        return rows;
+    }
+
+    get filteredTotals() {
+        if (!this.hasActiveFilters) {
+            return {
+                in:      this.state.total_in,
+                out:     this.state.total_out,
+                balance: this.state.balance,
+            };
+        }
+        let tin = 0, tout = 0;
+        for (const l of this.filteredLines) {
+            tin  += Number(l.amount_in  || 0);
+            tout += Number(l.amount_out || 0);
+        }
+        return { in: tin, out: tout, balance: tin - tout };
+    }
+
+    // ------------------------------------------------------------------
+    //  Formatting
+    // ------------------------------------------------------------------
+    formatAmount(v) {
+        const n = Number(v || 0);
+        return n.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    // ------------------------------------------------------------------
     //  Print (PDF)
     // ------------------------------------------------------------------
     async printPdf() {
@@ -76,9 +282,6 @@ export class AdvanceDonationStatement extends Component {
         });
     }
 
-    // ------------------------------------------------------------------
-    //  Common payload for PDF / XLSX
-    // ------------------------------------------------------------------
     _buildReportPayload() {
         const totals = this.filteredTotals;
         return {
@@ -94,133 +297,15 @@ export class AdvanceDonationStatement extends Component {
             balance: totals.balance,
             all_lines_count: this.state.lines.length,
             filtered_lines_count: this.filteredLines.length,
+            // active filters snapshot for the report header
+            filter_type:        this.state.filter_type || "",
+            filter_purpose:     this.state.filter_purpose || "",
+            filter_beneficiary: this.state.filter_beneficiary || "",
+            filter_method:      this.state.filter_method || "",
+            amount_min:         this.state.amount_min || "",
+            amount_max:         this.state.amount_max || "",
             report_name: this.props.action.display_name || "Advance Donation Statement",
         };
-    }
-
-    async _loadDonors() {
-        this.state.donors = await this.orm.searchRead(
-            "res.partner",
-            [["category_id.name", "=", "Donor"]],
-            ["id", "name"],
-            { limit: 500, order: "name" }
-        );
-    }
-
-    async _loadData() {
-        this.state.loading = true;
-        try {
-            const data = await this.orm.call(
-                "advance.donation.statement.wizard",
-                "get_statement_data",
-                [],
-                {
-                    date_from: this.state.date_from,
-                    date_to:   this.state.date_to,
-                    donor_id:  this.state.donor_id || false,
-                }
-            );
-            this.state.lines     = data.lines     || [];
-            this.state.total_in  = data.total_in  || 0;
-            this.state.total_out = data.total_out || 0;
-            this.state.balance   = data.balance   || 0;
-            this.state.currency  = data.currency  || '';
-            this.state.error     = null;
-        } catch (e) {
-            this.state.error = e.message || String(e);
-        } finally {
-            this.state.loading = false;
-        }
-    }
-
-    onDateChange(ev) {
-        this.state[ev.target.name] = ev.target.value;
-        this._loadData();
-    }
-
-    onDonorChange(ev) {
-        const v = ev.target.value;
-        this.state.donor_id = v ? parseInt(v, 10) : false;
-        this._loadData();
-    }
-
-    clearDonor() {
-        this.state.donor_id = false;
-        this._loadData();
-    }
-
-    // ------------------------------------------------------------------
-    //  Search (client side, over the loaded lines)
-    // ------------------------------------------------------------------
-    onSearchInput(ev) {
-        this.state.search = ev.target.value;
-    }
-
-    onSearchKeydown(ev) {
-        if (ev.key === "Escape") {
-            this.clearSearch();
-            ev.target.blur();
-        }
-    }
-
-    clearSearch() {
-        this.state.search = "";
-    }
-
-    /** Lines matching the current search term (or all lines if empty). */
-    get filteredLines() {
-        const q = (this.state.search || "").trim().toLowerCase();
-        if (!q) {
-            return this.state.lines;
-        }
-        return this.state.lines.filter((l) => {
-            const hay = [
-                l.date,
-                l.reference,
-                l.partner,
-                l.type,
-                l.purpose,
-                l.beneficiary,
-                l.description,
-            ]
-                .map((v) => (v == null ? "" : String(v)))
-                .join(" ")
-                .toLowerCase();
-            return hay.includes(q);
-        });
-    }
-
-    /** Totals recomputed for the filtered subset. */
-    get filteredTotals() {
-        const q = (this.state.search || "").trim();
-        if (!q) {
-            return {
-                in:      this.state.total_in,
-                out:     this.state.total_out,
-                balance: this.state.balance,
-            };
-        }
-        let tin = 0;
-        let tout = 0;
-        for (const l of this.filteredLines) {
-            tin  += Number(l.amount_in  || 0);
-            tout += Number(l.amount_out || 0);
-        }
-        return { in: tin, out: tout, balance: tin - tout };
-    }
-    // ------------------------------------------------------------------
-
-    formatAmount(v) {
-        const n = Number(v || 0);
-        return n.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        });
-    }
-
-    async printXlsx() {
-        // Optional: hook up to an XLSX export later.
-        console.log("XLSX export not implemented yet");
     }
 }
 

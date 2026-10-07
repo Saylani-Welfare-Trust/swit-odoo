@@ -4,109 +4,231 @@
     <t t-name="bn_advance_donation.AdvanceDonationStatement" owl="1">
         <div class="o_adv_donation_statement w-100">
 
-            <!-- Filters bar (unchanged layout) -->
-            <div class="d-flex flex-wrap align-items-end gap-3 p-3"
+            <!-- =================== FILTER BAR =================== -->
+            <div class="p-3"
                  style="background:#f6f7fa;border-bottom:1px solid #e0e0e0;">
-                <div>
-                    <label class="d-block small text-muted">From</label>
-                    <input type="date" class="form-control"
-                           name="date_from"
-                           t-att-value="state.date_from"
-                           t-on-change="onDateChange"/>
-                </div>
-                <div>
-                    <label class="d-block small text-muted">To</label>
-                    <input type="date" class="form-control"
-                           name="date_to"
-                           t-att-value="state.date_to"
-                           t-on-change="onDateChange"/>
-                </div>
-                <div style="min-width:260px;">
-                    <label class="d-block small text-muted">Donor</label>
-                    <select class="form-select"
-                            t-on-change="onDonorChange">
-                        <option value="">All donors</option>
-                        <t t-foreach="state.donors" t-as="d" t-key="d.id">
-                            <option t-att-value="d.id"
-                                    t-att-selected="state.donor_id === d.id">
-                                <t t-esc="d.name"/>
-                            </option>
-                        </t>
-                    </select>
+
+                <!-- Row 1: main filters -->
+                <div class="d-flex flex-wrap align-items-end gap-3">
+
+                    <div>
+                        <label class="d-block small text-muted">From</label>
+                        <input type="date" class="form-control"
+                               name="date_from"
+                               t-att-value="state.date_from"
+                               t-on-change="onDateChange"/>
+                    </div>
+
+                    <div>
+                        <label class="d-block small text-muted">To</label>
+                        <input type="date" class="form-control"
+                               name="date_to"
+                               t-att-value="state.date_to"
+                               t-on-change="onDateChange"/>
+                    </div>
+
+                    <div style="min-width:220px;">
+                        <label class="d-block small text-muted">Donor</label>
+                        <select class="form-select" t-on-change="onDonorChange">
+                            <option value="">All donors</option>
+                            <t t-foreach="state.donors" t-as="d" t-key="d.id">
+                                <option t-att-value="d.id"
+                                        t-att-selected="state.donor_id === d.id">
+                                    <t t-esc="d.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div style="min-width:280px;">
+                        <label class="d-block small text-muted">Search</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </span>
+                            <input type="text" class="form-control"
+                                   placeholder="Reference, purpose, beneficiary…"
+                                   t-att-value="state.search"
+                                   t-on-input="onSearchInput"
+                                   t-on-keydown="onSearchKeydown"/>
+                            <button t-if="state.search"
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    t-on-click="clearSearch">
+                                <i class="fa fa-times" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- More Filters toggle -->
+                    <div class="align-self-end">
+                        <button type="button"
+                                class="btn btn-outline-primary"
+                                t-on-click="toggleMoreFilters">
+                            <i class="fa fa-sliders me-1" aria-hidden="true"></i>
+                            More Filters
+                            <t t-if="extraFiltersCount">
+                                <span class="badge text-bg-primary ms-1">
+                                    <t t-esc="extraFiltersCount"/>
+                                </span>
+                            </t>
+                            <i t-att-class="state.show_more_filters
+                                ? 'fa fa-caret-up ms-2'
+                                : 'fa fa-caret-down ms-2'" aria-hidden="true"/>
+                        </button>
+                    </div>
+
+                    <!-- Print / Export -->
+                    <div class="align-self-end d-flex gap-2">
+                        <button type="button"
+                                class="btn btn-info btn-report-print"
+                                t-on-click="printPdf">
+                            <i class="fa fa-print me-1"/> Print (PDF)
+                        </button>
+                        <button type="button"
+                                class="btn btn-info btn-report-print"
+                                t-on-click="printXlsx">
+                            <i class="fa fa-file-excel-o me-1"/> Export (XLSX)
+                        </button>
+                    </div>
+
+                    <!-- Totals on the right -->
+                    <div class="ms-auto d-flex gap-4 pt-2">
+                        <div class="text-end">
+                            <div class="small text-muted">Total In</div>
+                            <div class="fw-bold text-success">
+                                <t t-esc="state.currency"/>
+                                <t t-esc="formatAmount(filteredTotals.in)"/>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Total Out</div>
+                            <div class="fw-bold text-danger">
+                                <t t-esc="state.currency"/>
+                                <t t-esc="formatAmount(filteredTotals.out)"/>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">Balance</div>
+                            <div class="fw-bold">
+                                <t t-esc="state.currency"/>
+                                <t t-esc="formatAmount(filteredTotals.balance)"/>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Search box (new) -->
-                <div style="min-width:280px;">
-                    <label class="d-block small text-muted">Search</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white">
-                            <i class="fa fa-search" aria-hidden="true"></i>
-                        </span>
-                        <input type="text"
-                               class="form-control"
-                               placeholder="Reference, purpose, beneficiary…"
-                               t-att-value="state.search"
-                               t-on-input="onSearchInput"
-                               t-on-keydown="onSearchKeydown"/>
-                        <button t-if="state.search"
-                                type="button"
-                                class="btn btn-outline-secondary"
-                                t-on-click="clearSearch">
-                            <i class="fa fa-times" aria-hidden="true"></i>
+                <!-- Row 2: extra filters (collapsible) -->
+                <div t-if="state.show_more_filters"
+                     class="d-flex flex-wrap align-items-end gap-3 mt-3 pt-3"
+                     style="border-top:1px dashed #d5d5d5;">
+
+                    <div style="min-width:180px;">
+                        <label class="d-block small text-muted">Type</label>
+                        <select class="form-select"
+                                name="filter_type"
+                                t-on-change="onFilterChange">
+                            <option value="">All types</option>
+                            <t t-foreach="state.type_options" t-as="opt" t-key="opt_index">
+                                <option t-att-value="opt"
+                                        t-att-selected="state.filter_type === opt">
+                                    <t t-esc="opt"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div style="min-width:220px;">
+                        <label class="d-block small text-muted">Purpose</label>
+                        <select class="form-select"
+                                name="filter_purpose"
+                                t-on-change="onFilterChange">
+                            <option value="">All purposes</option>
+                            <t t-foreach="state.purpose_options" t-as="opt" t-key="opt_index">
+                                <option t-att-value="opt"
+                                        t-att-selected="state.filter_purpose === opt">
+                                    <t t-esc="opt"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div style="min-width:220px;">
+                        <label class="d-block small text-muted">Beneficiary</label>
+                        <select class="form-select"
+                                name="filter_beneficiary"
+                                t-on-change="onFilterChange">
+                            <option value="">All beneficiaries</option>
+                            <t t-foreach="state.beneficiary_options" t-as="opt" t-key="opt_index">
+                                <option t-att-value="opt"
+                                        t-att-selected="state.filter_beneficiary === opt">
+                                    <t t-esc="opt"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div style="min-width:180px;">
+                        <label class="d-block small text-muted">Payment Method</label>
+                        <select class="form-select"
+                                name="filter_method"
+                                t-on-change="onFilterChange">
+                            <option value="">All methods</option>
+                            <t t-foreach="state.method_options" t-as="opt" t-key="opt_index">
+                                <option t-att-value="opt"
+                                        t-att-selected="state.filter_method === opt">
+                                    <t t-esc="opt"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div style="min-width:130px;">
+                        <label class="d-block small text-muted">Amount Min</label>
+                        <input type="number" class="form-control" min="0" step="0.01"
+                               name="amount_min"
+                               t-att-value="state.amount_min"
+                               t-on-input="onFilterChange"/>
+                    </div>
+
+                    <div style="min-width:130px;">
+                        <label class="d-block small text-muted">Amount Max</label>
+                        <input type="number" class="form-control" min="0" step="0.01"
+                               name="amount_max"
+                               t-att-value="state.amount_max"
+                               t-on-input="onFilterChange"/>
+                    </div>
+
+                    <div class="align-self-end">
+                        <button type="button"
+                                class="btn btn-link text-danger"
+                                t-on-click="clearExtraFilters">
+                            <i class="fa fa-times me-1"/> Clear extra filters
                         </button>
                     </div>
                 </div>
-                <div class="d-flex gap-2 align-items-end">
-                    <button type="button"
-                            class="btn btn-info btn-report-print"
-                            t-on-click="printPdf"
-                            style="margin-right: 8px;">
-                        <i class="fa fa-print me-1"/> Print (PDF)
-                    </button>
-                    <button type="button"
-                            class="btn btn-info btn-report-print"
-                            t-on-click="printXlsx">
-                        <i class="fa fa-file-excel-o me-1"/> Export (XLSX)
-                    </button>
-                </div>
-
-                <div class="ms-auto d-flex gap-2">
-                    <div class="text-end">
-                        <div class="small text-muted">Total In</div>
-                        <div class="fw-bold text-success">
-                            <t t-esc="state.currency"/>
-                            <t t-esc="formatAmount(filteredTotals.in)"/>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <div class="small text-muted">Total Out</div>
-                        <div class="fw-bold text-danger">
-                            <t t-esc="state.currency"/>
-                            <t t-esc="formatAmount(filteredTotals.out)"/>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <div class="small text-muted">Balance</div>
-                        <div class="fw-bold">
-                            <t t-esc="state.currency"/>
-                            <t t-esc="formatAmount(filteredTotals.balance)"/>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Result counter under the filter bar -->
-            <div t-if="state.search and !state.loading and !state.error"
-                 class="px-3 py-2 small text-muted"
+            <!-- =================== RESULT COUNTER =================== -->
+            <div t-if="hasActiveFilters and !state.loading and !state.error"
+                 class="px-3 py-2 small text-muted d-flex align-items-center gap-3"
                  style="background:#fff;border-bottom:1px solid #eee;">
-                Showing
-                <strong><t t-esc="filteredLines.length"/></strong>
-                of
-                <strong><t t-esc="state.lines.length"/></strong>
-                movements
+                <span>
+                    Showing
+                    <strong><t t-esc="filteredLines.length"/></strong>
+                    of
+                    <strong><t t-esc="state.lines.length"/></strong>
+                    movements
+                </span>
+                <button t-if="hasActiveFilters"
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        t-on-click="clearAllFilters">
+                    <i class="fa fa-times me-1"/> Clear all filters
+                </button>
             </div>
 
-            <!-- Error / Loading -->
+            <!-- =================== STATES =================== -->
             <t t-if="state.error">
                 <div class="alert alert-danger m-3">
                     <t t-esc="state.error"/>
@@ -116,7 +238,7 @@
                 <div class="text-center p-4 text-muted">Loading…</div>
             </t>
 
-            <!-- Same table layout as before -->
+            <!-- =================== TABLE =================== -->
             <t t-if="!state.loading and !state.error">
                 <div style="overflow:auto;max-height:70vh;">
                     <table class="table table-sm table-hover mb-0">
@@ -138,7 +260,7 @@
                             <t t-if="!filteredLines.length">
                                 <tr>
                                     <td colspan="10" class="text-center text-muted p-4">
-                                        <t t-if="state.search">No movements match your search.</t>
+                                        <t t-if="hasActiveFilters">No movements match your filters.</t>
                                         <t t-else="">No movements in the selected range.</t>
                                     </td>
                                 </tr>
@@ -159,14 +281,10 @@
                                     <td style="text-align:left;"><t t-esc="l.beneficiary"/></td>
                                     <td style="text-align:left;"><t t-esc="l.description"/></td>
                                     <td style="text-align:right;">
-                                        <t t-if="l.amount_in">
-                                            <t t-esc="formatAmount(l.amount_in)"/>
-                                        </t>
+                                        <t t-if="l.amount_in"><t t-esc="formatAmount(l.amount_in)"/></t>
                                     </td>
                                     <td style="text-align:right;">
-                                        <t t-if="l.amount_out">
-                                            <t t-esc="formatAmount(l.amount_out)"/>
-                                        </t>
+                                        <t t-if="l.amount_out"><t t-esc="formatAmount(l.amount_out)"/></t>
                                     </td>
                                     <td style="text-align:right;">
                                         <t t-esc="formatAmount(l.balance)"/>
