@@ -88,6 +88,16 @@ class PurchaseRequisition(models.Model):
             lowest_balance = min(balances)
         return not insufficient_accounts, lowest_balance, insufficient_accounts
 
+    def action_create_multi_vendor_rfqs(self):
+        """Restrict opening Vendor Selection, for requisitions under this workflow,
+        to the Procurement Manager group - matching the button's own visibility so
+        it can't be reached another way once hidden."""
+        for requisition in self:
+            if requisition.material_request_id and not self.env.user.has_group(
+                    'bn_procurement_workflow.group_procurement_manager'):
+                raise ValidationError(_('Only a Procurement Manager can select vendors for RFQs.'))
+        return super().action_create_multi_vendor_rfqs()
+
     def action_procurement_approve(self):
         """Procurement Manager reviews and approves the draft PR directly - no HOD/Member
         approval step in this workflow. Moves the PR into its own 'Procurement Manager

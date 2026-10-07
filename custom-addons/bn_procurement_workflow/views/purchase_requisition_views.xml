@@ -53,6 +53,7 @@
                  already moved the requisition to 'in_progress') is a guaranteed dead end. -->
             <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
                 <attribute name="invisible">state != 'procurement_approval'</attribute>
+                <attribute name="groups">bn_procurement_workflow.group_procurement_manager</attribute>
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="inside">
