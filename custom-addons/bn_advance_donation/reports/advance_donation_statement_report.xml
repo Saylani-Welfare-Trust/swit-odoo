@@ -16,9 +16,7 @@
                         <t t-if="search"> — search: "<t t-esc="search"/>"</t>
                         <br/>
                         <t t-if="filter_type">Type: <t t-esc="filter_type"/> · </t>
-                        <t t-if="filter_purpose">Purpose: <t t-esc="filter_purpose"/> · </t>
                         <t t-if="filter_beneficiary">Beneficiary: <t t-esc="filter_beneficiary"/> · </t>
-                        <t t-if="filter_method">Method: <t t-esc="filter_method"/> · </t>
                         <t t-if="amount_min">Min: <t t-esc="amount_min"/> · </t>
                         <t t-if="amount_max">Max: <t t-esc="amount_max"/></t>
                     </div>
