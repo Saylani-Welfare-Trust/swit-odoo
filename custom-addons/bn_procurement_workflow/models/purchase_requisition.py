@@ -102,8 +102,6 @@ class PurchaseRequisition(models.Model):
                 _('This Purchase Requisition has no source Material Request, so there is no '
                   'requesting department to run Technical Evaluation against. It cannot enter '
                   'the Procurement workflow.'))
-        # The request gets its number here, so that the RFQs sent out next carry it.
-        self._assign_reference_number()
         self.write({
             'procurement_manager_id': self.env.user.id,
             'procurement_review_date': fields.Datetime.now(),
@@ -168,28 +166,9 @@ class PurchaseRequisition(models.Model):
             'selected_rfq_id': winning_po.id,
             'state': 'vendor_selected',
         })
-        other_rfqs = self._cancel_other_rfqs(winning_po, _(
-            'Cancelled - the quote of %(vendor)s was selected for Purchase Request %(request)s.'
-        ) % {'vendor': winning_po.partner_id.display_name, 'request': self.display_name})
         self.message_post(body=_(
-            'Quote from %(vendor)s selected, %(count)s other RFQ(s) cancelled. '
-            'Awaiting CXO and HOD approval on that RFQ.'
-        ) % {'vendor': winning_po.partner_id.display_name, 'count': len(other_rfqs)})
-
-    def _cancel_other_rfqs(self, kept_rfq, message):
-        """Cancel the quotes of the other vendors that are still open, posting
-        ``message`` on each of them. Returns the cancelled RFQs."""
-        self.ensure_one()
-        # sudo: whoever selects or approves the quote need not be a purchase user.
-        other_rfqs = self.sudo().purchase_ids.filtered(
-            lambda rfq: rfq != kept_rfq and rfq.state in ('draft', 'sent', 'to approve'))
-        if other_rfqs:
-            # An RFQ waiting for the CFO must not keep its "Waiting for CFO" banner once cancelled.
-            other_rfqs.write({'shariah_hold': False, 'shariah_hold_reason': False})
-            other_rfqs.button_cancel()
-            for rfq in other_rfqs:
-                rfq.message_post(body=message)
-        return other_rfqs
+            'Quote from %s selected. Awaiting CXO and HOD approval on that RFQ.'
+        ) % winning_po.partner_id.display_name)
 
     def action_funds_available(self):
         """Decide whether funds are available for the selected quote."""
@@ -273,8 +252,5 @@ class PurchaseRequisition(models.Model):
         # The CFO / Shariah Dept has just made the funds decision for this RFQ
         # at the gate, so it must not be put on a second Shariah Hold here.
         self.selected_rfq_id.shariah_override = True
-        # Before the confirmation, not after: it would reopen the requisition
-        # if it ran once the PO has closed it.
-        self.action_in_progress()
         self.selected_rfq_id.button_confirm()
         self.action_in_progress()

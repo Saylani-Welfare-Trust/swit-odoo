@@ -23,7 +23,6 @@
         'views/material_request_views.xml',
         'views/purchase_order_views.xml',
         'views/stock_picking_views.xml',
-        'views/rfq_price_wizard_views.xml',
     ],
     'installable': True,
     'auto_install': False,

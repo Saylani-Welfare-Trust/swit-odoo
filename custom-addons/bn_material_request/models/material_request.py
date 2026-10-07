@@ -370,7 +370,6 @@ class MemberApproval(models.Model):
                     'product_uom_qty': line.quantity,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.dest_location_id.id,
-                    'description_picking': line.description,
                 }))
 
             elif available_qty > 0:
@@ -381,7 +380,6 @@ class MemberApproval(models.Model):
                     'product_uom_qty': available_qty,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.dest_location_id.id,
-                    'description_picking': line.description,
                 }))
 
                 shortage_qty = line.quantity - available_qty
@@ -390,7 +388,6 @@ class MemberApproval(models.Model):
                     'product_id': line.product_id.id,
                     'product_uom_id': line.product_uom_id.id,
                     'product_qty': shortage_qty,
-                    'product_description_variants': line.description,
                 }))
 
                 shortage_move_vals.append((0, 0, {
@@ -400,7 +397,6 @@ class MemberApproval(models.Model):
                     'product_uom_qty': shortage_qty,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.dest_location_id.id,
-                    'description_picking': line.description,
                 }))
 
             else:
@@ -408,7 +404,6 @@ class MemberApproval(models.Model):
                     'product_id': line.product_id.id,
                     'product_uom_id': line.product_uom_id.id,
                     'product_qty': line.quantity,
-                    'product_description_variants': line.description,
                 }))
 
                 shortage_move_vals.append((0, 0, {
@@ -418,7 +413,6 @@ class MemberApproval(models.Model):
                     'product_uom_qty': line.quantity,
                     'location_id': self.source_location_id.id,
                     'location_dest_id': self.dest_location_id.id,
-                    'description_picking': line.description,
                 }))
 
         # Create transfer for available stock
@@ -428,7 +422,6 @@ class MemberApproval(models.Model):
                 'location_id': self.source_location_id.id,
                 'location_dest_id': self.dest_location_id.id,
                 'origin': self.name,
-                'material_request_id': self.id,
                 'move_ids_without_package': move_vals,
             })
 
@@ -450,7 +443,6 @@ class MemberApproval(models.Model):
                 'location_id': self.source_location_id.id,
                 'location_dest_id': self.dest_location_id.id,
                 'origin': "%s (Stock Shortage)" % self.name,
-                'material_request_id': self.id,
                 'move_ids_without_package': shortage_move_vals,
             })
 
@@ -474,7 +466,6 @@ class MemberApproval(models.Model):
                 'product_id': line.product_id.id,
                 'product_uom_id': line.product_uom_id.id,
                 'product_qty': line.quantity,
-                'product_description_variants': line.description,
             }))
         # Create picking
         purchase_request = self.env['purchase.requisition'].create({

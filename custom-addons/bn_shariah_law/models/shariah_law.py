@@ -621,8 +621,7 @@ class ShariahLaw(models.Model):
         try:
             purchases = self.env['purchase.order'].search([
                 ('is_sync_shariah_law', '=', False),
-                # 'done' is a confirmed order that has been locked
-                ('state', 'in', ('purchase', 'done'))
+                ('state', '=', 'purchase')
             ])
 
             if not purchases:
