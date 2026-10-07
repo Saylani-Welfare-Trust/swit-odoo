@@ -19,7 +19,7 @@
             </xpath>
 
             <!-- An advance payment generated from a Purchase Order keeps the vendor and the amount of that order:
-                 nobody can change the vendor, only Finance the amount -->
+                 nobody can change them -->
             <xpath expr="//field[@name='is_internal_transfer']" position="attributes">
                 <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
             </xpath>
@@ -33,7 +33,7 @@
                 <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
             </xpath>
             <xpath expr="//div[@name='amount_div']/field[@name='amount']" position="attributes">
-                <attribute name="readonly">state != 'draft' or po_advance_amount_locked</attribute>
+                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
             </xpath>
             <xpath expr="//div[@name='amount_div']/field[@name='currency_id']" position="attributes">
                 <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
@@ -46,7 +46,6 @@
                     <field name="po_milestone"/>
                     <field name="po_amount_total"/>
                     <field name="po_advance_amount"/>
-                    <field name="po_advance_amount_locked" invisible="1"/>
                     <field name="po_review_required" invisible="1"/>
                 </group>
             </xpath>

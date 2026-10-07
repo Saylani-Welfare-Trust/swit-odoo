@@ -13,8 +13,10 @@ PO_ADVANCE_LINK_FIELDS = (
     'purchase_order_id', 'po_payment_term_id', 'po_payment_term_line_id', 'po_milestone',
     'po_amount_total', 'po_advance_amount', 'po_review_required', 'po_review_reason',
 )
-# Come from the Purchase Order and stay as generated.
-PO_ADVANCE_LOCKED_FIELDS = ('partner_id', 'currency_id', 'payment_type', 'partner_type', 'is_internal_transfer')
+# Come from the Purchase Order and stay as generated - the amount included: when it
+# is out of date, the payment is cancelled and created again from the order.
+PO_ADVANCE_LOCKED_FIELDS = (
+    'partner_id', 'amount', 'currency_id', 'payment_type', 'partner_type', 'is_internal_transfer')
 
 
 class AccountPayment(models.Model):
@@ -37,16 +39,6 @@ class AccountPayment(models.Model):
 
     po_review_required = fields.Boolean(string='Needs Finance Review', readonly=True, copy=False, tracking=True)
     po_review_reason = fields.Text(string='Review Reason', readonly=True, copy=False)
-    po_advance_amount_locked = fields.Boolean(
-        compute='_compute_po_advance_amount_locked',
-        help='Whether the current user may not change the amount: only Finance users can, on an advance payment.')
-
-    @api.depends_context('uid')
-    @api.depends('purchase_order_id')
-    def _compute_po_advance_amount_locked(self):
-        is_finance = self.env.user.has_group(FINANCE_GROUP)
-        for payment in self:
-            payment.po_advance_amount_locked = bool(payment.purchase_order_id) and not is_finance
 
     @api.depends('journal_id')
     def _compute_currency_id(self):
@@ -66,7 +58,7 @@ class AccountPayment(models.Model):
         they already have, which is not a change."""
         self.ensure_one()
         changed = []
-        for name in PO_ADVANCE_LINK_FIELDS + PO_ADVANCE_LOCKED_FIELDS + ('amount',):
+        for name in PO_ADVANCE_LINK_FIELDS + PO_ADVANCE_LOCKED_FIELDS:
             if name not in vals:
                 continue
             field, old, new = self._fields[name], self[name], vals[name]
@@ -83,7 +75,6 @@ class AccountPayment(models.Model):
     def write(self, vals):
         if self.env.context.get(SYSTEM_WRITE):
             return super().write(vals)
-        previous_amounts = {}
         for payment in self:
             changed = payment._get_po_advance_changes(vals)
             if not changed:
@@ -99,22 +90,7 @@ class AccountPayment(models.Model):
                     'its %(fields)s cannot be changed.',
                     order=payment.purchase_order_id.display_name,
                     fields=', '.join(field._description_string(self.env) for field in locked)))
-            if 'amount' in changed:
-                if not self.env.user.has_group(FINANCE_GROUP):
-                    raise UserError(_(
-                        'The amount of this advance payment is calculated from Purchase Order %s. '
-                        'Only Finance users can change it.', payment.purchase_order_id.display_name))
-                previous_amounts[payment] = payment.amount
-        res = super().write(vals)
-        for payment, previous in previous_amounts.items():
-            payment.message_post(body=_(
-                'Advance amount changed from %(old)s to %(new)s by %(user)s '
-                '(calculated from the Purchase Order: %(calculated)s).',
-                old=format_amount(self.env, previous, payment.currency_id),
-                new=format_amount(self.env, payment.amount, payment.currency_id),
-                user=self.env.user.display_name,
-                calculated=format_amount(self.env, payment.po_advance_amount, payment.currency_id)))
-        return res
+        return super().write(vals)
 
     @api.ondelete(at_uninstall=False)
     def _unlink_except_po_advance(self):

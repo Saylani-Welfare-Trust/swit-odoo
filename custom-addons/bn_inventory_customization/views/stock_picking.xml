@@ -23,8 +23,9 @@
             <xpath expr="//header/button[@name='button_validate'][hasclass('oe_highlight')]" position="attributes">
                 <attribute name="invisible">picking_type_code == 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
             </xpath>
+            <!-- An internal transfer only gets Validate once Mark as Todo has been pressed -->
             <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="attributes">
-                <attribute name="invisible">picking_type_code == 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel')</attribute>
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel') or (picking_type_code == 'internal' and state == 'draft')</attribute>
             </xpath>
             <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="after">
                 <button name="button_validate"
