@@ -16,7 +16,8 @@
                                 <button type="button" class="btn btn-info btn-report-print" t-on-click="print_xlsx">Export (XLSX)</button>
                             </div>
                         </div>
-                        <div class="sub_container_right">
+                        <div class="sub_container_right" style="display: flex; flex-direction: row; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 14px; width: 100%;">
+
                             <!-- ======================= ACCOUNT FILTER ======================= -->
                             <div class="account">
                                 <a type="button" class="dropdown-toggle" data-bs-toggle="dropdown" style="display:flex;flex-direction:row;align-items:center;justify-content:flex-start;min-width:105px;">
