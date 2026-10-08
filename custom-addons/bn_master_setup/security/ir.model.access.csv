@@ -6,6 +6,4 @@ access_loan_product_installment,access.loan.product.installment,bn_master_setup.
 access_direct_deposit_account_setup,access.direct.deposit.account.setup,bn_master_setup.model_direct_deposit_account_setup,,1,1,1,1
 access_city,access.city,bn_master_setup.model_city,,1,1,1,1
 access_bank,access.bank,bn_master_setup.model_bank,,1,1,1,1
-access_product_master,access.product.master,bn_master_setup.model_product_master,,1,1,1,1
-access_product_master_line,access.product.master.line,bn_master_setup.model_product_master_line,,1,1,1,1
 access_area,access.area,bn_master_setup.model_area,,1,1,1,1
