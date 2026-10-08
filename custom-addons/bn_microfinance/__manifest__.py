@@ -23,6 +23,7 @@
         'views/record_search.xml',
         'views/microfinance_pdc_consolidated_views.xml',
         'views/consolidate_installment_lines.xml',
+        'views/microfinance_scheme.xml',
         'views/security_offered.xml',
         'wizards/return_microfinance_product.xml',
         'reports/microfinance_pdc_template_report.xml',
