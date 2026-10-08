@@ -5,3 +5,4 @@ access_donation_box_registration_installation,donation.box.registration.installa
 access_donation_box_complain_center,donation.box.complain.center,bn_donation_box.model_donation_box_complain_center,base.group_user,1,1,1,0
 access_donation_box_complain_center_resolver,donation.box.complain.center resolver,bn_donation_box.model_donation_box_complain_center,bn_donation_box.donation_box_complain_center_resolve_group,1,1,1,1
 access_donation_product_onhand,donation.product.onhand,bn_donation_box.model_donation_product_onhand,base.group_user,1,0,0,0
+access_installation_category,access.installation.category,model_installation_category,,1,1,1,1

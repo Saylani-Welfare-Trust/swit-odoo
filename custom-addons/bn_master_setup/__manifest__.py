@@ -17,7 +17,6 @@
         'security/ir.model.access.csv',
         'security/group.xml',
         'views/menu.xml',
-        'views/installation_category.xml',
         'views/microfinance_scheme.xml',
         'views/direct_deposit_account_setup.xml',
         'views/city.xml',
