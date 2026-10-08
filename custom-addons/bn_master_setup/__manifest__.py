@@ -18,7 +18,6 @@
         'security/group.xml',
         'views/menu.xml',
         'views/microfinance_scheme.xml',
-        'views/direct_deposit_account_setup.xml',
         'views/city.xml',
         'views/bank.xml',
         'views/area.xml',
