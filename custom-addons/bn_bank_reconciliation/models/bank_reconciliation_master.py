@@ -365,14 +365,20 @@ class BankReconciliationMaster(models.Model):
                 'Please reconcile or reject them first.'
             ) % len(unreconciled))
         
-        # Draft entries can be matched, but they must be posted to complete
+        # The matched entries that are still in draft are posted on completion,
+        # so that they reach their accounts
+        matched_moves = self.reconciled_ids.mapped('matched_move_id') | self.env['account.move.line'].search([
+            ('bank_reconciliation_transaction_id', 'in', self.transaction_ids.ids)
+        ]).mapped('move_id')
+        matched_moves.filtered(lambda move: move.state == 'draft').action_post()
+
         not_posted = self.reconciled_ids.filtered(lambda r: r.matched_move_id.state != 'posted')
         if not_posted:
             raise UserError(_(
-                'Some reconciled transactions are not posted to accounting.\n'
-                'Please post them first or enable auto-posting.\n'
-                'Entries: %s'
-            ) % ', '.join(move.ref or move.name for move in not_posted.mapped('matched_move_id')))
+                'Some reconciled transactions are matched with an entry that is cancelled or deleted.\n'
+                'Please unreconcile them first.\n'
+                'Transactions: %s'
+            ) % ', '.join(not_posted.mapped('description')))
         self.reconciled_ids.write({'is_posted': True})
         
         # The statement is only compared with the journal's existing entries,
