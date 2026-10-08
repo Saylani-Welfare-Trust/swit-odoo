@@ -2,7 +2,7 @@
     'name': 'Kitchen',
     'version': '1.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com',
+    'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Kitchen',
     'depends': [
