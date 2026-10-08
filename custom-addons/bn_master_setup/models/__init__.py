@@ -5,6 +5,4 @@ from . import loan_product_installment
 from . import direct_deposit_account_setup
 from . import city
 from . import bank
-from . import product_master
-from . import product_master_line
 from . import area
