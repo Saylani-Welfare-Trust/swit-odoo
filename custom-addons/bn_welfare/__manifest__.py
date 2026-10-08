@@ -23,6 +23,8 @@
         'views/product_template.xml',
         'views/record_search.xml',
         'views/welfare_consolidated_line.xml',
+        'views/disbursement_category.xml',
+        'views/disbursement_application_type.xml',
         'reports/report_welfare_collection_document.xml',
         'wizards/check_marfat_shift.xml',
         'views/welfare_limit_view.xml',
