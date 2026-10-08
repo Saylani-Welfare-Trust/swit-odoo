@@ -198,6 +198,52 @@
         </field>
     </record>
 
+    <record id="advance_donation_search" model="ir.ui.view">
+        <field name="name">advance.donation.search</field>
+        <field name="model">advance.donation</field>
+        <field name="arch" type="xml">
+            <search string="Advance Donation">
+                <field name="name" string="Reference"/>
+                <field name="donor_id" string="Donor"/>
+                <field name="category_id" string="Category"/>
+                <field name="contract_type" string="Contract Type"/>
+                <field name="product_id" string="Product"/>
+                <field name="payment_type" string="Payment Type"/>
+                <field name="state" string="Status"/>
+                <field name="create_date" string="Created On"/>
+                <field name="approved_date" string="Approved On"/>
+
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="approval_1" string="Waiting Approval 1" domain="[('state', '=', 'approval_1')]"/>
+                <filter name="approval_2" string="Waiting Approval 2" domain="[('state', '=', 'approval_2')]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+
+                <separator/>
+
+                <filter name="fully_paid" string="Fully Paid" domain="[('is_fully_paid', '=', True)]"/>
+                <filter name="not_fully_paid" string="Not Fully Paid" domain="[('is_fully_paid', '=', False)]"/>
+                <filter name="fully_disbursed" string="Fully Disbursed" domain="[('is_fully_disbursed', '=', True)]"/>
+                <filter name="not_fully_disbursed" string="Not Fully Disbursed" domain="[('is_fully_disbursed', '=', False)]"/>
+
+                <separator/>
+
+                <filter name="service_charges" string="With Service Charges" domain="[('service_charges', '=', True)]"/>
+                <filter name="without_service_charges" string="Without Service Charges" domain="[('service_charges', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_by_donor" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="group_by_category" string="Category" context="{'group_by': 'category_id'}"/>
+                    <filter name="group_by_contract_type" string="Contract Type" context="{'group_by': 'contract_type'}"/>
+                    <filter name="group_by_payment_type" string="Payment Type" context="{'group_by': 'payment_type'}"/>
+                    <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_product" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_by_approved_date" string="Approved Date" context="{'group_by': 'approved_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_advance_donation" model="ir.actions.act_window">
         <field name="name">Advance Donation</field>
         <field name="res_model">advance.donation</field>
