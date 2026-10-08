@@ -30,7 +30,7 @@
         id="disbursement_application_type_menu"
         name="Disbursement Application Type"
         action="disbursement_application_type_action"
-        parent="bn_master_setup.welfare_menu"
+        parent="welfare_menu"
         sequence="1"/>
 
 </odoo>
