@@ -7,25 +7,44 @@
                 <t t-set="data_report_header_spacing" t-value="9"/>
                 <t t-set="data_report_dpi" t-value="110"/>
                 <div class="page">
-                    <h3><center><b><span t-esc="report_name"/></b></center></h3>
-                    <br/><br/>
-                    <table class="table table-sm table-reports" style="width: fit-content;">
-                        <thead style="background:#808080;">
-                            <tr>
-                                <th colspan="6"/>
+
+                    <!-- ============ TITLE ============ -->
+                    <h2 style="text-align:center;font-weight:700;letter-spacing:0.5px;
+                               margin-bottom:4px;">
+                        <t t-esc="report_name"/>
+                    </h2>
+                    <div style="text-align:center;font-size:11px;color:#555;
+                                margin-bottom:18px;">
+                        Period Balance Report
+                    </div>
+
+                    <!-- ============ TABLE ============ -->
+                    <table class="table table-sm table-reports" style="width:fit-content;font-size:11px;
+                                  border-collapse:collapse;">
+                        <thead>
+                            <tr style="background:#3a3a3a;color:#fff;font-weight:700;
+                                       font-size:12px;">
+                                <th colspan="6" style="padding:8px;text-align:left;">
+                                    Account
+                                </th>
                                 <t t-foreach="date_viewed" t-as="date_view" t-key="date_view_index">
-                                    <th colspan="2"><t t-esc="date_view"/></th>
+                                    <th colspan="2" style="padding:8px;text-align:center;border-left:1px solid #fff;">
+                                        <t t-esc="date_view"/>
+                                    </th>
                                 </t>
                             </tr>
-                            <tr class="o_heading" style="text-align:center;background:#D3D3D3;">
-                                <th colspan="6"/>
+                            <tr style="background:#5c5c5c;color:#fff;font-weight:700;
+                                       text-align:center;font-size:11px;">
+                                <th colspan="6" style="padding:6px;"/>
                                 <t t-if="apply_comparison == true">
                                     <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                     <t t-foreach="number_of_periods" t-as="number" t-key="number">
-                                        <th>Debit</th><th>Credit</th>
+                                        <th style="padding:6px;border-left:1px solid #fff;">Debit</th>
+                                        <th style="padding:6px;">Credit</th>
                                     </t>
                                 </t>
-                                <th>Debit</th><th>Credit</th>
+                                <th style="padding:6px;border-left:1px solid #fff;">Debit</th>
+                                <th style="padding:6px;">Credit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -34,38 +53,67 @@
                                 <t t-set="current_group" t-value="False"/>
                                 <t t-foreach="data" t-as="move_line" t-key="move_line_index">
 
-                                    <!-- Internal group boundary -->
+                                    <!-- ===== INTERNAL GROUP boundary ===== -->
                                     <t t-if="(move_line.get('internal_group') or 'Other') != current_internal_group">
                                         <t t-if="current_group">
-                                            <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
-                                                <th/><th colspan="5" style="text-align:left;">Total</th>
+                                            <tr style="font-weight:700;font-size:13px;
+                                                       border-top:2px solid #000;
+                                                       background:#f4f4f4;">
+                                                <th/>
+                                                <th colspan="5" style="text-align:left;padding:6px;">
+                                                    Total
+                                                </th>
                                                 <t t-if="apply_comparison == true">
                                                     <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                     <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
-                                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
+                                                        <th style="text-align:right;padding:6px;">
+                                                            <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                        </th>
+                                                        <th style="text-align:right;padding:6px;">
+                                                            <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                        </th>
                                                     </t>
                                                 </t>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
+                                                <th style="text-align:right;padding:6px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                </th>
+                                                <th style="text-align:right;padding:6px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                </th>
                                             </tr>
                                         </t>
                                         <t t-if="current_internal_group">
-                                            <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
-                                                <th/><th colspan="5" style="text-align:left;"><t t-esc="current_internal_group"/> Total</th>
+                                            <tr style="font-weight:700;font-size:14px;
+                                                       background:#DADADA;
+                                                       border-top:3px double #000;">
+                                                <th/>
+                                                <th colspan="5" style="text-align:left;padding:8px;">
+                                                    <t t-esc="current_internal_group"/>
+ Total
+                                                </th>
                                                 <t t-if="apply_comparison == true">
                                                     <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                     <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
-                                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
+                                                        <th style="text-align:right;padding:8px;">
+                                                            <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                                        </th>
+                                                        <th style="text-align:right;padding:8px;">
+                                                            <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                                        </th>
                                                     </t>
                                                 </t>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
+                                                <th style="text-align:right;padding:8px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                                </th>
+                                                <th style="text-align:right;padding:8px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                                </th>
                                             </tr>
                                         </t>
-                                        <tr style="background:#CFCFCF;font-weight:700;font-size:16px;">
-                                            <th colspan="12" style="text-align:left;padding:10px 8px;letter-spacing:0.5px;">
+                                        <tr style="background:#CFCFCF;font-weight:700;font-size:15px;
+                                                   letter-spacing:1px;border-top:2px solid #000;
+                                                   border-bottom:1px solid #000;">
+                                            <th colspan="12" style="text-align:left;padding:10px 12px;">
                                                 <t t-esc="(move_line.get('internal_group') or 'Other').upper()"/>
                                             </th>
                                         </tr>
@@ -73,88 +121,146 @@
                                         <t t-set="current_group" t-value="False"/>
                                     </t>
 
-                                    <!-- Sub-group boundary -->
+                                    <!-- ===== SUB-GROUP boundary ===== -->
                                     <t t-if="(move_line.get('group_label') or 'Other') != current_group">
                                         <t t-if="current_group">
-                                            <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
-                                                <th/><th colspan="5" style="text-align:left;">Total</th>
+                                            <tr style="font-weight:700;font-size:13px;
+                                                       border-top:2px solid #000;
+                                                       background:#f4f4f4;">
+                                                <th/>
+                                                <th colspan="5" style="text-align:left;padding:6px;">
+                                                    Total
+                                                </th>
                                                 <t t-if="apply_comparison == true">
                                                     <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                                     <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
-                                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
+                                                        <th style="text-align:right;padding:6px;">
+                                                            <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                        </th>
+                                                        <th style="text-align:right;padding:6px;">
+                                                            <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                        </th>
                                                     </t>
                                                 </t>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
+                                                <th style="text-align:right;padding:6px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                </th>
+                                                <th style="text-align:right;padding:6px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                </th>
                                             </tr>
                                         </t>
-                                        <tr style="background:#EAEAEA;font-weight:700;font-size:14px;">
-                                            <th colspan="12" style="text-align:left;padding:8px 8px 8px 28px;">
+                                        <tr style="background:#EAEAEA;font-weight:700;font-size:13px;
+                                                   border-top:1px solid #aaa;">
+                                            <th colspan="12" style="text-align:left;padding:8px 12px 8px 30px;">
                                                 <t t-esc="move_line.get('group_label') or 'Other'"/>
                                             </th>
                                         </tr>
                                         <t t-set="current_group" t-value="move_line.get('group_label') or 'Other'"/>
                                     </t>
 
-                                    <!-- Account row -->
-                                    <tr class="border-bottom" style="border-spacing: 0 10px;">
-                                        <th colspan="6"><t t-esc="move_line['account']"/></th>
+                                    <!-- ===== ACCOUNT ROW ===== -->
+                                    <tr style="border-bottom:1px solid #eee;">
+                                        <th colspan="6" style="text-align:left;padding:6px 8px;">
+                                            <t t-esc="move_line['account']"/>
+                                        </th>
                                         <t t-if="apply_comparison == true">
                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                             <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                <th style="text-align:center;"><t t-if="move_line.get('dynamic_total_debit_'+str(num))"  t-esc="'{:,.0f}'.format(move_line['dynamic_total_debit_'+str(num)])"/></th>
-                                                <th style="text-align:center;"><t t-if="move_line.get('dynamic_total_credit_'+str(num))" t-esc="'{:,.0f}'.format(move_line['dynamic_total_credit_'+str(num)])"/></th>
+                                                <th style="text-align:right;padding:6px 8px;">
+                                                    <t t-if="move_line.get('dynamic_total_debit_'+str(num))" t-esc="'{:,.0f}'.format(move_line['dynamic_total_debit_'+str(num)])"/>
+                                                </th>
+                                                <th style="text-align:right;padding:6px 8px;">
+                                                    <t t-if="move_line.get('dynamic_total_credit_'+str(num))" t-esc="'{:,.0f}'.format(move_line['dynamic_total_credit_'+str(num)])"/>
+                                                </th>
                                             </t>
                                         </t>
-                                        <th style="text-align:center;"><t t-if="move_line.get('total_debit')"  t-esc="'{:,.0f}'.format(move_line['total_debit'])"/></th>
-                                        <th style="text-align:center;"><t t-if="move_line.get('total_credit')" t-esc="'{:,.0f}'.format(move_line['total_credit'])"/></th>
+                                        <th style="text-align:right;padding:6px 8px;">
+                                            <t t-if="move_line.get('total_debit')" t-esc="'{:,.0f}'.format(move_line['total_debit'])"/>
+                                        </th>
+                                        <th style="text-align:right;padding:6px 8px;">
+                                            <t t-if="move_line.get('total_credit')" t-esc="'{:,.0f}'.format(move_line['total_credit'])"/>
+                                        </th>
                                     </tr>
                                 </t>
 
                                 <!-- close last sub-group -->
                                 <t t-if="current_group">
-                                    <tr style="font-weight:700;font-size:13px;border-top:1px solid #000;">
-                                        <th/><th colspan="5" style="text-align:left;">Total</th>
+                                    <tr style="font-weight:700;font-size:13px;
+                                               border-top:2px solid #000;background:#f4f4f4;">
+                                        <th/>
+                                        <th colspan="5" style="text-align:left;padding:6px;">Total</th>
                                         <t t-if="apply_comparison == true">
                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                             <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
+                                                <th style="text-align:right;padding:6px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                </th>
+                                                <th style="text-align:right;padding:6px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                                </th>
                                             </t>
                                         </t>
-                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
-                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/></th>
+                                        <th style="text-align:right;padding:6px;">
+                                            <t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                        </th>
+                                        <th style="text-align:right;padding:6px;">
+                                            <t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('group_label') or 'Other')==current_group))"/>
+                                        </th>
                                     </tr>
                                 </t>
                                 <!-- close last internal group -->
                                 <t t-if="current_internal_group">
-                                    <tr style="font-weight:700;font-size:15px;background:#DADADA;border-top:2px solid #000;">
-                                        <th/><th colspan="5" style="text-align:left;"><t t-esc="current_internal_group"/> Total</th>
+                                    <tr style="font-weight:700;font-size:14px;background:#DADADA;
+                                               border-top:3px double #000;">
+                                        <th/>
+                                        <th colspan="5" style="text-align:left;padding:8px;">
+                                            <t t-esc="current_internal_group"/>
+ Total</th>
                                         <t t-if="apply_comparison == true">
                                             <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                             <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
-                                                <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
+                                                <th style="text-align:right;padding:8px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                                </th>
+                                                <th style="text-align:right;padding:8px;">
+                                                    <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                                </th>
                                             </t>
                                         </t>
-                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
-                                        <th style="text-align:center;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/></th>
+                                        <th style="text-align:right;padding:8px;">
+                                            <t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                        </th>
+                                        <th style="text-align:right;padding:8px;">
+                                            <t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data if (m.get('internal_group') or 'Other')==current_internal_group))"/>
+                                        </th>
                                     </tr>
                                 </t>
 
-                                <!-- Grand total -->
-                                <tr style="background:#999;color:#fff;font-weight:700;font-size:16px;">
-                                    <th/><th colspan="5" style="color:#fff;padding:10px 8px;">Grand Total</th>
+                                <!-- ===== GRAND TOTAL ===== -->
+                                <tr style="background:#3a3a3a;color:#fff;font-weight:700;
+                                           font-size:14px;border-top:3px double #000;">
+                                    <th/>
+                                    <th colspan="5" style="text-align:left;color:#fff;padding:10px 12px;">
+                                        GRAND TOTAL
+                                    </th>
                                     <t t-if="apply_comparison == true">
                                         <t t-set="number_of_periods" t-value="comparison_number_range"/>
                                         <t t-foreach="number_of_periods" t-as="num" t-key="num">
-                                            <th style="text-align:center;color:#fff;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data))"/></th>
-                                            <th style="text-align:center;color:#fff;"><t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data))"/></th>
+                                            <th style="text-align:right;color:#fff;padding:10px 8px;">
+                                                <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_debit_'+str(num),0.0)  for m in data))"/>
+                                            </th>
+                                            <th style="text-align:right;color:#fff;padding:10px 8px;">
+                                                <t t-esc="'{:,.0f}'.format(sum(m.get('dynamic_total_credit_'+str(num),0.0) for m in data))"/>
+                                            </th>
                                         </t>
                                     </t>
-                                    <th style="text-align:center;color:#fff;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data))"/></th>
-                                    <th style="text-align:center;color:#fff;"><t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data))"/></th>
+                                    <th style="text-align:right;color:#fff;padding:10px 8px;">
+                                        <t t-esc="'{:,.0f}'.format(sum(m.get('total_debit',0.0)  for m in data))"/>
+                                    </th>
+                                    <th style="text-align:right;color:#fff;padding:10px 8px;">
+                                        <t t-esc="'{:,.0f}'.format(sum(m.get('total_credit',0.0) for m in data))"/>
+                                    </th>
                                 </tr>
                             </t>
                         </tbody>
