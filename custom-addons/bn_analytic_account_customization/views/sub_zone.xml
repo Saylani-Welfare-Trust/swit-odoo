@@ -27,7 +27,7 @@
         id="sub_zone_menu"
         name="Sub Zone"
         action="sub_zone_action"
-        parent="bn_master_setup.donation_box_config_menu"
+        parent="donation_box_config_menu"
         sequence="0"/>
 
 </odoo>
