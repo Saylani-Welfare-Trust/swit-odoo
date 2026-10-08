@@ -9,6 +9,11 @@
             <xpath expr="//field[@name='requisition_id']" position="after">
                 <field name="material_request_id" readonly="1"/>
             </xpath>
+
+            <!-- Vendors are picked from the existing ones, never created from here -->
+            <xpath expr="//field[@name='partner_id']" position="attributes">
+                <attribute name="options">{'no_create': True}</attribute>
+            </xpath>
         </field>
     </record>
     <record id="view_purchase_order_tree_inherit_mr" model="ir.ui.view">

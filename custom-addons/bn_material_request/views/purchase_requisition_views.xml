@@ -29,6 +29,11 @@
                     <field name="material_request_id" widget="statinfo" string="Source MR"/>
                 </button>
             </xpath>
+
+            <!-- Vendors are picked from the existing ones, never created from here -->
+            <xpath expr="//field[@name='vendor_id']" position="attributes">
+                <attribute name="options">{'no_create': True}</attribute>
+            </xpath>
         </field>
     </record>
 
