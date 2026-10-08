@@ -221,13 +221,6 @@
 
                 <separator/>
 
-                <filter name="fully_paid" string="Fully Paid" domain="[('is_fully_paid', '=', True)]"/>
-                <filter name="not_fully_paid" string="Not Fully Paid" domain="[('is_fully_paid', '=', False)]"/>
-                <filter name="fully_disbursed" string="Fully Disbursed" domain="[('is_fully_disbursed', '=', True)]"/>
-                <filter name="not_fully_disbursed" string="Not Fully Disbursed" domain="[('is_fully_disbursed', '=', False)]"/>
-
-                <separator/>
-
                 <filter name="service_charges" string="With Service Charges" domain="[('service_charges', '=', True)]"/>
                 <filter name="without_service_charges" string="Without Service Charges" domain="[('service_charges', '=', False)]"/>
 
