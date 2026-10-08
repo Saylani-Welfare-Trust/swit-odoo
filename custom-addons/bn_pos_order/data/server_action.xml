@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fetch_branch_name_pos_order_action_server" model="ir.actions.server">
+        <field name="name">Fetch Branch Name from Employee | BN</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="binding_model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_fetch_branch_name_from_employee()</field>
+    </record>
+
+</odoo>

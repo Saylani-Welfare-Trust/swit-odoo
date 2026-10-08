@@ -11,6 +11,7 @@
     ],
     'data': [
         'data/paper_format.xml',
+        'data/server_action.xml',
         'security/group.xml',
         'reports/whatsapp_dn.xml',
         'reports/duplicate_dn.xml',

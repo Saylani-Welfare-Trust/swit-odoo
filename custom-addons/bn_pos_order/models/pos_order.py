@@ -53,6 +53,37 @@ class POSOrder(models.Model):
             'target': 'current',
         }
 
+    def action_fetch_branch_name_from_employee(self):
+        fixed_count = 0
+        skipped_count = 0
+
+        for rec in self:
+            employee = rec.user_id.with_company(rec.company_id).sudo().employee_id
+            branch_name = employee.analytic_account_id.name
+
+            # Order Ref is "<branch>/<number>"; draft orders are still "/"
+            old_branch_name, sep, number = (rec.name or '').rpartition('/')
+
+            if not branch_name or not old_branch_name or not number:
+                skipped_count += 1
+                continue
+
+            if old_branch_name != branch_name:
+                rec.name = f"{branch_name}/{number}"
+                fixed_count += 1
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Branch Name Fetched'),
+                'message': _('%s order(s) updated, %s skipped.') % (fixed_count, skipped_count),
+                'type': 'warning' if skipped_count else 'success',
+                'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
+        }
+
     @api.depends('user_id')
     def _set_employee_branch(self):
         for rec in self:
