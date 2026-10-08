@@ -5,3 +5,5 @@ access_advance_donation_receipt,advance.donation.receipt,model_advance_donation_
 access_advance_donation_slip_usage,advance.donation.slip.usage,model_advance_donation_slip_usage,,1,1,1,1
 access_advance_donation_payment_wizard,advance.donation.payment.wizard,model_advance_donation_payment_wizard,,1,1,1,1
 access_advance_donation_disbursement_line_user,access.advance.donation.disbursement.line.user,model_advance_donation_disbursement_line,,1,1,1,1
+access_advance_donation_category,advance.donation.category,bn_master_setup.model_advance_donation_category,,1,1,1,1
+access_advance_donation_category_line,advance.donation.category.line,bn_master_setup.model_advance_donation_category_line,,1,1,1,1

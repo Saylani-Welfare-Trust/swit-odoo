@@ -13,7 +13,6 @@
         'account',
     ],
     'data': [
-        'data/disbursement_category.xml',
         'data/ir_module_category.xml',
         'security/ir.model.access.csv',
         'security/group.xml',
@@ -28,7 +27,6 @@
         'views/area.xml',
         'views/medical_equipment_category.xml',
         'views/product_master.xml',
-        'views/advance_donation_category.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -10,11 +10,13 @@
         'point_of_sale',
         'bn_import_donation',
         'dynamic_accounts_report',
+        'bn_master_setup',
     ],
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
 
+        'data/disbursement_category.xml',
         'data/sequences.xml',
         'data/sync_pos_donation_receipts_action.xml',
         'reports/advance_donation_report.xml',
@@ -27,6 +29,7 @@
         'views/donation_receipt.xml',
         'views/product_template.xml',
         'views/product_product.xml',
+        'views/advance_donation_category.xml',
         'views/menu.xml',
         'views/advance_donation_statement_action.xml',
     ],
