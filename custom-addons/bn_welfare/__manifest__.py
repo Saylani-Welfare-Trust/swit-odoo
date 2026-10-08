@@ -9,6 +9,7 @@
         'bn_microfinance',
         'bn_profile_management',
         'bn_analytic_account_customization',
+        'bn_master_setup',
     ],
     'data': [
         'data/sequence.xml',
