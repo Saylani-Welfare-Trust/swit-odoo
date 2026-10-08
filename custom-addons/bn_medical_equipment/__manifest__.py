@@ -26,6 +26,7 @@
         'views/medical_equipment_reference.xml',
         'views/medical_security_deposit.xml',
         'views/res_partner.xml',
+        'views/medical_equipment_category.xml',
         'wizards/medical_equipment_donation.xml',
     ],
     'auto_install': False,

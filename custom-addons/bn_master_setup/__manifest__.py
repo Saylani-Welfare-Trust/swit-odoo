@@ -22,7 +22,6 @@
         'views/city.xml',
         'views/bank.xml',
         'views/area.xml',
-        'views/medical_equipment_category.xml',
         'views/product_master.xml',
     ],
     'auto_install': False,
