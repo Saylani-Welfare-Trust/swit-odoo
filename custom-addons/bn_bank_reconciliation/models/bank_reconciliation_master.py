@@ -381,9 +381,8 @@ class BankReconciliationMaster(models.Model):
             ) % ', '.join(not_posted.mapped('description')))
         self.reconciled_ids.write({'is_posted': True})
         
-        # The statement is only compared with the journal's existing entries,
-        # so no journal entry is created (_create_reconciliation_journal_entry
-        # moved the totals from the Bank Account to the Posted Account).
+        self._create_reconciliation_journal_entry()
+        
         self.write({
             'state': 'completed',
             'reconciled_by': self.env.user.id,
@@ -391,81 +390,50 @@ class BankReconciliationMaster(models.Model):
         })
 
     def _create_reconciliation_journal_entry(self):
+        """Move the reconciled amounts from the accounts holding them (the
+        accounts of the matched journal items) to the Posted Account: when the
+        holding account is credited the Posted Account is debited, and vice versa."""
         self.ensure_one()
-        if not self.reconciled_ids:
-            raise UserError(_('No reconciled transactions found to create journal entry.'))
         if self.move_id:
             raise UserError(_('Journal entry already exists for this reconciliation.'))
         
-        move_lines = []
         account_totals = {}
-        total_debit = 0.0
-        total_credit = 0.0
-        
         for reconciled in self.reconciled_ids:
-            if not reconciled.account_id:
+            matched_line = reconciled.matched_move_line_id
+            # Nothing to move when the entry is already on the Posted Account
+            if not matched_line.balance or matched_line.account_id == self.posted_account_id:
                 continue
-            account_id = reconciled.account_id.id
-            if account_id not in account_totals:
-                account_totals[account_id] = {
-                    'debit': 0.0,
-                    'credit': 0.0,
-                    'account': reconciled.account_id,
-                    'partner_id': reconciled.partner_id.id if reconciled.partner_id else False,
-                }
-            account_totals[account_id]['debit'] += reconciled.debit or 0.0
-            account_totals[account_id]['credit'] += reconciled.credit or 0.0
-            total_debit += reconciled.debit or 0.0
-            total_credit += reconciled.credit or 0.0
+            totals = account_totals.setdefault(matched_line.account_id.id, {'debit': 0.0, 'credit': 0.0})
+            # The holding account is cleared on the opposite side of the matched item
+            if matched_line.balance > 0:
+                totals['credit'] += abs(reconciled.amount)
+            else:
+                totals['debit'] += abs(reconciled.amount)
         
-        if total_debit == 0 and total_credit == 0:
-            raise UserError(_('Total debit and credit are zero. No journal entry needed.'))
-        
+        reconciled_vals = {
+            'is_bank_reconciled': True,
+            'bank_reconciliation_id': self.id,
+            'bank_reconciliation_date': self.date,
+        }
+        move_lines = []
         for account_id, totals in account_totals.items():
-            if totals['debit'] == 0 and totals['credit'] == 0:
-                continue
-            move_lines.append((0, 0, {
-                'account_id': account_id,
-                'partner_id': totals['partner_id'],
-                'debit': totals['debit'],
-                'credit': totals['credit'],
-                'name': _('Reconciliation: %s') % self.name,
-                'is_bank_reconciled': True,
-                'bank_reconciliation_id': self.id,
-                'bank_reconciliation_date': self.date,
-            }))
+            for side, contra_side in (('credit', 'debit'), ('debit', 'credit')):
+                amount = self.currency_id.round(totals[side])
+                if not amount:
+                    continue
+                move_lines.append((0, 0, dict(reconciled_vals, **{
+                    'account_id': account_id,
+                    side: amount,
+                    'name': _('Reconciliation: %s') % self.name,
+                })))
+                move_lines.append((0, 0, dict(reconciled_vals, **{
+                    'account_id': self.posted_account_id.id,
+                    contra_side: amount,
+                    'name': _('Contra - %s') % self.posted_account_id.name,
+                })))
         
-        net_amount = total_debit - total_credit
-        if net_amount > 0:
-            move_lines.append((0, 0, {
-                'account_id': self.posted_account_id.id,
-                'debit': 0.0,
-                'credit': net_amount,
-                'name': _('Contra - %s') % self.posted_account_id.name,
-                'is_bank_reconciled': True,
-                'bank_reconciliation_id': self.id,
-                'bank_reconciliation_date': self.date,
-            }))
-        elif net_amount < 0:
-            move_lines.append((0, 0, {
-                'account_id': self.posted_account_id.id,
-                'debit': abs(net_amount),
-                'credit': 0.0,
-                'name': _('Contra - %s') % self.posted_account_id.name,
-                'is_bank_reconciled': True,
-                'bank_reconciliation_id': self.id,
-                'bank_reconciliation_date': self.date,
-            }))
-        
-        if len(move_lines) < 2:
-            raise UserError(_('Cannot create journal entry: Need at least two lines for a balanced entry.'))
-        
-        total_debit_lines = sum(line[2]['debit'] for line in move_lines)
-        total_credit_lines = sum(line[2]['credit'] for line in move_lines)
-        if abs(total_debit_lines - total_credit_lines) > 0.01:
-            raise UserError(_(
-                'Journal entry is not balanced. Debit: %s, Credit: %s'
-            ) % (total_debit_lines, total_credit_lines))
+        if not move_lines:
+            return
         
         try:
             move = self.env['account.move'].create({
@@ -479,17 +447,6 @@ class BankReconciliationMaster(models.Model):
             })
             move.action_post()
             self.move_id = move.id
-            
-            for reconciled in self.reconciled_ids:
-                reconciled.write({
-                    'matched_move_id': move.id,
-                    'is_posted': True,
-                })
-                for line in move.line_ids:
-                    if line.account_id.id == reconciled.account_id.id:
-                        reconciled.journal_line_id = line.id
-                        break
-                        
         except Exception as e:
             raise UserError(_('Error creating journal entry: %s') % str(e))
 

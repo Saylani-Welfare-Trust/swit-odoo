@@ -53,30 +53,37 @@ class POSOrder(models.Model):
             'target': 'current',
         }
 
-    def action_fetch_branch_name_from_employee(self):
+    def action_correct_order_ref(self):
         fixed_count = 0
         skipped_count = 0
 
         for rec in self:
-            employee = rec.user_id.with_company(rec.company_id).sudo().employee_id
-            branch_name = employee.analytic_account_id.name
+            pos_name = rec.config_id.name
 
-            # Order Ref is "<branch>/<number>"; draft orders are still "/"
-            old_branch_name, sep, number = (rec.name or '').rpartition('/')
+            # Order Ref is "<POS name>/<number>"; draft orders are still "/"
+            old_pos_name, sep, number = (rec.name or '').rpartition('/')
 
-            if not branch_name or not old_branch_name or not number:
+            if not pos_name or not old_pos_name or not number:
                 skipped_count += 1
                 continue
 
-            if old_branch_name != branch_name:
-                rec.name = f"{branch_name}/{number}"
+            if old_pos_name != pos_name:
+                rec.name = f"{pos_name}/{number}"
                 fixed_count += 1
+
+        # Renaming a POS does not rename its sequence, so new orders
+        # would keep coming with the old POS name
+        for config in self.config_id.sudo():
+            prefix = f"{config.name}/"
+
+            if config.sequence_id.prefix != prefix:
+                config.sequence_id.prefix = prefix
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Branch Name Fetched'),
+                'title': _('Order Ref Corrected'),
                 'message': _('%s order(s) updated, %s skipped.') % (fixed_count, skipped_count),
                 'type': 'warning' if skipped_count else 'success',
                 'sticky': False,
