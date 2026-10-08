@@ -16,7 +16,6 @@
         'security/groups.xml',
         'security/ir.model.access.csv',
 
-        'data/disbursement_category.xml',
         'data/sequences.xml',
         'data/sync_pos_donation_receipts_action.xml',
         'reports/advance_donation_report.xml',

@@ -15,6 +15,7 @@
         'data/hr_employee_category.xml',
         'data/server_action_fetch_welfare.xml',
         'data/ir_cron_auto_deliver.xml',
+        'data/disbursement_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'views/welfare_institution_fetch_log.xml',
