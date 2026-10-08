@@ -32,7 +32,7 @@
         id="disbursement_category_menu"
         name="Disbursement Category"
         action="disbursement_category_action"
-        parent="bn_master_setup.welfare_menu"
+        parent="welfare_menu"
         sequence="0"/>
 
 </odoo>
