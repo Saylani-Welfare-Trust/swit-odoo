@@ -96,9 +96,9 @@
                                 </div>
                                 <div class="col-6">
                                     <div>
-                                        <strong>Date:</strong>
-                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
-                                    </div>
+                                        <strong>Date &amp; Time:</strong>
+                                         <t t-esc="(order.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if order.create_date and not isinstance(order.create_date, str) else (order.create_date or '--')"/>
+                                    </div>  
                                     <div>
                                         <strong>Bank Deposit:</strong>
                                         <t t-esc="o.bank_id.name"/>
@@ -164,8 +164,8 @@
                                 <div class="col-6">
                                     <div>
                                         <strong>Date &amp; Time:</strong>
-                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
-                                    </div>
+                                         <t t-esc="(order.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if order.create_date and not isinstance(order.create_date, str) else (order.create_date or '--')"/>
+                                    </div>  
                                     <div><strong>Entered by: </strong> <t t-esc="o.user_id.name"/></div>
                                 </div>
                             </div>
