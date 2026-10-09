@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
 class DirectDeposit(models.Model):
@@ -34,6 +34,17 @@ class DirectDeposit(models.Model):
         service_charges = data.get('service_charges')
         user_id = data.get('user_id') or self.env.user.id
         transaction_ref = data.get('transaction_ref')
+
+        duplicate = self._check_duplicate_transaction_ref(transaction_ref)
+        if duplicate:
+            return {
+                'status': 'error',
+                'body': _(
+                    'This Transaction Reference (%s) has already been used '
+                    'in Direct Deposit record %s. Please use a different '
+                    'transaction reference.'
+                ) % (transaction_ref, duplicate.name),
+            }
 
         # -------------------------
         # 1. Prepare Line Items
