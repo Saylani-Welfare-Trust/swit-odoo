@@ -71,7 +71,7 @@
         id="security_offered_menu"
         name="Security Offered"
         action="security_offered_action"
-        parent="microfinance_menu"
-        sequence="7"/>
+        parent="microfinance_config_menu"
+        sequence="1"/>   
 
 </odoo>

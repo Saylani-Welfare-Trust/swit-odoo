@@ -99,7 +99,7 @@
     </record>
 
     <menuitem
-        id="microfinance_menu"
+        id="microfinance_config_menu"         
         name="Microfinance"
         parent="bn_master_setup.master_setup_menu"
         sequence="3"/>
@@ -108,7 +108,7 @@
         id="microfinance_scheme_menu"
         name="Microfinance Scheme"
         action="microfinance_scheme_action"
-        parent="microfinance_menu"
-        sequence="0"/>
+        parent="microfinance_config_menu"    
+    sequence="0"/>
 
 </odoo>
