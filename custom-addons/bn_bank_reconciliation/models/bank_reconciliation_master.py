@@ -251,8 +251,8 @@ class BankReconciliationMaster(models.Model):
 
     def _get_candidate_move_line_domain(self, transaction=None):
         """Journal items a statement line can be compared with: the items of the
-        selected journal's entries, whatever their account, that are not bank
-        reconciled yet. A statement line is reconciled with whole entries, so an
+        selected journal's posted entries, whatever their account, that are not
+        bank reconciled yet. A statement line is reconciled with whole entries, so an
         entry is offered only once. Income and expense items are left out: the
         bank movement is the other side of the entry (bank, settlement...)."""
         self.ensure_one()
@@ -271,7 +271,7 @@ class BankReconciliationMaster(models.Model):
         return [
             ('journal_id', '=', journal.id),
             ('account_id.internal_group', 'not in', ['income', 'expense']),
-            ('parent_state', '!=', 'cancel'),
+            ('parent_state', '=', 'posted'),
             ('is_bank_reconciled', '=', False),
             ('reconciled', '=', False),
             ('company_id', '=', self.company_id.id),
