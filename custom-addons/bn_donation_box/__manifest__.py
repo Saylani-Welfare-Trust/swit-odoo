@@ -13,6 +13,7 @@
         'bn_pos_custom_action',
         'bn_profile_management',
         'bn_import_donation',
+        'bn_master_setup',
     ],
     'data': [
         'security/groups.xml',

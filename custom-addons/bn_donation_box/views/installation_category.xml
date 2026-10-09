@@ -34,5 +34,11 @@
         action="installation_category_action"
         parent="donation_box_config_menu"
         sequence="0"/>
+    <menuitem
+        id="sub_zone_config_menu"
+        name="Sub Zone"
+        action="bn_analytic_account_customization.sub_zone_action"
+        parent="donation_box_config_menu"
+        sequence="1"/>
 
 </odoo>
