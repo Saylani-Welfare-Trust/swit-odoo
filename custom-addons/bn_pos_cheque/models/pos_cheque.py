@@ -95,6 +95,7 @@ class POSCheque(models.Model):
                 'cheque_number': self.name,
                 'cheque_date': self.date,
                 'date': fields.Date.today(),
+                'order_id': line.order_id.id,
                 'remarks': 'Auto-created from POS Cheque %s' % self.name,
                 'state': 'paid',
             })

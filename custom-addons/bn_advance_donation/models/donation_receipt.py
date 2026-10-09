@@ -44,6 +44,8 @@ class DonationReceipt(models.Model):
         string='Status',
         default='draft')
     bank_id = fields.Many2one('bank', string='Bank')
+    has_pos_source = fields.Boolean(compute='_compute_has_pos_source')
+    has_disbursement = fields.Boolean(compute='_compute_has_disbursement')
     
     @api.model
     def create(self, vals):
@@ -307,7 +309,50 @@ class DonationReceipt(models.Model):
                 raise UserError(f'You cannot delete record in {rec.state} state')
 
 
+    def _get_disbursement_lines(self):
+        """Disbursement lines of the advance donation(s) this receipt was used on."""
+        self.ensure_one()
+        usages = self.env['advance.donation.slip.usage'].search([('donation_slip_id', '=', self.id)])
+        donations = self.donation_id | usages.advance_donation_id
+        donations |= self.env['advance.donation'].search([('donation_slip_ids', 'in', self.ids)])
+        return donations.disbursement_line_ids
+
+    def _compute_has_disbursement(self):
+        for rec in self:
+            rec.has_disbursement = bool(rec._get_disbursement_lines())
+
+    def action_print_disbursement_receipt(self):
+        self.ensure_one()
+        lines = self._get_disbursement_lines()
+        if not lines:
+            raise UserError(_('Nothing has been disbursed against this receipt yet.'))
+        return lines.action_print_line_non_cash_disbursement_report()
+
     # ------------POS Functions----------------
+    def _get_pos_source_record(self):
+        """Return the POS record this receipt was created from, if any."""
+        self.ensure_one()
+        order = self.order_id or self.pos_order_id
+        if not order and self.name:
+            # Cash receipts are created from the payment screen before the
+            # order reaches the backend - the order keeps the receipt number.
+            order = self.env['pos.order'].search([('source_document', '=', self.name)], limit=1)
+        return order
+
+    def _get_pos_source_report(self, source):
+        return self.env.ref('bn_pos_order.pos_donation_receipt_report')
+
+    def _compute_has_pos_source(self):
+        for rec in self:
+            rec.has_pos_source = bool(rec._get_pos_source_record())
+
+    def action_print_pos_receipt(self):
+        self.ensure_one()
+        source = self._get_pos_source_record()
+        if not source:
+            raise UserError(_('This receipt was not created from POS.'))
+        return self._get_pos_source_report(source).report_action(source)
+
     @api.model
     def register_pos_payment(self, data):
         _logger.info(f"Registering POS payment with data: {data}")
