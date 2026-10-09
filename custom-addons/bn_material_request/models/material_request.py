@@ -436,7 +436,8 @@ class MemberApproval(models.Model):
 
         # Create purchase requisition and shortage transfer
         if purchase_lines:
-            purchase_request = self.env['purchase.requisition'].create({
+            # sudo: the approver (HOD / CFO / COO) need not be a purchase user.
+            purchase_request = self.env['purchase.requisition'].sudo().create({
                 'origin': "%s (Stock Shortage)" % self.name,
                 'line_ids': purchase_lines,
                 'material_request_id': self.id,   # <-- autopopulate here
@@ -476,8 +477,8 @@ class MemberApproval(models.Model):
                 'product_qty': line.quantity,
                 'product_description_variants': line.description,
             }))
-        # Create picking
-        purchase_request = self.env['purchase.requisition'].create({
+        # sudo: the approver (HOD / CFO / COO) need not be a purchase user.
+        purchase_request = self.env['purchase.requisition'].sudo().create({
             'origin': self.name,
             'line_ids': line_vals,
             'material_request_id': self.id,   # <-- autopopulate here
