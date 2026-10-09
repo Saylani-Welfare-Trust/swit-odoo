@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
+    _description = "Advance Donation"
     # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))

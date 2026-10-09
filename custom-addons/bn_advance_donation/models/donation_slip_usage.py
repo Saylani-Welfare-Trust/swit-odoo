@@ -3,7 +3,7 @@ from odoo import models, fields
 
 class DonationSlipUsage(models.Model):
     _name = 'advance.donation.slip.usage'
-
+    _description = "Donation Slip Usage"
 
 
     advance_donation_id = fields.Many2one('advance.donation', string='Donation ID')

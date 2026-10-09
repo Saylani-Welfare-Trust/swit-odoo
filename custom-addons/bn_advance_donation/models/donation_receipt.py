@@ -7,6 +7,7 @@ _logger = logging.getLogger(__name__)
 
 class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
+    _description = "Advance Donation Receipt"
 
 
     category_id = fields.Many2one('product.category', string='Category')    
