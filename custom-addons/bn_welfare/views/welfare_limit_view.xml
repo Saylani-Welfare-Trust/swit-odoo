@@ -62,7 +62,7 @@
     
     <menuitem id="menu_welfare_approval_limits" 
               name="Approval Limits" 
-              parent="welfare_menu"
+              parent="welfare_config_menu"
               action="action_welfare_approval_limit"
               sequence="10"/>
 

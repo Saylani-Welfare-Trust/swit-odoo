@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<!-- Tree View -->
+    <!-- Tree View -->
     <record id="view_welfare_consolidated_tree" model="ir.ui.view">
         <field name="name">welfare.line.tree</field>
         <field name="model">welfare.line</field>
@@ -14,16 +14,16 @@
                 <field name="recurring_duration" column_invisible="order_type != 'recurring'" />     -->
                 <field name="recurring_duration" />
                 <field name="disbursement_category_id" />
-                <field name="disbursement_application_type_id"  />
+                <field name="disbursement_application_type_id" />
                 <field name="product_id" />
                 <field name="on_hand_qty"/>
                 <field name="payment_type" />
-                <field name="assigned_officer_id"  />
+                <field name="assigned_officer_id" />
                 <field name="collection_point" />
                 <field name="analytic_account_id" />
                 <field name="collection_date" />
                 <field name="marriage_date" />
-                <field name="quantity" />   
+                <field name="quantity" />
                 <field name="amount" readonly="1" />
                 <field name="fixed_amount_check" column_invisible="1" />
                 <field name="total_amount" />
@@ -36,16 +36,16 @@
             </tree>
         </field>
     </record>
-<!-- Search View -->
+    <!-- Search View -->
     <record id="view_welfare_consolidated_search" model="ir.ui.view">
         <field name="name">welfare.line.search</field>
         <field name="model">welfare.line</field>
         <field name="arch" type="xml">
             <search>
-<!-- <field name="employee_id"/> -->
+                <!-- <field name="employee_id"/> -->
                 <field name="disbursement_category_id"/>
                 <field name="state"/>
-<!-- <filter name="regular" string="Regular" domain="[('order_type','!=','recurring')]"/>
+                <!-- <filter name="regular" string="Regular" domain="[('order_type','!=','recurring')]"/>
                     <filter name="recurring" string="Recurring" domain="[('order_type','=','recurring')]"/> -->
                 <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
                 <filter name="disbursed" string="Disbursed" domain="[('state','=','disbursed')]"/>
@@ -57,7 +57,7 @@
             </search>
         </field>
     </record>
-<!-- Action -->
+    <!-- Action -->
     <record id="action_welfare_consolidated" model="ir.actions.act_window">
         <field name="name">All Welfare Lines</field>
         <field name="res_model">welfare.line</field>
@@ -65,12 +65,6 @@
         <field name="search_view_id" ref="view_welfare_consolidated_search"/>
         <field name="target">current</field>
     </record>
-<!-- Menu -->
-    <menuitem
-id="menu_welfare_consolidated"
-name="All Welfare Lines"
-action="action_welfare_consolidated"
-parent="welfare_menu"
-groups="bn_welfare.welfare_consolidated_group"
-sequence="50"/>
+    <!-- Menu -->
+    <menuitem id="menu_welfare_consolidated" name="All Welfare Lines" action="action_welfare_consolidated" parent="welfare_menu" groups="bn_welfare.welfare_consolidated_group" sequence="4"/>
 </odoo>

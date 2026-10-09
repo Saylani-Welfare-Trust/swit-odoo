@@ -23,7 +23,7 @@
     </record>
 
     <menuitem
-        id="welfare_menu"
+        id="welfare_config_menu"
         name="Welfare"
         parent="bn_master_setup.master_setup_menu"
         sequence="4"/>
@@ -32,7 +32,7 @@
         id="disbursement_category_menu"
         name="Disbursement Category"
         action="disbursement_category_action"
-        parent="welfare_menu"
+        parent="welfare_config_menu"
         sequence="0"/>
 
 </odoo>

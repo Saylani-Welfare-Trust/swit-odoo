@@ -695,7 +695,7 @@
         id="disbursement_request_menu"
         name="Disbursement Request"
         parent="welfare_menu"
-        sequence="0"/>
+        sequence="1"/>
 
     <menuitem
         id="disbursement_request_menu_individual"
