@@ -12,7 +12,7 @@ state_selection = [
 
 class LivestockCuttingMaterial(models.Model):
     _name = 'livestock.cutting.material'
-    _descripiton = "Livestock Cutting Material"
+    _description = "Livestock Cutting Material"
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
