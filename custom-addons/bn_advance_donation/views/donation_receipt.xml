@@ -36,11 +36,17 @@
                             type="action" 
                             class="oe_highlight" 
                             context="{'active_ids': [active_id]}"/>      
-                    <button name="%(bn_advance_donation.action_report_advance_donation_disbursement_line)d" 
-                            string="Print Receipt" 
-                            type="action" 
-                            class="oe_highlight" 
-                            context="{'active_ids': [active_id]}"/>      
+                    <field name="has_pos_source" invisible="1"/>
+                    <button name="action_print_pos_receipt"
+                            string="Print POS Receipt"
+                            type="object"
+                            invisible="not has_pos_source"/>
+                    <field name="has_disbursement" invisible="1"/>
+                    <button name="action_print_disbursement_receipt"
+                            string="Print Disbursement Receipt"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="not has_disbursement"/>
             
                     <field name="state" widget="statusbar" statusbar_visible="draft,paid"/>
                 </header>

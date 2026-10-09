@@ -250,6 +250,7 @@ May Allah bless you!
                 'product_id': line.product_id.id,
                 'payment_type': self.payment_type or 'directdeposit',
                 'date': fields.Date.today(),
+                'direct_deposit_id': self.id,
                 'remarks': _('Auto-created from Direct Deposit %s') % self.name,
                 'state': 'paid',
             })
