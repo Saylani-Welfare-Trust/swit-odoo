@@ -11,7 +11,6 @@
         'base_accounting_kit',
         'bn_profile_management',
         'bn_sms_whatsapp',
-        'bn_master_setup'
     ],
     'data': [
         'data/sequence.xml',
