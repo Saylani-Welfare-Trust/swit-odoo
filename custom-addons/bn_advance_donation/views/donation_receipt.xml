@@ -36,12 +36,12 @@
                             type="action" 
                             class="oe_highlight" 
                             context="{'active_ids': [active_id]}"/>      
-                        <button name="%(bn_advance_donation.action_report_advance_donation_disbursement_line)d" 
-                                string="Print disbursement Receipt" 
-                                type="action" 
-                                class="oe_highlight" 
-                                context="{'active_ids': [active_id]}"/>      
-                
+                    <button name="%(bn_advance_donation.action_report_advance_donation_disbursement_line)d" 
+                            string="Print Receipt" 
+                            type="action" 
+                            class="oe_highlight" 
+                            context="{'active_ids': [active_id]}"/>      
+            
                     <field name="state" widget="statusbar" statusbar_visible="draft,paid"/>
                 </header>
                 <sheet>
