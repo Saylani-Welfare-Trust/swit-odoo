@@ -44,12 +44,13 @@ class PurchaseRequisition(models.Model):
     selected_rfq_hod_approved_by = fields.Many2one(
         related='selected_rfq_id.hod_approved_by', string='HOD Approved By')
 
-    # The selected quote may cover only some of the products, which leaves the
-    # request closed with products that were never ordered.
+    # The Purchase Order may cover only part of what the Material Request asks
+    # for (fewer products, or a lower quantity), which leaves the request
+    # closed with something that was never ordered.
     has_pending_rfq_products = fields.Boolean(
         compute='_compute_has_pending_rfq_products',
-        help='Whether some products of this request have no Purchase Order yet '
-             'on its Material Request.')
+        help='Whether the Material Request asks for products or quantities that '
+             'are not on a confirmed Purchase Order yet.')
 
     # Automatic Shariah Law balance check for the Funds Availability gate
     funds_shariah_balance = fields.Monetary(
@@ -164,18 +165,22 @@ class PurchaseRequisition(models.Model):
             raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
         self.state = 'rfq_sent'
 
-    @api.depends('material_request_id', 'line_ids.product_id',
-                 'purchase_ids.state', 'purchase_ids.order_line.product_id')
+    @api.depends('material_request_id', 'line_ids.product_id', 'line_ids.product_qty',
+                 'purchase_ids.state', 'purchase_ids.order_line.product_id',
+                 'purchase_ids.order_line.product_qty')
     def _compute_has_pending_rfq_products(self):
+        """The confirmed Purchase Orders are matched against the Material Request,
+        product by product and quantity by quantity: any difference is pending."""
         for requisition in self:
-            requisition.has_pending_rfq_products = bool(
-                requisition.material_request_id and requisition._get_pending_rfq_lines())
+            requisition.has_pending_rfq_products = bool(requisition.material_request_id and (
+                requisition._get_request_shortfall() or requisition._get_pending_rfq_line_quantities()))
 
     def action_resend_pending_for_rfq(self):
-        """Reopen a closed request whose Purchase Order covers only some of its
-        products: it goes back to Procurement Manager Approval, where RFQs are
-        sent to vendors again - this time only for the products that have no
-        Purchase Order yet (vendor.selection.wizard skips the ordered ones)."""
+        """Reopen a closed request whose Purchase Order covers only part of its
+        Material Request: its lines are brought back in step with that request,
+        and it goes back to Procurement Manager Approval, where RFQs are sent to
+        vendors again - this time only for the products and quantities that are
+        not ordered yet (vendor.selection.wizard leaves out the rest)."""
         self.ensure_one()
         if self.state != 'done':
             raise ValidationError(_('This request is not Closed.'))
@@ -183,9 +188,10 @@ class PurchaseRequisition(models.Model):
             raise ValidationError(_('Only a Procurement Manager can send the remaining products for RFQ.'))
         if not self.material_request_id:
             raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
-        pending_lines = self._get_pending_rfq_lines()
-        if not pending_lines:
-            raise ValidationError(_('Every product of this request already has a Purchase Order.'))
+        self._restore_lines_from_request()
+        pending = self._get_pending_rfq_line_quantities()
+        if not pending:
+            raise ValidationError(_('Everything on this request has already been ordered.'))
         # The selected quote and the funds decision belong to the order already
         # made - the next round of RFQs gets its own.
         self.write({
@@ -197,9 +203,11 @@ class PurchaseRequisition(models.Model):
             'funds_gate_date': False,
         })
         self.message_post(body=_(
-            'Reopened by %(user)s to send RFQs for the product(s) without a Purchase Order: %(products)s.'
+            'Reopened by %(user)s to send RFQs for what is not ordered yet: %(products)s.'
         ) % {'user': self.env.user.display_name,
-             'products': ', '.join(pending_lines.product_id.mapped('display_name'))})
+             'products': ', '.join(
+                 '%s (%g %s)' % (line.product_id.display_name, quantity, line.product_uom_id.name)
+                 for line, quantity in pending.items())})
 
     def action_select_winning_rfq(self, winning_po):
         """Called by the RFQ price wizard once a winning quote has been selected.
