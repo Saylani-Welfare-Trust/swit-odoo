@@ -85,7 +85,7 @@
                                     <div>
                                         <strong>Remarks:</strong>
                                         <t t-set="count" t-value="1"/>
-                                        <t t-foreach="o.remarks.split('-')" t-as="remark">
+                                        <t t-foreach="(o.remarks or '').split('-')" t-as="remark">
                                             <t t-if="remark">
                                                 <t t-esc="count"/>. <t t-esc="remark or '-'"/>
                                                 <br/>
@@ -96,9 +96,9 @@
                                 </div>
                                 <div class="col-6">
                                     <div>
-                                        <strong>Date:</strong>
-                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
-                                    </div>
+                                        <strong>Date &amp; Time:</strong>
+                                         <t t-esc="(o.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if o.create_date and not isinstance(o.create_date, str) else (o.create_date or '--')"/>
+                                    </div>  
                                     <div>
                                         <strong>Bank Deposit:</strong>
                                         <t t-esc="o.bank_id.name"/>
@@ -111,7 +111,6 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.amount) or 0) or 0"/>
                                     </div>
-                                    <div><strong>Remarks:</strong> <t t-esc="o.remarks or ''"/></div>
                                 </div>
                             </div>
 
@@ -164,8 +163,8 @@
                                 <div class="col-6">
                                     <div>
                                         <strong>Date &amp; Time:</strong>
-                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
-                                    </div>
+                                         <t t-esc="(o.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if o.create_date and not isinstance(o.create_date, str) else (o.create_date or '--')"/>
+                                    </div>  
                                     <div><strong>Entered by: </strong> <t t-esc="o.user_id.name"/></div>
                                 </div>
                             </div>
