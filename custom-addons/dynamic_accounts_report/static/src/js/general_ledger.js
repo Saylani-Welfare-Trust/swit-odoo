@@ -179,11 +179,13 @@ class GeneralLedger extends owl.Component {
     async printPdf(ev) {
         ev.preventDefault();
         var self = this;
+        const gt = this.getVisibleGrandTotals();
         let totals = {
-            'total_debit': this.state.total_debit,
-            'total_credit': this.state.total_credit,
-            'currency': this.state.currency,
-        }
+            'total_debit':     gt.debit.toFixed(2),
+            'total_credit':    gt.credit.toFixed(2),
+            'opening_balance': gt.opening.toFixed(2),
+            'currency':        this.state.currency,
+        };
         var action_title = self.getActionTitle();
         return self.action.doAction({
             'type': 'ir.actions.report',
@@ -208,11 +210,13 @@ class GeneralLedger extends owl.Component {
     }
     async print_xlsx() {
         var self = this;
+        const gt = this.getVisibleGrandTotals();
         let totals = {
-            'total_debit': this.state.total_debit,
-            'total_credit': this.state.total_credit,
-            'currency': this.state.currency,
-        }
+            'total_debit':     gt.debit.toFixed(2),
+            'total_credit':    gt.credit.toFixed(2),
+            'opening_balance': gt.opening.toFixed(2),
+            'currency':        this.state.currency,
+        };
         var action_title = self.getActionTitle();
         var datas = {
             'account': self.state.account,
