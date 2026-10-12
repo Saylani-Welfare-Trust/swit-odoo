@@ -6,7 +6,7 @@ class LoanProductLine(models.Model):
     _description = "Loan Product Line"
 
 
-    # product_id = fields.Many2one('product.product', string='Product')
+    product_id = fields.Many2one('product.product', string='Product')
     microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string='Microfinance Scheme Line')
 
     sd_amount = fields.Float('SD Amount')

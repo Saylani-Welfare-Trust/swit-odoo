@@ -169,9 +169,7 @@ class MedicalEquipment(models.Model):
         help='Reference selected from Master Setup medical equipment references.'
     )
     reference_line_ids = fields.One2many(
-        'medical_equipment_ref_line_rel',
-        'medical_equipment_id',
-        'line_id',
+        'medical.equipment.line',
         compute='_compute_reference_lines',
         string='Reference Items',
         readonly=True
