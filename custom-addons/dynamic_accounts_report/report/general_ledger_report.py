@@ -26,6 +26,7 @@ class GeneralLedgerReport(models.AbstractModel):
             report_options.get('method') or {'accrual': True},
             include_filter_values=False,
         )
+
         accounts = [
             key for key in report_data
             if key not in ('account_totals', 'journal_ids', 'analytic_ids')
