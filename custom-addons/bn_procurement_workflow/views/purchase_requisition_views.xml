@@ -36,6 +36,13 @@
                         class="oe_highlight" invisible="state != 'deferred'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
 
+                <!-- A closed request whose Purchase Order covers only some of its products
+                     goes back to where RFQs are sent, for the remaining products only -->
+                <button string="Send Remaining Products for RFQ" name="action_resend_pending_for_rfq" type="object"
+                        class="oe_highlight" invisible="state != 'done' or not has_pending_rfq_products"
+                        groups="bn_procurement_workflow.group_procurement_manager"
+                        confirm="This reopens the request to send RFQs to vendors for the products that have no Purchase Order yet. Continue?"/>
+
                 <button string="Funds Available" name="action_funds_available" type="object"
                         class="oe_highlight" invisible="state != 'funds_check'"
                         groups="bn_procurement_workflow.group_cfo_shariah"/>
@@ -68,6 +75,7 @@
                  soon as one is selected, not just after Funds Check. -->
             <xpath expr="//field[@name='vendor_id']" position="after">
                 <field name="selected_vendor_id" invisible="not selected_vendor_id"/>
+                <field name="has_pending_rfq_products" invisible="1"/>
             </xpath>
 
             <xpath expr="//notebook" position="inside">

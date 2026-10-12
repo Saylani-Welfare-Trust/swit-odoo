@@ -33,6 +33,20 @@ class PurchaseRequisition(models.Model):
                 'default_source_requisition_id': self.id,
             },
         }
+    def _get_pending_rfq_lines(self):
+        """Lines still to be sent out for quotation: those whose product is not
+        on a confirmed Purchase Order of the source Material Request yet. A
+        requisition without a Material Request always sends all its lines."""
+        self.ensure_one()
+        if not self.material_request_id:
+            return self.line_ids
+        # sudo: whoever opens the requisition need not be a purchase user.
+        ordered_products = self.env['purchase.order'].sudo().search([
+            ('material_request_id', '=', self.material_request_id.id),
+            ('state', 'in', ('purchase', 'done')),
+        ]).order_line.product_id
+        return self.line_ids.filtered(lambda line: line.product_id not in ordered_products)
+
     def action_view_material_request(self):
         """View the source Material Request"""
         self.ensure_one()
