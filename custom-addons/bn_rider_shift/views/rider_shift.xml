@@ -78,7 +78,7 @@
         id="rider_shift_menu"
         name="Shift"
         action="rider_shift_action"
-        groups="bn_rider_shift.rider_shift_menu_group"
+        groups="bn_rider_shift.rider_shift_root_group"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="0"/>
 
