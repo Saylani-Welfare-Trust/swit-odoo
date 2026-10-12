@@ -111,7 +111,6 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.amount) or 0) or 0"/>
                                     </div>
-                                    <div><strong>Remarks:</strong> <t t-esc="o.remarks or ''"/></div>
                                 </div>
                             </div>
 
