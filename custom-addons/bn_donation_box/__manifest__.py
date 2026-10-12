@@ -18,6 +18,7 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'data/ir_module_category.xml',
         'data/server_action.xml',
         'data/sequence.xml',
         'data/hr_employee_category.xml',
