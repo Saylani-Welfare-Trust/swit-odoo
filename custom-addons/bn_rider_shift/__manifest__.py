@@ -10,6 +10,7 @@
         'bn_donation_box',
     ],
     'data': [
+        'data/ir_module_category.xml',
         'data/sequence.xml',
         'security/ir.model.access.csv',
         'security/groups.xml',
