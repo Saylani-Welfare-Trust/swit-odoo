@@ -36,6 +36,19 @@ class GeneralLedger extends owl.Component {
         return Number(this.state.total_debit || 0) - Number(this.state.total_credit || 0);
     }
 
+    getPeriodTotals() {
+        let debit = 0, credit = 0;
+        for (const acc of this.state.account || []) {
+            debit  += Number(this.getAccountTotalValue(acc, 'total_debit',  0));
+            credit += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+        }
+        return {
+            debit,
+            credit,
+            balance: debit - credit,   // no opening balance here
+        };
+    }
+
     setup() {
         super.setup(...arguments);
         this.initial_render = true;
@@ -180,11 +193,17 @@ class GeneralLedger extends owl.Component {
         ev.preventDefault();
         var self = this;
         const gt = this.getVisibleGrandTotals();
+        const pt = this.getPeriodTotals();
         let totals = {
             'total_debit':     gt.debit.toFixed(2),
             'total_credit':    gt.credit.toFixed(2),
             'opening_balance': gt.opening.toFixed(2),
             'currency':        this.state.currency,
+
+            // new — without opening balance
+            'period_debit':    pt.debit.toFixed(2),
+            'period_credit':   pt.credit.toFixed(2),
+            'period_balance':  pt.balance.toFixed(2),
         };
         var action_title = self.getActionTitle();
         return self.action.doAction({
@@ -211,11 +230,17 @@ class GeneralLedger extends owl.Component {
     async print_xlsx() {
         var self = this;
         const gt = this.getVisibleGrandTotals();
+        const pt = this.getPeriodTotals();
         let totals = {
             'total_debit':     gt.debit.toFixed(2),
             'total_credit':    gt.credit.toFixed(2),
             'opening_balance': gt.opening.toFixed(2),
             'currency':        this.state.currency,
+
+            // new — without opening balance
+            'period_debit':    pt.debit.toFixed(2),
+            'period_credit':   pt.credit.toFixed(2),
+            'period_balance':  pt.balance.toFixed(2),
         };
         var action_title = self.getActionTitle();
         var datas = {
