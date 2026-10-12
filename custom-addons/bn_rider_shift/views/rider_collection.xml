@@ -86,7 +86,7 @@
         id="rider_collection_menu"
         name="Collection"
         action="rider_collection_action"
-        groups="bn_rider_shift.rider_shift_collection_menu_group"
+        groups="bn_rider_shift.rider_shift_root_group"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="1"/>
 
