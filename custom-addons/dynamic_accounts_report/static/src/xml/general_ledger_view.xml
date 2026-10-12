@@ -399,9 +399,7 @@
                                         <t t-esc="this.formatAmount(state.total_credit)"/>
                                     </td>
                                     <td style="text-align:right;padding-right:8px;white-space:nowrap;">
-                                        <t t-esc="this.formatAmount(
-                                            Number(state.total_debit || 0) - Number(state.total_credit || 0)
-                                        )"/>
+                                        <t t-esc="this.formatAmount(state.total_debit - state.total_credit)"/>
                                     </td>
                                 </tr>
                             </t>
