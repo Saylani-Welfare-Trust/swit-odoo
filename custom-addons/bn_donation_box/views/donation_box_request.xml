@@ -19,6 +19,7 @@
                         <h1><field name="name" readonly="1" /></h1>
                     </div>
 
+                    
                     <group>
                         <group name="donation_box_request_col_1">
                             <field name="employee_category_id" invisible="1" />
