@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+
+    <data>
+
+        <record id="module_donation_box" model="ir.module.category">
+            <field name="name">Donation Box</field>
+            <field name="description">
+            Access rights and permissions for the Donation Box application.
+            </field>
+            <field name="sequence">30</field>
+        </record>
+
+    </data>
+
+</odoo>
