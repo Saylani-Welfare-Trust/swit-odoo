@@ -2,7 +2,8 @@
 <templates>
     <!-- The gl_template_new template for the GeneralLedger component. -->
     <t t-name="gl_template_new" owl="1">
-        <div class="w-100">
+        <div class="w-100"
+            style="display:flex;flex-direction:column;height:calc(100vh - 120px);min-height:0;overflow:hidden;">
             <div class="fin_report">
                 <div class="filter_view_gl">
                     <div>
