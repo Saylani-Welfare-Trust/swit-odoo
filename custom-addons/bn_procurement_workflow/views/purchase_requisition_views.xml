@@ -78,6 +78,11 @@
                 <field name="has_pending_rfq_products" invisible="1"/>
             </xpath>
 
+            <!-- Department of the Material Request, next to the request's number (Source Document) -->
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="requesting_department_id" invisible="not requesting_department_id"/>
+            </xpath>
+
             <xpath expr="//notebook" position="inside">
                 <page string="Procurement Approval Trail" name="procurement_approval_trail">
                     <group>
