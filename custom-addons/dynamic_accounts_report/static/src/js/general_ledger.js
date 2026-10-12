@@ -26,6 +26,10 @@ class GeneralLedger extends owl.Component {
         return { debit, credit };
     }
 
+    getGrandTotalBalance() {
+        return Number(this.state.total_debit || 0) - Number(this.state.total_credit || 0);
+    }
+
     setup() {
         super.setup(...arguments);
         this.initial_render = true;
