@@ -18,12 +18,18 @@ class GeneralLedger extends owl.Component {
     }
 
     getVisibleGrandTotals() {
-        let debit = 0, credit = 0;
+        let debit = 0, credit = 0, opening = 0;
         for (const acc of this.state.account || []) {
-            debit  += Number(this.getAccountTotalValue(acc, 'total_debit', 0));
-            credit += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+            debit   += Number(this.getAccountTotalValue(acc, 'total_debit', 0));
+            credit  += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+            opening += Number(this.getAccountTotalValue(acc, 'opening_balance', 0));
         }
-        return { debit, credit };
+        return {
+            debit,
+            credit,
+            opening,
+            balance: opening + debit - credit,
+        };
     }
 
     getGrandTotalBalance() {
