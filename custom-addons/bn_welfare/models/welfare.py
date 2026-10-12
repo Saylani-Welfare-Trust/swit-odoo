@@ -152,21 +152,12 @@ class Welfare(models.Model):
 
     
 
-    app_form_ids = fields.One2many('welfare.document.image', 'welfare_id', 
-                                string='Application Forms', 
-                                domain=[('document_type', '=', 'application_form')])
-    frc_ids = fields.One2many('welfare.document.image', 'welfare_id', 
-                            string='FRC', 
-                            domain=[('document_type', '=', 'frc')])
-    elec_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
-                                    string='Electricity Bill', 
-                                    domain=[('document_type', '=', 'electricity_bill')])
-    gas_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
-                                string='Gas Bill', 
-                                domain=[('document_type', '=', 'gas_bill')])
-    family_cnic_ids = fields.One2many('welfare.document.image', 'welfare_id', 
-                                    string='Family CNIC', 
-                                    domain=[('document_type', '=', 'family_cnic')])
+    # NOTE: the *_ids document One2many fields (application_form_ids, frc_ids,
+    # electricity_bill_ids, gas_bill_ids, family_cnic_ids) are defined once
+    # above. The duplicated second set (app_form_ids / elec_bill_ids and the
+    # re-declared frc_ids / gas_bill_ids / family_cnic_ids) was removed: in
+    # Python only the last assignment survived, silently overriding the first
+    # definitions with different labels.
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # Store raw URLs (never touched by sanitizer)
@@ -176,39 +167,38 @@ class Welfare(models.Model):
     gas_bill_urls          = fields.Text('Gas Bill URLs')
     family_cnic_urls       = fields.Text('Family CNIC URLs')
     # Computed fields for filtered document images
-    application_form_images = fields.One2many(
+    # NOTE: One2many fields cannot be computed in Odoo (a comodel inverse name
+    # is required and the ORM never calls a compute on x2many), so these were
+    # broken no-op declarations. Replaced with the equivalent Many2many fields
+    # computed from document_image_ids in _compute_filtered_images below.
+    application_form_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Application Forms',
-        readonly=True
     )
-    
-    frc_images = fields.One2many(
+
+    frc_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='FRC Documents',
-        readonly=True
     )
-    
-    electricity_bill_images = fields.One2many(
+
+    electricity_bill_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Electricity Bills',
-        readonly=True
     )
-    
-    gas_bill_images = fields.One2many(
+
+    gas_bill_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Gas Bills',
-        readonly=True
     )
-    
-    family_cnic_images = fields.One2many(
+
+    family_cnic_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Family CNICs',
-        readonly=True
     )
     # Computed Html fields for display only — never written by the form
 
@@ -358,14 +348,6 @@ class Welfare(models.Model):
             record.family_cnic_images = record.document_image_ids.filtered(
                 lambda img: img.document_type == 'family_cnic'
             )                    
-    @api.depends('employee_category_id', 'donee_id')
-    def _compute_employee_domain(self):
-        for record in self:
-            if record.employee_category_id:
-                record.employee_domain = f"[('category_ids', 'in', [{record.employee_category_id.id}]),('area.id', '=', [{record.donee_id.area.id}])]"
-            else:
-                record.employee_domain = "[]"
-
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
         default=0.0

@@ -105,7 +105,6 @@ class Microfinance(models.Model):
         currency_field='currency_id',
         store=True
     )
-    asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
     
     on_hand_qty = fields.Float(
         string='On Hand Quantity',

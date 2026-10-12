@@ -74,8 +74,17 @@ class AccountStatementImportSheetMapping(models.Model):
             "transaction from"
         ),
     )
+    # NOTE: 'amount_column' is declared once here (next to amount_type, with
+    # the full help text). An earlier duplicate declaration of this field used
+    # to sit above the amount_debit/credit columns; it was removed because in
+    # Python only the last assignment survives.
     amount_column = fields.Char(
-        help="Amount of transaction in journal's currency",
+        string="Amount column",
+        help=(
+            'Used if amount type is "Simple value" or "Absolute value"\n'
+            "Amount of transaction in journal's currency\n"
+            "Some statement formats use credit/debit columns"
+        ),
     )
     amount_debit_column = fields.Char(
         string="Debit amount column",
@@ -125,14 +134,7 @@ class AccountStatementImportSheetMapping(models.Model):
             "Distinct Credit/debit Column: use a distinct column for debit and credit"
         ),
     )
-    amount_column = fields.Char(
-        string="Amount column",
-        help=(
-            'Used if amount type is "Simple value" or "Absolute value"\n'
-            "Amount of transaction in journal's currency\n"
-            "Some statement formats use credit/debit columns"
-        ),
-    )
+    # amount_column declared once above (with the full help text).
     debit_credit_column = fields.Char(
         string="Debit/credit column",
         help=(
