@@ -16,6 +16,25 @@ class PurchaseRequisition(models.Model):
         copy=False,
         help='Material Request that generated this Purchase Request.'
     )
+    material_request_requisition_count = fields.Integer(
+        string='Purchase Requests of the Material Request',
+        compute='_compute_material_request_requisition_count',
+        help='How many Purchase Requests were made for the source Material Request, this one included.')
+
+    @api.depends('material_request_id')
+    def _compute_material_request_requisition_count(self):
+        for requisition in self:
+            # sudo: the Material Request record rule hides requests the user didn't create.
+            requisition.material_request_requisition_count = \
+                requisition.material_request_id.sudo().purchase_requisition_count
+
+    def action_view_material_request_requisitions(self):
+        """View every Purchase Request made for the source Material Request"""
+        self.ensure_one()
+        if not self.material_request_id:
+            raise ValidationError(_('No source Material Request found.'))
+        # sudo: the Material Request record rule hides requests the user didn't create.
+        return self.material_request_id.sudo().action_view_purchase_requisitions()
     
 
     

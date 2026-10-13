@@ -28,6 +28,12 @@
                         invisible="not material_request_id">
                     <field name="material_request_id" widget="statinfo" string="Source MR"/>
                 </button>
+                <!-- The other Purchase Requests made for the same Material Request -->
+                <button name="action_view_material_request_requisitions" type="object"
+                        class="oe_stat_button" icon="fa-list"
+                        invisible="material_request_requisition_count &lt; 2">
+                    <field name="material_request_requisition_count" widget="statinfo" string="PRs on this MR"/>
+                </button>
             </xpath>
 
             <!-- Vendors are picked from the existing ones, never created from here -->

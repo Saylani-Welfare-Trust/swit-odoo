@@ -69,6 +69,11 @@
                                 invisible="not auto_purchase_request_id">
                             <field name="auto_purchase_request_id" widget="statinfo" string="Auto PR (Shortage)"/>
                         </button>
+                        <!-- All the Purchase Requests made for this request, the later ones included -->
+                        <button name="action_view_purchase_requisitions" type="object" class="oe_stat_button" icon="fa-list"
+                                invisible="purchase_requisition_count == 0">
+                            <field name="purchase_requisition_count" widget="statinfo" string="Purchase Requests"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <label for="name" string="Reference"/>
