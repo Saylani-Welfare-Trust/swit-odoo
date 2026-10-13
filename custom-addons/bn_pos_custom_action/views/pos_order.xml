@@ -31,6 +31,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='pos_reference']" position="after">
                 <field name="pos_order_seq" />
+                <field name="source_document" optional="show" />
             </xpath>
         </field>
     </record>
@@ -42,6 +43,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='pos_reference']" position="after">
                 <field name="pos_order_seq"/>
+                <field name="source_document"/>
             </xpath>
         </field>
     </record>
