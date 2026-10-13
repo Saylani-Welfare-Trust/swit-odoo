@@ -50,4 +50,35 @@
         </field>
     </record>
 
+    <record id="view_pos_order_filter_inherit_custom" model="ir.ui.view">
+        <field name="name">pos.order.filter.inherit.custom</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_order_filter"/>
+        <field name="arch" type="xml">
+            <!-- Add searchable fields -->
+            <xpath expr="//field[@name='config_id']" position="after">
+                <field name="analytic_account_id" string="Branch"/>
+                <field name="employee_id" string="Cashier"/>
+                <field name="pos_order_seq"/>
+            </xpath>
+
+            <!-- Add filter buttons next to existing filters -->
+            <xpath expr="//filter[@name='posted']" position="after">
+                <filter string="By Branch" name="filter_branch"
+                        domain="[('analytic_account_id', '!=', False)]"/>
+                <filter string="By Cashier" name="filter_employee"
+                        domain="[('employee_id', '!=', False)]"/>
+                <separator/>
+            </xpath>
+
+            <!-- Add Group By options -->
+            <xpath expr="//filter[@name='status']" position="after">
+                <filter string="Branch" name="group_branch"
+                        domain="[]" context="{'group_by': 'analytic_account_id'}"/>
+                <filter string="Cashier" name="group_employee"
+                        domain="[]" context="{'group_by': 'employee_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
