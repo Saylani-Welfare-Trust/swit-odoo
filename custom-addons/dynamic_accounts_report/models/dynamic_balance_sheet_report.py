@@ -55,274 +55,229 @@ class ProfitLossReport(models.TransientModel):
                             help="Specify the start date.")
     date_to = fields.Date(string="End date", help="Specify the end date.")
 
+    # Simple cache so that load_data / print_pdf / print_xlsx don't all
+    # recompute the same report.
+    cache_key = fields.Char()
+    cache_payload = fields.Text()
+
+    # Account types whose natural sign is credit (i.e. we flip debit-credit).
+    _INCOME_LIKE_TYPES = {
+        'income', 'income_other',
+        'liability_payable', 'liability_current', 'liability_non_current',
+        'equity', 'equity_unaffected',
+    }
+
+    _ACCOUNT_TYPES = [
+        'income', 'income_other', 'expense', 'expense_depreciation',
+        'expense_direct_cost',
+        'asset_receivable', 'asset_cash', 'asset_current',
+        'asset_non_current', 'asset_prepayments', 'asset_fixed',
+        'liability_payable', 'liability_credit_card', 'liability_current',
+        'liability_non_current',
+        'equity', 'equity_unaffected',
+    ]
+
     @api.model_create_multi
     def create(self, vals):
-        """Create one or more records of ProfitLossReport.
-        :param vals: A dictionary or a list of dictionaries containing the field values for the records to be created.
-        :return: A recordset of the created ProfitLossReport records."""
-        return super(ProfitLossReport, self).create({})
+        """Create the (singleton) wizard. Filter values arrive later via
+        ``filter()``, so we deliberately ignore the incoming payload and
+        create with defaults."""
+        return super().create({})
 
+    # ------------------------------------------------------------------ #
+    #  Core computation                                                   #
+    # ------------------------------------------------------------------ #
     @api.model
     def view_report(self, option, comparison, comparison_type):
-        datas = []
-        account_types = {
-            'income': 'income',
-            'income_other': 'income_other',
-            'expense': 'expense',
-            'expense_depreciation': 'expense_depreciation',
-            'expense_direct_cost': 'expense_direct_cost',
-            'asset_receivable': 'asset_receivable',
-            'asset_cash': 'asset_cash',
-            'asset_current': 'asset_current',
-            'asset_non_current': 'asset_non_current',
-            'asset_prepayments': 'asset_prepayments',
-            'asset_fixed': 'asset_fixed',
-            'liability_payable': 'liability_payable',
-            'liability_credit_card': 'liability_credit_card',
-            'liability_current': 'liability_current',
-            'liability_non_current': 'liability_non_current',
-            'equity': 'equity',
-            'equity_unaffected': 'equity_unaffected',
-        }
-        financial_report_id = self.browse(option)
-        current_year = fields.Date.today().year
-        current_date = fields.Date.today()
-        if financial_report_id.target_move == 'draft':
+        """Build the Profit & Loss report payload.
+
+        :returns: ``(data, filters, datas)`` tuple
+        """
+        rec = self.browse(option)
+
+        # Cache hit?
+        key = self._cache_signature(rec, comparison, comparison_type)
+        if rec.cache_key == key and rec.cache_payload:
+            try:
+                data, filters, datas = json.loads(rec.cache_payload)
+                return data, filters, datas
+            except (ValueError, TypeError):
+                pass  # fall through and recompute
+
+        if rec.target_move == 'draft':
             target_move = ['posted', 'draft']
         else:
             target_move = ['posted']
+
+        datas = []
         if comparison:
             for count in range(0, int(comparison) + 1):
                 if comparison_type == "month":
-                    account_move_lines = self.env['account.move.line'].search(
-                        [(
-                            'parent_state', 'in', target_move),
-                            ('date', '>=', (current_date - datetime.timedelta(
-                                days=30 * count)).strftime('%Y-%m-01')),
-                            ('date', '<=', (current_date - datetime.timedelta(
-                                days=30 * count)).strftime('%Y-%m-12'))])
-                elif comparison_type == "year":
-                    account_move_lines = self.env['account.move.line'].search(
-                        [(
-                            'parent_state', 'in', target_move),
-                            ('date', '>=', f'{current_year - count}-01-01'),
-                            ('date', '<=', f'{current_year - count}-12-31')])
-                lists = [{'id': rec.id, 'value': [eval(i) for i in
-                                                  rec.analytic_distribution.keys()]}
-                         for rec in account_move_lines if
-                         rec.analytic_distribution]
-                if financial_report_id.analytic_ids:
-                    account_move_lines = account_move_lines.filtered(lambda
-                                                                         rec: rec.id in [
-                        lst['id'] for lst in lists if lst['value'] and any(
-                            i in financial_report_id.analytic_ids.mapped('id')
-                            for i in lst['value'])])
-                account_move_lines = account_move_lines.filtered(lambda
-                                                                     a: not financial_report_id.journal_ids or a.journal_id in financial_report_id.journal_ids)
-                account_move_lines = account_move_lines.filtered(lambda
-                                                                     a: not financial_report_id.account_ids or a.account_id in financial_report_id.account_ids)
-                account_move_lines = account_move_lines.filtered(lambda
-                                                                     a: not financial_report_id.date_from or a.date >= financial_report_id.date_from)
-                account_move_lines = account_move_lines.filtered(lambda
-                                                                     a: not financial_report_id.date_to or a.date <= financial_report_id.date_to)
-                account_entries = {}
-                for account_type in account_types.values():
-                    account_entries[account_type] = self._get_entries(
-                        account_move_lines, self.env['account.account'].search(
-                            [('account_type', '=', account_type)]),
-                        account_type)
-                total_income = sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['income', 'income_other'] for entry in
-                    account_entries[account_type][0]) - sum(
-                    float(entry['amount'].replace(',', '')) for entry in
-                    account_entries['expense_direct_cost'][0])
-                total_expense = sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['expense', 'expense_depreciation'] for entry in
-                    account_entries[account_type][0])
-                total_current_asset = sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['asset_receivable', 'asset_current', 'asset_cash',
-                     'asset_prepayments'] for entry in
-                    account_entries[account_type][0])
-                total_assets = total_current_asset + sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['asset_fixed', 'asset_non_current'] for entry in
-                    account_entries[account_type][0])
-                total_current_liability = sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['liability_current', 'liability_payable'] for entry in
-                    account_entries[account_type][0])
-                total_liability = total_current_liability + sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['liability_non_current'] for entry in
-                    account_entries[account_type][0])
-                total_unallocated_earning = (
-                                                    total_income - total_expense) + sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['equity_unaffected'] for entry in
-                    account_entries[account_type][0])
-                total_equity = total_unallocated_earning + sum(
-                    float(entry['amount'].replace(',', '')) for account_type
-                    in
-                    ['equity'] for entry in
-                    account_entries[account_type][0])
-                total = total_liability + total_equity
-                data = {
-                    'total': total_income - total_expense,
-                    'total_expense': "{:,.2f}".format(total_expense),
-                    'total_income': "{:,.2f}".format(total_income),
-                    'total_current_asset': "{:,.2f}".format(
-                        total_current_asset),
-                    'total_assets': "{:,.2f}".format(total_assets),
-                    'total_current_liability': "{:,.2f}".format(
-                        total_current_liability),
-                    'total_liability': "{:,.2f}".format(total_liability),
-                    'total_earnings': "{:,.2f}".format(
-                        total_income - total_expense),
-                    'total_unallocated_earning': "{:,.2f}".format(
-                        total_unallocated_earning),
-                    'total_equity': "{:,.2f}".format(total_equity),
-                    'total_balance': "{:,.2f}".format(total),
-                    **account_entries}
+                    period_from = (datetime.date.today() - datetime.timedelta(
+                        days=30 * count)).strftime('%Y-%m-01')
+                    period_to = (datetime.date.today() - datetime.timedelta(
+                        days=30 * count)).strftime('%Y-%m-12')
+                else:  # "year"
+                    period_from = f'{fields.Date.today().year - count}-01-01'
+                    period_to = f'{fields.Date.today().year - count}-12-31'
+
+                data, _ = self._compute_period(
+                    rec, target_move, period_from, period_to)
                 datas.append(data)
         else:
             current_year = fields.Date.today().year
-            date_from = financial_report_id.date_from or f'{current_year}-01-01'
-            date_to = financial_report_id.date_to or f'{current_year}-12-31'
-            account_move_lines = self.env['account.move.line'].search(
-                [('parent_state', 'in', target_move),
-                 ('date', '>=', date_from),
-                 ('date', '<=', date_to)])
-            lists = [{'id': rec.id,
-                      'value': [eval(i) for i in
-                                rec.analytic_distribution.keys()]}
-                     for rec in account_move_lines if
-                     rec.analytic_distribution]
-            if financial_report_id.analytic_ids:
-                account_move_lines = account_move_lines.filtered(
-                    lambda rec: rec.id in [lst['id'] for lst in lists if
-                                           lst['value'] and any(
-                                               i in financial_report_id.analytic_ids.mapped(
-                                                   'id') for i in
-                                               lst['value'])])
-            account_move_lines = account_move_lines.filtered(lambda
-                                                                 a: not financial_report_id.journal_ids or a.journal_id in financial_report_id.journal_ids)
-            account_move_lines = account_move_lines.filtered(lambda
-                                                                 a: not financial_report_id.account_ids or a.account_id in financial_report_id.account_ids)
-            account_move_lines = account_move_lines.filtered(lambda
-                                                                 a: not financial_report_id.date_from or a.date >= financial_report_id.date_from)
-            account_move_lines = account_move_lines.filtered(lambda
-                                                                 a: not financial_report_id.date_to or a.date <= financial_report_id.date_to)
-            account_entries = {}
-            for account_type in account_types.values():
-                account_entries[account_type] = self._get_entries(
-                    account_move_lines, self.env['account.account'].search(
-                        [('account_type', '=', account_type)]), account_type)
-            total_income = sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['income', 'income_other'] for entry in
-                account_entries[account_type][0]) - sum(
-                float(entry['amount'].replace(',', '')) for entry in
-                account_entries['expense_direct_cost'][0])
-            total_expense = sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['expense', 'expense_depreciation'] for entry in
-                account_entries[account_type][0])
-            total_current_asset = sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['asset_receivable', 'asset_current', 'asset_cash',
-                 'asset_prepayments'] for entry in
-                account_entries[account_type][0])
-            total_assets = total_current_asset + sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['asset_fixed', 'asset_non_current'] for entry in
-                account_entries[account_type][0])
-            total_current_liability = sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['liability_current', 'liability_payable'] for entry in
-                account_entries[account_type][0])
-            total_liability = total_current_liability + sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['liability_non_current'] for entry in
-                account_entries[account_type][0])
-            total_unallocated_earning = (total_income - total_expense) + sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['equity_unaffected'] for entry in
-                account_entries[account_type][0])
-            total_equity = total_unallocated_earning + sum(
-                float(entry['amount'].replace(',', '')) for account_type in
-                ['equity'] for entry in account_entries[account_type][0])
-            total = total_liability + total_equity
-            data = {
-                'total': total_income - total_expense,
-                'total_expense': "{:,.2f}".format(total_expense),
-                'total_income': "{:,.2f}".format(total_income),
-                'total_current_asset': "{:,.2f}".format(total_current_asset),
-                'total_assets': "{:,.2f}".format(total_assets),
-                'total_current_liability': "{:,.2f}".format(
-                    total_current_liability),
-                'total_liability': "{:,.2f}".format(total_liability),
-                'total_earnings': "{:,.2f}".format(
-                    total_income - total_expense),
-                'total_unallocated_earning': "{:,.2f}".format(
-                    total_unallocated_earning),
-                'total_equity': "{:,.2f}".format(total_equity),
-                'total_balance': "{:,.2f}".format(total),
-                **account_entries}
+            date_from = rec.date_from or f'{current_year}-01-01'
+            date_to = rec.date_to or f'{current_year}-12-31'
+            data, _ = self._compute_period(rec, target_move, date_from, date_to)
             datas.append(data)
+
+        data = datas[0]  # report payload for single-period callers
         filters = self._get_filter_data()
+
+        rec.write({
+            'cache_key': key,
+            'cache_payload': json.dumps([data, filters, datas]),
+        })
         return data, filters, datas
 
-    def _get_entries(self, account_move_lines, account_ids, account_type):
-        """
-            Get the entries for the specified account type.
-            :param account_move_lines: The account move lines to filter.
-            :param account_ids: The account IDs to filter.
-            :param account_type: The account type.
-            :return: A tuple containing the entries and the total amount.
-            """
-        entries = []
-        total = 0
-        for account in account_ids:
-            filtered_lines = account_move_lines.filtered(
-                lambda line: line.account_id == account)
-            if filtered_lines:
-                if account_type in ['income', 'income_other',
-                                    'liability_payable', 'liability_current',
-                                    'liability_non_current', 'equity',
-                                    'equity_unaffected']:
-                    amount = -(sum(filtered_lines.mapped('debit')) - sum(
-                        filtered_lines.mapped('credit')))
-                else:
-                    amount = sum(filtered_lines.mapped('debit')) - sum(
-                        filtered_lines.mapped('credit'))
-                entries.append({
-                    'name': "{} - {}".format(account.code, account.name),
-                    'amount': "{:,.2f}".format(amount),
-                })
-                total += amount
-            else:
-                entries.append({
-                    'name': "{} - {}".format(account.code, account.name),
-                    'amount': "{:,.2f}".format(0),
-                })
-        return entries, "{:,.2f}".format(total)
+    # ------------------------------------------------------------------ #
+    #  Per-period computation                                             #
+    # ------------------------------------------------------------------ #
+    def _compute_period(self, rec, target_move, date_from, date_to):
+        """Return (data_dict, account_entries) for a single period."""
+        # ---- 1. Build the search domain directly. All the field-level
+        #         filtering that used to be done with ``.filtered(...)``
+        #         now happens in SQL.
+        domain = [
+            ('parent_state', 'in', target_move),
+            ('date', '>=', date_from),
+            ('date', '<=', date_to),
+        ]
+        if rec.journal_ids:
+            domain.append(('journal_id', 'in', rec.journal_ids.ids))
+        if rec.account_ids:
+            domain.append(('account_id', 'in', rec.account_ids.ids))
 
-    def filter(self, vals):
+        account_move_lines = self.env['account.move.line'].search(domain)
+
+        # ---- 2. Analytic filter. There is no clean SQL way to test keys
+        #         of a JSONB column against a list of ints in every PG
+        #         version we support, so keep it in Python but operate
+        #         with ints only (never eval() user data).
+        if rec.analytic_ids:
+            wanted = set(rec.analytic_ids.ids)
+            account_move_lines = account_move_lines.filtered(
+                lambda l: l.analytic_distribution and any(
+                    int(k) in wanted for k in l.analytic_distribution.keys()
+                )
+            )
+
+        # ---- 3. Single O(N) pass over the lines -> bucket by account.
+        buckets = self._build_account_buckets(account_move_lines)
+
+        # ---- 4. Fetch accounts once, group by account_type.
+        all_accounts = self.env['account.account'].search(
+            [('account_type', 'in', self._ACCOUNT_TYPES)])
+        accounts_by_type = {}
+        for acc in all_accounts:
+            accounts_by_type.setdefault(acc.account_type, []).append(acc)
+
+        account_entries = {}
+        for account_type in self._ACCOUNT_TYPES:
+            account_entries[account_type] = self._get_entries(
+                buckets,
+                accounts_by_type.get(account_type, []),
+                account_type,
+            )
+
+        # ---- 5. Totals. Same maths as before but reading directly from
+        #         the numeric amounts instead of the formatted strings.
+        def _sum(*types):
+            total = 0.0
+            for t in types:
+                # account_entries[t][1] is the formatted total; use the
+                # numeric value stored next to it.
+                total += account_entries[t][2]
+            return total
+
+        total_income = (
+            _sum('income', 'income_other') - _sum('expense_direct_cost')
+        )
+        total_expense = _sum('expense', 'expense_depreciation')
+        total_current_asset = _sum(
+            'asset_receivable', 'asset_current', 'asset_cash',
+            'asset_prepayments')
+        total_assets = total_current_asset + _sum(
+            'asset_fixed', 'asset_non_current')
+        total_current_liability = _sum(
+            'liability_current', 'liability_payable')
+        total_liability = total_current_liability + _sum(
+            'liability_non_current')
+        total_unallocated_earning = (
+            (total_income - total_expense) + _sum('equity_unaffected')
+        )
+        total_equity = total_unallocated_earning + _sum('equity')
+        total = total_liability + total_equity
+
+        data = {
+            'total': total_income - total_expense,
+            'total_expense': "{:,.2f}".format(total_expense),
+            'total_income': "{:,.2f}".format(total_income),
+            'total_current_asset': "{:,.2f}".format(total_current_asset),
+            'total_assets': "{:,.2f}".format(total_assets),
+            'total_current_liability': "{:,.2f}".format(
+                total_current_liability),
+            'total_liability': "{:,.2f}".format(total_liability),
+            'total_earnings': "{:,.2f}".format(total_income - total_expense),
+            'total_unallocated_earning': "{:,.2f}".format(
+                total_unallocated_earning),
+            'total_equity': "{:,.2f}".format(total_equity),
+            'total_balance': "{:,.2f}".format(total),
+        }
+        # account_entries values are (entries, formatted_total, numeric_total)
+        # but the JSON payload historically exposed (entries, formatted_total).
+        # Strip the third element to keep the front-end / XLSX template happy.
+        for k, v in account_entries.items():
+            data[k] = (v[0], v[1])
+        return data, account_entries
+
+    def _build_account_buckets(self, account_move_lines):
+        """Single-pass aggregation: ``{account_id: [debit_sum, credit_sum]}``."""
+        buckets = {}
+        for line in account_move_lines:
+            aid = line.account_id.id
+            b = buckets.get(aid)
+            if b is None:
+                buckets[aid] = [line.debit, line.credit]
+            else:
+                b[0] += line.debit
+                b[1] += line.credit
+        return buckets
+
+    def _get_entries(self, buckets, accounts, account_type):
+        """Return ``(entries, formatted_total, numeric_total)``.
+
+        Uses a pre-built bucket dict so the whole report is O(lines + accounts)
+        instead of O(lines × accounts) as before.
         """
-            Update the filter criteria based on the provided values.
-            :param vals: A dictionary containing the filter values to update.
-            :return: The updated record.
-            """
+        sign = -1.0 if account_type in self._INCOME_LIKE_TYPES else 1.0
+        entries = []
+        total = 0.0
+        for account in accounts:
+            b = buckets.get(account.id)
+            amount = sign * (b[0] - b[1]) if b else 0.0
+            entries.append({
+                'name': "{} - {}".format(account.code, account.name),
+                'amount': "{:,.2f}".format(amount),
+            })
+            total += amount
+        return entries, "{:,.2f}".format(total), total
+
+    # ------------------------------------------------------------------ #
+    #  Filters                                                            #
+    # ------------------------------------------------------------------ #
+    def filter(self, vals):
+        """Update the filter criteria based on the provided values."""
         filter = []
         today = fields.Date.today()
         if vals == 'month':
@@ -363,60 +318,84 @@ class ProfitLossReport(models.TransientModel):
                 'date_to': get_fiscal_year(last_year_date)[1].strftime(
                     "%Y-%m-%d"),
             }
+
         if 'date_from' in vals:
             self.write({'date_from': vals['date_from']})
         if 'date_to' in vals:
             self.write({'date_to': vals['date_to']})
         if 'journal_ids' in vals:
             if int(vals['journal_ids']) in self.journal_ids.mapped('id'):
-                self.update({'journal_ids': [(3, int(vals['journal_ids']))]})
+                self.write({'journal_ids': [(3, int(vals['journal_ids']))]})
             else:
                 self.write({'journal_ids': [(4, int(vals['journal_ids']))]})
             filter.append({'journal_ids': self.journal_ids.mapped('code')})
         if 'account_ids' in vals:
             if int(vals['account_ids']) in self.account_ids.mapped('id'):
-                self.update(
-                    {'account_ids': [(3, int(vals['account_ids']))]})
+                self.write({'account_ids': [(3, int(vals['account_ids']))]})
             else:
                 self.write({'account_ids': [(4, int(vals['account_ids']))]})
             filter.append({'account_ids': self.account_ids.mapped('name')})
         if 'analytic_ids' in vals:
             if int(vals['analytic_ids']) in self.analytic_ids.mapped('id'):
-                self.update(
+                self.write(
                     {'analytic_ids': [(3, int(vals['analytic_ids']))]})
             else:
-                self.write({'analytic_ids': [(4, int(vals['analytic_ids']))]})
+                self.write(
+                    {'analytic_ids': [(4, int(vals['analytic_ids']))]})
             filter.append({'analytic_ids': self.analytic_ids.mapped('name')})
         if 'target' in vals:
             self.write({'target_move': vals['target']})
             filter.append({'target_move': self.target_move})
+
+        # Any filter change invalidates the cache.
+        self.write({'cache_key': False, 'cache_payload': False})
         return filter
 
     def _get_filter_data(self):
+        """Return the dropdown contents for journals / accounts / analytics.
+
+        Restricted to the current company where the model supports it and
+        uses ``search_read`` to avoid loading whole records just to build
+        a two-key dict.
         """
-            Retrieve the filter data for journals and accounts.
+        company = self.company_id or self.env.company
 
-            :return: A dictionary containing the filter data.
-            """
-        journal_ids = self.env['account.journal'].search([])
-        journal = [{'id': journal.id, 'name': journal.name} for journal in
-                   journal_ids]
+        journal_recs = self.env['account.journal'].search_read(
+            [('company_id', '=', company.id)], ['name'])
+        journal = [{'id': r['id'], 'name': r['name']} for r in journal_recs]
 
-        account_ids = self.env['account.account'].search([])
-        account = [{'id': account.id, 'name': account.name} for account in
-                   account_ids]
+        account_domain = []
+        if 'company_ids' in self.env['account.account']._fields:
+            account_domain = [('company_ids', 'in', company.id)]
+        elif 'company_id' in self.env['account.account']._fields:
+            account_domain = [('company_id', '=', company.id)]
+        account_recs = self.env['account.account'].search_read(
+            account_domain, ['name'])
+        account = [{'id': r['id'], 'name': r['name']} for r in account_recs]
 
-        analytic_ids = self.env['account.analytic.account'].search([])
-        analytic = [{'id': analytic.id, 'name': analytic.name} for analytic in
-                    analytic_ids]
+        analytic_recs = self.env['account.analytic.account'].search_read(
+            [], ['name'])
+        analytic = [{'id': r['id'], 'name': r['name']} for r in analytic_recs]
 
-        filter = {
+        return {
             'journal': journal,
             'account': account,
-            'analytic': analytic
+            'analytic': analytic,
         }
-        return filter
 
+    # ------------------------------------------------------------------ #
+    #  Cache helpers                                                      #
+    # ------------------------------------------------------------------ #
+    def _cache_signature(self, rec, comparison, comparison_type):
+        return "|".join(str(x) for x in [
+            comparison, comparison_type,
+            rec.date_from, rec.date_to, rec.target_move,
+            rec.journal_ids.ids, rec.account_ids.ids, rec.analytic_ids.ids,
+        ])
+
+    # ------------------------------------------------------------------ #
+    #  Comparison helpers (unchanged logic)                               #
+    # ------------------------------------------------------------------ #
     @api.model
     def comparison_filter(self, options, count):
         today = fields.Date.today()
@@ -452,11 +431,7 @@ class ProfitLossReport(models.TransientModel):
 
     @api.model
     def get_xlsx_report(self, data, response, report_name, report_action):
-        """Generate and return an XLSX report based on the provided data.
-            :param data: The report data in JSON format.
-            :param report_name: Name of the report.
-            :param response: The response object to write the generated report to.
-            """
+        """Generate and return an XLSX report based on the provided data."""
         data = json.loads(data)
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
