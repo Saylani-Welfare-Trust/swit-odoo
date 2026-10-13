@@ -42,16 +42,21 @@ class VendorSelectionWizard(models.TransientModel):
         if not self.source_requisition_id or not self.source_requisition_id.line_ids:
             raise ValidationError(_('No product lines found in the source Purchase Requisition.'))
         
+        # What is already ordered from this requisition is left out
+        pending = self.source_requisition_id._get_pending_rfq_line_quantities()
+        if not pending:
+            raise ValidationError(_('Everything on this Purchase Requisition has already been ordered.'))
+
         created_rfqs = self.env['purchase.order']
-        
+
         for vendor in self.vendor_ids:
             # Prepare line values from source Purchase Requisition
             line_vals = []
-            for line in self.source_requisition_id.line_ids:
+            for line, quantity in pending.items():
                 line_vals.append((0, 0, {
                     'product_id': line.product_id.id,
                     'product_uom': line.product_uom_id.id,
-                    'product_qty': line.product_qty,
+                    'product_qty': quantity,
                     'price_unit': 0.0,  # Will be filled later
                 }))
             

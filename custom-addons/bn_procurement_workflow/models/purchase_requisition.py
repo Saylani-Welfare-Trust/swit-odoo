@@ -44,6 +44,15 @@ class PurchaseRequisition(models.Model):
     selected_rfq_hod_approved_by = fields.Many2one(
         related='selected_rfq_id.hod_approved_by', string='HOD Approved By')
 
+    # The Purchase Order may cover only part of what the Material Request asks
+    # for (fewer products, or a lower quantity), which leaves the request
+    # closed with something that was never ordered.
+    has_pending_rfq_products = fields.Boolean(
+        compute='_compute_has_pending_rfq_products',
+        help='Whether the Material Request asks for products or quantities that '
+             'are not on a confirmed Purchase Order yet, and no more recent '
+             'Purchase Request has been created for them.')
+
     # Automatic Shariah Law balance check for the Funds Availability gate
     funds_shariah_balance = fields.Monetary(
         string='Shariah Law Closing Balance', currency_field='currency_id',
@@ -156,6 +165,58 @@ class PurchaseRequisition(models.Model):
         if not self.procurement_manager_id:
             raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
         self.state = 'rfq_sent'
+
+    @api.depends('material_request_id', 'state', 'purchase_ids.state',
+                 'purchase_ids.order_line.product_id', 'purchase_ids.order_line.product_qty')
+    def _compute_has_pending_rfq_products(self):
+        """The confirmed Purchase Orders are matched against the Material Request,
+        product by product and quantity by quantity: any difference is pending.
+        Only the latest requisition of a Material Request offers to act on it,
+        so the same remainder is never requested twice."""
+        for requisition in self:
+            requisition.has_pending_rfq_products = bool(
+                requisition.material_request_id
+                and not requisition._has_newer_request()
+                and requisition._get_request_shortfall())
+
+    def action_create_remaining_request(self):
+        """A closed request whose Purchase Order covers only part of its Material
+        Request: create a new Purchase Request for the products and quantities
+        that are not ordered yet. This one stays closed with what it ordered.
+        The new one starts in Procurement Manager Approval, ready for RFQs: the
+        Procurement Manager creating it is the one who would approve it."""
+        self.ensure_one()
+        if self.state != 'done':
+            raise ValidationError(_('This request is not Closed.'))
+        if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+            raise ValidationError(_('Only a Procurement Manager can create the Purchase Request for the remaining products.'))
+        if not self.material_request_id:
+            raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
+        if self._has_newer_request():
+            raise ValidationError(_('A more recent Purchase Request already exists for this Material Request.'))
+        shortfall = self._get_request_shortfall()
+        if not shortfall:
+            raise ValidationError(_('Everything on the Material Request has already been ordered.'))
+        new_request = self._create_remaining_request()
+        new_request.action_procurement_approve()
+        products = ', '.join(
+            '%s (%g %s)' % (product.display_name, quantity, product.uom_id.name)
+            for product, quantity in shortfall.items())
+        self.message_post(body=_(
+            '%(user)s created %(request)s for what is not ordered yet: %(products)s.',
+            user=self.env.user.display_name,
+            request=new_request._get_html_link(), products=products))
+        new_request.message_post(body=_(
+            'Created from %(request)s for what its Purchase Order did not cover: %(products)s.',
+            request=self._get_html_link(), products=products))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase Request'),
+            'res_model': 'purchase.requisition',
+            'res_id': new_request.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_select_winning_rfq(self, winning_po):
         """Called by the RFQ price wizard once a winning quote has been selected.

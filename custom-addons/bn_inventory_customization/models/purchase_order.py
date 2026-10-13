@@ -1,6 +1,36 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
+
+class PurchaseOrder(models.Model):
+    _inherit = "purchase.order"
+
+    # What a confirmed order is waiting for. It is a field of its own, not extra
+    # values of `state`: Odoo's receipt and billing logic only knows a confirmed
+    # order as 'purchase' or 'done'.
+    receipt_bill_state = fields.Selection([
+        ('to_receive', 'Waiting Receipt'),
+        ('to_bill', 'Received - To Bill'),
+        ('billed', 'Billed'),
+    ], string="Receipt / Bill Status", compute='_compute_receipt_bill_state', store=True)
+
+    @api.depends('state', 'receipt_status', 'invoice_status')
+    def _compute_receipt_bill_state(self):
+        """The bill is created from the receipt (stock.picking.action_create_bill),
+        so an order needs one as soon as something has been received and is not
+        billed yet. After a partial receipt has been billed, the order waits for
+        the rest of its receipt again."""
+        for order in self:
+            if order.state not in ('purchase', 'done'):
+                order.receipt_bill_state = False
+            elif order.invoice_status == 'to invoice' and order.receipt_status != 'pending':
+                order.receipt_bill_state = 'to_bill'
+            elif order.invoice_status == 'invoiced' and order.receipt_status in (False, 'full'):
+                order.receipt_bill_state = 'billed'
+            else:
+                order.receipt_bill_state = 'to_receive'
+
+
 class PurchaseOrderLine(models.Model):
     _inherit = "purchase.order.line"
 

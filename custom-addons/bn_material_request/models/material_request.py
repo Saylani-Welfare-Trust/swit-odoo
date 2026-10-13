@@ -16,6 +16,12 @@ class MemberApproval(models.Model):
     department_id = fields.Many2one(related='user_id.employee_id.department_id', string="Department", store=True)
     purchase_request_id =   fields.Many2one('purchase.requisition', string="Purchase Request")
     auto_purchase_request_id = fields.Many2one('purchase.requisition', string="Auto Purchase Request (Stock Shortage)", readonly=True, copy=False, help="Automatically created purchase requisition when stock is insufficient.")
+    # Every Purchase Request made for this request: the first one above, and
+    # the ones created afterwards for what its Purchase Order did not cover.
+    purchase_requisition_ids = fields.One2many(
+        'purchase.requisition', 'material_request_id', string='Purchase Requests', readonly=True)
+    purchase_requisition_count = fields.Integer(
+        string='Purchase Requests', compute='_compute_purchase_requisition_count')
    
     employee_location_id = fields.Many2one(
         'account.analytic.account',
@@ -562,6 +568,25 @@ class MemberApproval(models.Model):
             'target': 'current',
         }
     
+    @api.depends('purchase_requisition_ids')
+    def _compute_purchase_requisition_count(self):
+        for rec in self:
+            # sudo: the requester need not be a purchase user.
+            rec.purchase_requisition_count = len(rec.sudo().purchase_requisition_ids)
+
+    def action_view_purchase_requisitions(self):
+        """View every Purchase Request made for this request"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase Requests of %s', self.name),
+            'res_model': 'purchase.requisition',
+            'view_mode': 'tree,form',
+            'domain': [('material_request_id', '=', self.id)],
+            'context': {'create': False},
+            'target': 'current',
+        }
+
     def action_view_auto_purchase_request(self):
         """View the auto-created purchase request (due to stock shortage)"""
         self.ensure_one()
