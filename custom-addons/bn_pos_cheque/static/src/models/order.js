@@ -24,9 +24,6 @@ patch(Order.prototype, {
             cheque_number: this.cheque_number,
             cheque_date: this.cheque_date,
             qr_code: this.qr_code,
-            // Same rule the backend uses to create the pos.cheque record: the slip
-            // stays provisional until treasury clears that cheque
-            is_provisional: Boolean(this.cheque_number && !this.qr_code),
         };
     },
 
