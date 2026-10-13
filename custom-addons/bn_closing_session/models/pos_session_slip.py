@@ -15,7 +15,8 @@ class POSSessionSlip(models.Model):
     type = fields.Char('Type')
     slip_no = fields.Char('Deposit Slip No.')
 
-    amount = fields.Monetary('Amount', currency_field='currency_id')
+    # Set by the POS closing screen (create_session_slip); never edited in the back office.
+    amount = fields.Monetary('Amount', currency_field='currency_id', readonly=True)
 
 
     @api.model
