@@ -17,6 +17,7 @@ class POSSessionSlip(models.Model):
 
     # Set by the POS closing screen (create_session_slip); never edited in the back office.
     amount = fields.Monetary('Amount', currency_field='currency_id', readonly=True)
+    description = fields.Text('Description')
 
 
     @api.model
