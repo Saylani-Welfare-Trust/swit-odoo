@@ -94,30 +94,45 @@ class AccountGeneralLedger(models.TransientModel):
         return account_dict
 
     @api.model
-    def get_filter_values(self, journal_id, date_range, options, analytic,
-                        method, include_filter_values=True):
-        account_dict = {}
-        account_totals = {}
+    def get_filter_values(self, journal_id, date_range, options, analytic, method,
+                        include_filter_values=True, offset=0, limit=20,
+                        search_query=''):
+        """
+        Paginated GL loader.
+        - offset / limit: paginate ACCOUNTS (each page includes those accounts' lines)
+        - search_query: server-side search across account name/code + line text
+        Returns:
+        {
+            'account':        [<account keys for this page>],
+            'account_totals': { key: {..totals..} },
+            'total_accounts': int,
+            'has_more':       bool,
+            'offset':         int,
+            'journal_ids':    [...],   # only when offset == 0
+            'analytic_ids':   [...],   # only when offset == 0
+        }
+        """
+        # -------- build domain (same logic as before) --------
         today = fields.Date.today()
         quarter_start, quarter_end = date_utils.get_quarter(today)
         previous_quarter_start = quarter_start - relativedelta(months=3)
         previous_quarter_end = quarter_start - relativedelta(days=1)
+
         if options == {}:
             options = None
-        if options is None:
-            option_domain = ['posted']
-        elif 'draft' in options:
-            option_domain = ['posted', 'draft']
-        domain = [('journal_id', 'in', journal_id),
-                ('parent_state', 'in', option_domain), ] if journal_id else [
-            ('parent_state', 'in', option_domain), ]
-        if method == {}:
-            method = None
-        if method is not None and 'cash' in method:
-            domain += [('journal_id', 'in',
-                        self.env.company.tax_cash_basis_journal_id.ids), ]
+        option_domain = ['posted'] if options is None else (
+            ['posted', 'draft'] if 'draft' in options else ['posted'])
+
+        domain = []
+        if journal_id:
+            domain.append(('journal_id', 'in', journal_id))
+        domain.append(('parent_state', 'in', option_domain))
+
+        if method and 'cash' in method:
+            domain.append(('journal_id', 'in',
+                        self.env.company.tax_cash_basis_journal_id.ids))
         if analytic:
-            domain += [('analytic_line_ids.account_id', 'in', analytic)]
+            domain.append(('analytic_line_ids.account_id', 'in', analytic))
 
         start_date = end_date = None
         if date_range:
@@ -130,7 +145,8 @@ class AccountGeneralLedger(models.TransientModel):
             elif date_range == 'last-month':
                 last_month_start = today.replace(day=1) - relativedelta(months=1)
                 last_month_end = last_month_start + relativedelta(
-                    day=calendar.monthrange(last_month_start.year, last_month_start.month)[1])
+                    day=calendar.monthrange(last_month_start.year,
+                                            last_month_start.month)[1])
                 start_date, end_date = last_month_start, last_month_end
             elif date_range == 'last-year':
                 last_year_start = today.replace(month=1, day=1) - relativedelta(years=1)
@@ -142,84 +158,111 @@ class AccountGeneralLedger(models.TransientModel):
                     start_date = datetime.strptime(date_range['start_date'], '%Y-%m-%d').date()
                 if date_range.get('end_date'):
                     end_date = datetime.strptime(date_range['end_date'], '%Y-%m-%d').date()
-
             if start_date:
-                domain += [('date', '>=', start_date)]
+                domain.append(('date', '>=', start_date))
             if end_date:
-                domain += [('date', '<=', end_date)]
+                domain.append(('date', '<=', end_date))
 
-        # ---- Safety cap: prevent RPC/HTTP2 failures on large databases ----
-        MAX_MOVE_LINES = 20000
-        line_count = self.env['account.move.line'].search_count(domain)
-        if line_count > MAX_MOVE_LINES:
-            raise UserError(
-                "This filter matches %s journal items, which is too many to "
-                "load at once.\n\nPlease narrow the Date Range or pick "
-                "specific Journals.\n\n(Limit: %s lines)"
-                % (line_count, MAX_MOVE_LINES)
-            )
+        # -------- server-side search --------
+        if search_query:
+            tokens = [t for t in search_query.split() if t]
+            for token in tokens:
+                domain += [
+                    '|', '|', '|', '|', '|',
+                    ('account_id.code', 'ilike', token),
+                    ('account_id.name', 'ilike', token),
+                    ('move_name', 'ilike', token),
+                    ('name', 'ilike', token),
+                    ('ref', 'ilike', token),
+                    ('partner_id.name', 'ilike', token),
+                ]
 
-        move_lines = self.env['account.move.line'].search_read(
-            domain,
-            ['date', 'name', 'move_id', 'move_name', 'debit', 'credit',
-            'partner_id', 'account_id', 'ref', 'journal_id',
-            'analytic_distribution']
-        )
+        # -------- per-account totals via read_group (no line load) --------
+        grouped = self.env['account.move.line'].read_group(
+            domain, ['debit:sum', 'credit:sum'], ['account_id'], lazy=False)
+        account_meta_raw = []
+        for g in grouped:
+            if not g.get('account_id'):
+                continue
+            acc_id = g['account_id'][0]
+            account_meta_raw.append({
+                'id': acc_id,
+                'debit': g.get('debit', 0.0) or 0.0,
+                'credit': g.get('credit', 0.0) or 0.0,
+            })
 
-        if include_filter_values:
-            account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
-            account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+        acc_records = self.env['account.account'].browse(
+            [a['id'] for a in account_meta_raw]).exists()
+        acc_by_id = {a.id: a for a in acc_records}
 
-        account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
-        account_map = {}
-        account_meta = {}
-        if account_ids:
-            account_records = self.env['account.account'].browse(list(account_ids)).exists()
-            account_map = {
-                account.id: f"{account.code} {account.name}"
-                for account in account_records
-            }
-            account_meta = {
-                account.id: {'code': account.code or '', 'name': account.name or ''}
-                for account in account_records
-            }
+        all_rows = []
+        for a in account_meta_raw:
+            acc = acc_by_id.get(a['id'])
+            if not acc:
+                continue
+            key = f"{acc.code} {acc.name}"
+            all_rows.append({
+                'key': key,
+                'id': acc.id,
+                'code': acc.code or '',
+                'name': acc.name or '',
+                'debit': a['debit'],
+                'credit': a['credit'],
+            })
+        all_rows.sort(key=lambda r: r['key'])
 
-        # --- opening balance (same domain, minus date filters, dated before start_date) ---
+        total_accounts = len(all_rows)
+        if limit is None:
+            page_rows = all_rows[offset:]           # no cap — used by PDF/grand-total
+        else:
+            page_rows = all_rows[offset:offset + limit]
+        page_keys = [r['key'] for r in page_rows]
+        page_acc_ids = [r['id'] for r in page_rows]
+
+        currency = self.env.company.currency_id.symbol
+
+        # -------- opening balances for THIS PAGE's accounts only --------
         opening_balances = {}
-        if start_date and account_ids:
+        if start_date and page_acc_ids:
             opening_domain = [d for d in domain if d[0] != 'date']
             opening_domain += [('date', '<', start_date),
-                            ('account_id', 'in', list(account_ids))]
+                            ('account_id', 'in', page_acc_ids)]
             opening_lines = self.env['account.move.line'].read_group(
                 opening_domain, ['debit:sum', 'credit:sum'], ['account_id'])
             for row in opening_lines:
                 acc_id = row['account_id'][0]
-                opening_balances[acc_id] = (row.get('debit', 0.0) or 0.0) - (row.get('credit', 0.0) or 0.0)
+                opening_balances[acc_id] = ((row.get('debit', 0.0) or 0.0)
+                                            - (row.get('credit', 0.0) or 0.0))
 
-        # --- corresponding/"split" account per move (siblings in the same entry) ---
-        move_ids = {line['move_id'][0] for line in move_lines if line.get('move_id')}
+        # -------- lines for THIS PAGE's accounts only --------
+        entries_by_account = defaultdict(list)
+        if page_acc_ids:
+            page_domain = [d for d in domain] + [('account_id', 'in', page_acc_ids)]
+            move_lines = self.env['account.move.line'].search_read(
+                page_domain,
+                ['date', 'name', 'move_id', 'move_name', 'debit', 'credit',
+                'partner_id', 'account_id', 'ref', 'journal_id'],
+            )
+        else:
+            move_lines = []
+
+        # split accounts (siblings in the same journal entry)
+        move_ids = {l['move_id'][0] for l in move_lines if l.get('move_id')}
         move_account_map = defaultdict(set)
         split_account_ids = set()
         if move_ids:
-            grouped = self.env['account.move.line'].read_group(
+            grouped2 = self.env['account.move.line'].read_group(
                 [('move_id', 'in', list(move_ids))],
-                ['account_id'],
-                ['move_id', 'account_id'],
-                lazy=False,
-            )
-            for g in grouped:
-                move_id = g['move_id'][0] if g.get('move_id') else None
-                acc_id = g['account_id'][0] if g.get('account_id') else None
-                if move_id and acc_id:
-                    move_account_map[move_id].add(acc_id)
-                    split_account_ids.add(acc_id)
+                ['account_id'], ['move_id', 'account_id'], lazy=False)
+            for g in grouped2:
+                if g.get('move_id') and g.get('account_id'):
+                    move_account_map[g['move_id'][0]].add(g['account_id'][0])
+                    split_account_ids.add(g['account_id'][0])
 
         split_account_map = {}
         if split_account_ids:
-            split_account_map = {
-                account.id: f"{account.code} {account.name}"
-                for account in self.env['account.account'].browse(list(split_account_ids)).exists()
-            }
+            for acc in self.env['account.account'].browse(list(split_account_ids)).exists():
+                split_account_map[acc.id] = f"{acc.code} {acc.name}"
 
         def split_account_for(line):
             if not line.get('move_id') or not line.get('account_id'):
@@ -227,85 +270,74 @@ class AccountGeneralLedger(models.TransientModel):
             others = move_account_map[line['move_id'][0]] - {line['account_id'][0]}
             if not others:
                 return ''
-            names = sorted(
-                split_account_map.get(acc_id, '') for acc_id in others
-            )
-            return ', '.join(n for n in names if n)
+            return ', '.join(sorted(
+                n for n in (split_account_map.get(a, '') for a in others) if n))
 
-        # --- location from first analytic account on the distribution ---
-        # We don't load analytic_distribution on every move line (it's a big JSON
-        # column). Instead, fetch the mapping once for the affected move_ids.
-        line_ids = [line['id'] for line in move_lines]
-        location_by_line = {}
-        if line_ids:
-            # Read only the two small fields we need.
-            full_lines = self.env['account.move.line'].search_read(
-                [('id', 'in', line_ids)],
-                ['id', 'analytic_distribution'],
-            )
-            all_analytic_ids = set()
-            for fl in full_lines:
-                dist = fl.get('analytic_distribution') or {}
-                for k in dist.keys():
-                    try:
-                        all_analytic_ids.add(int(k))
-                    except (TypeError, ValueError):
-                        pass
-            analytic_map = {}
-            if all_analytic_ids:
-                analytic_map = {
-                    a.id: a.display_name
-                    for a in self.env['account.analytic.account']
-                        .browse(list(all_analytic_ids)).exists()
-                }
-            for fl in full_lines:
-                dist = fl.get('analytic_distribution') or {}
-                loc = ''
-                for k in dist.keys():
-                    try:
-                        k_int = int(k)
-                    except (TypeError, ValueError):
-                        continue
-                    if k_int in analytic_map:
-                        loc = analytic_map[k_int]
-                        break
-                location_by_line[fl['id']] = loc
-
-        def location_for(line):
-            return location_by_line.get(line['id'], '')
-
-        entries_by_account = defaultdict(list)
+        account_totals = {}
+        acc_by_key = {r['key']: r for r in page_rows}
         for line in sorted(move_lines, key=lambda l: (l.get('date') or '', l.get('id', 0))):
-            account_id = line.get('account_id')
-            if not account_id:
+            acc_ref = line.get('account_id')
+            if not acc_ref:
                 continue
-            account_key = account_map.get(account_id[0], account_id[1])
+            acc_id = acc_ref[0]
+            acc_rec = acc_by_id.get(acc_id)
+            if not acc_rec:
+                continue
+            key = f"{acc_rec.code} {acc_rec.name}"
             line['split_account'] = split_account_for(line)
-            line['location'] = location_for(line)
+            line['location'] = ''   # dropped from main fetch; see note at bottom
             line['trx_type'] = line['journal_id'][1] if line.get('journal_id') else ''
-            entries_by_account[account_key].append(line)
-            totals = account_totals.setdefault(
-                account_key,
-                {'total_debit': 0.0, 'total_credit': 0.0,
-                'currency_id': self.env.company.currency_id.symbol,
-                'account_id': account_id[0],
-                'account_code': account_meta.get(account_id[0], {}).get('code', ''),
-                'account_name': account_meta.get(account_id[0], {}).get('name', account_key),
-                'opening_balance': opening_balances.get(account_id[0], 0.0)}
-            )
-            totals['total_debit'] += line.get('debit') or 0.0
-            totals['total_credit'] += line.get('credit') or 0.0
+            entries_by_account[key].append(line)
+            t = account_totals.setdefault(key, {
+                'total_debit': 0.0,
+                'total_credit': 0.0,
+                'currency_id': currency,
+                'account_id': acc_id,
+                'account_code': acc_rec.code or '',
+                'account_name': acc_rec.name or key,
+                'opening_balance': opening_balances.get(acc_id, 0.0),
+            })
+            t['total_debit'] += line.get('debit') or 0.0
+            t['total_credit'] += line.get('credit') or 0.0
 
         # running balance per account
-        for account_key, lines in entries_by_account.items():
-            running = account_totals[account_key]['opening_balance']
+        for key, lines in entries_by_account.items():
+            running = account_totals[key]['opening_balance']
             for line in lines:
                 running += (line.get('debit') or 0.0) - (line.get('credit') or 0.0)
                 line['running_balance'] = running
-            account_dict[account_key] = lines
 
-        account_dict['account_totals'] = account_totals
-        return account_dict
+        # ensure every account in the page has an entry (even if no lines matched search)
+        for key in page_keys:
+            if key not in entries_by_account:
+                entries_by_account[key] = []
+            if key not in account_totals:
+                r = acc_by_key[key]
+                account_totals[key] = {
+                    'total_debit': r['debit'],
+                    'total_credit': r['credit'],
+                    'currency_id': currency,
+                    'account_id': r['id'],
+                    'account_code': r['code'],
+                    'account_name': r['name'],
+                    'opening_balance': opening_balances.get(r['id'], 0.0),
+                }
+
+        result = dict(entries_by_account)
+        result['account'] = page_keys
+        result['account_totals'] = account_totals
+        result['total_accounts'] = total_accounts
+        result['has_more'] = offset + limit < total_accounts
+        result['offset'] = offset
+
+        if include_filter_values and offset == 0:
+            result['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+            result['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+        else:
+            result['journal_ids'] = []
+            result['analytic_ids'] = []
+
+        return result
 
     @api.model
     def get_xlsx_report(self, data, response, report_name, report_action):

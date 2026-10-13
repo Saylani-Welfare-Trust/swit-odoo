@@ -25,6 +25,9 @@ class GeneralLedgerReport(models.AbstractModel):
             report_options.get('analytic_ids') or [],
             report_options.get('method') or {'accrual': True},
             include_filter_values=False,
+            offset=0,
+            limit=None,          # ← PDF must see every account
+            search_query='',
         )
 
         accounts = [
