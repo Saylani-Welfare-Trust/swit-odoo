@@ -11,7 +11,8 @@ class AccountMoveLine(models.Model):
     )
     bank_reconciliation_id = fields.Many2one(
         'bank.reconciliation.master',
-        string='Bank Reconciliation'
+        string='Bank Reconciliation',
+        index='btree_not_null'
     )
     bank_reconciliation_date = fields.Date(
         string='Bank Reconciliation Date'

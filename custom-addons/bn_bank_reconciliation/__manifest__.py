@@ -18,6 +18,7 @@
         'views/bank_reconciliation_master.xml',
         'views/bank_reconciliation_transaction.xml',
         'views/bank_reconciliation_reconciled.xml',
+        'views/account_move.xml',
         'views/menu.xml',
         'views/bank_statement_header_type.xml',
         'views/bank_statement_config.xml',
