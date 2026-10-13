@@ -41,7 +41,7 @@
                 <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
                         class="oe_highlight" invisible="state != 'done' or not has_pending_rfq_products"
                         groups="bn_procurement_workflow.group_procurement_manager"
-                        confirm="This creates a new Purchase Request for the products and quantities of the Material Request that are not ordered yet. Continue?"/>
+                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not ordered yet. Continue?"/>
 
                 <button string="Funds Available" name="action_funds_available" type="object"
                         class="oe_highlight" invisible="state != 'funds_check'"

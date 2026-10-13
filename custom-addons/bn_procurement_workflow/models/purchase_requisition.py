@@ -182,7 +182,9 @@ class PurchaseRequisition(models.Model):
     def action_create_remaining_request(self):
         """A closed request whose Purchase Order covers only part of its Material
         Request: create a new Purchase Request for the products and quantities
-        that are not ordered yet. This one stays closed with what it ordered."""
+        that are not ordered yet. This one stays closed with what it ordered.
+        The new one starts in Procurement Manager Approval, ready for RFQs: the
+        Procurement Manager creating it is the one who would approve it."""
         self.ensure_one()
         if self.state != 'done':
             raise ValidationError(_('This request is not Closed.'))
@@ -196,13 +198,14 @@ class PurchaseRequisition(models.Model):
         if not shortfall:
             raise ValidationError(_('Everything on the Material Request has already been ordered.'))
         new_request = self._create_remaining_request()
+        new_request.action_procurement_approve()
         products = ', '.join(
             '%s (%g %s)' % (product.display_name, quantity, product.uom_id.name)
             for product, quantity in shortfall.items())
         self.message_post(body=_(
             '%(user)s created %(request)s for what is not ordered yet: %(products)s.',
             user=self.env.user.display_name,
-            request=new_request._get_html_link(title=_('a new Purchase Request')), products=products))
+            request=new_request._get_html_link(), products=products))
         new_request.message_post(body=_(
             'Created from %(request)s for what its Purchase Order did not cover: %(products)s.',
             request=self._get_html_link(), products=products))

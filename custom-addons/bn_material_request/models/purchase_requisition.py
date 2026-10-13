@@ -119,8 +119,8 @@ class PurchaseRequisition(models.Model):
 
     def _create_remaining_request(self):
         """Create the requisition for what the source Material Request still
-        needs purchased, and return it. It is a requisition of its own, to go
-        through the same steps as the first one."""
+        needs purchased, and return it. It is a requisition of its own; this
+        one is left as it is."""
         self.ensure_one()
         reference = self._get_request_reference()
         # sudo: like the first requisition of a Material Request, it may be
