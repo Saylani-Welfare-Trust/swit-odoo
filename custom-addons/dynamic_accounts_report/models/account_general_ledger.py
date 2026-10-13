@@ -51,10 +51,10 @@ class AccountGeneralLedger(models.TransientModel):
         """
         account_dict = {}
         move_lines = self.env['account.move.line'].search_read(
-            [('parent_state', '=', 'posted')],
-            ['date', 'name', 'move_name', 'debit', 'credit',
-             'partner_id', 'account_id']
-        )
+                    [('parent_state', '=', 'posted')],
+                    ['date', 'name', 'move_name', 'debit', 'credit',
+                     'partner_id', 'account_id']
+                )
 
         account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
         account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
@@ -221,31 +221,46 @@ class AccountGeneralLedger(models.TransientModel):
             return ', '.join(n for n in names if n)
 
         # --- location from first analytic account on the distribution ---
-        analytic_ids = set()
-        for line in move_lines:
-            dist = line.get('analytic_distribution') or {}
-            for k in dist.keys():
-                try:
-                    analytic_ids.add(int(k))
-                except (TypeError, ValueError):
-                    pass
-        analytic_map = {}
-        if analytic_ids:
-            analytic_map = {
-                a.id: a.display_name
-                for a in self.env['account.analytic.account'].browse(list(analytic_ids)).exists()
-            }
+        # We don't load analytic_distribution on every move line (it's a big JSON
+        # column). Instead, fetch the mapping once for the affected move_ids.
+        line_ids = [line['id'] for line in move_lines]
+        location_by_line = {}
+        if line_ids:
+            # Read only the two small fields we need.
+            full_lines = self.env['account.move.line'].search_read(
+                [('id', 'in', line_ids)],
+                ['id', 'analytic_distribution'],
+            )
+            all_analytic_ids = set()
+            for fl in full_lines:
+                dist = fl.get('analytic_distribution') or {}
+                for k in dist.keys():
+                    try:
+                        all_analytic_ids.add(int(k))
+                    except (TypeError, ValueError):
+                        pass
+            analytic_map = {}
+            if all_analytic_ids:
+                analytic_map = {
+                    a.id: a.display_name
+                    for a in self.env['account.analytic.account']
+                        .browse(list(all_analytic_ids)).exists()
+                }
+            for fl in full_lines:
+                dist = fl.get('analytic_distribution') or {}
+                loc = ''
+                for k in dist.keys():
+                    try:
+                        k_int = int(k)
+                    except (TypeError, ValueError):
+                        continue
+                    if k_int in analytic_map:
+                        loc = analytic_map[k_int]
+                        break
+                location_by_line[fl['id']] = loc
 
         def location_for(line):
-            dist = line.get('analytic_distribution') or {}
-            for k in dist.keys():
-                try:
-                    k_int = int(k)
-                except (TypeError, ValueError):
-                    continue
-                if k_int in analytic_map:
-                    return analytic_map[k_int]
-            return ''
+            return location_by_line.get(line['id'], '')
 
         entries_by_account = defaultdict(list)
         for line in sorted(move_lines, key=lambda l: (l.get('date') or '', l.get('id', 0))):
