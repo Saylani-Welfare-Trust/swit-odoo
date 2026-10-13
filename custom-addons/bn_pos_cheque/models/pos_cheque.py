@@ -177,6 +177,22 @@ class POSCheque(models.Model):
             'target': 'new',
         }
 
+    def action_print_receipt(self):
+        """Donation receipt of the linked POS order. Only once the cheque is
+        cleared - until then the donor holds the provisional slip from POS."""
+        self.ensure_one()
+        if self.state != 'clear':
+            raise ValidationError('The donation receipt can be printed only after the cheque is cleared.')
+
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            raise ValidationError('No POS order is linked to this cheque.')
+
+        # the clean (non-duplicate) receipt, same one the donor gets on WhatsApp
+        action = self.env.ref('bn_pos_order.pos_whatsapp_donation_receipt_report').report_action(pos_order)
+        action['name'] = 'Donation Receipt'
+        return action
+
     def _get_or_repair_microfinance_line(self, pdc_line):
         """Get microfinance line from link or fallback to installment_number search, and repair the link"""
         microfinance_line = pdc_line.microfinance_line_id

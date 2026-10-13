@@ -143,3 +143,22 @@ h4 {
 .pos-receipt-print table tr {
     border-bottom: 1px solid #000000; /* optional row separation */
 }
+
+/* ================== Provisional watermark ================== */
+/* !important: the print rules reset every position inside .pos to static */
+.pos-receipt .pos-receipt-watermark-anchor {
+    position: relative !important;
+    height: 0;
+}
+
+.pos-receipt .pos-receipt-watermark {
+    position: absolute !important;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-30deg);
+    font-size: 70px;
+    font-weight: bold;
+    white-space: nowrap;
+    opacity: 0.12; /* not a grey colour: print forces all receipt text to black */
+    pointer-events: none;
+}
