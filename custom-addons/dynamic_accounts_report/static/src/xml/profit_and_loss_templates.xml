@@ -301,7 +301,7 @@
 
             <!-- ==== Scrollable table area ==== -->
             <div class="flex-grow-1" style="min-height: 0; overflow: hidden;">
-                <div class="table_view_dfr" style="height: 100%; overflow: auto;">
+                <div class="table_view_dfr" style="height: 150%; overflow: auto;">
                     <div class="table_main_view">
                         <table cellspacing="0" width="100%">
                             <thead style="position: sticky; top: 0; z-index: 2; background: #fff;">
