@@ -28,6 +28,7 @@ import xlsxwriter
 from odoo import api, fields, models
 from datetime import datetime
 from odoo.tools import date_utils
+from odoo.exceptions import UserError
 
 
 class AccountGeneralLedger(models.TransientModel):
@@ -146,6 +147,17 @@ class AccountGeneralLedger(models.TransientModel):
                 domain += [('date', '>=', start_date)]
             if end_date:
                 domain += [('date', '<=', end_date)]
+
+        # ---- Safety cap: prevent RPC/HTTP2 failures on large databases ----
+        MAX_MOVE_LINES = 20000
+        line_count = self.env['account.move.line'].search_count(domain)
+        if line_count > MAX_MOVE_LINES:
+            raise UserError(
+                "This filter matches %s journal items, which is too many to "
+                "load at once.\n\nPlease narrow the Date Range or pick "
+                "specific Journals.\n\n(Limit: %s lines)"
+                % (line_count, MAX_MOVE_LINES)
+            )
 
         move_lines = self.env['account.move.line'].search_read(
             domain,
