@@ -9,6 +9,7 @@
         'account',
         'bn_pos_custom_action',
         'bn_pos_order',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'security/group.xml',

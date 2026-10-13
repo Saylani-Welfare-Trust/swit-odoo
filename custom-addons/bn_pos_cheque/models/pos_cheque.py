@@ -193,6 +193,22 @@ class POSCheque(models.Model):
         action['name'] = 'Donation Receipt'
         return action
 
+    def _send_clear_notification(self):
+        """WhatsApp / SMS the donation receipt of the linked POS order. POS
+        holds this message back for cheque orders until the cheque is cleared
+        (see pos.order.sms_or_whatsapp_send_receipt)."""
+        self.ensure_one()
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            return
+
+        # a failed message must never block the clearing itself
+        try:
+            with self.env.cr.savepoint():
+                pos_order.send_whatsapp_after_payment(pos_order.id)
+        except Exception as e:
+            _logger.error('Cheque %s: clear notification failed: %s', self.name, str(e))
+
     def _get_or_repair_microfinance_line(self, pdc_line):
         """Get microfinance line from link or fallback to installment_number search, and repair the link"""
         microfinance_line = pdc_line.microfinance_line_id
@@ -291,6 +307,8 @@ class POSCheque(models.Model):
             self._clear_medical_equipment()
 
         self.state = 'clear'
+
+        self._send_clear_notification()
 
     def action_bounce(self):
         if self.bounce_count >= 3:

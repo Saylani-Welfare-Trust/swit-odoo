@@ -103,7 +103,18 @@ class POSOrder(models.Model):
                             _logger.info(f"Linked cheque {cheque.id} to security deposit {sd_slip.id}")
 
         return res
-    
+
+    @api.model
+    def sms_or_whatsapp_send_receipt(self, order_id):
+        """POS calls this right after payment. A cheque order only has a
+        provisional slip at that point: its receipt is sent when treasury
+        clears the cheque (pos.cheque.action_clear)."""
+        order = self.browse(order_id or [])[:1]
+        if order.pos_cheque_id and order.pos_cheque_id.state != 'clear':
+            return {'status': 'skipped', 'message': 'Receipt will be sent when the cheque is cleared'}
+
+        return super().sms_or_whatsapp_send_receipt(order_id)
+
     def get_cheque_pos_order(self, shop, offset=0, limit=10):
         # orders = self.env['pos.order'].search([('session_id.config_id', '=', shop)], offset=offset, limit=limit)
         orders = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')], offset=offset, limit=limit)
