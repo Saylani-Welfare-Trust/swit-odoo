@@ -8,17 +8,6 @@ class POSOrder(models.Model):
     _inherit = 'pos.order'
 
 
-    product_ids = fields.Many2many(
-        'product.product',
-        compute='_compute_product_ids',
-        string='Products',
-        store=True,          # required for search / filter / group by
-    )
-    
-    @api.depends('lines.product_id')
-    def _compute_product_ids(self):
-        for order in self:
-            order.product_ids = order.lines.mapped('product_id')
     mobile = fields.Char(related='partner_id.mobile', string="Mobile No.")
 
     state = fields.Selection(
