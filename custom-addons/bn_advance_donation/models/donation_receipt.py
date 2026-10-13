@@ -327,11 +327,22 @@ class DonationReceipt(models.Model):
             rec.has_pos_source = bool(rec._get_pos_source_record())
 
     def action_print_pos_receipt(self):
-        self.ensure_one()
-        source = self._get_pos_source_record()
-        if not source:
-            raise UserError(_('This receipt was not created from POS.'))
-        return self._get_pos_source_report(source).report_action(source)
+        # Also called from the Print menu, so several receipts can be selected.
+        sources = {}
+        for rec in self:
+            source = rec._get_pos_source_record()
+            if source:
+                report = rec._get_pos_source_report(source)
+                sources[report] = sources.get(report, source.browse()) | source
+        if not sources:
+            raise UserError(_('The selected receipt was not created from POS.'))
+        if len(sources) > 1:
+            raise UserError(_(
+                'The selected receipts are printed with different reports (%s). Please print them separately.',
+                ', '.join(report.name for report in sources),
+            ))
+        report, records = next(iter(sources.items()))
+        return report.report_action(records)
 
     @api.model
     def register_pos_payment(self, data):
