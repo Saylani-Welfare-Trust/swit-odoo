@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates>
     <t t-name="dfr_template_new" owl="1">
-        <!-- Outer wrapper: flex column, viewport-capped (not viewport-sized).
-             Using max-height instead of height lets the wrapper shrink to
-             content when the report is short, so there is no empty gap at
-             the bottom, while still capping at the viewport so the table
-             scrolls internally when the report is long. -->
+        <!-- Outer wrapper: flex column, viewport-sized, lets the table area
+             shrink and scroll instead of being clipped at a fixed 650px. -->
         <div class="w-100 d-flex flex-column"
-             style="max-height: calc(100vh - 220px); min-height: 0; overflow: hidden;">
+             style="height: calc(100vh - 220px); min-height: 0; overflow: hidden;">
 
             <!-- ==== Filter bar (fixed height, never scrolls away) ==== -->
             <div class="flex-shrink-0"
