@@ -420,6 +420,26 @@
                                     </td>
                                 </tr>
                             </t>
+                            <t t-if="state.has_more or state.is_loading">
+                                <tr>
+                                    <td colspan="14" style="text-align:center;padding:12px;">
+                                        <button type="button"
+                                                class="btn btn-secondary"
+                                                t-on-click="loadMore"
+                                                t-att-disabled="state.is_loading">
+                                            <t t-if="state.is_loading">
+                                                <i class="fa fa-spinner fa-spin" style="margin-right:6px;"/>
+                                                Loading…
+                                            </t>
+                                            <t t-else="">
+                                                Load More
+                                                (<t t-esc="state.account.length"/> of
+                                                <t t-esc="state.total_accounts"/> accounts)
+                                            </t>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </t>
                         </tbody>
                     </table>
                 </div>
