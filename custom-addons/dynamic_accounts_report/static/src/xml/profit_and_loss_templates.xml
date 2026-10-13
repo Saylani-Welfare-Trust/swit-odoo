@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <templates>
     <t t-name="dfr_template_new" owl="1">
-        <div class="w-100">
-            <div style="border-bottom: 1px solid #d8dadd;">
+        <!-- Outer wrapper: flex column, viewport-sized, lets the table area
+             shrink and scroll instead of being clipped at a fixed 650px. -->
+        <div class="w-100 d-flex flex-column"
+             style="height: calc(100vh - 220px); min-height: 0; overflow: hidden;">
+
+            <!-- ==== Filter bar (fixed height, never scrolls away) ==== -->
+            <div class="flex-shrink-0"
+                 style="border-bottom: 1px solid #d8dadd;">
                 <div class="filter_view_dfr p-2">
                     <div class="">
                         <h1 class="p-2">
@@ -292,698 +298,697 @@
                     </div>
                 </div>
             </div>
-            <br/>
-            <div>
-                <div class="table_view_dfr" style="height: 650px; overflow-y: scroll;">
-                    <div>
-                        <div class="table_main_view">
-                            <table cellspacing="0" width="100%">
-                                <thead>
-                                    <tr class="o_heading">
-                                        <th colspan="6"/>
-                                        <t t-if="state.year">
-                                            <t t-foreach="state.year"
-                                               t-as="periodData"
-                                               t-key="periodData_index">
-                                                <th class="text-end">
-                                                    <t t-esc="periodData"/>
-                                                </th>
-                                            </t>
+
+            <!-- ==== Scrollable table area ==== -->
+            <div class="flex-grow-1" style="min-height: 0; overflow: hidden;">
+                <div class="table_view_dfr" style="height: 100%; overflow: auto;">
+                    <div class="table_main_view">
+                        <table cellspacing="0" width="100%">
+                            <thead style="position: sticky; top: 0; z-index: 2; background: #fff;">
+                                <tr class="o_heading">
+                                    <th colspan="6"/>
+                                    <t t-if="state.year">
+                                        <t t-foreach="state.year"
+                                           t-as="periodData"
+                                           t-key="periodData_index">
+                                            <th class="text-end">
+                                                <t t-esc="periodData"/>
+                                            </th>
                                         </t>
-                                    </tr>
-                                    <tr class="o_heading">
-                                        <th colspan="6"/>
-                                        <t t-if="state.year">
-                                            <t t-foreach="state.year"
-                                               t-as="periodData"
-                                               t-key="periodData_index">
-                                                <th class="text-end">Balance
-                                                </th>
-                                            </t>
+                                    </t>
+                                </tr>
+                                <tr class="o_heading">
+                                    <th colspan="6"/>
+                                    <t t-if="state.year">
+                                        <t t-foreach="state.year"
+                                           t-as="periodData"
+                                           t-key="periodData_index">
+                                            <th class="text-end">Balance
+                                            </th>
                                         </t>
-                                    </tr>
-                                </thead>
-                                <tbody t-ref="tbody">
-                                    <t t-if="state.datas">
-                                        <tr class="gl-line">
-                                            <th colspan="6">
+                                    </t>
+                                </tr>
+                            </thead>
+                            <tbody t-ref="tbody">
+                                <t t-if="state.datas">
+                                    <tr class="gl-line">
+                                        <th colspan="6">
+                                            <span class="fw-bolder">
+                                                Net Profit
+                                            </span>
+                                        </th>
+                                        <t t-foreach="state.datas"
+                                           t-as="total"
+                                           t-key="total_index">
+                                            <th class="text-end">
                                                 <span class="fw-bolder">
-                                                    Net Profit
+                                                    <t t-if="total.total"
+                                                       t-esc="total.total.toFixed(2)"/>
                                                 </span>
                                             </th>
-                                            <t t-foreach="state.datas"
-                                               t-as="total"
-                                               t-key="total_index">
+                                        </t>
+                                    </tr>
+                                    <tr class="border-bottom border-dark">
+                                        <th colspan="6">
+                                            <span class="fw-bolder ms-2">
+                                                Income
+                                            </span>
+                                        </th>
+                                        <t t-foreach="state.datas"
+                                           t-as="total_income"
+                                           t-key="total_income_index">
+                                            <th class="text-end">
+                                                <span class="fw-bolder">
+                                                    <t t-esc="total_income.total_income"/>
+                                                </span>
+                                            </th>
+                                        </t>
+                                    </tr>
+                                    <tr class="border-bottom border-gainsboro">
+                                        <th colspan="6">
+                                            <span class="fw-bolder ms-3">
+                                                Gross Profit
+                                            </span>
+                                        </th>
+                                        <t t-foreach="state.datas"
+                                               t-as="value"
+                                               t-key="value_index">
                                                 <th class="text-end">
-                                                    <span class="fw-bolder">
-                                                        <t t-if="total.total"
-                                                           t-esc="total.total.toFixed(2)"/>
+                                                    <span>
+                                                        <t t-esc="sumGrossProfit(value.expense_direct_cost[1], value.income[1]).toFixed(2)"/>
+                                                    </span>
+                                                </th>
+                                            </t>
+                                    </tr>
+                                    <t t-foreach="state.datas" t-as="value"
+                                       t-key="value_index">
+                                        <t t-if="value.income[1] != '0.00'">
+                                            <t t-set="income" t-value="1"/>
+                                        </t>
+                                    </t>
+                                    <t t-if="income == 1">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="6">
+                                                <div data-bs-toggle="collapse"
+                                                     href="#collapseIncome"
+                                                     aria-expanded="false"
+                                                     aria-controls="collapseIncome"
+                                                     class="ms-3 collapsed">
+                                                    <a class="btn header">
+                                                        <span class="toggle-icon">
+                                                            <i class="fa fa-caret-down"/>
+                                                        </span>
+                                                        <span class="ms-3">
+                                                            Operating
+                                                            Income
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </th>
+                                            <t t-foreach="state.datas"
+                                               t-as="value"
+                                               t-key="value_index">
+                                                <th class="text-end">
+                                                    <span>
+                                                        <t t-esc="value.income[1]"/>
                                                     </span>
                                                 </th>
                                             </t>
                                         </tr>
-                                        <tr class="border-bottom border-dark">
-                                            <th colspan="6">
-                                                <span class="fw-bolder ms-2">
+                                        <t t-foreach="state.datas"
+                                           t-as="value"
+                                           t-key="value_index">
+                                            <t t-if="value_index == 0">
+                                                <t t-foreach="value.income[0]"
+                                                   t-as="income"
+                                                   t-key="income_index">
+                                                    <t t-set="income_name"
+                                                       t-value="income.name"/>
+                                                    <t t-set="account_value"
+                                                       t-value="0"/>
+                                                    <t t-foreach="state.datas"
+                                                       t-as="values"
+                                                       t-key="values_index">
+                                                        <t t-foreach="values.income[0]"
+                                                           t-as="income"
+                                                           t-key="income_index">
+                                                            <t t-if="income_name == income.name">
+                                                                <t t-if="income.amount != '0.00'">
+                                                                    <t t-set="account_value"
+                                                                       t-value="1"/>
+                                                                </t>
+                                                            </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="account_value == 1">
+                                                        <tr class="border-bottom border-gainsboro collapse"
+                                                            id="collapseIncome">
+                                                            <th colspan="6">
+                                                                <span class="dropdown">
+                                                                    <a class="dropdown-toggle"
+                                                                       data-bs-toggle="dropdown">
+                                                                        <span class="ms-5">
+                                                                            <t t-esc="income.name"/>
+                                                                        </span>
+                                                                    </a>
+                                                                    <span class="dropdown-menu">
+                                                                        <a role="menuitem"
+                                                                           t-on-click="show_gl"
+                                                                           class="show_gl">
+                                                                            General
+                                                                            Ledger
+                                                                        </a>
+                                                                    </span>
+                                                                </span>
+                                                            </th>
+                                                            <t t-foreach="state.datas"
+                                                               t-as="values"
+                                                               t-key="values_index">
+                                                                <t t-foreach="values.income[0]"
+                                                                   t-as="income"
+                                                                   t-key="income_index">
+                                                                    <t t-if="income_name == income.name">
+                                                                        <th class="text-end">
+                                                                            <span>
+                                                                                <t t-esc="income.amount"/>
+                                                                            </span>
+                                                                        </th>
+                                                                    </t>
+                                                                </t>
+                                                            </t>
+                                                        </tr>
+                                                    </t>
+                                                </t>
+                                            </t>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="9">
+                                                <span class="ms-4">
+                                                    Operating
                                                     Income
                                                 </span>
                                             </th>
-                                            <t t-foreach="state.datas"
-                                               t-as="total_income"
-                                               t-key="total_income_index">
-                                                <th class="text-end">
-                                                    <span class="fw-bolder">
-                                                        <t t-esc="total_income.total_income"/>
-                                                    </span>
-                                                </th>
-                                            </t>
-                                        </tr>
-                                        <tr class="border-bottom border-gainsboro">
-                                            <th colspan="6">
-                                                <span class="fw-bolder ms-3">
-                                                    Gross Profit
-                                                </span>
-                                            </th>
-                                            <t t-foreach="state.datas"
-                                                   t-as="value"
-                                                   t-key="value_index">
-                                                    <th class="text-end">
-                                                        <span>
-                                                            <t t-esc="sumGrossProfit(value.expense_direct_cost[1], value.income[1]).toFixed(2)"/>
-                                                        </span>
-                                                    </th>
-                                                </t>
-                                        </tr>
-                                        <t t-foreach="state.datas" t-as="value"
-                                           t-key="value_index">
-                                            <t t-if="value.income[1] != '0.00'">
-                                                <t t-set="income" t-value="1"/>
-                                            </t>
-                                        </t>
-                                        <t t-if="income == 1">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="6">
-                                                    <div data-bs-toggle="collapse"
-                                                         href="#collapseIncome"
-                                                         aria-expanded="false"
-                                                         aria-controls="collapseIncome"
-                                                         class="ms-3 collapsed">
-                                                        <a class="btn header">
-                                                            <span class="toggle-icon">
-                                                                <i class="fa fa-caret-down"/>
-                                                            </span>
-                                                            <span class="ms-3">
-                                                                Operating
-                                                                Income
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </th>
-                                                <t t-foreach="state.datas"
-                                                   t-as="value"
-                                                   t-key="value_index">
-                                                    <th class="text-end">
-                                                        <span>
-                                                            <t t-esc="value.income[1]"/>
-                                                        </span>
-                                                    </th>
-                                                </t>
-                                            </tr>
-                                            <t t-foreach="state.datas"
-                                               t-as="value"
-                                               t-key="value_index">
-                                                <t t-if="value_index == 0">
-                                                    <t t-foreach="value.income[0]"
-                                                       t-as="income"
-                                                       t-key="income_index">
-                                                        <t t-set="income_name"
-                                                           t-value="income.name"/>
-                                                        <t t-set="account_value"
-                                                           t-value="0"/>
-                                                        <t t-foreach="state.datas"
-                                                           t-as="values"
-                                                           t-key="values_index">
-                                                            <t t-foreach="values.income[0]"
-                                                               t-as="income"
-                                                               t-key="income_index">
-                                                                <t t-if="income_name == income.name">
-                                                                    <t t-if="income.amount != '0.00'">
-                                                                        <t t-set="account_value"
-                                                                           t-value="1"/>
-                                                                    </t>
-                                                                </t>
-                                                            </t>
-                                                        </t>
-                                                        <t t-if="account_value == 1">
-                                                            <tr class="border-bottom border-gainsboro collapse"
-                                                                id="collapseIncome">
-                                                                <th colspan="6">
-                                                                    <span class="dropdown">
-                                                                        <a class="dropdown-toggle"
-                                                                           data-bs-toggle="dropdown">
-                                                                            <span class="ms-5">
-                                                                                <t t-esc="income.name"/>
-                                                                            </span>
-                                                                        </a>
-                                                                        <span class="dropdown-menu">
-                                                                            <a role="menuitem"
-                                                                               t-on-click="show_gl"
-                                                                               class="show_gl">
-                                                                                General
-                                                                                Ledger
-                                                                            </a>
-                                                                        </span>
-                                                                    </span>
-                                                                </th>
-                                                                <t t-foreach="state.datas"
-                                                                   t-as="values"
-                                                                   t-key="values_index">
-                                                                    <t t-foreach="values.income[0]"
-                                                                       t-as="income"
-                                                                       t-key="income_index">
-                                                                        <t t-if="income_name == income.name">
-                                                                            <th class="text-end">
-                                                                                <span>
-                                                                                    <t t-esc="income.amount"/>
-                                                                                </span>
-                                                                            </th>
-                                                                        </t>
-                                                                    </t>
-                                                                </t>
-                                                            </tr>
-                                                        </t>
-                                                    </t>
-                                                </t>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="9">
-                                                    <span class="ms-4">
-                                                        Operating
-                                                        Income
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </t>
-                                        <t t-foreach="state.datas" t-as="value"
-                                           t-key="value_index">
-                                            <t t-if="value.expense_direct_cost[1] != '0.00'">
-                                                <t t-set="expense_direct_cost"
-                                                   t-value="1"/>
-                                            </t>
-                                        </t>
-                                        <t t-if="expense_direct_cost  == 1">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="6">
-                                                    <div data-bs-toggle="collapse"
-                                                         href="#collapseRevenue"
-                                                         aria-expanded="false"
-                                                         aria-controls="collapseRevenue"
-                                                         class="ms-3 collapsed">
-                                                        <a class="btn header">
-                                                            <span class="toggle-icon">
-                                                                <i class="fa fa-caret-down"/>
-                                                            </span>
-                                                            <span class="ms-3">
-                                                                Cost
-                                                                of
-                                                                Revenue
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </th>
-                                                <t t-foreach="state.datas"
-                                                   t-as="value"
-                                                   t-key="value_index">
-                                                    <th class="text-end">
-                                                        <span>
-                                                            <t t-esc="value.expense_direct_cost[1]"/>
-                                                        </span>
-                                                    </th>
-                                                </t>
-                                            </tr>
-                                            <t t-foreach="state.datas"
-                                               t-as="value"
-                                               t-key="value_index">
-                                                <t t-if="value_index == 0">
-                                                    <t t-foreach="value.expense_direct_cost[0]"
-                                                       t-as="income"
-                                                       t-key="income_index">
-                                                        <t t-set="income_name"
-                                                           t-value="income.name"/>
-                                                        <t t-set="account_value"
-                                                           t-value="0"/>
-                                                        <t t-foreach="state.datas"
-                                                           t-as="values"
-                                                           t-key="values_index">
-                                                            <t t-foreach="values.expense_direct_cost[0]"
-                                                               t-as="income"
-                                                               t-key="income_index">
-                                                                <t t-if="income_name == income.name">
-                                                                    <t t-if="income.amount != '0.00'">
-                                                                        <t t-set="account_value"
-                                                                           t-value="1"/>
-                                                                    </t>
-                                                                </t>
-                                                            </t>
-                                                        </t>
-                                                        <t t-if="account_value == 1">
-                                                            <tr class="border-bottom border-gainsboro collapse"
-                                                                id="collapseRevenue">
-                                                                <th colspan="6">
-                                                                    <span class="dropdown">
-                                                                        <a class="dropdown-toggle"
-                                                                           data-bs-toggle="dropdown">
-                                                                            <span class="ms-5">
-                                                                                <t t-esc="income.name"/>
-                                                                            </span>
-                                                                        </a>
-                                                                        <span class="dropdown-menu">
-                                                                            <a role="menuitem"
-                                                                               t-on-click="show_gl"
-                                                                               class="show_gl">
-                                                                                General
-                                                                                Ledger
-                                                                            </a>
-                                                                        </span>
-                                                                    </span>
-                                                                </th>
-                                                                <t t-foreach="state.datas"
-                                                                   t-as="values"
-                                                                   t-key="values_index">
-                                                                    <t t-foreach="values.expense_direct_cost[0]"
-                                                                       t-as="income"
-                                                                       t-key="income_index">
-                                                                        <t t-if="income_name == income.name">
-                                                                            <th class="text-end">
-                                                                                <span>
-                                                                                    <t t-esc="income.amount"/>
-                                                                                </span>
-                                                                            </th>
-                                                                        </t>
-                                                                    </t>
-                                                                </t>
-                                                            </tr>
-                                                        </t>
-                                                    </t>
-                                                </t>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="9">
-                                                    <span class="ms-4">Cost of
-                                                        Revenue
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </t>
-                                        <t t-foreach="state.datas" t-as="value"
-                                           t-key="value_index">
-                                            <t t-if="value.income_other[1] != '0.00'">
-                                                <t t-set="income_other"
-                                                   t-value="1"/>
-                                            </t>
-                                        </t>
-                                        <t t-if="income_other  == 1">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="6">
-                                                    <div data-bs-toggle="collapse"
-                                                         href="#collapseOtherIncome"
-                                                         aria-expanded="false"
-                                                         aria-controls="collapseOtherIncome"
-                                                         class="ms-1 collapsed">
-                                                        <a class="btn header">
-                                                            <span class="toggle-icon">
-                                                                <i class="fa fa-caret-down"/>
-                                                            </span>
-                                                            <span class="ms-3">
-                                                                Other Income
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </th>
-                                                <t t-foreach="state.datas"
-                                                   t-as="value"
-                                                   t-key="value_index">
-                                                    <th class="text-end">
-                                                        <span>
-                                                            <t t-esc="value.income_other[1]"/>
-                                                        </span>
-                                                    </th>
-                                                </t>
-                                            </tr>
-                                            <t t-foreach="state.datas"
-                                               t-as="value"
-                                               t-key="value_index">
-                                                <t t-if="value_index == 0">
-                                                    <t t-foreach="value.income_other[0]"
-                                                       t-as="income"
-                                                       t-key="income_index">
-                                                        <t t-set="income_name"
-                                                           t-value="income.name"/>
-                                                        <t t-set="account_value"
-                                                           t-value="0"/>
-                                                        <t t-foreach="state.datas"
-                                                           t-as="values"
-                                                           t-key="values_index">
-                                                            <t t-foreach="values.income_other[0]"
-                                                               t-as="income"
-                                                               t-key="income_index">
-                                                                <t t-if="income_name == income.name">
-                                                                    <t t-if="income.amount != '0.00'">
-                                                                        <t t-set="account_value"
-                                                                           t-value="1"/>
-                                                                    </t>
-                                                                </t>
-                                                            </t>
-                                                        </t>
-                                                        <t t-if="account_value == 1">
-                                                            <tr class="border-bottom border-gainsboro collapse"
-                                                                id="collapseOtherIncome">
-                                                                <th colspan="6">
-                                                                    <span class="dropdown">
-                                                                        <a class="dropdown-toggle"
-                                                                           data-bs-toggle="dropdown">
-                                                                            <span class="ms-4">
-                                                                                <t t-esc="income.name"/>
-                                                                            </span>
-                                                                        </a>
-                                                                        <span class="dropdown-menu">
-                                                                            <a role="menuitem"
-                                                                               t-on-click="show_gl"
-                                                                               class="show_gl">
-                                                                                General
-                                                                                Ledger
-                                                                            </a>
-                                                                        </span>
-                                                                    </span>
-                                                                </th>
-                                                                <t t-foreach="state.datas"
-                                                                   t-as="values"
-                                                                   t-key="values_index">
-                                                                    <t t-foreach="values.income_other[0]"
-                                                                       t-as="income"
-                                                                       t-key="income_index">
-                                                                        <t t-if="income_name == income.name">
-                                                                            <th class="text-end">
-                                                                                <span>
-                                                                                    <t t-esc="income.amount"/>
-                                                                                </span>
-                                                                            </th>
-                                                                        </t>
-                                                                    </t>
-                                                                </t>
-                                                            </tr>
-                                                        </t>
-                                                    </t>
-                                                </t>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="9">
-                                                    <span class="ms-3">Other
-                                                        Income
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </t>
-                                        <tr class="border-bottom border-gainsboro">
-                                            <th colspan="6">
-                                                <span class="fw-bolder ms-2">
-                                                    Total Income
-                                                </span>
-                                            </th>
-                                            <t t-foreach="state.datas"
-                                               t-as="total_income"
-                                               t-key="total_income_index">
-                                                <th class="text-end">
-                                                    <span class="fw-bolder">
-                                                        <t t-esc="total_income.total_income"/>
-                                                    </span>
-                                                </th>
-                                            </t>
-                                        </tr>
-                                        <tr class="border-bottom border-dark">
-                                            <th colspan="6">
-                                                <span class="fw-bolder ms-1">
-                                                    Expenses
-                                                </span>
-                                            </th>
-                                            <t t-foreach="state.datas"
-                                               t-as="total_expense"
-                                               t-key="total_expense_index">
-                                                <th class="text-end">
-                                                    <span class="fw-bolder">
-                                                        <t t-esc="total_expense.total_expense"/>
-                                                    </span>
-                                                </th>
-                                            </t>
-                                        </tr>
-                                        <t t-foreach="state.datas" t-as="value"
-                                           t-key="value_index">
-                                            <t t-if="value.expense[1] != '0.00'">
-                                                <t t-set="expense"
-                                                   t-value="1"/>
-                                            </t>
-                                        </t>
-                                        <t t-if="expense  == 1">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="6">
-                                                    <div data-bs-toggle="collapse"
-                                                         href="#collapseExpenses"
-                                                         aria-expanded="false"
-                                                         aria-controls="collapseExpenses"
-                                                         class="ms-2 collapsed">
-                                                        <a class="btn header">
-                                                            <span class="toggle-icon">
-                                                                <i class="fa fa-caret-down"/>
-                                                            </span>
-                                                            <span class="ms-3">
-                                                                Expenses
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </th>
-                                                <t t-foreach="state.datas"
-                                                   t-as="value"
-                                                   t-key="value_index">
-                                                    <th class="text-end">
-                                                        <span>
-                                                            <t t-esc="value.expense[1]"/>
-                                                        </span>
-                                                    </th>
-                                                </t>
-                                            </tr>
-                                            <t t-foreach="state.datas"
-                                               t-as="value"
-                                               t-key="value_index">
-                                                <t t-if="value_index == 0">
-                                                    <t t-foreach="value.expense[0]"
-                                                       t-as="income"
-                                                       t-key="income_index">
-                                                        <t t-set="income_name"
-                                                           t-value="income.name"/>
-                                                        <t t-set="account_value"
-                                                           t-value="0"/>
-                                                        <t t-foreach="state.datas"
-                                                           t-as="values"
-                                                           t-key="values_index">
-                                                            <t t-foreach="values.expense[0]"
-                                                               t-as="income"
-                                                               t-key="income_index">
-                                                                <t t-if="income_name == income.name">
-                                                                    <t t-if="income.amount != '0.00'">
-                                                                        <t t-set="account_value"
-                                                                           t-value="1"/>
-                                                                    </t>
-                                                                </t>
-                                                            </t>
-                                                        </t>
-                                                        <t t-if="account_value == 1">
-                                                            <tr class="border-bottom border-gainsboro collapse"
-                                                                id="collapseExpenses">
-                                                                <th colspan="6">
-                                                                    <span class="dropdown">
-                                                                        <a class="dropdown-toggle"
-                                                                           data-bs-toggle="dropdown">
-                                                                            <span class="ms-5">
-                                                                                <t t-esc="income.name"/>
-                                                                            </span>
-                                                                        </a>
-                                                                        <span class="dropdown-menu">
-                                                                            <a role="menuitem"
-                                                                               t-on-click="show_gl"
-                                                                               class="show_gl">
-                                                                                General
-                                                                                Ledger
-                                                                            </a>
-                                                                        </span>
-                                                                    </span>
-                                                                </th>
-                                                                <t t-foreach="state.datas"
-                                                                   t-as="values"
-                                                                   t-key="values_index">
-                                                                    <t t-foreach="values.expense[0]"
-                                                                       t-as="income"
-                                                                       t-key="income_index">
-                                                                        <t t-if="income_name == income.name">
-                                                                            <th class="text-end">
-                                                                                <span>
-                                                                                    <t t-esc="income.amount"/>
-                                                                                </span>
-                                                                            </th>
-                                                                        </t>
-                                                                    </t>
-                                                                </t>
-                                                            </tr>
-                                                        </t>
-                                                    </t>
-                                                </t>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="9">
-                                                    <span class="ms-2">Expenses
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </t>
-                                        <t t-foreach="state.datas" t-as="value"
-                                           t-key="value_index">
-                                            <t t-if="value.expense_depreciation[1] != '0.00'">
-                                                <t t-set="expense_depreciation"
-                                                   t-value="1"/>
-                                            </t>
-                                        </t>
-                                        <t t-if="expense_depreciation  == 1">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="6">
-                                                    <div data-bs-toggle="collapse"
-                                                         href="#collapseDepreciation"
-                                                         aria-expanded="false"
-                                                         aria-controls="collapseDepreciation"
-                                                         class="ms-2 collapsed">
-                                                        <a class="btn header">
-                                                            <span class="toggle-icon">
-                                                                <i class="fa fa-caret-down"/>
-                                                            </span>
-                                                            <span class="ms-3">
-                                                                Depreciation
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </th>
-                                                <t t-foreach="state.datas"
-                                                   t-as="value"
-                                                   t-key="value_index">
-                                                    <th class="text-end">
-                                                        <span>
-                                                            <t t-esc="value.expense_depreciation[1]"/>
-                                                        </span>
-                                                    </th>
-                                                </t>
-                                            </tr>
-                                            <t t-foreach="state.datas"
-                                               t-as="value"
-                                               t-key="value_index">
-                                                <t t-if="value_index == 0">
-                                                    <t t-foreach="value.expense_depreciation[0]"
-                                                       t-as="income"
-                                                       t-key="income_index">
-                                                        <t t-set="income_name"
-                                                           t-value="income.name"/>
-                                                        <t t-set="account_value"
-                                                           t-value="0"/>
-                                                        <t t-foreach="state.datas"
-                                                           t-as="values"
-                                                           t-key="values_index">
-                                                            <t t-foreach="values.expense_depreciation[0]"
-                                                               t-as="income"
-                                                               t-key="income_index">
-                                                                <t t-if="income_name == income.name">
-                                                                    <t t-if="income.amount != '0.00'">
-                                                                        <t t-set="account_value"
-                                                                           t-value="1"/>
-                                                                    </t>
-                                                                </t>
-                                                            </t>
-                                                        </t>
-                                                        <t t-if="account_value == 1">
-                                                            <tr class="border-bottom border-gainsboro collapse"
-                                                                id="collapseDepreciation">
-                                                                <th colspan="6">
-                                                                    <span class="dropdown">
-                                                                        <a class="dropdown-toggle"
-                                                                           data-bs-toggle="dropdown">
-                                                                            <span class="ms-5">
-                                                                                <t t-esc="income.name"/>
-                                                                            </span>
-                                                                        </a>
-                                                                        <span class="dropdown-menu">
-                                                                            <a role="menuitem"
-                                                                               t-on-click="show_gl"
-                                                                               class="show_gl">
-                                                                                General
-                                                                                Ledger
-                                                                            </a>
-                                                                        </span>
-                                                                    </span>
-                                                                </th>
-                                                                <t t-foreach="state.datas"
-                                                                   t-as="values"
-                                                                   t-key="values_index">
-                                                                    <t t-foreach="values.expense_depreciation[0]"
-                                                                       t-as="income"
-                                                                       t-key="income_index">
-                                                                        <t t-if="income_name == income.name">
-                                                                            <th class="text-end">
-                                                                                <span>
-                                                                                    <t t-esc="income.amount"/>
-                                                                                </span>
-                                                                            </th>
-                                                                        </t>
-                                                                    </t>
-                                                                </t>
-                                                            </tr>
-                                                        </t>
-                                                    </t>
-                                                </t>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr class="border-bottom border-gainsboro">
-                                                <th colspan="6">
-                                                    <span class="ms-2">
-                                                        Depreciation
-                                                    </span>
-                                                </th>
-                                            </tr>
-                                        </t>
-                                        <tr class="border-bottom border-gainsboro">
-                                            <th colspan="6">
-                                                <span class="fw-bolder ms-2">
-                                                    Total
-                                                    Expenses
-                                                </span>
-                                            </th>
-                                            <t t-foreach="state.datas"
-                                               t-as="total_expense"
-                                               t-key="total_expense_index">
-                                                <th class="text-end">
-                                                    <span class="fw-bolder">
-                                                        <t t-esc="total_expense.total_expense"/>
-                                                    </span>
-                                                </th>
-                                            </t>
                                         </tr>
                                     </t>
-                                </tbody>
-                            </table>
-                        </div>
+                                    <t t-foreach="state.datas" t-as="value"
+                                       t-key="value_index">
+                                        <t t-if="value.expense_direct_cost[1] != '0.00'">
+                                            <t t-set="expense_direct_cost"
+                                               t-value="1"/>
+                                        </t>
+                                    </t>
+                                    <t t-if="expense_direct_cost  == 1">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="6">
+                                                <div data-bs-toggle="collapse"
+                                                     href="#collapseRevenue"
+                                                     aria-expanded="false"
+                                                     aria-controls="collapseRevenue"
+                                                     class="ms-3 collapsed">
+                                                    <a class="btn header">
+                                                        <span class="toggle-icon">
+                                                            <i class="fa fa-caret-down"/>
+                                                        </span>
+                                                        <span class="ms-3">
+                                                            Cost
+                                                            of
+                                                            Revenue
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </th>
+                                            <t t-foreach="state.datas"
+                                               t-as="value"
+                                               t-key="value_index">
+                                                <th class="text-end">
+                                                    <span>
+                                                        <t t-esc="value.expense_direct_cost[1]"/>
+                                                    </span>
+                                                </th>
+                                            </t>
+                                        </tr>
+                                        <t t-foreach="state.datas"
+                                           t-as="value"
+                                           t-key="value_index">
+                                            <t t-if="value_index == 0">
+                                                <t t-foreach="value.expense_direct_cost[0]"
+                                                   t-as="income"
+                                                   t-key="income_index">
+                                                    <t t-set="income_name"
+                                                       t-value="income.name"/>
+                                                    <t t-set="account_value"
+                                                       t-value="0"/>
+                                                    <t t-foreach="state.datas"
+                                                       t-as="values"
+                                                       t-key="values_index">
+                                                        <t t-foreach="values.expense_direct_cost[0]"
+                                                           t-as="income"
+                                                           t-key="income_index">
+                                                            <t t-if="income_name == income.name">
+                                                                <t t-if="income.amount != '0.00'">
+                                                                    <t t-set="account_value"
+                                                                       t-value="1"/>
+                                                                </t>
+                                                            </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="account_value == 1">
+                                                        <tr class="border-bottom border-gainsboro collapse"
+                                                            id="collapseRevenue">
+                                                            <th colspan="6">
+                                                                <span class="dropdown">
+                                                                    <a class="dropdown-toggle"
+                                                                       data-bs-toggle="dropdown">
+                                                                        <span class="ms-5">
+                                                                            <t t-esc="income.name"/>
+                                                                        </span>
+                                                                    </a>
+                                                                    <span class="dropdown-menu">
+                                                                        <a role="menuitem"
+                                                                           t-on-click="show_gl"
+                                                                           class="show_gl">
+                                                                            General
+                                                                            Ledger
+                                                                        </a>
+                                                                    </span>
+                                                                </span>
+                                                            </th>
+                                                            <t t-foreach="state.datas"
+                                                               t-as="values"
+                                                               t-key="values_index">
+                                                                <t t-foreach="values.expense_direct_cost[0]"
+                                                                   t-as="income"
+                                                                   t-key="income_index">
+                                                                    <t t-if="income_name == income.name">
+                                                                        <th class="text-end">
+                                                                            <span>
+                                                                                <t t-esc="income.amount"/>
+                                                                            </span>
+                                                                        </th>
+                                                                    </t>
+                                                                </t>
+                                                            </t>
+                                                        </tr>
+                                                    </t>
+                                                </t>
+                                            </t>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="9">
+                                                <span class="ms-4">Cost of
+                                                    Revenue
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="state.datas" t-as="value"
+                                       t-key="value_index">
+                                        <t t-if="value.income_other[1] != '0.00'">
+                                            <t t-set="income_other"
+                                               t-value="1"/>
+                                        </t>
+                                    </t>
+                                    <t t-if="income_other  == 1">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="6">
+                                                <div data-bs-toggle="collapse"
+                                                     href="#collapseOtherIncome"
+                                                     aria-expanded="false"
+                                                     aria-controls="collapseOtherIncome"
+                                                     class="ms-1 collapsed">
+                                                    <a class="btn header">
+                                                        <span class="toggle-icon">
+                                                            <i class="fa fa-caret-down"/>
+                                                        </span>
+                                                        <span class="ms-3">
+                                                            Other Income
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </th>
+                                            <t t-foreach="state.datas"
+                                               t-as="value"
+                                               t-key="value_index">
+                                                <th class="text-end">
+                                                    <span>
+                                                        <t t-esc="value.income_other[1]"/>
+                                                    </span>
+                                                </th>
+                                            </t>
+                                        </tr>
+                                        <t t-foreach="state.datas"
+                                           t-as="value"
+                                           t-key="value_index">
+                                            <t t-if="value_index == 0">
+                                                <t t-foreach="value.income_other[0]"
+                                                   t-as="income"
+                                                   t-key="income_index">
+                                                    <t t-set="income_name"
+                                                       t-value="income.name"/>
+                                                    <t t-set="account_value"
+                                                       t-value="0"/>
+                                                    <t t-foreach="state.datas"
+                                                       t-as="values"
+                                                       t-key="values_index">
+                                                        <t t-foreach="values.income_other[0]"
+                                                           t-as="income"
+                                                           t-key="income_index">
+                                                            <t t-if="income_name == income.name">
+                                                                <t t-if="income.amount != '0.00'">
+                                                                    <t t-set="account_value"
+                                                                       t-value="1"/>
+                                                                </t>
+                                                            </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="account_value == 1">
+                                                        <tr class="border-bottom border-gainsboro collapse"
+                                                            id="collapseOtherIncome">
+                                                            <th colspan="6">
+                                                                <span class="dropdown">
+                                                                    <a class="dropdown-toggle"
+                                                                       data-bs-toggle="dropdown">
+                                                                        <span class="ms-4">
+                                                                            <t t-esc="income.name"/>
+                                                                        </span>
+                                                                    </a>
+                                                                    <span class="dropdown-menu">
+                                                                        <a role="menuitem"
+                                                                           t-on-click="show_gl"
+                                                                           class="show_gl">
+                                                                            General
+                                                                            Ledger
+                                                                        </a>
+                                                                    </span>
+                                                                </span>
+                                                            </th>
+                                                            <t t-foreach="state.datas"
+                                                               t-as="values"
+                                                               t-key="values_index">
+                                                                <t t-foreach="values.income_other[0]"
+                                                                   t-as="income"
+                                                                   t-key="income_index">
+                                                                    <t t-if="income_name == income.name">
+                                                                        <th class="text-end">
+                                                                            <span>
+                                                                                <t t-esc="income.amount"/>
+                                                                            </span>
+                                                                        </th>
+                                                                    </t>
+                                                                </t>
+                                                            </t>
+                                                        </tr>
+                                                    </t>
+                                                </t>
+                                            </t>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="9">
+                                                <span class="ms-3">Other
+                                                    Income
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </t>
+                                    <tr class="border-bottom border-gainsboro">
+                                        <th colspan="6">
+                                            <span class="fw-bolder ms-2">
+                                                Total Income
+                                            </span>
+                                        </th>
+                                        <t t-foreach="state.datas"
+                                           t-as="total_income"
+                                           t-key="total_income_index">
+                                            <th class="text-end">
+                                                <span class="fw-bolder">
+                                                    <t t-esc="total_income.total_income"/>
+                                                </span>
+                                            </th>
+                                        </t>
+                                    </tr>
+                                    <tr class="border-bottom border-dark">
+                                        <th colspan="6">
+                                            <span class="fw-bolder ms-1">
+                                                Expenses
+                                            </span>
+                                        </th>
+                                        <t t-foreach="state.datas"
+                                           t-as="total_expense"
+                                           t-key="total_expense_index">
+                                            <th class="text-end">
+                                                <span class="fw-bolder">
+                                                    <t t-esc="total_expense.total_expense"/>
+                                                </span>
+                                            </th>
+                                        </t>
+                                    </tr>
+                                    <t t-foreach="state.datas" t-as="value"
+                                       t-key="value_index">
+                                        <t t-if="value.expense[1] != '0.00'">
+                                            <t t-set="expense"
+                                               t-value="1"/>
+                                        </t>
+                                    </t>
+                                    <t t-if="expense  == 1">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="6">
+                                                <div data-bs-toggle="collapse"
+                                                     href="#collapseExpenses"
+                                                     aria-expanded="false"
+                                                     aria-controls="collapseExpenses"
+                                                     class="ms-2 collapsed">
+                                                    <a class="btn header">
+                                                        <span class="toggle-icon">
+                                                            <i class="fa fa-caret-down"/>
+                                                        </span>
+                                                        <span class="ms-3">
+                                                            Expenses
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </th>
+                                            <t t-foreach="state.datas"
+                                               t-as="value"
+                                               t-key="value_index">
+                                                <th class="text-end">
+                                                    <span>
+                                                        <t t-esc="value.expense[1]"/>
+                                                    </span>
+                                                </th>
+                                            </t>
+                                        </tr>
+                                        <t t-foreach="state.datas"
+                                           t-as="value"
+                                           t-key="value_index">
+                                            <t t-if="value_index == 0">
+                                                <t t-foreach="value.expense[0]"
+                                                   t-as="income"
+                                                   t-key="income_index">
+                                                    <t t-set="income_name"
+                                                       t-value="income.name"/>
+                                                    <t t-set="account_value"
+                                                       t-value="0"/>
+                                                    <t t-foreach="state.datas"
+                                                       t-as="values"
+                                                       t-key="values_index">
+                                                        <t t-foreach="values.expense[0]"
+                                                           t-as="income"
+                                                           t-key="income_index">
+                                                            <t t-if="income_name == income.name">
+                                                                <t t-if="income.amount != '0.00'">
+                                                                    <t t-set="account_value"
+                                                                       t-value="1"/>
+                                                                </t>
+                                                            </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="account_value == 1">
+                                                        <tr class="border-bottom border-gainsboro collapse"
+                                                            id="collapseExpenses">
+                                                            <th colspan="6">
+                                                                <span class="dropdown">
+                                                                    <a class="dropdown-toggle"
+                                                                       data-bs-toggle="dropdown">
+                                                                        <span class="ms-5">
+                                                                            <t t-esc="income.name"/>
+                                                                        </span>
+                                                                    </a>
+                                                                    <span class="dropdown-menu">
+                                                                        <a role="menuitem"
+                                                                           t-on-click="show_gl"
+                                                                           class="show_gl">
+                                                                            General
+                                                                            Ledger
+                                                                        </a>
+                                                                    </span>
+                                                                </span>
+                                                            </th>
+                                                            <t t-foreach="state.datas"
+                                                               t-as="values"
+                                                               t-key="values_index">
+                                                                <t t-foreach="values.expense[0]"
+                                                                   t-as="income"
+                                                                   t-key="income_index">
+                                                                    <t t-if="income_name == income.name">
+                                                                        <th class="text-end">
+                                                                            <span>
+                                                                                <t t-esc="income.amount"/>
+                                                                            </span>
+                                                                        </th>
+                                                                    </t>
+                                                                </t>
+                                                            </t>
+                                                        </tr>
+                                                    </t>
+                                                </t>
+                                            </t>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="9">
+                                                <span class="ms-2">Expenses
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </t>
+                                    <t t-foreach="state.datas" t-as="value"
+                                       t-key="value_index">
+                                        <t t-if="value.expense_depreciation[1] != '0.00'">
+                                            <t t-set="expense_depreciation"
+                                               t-value="1"/>
+                                        </t>
+                                    </t>
+                                    <t t-if="expense_depreciation  == 1">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="6">
+                                                <div data-bs-toggle="collapse"
+                                                     href="#collapseDepreciation"
+                                                     aria-expanded="false"
+                                                     aria-controls="collapseDepreciation"
+                                                     class="ms-2 collapsed">
+                                                    <a class="btn header">
+                                                        <span class="toggle-icon">
+                                                            <i class="fa fa-caret-down"/>
+                                                        </span>
+                                                        <span class="ms-3">
+                                                            Depreciation
+                                                        </span>
+                                                    </a>
+                                                </div>
+                                            </th>
+                                            <t t-foreach="state.datas"
+                                               t-as="value"
+                                               t-key="value_index">
+                                                <th class="text-end">
+                                                    <span>
+                                                        <t t-esc="value.expense_depreciation[1]"/>
+                                                    </span>
+                                                </th>
+                                            </t>
+                                        </tr>
+                                        <t t-foreach="state.datas"
+                                           t-as="value"
+                                           t-key="value_index">
+                                            <t t-if="value_index == 0">
+                                                <t t-foreach="value.expense_depreciation[0]"
+                                                   t-as="income"
+                                                   t-key="income_index">
+                                                    <t t-set="income_name"
+                                                       t-value="income.name"/>
+                                                    <t t-set="account_value"
+                                                       t-value="0"/>
+                                                    <t t-foreach="state.datas"
+                                                       t-as="values"
+                                                       t-key="values_index">
+                                                        <t t-foreach="values.expense_depreciation[0]"
+                                                           t-as="income"
+                                                           t-key="income_index">
+                                                            <t t-if="income_name == income.name">
+                                                                <t t-if="income.amount != '0.00'">
+                                                                    <t t-set="account_value"
+                                                                       t-value="1"/>
+                                                                </t>
+                                                            </t>
+                                                        </t>
+                                                    </t>
+                                                    <t t-if="account_value == 1">
+                                                        <tr class="border-bottom border-gainsboro collapse"
+                                                            id="collapseDepreciation">
+                                                            <th colspan="6">
+                                                                <span class="dropdown">
+                                                                    <a class="dropdown-toggle"
+                                                                       data-bs-toggle="dropdown">
+                                                                        <span class="ms-5">
+                                                                            <t t-esc="income.name"/>
+                                                                        </span>
+                                                                    </a>
+                                                                    <span class="dropdown-menu">
+                                                                        <a role="menuitem"
+                                                                           t-on-click="show_gl"
+                                                                           class="show_gl">
+                                                                            General
+                                                                            Ledger
+                                                                        </a>
+                                                                    </span>
+                                                                </span>
+                                                            </th>
+                                                            <t t-foreach="state.datas"
+                                                               t-as="values"
+                                                               t-key="values_index">
+                                                                <t t-foreach="values.expense_depreciation[0]"
+                                                                   t-as="income"
+                                                                   t-key="income_index">
+                                                                    <t t-if="income_name == income.name">
+                                                                        <th class="text-end">
+                                                                            <span>
+                                                                                <t t-esc="income.amount"/>
+                                                                            </span>
+                                                                        </th>
+                                                                    </t>
+                                                                </t>
+                                                            </t>
+                                                        </tr>
+                                                    </t>
+                                                </t>
+                                            </t>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr class="border-bottom border-gainsboro">
+                                            <th colspan="6">
+                                                <span class="ms-2">
+                                                    Depreciation
+                                                </span>
+                                            </th>
+                                        </tr>
+                                    </t>
+                                    <tr class="border-bottom border-gainsboro">
+                                        <th colspan="6">
+                                            <span class="fw-bolder ms-2">
+                                                Total
+                                                Expenses
+                                            </span>
+                                        </th>
+                                        <t t-foreach="state.datas"
+                                           t-as="total_expense"
+                                           t-key="total_expense_index">
+                                            <th class="text-end">
+                                                <span class="fw-bolder">
+                                                    <t t-esc="total_expense.total_expense"/>
+                                                </span>
+                                            </th>
+                                        </t>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
