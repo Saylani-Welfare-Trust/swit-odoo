@@ -15,6 +15,12 @@
                 <field name="used_amount"/>
                 <field name="remaining_amount"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'paid'"/>
+                <field name="has_pos_source" column_invisible="True"/>
+                <button name="action_print_pos_receipt"
+                        string="Print POS Receipt"
+                        type="object"
+                        icon="fa-print"
+                        invisible="not has_pos_source"/>
             </tree>
         </field>
     </record>
