@@ -47,7 +47,6 @@ class POSOrder(models.Model):
                 pos_order.state = 'done'
         
         self.state = 'reject'
-
     def action_cfo_approval(self):
         self.state = 'cfo_approval'
     
