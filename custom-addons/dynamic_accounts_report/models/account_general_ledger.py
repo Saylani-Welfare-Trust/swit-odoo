@@ -189,12 +189,18 @@ class AccountGeneralLedger(models.TransientModel):
         move_account_map = defaultdict(set)
         split_account_ids = set()
         if move_ids:
-            all_move_lines = self.env['account.move.line'].search_read(
-                [('move_id', 'in', list(move_ids))], ['move_id', 'account_id'])
-            for l in all_move_lines:
-                if l.get('account_id'):
-                    move_account_map[l['move_id'][0]].add(l['account_id'][0])
-                    split_account_ids.add(l['account_id'][0])
+            grouped = self.env['account.move.line'].read_group(
+                [('move_id', 'in', list(move_ids))],
+                ['account_id'],
+                ['move_id', 'account_id'],
+                lazy=False,
+            )
+            for g in grouped:
+                move_id = g['move_id'][0] if g.get('move_id') else None
+                acc_id = g['account_id'][0] if g.get('account_id') else None
+                if move_id and acc_id:
+                    move_account_map[move_id].add(acc_id)
+                    split_account_ids.add(acc_id)
 
         split_account_map = {}
         if split_account_ids:
