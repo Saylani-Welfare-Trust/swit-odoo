@@ -136,7 +136,7 @@ class GeneralLedger extends owl.Component {
 
         const offset = reset ? 0 : this.state.account_offset;
 
-        const raw = await this.orm.call(
+        let raw = await this.orm.call(
             "account.general.ledger",
             "get_filter_values",
             [
