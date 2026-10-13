@@ -47,22 +47,49 @@ class PurchaseRequisition(models.Model):
             ordered[order_line.product_id.id] += order_line.product_uom_qty
         return ordered
 
-    def _get_request_reference_lines(self):
-        """[(product, quantity in the product's unit, description)]: what the
-        source Material Request needs purchased. A purchase-type request is to
-        be bought as a whole, so its own lines say it - whatever was taken off
-        or lowered on a requisition later. An internal request only buys what
-        was short in stock, which is on the lines of its first requisition."""
+    def _get_request_reference(self):
+        """{product: [quantity in the product's unit, description]}: what the
+        source Material Request needs purchased, whatever was taken off or
+        lowered on a requisition afterwards.
+
+        A purchase-type request is bought as a whole, so its own lines say it.
+        An internal request only buys what was short in stock: that is kept on
+        its stock-shortage transfer, created together with its first
+        requisition - whose own lines can be edited, and so cannot be relied on
+        alone."""
         self.ensure_one()
         # sudo: the Material Request record rule hides requests the user didn't create.
         request = self.material_request_id.sudo()
+        reference = {}
+
+        def add(target, product, quantity, description):
+            entry = target.setdefault(product, [0.0, description])
+            entry[0] += quantity
+            entry[1] = entry[1] or description
+
         if request.purchase_request_id:
-            return [(line.product_id, line.quantity, line.description) for line in request.line_ids]
-        return [(
-            line.product_id,
-            (line.product_uom_id or line.product_id.uom_id)._compute_quantity(line.product_qty, line.product_id.uom_id),
-            line.product_description_variants,
-        ) for line in request.auto_purchase_request_id.line_ids]
+            for line in request.line_ids:
+                add(reference, line.product_id, line.quantity, line.description)
+            return reference
+
+        transfers = request.shortage_picking_id
+        while transfers.backorder_ids - transfers:
+            transfers |= transfers.backorder_ids
+        for move in transfers.move_ids.filtered(lambda move: move.state != 'cancel'):
+            add(reference, move.product_id, move.product_qty, move.description_picking)
+        # The first requisition's lines count where they ask for more than the
+        # transfer does, or where the transfer has been cancelled.
+        on_lines = {}
+        for line in request.auto_purchase_request_id.line_ids:
+            uom = line.product_id.uom_id
+            add(on_lines, line.product_id,
+                (line.product_uom_id or uom)._compute_quantity(line.product_qty, uom),
+                line.product_description_variants)
+        for product, (quantity, description) in on_lines.items():
+            entry = reference.setdefault(product, [0.0, description])
+            entry[0] = max(entry[0], quantity)
+            entry[1] = entry[1] or description
+        return reference
 
     def _get_request_shortfall(self):
         """The confirmed Purchase Orders of the source Material Request - from
@@ -71,12 +98,9 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if not self.material_request_id:
             return {}
-        requested = defaultdict(float)
-        for product, quantity, _description in self._get_request_reference_lines():
-            requested[product] += quantity
         ordered = self._get_ordered_quantities([('material_request_id', '=', self.material_request_id.id)])
         shortfall = {}
-        for product, quantity in requested.items():
+        for product, (quantity, _description) in self._get_request_reference().items():
             missing = quantity - ordered[product.id]
             if float_compare(missing, 0.0, precision_rounding=product.uom_id.rounding) > 0:
                 shortfall[product] = missing
@@ -98,9 +122,7 @@ class PurchaseRequisition(models.Model):
         needs purchased, and return it. It is a requisition of its own, to go
         through the same steps as the first one."""
         self.ensure_one()
-        descriptions = {}
-        for product, _quantity, description in self._get_request_reference_lines():
-            descriptions.setdefault(product, description)
+        reference = self._get_request_reference()
         # sudo: like the first requisition of a Material Request, it may be
         # created by someone who is not a purchase user.
         return self.env['purchase.requisition'].sudo().create({
@@ -113,7 +135,7 @@ class PurchaseRequisition(models.Model):
                 'product_id': product.id,
                 'product_uom_id': product.uom_id.id,
                 'product_qty': quantity,
-                'product_description_variants': descriptions.get(product),
+                'product_description_variants': reference[product][1],
             }) for product, quantity in self._get_request_shortfall().items()],
         }).sudo(False)
 
