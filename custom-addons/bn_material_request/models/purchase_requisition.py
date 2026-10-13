@@ -36,37 +36,45 @@ class PurchaseRequisition(models.Model):
                 'default_source_requisition_id': self.id,
             },
         }
-    def _get_ordered_quantities(self):
-        """{product id: quantity on the confirmed Purchase Orders of the source
-        Material Request}, in the product's own unit of measure."""
-        self.ensure_one()
+    def _get_ordered_quantities(self, domain):
+        """{product id: quantity on the confirmed Purchase Orders matching
+        ``domain``}, in the product's own unit of measure."""
         ordered = defaultdict(float)
         # sudo: whoever opens the requisition need not be a purchase user.
-        orders = self.env['purchase.order'].sudo().search([
-            ('material_request_id', '=', self.material_request_id.id),
-            ('state', 'in', ('purchase', 'done')),
-        ])
+        orders = self.env['purchase.order'].sudo().search(
+            domain + [('state', 'in', ('purchase', 'done'))])
         for order_line in orders.order_line:
             ordered[order_line.product_id.id] += order_line.product_uom_qty
         return ordered
 
-    def _get_request_shortfall(self):
-        """What the Material Request asks for and no confirmed Purchase Order
-        covers yet: {product: quantity, in the product's unit}.
-
-        The Material Request is the reference here, so a product taken off this
-        requisition, or a quantity lowered on it or on the RFQ, still counts.
-        Only for the Purchase Request of a purchase-type Material Request: a
-        stock-shortage requisition buys just the part its own lines say."""
+    def _get_request_reference_lines(self):
+        """[(product, quantity in the product's unit, description)]: what the
+        source Material Request needs purchased. A purchase-type request is to
+        be bought as a whole, so its own lines say it - whatever was taken off
+        or lowered on a requisition later. An internal request only buys what
+        was short in stock, which is on the lines of its first requisition."""
         self.ensure_one()
         # sudo: the Material Request record rule hides requests the user didn't create.
         request = self.material_request_id.sudo()
-        if request.purchase_request_id != self:
+        if request.purchase_request_id:
+            return [(line.product_id, line.quantity, line.description) for line in request.line_ids]
+        return [(
+            line.product_id,
+            (line.product_uom_id or line.product_id.uom_id)._compute_quantity(line.product_qty, line.product_id.uom_id),
+            line.product_description_variants,
+        ) for line in request.auto_purchase_request_id.line_ids]
+
+    def _get_request_shortfall(self):
+        """The confirmed Purchase Orders of the source Material Request - from
+        all its requisitions - matched against what that request needs
+        purchased: {product: quantity not ordered yet, in the product's unit}."""
+        self.ensure_one()
+        if not self.material_request_id:
             return {}
         requested = defaultdict(float)
-        for line in request.line_ids:
-            requested[line.product_id] += line.quantity
-        ordered = self._get_ordered_quantities()
+        for product, quantity, _description in self._get_request_reference_lines():
+            requested[product] += quantity
+        ordered = self._get_ordered_quantities([('material_request_id', '=', self.material_request_id.id)])
         shortfall = {}
         for product, quantity in requested.items():
             missing = quantity - ordered[product.id]
@@ -74,15 +82,50 @@ class PurchaseRequisition(models.Model):
                 shortfall[product] = missing
         return shortfall
 
+    def _has_newer_request(self):
+        """Whether the source Material Request has a more recent requisition
+        than this one (a cancelled one does not count)."""
+        self.ensure_one()
+        # sudo: a count across requisitions the user may not all be allowed to read.
+        return bool(self.sudo().search_count([
+            ('material_request_id', '=', self.material_request_id.id),
+            ('state', '!=', 'cancel'),
+            ('id', '>', self._origin.id),
+        ], limit=1))
+
+    def _create_remaining_request(self):
+        """Create the requisition for what the source Material Request still
+        needs purchased, and return it. It is a requisition of its own, to go
+        through the same steps as the first one."""
+        self.ensure_one()
+        descriptions = {}
+        for product, _quantity, description in self._get_request_reference_lines():
+            descriptions.setdefault(product, description)
+        # sudo: like the first requisition of a Material Request, it may be
+        # created by someone who is not a purchase user.
+        return self.env['purchase.requisition'].sudo().create({
+            'origin': self.origin,
+            'material_request_id': self.material_request_id.id,
+            'user_id': self.user_id.id,
+            'type_id': self.type_id.id,
+            'company_id': self.company_id.id,
+            'line_ids': [(0, 0, {
+                'product_id': product.id,
+                'product_uom_id': product.uom_id.id,
+                'product_qty': quantity,
+                'product_description_variants': descriptions.get(product),
+            }) for product, quantity in self._get_request_shortfall().items()],
+        }).sudo(False)
+
     def _get_pending_rfq_line_quantities(self):
         """{requisition line: quantity still to send out for quotation, in the
         line's unit}: what the line asks for, less what the confirmed Purchase
-        Orders of the source Material Request already cover. A requisition
-        without a Material Request always sends all its lines in full."""
+        Orders of this requisition already cover. A requisition without a
+        Material Request always sends all its lines in full."""
         self.ensure_one()
         if not self.material_request_id:
             return {line: line.product_qty for line in self.line_ids}
-        ordered = self._get_ordered_quantities()
+        ordered = self._get_ordered_quantities([('requisition_id', '=', self.id)])
         pending = {}
         for line in self.line_ids:
             uom = line.product_id.uom_id
@@ -94,45 +137,6 @@ class PurchaseRequisition(models.Model):
             if float_compare(requested - covered, 0.0, precision_rounding=uom.rounding) > 0:
                 pending[line] = uom._compute_quantity(requested - covered, line_uom)
         return pending
-
-    def _get_pending_rfq_lines(self):
-        """Lines that still have something to send out for quotation."""
-        pending = self._get_pending_rfq_line_quantities()
-        return self.line_ids.filtered(lambda line: line in pending)
-
-    def _restore_lines_from_request(self):
-        """Bring the lines back in step with the Material Request for what it
-        still needs: a product that was taken off this requisition gets a line
-        again, a quantity that was lowered is raised by what is missing.
-        Returns the {product: quantity} put back."""
-        self.ensure_one()
-        restored = {}
-        pending = self._get_pending_rfq_line_quantities()
-        for product, shortfall in self._get_request_shortfall().items():
-            uom = product.uom_id
-            lines = self.line_ids.filtered(lambda line: line.product_id == product)
-            on_lines = sum(
-                (line.product_uom_id or uom)._compute_quantity(quantity, uom)
-                for line, quantity in pending.items() if line in lines)
-            missing = shortfall - on_lines
-            if float_compare(missing, 0.0, precision_rounding=uom.rounding) <= 0:
-                continue
-            if lines:
-                line = lines[0]
-                line.product_qty += uom._compute_quantity(missing, line.product_uom_id or uom)
-            else:
-                # sudo: the Material Request record rule hides requests the user didn't create.
-                request_line = self.material_request_id.sudo().line_ids.filtered(
-                    lambda l: l.product_id == product)[:1]
-                self.env['purchase.requisition.line'].create({
-                    'requisition_id': self.id,
-                    'product_id': product.id,
-                    'product_uom_id': uom.id,
-                    'product_qty': missing,
-                    'product_description_variants': request_line.description,
-                })
-            restored[product] = missing
-        return restored
 
     def action_view_material_request(self):
         """View the source Material Request"""

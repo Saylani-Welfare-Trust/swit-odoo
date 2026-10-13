@@ -36,12 +36,12 @@
                         class="oe_highlight" invisible="state != 'deferred'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
 
-                <!-- A closed request whose Purchase Order covers only part of its Material Request
-                     goes back to where RFQs are sent, for what is not ordered yet -->
-                <button string="Send Remaining Products for RFQ" name="action_resend_pending_for_rfq" type="object"
+                <!-- A closed request whose Purchase Order covers only part of its Material Request:
+                     a new Purchase Request is created for what is not ordered yet -->
+                <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
                         class="oe_highlight" invisible="state != 'done' or not has_pending_rfq_products"
                         groups="bn_procurement_workflow.group_procurement_manager"
-                        confirm="This reopens the request to send RFQs to vendors for the products and quantities of its Material Request that are not ordered yet. Continue?"/>
+                        confirm="This creates a new Purchase Request for the products and quantities of the Material Request that are not ordered yet. Continue?"/>
 
                 <button string="Funds Available" name="action_funds_available" type="object"
                         class="oe_highlight" invisible="state != 'funds_check'"
