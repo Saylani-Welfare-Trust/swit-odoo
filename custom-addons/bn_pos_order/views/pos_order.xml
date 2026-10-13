@@ -61,9 +61,6 @@
                 <field name="analytic_account_id" string="Branch"/>
                 <field name="employee_id" string="Cashier"/>
                 <field name="pos_order_seq"/>
-                <!-- Product search: matches any order whose lines contain the product -->
-                <field name="order_line" string="Product"
-                       filter_domain="[('lines.product_id', 'ilike', self)]"/>
             </xpath>
 
 
