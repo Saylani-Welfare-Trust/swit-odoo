@@ -18,8 +18,9 @@
                 <!-- Header Row -->
                 <div class="row mb-2 receipt_header">
                     <div name="custom-title" class="col-6">
-                        <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
-                        <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
+                        <h1 t-if="order.is_provisional">Provisional Receipt</h1>
+                        <h1 t-elif="order.receive_voucher">Receipt Voucher</h1>
+                        <h1 t-else="">Donation Receipt</h1>
                     </div>
                     <div class="col-6 text-end">
                         <h1 class="text-transform" style="font-size: 12px;">
@@ -31,6 +32,11 @@
                 </div>
 
                 <hr/>
+
+                <!-- Cheque not cleared by treasury yet -->
+                <div t-if="order.is_provisional" class="pos-receipt-watermark-anchor">
+                    <div class="pos-receipt-watermark">Provisional</div>
+                </div>
 
                 <!-- ===== BASIC INFO ===== -->
                 <div class="row mb-2" style="font-size: 11px;">

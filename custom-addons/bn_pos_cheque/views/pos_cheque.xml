@@ -33,6 +33,7 @@
 
                 <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state in ['cancel', 'clear'] or bounce_count &gt;= 4" />
                 <button string="Bounce" name="action_bounce" type="object" invisible="state == 'clear' or bounce_count > 3" />
+                <button string="Print Receipt" name="action_print_receipt" type="object" icon="fa-print" invisible="state != 'clear'" />
             </tree>
         </field>
     </record>
