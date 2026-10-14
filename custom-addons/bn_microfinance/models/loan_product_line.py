@@ -6,13 +6,13 @@ class LoanProductLine(models.Model):
     _description = "Loan Product Line"
 
 
-    product_id = fields.Many2one('product.product', string='Product')
+    # product_id = fields.Many2one('product.product', string='Product')
     microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string='Microfinance Scheme Line')
 
     sd_amount = fields.Float('SD Amount')
     inst_amount = fields.Float('Ins. Amount')
 
-    # product_ids = fields.Many2many('product.product', string='Products')
+    product_ids = fields.Many2many('product.product', string='Products')
 
     installment_ids = fields.One2many('loan.product.installment', 'loan_product_line_id', string='No. of Installments')
 
