@@ -13,6 +13,7 @@
     'data': [
         'security/group.xml',
         'security/record_rule.xml',
+        
         'views/res_users.xml',
         'views/stock_picking.xml',
         'views/stock_location.xml',

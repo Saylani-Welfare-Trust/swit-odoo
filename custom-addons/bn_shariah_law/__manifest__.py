@@ -17,12 +17,14 @@
         'bn_material_request',
     ],
     'data': [
+        'security/group.xml',
+        'security/ir.model.access.csv',
+        
         'data/ir_module_category.xml',
         'data/schedule_action.xml',
         'data/sequence.xml',
         'data/shariah_law_blocker.xml',
-        'security/group.xml',
-        'security/ir.model.access.csv',
+        
         'views/shariah_daily_balance.xml',
         'views/shariah_transfer.xml',
         'views/shariah_law.xml',
@@ -41,6 +43,7 @@
         'views/microfinance.xml',
         'views/welfare.xml',
         'views/account_analytic_account.xml',
+        
         'wizards/transfer_wizard.xml',
     ],
     'auto_install': False,

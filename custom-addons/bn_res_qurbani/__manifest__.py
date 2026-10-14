@@ -8,7 +8,6 @@
     'category': 'Base',
     'depends': ['base', 'bn_pos_custom_action', 'bn_qurbani'],
     'data': [
-        # Add XML view files here if needed
         'views/res_company_views.xml',
     ],
     'installable': True,
