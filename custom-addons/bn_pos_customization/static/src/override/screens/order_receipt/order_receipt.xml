@@ -212,9 +212,18 @@
                         <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                     </div>
                 </div>
-                
+
                 <div name="custom-footer" style="text-align: center; font-size: 12px;">
                     Powered by BytesNode
+                </div>
+
+                <!-- ✅ FIX: Hidden Orderline placeholder so downstream modules
+                     (pos_sale, pos_loyalty, pos_restaurant, l10n_*_pos) can inject
+                     into //Orderline without breaking the asset bundle compile. -->
+                <div style="display:none;" aria-hidden="true">
+                    <t t-foreach="lines" t-as="line" t-key="line.id">
+                        <Orderline line="line"/>
+                    </t>
                 </div>
 
             </div>
