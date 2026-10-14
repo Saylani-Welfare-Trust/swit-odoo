@@ -181,7 +181,7 @@ class MemberApproval(models.Model):
         for line in self.line_ids:
             # Search for analytic account linked to the product
             analytic = self.env['account.analytic.account'].search([
-                ('product_id', 'in', [line.product_id.id])
+                ('product_ids', 'in', [line.product_id.id])
             ], limit=1)
 
             if not analytic:

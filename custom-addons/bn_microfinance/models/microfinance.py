@@ -349,10 +349,10 @@ class Microfinance(models.Model):
             ])
 
             # Get product IDs
-            product_id = lines.mapped('product_id').ids
+            product_ids = lines.mapped('product_id').ids
 
             # Set Many2many properly
-            rec.product_domain = [(6, 0, product_id)]
+            rec.product_domain = [(6, 0, product_ids)]
 
     @api.depends('microfinance_scheme_line_id', 'product_id')
     def _compute_installment_domain(self):
