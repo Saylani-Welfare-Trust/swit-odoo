@@ -112,15 +112,26 @@ class PurchaseRequisition(models.Model):
 
     def _get_request_shortfall(self):
         """The confirmed Purchase Orders of the source Material Request - from
-        all its requisitions - matched against what that request needs
-        purchased: {product: quantity not ordered yet, in the product's unit}."""
+        all its requisitions - and what its open requisitions still ask for,
+        matched against what that request needs purchased: {product: quantity
+        neither ordered nor requested yet, in the product's unit}. A closed
+        requisition no longer asks for what it did not order."""
         self.ensure_one()
         if not self.material_request_id:
             return {}
-        ordered = self._get_ordered_quantities([('material_request_id', '=', self.material_request_id.id)])
+        covered = self._get_ordered_quantities([('material_request_id', '=', self.material_request_id.id)])
+        # sudo: requisitions the user may not all be allowed to read.
+        open_requests = self.sudo().search([
+            ('material_request_id', '=', self.material_request_id.id),
+            ('state', 'not in', ('done', 'cancel')),
+        ])
+        for requisition in open_requests:
+            for line, quantity in requisition._get_pending_rfq_line_quantities().items():
+                uom = line.product_id.uom_id
+                covered[line.product_id.id] += (line.product_uom_id or uom)._compute_quantity(quantity, uom)
         shortfall = {}
         for product, (quantity, _description) in self._get_request_reference().items():
-            missing = quantity - ordered[product.id]
+            missing = quantity - covered[product.id]
             if float_compare(missing, 0.0, precision_rounding=product.uom_id.rounding) > 0:
                 shortfall[product] = missing
         return shortfall
