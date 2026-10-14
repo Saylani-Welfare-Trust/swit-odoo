@@ -9,6 +9,7 @@
         'base',
         'product',
         'stock',
+        'stock_account',
         'purchase',
         'purchase_stock',
         'analytic',
@@ -16,6 +17,7 @@
         'bn_donation_home_service',
     ],
     'data': [
+        'security/stock_security.xml',
         'security/ir.model.access.csv',
         
         'data/demo_data.xml',

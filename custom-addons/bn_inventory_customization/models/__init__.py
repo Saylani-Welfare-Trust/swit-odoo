@@ -6,3 +6,4 @@ from . import product_attribute_value
 from . import purchase_order
 from . import account_analytic_account
 from . import stock_move_line
+from . import ir_ui_menu
