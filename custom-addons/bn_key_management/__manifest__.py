@@ -19,7 +19,7 @@
         'views/key_bunch.xml',
         'views/key_issuance.xml',
         'views/donation_box_request.xml',
-        'views/donation_box_registration_installation.xml'
+        'views/donation_box_registration_installation.xml',
         
         'wizards/bulk_key_issuance.xml',
         'wizards/manual_key_issuance.xml',
