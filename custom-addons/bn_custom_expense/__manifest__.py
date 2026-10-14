@@ -12,7 +12,9 @@
     'data': [
         'security/group.xml',
         'security/access_right.xml',
+        
         'views/hr_expense.xml',
+        
         'report/report_paperformat.xml',
     ],
     'auto_install': False,

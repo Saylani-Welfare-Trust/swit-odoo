@@ -9,10 +9,12 @@
         'bn_pos_cheque'
     ],
     'data': [
-        'data/sequence.xml',
-        'data/schedule_action.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        
+        'data/sequence.xml',
+        'data/schedule_action.xml',
+        
         'views/journal_transfer.xml'
     ],
     'auto_install': False,

@@ -14,7 +14,7 @@
         # 'spreadsheet_dashboard'
     ],
     'data': [
-        'security/ir.model.access.csv',  # Add this line
+        'security/ir.model.access.csv',
         'security/group.xml',
         'views/menu.xml',
         'views/chatter.xml'

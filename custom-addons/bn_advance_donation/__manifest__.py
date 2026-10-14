@@ -18,12 +18,14 @@
 
         'data/sequences.xml',
         'data/sync_pos_donation_receipts_action.xml',
+
         'reports/advance_donation_report.xml',
         'reports/non_cash_advance_donation_report.xml',
         'reports/non_cash_disbursement_report.xml',
         'reports/report_advance_donation_receipt.xml',
         'reports/advance_donation_statement_report.xml',
-        'wizard/partial_payment.xml',
+        
+        
         'views/advance_donation.xml',
         'views/donation_receipt.xml',
         'views/product_template.xml',
@@ -31,6 +33,8 @@
         'views/advance_donation_category.xml',
         'views/menu.xml',
         'views/advance_donation_statement_action.xml',
+        
+        'wizard/partial_payment.xml',
     ],
     'assets': {
         'web.assets_backend': [

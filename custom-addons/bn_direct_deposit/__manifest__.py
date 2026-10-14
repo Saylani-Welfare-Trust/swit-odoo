@@ -13,13 +13,16 @@
         'bn_master_setup',
     ],
     'data': [
-        'data/server_action.xml',
-        'data/sequence.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        
+        'data/server_action.xml',
+        'data/sequence.xml',
+        
         'views/direct_deposit.xml',
         'views/pos_direct_deposit.xml',
         'views/direct_deposit_account_setup.xml',
+        
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
         'reports/direct_deposit_dn_report.xml',
@@ -29,7 +32,6 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_direct_deposit/static/src/app/**/*',
-            # 'bn_direct_deposit/static/src/screens/*',
         ],
     },
-} # type: ignore
+}

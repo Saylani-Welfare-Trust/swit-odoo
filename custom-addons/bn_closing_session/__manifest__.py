@@ -10,6 +10,7 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        
         'views/pos_order.xml',
         'views/pos_payment_method.xml',
         'views/res_company.xml',

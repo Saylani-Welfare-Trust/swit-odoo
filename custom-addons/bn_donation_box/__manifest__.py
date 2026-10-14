@@ -16,12 +16,16 @@
         'bn_master_setup',
     ],
     'data': [
-        'data/ir_module_category.xml',
         'security/groups.xml',
         'security/ir.model.access.csv',
+        
+        'data/ir_module_category.xml',
         'data/server_action.xml',
         'data/sequence.xml',
         'data/hr_employee_category.xml',
+        
+        'reports/donation_box_report.xml',
+        
         'views/donation_box_request.xml',
         'views/donation_box_registration_intallation.xml',
         'views/donation_box_complain_center.xml',
@@ -33,7 +37,6 @@
         'views/installation_category.xml',
         'views/res_company.xml',
         'views/stock_warehouse.xml',
-        'reports/donation_box_report.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'auto_install': False,
@@ -41,7 +44,6 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_donation_box/static/src/app/**/*',
-            # 'bn_donation_box/static/src/screen/*',
         ],
     },
 }
