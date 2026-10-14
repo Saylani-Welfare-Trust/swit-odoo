@@ -14,6 +14,7 @@ class AdvanceDonationLine(models.Model):
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product')
     description = fields.Char('Description')
+    comment = fields.Char('Comment')
     quantity = fields.Integer(
         'Quantity',
         default=1,
