@@ -82,6 +82,7 @@
                 <t t-set="descriptions" t-value="list(dict.fromkeys(d for d in lines.mapped('description') if d))"/>
                 <!-- Remarks (line descriptions) are printed in place of the donor name -->
                 <t t-set="donor_name" t-value="', '.join(descriptions) or donation.donor_id.name"/>
+                <t t-set="comments" t-value="', '.join(dict.fromkeys(c for c in lines.mapped('comment') if c))"/>
                 <t t-set="entered_by" t-value="donation.create_uid"/>
                 <t t-set="branch" t-value="entered_by.employee_id.analytic_account_id.name or user.employee_id.analytic_account_id.name or ''"/>
                 <t t-set="printed_on" t-value="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %I:%M %p')"/>
@@ -126,6 +127,10 @@
                             <tr>
                                 <td>Amount</td>
                                 <td colspan="3">: <span t-esc="fmt(total)"/></td>
+                            </tr>
+                            <tr t-if="comments">
+                                <td>Comment</td>
+                                <td colspan="3">: <span t-esc="comments"/></td>
                             </tr>
                         </table>
                     </div>
