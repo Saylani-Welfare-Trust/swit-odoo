@@ -15,9 +15,11 @@
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
+        
+        'reports/pos_order_receipt.xml',
+        
         'views/pos_cheque.xml',
         'views/pos_order.xml',
-        'reports/pos_order_receipt.xml',
     ],
     'auto_install': False,
     'application': False,

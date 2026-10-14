@@ -17,6 +17,7 @@
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
+        
         'views/procurement_defer_wizard_views.xml',
         'views/arrange_budget_wizard_views.xml',
         'views/purchase_requisition_views.xml',

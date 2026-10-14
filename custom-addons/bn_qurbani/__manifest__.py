@@ -15,13 +15,13 @@
         'bn_direct_deposit',
     ],
     'data': [
+        'security/group.xml',
+        'security/ir.model.access.csv',
+        
         'data/server_action.xml',
         'data/sequence.xml',
         'data/chand_raat.xml',
         'data/qurbani_day.xml',
-        
-        'security/group.xml',
-        'security/ir.model.access.csv',
         
         'reports/duplicate_dn.xml',
         'reports/qurbani_cow_slaughter_report.xml',

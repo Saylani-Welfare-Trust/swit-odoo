@@ -9,8 +9,10 @@
         'purchase_requisition'
     ],
     'data': [
-        'data/sequence.xml',
         'security/group.xml',
+        
+        'data/sequence.xml',
+        
         'views/purchase_requisition.xml',
         'views/purchase_requisition_type.xml',
         'views/purchase_order.xml',
