@@ -392,7 +392,7 @@ patch(PaymentScreen.prototype, {
                             const analyticAccount = await this.env.services.orm.search(
                                 'account.analytic.account',
                                 [
-                                    ['product_id', 'in', [line.product_id || line.product_id[0]]],
+                                    ['product_ids', 'in', [line.product_id || line.product_id[0]]],
                                 ],
                                 1
                             );
