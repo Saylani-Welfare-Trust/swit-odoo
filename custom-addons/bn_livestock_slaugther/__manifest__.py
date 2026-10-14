@@ -14,10 +14,13 @@
         'mail',
     ],
     'data': [
+        'security/ir.model.access.csv',
+        
         'data/sequence.xml',
         'data/stock_location.xml',
-        'data/operation_type_livestock.xml',
-        'security/ir.model.access.csv',
+        
+        'reports/livestock_bulk_transfer_report.xml',
+        
         'views/livestock_slaugther.xml',
         'views/livestock_requisition.xml',
         'views/livestock_cutting.xml',
@@ -26,7 +29,7 @@
         'views/package_type.xml',
         'views/meat_management.xml',
         'views/distribution_center.xml',
-        'reports/livestock_bulk_transfer_report.xml',
+        
         'wizards/livestock_slaugther.xml',
     ],
     'auto_install': False,

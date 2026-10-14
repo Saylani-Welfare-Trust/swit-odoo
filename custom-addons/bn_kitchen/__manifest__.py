@@ -10,9 +10,11 @@
         'stock',
     ],
     'data': [
-        'data/sequence.xml',
         'security/groups.xml',
         'security/ir.model.access.csv',
+        
+        'data/sequence.xml',
+        
         'views/ration_packing.xml',
         'views/issuance_request.xml',
         'views/kitchen_menu.xml',

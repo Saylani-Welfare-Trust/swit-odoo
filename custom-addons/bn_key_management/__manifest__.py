@@ -9,17 +9,20 @@
         'bn_donation_box'
     ],
     'data': [
-        'data/ir_module_category.xml',
         'security/ir.model.access.csv',
         'security/groups.xml',
+        
+        'data/ir_module_category.xml',
         'data/schedule_action.xml',
-        'wizards/bulk_key_issuance.xml',
-        'wizards/manual_key_issuance.xml',
+
         'views/key.xml',
         'views/key_bunch.xml',
         'views/key_issuance.xml',
         'views/donation_box_request.xml',
         'views/donation_box_registration_installation.xml'
+        
+        'wizards/bulk_key_issuance.xml',
+        'wizards/manual_key_issuance.xml',
     ],
     'auto_install': False,
     'application': False,

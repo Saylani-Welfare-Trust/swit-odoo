@@ -23,14 +23,10 @@ Long description of module's purpose
     # always loaded
     'data': [
         'security/ir.model.access.csv',
+        
         'views/live_stock_recieving.xml',
         'views/po_inherit.xml',
         'views/views.xml',
-        # 'views/templates.xml',
-    ],
-    # only loaded in demonstration mode
-    'demo': [
-        'demo/demo.xml',
     ],
 } # type: ignore
 
