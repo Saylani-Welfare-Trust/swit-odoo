@@ -29,7 +29,6 @@ class DonationReceipt(models.Model):
        # POS related fields
     pos_session_id = fields.Many2one('pos.session', string='POS Session')
     pos_order_id = fields.Many2one('pos.order', string='POS Order')
-    pos_reference = fields.Char(string='POS Order Reference', copy=False, readonly=True)
     remarks = fields.Text(string='Remarks') 
     product_name = fields.Char(string='Product Name')  # If you want a separate text field
     payment_type = fields.Selection([
@@ -309,30 +308,6 @@ class DonationReceipt(models.Model):
 
 
     # ------------POS Functions----------------
-    def _get_pos_source_record(self):
-        """Return the POS record this receipt was created from, if any."""
-        self.ensure_one()
-        order = self.order_id or self.pos_order_id
-        if not order and self.name:
-            # Cash receipts are created from the payment screen before the
-            # order reaches the backend - the order keeps the receipt number.
-            order = self.env['pos.order'].search([('source_document', '=', self.name)], limit=1)
-        return order
-
-    def _get_pos_source_report(self, source):
-        return self.env.ref('bn_pos_order.pos_donation_receipt_report')
-
-    def _compute_has_pos_source(self):
-        for rec in self:
-            rec.has_pos_source = bool(rec._get_pos_source_record())
-
-    def action_print_pos_receipt(self):
-        self.ensure_one()
-        source = self._get_pos_source_record()
-        if not source:
-            raise UserError(_('This receipt was not created from POS.'))
-        return self._get_pos_source_report(source).report_action(source)
-
     @api.model
     def register_pos_payment(self, data):
         _logger.info(f"Registering POS payment with data: {data}")
@@ -385,7 +360,6 @@ class DonationReceipt(models.Model):
                 'is_donation_id': data.get('is_donation_id', False),
                 'amount': amount,
                 'product_id': data.get('product_id'),
-                'pos_reference': data.get('order_name') or False,
             }
 
             payment = self.env['advance.donation.receipt'].create(payment_vals)
