@@ -278,8 +278,6 @@ class BankReconciliationTransaction(models.Model):
             # Double check that the move line is not reconciled
             if move_line.reconciled:
                 continue
-            if move_line.id in reconciled_line_ids:
-                continue
             if self.master_id.match_by_amount and not self._check_amount_match(move_line):
                 continue
             
