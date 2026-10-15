@@ -1,6 +1,5 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_compare
 from datetime import timedelta
 import logging
 
@@ -276,6 +275,14 @@ class BankReconciliationTransaction(models.Model):
         move_lines = self.env['account.move.line'].search(domain, limit=1000)
         
         for move_line in move_lines:
+            # Double check that the move line is not reconciled
+            if move_line.reconciled:
+                continue
+            if move_line.id in reconciled_line_ids:
+                continue
+            if self.master_id.match_by_amount and not self._check_amount_match(move_line):
+                continue
+            
             score = 0
             criteria = {}
             
@@ -323,17 +330,14 @@ class BankReconciliationTransaction(models.Model):
         return sorted(matches, key=lambda x: x['score'], reverse=True)
 
     def _check_amount_match(self, move_line):
-        # The statement line is compared with the whole entry: only the item
-        # carrying the entry's full amount can match, not one of its parts
-        if float_compare(abs(move_line.balance), abs(move_line.move_id.amount_total_signed), precision_digits=2) != 0:
-            return False
+        tolerance = self.master_id.match_tolerance_amount or 0.01
         if self.debit and move_line.debit:
-            if abs(move_line.debit - self.debit) <= (self.master_id.match_tolerance_amount or 0.01):
+            if abs(move_line.debit - self.debit) <= tolerance:
                 return True
         if self.credit and move_line.credit:
-            if abs(move_line.credit - self.credit) <= (self.master_id.match_tolerance_amount or 0.01):
+            if abs(move_line.credit - self.credit) <= tolerance:
                 return True
-        if float_compare(abs(move_line.balance), abs(self.amount), precision_digits=2) == 0:
+        if abs(abs(move_line.balance) - abs(self.amount)) <= tolerance:
             return True
         return False
 

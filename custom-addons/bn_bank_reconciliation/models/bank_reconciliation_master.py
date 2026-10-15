@@ -100,6 +100,12 @@ class BankReconciliationMaster(models.Model):
         'master_id',
         string='Transactions'
     )
+    unreconciled_transaction_ids = fields.One2many(
+        'bank.reconciliation.transaction',
+        'master_id',
+        string='Unreconciled Transactions',
+        compute='_compute_unreconciled_transactions'
+    )
     reconciled_ids = fields.One2many(
         'bank.reconciliation.reconciled',
         'master_id',
@@ -231,6 +237,22 @@ class BankReconciliationMaster(models.Model):
             record.reconciled_transactions = reconciled
             record.pending_transactions = pending
             record.reconciliation_percentage = (reconciled / total * 100) if total > 0 else 0.0
+
+    @api.depends(
+        'transaction_ids',
+        'transaction_ids.state',
+        'reconciled_ids',
+        'reconciled_ids.transaction_id'
+    )
+    def _compute_unreconciled_transactions(self):
+        for record in self:
+            reconciled_transactions = record.reconciled_ids.mapped('transaction_id')
+            record.unreconciled_transaction_ids = record.transaction_ids.filtered(
+                lambda transaction: (
+                    transaction.state != 'reconciled'
+                    and transaction not in reconciled_transactions
+                )
+            )
 
     @api.depends('transaction_ids', 'transaction_ids.debit', 'transaction_ids.credit', 'reconciled_ids', 'opening_balance')
     def _compute_totals(self):
