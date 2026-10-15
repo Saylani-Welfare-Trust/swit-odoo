@@ -32,7 +32,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Check Budget" name="action_check_budget" type="object"
+                    <button string="Confirm" name="action_check_budget" type="object"
                             class="oe_highlight" invisible="state != 'draft'"/>
                     <field name="is_current_user_hod" invisible="1"/>
                     <button string="HOD Approve" name="action_hod_approve" type="object"
