@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import float_compare
 from datetime import timedelta
 import logging
 
@@ -297,8 +298,6 @@ class BankReconciliationTransaction(models.Model):
                 continue
             if move_line.id in reconciled_line_ids:
                 continue
-            if self.master_id.match_by_amount and not self._check_amount_match(move_line):
-                continue
             
             score = 0
             criteria = {}
@@ -347,14 +346,13 @@ class BankReconciliationTransaction(models.Model):
         return sorted(matches, key=lambda x: x['score'], reverse=True)
 
     def _check_amount_match(self, move_line):
-        tolerance = self.master_id.match_tolerance_amount or 0.01
         if self.debit and move_line.debit:
-            if abs(move_line.debit - self.debit) <= tolerance:
+            if abs(move_line.debit - self.debit) <= (self.master_id.match_tolerance_amount or 0.01):
                 return True
         if self.credit and move_line.credit:
-            if abs(move_line.credit - self.credit) <= tolerance:
+            if abs(move_line.credit - self.credit) <= (self.master_id.match_tolerance_amount or 0.01):
                 return True
-        if abs(abs(move_line.balance) - abs(self.amount)) <= tolerance:
+        if float_compare(abs(move_line.balance), abs(self.amount), precision_digits=2) == 0:
             return True
         return False
 
