@@ -7,11 +7,10 @@ class TreasuryDashboardController(http.Controller):
     @http.route('/treasury/dashboard/data', type='json', auth='user', methods=['POST'], csrf=False)
     def get_dashboard_data(self, **kwargs):
         # 1. Calculate Total Cash & Bank Balance
-        # FIX: In Odoo 17, 'current_balance' is on 'account.account', not 'account.journal'
         liquidity_accounts = request.env['account.account'].search([('account_type', '=', 'asset_cash')])
         total_cash = sum(liquidity_accounts.mapped('current_balance'))
 
-        # 2. Calculate Total Receivables (Outstanding Customer Invoices)
+        # 2. Calculate Total Receivables
         receivables = request.env['account.move.line'].search([
             ('account_id.account_type', '=', 'asset_receivable'),
             ('amount_residual', '>', 0),
@@ -19,7 +18,7 @@ class TreasuryDashboardController(http.Controller):
         ])
         total_receivables = sum(receivables.mapped('amount_residual'))
 
-        # 3. Calculate Total Payables (Outstanding Vendor Bills)
+        # 3. Calculate Total Payables
         payables = request.env['account.move.line'].search([
             ('account_id.account_type', '=', 'liability_payable'),
             ('amount_residual', '>', 0),
@@ -28,45 +27,61 @@ class TreasuryDashboardController(http.Controller):
         total_payables = sum(payables.mapped('amount_residual'))
 
         # 4. Chart Data: Payables vs Receivables grouped by Month (Current Year)
-        # FIX: Made the date dynamic instead of hardcoding 2024-01-01
         start_of_year = date.today().replace(month=1, day=1).strftime('%Y-%m-%d')
-        
-        domain = [
-            ('account_id.account_type', 'in', ['asset_receivable', 'liability_payable']),
-            ('parent_state', '=', 'posted'),
-            ('date', '>=', start_of_year),
-        ]
-        
-        grouped_data = request.env['account.move.line'].read_group(
-            domain,
+
+        # FIX: Split into two separate read_group calls to avoid nested field grouping error
+        # Receivables grouped by month
+        receivable_groups = request.env['account.move.line'].read_group(
+            [
+                ('account_id.account_type', '=', 'asset_receivable'),
+                ('parent_state', '=', 'posted'),
+                ('date', '>=', start_of_year),
+            ],
             ['amount_residual:sum'],
-            ['date:month', 'account_id.account_type'],
+            ['date:month'],
             lazy=False
         )
 
-        months = []
-        receivable_data = []
-        payable_data = []
-        monthly_totals = {}
-        
-        for group in grouped_data:
-            month_str = group['date:month'] 
-            account_type = group['account_id.account_type']
-            amount = group['amount_residual']
-            
-            if month_str not in monthly_totals:
-                monthly_totals[month_str] = {'receivable': 0.0, 'payable': 0.0}
-                months.append(month_str)
-                
-            if account_type == 'asset_receivable':
-                monthly_totals[month_str]['receivable'] += amount
-            elif account_type == 'liability_payable':
-                monthly_totals[month_str]['payable'] += amount
+        # Payables grouped by month
+        payable_groups = request.env['account.move.line'].read_group(
+            [
+                ('account_id.account_type', '=', 'liability_payable'),
+                ('parent_state', '=', 'posted'),
+                ('date', '>=', start_of_year),
+            ],
+            ['amount_residual:sum'],
+            ['date:month'],
+            lazy=False
+        )
 
-        # Ensure data aligns with the months array
-        for month in months:
-            receivable_data.append(monthly_totals[month]['receivable'])
-            payable_data.append(monthly_totals[month]['payable'])
+        # Build a unified month list (sorted chronologically)
+        all_months = set()
+        receivable_map = {}
+        payable_map = {}
+
+        for group in receivable_groups:
+            month_str = group['date:month']
+            all_months.add(month_str)
+            receivable_map[month_str] = group['amount_residual']
+
+        for group in payable_groups:
+            month_str = group['date:month']
+            all_months.add(month_str)
+            payable_map[month_str] = group['amount_residual']
+
+        # Sort months (e.g., "January 2025", "February 2025" ...)
+        # Odoo returns month format like "January 2025", so we sort using datetime
+        from datetime import datetime
+        def month_sort_key(m):
+            try:
+                return datetime.strptime(m, "%B %Y")
+            except ValueError:
+                return datetime.min
+
+        sorted_months = sorted(all_months, key=month_sort_key)
+
+        receivable_data = [receivable_map.get(m, 0.0) for m in sorted_months]
+        payable_data = [payable_map.get(m, 0.0) for m in sorted_months]
 
         return {
             'kpis': {
@@ -75,7 +90,7 @@ class TreasuryDashboardController(http.Controller):
                 'total_payables': total_payables,
             },
             'chart': {
-                'labels': months,
+                'labels': sorted_months,
                 'receivables': receivable_data,
                 'payables': payable_data,
             }
