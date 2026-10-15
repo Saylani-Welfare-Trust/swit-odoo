@@ -1,14 +1,15 @@
 from odoo import http
 from odoo.http import request
+from datetime import date
 
 class TreasuryDashboardController(http.Controller):
 
-    # CHANGE: type='jsonrpc' is for Odoo 18. Use type='json' for Odoo 17
     @http.route('/treasury/dashboard/data', type='json', auth='user', methods=['POST'], csrf=False)
     def get_dashboard_data(self, **kwargs):
         # 1. Calculate Total Cash & Bank Balance
-        liquidity_journals = request.env['account.journal'].search([('type', 'in', ['bank', 'cash'])])
-        total_cash = sum(liquidity_journals.mapped('current_balance'))
+        # FIX: In Odoo 17, 'current_balance' is on 'account.account', not 'account.journal'
+        liquidity_accounts = request.env['account.account'].search([('account_type', '=', 'asset_cash')])
+        total_cash = sum(liquidity_accounts.mapped('current_balance'))
 
         # 2. Calculate Total Receivables (Outstanding Customer Invoices)
         receivables = request.env['account.move.line'].search([
@@ -27,10 +28,13 @@ class TreasuryDashboardController(http.Controller):
         total_payables = sum(payables.mapped('amount_residual'))
 
         # 4. Chart Data: Payables vs Receivables grouped by Month (Current Year)
+        # FIX: Made the date dynamic instead of hardcoding 2024-01-01
+        start_of_year = date.today().replace(month=1, day=1).strftime('%Y-%m-%d')
+        
         domain = [
             ('account_id.account_type', 'in', ['asset_receivable', 'liability_payable']),
             ('parent_state', '=', 'posted'),
-            ('date', '>=', '2024-01-01'), # Adjust dynamically as needed
+            ('date', '>=', start_of_year),
         ]
         
         grouped_data = request.env['account.move.line'].read_group(
@@ -59,6 +63,7 @@ class TreasuryDashboardController(http.Controller):
             elif account_type == 'liability_payable':
                 monthly_totals[month_str]['payable'] += amount
 
+        # Ensure data aligns with the months array
         for month in months:
             receivable_data.append(monthly_totals[month]['receivable'])
             payable_data.append(monthly_totals[month]['payable'])
