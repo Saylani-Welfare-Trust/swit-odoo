@@ -377,16 +377,6 @@ class BankReconciliationMaster(models.Model):
         if self.state == 'cancelled':
             raise UserError(_('This reconciliation is cancelled.'))
         
-        unreconciled = self.transaction_ids.filtered(
-            lambda t: t.state in ['matched', 'unmatched']
-        )
-        if unreconciled:
-            raise UserError(_(
-                'Cannot complete reconciliation. There are %d transactions '
-                'that have not been reconciled.\n'
-                'Please reconcile or reject them first.'
-            ) % len(unreconciled))
-        
         # The matched entries that are still in draft are posted on completion,
         # so that they reach their accounts
         matched_moves = self.reconciled_ids.mapped('matched_move_id') | self.env['account.move.line'].search([
