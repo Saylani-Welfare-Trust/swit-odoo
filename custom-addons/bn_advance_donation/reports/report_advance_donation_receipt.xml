@@ -291,16 +291,5 @@
             <field name="paperformat_id" ref="report_advance_donation_receipt_paperformat"/>
         </record>
 
-        <!-- Print menu entry for the receipt of the POS order / direct deposit the record came from -->
-        <record id="action_print_pos_receipt_advance_donation_receipt" model="ir.actions.server">
-            <field name="name">POS Receipt</field>
-            <field name="model_id" ref="model_advance_donation_receipt"/>
-            <field name="binding_model_id" ref="model_advance_donation_receipt"/>
-            <field name="binding_type">report</field>
-            <field name="binding_view_types">list,form</field>
-            <field name="state">code</field>
-            <field name="code">action = records.action_print_pos_receipt()</field>
-        </record>
-
     </data>
 </odoo>
