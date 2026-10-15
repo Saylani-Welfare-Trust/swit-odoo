@@ -10,144 +10,100 @@
                 </div>
             </div>
 
-            <!-- 🟢 3 MAIN MENUS SECTION -->
-            <div class="row g-3 mb-4">
+            <!-- 🟢 CUSTOM TREASURY OPERATIONS SECTION -->
+            <div class="row g-3">
                 
-                <!-- 1. Customer Invoices Menu -->
+                <!-- 1. Cheque Dashboard Card -->
                 <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-top border-4 border-primary">
+                    <div class="card h-100 shadow-sm border-top border-4 border-info">
                         <div class="card-body d-flex flex-column justify-content-between">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="card-title text-primary mb-0">Customer Invoices</h5>
-                                <button class="btn btn-sm btn-primary" t-on-click="() => this.openAction('account.action_move_out_invoice_type')">New Invoice</button>
+                                <h5 class="card-title text-info mb-0">Cheques</h5>
+                                <button class="btn btn-sm btn-info text-white" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
                             </div>
                             <div class="mt-2 text-muted small">
-                                <div class="d-flex justify-content-between">
-                                    <span t-esc="state.invoices.to_validate + ' Invoices to Validate'"/>
-                                    <span class="fw-bold" t-esc="formatCurrency(state.invoices.to_validate_amt)"/>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">Total Cheques:</span>
+                                    <span t-esc="state.cheques.count"/>
                                 </div>
-                                <div class="d-flex justify-content-between">
-                                    <span t-esc="state.invoices.unpaid + ' Unpaid Invoices'"/>
-                                    <span class="fw-bold" t-esc="formatCurrency(state.invoices.unpaid_amt)"/>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Total Amount:</span>
+                                    <span t-esc="formatCurrency(state.cheques.total_amount)"/>
                                 </div>
-                                <div class="d-flex justify-content-between text-danger">
-                                    <span t-esc="state.invoices.late + ' Late Invoices'"/>
-                                    <span class="fw-bold" t-esc="formatCurrency(state.invoices.late_amt)"/>
+                                <!-- Status Badges -->
+                                <div class="d-flex flex-wrap gap-1">
+                                    <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
+                                        <span class="badge rounded-pill bg-secondary">
+                                            <t t-esc="state_name"/>: <t t-esc="state.cheques.states[state_name]"/>
+                                        </span>
+                                    </t>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Vendor Bills Menu -->
+                <!-- 2. Bank Transfers / Direct Deposit Card -->
                 <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-top border-4 border-danger">
+                    <div class="card h-100 shadow-sm border-top border-4 border-warning">
                         <div class="card-body d-flex flex-column justify-content-between">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="card-title text-danger mb-0">Vendor Bills</h5>
-                                <div>
-                                    <button class="btn btn-sm btn-secondary me-1" t-on-click="() => this.openAction('account.action_move_in_invoice_type')">Upload</button>
-                                    <button class="btn btn-sm btn-outline-secondary" t-on-click="() => this.openAction('account.action_move_in_invoice_type')">Create Manually</button>
-                                </div>
+                                <h5 class="card-title text-warning mb-0">Bank Transfers / Deposits</h5>
+                                <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
                             </div>
                             <div class="mt-2 text-muted small">
-                                <div class="d-flex justify-content-between">
-                                    <span t-esc="state.bills.to_validate + ' Bills to Validate'"/>
-                                    <span class="fw-bold" t-esc="formatCurrency(state.bills.to_validate_amt)"/>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">Total Transfers:</span>
+                                    <span t-esc="state.deposits.count"/>
                                 </div>
-                                <div class="d-flex justify-content-between text-danger">
-                                    <span t-esc="state.bills.to_pay + ' Bills to Pay'"/>
-                                    <span class="fw-bold" t-esc="formatCurrency(state.bills.to_pay_amt)"/>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Total Amount:</span>
+                                    <span t-esc="formatCurrency(state.deposits.total_amount)"/>
+                                </div>
+                                <!-- Status Badges -->
+                                <div class="d-flex flex-wrap gap-1">
+                                    <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
+                                        <span class="badge rounded-pill bg-secondary">
+                                            <t t-esc="state_name"/>: <t t-esc="state.deposits.states[state_name]"/>
+                                        </span>
+                                    </t>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. Miscellaneous Operations Menu -->
+                <!-- 3. Journal Transfer Card -->
                 <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-top border-4 border-dark">
+                    <div class="card h-100 shadow-sm border-top border-4 border-success">
                         <div class="card-body d-flex flex-column justify-content-between">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="card-title text-dark mb-0">Miscellaneous Operations</h5>
-                                <button class="btn btn-sm btn-light border" t-on-click="() => this.openAction('account.action_move_journal_line')">New Entry</button>
+                                <h5 class="card-title text-success mb-0">Journal Transfers</h5>
+                                <button class="btn btn-sm btn-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
                             </div>
                             <div class="mt-2 text-muted small">
-                                <p class="text-muted">Use this to create manual journal entries, bank transfers, or expense records.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 🟢 BANK & CASH JOURNALS SECTION -->
-            <div class="row g-3 mb-4">
-                <t t-foreach="state.journals" t-as="journal" t-key="journal.id">
-                    <div class="col-md-4">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body d-flex flex-column justify-content-between">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h5 class="card-title mb-0" t-esc="journal.name"/>
-                                    <button class="btn btn-sm btn-primary" t-on-click="() => this.openAction('account.action_account_journal_dashboard')">Connect</button>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span class="fw-bold">Total Transfers:</span>
+                                    <span t-esc="state.transfers.count"/>
                                 </div>
-                                <div class="mt-2 text-muted small">
-                                    <div class="d-flex justify-content-between">
-                                        <span>Payments</span>
-                                        <span class="fw-bold" t-esc="formatCurrency(journal.balance)"/>
-                                    </div>
-                                    <div class="d-flex justify-content-between">
-                                        <span>Misc. Operations</span>
-                                        <span class="fw-bold" t-esc="formatCurrency(journal.balance)"/>
-                                    </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">Total Amount:</span>
+                                    <span t-esc="formatCurrency(state.transfers.total_amount)"/>
+                                </div>
+                                <!-- Status Badges -->
+                                <div class="d-flex flex-wrap gap-1">
+                                    <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
+                                        <span class="badge rounded-pill bg-secondary">
+                                            <t t-esc="state_name"/>: <t t-esc="state.transfers.states[state_name]"/>
+                                        </span>
+                                    </t>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </t>
-            </div>
+                </div>
 
-            <!-- Existing KPI Cards -->
-            <div class="row g-3 mb-4">
-                <div class="col-md-4">
-                    <div class="card border-primary h-100">
-                        <div class="card-body">
-                            <h5 class="card-title text-primary">Cash &amp; Bank Balance</h5>
-                            <h2 class="card-text fw-bold" t-esc="formatCurrency(state.kpis.total_cash)"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-success h-100">
-                        <div class="card-body">
-                            <h5 class="card-title text-success">Total Receivables</h5>
-                            <h2 class="card-text fw-bold" t-esc="formatCurrency(state.kpis.total_receivables)"/>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card border-danger h-100">
-                        <div class="card-body">
-                            <h5 class="card-title text-danger">Total Payables</h5>
-                            <h2 class="card-text fw-bold" t-esc="formatCurrency(state.kpis.total_payables)"/>
-                        </div>
-                    </div>
-                </div>
             </div>
-
-            <!-- Chart Section -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">Receivables vs Payables (Monthly Trend)</h5>
-                        </div>
-                        <div class="card-body" style="height: 400px;">
-                            <canvas t-ref="treasuryChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </t>
 </templates>
