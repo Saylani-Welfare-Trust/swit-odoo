@@ -28,6 +28,7 @@ import xlsxwriter
 from odoo import api, fields, models
 from datetime import datetime
 from odoo.tools import date_utils
+from odoo.exceptions import UserError
 
 
 class AccountGeneralLedger(models.TransientModel):
@@ -51,10 +52,10 @@ class AccountGeneralLedger(models.TransientModel):
         """
         account_dict = {}
         move_lines = self.env['account.move.line'].search_read(
-            [('parent_state', '=', 'posted')],
-            ['date', 'name', 'move_name', 'debit', 'credit',
-             'partner_id', 'account_id']
-        )
+                    [('parent_state', '=', 'posted')],
+                    ['date', 'name', 'move_name', 'debit', 'credit',
+                     'partner_id', 'account_id']
+                )
 
         account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
         account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
@@ -93,30 +94,45 @@ class AccountGeneralLedger(models.TransientModel):
         return account_dict
 
     @api.model
-    def get_filter_values(self, journal_id, date_range, options, analytic,
-                        method, include_filter_values=True):
-        account_dict = {}
-        account_totals = {}
+    def get_filter_values(self, journal_id, date_range, options, analytic, method,
+                        include_filter_values=True, offset=0, limit=20,
+                        search_query=''):
+        """
+        Paginated GL loader.
+        - offset / limit: paginate ACCOUNTS (each page includes those accounts' lines)
+        - search_query: server-side search across account name/code + line text
+        Returns:
+        {
+            'account':        [<account keys for this page>],
+            'account_totals': { key: {..totals..} },
+            'total_accounts': int,
+            'has_more':       bool,
+            'offset':         int,
+            'journal_ids':    [...],   # only when offset == 0
+            'analytic_ids':   [...],   # only when offset == 0
+        }
+        """
+        # -------- build domain (same logic as before) --------
         today = fields.Date.today()
         quarter_start, quarter_end = date_utils.get_quarter(today)
         previous_quarter_start = quarter_start - relativedelta(months=3)
         previous_quarter_end = quarter_start - relativedelta(days=1)
+
         if options == {}:
             options = None
-        if options is None:
-            option_domain = ['posted']
-        elif 'draft' in options:
-            option_domain = ['posted', 'draft']
-        domain = [('journal_id', 'in', journal_id),
-                ('parent_state', 'in', option_domain), ] if journal_id else [
-            ('parent_state', 'in', option_domain), ]
-        if method == {}:
-            method = None
-        if method is not None and 'cash' in method:
-            domain += [('journal_id', 'in',
-                        self.env.company.tax_cash_basis_journal_id.ids), ]
+        option_domain = ['posted'] if options is None else (
+            ['posted', 'draft'] if 'draft' in options else ['posted'])
+
+        domain = []
+        if journal_id:
+            domain.append(('journal_id', 'in', journal_id))
+        domain.append(('parent_state', 'in', option_domain))
+
+        if method and 'cash' in method:
+            domain.append(('journal_id', 'in',
+                        self.env.company.tax_cash_basis_journal_id.ids))
         if analytic:
-            domain += [('analytic_line_ids.account_id', 'in', analytic)]
+            domain.append(('analytic_line_ids.account_id', 'in', analytic))
 
         start_date = end_date = None
         if date_range:
@@ -129,7 +145,8 @@ class AccountGeneralLedger(models.TransientModel):
             elif date_range == 'last-month':
                 last_month_start = today.replace(day=1) - relativedelta(months=1)
                 last_month_end = last_month_start + relativedelta(
-                    day=calendar.monthrange(last_month_start.year, last_month_start.month)[1])
+                    day=calendar.monthrange(last_month_start.year,
+                                            last_month_start.month)[1])
                 start_date, end_date = last_month_start, last_month_end
             elif date_range == 'last-year':
                 last_year_start = today.replace(month=1, day=1) - relativedelta(years=1)
@@ -141,67 +158,111 @@ class AccountGeneralLedger(models.TransientModel):
                     start_date = datetime.strptime(date_range['start_date'], '%Y-%m-%d').date()
                 if date_range.get('end_date'):
                     end_date = datetime.strptime(date_range['end_date'], '%Y-%m-%d').date()
-
             if start_date:
-                domain += [('date', '>=', start_date)]
+                domain.append(('date', '>=', start_date))
             if end_date:
-                domain += [('date', '<=', end_date)]
+                domain.append(('date', '<=', end_date))
 
-        move_lines = self.env['account.move.line'].search_read(
-            domain,
-            ['date', 'name', 'move_id', 'move_name', 'debit', 'credit',
-            'partner_id', 'account_id', 'ref', 'journal_id',
-            'analytic_distribution']
-        )
+        # -------- server-side search --------
+        if search_query:
+            tokens = [t for t in search_query.split() if t]
+            for token in tokens:
+                domain += [
+                    '|', '|', '|', '|', '|',
+                    ('account_id.code', 'ilike', token),
+                    ('account_id.name', 'ilike', token),
+                    ('move_name', 'ilike', token),
+                    ('name', 'ilike', token),
+                    ('ref', 'ilike', token),
+                    ('partner_id.name', 'ilike', token),
+                ]
 
-        if include_filter_values:
-            account_dict['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
-            account_dict['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+        # -------- per-account totals via read_group (no line load) --------
+        grouped = self.env['account.move.line'].read_group(
+            domain, ['debit:sum', 'credit:sum'], ['account_id'], lazy=False)
+        account_meta_raw = []
+        for g in grouped:
+            if not g.get('account_id'):
+                continue
+            acc_id = g['account_id'][0]
+            account_meta_raw.append({
+                'id': acc_id,
+                'debit': g.get('debit', 0.0) or 0.0,
+                'credit': g.get('credit', 0.0) or 0.0,
+            })
 
-        account_ids = {line['account_id'][0] for line in move_lines if line.get('account_id')}
-        account_map = {}
-        account_meta = {}
-        if account_ids:
-            account_records = self.env['account.account'].browse(list(account_ids)).exists()
-            account_map = {
-                account.id: f"{account.code} {account.name}"
-                for account in account_records
-            }
-            account_meta = {
-                account.id: {'code': account.code or '', 'name': account.name or ''}
-                for account in account_records
-            }
+        acc_records = self.env['account.account'].browse(
+            [a['id'] for a in account_meta_raw]).exists()
+        acc_by_id = {a.id: a for a in acc_records}
 
-        # --- opening balance (same domain, minus date filters, dated before start_date) ---
+        all_rows = []
+        for a in account_meta_raw:
+            acc = acc_by_id.get(a['id'])
+            if not acc:
+                continue
+            key = f"{acc.code} {acc.name}"
+            all_rows.append({
+                'key': key,
+                'id': acc.id,
+                'code': acc.code or '',
+                'name': acc.name or '',
+                'debit': a['debit'],
+                'credit': a['credit'],
+            })
+        all_rows.sort(key=lambda r: r['key'])
+
+        total_accounts = len(all_rows)
+        if limit is None:
+            page_rows = all_rows[offset:]           # no cap — used by PDF/grand-total
+        else:
+            page_rows = all_rows[offset:offset + limit]
+        page_keys = [r['key'] for r in page_rows]
+        page_acc_ids = [r['id'] for r in page_rows]
+
+        currency = self.env.company.currency_id.symbol
+
+        # -------- opening balances for THIS PAGE's accounts only --------
         opening_balances = {}
-        if start_date and account_ids:
+        if start_date and page_acc_ids:
             opening_domain = [d for d in domain if d[0] != 'date']
             opening_domain += [('date', '<', start_date),
-                            ('account_id', 'in', list(account_ids))]
+                            ('account_id', 'in', page_acc_ids)]
             opening_lines = self.env['account.move.line'].read_group(
                 opening_domain, ['debit:sum', 'credit:sum'], ['account_id'])
             for row in opening_lines:
                 acc_id = row['account_id'][0]
-                opening_balances[acc_id] = (row.get('debit', 0.0) or 0.0) - (row.get('credit', 0.0) or 0.0)
+                opening_balances[acc_id] = ((row.get('debit', 0.0) or 0.0)
+                                            - (row.get('credit', 0.0) or 0.0))
 
-        # --- corresponding/"split" account per move (siblings in the same entry) ---
-        move_ids = {line['move_id'][0] for line in move_lines if line.get('move_id')}
+        # -------- lines for THIS PAGE's accounts only --------
+        entries_by_account = defaultdict(list)
+        if page_acc_ids:
+            page_domain = [d for d in domain] + [('account_id', 'in', page_acc_ids)]
+            move_lines = self.env['account.move.line'].search_read(
+                page_domain,
+                ['date', 'name', 'move_id', 'move_name', 'debit', 'credit',
+                'partner_id', 'account_id', 'ref', 'journal_id'],
+            )
+        else:
+            move_lines = []
+
+        # split accounts (siblings in the same journal entry)
+        move_ids = {l['move_id'][0] for l in move_lines if l.get('move_id')}
         move_account_map = defaultdict(set)
         split_account_ids = set()
         if move_ids:
-            all_move_lines = self.env['account.move.line'].search_read(
-                [('move_id', 'in', list(move_ids))], ['move_id', 'account_id'])
-            for l in all_move_lines:
-                if l.get('account_id'):
-                    move_account_map[l['move_id'][0]].add(l['account_id'][0])
-                    split_account_ids.add(l['account_id'][0])
+            grouped2 = self.env['account.move.line'].read_group(
+                [('move_id', 'in', list(move_ids))],
+                ['account_id'], ['move_id', 'account_id'], lazy=False)
+            for g in grouped2:
+                if g.get('move_id') and g.get('account_id'):
+                    move_account_map[g['move_id'][0]].add(g['account_id'][0])
+                    split_account_ids.add(g['account_id'][0])
 
         split_account_map = {}
         if split_account_ids:
-            split_account_map = {
-                account.id: f"{account.code} {account.name}"
-                for account in self.env['account.account'].browse(list(split_account_ids)).exists()
-            }
+            for acc in self.env['account.account'].browse(list(split_account_ids)).exists():
+                split_account_map[acc.id] = f"{acc.code} {acc.name}"
 
         def split_account_for(line):
             if not line.get('move_id') or not line.get('account_id'):
@@ -209,70 +270,74 @@ class AccountGeneralLedger(models.TransientModel):
             others = move_account_map[line['move_id'][0]] - {line['account_id'][0]}
             if not others:
                 return ''
-            names = sorted(
-                split_account_map.get(acc_id, '') for acc_id in others
-            )
-            return ', '.join(n for n in names if n)
+            return ', '.join(sorted(
+                n for n in (split_account_map.get(a, '') for a in others) if n))
 
-        # --- location from first analytic account on the distribution ---
-        analytic_ids = set()
-        for line in move_lines:
-            dist = line.get('analytic_distribution') or {}
-            for k in dist.keys():
-                try:
-                    analytic_ids.add(int(k))
-                except (TypeError, ValueError):
-                    pass
-        analytic_map = {}
-        if analytic_ids:
-            analytic_map = {
-                a.id: a.display_name
-                for a in self.env['account.analytic.account'].browse(list(analytic_ids)).exists()
-            }
-
-        def location_for(line):
-            dist = line.get('analytic_distribution') or {}
-            for k in dist.keys():
-                try:
-                    k_int = int(k)
-                except (TypeError, ValueError):
-                    continue
-                if k_int in analytic_map:
-                    return analytic_map[k_int]
-            return ''
-
-        entries_by_account = defaultdict(list)
+        account_totals = {}
+        acc_by_key = {r['key']: r for r in page_rows}
         for line in sorted(move_lines, key=lambda l: (l.get('date') or '', l.get('id', 0))):
-            account_id = line.get('account_id')
-            if not account_id:
+            acc_ref = line.get('account_id')
+            if not acc_ref:
                 continue
-            account_key = account_map.get(account_id[0], account_id[1])
+            acc_id = acc_ref[0]
+            acc_rec = acc_by_id.get(acc_id)
+            if not acc_rec:
+                continue
+            key = f"{acc_rec.code} {acc_rec.name}"
             line['split_account'] = split_account_for(line)
-            line['location'] = location_for(line)
+            line['location'] = ''   # dropped from main fetch; see note at bottom
             line['trx_type'] = line['journal_id'][1] if line.get('journal_id') else ''
-            entries_by_account[account_key].append(line)
-            totals = account_totals.setdefault(
-                account_key,
-                {'total_debit': 0.0, 'total_credit': 0.0,
-                'currency_id': self.env.company.currency_id.symbol,
-                'account_id': account_id[0],
-                'account_code': account_meta.get(account_id[0], {}).get('code', ''),
-                'account_name': account_meta.get(account_id[0], {}).get('name', account_key),
-                'opening_balance': opening_balances.get(account_id[0], 0.0)}
-            )
-            totals['total_debit'] += line.get('debit') or 0.0
-            totals['total_credit'] += line.get('credit') or 0.0
+            entries_by_account[key].append(line)
+            t = account_totals.setdefault(key, {
+                'total_debit': 0.0,
+                'total_credit': 0.0,
+                'currency_id': currency,
+                'account_id': acc_id,
+                'account_code': acc_rec.code or '',
+                'account_name': acc_rec.name or key,
+                'opening_balance': opening_balances.get(acc_id, 0.0),
+            })
+            t['total_debit'] += line.get('debit') or 0.0
+            t['total_credit'] += line.get('credit') or 0.0
 
         # running balance per account
-        for account_key, lines in entries_by_account.items():
-            running = account_totals[account_key]['opening_balance']
+        for key, lines in entries_by_account.items():
+            running = account_totals[key]['opening_balance']
             for line in lines:
                 running += (line.get('debit') or 0.0) - (line.get('credit') or 0.0)
                 line['running_balance'] = running
-            account_dict[account_key] = lines
 
-        account_dict['account_totals'] = account_totals
-        return account_dict
+        # ensure every account in the page has an entry (even if no lines matched search)
+        for key in page_keys:
+            if key not in entries_by_account:
+                entries_by_account[key] = []
+            if key not in account_totals:
+                r = acc_by_key[key]
+                account_totals[key] = {
+                    'total_debit': r['debit'],
+                    'total_credit': r['credit'],
+                    'currency_id': currency,
+                    'account_id': r['id'],
+                    'account_code': r['code'],
+                    'account_name': r['name'],
+                    'opening_balance': opening_balances.get(r['id'], 0.0),
+                }
+
+        result = dict(entries_by_account)
+        result['account'] = page_keys
+        result['account_totals'] = account_totals
+        result['total_accounts'] = total_accounts
+        result['has_more'] = offset + limit < total_accounts
+        result['offset'] = offset
+
+        if include_filter_values and offset == 0:
+            result['journal_ids'] = self.env['account.journal'].search_read([], ['name'])
+            result['analytic_ids'] = self.env['account.analytic.account'].search_read([], ['name'])
+        else:
+            result['journal_ids'] = []
+            result['analytic_ids'] = []
+
+        return result
 
     @api.model
     def get_xlsx_report(self, data, response, report_name, report_action):
@@ -319,40 +384,33 @@ class AccountGeneralLedger(models.TransientModel):
         sheet.set_default_row(20)
 
         # ==================== Neutral / clean format palette ====================
-        # Company name (larger, bold, dark text)
         company_fmt = workbook.add_format({
             'bold': True, 'font_size': 16, 'font_color': '#1A1A1A',
             'align': 'left', 'valign': 'vcenter'})
 
-        # Report title (medium, bold)
         title_fmt = workbook.add_format({
             'bold': True, 'font_size': 13, 'font_color': '#333333',
             'align': 'left', 'valign': 'vcenter'})
 
-        # Date range / subtitle (small gray)
         subtitle_fmt = workbook.add_format({
             'font_size': 10, 'font_color': '#666666',
             'align': 'left', 'valign': 'vcenter'})
 
-        # Printed date (right aligned)
         printed_date_fmt = workbook.add_format({
             'bold': True, 'font_size': 9, 'font_color': '#666666',
             'align': 'right', 'valign': 'vcenter'})
 
-        # Section header (dark bar, white text)
         section_header_fmt = workbook.add_format({
             'bg_color': '#333333', 'font_color': '#FFFFFF',
             'bold': True, 'align': 'center', 'valign': 'vcenter',
             'font_size': 10, 'border': 1, 'border_color': '#333333'})
 
-        # Account banner (light gray, bold black text)
         banner_fmt = workbook.add_format({
             'bg_color': '#E8E8E8', 'font_color': '#1A1A1A',
             'bold': True, 'font_size': 10, 'border': 1,
             'border_color': '#BFBFBF', 'align': 'left', 'valign': 'vcenter'})
         banner_fmt.set_indent(1)
 
-        # Opening balance row (very light gray)
         opening_fmt = workbook.add_format({
             'bold': True, 'font_size': 10, 'bg_color': '#F2F2F2',
             'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
@@ -362,7 +420,6 @@ class AccountGeneralLedger(models.TransientModel):
             'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
             'num_format': '#,##0.00', 'valign': 'vcenter'})
 
-        # Transaction line (white, thin gray borders)
         line_fmt = workbook.add_format({
             'font_size': 10, 'border': 1, 'border_color': '#D9D9D9',
             'valign': 'vcenter'})
@@ -373,7 +430,6 @@ class AccountGeneralLedger(models.TransientModel):
             'font_size': 10, 'border': 1, 'border_color': '#D9D9D9',
             'num_format': '#,##0.00', 'valign': 'vcenter'})
 
-        # Per-account total (light gray, bold, top border emphasis)
         total_fmt = workbook.add_format({
             'bold': True, 'font_size': 10, 'bg_color': '#E8E8E8',
             'font_color': '#1A1A1A', 'border': 1, 'border_color': '#BFBFBF',
@@ -384,7 +440,6 @@ class AccountGeneralLedger(models.TransientModel):
             'top': 2, 'top_color': '#333333',
             'num_format': '#,##0.00', 'valign': 'vcenter'})
 
-        # Grand total (darker gray, bold, double top border)
         grand_total_fmt = workbook.add_format({
             'bold': True, 'font_size': 11, 'bg_color': '#D9D9D9',
             'font_color': '#1A1A1A', 'border': 1, 'border_color': '#808080',
@@ -405,7 +460,6 @@ class AccountGeneralLedger(models.TransientModel):
         date_range_text = f"{start_date}  -  {end_date}" if (start_date or end_date) else ''
         sheet.merge_range(2, 0, 2, last_col, date_range_text, subtitle_fmt)
 
-        # Bottom border under the header block
         underline_fmt = workbook.add_format({'bottom': 1, 'bottom_color': '#333333'})
         sheet.merge_range(3, 0, 3, last_col, '', underline_fmt)
         sheet.set_row(3, 4)
@@ -418,9 +472,6 @@ class AccountGeneralLedger(models.TransientModel):
                     account_label = account if account != 'false' else 'Unknown Account'
                     lines_for_account = report_data.get(account, [])
 
-                    # Recompute debit/credit directly from the displayed lines
-                    # instead of trusting the separately-passed totals dict —
-                    # guards against any key mismatch between `data` and `total`.
                     computed_debit = 0.0
                     computed_credit = 0.0
                     for rec in lines_for_account:
@@ -430,7 +481,6 @@ class AccountGeneralLedger(models.TransientModel):
 
                     opening_balance = account_total.get('opening_balance', 0.0)
                     closing = opening_balance + computed_debit - computed_credit
-                    currency = account_total.get('currency_id', '')
 
                     # Column headers, repeated per account section
                     for idx, header in enumerate(headers):
@@ -473,7 +523,7 @@ class AccountGeneralLedger(models.TransientModel):
                         sheet.set_row(row, 30)
                         row += 1
 
-                    # Per-account totals — now guaranteed consistent with the lines above
+                    # Per-account totals
                     sheet.merge_range(row, 0, row, 10, 'Total', total_fmt)
                     sheet.write(row, 11, computed_debit, total_num_fmt)
                     sheet.write(row, 12, computed_credit, total_num_fmt)
@@ -489,10 +539,8 @@ class AccountGeneralLedger(models.TransientModel):
                     sheet.write(row, 13, closing, opening_num_fmt)
                     row += 2  # blank spacer row between account blocks
 
-                # Grand total row
-                # Grand total row
-                                # Grand total row — computed from the same lines as each account
-                # section above, not from the separately-passed totals dict.
+                # ================= Grand totals =================
+                # Period-only debit / credit (opening is NOT inside these).
                 grand_opening = sum(
                     (report_totals.get(acc) or {}).get('opening_balance', 0.0)
                     for acc in report_accounts
@@ -504,27 +552,26 @@ class AccountGeneralLedger(models.TransientModel):
                         record = rec[0] if isinstance(rec, list) else rec
                         grand_debit += record.get('debit', 0.0) or 0.0
                         grand_credit += record.get('credit', 0.0) or 0.0
-                grand_closing = grand_opening + grand_debit - grand_credit
 
-                sheet.merge_range(row, 0, row, 10, 'GRAND OPENING BALANCE', grand_total_fmt)
-                sheet.write(row, 11, '', grand_total_num_fmt)
-                sheet.write(row, 12, '', grand_total_num_fmt)
-                sheet.write(row, 13, grand_opening, grand_total_num_fmt)
-                sheet.set_row(row, 24)
-                row += 1
+                grand_closing   = grand_opening + grand_debit - grand_credit
+                period_balance  = grand_debit - grand_credit    # without opening
 
+                # Row 1 — GRAND TOTAL (with opening balance)
                 sheet.merge_range(row, 0, row, 10, 'GRAND TOTAL', grand_total_fmt)
-                sheet.write(row, 11, grand_debit, grand_total_num_fmt)
-                sheet.write(row, 12, grand_credit, grand_total_num_fmt)
+                sheet.write(row, 11, grand_debit,   grand_total_num_fmt)
+                sheet.write(row, 12, grand_credit,  grand_total_num_fmt)
                 sheet.write(row, 13, grand_closing, grand_total_num_fmt)
                 sheet.set_row(row, 26)
                 row += 1
 
-                sheet.merge_range(row, 0, row, 10, 'GRAND CLOSING BALANCE', grand_total_fmt)
-                sheet.write(row, 11, '', grand_total_num_fmt)
-                sheet.write(row, 12, '', grand_total_num_fmt)
-                sheet.write(row, 13, grand_closing, grand_total_num_fmt)
-                sheet.set_row(row, 24)
+                # Row 2 — TOTAL (Without Opening Balance)
+                sheet.merge_range(row, 0, row, 10,
+                                  'TOTAL (Without Opening Balance)', grand_total_fmt)
+                sheet.write(row, 11, grand_debit,     grand_total_num_fmt)
+                sheet.write(row, 12, grand_credit,    grand_total_num_fmt)
+                sheet.write(row, 13, period_balance,  grand_total_num_fmt)
+                sheet.set_row(row, 26)
+                row += 1
 
         # Freeze the header rows so they stay visible while scrolling
         sheet.freeze_panes(5, 0)

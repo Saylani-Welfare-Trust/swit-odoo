@@ -17,6 +17,38 @@ class GeneralLedger extends owl.Component {
         });
     }
 
+    getVisibleGrandTotals() {
+        let debit = 0, credit = 0, opening = 0;
+        for (const acc of this.state.account || []) {
+            debit   += Number(this.getAccountTotalValue(acc, 'total_debit', 0));
+            credit  += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+            opening += Number(this.getAccountTotalValue(acc, 'opening_balance', 0));
+        }
+        return {
+            debit,
+            credit,
+            opening,
+            balance: opening + debit - credit,
+        };
+    }
+
+    getGrandTotalBalance() {
+        return Number(this.state.total_debit || 0) - Number(this.state.total_credit || 0);
+    }
+
+    getPeriodTotals() {
+        let debit = 0, credit = 0;
+        for (const acc of this.state.account || []) {
+            debit  += Number(this.getAccountTotalValue(acc, 'total_debit',  0));
+            credit += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+        }
+        return {
+            debit,
+            credit,
+            balance: debit - credit,   // no opening balance here
+        };
+    }
+
     setup() {
         super.setup(...arguments);
         this.initial_render = true;
@@ -60,6 +92,11 @@ class GeneralLedger extends owl.Component {
             all_accounts: [],
             account_from: '',
             account_to: '',
+            account_offset: 0,
+            account_limit: 20,
+            total_accounts: 0,
+            has_more: false,
+            is_loading: false,
 
             title: null,
             filter_applied: null,
@@ -92,80 +129,106 @@ class GeneralLedger extends owl.Component {
         this.load_data();
     }
 
-    async load_data() {
-        let account_list = [];
-        let account_totals = {};
-        let totalDebitSum = 0;
-        let totalCreditSum = 0;
-        let currency = null;
-        var self = this;
-        var action_title = self.getActionTitle();
-        try {
-            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method,]);
-            const raw_data = filtered_data || {};
-            self.state.account_data = raw_data;
-            $.each(raw_data, function (index, value) {
-                if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                    if (Array.isArray(value) || value && typeof value === 'object') {
-                        account_list.push(index);
-                    }
-                } else if (index === 'journal_ids') {
-                    self.state.journals = value || []
-                }
-                else if (index === 'analytic_ids') {
-                    self.state.analytics = value || []
-                }
-                else {
-                    account_totals = value || {}
-                    Object.values(account_totals).forEach(account_list => {
-                        if (account_list && typeof account_list === 'object') {
-                            currency = account_list.currency_id || currency
-                            totalDebitSum += Number(account_list.total_debit || 0);
-                            totalCreditSum += Number(account_list.total_credit || 0);
-                        }
-                    });
-                }
-            })
-            // sort accounts A -> Z (case-insensitive, numeric-aware)
-            account_list = self.sortAccounts(account_list);
-            self.state.account = account_list
-            self.state.account_list = account_list
-            self.state.account_data_list = self.state.account_data
-            self.state.account_list_full = [...account_list];
-            self.state.all_accounts = [...account_list];
-            self.state.account_data_full = { ...self.state.account_data };
-            self.state.account_total_list = account_totals
-            self.state.account_total = account_totals
-            self.state.currency = currency
-            self.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
-            self.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
-            self.state.title = action_title
-            const collapsed = {};
-            account_list.forEach((acc) => { collapsed[acc] = true; });
-            self.state.collapsed_accounts = collapsed;
-            if (self.state.selected_account_list.length) {
-                self.applySearch();
+    async _fetchPage({ reset = false } = {}) {
+        if (this.state.is_loading) return;
+        if (!reset && !this.state.has_more) return;
+        this.state.is_loading = true;
+
+        const offset = reset ? 0 : this.state.account_offset;
+
+        let raw = await this.orm.call(
+            "account.general.ledger",
+            "get_filter_values",
+            [
+                this.state.selected_journal_list,
+                this.state.date_range,
+                this.state.options,
+                this.state.selected_analytic_list,
+                this.state.method,
+                true,                              // include_filter_values
+                offset,
+                this.state.account_limit,
+                this.state.search_query || '',
+            ]
+        );
+
+        raw = raw || {};
+        const pageAccounts = raw.account || [];
+        const pageTotals   = raw.account_totals || {};
+
+        if (reset) {
+            this.state.account = [];
+            this.state.account_data = {};
+            this.state.account_total = {};
+            this.state.collapsed_accounts = {};
+        }
+
+        // merge totals
+        this.state.account_total = { ...this.state.account_total, ...pageTotals };
+
+        // merge data + collect keys
+        const merged = [];
+        for (const key of pageAccounts) {
+            merged.push(key);
+            this.state.account_data[key] = raw[key] || [];
+            if (this.state.collapsed_accounts[key] === undefined) {
+                this.state.collapsed_accounts[key] = true;
             }
         }
-        catch (el) {
-            self.state.account = []
-            self.state.account_data = {}
-            self.state.account_total = {}
-            self.state.currency = null
-            self.state.total_debit = '0.00'
-            self.state.total_credit = '0.00'
-            self.state.title = action_title
-            self.state.collapsed_accounts = {};
+
+        this.state.account = reset ? merged : [...this.state.account, ...merged];
+        this.state.account_list_full = this.state.account;
+        this.state.all_accounts = this.state.account;
+
+        // metadata
+        this.state.total_accounts  = raw.total_accounts || 0;
+        this.state.has_more        = !!raw.has_more;
+        this.state.account_offset  = offset + pageAccounts.length;
+
+        // filter values (only sent on offset == 0)
+        if (raw.journal_ids && raw.journal_ids.length) {
+            this.state.journals = raw.journal_ids;
         }
+        if (raw.analytic_ids && raw.analytic_ids.length) {
+            this.state.analytics = raw.analytic_ids;
+        }
+
+        // currency from first total we see
+        if (!this.state.currency) {
+            for (const k of Object.keys(pageTotals)) {
+                const c = pageTotals[k].currency_id;
+                if (c) { this.state.currency = c; break; }
+            }
+        }
+
+        this.state.is_loading = false;
+    }
+
+    async load_data() {
+        // First-ever load uses the state already seeded from action params.
+        this.state.account_offset = 0;
+        await this._fetchPage({ reset: true });
+    }
+
+    async loadMore() {
+        await this._fetchPage({ reset: false });
     }
     async printPdf(ev) {
         ev.preventDefault();
         var self = this;
+        const gt = this.getVisibleGrandTotals();
+        const pt = this.getPeriodTotals();
         let totals = {
-            'total_debit': this.state.total_debit,
-            'total_credit': this.state.total_credit,
-            'currency': this.state.currency,
-        }
+            'total_debit':     gt.debit.toFixed(2),
+            'total_credit':    gt.credit.toFixed(2),
+            'opening_balance': gt.opening.toFixed(2),
+            'currency':        this.state.currency,
+
+            // new — without opening balance
+            'period_debit':    pt.debit.toFixed(2),
+            'period_credit':   pt.credit.toFixed(2),
+            'period_balance':  pt.balance.toFixed(2),
+        };
         var action_title = self.getActionTitle();
         return self.action.doAction({
             'type': 'ir.actions.report',
@@ -190,11 +253,19 @@ class GeneralLedger extends owl.Component {
     }
     async print_xlsx() {
         var self = this;
+        const gt = this.getVisibleGrandTotals();
+        const pt = this.getPeriodTotals();
         let totals = {
-            'total_debit': this.state.total_debit,
-            'total_credit': this.state.total_credit,
-            'currency': this.state.currency,
-        }
+            'total_debit':     gt.debit.toFixed(2),
+            'total_credit':    gt.credit.toFixed(2),
+            'opening_balance': gt.opening.toFixed(2),
+            'currency':        this.state.currency,
+
+            // new — without opening balance
+            'period_debit':    pt.debit.toFixed(2),
+            'period_credit':   pt.credit.toFixed(2),
+            'period_balance':  pt.balance.toFixed(2),
+        };
         var action_title = self.getActionTitle();
         var datas = {
             'account': self.state.account,
@@ -275,7 +346,7 @@ class GeneralLedger extends owl.Component {
                 btn.classList.toggle('selected-filter', selected.includes(id));
             });
 
-        this.applySearch();
+        // Range narrowing applies to what's already loaded — no server call.
     }
 
     clearAccountRange() {
@@ -335,17 +406,7 @@ class GeneralLedger extends owl.Component {
     }
 
     async applyFilter(val, ev, is_delete = false) {
-        let account_list = []
-        let account_totals = ''
-        let totalDebitSum = 0;
-        let totalCreditSum = 0;
-        this.state.account = null
-        this.state.account_data = null
-        this.state.account_total = null
         this.state.filter_applied = true;
-        if (this.state.selected_account_list.length) {
-            this.applySearch();
-        }
         if (ev) {
             if (ev.input && ev.input.attributes.placeholder.value == 'Account' && !is_delete) {
                 this.state.selected_analytic.push(val[0].id)
@@ -432,50 +493,22 @@ class GeneralLedger extends owl.Component {
                 }
             }
         }
-        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method, ]);
-        filtered_data = filtered_data || {};
-        $.each(filtered_data, function (index, value) {
-            if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                if (Array.isArray(value) || value && typeof value === 'object') {
-                    account_list.push(index)
-                }
-            }
-            else {
-                account_totals = value || {}
-                Object.values(account_totals).forEach(account_list => {
-                    if (account_list && typeof account_list === 'object') {
-                        totalDebitSum += Number(account_list.total_debit || 0);
-                        totalCreditSum += Number(account_list.total_credit || 0);
-                    }
-                });
-            }
-        })
-        // sort accounts A -> Z (case-insensitive, numeric-aware)
-        account_list = this.sortAccounts(account_list);
-        this.state.account = account_list
-        this.state.account_data = filtered_data
-        this.state.account_list_full = [...account_list];
-        this.state.all_accounts = [...account_list];
-        this.state.account_data_full = { ...filtered_data };
-        this.state.account_total = account_totals
-        this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
-        this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
-        const collapsed = {};
-        account_list.forEach((acc) => { collapsed[acc] = true; });
-        this.state.collapsed_accounts = collapsed;
-        if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
-            this.unfoldButton.el.classList.remove("selected-filter")
+        this.state.account_offset = 0;
+        await this._fetchPage({ reset: true });
+
+        if (this.unfoldButton && this.unfoldButton.el) {
+            this.unfoldButton.el.classList.remove("selected-filter");
         }
     }
 
     onSearchInput(ev) {
-        const value = ev.target.value;
-        this.state.search_query = value;
+        this.state.search_query = ev.target.value;
         clearTimeout(this.searchTimeout);
-        // debounce so we don't re-filter on every keystroke while typing fast
-        this.searchTimeout = setTimeout(() => {
-            this.applySearch();
-        }, 300);
+        // Server-side search: 400 ms debounce, then reload page 0.
+        this.searchTimeout = setTimeout(async () => {
+            this.state.account_offset = 0;
+            await this._fetchPage({ reset: true });
+        }, 400);
     }
 
     applySearch() {
@@ -568,7 +601,8 @@ class GeneralLedger extends owl.Component {
             ev.target.classList.add("selected-filter");
         }
         this.state.selected_account_list = selected;
-        this.applySearch();
+        // Account-filter selection is applied client-side within loaded pages,
+        // so no server round-trip is needed here.
     }
 
     sortAccounts(accounts) {
@@ -579,14 +613,15 @@ class GeneralLedger extends owl.Component {
             })
         );
     }
-    clearAccountFilter() {
+    async clearAccountFilter() {
         this.state.selected_account_list = [];
         this.state.account_from = '';
         this.state.account_to   = '';
         document
             .querySelectorAll(".report-filter-button[data-value='account']")
             .forEach((btn) => btn.classList.remove("selected-filter"));
-        this.applySearch();
+        this.state.account_offset = 0;
+        await this._fetchPage({ reset: true });
     }
     async unfoldAll(ev) {
         const shouldCollapseAll = !ev.target.classList.contains("selected-filter");

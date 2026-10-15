@@ -207,6 +207,24 @@
                                         - float(grand_total['total_credit'] or 0))"/>
                                 </th>
                             </tr>
+                            <!-- ================ Load More ================ -->
+                            <t t-if="state.has_more">
+                                <tr>
+                                    <td colspan="14" style="text-align:center;padding:12px;">
+                                        <button type="button"
+                                                class="btn btn-secondary"
+                                                t-on-click="loadMore"
+                                                t-att-disabled="state.is_loading">
+                                            <t t-if="state.is_loading">Loading…</t>
+                                            <t t-else="">
+                                                Load More
+                                                (<t t-esc="state.account.length"/> of
+                                                <t t-esc="state.total_accounts"/> accounts)
+                                            </t>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </t>
                         </tbody>
                     </table>
                 </div>

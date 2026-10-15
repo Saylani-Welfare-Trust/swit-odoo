@@ -42,6 +42,8 @@ class TrialBalance extends owl.Component {
             method: {
                         'accural': true
                     },
+            collapsed_groups: {},
+            collapsed_internal_groups: {},
         });
         onMounted(() => {
             this.load_data();
@@ -298,6 +300,42 @@ class TrialBalance extends owl.Component {
          * @returns {void} No explicit return value.
          */
         this.period.el.value = ev.target.value
+    }
+    isGroupCollapsed(groupLabel) {
+        return !!this.state.collapsed_groups[groupLabel];
+    }
+
+    toggleGroup(groupLabel) {
+        this.state.collapsed_groups = {
+            ...this.state.collapsed_groups,
+            [groupLabel]: !this.state.collapsed_groups[groupLabel],
+        };
+    }
+    isInternalGroupCollapsed(internalGroup) {
+        return !!this.state.collapsed_internal_groups[internalGroup];
+    }
+    
+    toggleInternalGroup(internalGroup) {
+        this.state.collapsed_internal_groups = {
+            ...this.state.collapsed_internal_groups,
+            [internalGroup]: !this.state.collapsed_internal_groups[internalGroup],
+        };
+    }
+
+    /**
+     * Sum a numeric key across only the rows belonging to one group,
+     * for the group subtotal row (mirrors sumByKey but scoped).
+     */
+    groupSumByKey(data, groupLabel, key) {
+        return (data || [])
+            .filter((row) => (row.group_label || 'Other') === groupLabel)
+            .reduce((acc, item) => acc + (item[key] || 0), 0);
+    }
+
+    internalGroupSumByKey(data, internalGroup, key) {
+        return (data || [])
+            .filter((row) => (row.internal_group || 'Other') === internalGroup)
+            .reduce((acc, item) => acc + (item[key] || 0), 0);
     }
     applyComparisonPeriod(ev) {
         /**

@@ -29,29 +29,42 @@ from odoo import api, fields, models
 from odoo.tools.date_utils import get_month, get_fiscal_year, \
     get_quarter_number, subtract
 
+# Mirrors Odoo's native two-level Chart of Accounts grouping:
+#   Internal Group  (Asset / Liability / Equity / Income / Expense)
+#     └── Account Type  (Bank and Cash, Current Assets, Receivable, ...)
+# internal_group_order matches Odoo's own alphabetical default
+# (Asset, Equity, Expense, Income, Liability); group_order matches the
+# sub-type order seen in Odoo's own Chart of Accounts list.
 ACCOUNT_TYPE_GROUPS = {
-    'asset_receivable': ('Assets', 1),
-    'asset_cash': ('Assets', 1),
-    'asset_current': ('Assets', 1),
-    'asset_non_current': ('Assets', 1),
-    'asset_prepayments': ('Assets', 1),
-    'asset_fixed': ('Assets', 1),
-    'liability_payable': ('Liabilities', 2),
-    'liability_credit_card': ('Liabilities', 2),
-    'liability_current': ('Liabilities', 2),
-    'liability_non_current': ('Liabilities', 2),
-    'equity': ('Equity', 3),
-    'equity_unaffected': ('Equity', 3),
-    'income': ('Income', 4),
-    'income_other': ('Income', 4),
-    'expense': ('Expenses', 5),
-    'expense_depreciation': ('Expenses', 5),
-    'expense_direct_cost': ('Expenses', 5),
-    'off_balance': ('Off Balance', 6),
+    'asset_cash':             ('Asset', 1, 'Bank and Cash', 1),
+    'asset_current':          ('Asset', 1, 'Current Assets', 2),
+    'asset_non_current':      ('Asset', 1, 'Non-current Assets', 3),
+    'asset_receivable':       ('Asset', 1, 'Receivable', 4),
+    'asset_prepayments':      ('Asset', 1, 'Prepayments', 5),
+    'asset_fixed':            ('Asset', 1, 'Fixed Assets', 6),
+
+    'equity':                 ('Equity', 2, 'Equity', 1),
+    'equity_unaffected':      ('Equity', 2, 'Current Year Earnings', 2),
+
+    'expense':                ('Expense', 3, 'Expenses', 1),
+    'expense_direct_cost':    ('Expense', 3, 'Cost of Revenue', 2),
+    'expense_depreciation':   ('Expense', 3, 'Depreciation', 3),
+
+    'income':                 ('Income', 4, 'Income', 1),
+    'income_other':           ('Income', 4, 'Other Income', 2),
+
+    'liability_current':      ('Liability', 5, 'Current Liabilities', 1),
+    'liability_non_current':  ('Liability', 5, 'Non-current Liabilities', 2),
+    'liability_payable':      ('Liability', 5, 'Payable', 3),
+    'liability_credit_card':  ('Liability', 5, 'Credit Card', 4),
+
+    'off_balance':            ('Off Balance', 6, 'Off-Balance Sheet', 1),
 }
 
+
 def _group_info(account_type):
-    return ACCOUNT_TYPE_GROUPS.get(account_type, ('Other', 99))
+    """Returns (internal_group, internal_group_order, group_label, group_order)."""
+    return ACCOUNT_TYPE_GROUPS.get(account_type, ('Other', 99, 'Other', 99))
 
 class AccountTrialBalance(models.TransientModel):
     """For creating Trial Balance report"""
@@ -104,13 +117,15 @@ class AccountTrialBalance(models.TransientModel):
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
 
-            group_label, group_order = _group_info(account.account_type)
+            internal_group, internal_group_order, group_label, group_order = _group_info(account.account_type)
 
             move_line_list.append({
                 'account': account.display_name,
-                'account_name': account.name,  
+                'account_name': account.name,
                 'account_id': account_id,
                 'account_code': account.code or '',
+                'internal_group': internal_group,
+                'internal_group_order': internal_group_order,
                 'group_label': group_label,
                 'group_order': group_order,
                 'journal_ids': self.env['account.journal'].search_read([], ['name']),
@@ -125,7 +140,7 @@ class AccountTrialBalance(models.TransientModel):
                 'end_balance': end_total_debit - end_total_credit,
             })
 
-        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
+        move_line_list.sort(key=lambda d: (d['internal_group_order'], d['group_order'], d['account_code']))
         return move_line_list
 
     @api.model
@@ -336,12 +351,14 @@ class AccountTrialBalance(models.TransientModel):
             else:
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
-            group_label, group_order = _group_info(account_id.account_type)
+            internal_group, internal_group_order, group_label, group_order = _group_info(account_id.account_type)
             data = {
                 'account': account_id.display_name,
-                'account_name': account_id.name, 
+                'account_name': account_id.name,
                 'account_id': account_id.id,
                 'account_code': account_id.code or '',
+                'internal_group': internal_group,
+                'internal_group_order': internal_group_order,
                 'group_label': group_label,
                 'group_order': group_order,
                 'journal_ids': self.env['account.journal'].search_read([], [
@@ -368,7 +385,9 @@ class AccountTrialBalance(models.TransientModel):
                         0.0)
             move_line_list.append(data)
 
-        move_line_list.sort(key=lambda d: (d['group_order'], d['account_code']))
+        move_line_list.sort(
+            key=lambda d: (d['internal_group_order'], d['group_order'], d['account_code'])
+        )
         return move_line_list
 
     @api.model
@@ -388,138 +407,305 @@ class AccountTrialBalance(models.TransientModel):
         """
         Generate an XLSX report based on provided data and response stream.
         Generates an Excel workbook with specified report format, including
-        subheadings,column headers, and row data for the given financial report
-        data.
-        :param str data: JSON-encoded data for the report.
-        :param response: Response object to stream the generated report.
-        :param str report_name: Name of the financial report.
+        subheadings, column headers, and row data for the given financial
+        report data.
         """
         data = json.loads(data)
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-        start_date = data['filters']['start_date'] if \
-            data['filters']['start_date'] else ''
-        end_date = data['filters']['end_date'] if \
-            data['filters']['end_date'] else ''
-        head = workbook.add_format(
-            {'font_size': 15, 'align': 'center', 'bold': True})
+        start_date = data['filters']['start_date'] if data['filters']['start_date'] else ''
+        end_date = data['filters']['end_date'] if data['filters']['end_date'] else ''
         sheet = workbook.add_worksheet()
-        sub_heading = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '10px',
-             'border': 1, 'bg_color': '#D3D3D3',
-             'border_color': 'black'})
+
+        # ------------------------------------------------------------------
+        #  Title + subtitle
+        # ------------------------------------------------------------------
+        head = workbook.add_format(
+            {'font_size': 18, 'align': 'center', 'bold': True,
+             'font_color': '#222'})
+        subtitle = workbook.add_format(
+            {'font_size': 11, 'align': 'center', 'italic': True,
+             'font_color': '#555'})
+
+        # ------------------------------------------------------------------
+        #  Filter band formats
+        # ------------------------------------------------------------------
         filter_head = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '10px',
-             'border': 1, 'bg_color': '#D3D3D3',
+            {'align': 'center', 'bold': True, 'font_size': 10,
+             'border': 1, 'bg_color': '#3a3a3a', 'font_color': 'white',
              'border_color': 'black'})
         filter_body = workbook.add_format(
-            {'align': 'center', 'bold': True, 'font_size': '10px'})
+            {'align': 'center', 'font_size': 10, 'border': 1})
+
+        # ------------------------------------------------------------------
+        #  Table header formats (dark band with white text)
+        # ------------------------------------------------------------------
+        sub_heading = workbook.add_format(
+            {'align': 'center', 'bold': True, 'font_size': 11,
+             'border': 1, 'bg_color': '#3a3a3a', 'font_color': 'white',
+             'border_color': 'black', 'text_wrap': True,
+             'valign': 'vcenter'})
+
+        # ------------------------------------------------------------------
+        #  Row formats
+        # ------------------------------------------------------------------
         side_heading_sub = workbook.add_format(
-            {'align': 'left', 'bold': True, 'font_size': '10px',
-             'border': 1,
-             'border_color': 'black'})
+            {'align': 'left', 'font_size': 10, 'border': 1,
+             'border_color': '#cccccc'})
         side_heading_sub.set_indent(1)
-        txt_name = workbook.add_format({'font_size': '10px', 'border': 1})
+
+        txt_name = workbook.add_format(
+            {'font_size': 10, 'border': 1, 'border_color': '#cccccc'})
         txt_name.set_indent(2)
+
+        num_fmt_whole = workbook.add_format(
+            {'font_size': 10, 'border': 1, 'num_format': '#,##0',
+             'border_color': '#cccccc'})
+
+        # ------------------------------------------------------------------
+        #  Group hierarchy formats
+        # ------------------------------------------------------------------
+        internal_header_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 14, 'bg_color': '#CFCFCF',
+             'border': 1, 'border_color': '#888', 'valign': 'vcenter'})
+        internal_header_fmt.set_indent(1)
+
+        group_header_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 12, 'bg_color': '#EAEAEA',
+             'border': 1, 'border_color': '#aaa', 'valign': 'vcenter'})
+        group_header_fmt.set_indent(2)
+
+        group_total_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 12, 'border': 1,
+             'border_color': '#aaa', 'top': 2, 'num_format': '#,##0',
+             'bg_color': '#F4F4F4'})
+        group_total_lbl_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 12, 'border': 1,
+             'border_color': '#aaa', 'top': 2,
+             'bg_color': '#F4F4F4', 'align': 'left'})
+
+        internal_total_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 13, 'border': 1,
+             'border_color': '#888', 'top': 6, 'num_format': '#,##0',
+             'bg_color': '#DADADA'})
+        internal_total_lbl_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 13, 'border': 1,
+             'border_color': '#888', 'top': 6,
+             'bg_color': '#DADADA', 'align': 'left'})
+
+        grand_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 13, 'bg_color': '#3a3a3a',
+             'font_color': 'white', 'border': 1, 'border_color': 'black',
+             'num_format': '#,##0', 'top': 6})
+        grand_lbl_fmt = workbook.add_format(
+            {'bold': True, 'font_size': 13, 'bg_color': '#3a3a3a',
+             'font_color': 'white', 'border': 1, 'border_color': 'black',
+             'top': 6, 'align': 'left'})
+
+        # ------------------------------------------------------------------
+        #  Column widths
+        # ------------------------------------------------------------------
         sheet.set_column(0, 0, 16)   # Account Number
         sheet.set_column(1, 1, 34)   # Account Name
         sheet.set_column(2, 2, 15)   # Initial Balance (net)
         col = 0
 
-        num_fmt_whole = workbook.add_format(
-            {'font_size': '10px', 'border': 1, 'num_format': '#,##0'})
-        group_header_fmt = workbook.add_format(
-            {'bold': True, 'font_size': '11px', 'bg_color': '#D9D9D9',
-             'border': 1})
+        # ------------------------------------------------------------------
+        #  Title
+        # ------------------------------------------------------------------
+        sheet.merge_range('A1:G1', report_name, head)
+        sheet.merge_range('A2:G2', 'Trial Balance Report', subtitle)
+        sheet.set_row(0, 30)
+        sheet.set_row(1, 18)
 
-        sheet.write('A1:b1', report_name, head)
-        sheet.write('B3:b4', 'Date Range', filter_head)
-        sheet.write('B4:b4', 'Comparison', filter_head)
-        sheet.write('B5:b4', 'Journal', filter_head)
-        sheet.write('B6:b4', 'Account', filter_head)
-        sheet.write('B7:b4', 'Option', filter_head)
+        # ------------------------------------------------------------------
+        #  Filter band
+        # ------------------------------------------------------------------
+        sheet.write('B4:B4', 'Date Range', filter_head)
+        sheet.write('B5:B4', 'Comparison', filter_head)
+        sheet.write('B6:B4', 'Journal', filter_head)
+        sheet.write('B7:B4', 'Account', filter_head)
+        sheet.write('B8:B4', 'Option', filter_head)
+
         if start_date or end_date:
-            sheet.merge_range('C3:G3', f"{start_date} to {end_date}",
-                              filter_body)
+            sheet.merge_range('C4:G4', f"{start_date} to {end_date}", filter_body)
         if data['filters']['comparison_number_range']:
-            sheet.merge_range('C4:G4',
-                              f"{data['filters']['comparison_type']} : {data['filters']['comparison_number_range']}",
-                              filter_body)
+            sheet.merge_range(
+                'C5:G5',
+                f"{data['filters']['comparison_type']} : {data['filters']['comparison_number_range']}",
+                filter_body)
         if data['filters']['journal']:
-            display_names = [journal for
-                             journal in data['filters']['journal']]
-            display_names_str = ', '.join(display_names)
-            sheet.merge_range('C5:G5', display_names_str, filter_body)
+            display_names = [journal for journal in data['filters']['journal']]
+            sheet.merge_range('C6:G6', ', '.join(display_names), filter_body)
         if data['filters']['account']:
-            account_keys = [account.get('display_name', 'undefined') for
-                            account in data['filters']['account']]
-            account_keys_str = ', '.join(account_keys)
-            sheet.merge_range('C6:G6', account_keys_str, filter_body)
+            account_keys = [account.get('display_name', 'undefined')
+                            for account in data['filters']['account']]
+            sheet.merge_range('C7:G7', ', '.join(account_keys), filter_body)
         if data['filters']['options']:
             option_keys = list(data['filters']['options'].keys())
-            option_keys_str = ', '.join(option_keys)
-            sheet.merge_range('C7:G7', option_keys_str, filter_body)
+            sheet.merge_range('C8:G8', ', '.join(option_keys), filter_body)
 
-        # Header row: Account Number | Account Name | Initial Balance (net) | period pairs... | End Balance
-        sheet.write(9, col, 'Account No.', sub_heading)
-        sheet.write(9, col + 1, 'Account Name', sub_heading)
-        sheet.write(9, col + 2, 'Initial Balance', sub_heading)
+        # ------------------------------------------------------------------
+        #  Main table header rows
+        # ------------------------------------------------------------------
+        sheet.write(10, col, 'Account No.', sub_heading)
+        sheet.write(10, col + 1, 'Account Name', sub_heading)
+        sheet.write(10, col + 2, 'Initial Balance', sub_heading)
         i = 3
         for date_view in data['date_viewed']:
-            sheet.merge_range(9, col + i, 9, col + i + 1, date_view,
-                              sub_heading)
+            sheet.merge_range(10, col + i, 10, col + i + 1, date_view, sub_heading)
             i += 2
-        sheet.write(9, col + i, 'End Balance', sub_heading)
+        sheet.write(10, col + i, 'End Balance', sub_heading)
 
-        sheet.write(10, col, '', sub_heading)
-        sheet.write(10, col + 1, '', sub_heading)
-        sheet.write(10, col + 2, '', sub_heading)
+        sheet.write(11, col, '', sub_heading)
+        sheet.write(11, col + 1, '', sub_heading)
+        sheet.write(11, col + 2, '', sub_heading)
         i = 3
         for date_views in data['date_viewed']:
-            sheet.write(10, col + i, 'Debit', sub_heading)
+            sheet.write(11, col + i, 'Debit', sub_heading)
             i += 1
-            sheet.write(10, col + i, 'Credit', sub_heading)
+            sheet.write(11, col + i, 'Credit', sub_heading)
             i += 1
-        sheet.write(10, col + i, '', sub_heading)
-        # sheet.write(10, col + (i + 1), 'Credit', sub_heading)
+        sheet.write(11, col + i, '', sub_heading)
 
-        if data:
-            if report_action == 'dynamic_accounts_report.action_trial_balance':
-                row = 11
-                current_group = None
-                for move_line in data['data']:
-                    group_label = move_line.get('group_label', 'Other')
-                    if group_label != current_group:
-                        last_col = col + 3 + (2 * len(data['date_viewed'])) + 1
-                        sheet.merge_range(row, col, row, last_col,
-                                          group_label, group_header_fmt)
-                        row += 1
-                        current_group = group_label
+        sheet.set_row(10, 22)
+        sheet.set_row(11, 20)
 
-                    sheet.write(row, col, move_line.get('account_code', ''), txt_name)
-                    sheet.write(row, col + 1, move_line.get('account_name',
-                                        move_line['account']), side_heading_sub)
-                    sheet.write(row, col + 2,
-                                move_line.get('initial_balance', 0.0),
-                                num_fmt_whole)
-                    j = 3
-                    if data['apply_comparison']:
-                        number_of_periods = data['comparison_number_range']
-                        for num in number_of_periods:
-                            sheet.write(row, col + j, move_line[
-                                'dynamic_total_debit_' + str(num)], num_fmt_whole)
-                            sheet.write(row, col + j + 1, move_line[
-                                'dynamic_total_credit_' + str(num)], num_fmt_whole)
-                            j += 2
-                    sheet.write(row, col + j, move_line['total_debit'],
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 1, move_line['total_credit'],
-                                num_fmt_whole)
-                    sheet.write(row, col + j + 2,
-                        move_line.get('end_balance', 0.0), num_fmt_whole)
-                    row += 1
+        # ------------------------------------------------------------------
+        #  Data body
+        # ------------------------------------------------------------------
+        if data and report_action == 'dynamic_accounts_report.action_trial_balance':
+            row = 12
+            apply_cmp = data['apply_comparison']
+            periods = data['comparison_number_range'] if apply_cmp else []
+            last_col = col + 5 + (2 * len(data['date_viewed']))
+
+            def _s(rows, key):
+                return sum(m.get(key, 0.0) for m in rows)
+
+            def write_internal_header(label):
+                nonlocal row
+                sheet.merge_range(row, col, row, last_col, label,
+                                  internal_header_fmt)
+                sheet.set_row(row, 26)
+                row += 1
+
+            def write_group_header(label):
+                nonlocal row
+                sheet.merge_range(row, col, row, last_col, label,
+                                  group_header_fmt)
+                sheet.set_row(row, 20)
+                row += 1
+
+            def write_total(label, rows, fmt_num, fmt_lbl):
+                nonlocal row
+                sheet.write(row, col, '', fmt_lbl)
+                sheet.write(row, col + 1, label, fmt_lbl)
+                sheet.write(row, col + 2, _s(rows, 'initial_balance'), fmt_num)
+                j = 3
+                if apply_cmp:
+                    for num in periods:
+                        sheet.write(row, col + j,
+                                    _s(rows, 'dynamic_total_debit_' + str(num)), fmt_num)
+                        sheet.write(row, col + j + 1,
+                                    _s(rows, 'dynamic_total_credit_' + str(num)), fmt_num)
+                        j += 2
+                sheet.write(row, col + j,     _s(rows, 'total_debit'),  fmt_num)
+                sheet.write(row, col + j + 1, _s(rows, 'total_credit'), fmt_num)
+                sheet.write(row, col + j + 2, _s(rows, 'end_balance'),  fmt_num)
+                sheet.set_row(row, 20)
+                row += 1
+
+            def write_account(move_line):
+                nonlocal row
+                sheet.write(row, col, move_line.get('account_code', ''), txt_name)
+                sheet.write(row, col + 1,
+                            move_line.get('account_name', move_line['account']),
+                            side_heading_sub)
+                sheet.write(row, col + 2,
+                            move_line.get('initial_balance', 0.0), num_fmt_whole)
+                j = 3
+                if apply_cmp:
+                    for num in periods:
+                        sheet.write(row, col + j,
+                                    move_line.get('dynamic_total_debit_' + str(num), 0.0),
+                                    num_fmt_whole)
+                        sheet.write(row, col + j + 1,
+                                    move_line.get('dynamic_total_credit_' + str(num), 0.0),
+                                    num_fmt_whole)
+                        j += 2
+                sheet.write(row, col + j,     move_line.get('total_debit', 0.0),  num_fmt_whole)
+                sheet.write(row, col + j + 1, move_line.get('total_credit', 0.0), num_fmt_whole)
+                sheet.write(row, col + j + 2, move_line.get('end_balance', 0.0),  num_fmt_whole)
+                row += 1
+
+            current_internal_group = None
+            current_group = None
+            internal_group_rows = []
+            group_rows = []
+
+            for move_line in data['data']:
+                ig = move_line.get('internal_group') or 'Other'
+                gl = move_line.get('group_label') or 'Other'
+
+                # --- internal group boundary ---
+                if ig != current_internal_group:
+                    if current_group is not None and group_rows:
+                        write_total('Total', group_rows,
+                                    group_total_fmt, group_total_lbl_fmt)
+                        group_rows = []
+                    if current_internal_group is not None and internal_group_rows:
+                        write_total(f'{current_internal_group} Total',
+                                    internal_group_rows,
+                                    internal_total_fmt, internal_total_lbl_fmt)
+                        internal_group_rows = []
+                    write_internal_header(ig.upper())
+                    current_internal_group = ig
+                    current_group = None
+
+                # --- sub-group boundary ---
+                if gl != current_group:
+                    if current_group is not None and group_rows:
+                        write_total('Total', group_rows,
+                                    group_total_fmt, group_total_lbl_fmt)
+                        group_rows = []
+                    write_group_header(gl)
+                    current_group = gl
+
+                write_account(move_line)
+                group_rows.append(move_line)
+                internal_group_rows.append(move_line)
+
+            # --- close last sub-group ---
+            if current_group is not None and group_rows:
+                write_total('Total', group_rows,
+                            group_total_fmt, group_total_lbl_fmt)
+            # --- close last internal group ---
+            if current_internal_group is not None and internal_group_rows:
+                write_total(f'{current_internal_group} Total',
+                            internal_group_rows,
+                            internal_total_fmt, internal_total_lbl_fmt)
+
+            # --- grand total ---
+            all_rows = data['data']
+            sheet.write(row, col, '', grand_lbl_fmt)
+            sheet.write(row, col + 1, 'GRAND TOTAL', grand_lbl_fmt)
+            sheet.write(row, col + 2, _s(all_rows, 'initial_balance'), grand_fmt)
+            j = 3
+            if apply_cmp:
+                for num in periods:
+                    sheet.write(row, col + j,
+                                _s(all_rows, 'dynamic_total_debit_' + str(num)), grand_fmt)
+                    sheet.write(row, col + j + 1,
+                                _s(all_rows, 'dynamic_total_credit_' + str(num)), grand_fmt)
+                    j += 2
+            sheet.write(row, col + j,     _s(all_rows, 'total_debit'),  grand_fmt)
+            sheet.write(row, col + j + 1, _s(all_rows, 'total_credit'), grand_fmt)
+            sheet.write(row, col + j + 2, _s(all_rows, 'end_balance'),  grand_fmt)
+            sheet.set_row(row, 24)
+            row += 1
+
         workbook.close()
         output.seek(0)
         response.stream.write(output.read())
         output.close()
-        

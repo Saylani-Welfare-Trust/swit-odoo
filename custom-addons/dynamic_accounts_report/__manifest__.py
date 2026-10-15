@@ -48,6 +48,7 @@
         'report/aged_receivable_templates.xml',
         'report/tax_report_templates.xml',
         'report/account_payment_report.xml',
+        'report/period_balance_report.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -61,6 +62,7 @@
             'dynamic_accounts_report/static/src/xml/aged_payable_report_views.xml',
             'dynamic_accounts_report/static/src/xml/aged_receivable_report_views.xml',
             'dynamic_accounts_report/static/src/xml/tax_report_views.xml',
+            'dynamic_accounts_report/static/src/xml/period_balance_templates.xml',
             'dynamic_accounts_report/static/src/css/accounts_report.css',
             'dynamic_accounts_report/static/src/js/general_ledger.js',
             'dynamic_accounts_report/static/src/js/trial_balance.js',
@@ -72,6 +74,7 @@
             'dynamic_accounts_report/static/src/js/aged_payable_report.js',
             'dynamic_accounts_report/static/src/js/aged_receivable_report.js',
             'dynamic_accounts_report/static/src/js/tax_report.js',
+            'dynamic_accounts_report/static/src/js/period_balance.js',
         ],
     },
     'images': ['static/description/banner.jpg'],
