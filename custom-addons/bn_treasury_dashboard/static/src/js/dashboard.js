@@ -16,6 +16,10 @@ export class TreasuryDashboard extends Component {
             invoices: { to_validate: 0, to_validate_amt: 0, unpaid: 0, unpaid_amt: 0, late: 0, late_amt: 0 },
             bills: { to_validate: 0, to_validate_amt: 0, to_pay: 0, to_pay_amt: 0 },
             journals: [],
+            // NEW: State for custom models
+            cheques: { count: 0, total_amount: 0, states: {} },
+            deposits: { count: 0, total_amount: 0, states: {} },
+            transfers: { count: 0, total_amount: 0, states: {} },
             chart: { labels: [], receivables: [], payables: [] },
         });
         
@@ -29,22 +33,29 @@ export class TreasuryDashboard extends Component {
             this.state.invoices = data.invoices;
             this.state.bills = data.bills;
             this.state.journals = data.journals;
+            // NEW: Assign custom model data
+            this.state.cheques = data.cheques;
+            this.state.deposits = data.deposits;
+            this.state.transfers = data.transfers;
             this.state.chart = data.chart;
         });
 
-        onMounted(() => {
-            this.renderChart();
-        });
-
-        onWillUnmount(() => {
-            if (this.chartInstance) {
-                this.chartInstance.destroy();
-            }
-        });
+        onMounted(() => { this.renderChart(); });
+        onWillUnmount(() => { if (this.chartInstance) this.chartInstance.destroy(); });
     }
 
     openAction(actionXmlId) {
         this.actionService.doAction(actionXmlId);
+    }
+
+    // NEW: Generic method to open custom model list views safely
+    openCustomModel(modelName) {
+        this.actionService.doAction({
+            type: 'ir.actions.act_window',
+            res_model: modelName,
+            views: [[false, 'list'], [false, 'form']],
+            target: 'current'
+        });
     }
 
     renderChart() {

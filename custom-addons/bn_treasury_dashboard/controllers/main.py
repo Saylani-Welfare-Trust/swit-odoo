@@ -4,6 +4,31 @@ from datetime import date, datetime
 
 class TreasuryDashboardController(http.Controller):
 
+    def _get_custom_model_stats(self, model_name, amount_field='amount', state_field='state'):
+        """Helper to safely fetch stats for custom models if they exist"""
+        if model_name not in request.env:
+            return {'count': 0, 'total_amount': 0.0, 'states': {}}
+        
+        try:
+            records = request.env[model_name].search([])
+            total_amount = sum(records.mapped(amount_field))
+            
+            states = {}
+            if state_field:
+                groups = request.env[model_name].read_group([], ['id:count'], [state_field], lazy=False)
+                for g in groups:
+                    state_val = g.get(state_field)
+                    if state_val:
+                        states[state_val] = g['id_count']
+                        
+            return {
+                'count': len(records), 
+                'total_amount': total_amount, 
+                'states': states
+            }
+        except Exception:
+            return {'count': 0, 'total_amount': 0.0, 'states': {}}
+
     @http.route('/treasury/dashboard/data', type='json', auth='user', methods=['POST'], csrf=False)
     def get_dashboard_data(self, **kwargs):
         # 1. Calculate Total Cash & Bank Balance (KPI)
@@ -28,22 +53,17 @@ class TreasuryDashboardController(http.Controller):
         # 3. Customer Invoices Metrics
         today = date.today()
         invoice_domain = [('move_type', '=', 'out_invoice')]
-        
         inv_to_validate = request.env['account.move'].search_count(invoice_domain + [('state', '=', 'draft')])
         inv_to_validate_amt = sum(request.env['account.move'].search(invoice_domain + [('state', '=', 'draft')]).mapped('amount_total'))
-        
         inv_unpaid = request.env['account.move'].search_count(invoice_domain + [('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial'])])
         inv_unpaid_amt = sum(request.env['account.move'].search(invoice_domain + [('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial'])]).mapped('amount_residual'))
-        
         inv_late = request.env['account.move'].search_count(invoice_domain + [('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '<', today)])
         inv_late_amt = sum(request.env['account.move'].search(invoice_domain + [('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial']), ('invoice_date_due', '<', today)]).mapped('amount_residual'))
 
         # 4. Vendor Bills Metrics
         bill_domain = [('move_type', '=', 'in_invoice')]
-        
         bill_to_validate = request.env['account.move'].search_count(bill_domain + [('state', '=', 'draft')])
         bill_to_validate_amt = sum(request.env['account.move'].search(bill_domain + [('state', '=', 'draft')]).mapped('amount_total'))
-        
         bill_to_pay = request.env['account.move'].search_count(bill_domain + [('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial'])])
         bill_to_pay_amt = sum(request.env['account.move'].search(bill_domain + [('state', '=', 'posted'), ('payment_state', 'in', ['not_paid', 'partial'])]).mapped('amount_residual'))
 
@@ -51,55 +71,29 @@ class TreasuryDashboardController(http.Controller):
         journals = request.env['account.journal'].search([('type', 'in', ['bank', 'cash'])])
         journal_data = []
         for journal in journals:
-            # Get the journal's current balance from its default account
             balance = sum(journal.default_account_id.mapped('current_balance')) if journal.default_account_id else 0.0
-            
-            # Count of transactions (Payments/Misc) for this journal in the current month
             start_of_month = today.replace(day=1)
             payments_count = request.env['account.move.line'].search_count([
                 ('journal_id', '=', journal.id),
                 ('date', '>=', start_of_month),
                 ('parent_state', '=', 'posted')
             ])
-            
-            journal_data.append({
-                'id': journal.id,
-                'name': journal.name,
-                'balance': balance,
-                'payments_count': payments_count,
-            })
+            journal_data.append({'id': journal.id, 'name': journal.name, 'balance': balance, 'payments_count': payments_count})
 
-        # 6. Chart Data: Payables vs Receivables grouped by Month (Current Year)
+        # 6. Chart Data
         start_of_year = today.replace(month=1, day=1).strftime('%Y-%m-%d')
-        
-        receivable_groups = request.env['account.move.line'].read_group(
-            [('account_id.account_type', '=', 'asset_receivable'), ('parent_state', '=', 'posted'), ('date', '>=', start_of_year)],
-            ['amount_residual:sum'], ['date:month'], lazy=False
-        )
-        payable_groups = request.env['account.move.line'].read_group(
-            [('account_id.account_type', '=', 'liability_payable'), ('parent_state', '=', 'posted'), ('date', '>=', start_of_year)],
-            ['amount_residual:sum'], ['date:month'], lazy=False
-        )
+        receivable_groups = request.env['account.move.line'].read_group([('account_id.account_type', '=', 'asset_receivable'), ('parent_state', '=', 'posted'), ('date', '>=', start_of_year)], ['amount_residual:sum'], ['date:month'], lazy=False)
+        payable_groups = request.env['account.move.line'].read_group([('account_id.account_type', '=', 'liability_payable'), ('parent_state', '=', 'posted'), ('date', '>=', start_of_year)], ['amount_residual:sum'], ['date:month'], lazy=False)
 
-        all_months = set()
-        receivable_map = {}
-        payable_map = {}
-
+        all_months, receivable_map, payable_map = set(), {}, {}
         for group in receivable_groups:
-            month_str = group['date:month']
-            all_months.add(month_str)
-            receivable_map[month_str] = group['amount_residual']
-
+            month_str = group['date:month']; all_months.add(month_str); receivable_map[month_str] = group['amount_residual']
         for group in payable_groups:
-            month_str = group['date:month']
-            all_months.add(month_str)
-            payable_map[month_str] = group['amount_residual']
+            month_str = group['date:month']; all_months.add(month_str); payable_map[month_str] = group['amount_residual']
 
         def month_sort_key(m):
-            try:
-                return datetime.strptime(m, "%B %Y")
-            except ValueError:
-                return datetime.min
+            try: return datetime.strptime(m, "%B %Y")
+            except ValueError: return datetime.min
 
         sorted_months = sorted(all_months, key=month_sort_key)
         receivable_data = [receivable_map.get(m, 0.0) for m in sorted_months]
@@ -112,20 +106,19 @@ class TreasuryDashboardController(http.Controller):
                 'total_payables': total_payables,
             },
             'invoices': {
-                'to_validate': inv_to_validate,
-                'to_validate_amt': inv_to_validate_amt,
-                'unpaid': inv_unpaid,
-                'unpaid_amt': inv_unpaid_amt,
-                'late': inv_late,
-                'late_amt': inv_late_amt,
+                'to_validate': inv_to_validate, 'to_validate_amt': inv_to_validate_amt,
+                'unpaid': inv_unpaid, 'unpaid_amt': inv_unpaid_amt,
+                'late': inv_late, 'late_amt': inv_late_amt,
             },
             'bills': {
-                'to_validate': bill_to_validate,
-                'to_validate_amt': bill_to_validate_amt,
-                'to_pay': bill_to_pay,
-                'to_pay_amt': bill_to_pay_amt,
+                'to_validate': bill_to_validate, 'to_validate_amt': bill_to_validate_amt,
+                'to_pay': bill_to_pay, 'to_pay_amt': bill_to_pay_amt,
             },
             'journals': journal_data,
+            # NEW: Fetch stats for the 3 custom models based on your screenshots
+            'cheques': self._get_custom_model_stats('pos.cheque', 'amount', 'state'),
+            'deposits': self._get_custom_model_stats('direct.deposit', 'amount', 'state'),
+            'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status'),
             'chart': {
                 'labels': sorted_months,
                 'receivables': receivable_data,
