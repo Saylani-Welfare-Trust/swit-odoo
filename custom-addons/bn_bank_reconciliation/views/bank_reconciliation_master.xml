@@ -117,6 +117,23 @@
                                 </tree>
                             </field>
                         </page>
+                        <page string="Unreconciled" name="unreconciled_page">
+                            <field name="unreconciled_transaction_ids" readonly="1">
+                                <tree string="Unreconciled Transactions">
+                                    <field name="date"/>
+                                    <field name="description"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Credit"/>
+                                    <field name="amount" sum="Net Total"/>
+                                    <field name="reference"/>
+                                    <field name="partner_id"/>
+                                    <field name="account_id"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="matched_move_line_name" string="Matched Line"/>
+                                    <field name="matched_move_ref" string="Entry Ref"/>
+                                </tree>
+                            </field>
+                        </page>
                         <page string="Reconciled" name="reconciled_page">
                             <field name="reconciled_ids">
                                 <tree string="Reconciled Transactions">

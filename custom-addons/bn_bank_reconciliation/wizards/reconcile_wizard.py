@@ -200,20 +200,26 @@ class ReconcileWizard(models.TransientModel):
 
     def _validate_selected_lines(self, transaction):
         self.ensure_one()
-        
+        tolerance = transaction.master_id.match_tolerance_amount or 0.01
+
         if self.match_type == 'intelligent':
-            return True
+            if transaction.master_id.match_by_amount:
+                total_selected = sum(abs(line.balance) for line in self.selected_line_ids)
+                if abs(total_selected - abs(transaction.amount)) > tolerance:
+                    raise UserError(_(
+                        'Total selected amount (%s) does not match transaction amount (%s).'
+                    ) % (total_selected, abs(transaction.amount)))
             
         elif self.match_type == 'debit_credit':
             total_debit = sum(line.debit for line in self.selected_line_ids)
             total_credit = sum(line.credit for line in self.selected_line_ids)
             
-            if transaction.debit and abs(transaction.debit - total_debit) > 0.01:
+            if transaction.debit and abs(transaction.debit - total_debit) > tolerance:
                 raise UserError(_(
                     'Total debit amount (%s) does not match transaction debit (%s).'
                 ) % (total_debit, transaction.debit))
             
-            if transaction.credit and abs(transaction.credit - total_credit) > 0.01:
+            if transaction.credit and abs(transaction.credit - total_credit) > tolerance:
                 raise UserError(_(
                     'Total credit amount (%s) does not match transaction credit (%s).'
                 ) % (total_credit, transaction.credit))
@@ -221,7 +227,7 @@ class ReconcileWizard(models.TransientModel):
             total_selected = sum(abs(line.balance) for line in self.selected_line_ids)
             transaction_amount = abs(transaction.amount)
             
-            if abs(total_selected - transaction_amount) > 0.01:
+            if abs(total_selected - transaction_amount) > tolerance:
                 raise UserError(_(
                     'Total selected amount (%s) does not match transaction amount (%s).'
                 ) % (total_selected, transaction_amount))
