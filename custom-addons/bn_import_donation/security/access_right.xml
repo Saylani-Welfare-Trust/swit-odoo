@@ -93,6 +93,16 @@
         <field name="perm_create" eval="1"/>
         <field name="perm_unlink" eval="0"/>
     </record>
+
+    <record id="access_fetch_log_import_donation_user" model="ir.model.access">
+        <field name="name">Fetch Log / Import Donation User Access</field>
+        <field name="model_id" ref="model_fetch_log"/>
+        <field name="group_id" ref="bn_import_donation.import_donation_user_group"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
     
     <!-- API Donation -->
     <record id="access_api_donation_menu" model="ir.model.access">
