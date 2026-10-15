@@ -3,7 +3,8 @@ from odoo.http import request
 
 class TreasuryDashboardController(http.Controller):
 
-    @http.route('/treasury/dashboard/data', type='jsonrpc', auth='user', methods=['POST'], csrf=False)
+    # CHANGE: type='jsonrpc' is for Odoo 18. Use type='json' for Odoo 17
+    @http.route('/treasury/dashboard/data', type='json', auth='user', methods=['POST'], csrf=False)
     def get_dashboard_data(self, **kwargs):
         # 1. Calculate Total Cash & Bank Balance
         liquidity_journals = request.env['account.journal'].search([('type', 'in', ['bank', 'cash'])])
@@ -26,14 +27,12 @@ class TreasuryDashboardController(http.Controller):
         total_payables = sum(payables.mapped('amount_residual'))
 
         # 4. Chart Data: Payables vs Receivables grouped by Month (Current Year)
-        # Using read_group for efficient database aggregation
         domain = [
             ('account_id.account_type', 'in', ['asset_receivable', 'liability_payable']),
             ('parent_state', '=', 'posted'),
             ('date', '>=', '2024-01-01'), # Adjust dynamically as needed
         ]
         
-        # Group by month and account type
         grouped_data = request.env['account.move.line'].read_group(
             domain,
             ['amount_residual:sum'],
@@ -41,16 +40,13 @@ class TreasuryDashboardController(http.Controller):
             lazy=False
         )
 
-        # Format data for Chart.js
         months = []
         receivable_data = []
         payable_data = []
-        
-        # Initialize dictionary to hold monthly totals
         monthly_totals = {}
         
         for group in grouped_data:
-            month_str = group['date:month'] # e.g., "January 2024"
+            month_str = group['date:month'] 
             account_type = group['account_id.account_type']
             amount = group['amount_residual']
             
@@ -63,7 +59,6 @@ class TreasuryDashboardController(http.Controller):
             elif account_type == 'liability_payable':
                 monthly_totals[month_str]['payable'] += amount
 
-        # Build final arrays matching the months array order
         for month in months:
             receivable_data.append(monthly_totals[month]['receivable'])
             payable_data.append(monthly_totals[month]['payable'])
