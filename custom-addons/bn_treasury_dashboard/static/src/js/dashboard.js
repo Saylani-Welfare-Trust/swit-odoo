@@ -3,12 +3,15 @@
 import { Component, onWillStart, onMounted, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { loadJS } from "@web/core/assets";
-import { formatMonetary } from "@web/views/fields/formatters";
+import { useService } from "@web/core/utils/hooks"; // <-- Import useService
 
 export class TreasuryDashboard extends Component {
     static template = "treasury_dashboard.Dashboard";
 
     setup() {
+        // 🟢 Initialize the Action Service
+        this.actionService = useService("action");
+
         this.state = useState({
             kpis: { total_cash: 0, total_receivables: 0, total_payables: 0 },
             chart: { labels: [], receivables: [], payables: [] },
@@ -18,10 +21,8 @@ export class TreasuryDashboard extends Component {
         this.chartInstance = null;
 
         onWillStart(async () => {
-            // Load Chart.js library (included in Odoo 17 core)
             await loadJS("/web/static/lib/Chart/Chart.js");
             
-            // Fetch data from the Python controller
             const data = await this.env.services.rpc("/treasury/dashboard/data", {});
             this.state.kpis = data.kpis;
             this.state.chart = data.chart;
@@ -36,6 +37,11 @@ export class TreasuryDashboard extends Component {
                 this.chartInstance.destroy();
             }
         });
+    }
+
+    // 🟢 Add the openAction method to handle menu clicks
+    openAction(actionXmlId) {
+        this.actionService.doAction(actionXmlId);
     }
 
     renderChart() {
@@ -76,10 +82,8 @@ export class TreasuryDashboard extends Component {
     }
 
     formatCurrency(value) {
-        // Simple formatter for display. In a real scenario, pass the company currency.
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
     }
 }
 
-// Register the component as a client action
 registry.category("actions").add("treasury_dashboard", TreasuryDashboard);
