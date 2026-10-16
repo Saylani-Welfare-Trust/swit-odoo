@@ -760,6 +760,7 @@ May Allah bless you!
             self._create_invoice()
             self._create_stock_picking()
 
+        self.dhs_ids.write({'state': 'paid'})
         self.state = 'clear'
 
         try:
