@@ -33,7 +33,10 @@
                 <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
             </xpath>
             <xpath expr="//div[@name='amount_div']/field[@name='amount']" position="attributes">
-                <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
+                <attribute name="readonly">move_id.state == 'posted'</attribute>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="move_id" invisible="1"/>
             </xpath>
             <xpath expr="//div[@name='amount_div']/field[@name='currency_id']" position="attributes">
                 <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>

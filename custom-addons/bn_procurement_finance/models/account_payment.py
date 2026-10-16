@@ -83,7 +83,11 @@ class AccountPayment(models.Model):
                 raise UserError(_('The link between a payment and its Purchase Order is set by the system and cannot be changed.'))
             if not payment.purchase_order_id:
                 continue
-            locked = [payment._fields[name] for name in changed if name in PO_ADVANCE_LOCKED_FIELDS]
+            locked = [
+                payment._fields[name] for name in changed
+                if name in PO_ADVANCE_LOCKED_FIELDS
+                and not (name == 'amount' and payment.move_id.state != 'posted')
+            ]
             if locked:
                 raise UserError(_(
                     'This advance payment was generated from Purchase Order %(order)s: '
