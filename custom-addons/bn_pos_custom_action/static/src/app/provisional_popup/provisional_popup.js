@@ -66,10 +66,12 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         const mf = extraData.microfinance;
         const me = extraData.medical_equipment;
         const wf = extraData.welfare;   // NEW
+        const dhs = extraData.dhs;
 
         const mfRequestNo = mf && (mf.record_number || mf.microfinance_request_no);
         const meRequestNo = me && (me.record_number || me.medical_equipment_request_no);
         const wfRequestNo = wf && wf.record_number;   // NEW
+        const dhsRequestNo = dhs && dhs.record_number;
 
         if (mfRequestNo) {
             this.state.source_request_type = 'Microfinance';
@@ -90,6 +92,9 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             this.state.source_request_no = wfRequestNo;
             this.state.source_welfare_line_ids = wf.welfare_line_ids || [];
             this.state.source_welfare_recurring_line_ids = wf.recurring_line_ids || [];
+        } else if (dhsRequestNo) {
+            this.state.source_request_type = 'Donation Home Service';
+            this.state.source_request_no = dhsRequestNo;
         }else {
             console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
         }

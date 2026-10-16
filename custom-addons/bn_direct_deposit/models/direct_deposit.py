@@ -59,6 +59,7 @@ class DirectDeposit(models.Model):
         ('microfinance', 'Microfinance'),
         ('welfare', 'Welfare'),
         ('medical_equipment', 'Medical Equipment'),
+        ('donation_home_service', 'Donation Home Service'),
     ], string="Source Type")
     source_record_id = fields.Integer(string="Source Record ID")
 
@@ -344,6 +345,12 @@ May Allah bless you!
         mf = self._find_microfinance_from_source(source_request_type, source_request_no)
         welfare = self._find_welfare_from_source(source_request_type, source_request_no)
         equipment = self._find_medical_equipment_from_source(source_request_type, source_request_no)
+        dhs = self.env['donation.home.service'].sudo()
+        if source_request_type == 'Donation Home Service' and source_request_no:
+            dhs = dhs.search([
+                ('name', '=', source_request_no),
+                ('donor_id', '=', data['donor_id']),
+            ], limit=1)
         duplicate = self._check_duplicate_transaction_ref(transaction_ref)
         if duplicate:
             return {
@@ -399,11 +406,22 @@ May Allah bless you!
             if sd_slip:
                 dd_vals['medical_security_deposit_id'] = sd_slip.id
 
+        elif source_request_type == 'Donation Home Service':
+            if not dhs:
+                return {
+                    'status': 'error',
+                    'body': _('Donation Home Service record %s was not found for this donor.') % source_request_no,
+                }
+            dd_vals['source_model'] = 'donation_home_service'
+            dd_vals['source_record_id'] = dhs.id
+
         elif mf:
             dd_vals['source_model'] = 'microfinance'
             dd_vals['source_record_id'] = mf.id
 
         dd = self.create(dd_vals)
+        if dhs:
+            dhs.write({'direct_deposit_id': dd.id})
 
         for line in dd.direct_deposit_line_ids:
             base_price = line.product_id.lst_price
@@ -760,7 +778,11 @@ May Allah bless you!
             self._create_invoice()
             self._create_stock_picking()
 
-        self.dhs_ids.write({'state': 'paid'})
+        self.dhs_ids.sudo().write({'state': 'paid'})
+        if self.source_model == 'donation_home_service':
+            dhs = self.env['donation.home.service'].sudo().browse(self.source_record_id).exists()
+            if dhs:
+                dhs.write({'state': 'paid'})
         self.state = 'clear'
 
         try:
