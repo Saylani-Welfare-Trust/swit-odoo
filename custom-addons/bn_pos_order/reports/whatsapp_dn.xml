@@ -59,7 +59,8 @@
 
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <h1 style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
+                                    <h1 t-if="order.is_non_donation_receipt" style="font-size: 15px;font-weight: bold;">Non Donation Receipt</h1>
+                                    <h1 t-else="" style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1 class="text-transform" style="font-size: 12px;">

@@ -7,6 +7,21 @@ import re
 class POSOrder(models.Model):
     _inherit = 'pos.order'
 
+    is_non_donation_receipt = fields.Boolean(
+        string='Non-donation Receipt',
+        copy=False,
+    )
+
+    @api.model
+    def _order_fields(self, ui_order):
+        vals = super()._order_fields(ui_order)
+        extra_data = ui_order.get('extra_data') or {}
+        vals['is_non_donation_receipt'] = any(
+            extra_data.get(source)
+            for source in ('medical_equipment', 'microfinance', 'welfare')
+        )
+        return vals
+
 
     product_ids = fields.Many2many(
         'product.product',
