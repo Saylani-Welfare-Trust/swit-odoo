@@ -13,11 +13,12 @@
             <div class="watermark"><t t-if="is_provisional">Provisional</t><t t-else="">Duplicate</t></div>
         </xpath>
 
-        <xpath expr="//h1[normalize-space()='Donation Receipt']" position="replace">
+        <xpath expr="//h1[@t-if='order.is_non_donation_receipt']" position="replace">
             <h1 t-if="is_provisional">Provisional Receipt</h1>
             <h1 t-elif="order.is_non_donation_receipt">Non Donation Receipt</h1>
             <h1 t-else="">Donation Receipt</h1>
         </xpath>
+        <xpath expr="//h1[normalize-space()='Donation Receipt']" position="replace"/>
     </template>
 
     <!-- Same receipt without the Duplicate mark (Print menu, WhatsApp PDF) -->
@@ -30,11 +31,12 @@
             <div t-if="is_provisional" class="watermark">Provisional</div>
         </xpath>
 
-        <xpath expr="//h1[normalize-space()='Donation Receipt']" position="replace">
+        <xpath expr="//h1[@t-if='order.is_non_donation_receipt']" position="replace">
             <h1 t-if="is_provisional" style="font-size: 15px;font-weight: bold;">Provisional Receipt</h1>
             <h1 t-elif="order.is_non_donation_receipt" style="font-size: 15px;font-weight: bold;">Non Donation Receipt</h1>
             <h1 t-else="" style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
         </xpath>
+        <xpath expr="//h1[normalize-space()='Donation Receipt']" position="replace"/>
     </template>
 
 </odoo>
