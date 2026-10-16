@@ -1,5 +1,5 @@
 from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class POSSessionSlip(models.Model):
@@ -9,15 +9,26 @@ class POSSessionSlip(models.Model):
 
     bank_id = fields.Many2one('account.journal', string="Bank")
     session_id = fields.Many2one('pos.session', string="Session")
+    journal_entry_posted = fields.Boolean(compute='_compute_journal_entry_posted')
     pos_payment_method_id = fields.Many2one('pos.payment.method', string="Payment Method")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
 
     type = fields.Char('Type')
     slip_no = fields.Char('Deposit Slip No.')
 
-    # Set by the POS closing screen (create_session_slip); never edited in the back office.
-    amount = fields.Monetary('Amount', currency_field='currency_id', readonly=True)
+    # Editable while the session journal entry is still a draft.
+    amount = fields.Monetary('Amount', currency_field='currency_id')
     description = fields.Text('Description')
+
+    @api.depends('session_id.move_id.state')
+    def _compute_journal_entry_posted(self):
+        for slip in self:
+            slip.journal_entry_posted = slip.session_id.move_id.state == 'posted'
+
+    def write(self, vals):
+        if 'amount' in vals and any(slip.session_id.move_id.state == 'posted' for slip in self):
+            raise UserError('The deposit slip amount cannot be changed after the journal entry is posted.')
+        return super().write(vals)
 
 
     @api.model
