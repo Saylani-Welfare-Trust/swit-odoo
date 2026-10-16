@@ -42,9 +42,9 @@
                     <button name="action_cancel_reconciliation" string="Cancel" type="object"
                             class="btn-danger"
                             invisible="state not in ['draft','uploaded','in_progress']"/>
-                    <button name="action_view_move" string="View Journal Entry" type="object"
+                    <button name="action_view_matched_moves" string="View Matched Entries" type="object"
                             class="btn-info"
-                            invisible="not move_id"/>
+                            invisible="not reconciled_transactions"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,uploaded,in_progress,completed"/>
                 </header>
                 <sheet>

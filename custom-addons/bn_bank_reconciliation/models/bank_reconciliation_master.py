@@ -491,16 +491,18 @@ class BankReconciliationMaster(models.Model):
         
         self.state = 'cancelled'
 
-    def action_view_move(self):
+    def action_view_matched_moves(self):
         self.ensure_one()
-        if not self.move_id:
-            raise UserError(_('No journal entry found for this reconciliation.'))
+        matched_moves = self.reconciled_ids.mapped('matched_move_id').exists()
+        if not matched_moves:
+            raise UserError(_('No matched journal entries found for this reconciliation.'))
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'account.move',
-            'res_id': self.move_id.id,
-            'view_mode': 'form',
-            'target': 'current'
+            'name': _('Matched Journal Entries'),
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', matched_moves.ids)],
+            'target': 'current',
         }
 
     def action_view_transactions(self):
