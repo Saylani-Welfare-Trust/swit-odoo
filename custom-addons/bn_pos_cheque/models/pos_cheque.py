@@ -276,7 +276,7 @@ class POSCheque(models.Model):
         self.state = 'clear'
 
     def action_bounce(self):
-        if self.bounce_count >= 3:
+        if self.bounce_count >= 4:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
 
         pdc_line = self._get_microfinance_pdc_line()
