@@ -71,12 +71,42 @@ export class TreasuryDashboard extends Component {
         this.applyFilter();
     }
 
-    // 🟢 Method to open a blank form to create a new record
+    // 🟢 Helper to format state names (e.g., "draft" -> "Draft", "to_pay" -> "To Pay")
+    formatStateName(stateName) {
+        if (!stateName) return '';
+        return stateName.charAt(0).toUpperCase() + stateName.slice(1).replace(/_/g, ' ');
+    }
+
+    // 🟢 Helper to assign colors based on common Odoo state names
+    getStateColor(stateName) {
+        if (!stateName) return 'bg-secondary';
+        const s = stateName.toLowerCase();
+        
+        // Green for successful/cleared states
+        if (['clear', 'cleared', 'posted', 'paid', 'done'].includes(s)) {
+            return 'bg-success';
+        }
+        // Orange for pending/draft states
+        if (['draft', 'pending', 'to_pay', 'unpaid', 'to_validate'].includes(s)) {
+            return 'bg-warning text-dark'; // text-dark ensures readability on orange
+        }
+        // Red for failed/cancelled states
+        if (['bounce', 'bounced', 'cancel', 'cancelled', 'late'].includes(s)) {
+            return 'bg-danger';
+        }
+        // Blue for informational states
+        if (['new', 'in_progress', 'open'].includes(s)) {
+            return 'bg-info text-dark';
+        }
+        // Default grey for anything else
+        return 'bg-secondary';
+    }
+
     createCustomModel(modelName) {
         this.actionService.doAction({
             type: 'ir.actions.act_window',
             res_model: modelName,
-            views: [[false, 'form']], // Only load the form view
+            views: [[false, 'form']],
             target: 'current'
         });
     }

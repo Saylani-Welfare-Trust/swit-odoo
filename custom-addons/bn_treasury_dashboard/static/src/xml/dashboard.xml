@@ -42,7 +42,6 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-info mb-0">Cheques</h5>
                                 <div class="d-flex gap-1">
-                                    <!-- 🟢 NEW BUTTON -->
                                     <button class="btn btn-sm btn-info text-white" t-on-click="() => this.createCustomModel('pos.cheque')">New</button>
                                     <button class="btn btn-sm btn-outline-info" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
                                 </div>
@@ -56,10 +55,11 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.cheques.total_amount)"/>
                                 </div>
+                                <!-- Status Badges with dynamic colors -->
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
-                                        <span class="badge rounded-pill bg-secondary">
-                                            <t t-esc="state_name"/>: <t t-esc="state.cheques.states[state_name]"/>
+                                        <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
+                                            <t t-esc="formatStateName(state_name)"/>: <t t-esc="state.cheques.states[state_name]"/>
                                         </span>
                                     </t>
                                 </div>
@@ -75,7 +75,6 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-warning mb-0">Bank Transfers / Deposits</h5>
                                 <div class="d-flex gap-1">
-                                    <!-- 🟢 NEW BUTTON -->
                                     <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.createCustomModel('direct.deposit')">New</button>
                                     <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
                                 </div>
@@ -89,10 +88,11 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.deposits.total_amount)"/>
                                 </div>
+                                <!-- Status Badges with dynamic colors -->
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
-                                        <span class="badge rounded-pill bg-secondary">
-                                            <t t-esc="state_name"/>: <t t-esc="state.deposits.states[state_name]"/>
+                                        <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
+                                            <t t-esc="formatStateName(state_name)"/>: <t t-esc="state.deposits.states[state_name]"/>
                                         </span>
                                     </t>
                                 </div>
@@ -108,7 +108,6 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-success mb-0">Journal Transfers</h5>
                                 <div class="d-flex gap-1">
-                                    <!-- 🟢 NEW BUTTON -->
                                     <button class="btn btn-sm btn-success" t-on-click="() => this.createCustomModel('journal.transfer')">New</button>
                                     <button class="btn btn-sm btn-outline-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
                                 </div>
@@ -122,10 +121,11 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.transfers.total_amount)"/>
                                 </div>
+                                <!-- Status Badges with dynamic colors -->
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
-                                        <span class="badge rounded-pill bg-secondary">
-                                            <t t-esc="state_name"/>: <t t-esc="state.transfers.states[state_name]"/>
+                                        <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
+                                            <t t-esc="formatStateName(state_name)"/>: <t t-esc="state.transfers.states[state_name]"/>
                                         </span>
                                     </t>
                                 </div>
