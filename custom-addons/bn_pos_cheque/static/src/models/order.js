@@ -12,7 +12,10 @@ patch(Order.prototype, {
         json.cheque_number = this.cheque_number || false;
         json.cheque_date = this.cheque_date || false;
         json.qr_code = this.qr_code || false;
-        
+        // bounced cheque order a "Settle Order" return reverses: the backend
+        // creates no pos.cheque for a return (pos.order._order_fields)
+        json.pos_cheque_order_id = this.pos_cheque_order_id || false;
+
         return json;
     },
     // This is for printing receipts
