@@ -9,7 +9,7 @@
     <!-- 2. Menu Item (Placed under Accounting > Dashboard) -->
     <menuitem id="menu_treasury_dashboard"
           name="Treasury Dashboard"
-          parent="bn_treasury_dashboard.menu_treasury"
+          parent="bn_treasury_dashboard.treasury_menu"
           action="action_treasury_dashboard"
           sequence="5"
           />
