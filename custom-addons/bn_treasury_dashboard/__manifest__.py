@@ -3,7 +3,7 @@
     'version': '17.0.1.0.0',
     'category': 'Accounting/Treasury',
     'summary': 'A custom Treasury Dashboard for Odoo 17 Community',
-    'depends': ['base', 'web', 'account'],
+    'depends': ['base', 'web', 'account', 'bn_pos_cheque',],
     'data': [
         'security/ir.model.access.csv',
         'views/treasury_dashboard_views.xml',

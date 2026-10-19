@@ -6,11 +6,10 @@
         <field name="tag">treasury_dashboard</field>
     </record>
 
-    <!-- 2. Menu Item (Placed under Accounting > Dashboard) -->
+    <!-- 2. Sub Menu attached to the existing Treasury menu in bn_pos_cheque -->
     <menuitem id="menu_treasury_dashboard"
-          name="Treasury Dashboard"
-          parent="bn_treasury_dashboard.treasury_menu"
-          action="action_treasury_dashboard"
-          sequence="5"
-          />
+              name="Dashboard"
+              parent="bn_pos_cheque.treasury_menu"
+              action="action_treasury_dashboard"
+              sequence="1"/>
 </odoo>
