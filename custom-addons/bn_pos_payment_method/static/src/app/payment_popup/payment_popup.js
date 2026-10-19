@@ -23,11 +23,15 @@ export class PaymentPopup extends AbstractAwaitablePopup {
         
         this.label = `${this.props.label} Number`;
         this.is_bank = this.props.is_bank;
-        
+
+        // A cheque return ("Settle Order" in POS Cheques) hands back the
+        // bounced cheque itself: start from its details
+        const returnCheque = (this.is_bank && this.pos.get_order().get_return_cheque()) || {};
+
         this.state = useState({
-            bank_name: this.props.bank_name || "",
-            number: this.props.number || "",
-            date: this.props.date || "",
+            bank_name: this.props.bank_name || returnCheque.bank_name || "",
+            number: this.props.number || returnCheque.cheque_number || "",
+            date: this.props.date || returnCheque.cheque_date || "",
             banks: [],
             selected_bank_id: null,
         });

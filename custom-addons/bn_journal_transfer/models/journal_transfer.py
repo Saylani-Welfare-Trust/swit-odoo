@@ -132,8 +132,14 @@ class JournalTransfer(models.Model):
             debit_lines = move.line_ids.filtered(
                 lambda l: l.debit > 0 and l.account_id.account_type in ['asset_receivable', 'asset_cash']
             )
-        
-            for line in debit_lines:
+
+            # a deposit slip that went negative (cheque returns) is a credit
+            # line: pulled as a negative transfer, reversing that bank's deposit
+            credit_lines = move.line_ids.filtered(
+                lambda l: l.credit > 0 and l.bank_journal_id and l.account_id.account_type in ['asset_receivable', 'asset_cash']
+            )
+
+            for line in debit_lines | credit_lines:
                 records.append({
                     'pos_move_id': move.id,
                     'accounting_date': move.date,
@@ -142,7 +148,7 @@ class JournalTransfer(models.Model):
                     'source_journal_id': move.journal_id.id,
                     'dest_journal_id': line.bank_journal_id.id,
                     'date': line.date,
-                    'amount': line.debit,
+                    'amount': line.debit - line.credit,
                     'user_id': pos_session.user_id.id,
                 })
 

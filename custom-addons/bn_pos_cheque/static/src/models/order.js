@@ -26,8 +26,18 @@ patch(Order.prototype, {
             qr_code: this.qr_code,
             // Same rule the backend uses to create the pos.cheque record: the slip
             // stays provisional until treasury clears that cheque
-            is_provisional: Boolean(this.cheque_number && !this.qr_code),
+            is_provisional: Boolean(this.cheque_number && !this.qr_code && !this.pos_cheque_order_id),
         };
+    },
+
+    // Bounced cheque a "Settle Order" return gives back (bank_name,
+    // cheque_number, cheque_date), for the cheque payment popup
+    set_return_cheque(return_cheque){
+        this.return_cheque = return_cheque
+    },
+
+    get_return_cheque(){
+        return this.return_cheque
     },
 
     set_bank_name(bank_name){
