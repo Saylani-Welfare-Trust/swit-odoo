@@ -63,21 +63,30 @@ export class TreasuryDashboard extends Component {
         this.applyFilter();
     }
 
+    // Helper to format local dates safely without timezone shifts
+    formatLocalDate(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
     setQuickFilter(type) {
         const today = new Date();
         const year = today.getFullYear();
         const month = today.getMonth();
 
         if (type === 'this_month') {
-            this.state.date_from = new Date(year, month, 1).toISOString().split('T')[0];
-            this.state.date_to = new Date(year, month + 1, 0).toISOString().split('T')[0];
+            this.state.date_from = this.formatLocalDate(new Date(year, month, 1));
+            this.state.date_to = this.formatLocalDate(new Date(year, month + 1, 0));
         } else if (type === 'last_month') {
-            this.state.date_from = new Date(year, month - 1, 1).toISOString().split('T')[0];
-            this.state.date_to = new Date(year, month, 0).toISOString().split('T')[0];
+            this.state.date_from = this.formatLocalDate(new Date(year, month - 1, 1));
+            this.state.date_to = this.formatLocalDate(new Date(year, month, 0));
         } else if (type === 'this_year') {
-            this.state.date_from = new Date(year, 0, 1).toISOString().split('T')[0];
-            this.state.date_to = new Date(year, 11, 31).toISOString().split('T')[0];
+            this.state.date_from = this.formatLocalDate(new Date(year, 0, 1));
+            this.state.date_to = this.formatLocalDate(new Date(year, 11, 31));
         }
+        
         this.applyFilter();
     }
 
