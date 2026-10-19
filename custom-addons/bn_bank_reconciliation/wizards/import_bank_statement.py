@@ -4,6 +4,7 @@ import base64
 import csv
 import io
 import logging
+import re
 from datetime import datetime
 
 _logger = logging.getLogger(__name__)
@@ -12,6 +13,25 @@ try:
     import xlrd
 except ImportError:
     xlrd = None
+
+
+def _to_amount(value):
+    """Amount of a statement cell: 1,000.00, 1 000.00 or empty"""
+    try:
+        return float(re.sub(r'[,\s]', '', str(value or 0)) or 0)
+    except ValueError:
+        return 0.0
+
+
+def _column_label(position):
+    """Position 12 -> '12 (column M)', as the spreadsheet shows it"""
+    if position is None or position < 0:
+        return _('not set')
+    letters, number = '', position
+    while number >= 0:
+        letters = chr(65 + number % 26) + letters
+        number = number // 26 - 1
+    return _('%s (column %s)') % (position, letters)
 
 
 class BankStatementImportWizard(models.TransientModel):
@@ -69,6 +89,7 @@ class BankStatementImportWizard(models.TransientModel):
 
         if not data:
             raise UserError(_('No data found in the file.'))
+        self._check_amount_rows(data)
 
         master = self._get_or_create_master()
         self._check_duplicate_rows(data, master)
@@ -104,6 +125,33 @@ class BankStatementImportWizard(models.TransientModel):
             'file_name': self.file_name,
             'state': 'uploaded',
         })
+
+    def _check_amount_rows(self, data):
+        """Every statement line needs a Debit or a Credit amount. Name the rows
+        that have none and what was read in their cells: it is nearly always a
+        Debit or Credit position pointing at the wrong column."""
+        empty_rows = [row for row in data if not row['Debit'] and not row['Credit']]
+        if not empty_rows:
+            return
+        config = self.bank_statement_config_id
+        positions = {
+            line.header_type_id.name: line.position
+            for line in config.bank_statement_header_line_ids
+        }
+        shown = '\n'.join(
+            _('Row %s (%s): Debit read "%s", Credit read "%s"') % (
+                row['Row'], row['Date'], row['Debit Text'] or _('empty'), row['Credit Text'] or _('empty')
+            )
+            for row in empty_rows[:10]
+        )
+        if len(empty_rows) > 10:
+            shown += _('\n... and %s more') % (len(empty_rows) - 10)
+        raise UserError(_(
+            'These rows have no Debit or Credit amount:\n%s\n\n'
+            'The Bank Statement configuration "%s" reads Debit from position %s and Credit from '
+            'position %s. Positions start at 0 for the first column of the file (column A). '
+            'Check that they point at the Debit and Credit columns.'
+        ) % (shown, config.name, _column_label(positions.get('Debit')), _column_label(positions.get('Credit'))))
 
     def _check_duplicate_rows(self, data, master):
         """A reconciliation cannot hold two lines with the same reference, date
@@ -207,15 +255,8 @@ class BankStatementImportWizard(models.TransientModel):
                 if not date_obj:
                     continue
 
-                try:
-                    debit = float(str(get(row, "Debit") or 0).replace(",", ""))
-                except Exception:
-                    debit = 0.0
-
-                try:
-                    credit = float(str(get(row, "Credit") or 0).replace(",", ""))
-                except Exception:
-                    credit = 0.0
+                debit = _to_amount(get(row, "Debit"))
+                credit = _to_amount(get(row, "Credit"))
 
                 data.append({
                     "Row": row_number,
@@ -223,6 +264,8 @@ class BankStatementImportWizard(models.TransientModel):
                     "Description": str(get(row, "Description") or "").strip(),
                     "Debit": debit,
                     "Credit": credit,
+                    "Debit Text": str(get(row, "Debit")).strip(),
+                    "Credit Text": str(get(row, "Credit")).strip(),
                     "Reference": str(get(row, "Reference") or "").strip(),
                     "Payment Reference": str(get(row, "Payment Reference") or "").strip(),
                     "Partner": str(get(row, "Partner") or "").strip(),
@@ -305,15 +348,8 @@ class BankStatementImportWizard(models.TransientModel):
                     if not date_obj:
                         continue
 
-                try:
-                    debit = float(str(get(row, "Debit") or 0).replace(",", ""))
-                except Exception:
-                    debit = 0.0
-
-                try:
-                    credit = float(str(get(row, "Credit") or 0).replace(",", ""))
-                except Exception:
-                    credit = 0.0
+                debit = _to_amount(get(row, "Debit"))
+                credit = _to_amount(get(row, "Credit"))
 
                 data.append({
                     "Row": row_no + 1,
@@ -321,6 +357,8 @@ class BankStatementImportWizard(models.TransientModel):
                     "Description": text(row, "Description"),
                     "Debit": debit,
                     "Credit": credit,
+                    "Debit Text": str(get(row, "Debit")).strip(),
+                    "Credit Text": str(get(row, "Credit")).strip(),
                     "Reference": text(row, "Reference"),
                     "Payment Reference": text(row, "Payment Reference"),
                     "Partner": text(row, "Partner"),
