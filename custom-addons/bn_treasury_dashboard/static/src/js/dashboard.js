@@ -45,7 +45,6 @@ export class TreasuryDashboard extends Component {
         this.applyFilter();
     }
 
-    // Helper to format local dates safely
     formatLocalDate(d) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -70,6 +69,16 @@ export class TreasuryDashboard extends Component {
         }
         
         this.applyFilter();
+    }
+
+    // 🟢 Method to open a blank form to create a new record
+    createCustomModel(modelName) {
+        this.actionService.doAction({
+            type: 'ir.actions.act_window',
+            res_model: modelName,
+            views: [[false, 'form']], // Only load the form view
+            target: 'current'
+        });
     }
 
     openCustomModel(modelName) {

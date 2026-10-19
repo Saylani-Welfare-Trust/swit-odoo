@@ -41,7 +41,11 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-info mb-0">Cheques</h5>
-                                <button class="btn btn-sm btn-info text-white" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
+                                <div class="d-flex gap-1">
+                                    <!-- 🟢 NEW BUTTON -->
+                                    <button class="btn btn-sm btn-info text-white" t-on-click="() => this.createCustomModel('pos.cheque')">New</button>
+                                    <button class="btn btn-sm btn-outline-info" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
+                                </div>
                             </div>
                             <div class="text-muted small">
                                 <div class="d-flex justify-content-between mb-2">
@@ -70,7 +74,11 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-warning mb-0">Bank Transfers / Deposits</h5>
-                                <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
+                                <div class="d-flex gap-1">
+                                    <!-- 🟢 NEW BUTTON -->
+                                    <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.createCustomModel('direct.deposit')">New</button>
+                                    <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
+                                </div>
                             </div>
                             <div class="text-muted small">
                                 <div class="d-flex justify-content-between mb-2">
@@ -99,7 +107,11 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-success mb-0">Journal Transfers</h5>
-                                <button class="btn btn-sm btn-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
+                                <div class="d-flex gap-1">
+                                    <!-- 🟢 NEW BUTTON -->
+                                    <button class="btn btn-sm btn-success" t-on-click="() => this.createCustomModel('journal.transfer')">New</button>
+                                    <button class="btn btn-sm btn-outline-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
+                                </div>
                             </div>
                             <div class="text-muted small">
                                 <div class="d-flex justify-content-between mb-2">
