@@ -8,7 +8,8 @@
         <field name="arch" type="xml">
             <xpath expr="//div[@id='restaurant_on_create']" position="after">
                 <setting>
-                        <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                    <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                    <field name="analytic_account_id" options="{'no_create': True}"/>
                 </setting>
             </xpath>
         </field>
