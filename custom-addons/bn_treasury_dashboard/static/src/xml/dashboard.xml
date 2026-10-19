@@ -33,7 +33,7 @@
             </div>
 
             <!-- 🟢 CUSTOM TREASURY OPERATIONS SECTION -->
-            <div class="row g-3">
+            <div class="row g-3 mb-4">
                 
                 <!-- 1. Cheque Dashboard Card -->
                 <div class="col-md-4">
@@ -42,7 +42,6 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-info mb-0">Cheques</h5>
                                 <div class="d-flex gap-1">
-                                    <!-- 🟢 NEW BUTTON -->
                                     <button class="btn btn-sm btn-info text-white" t-on-click="() => this.createCustomModel('pos.cheque')">New</button>
                                     <button class="btn btn-sm btn-outline-info" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
                                 </div>
@@ -75,7 +74,6 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-warning mb-0">Bank Transfers / Deposits</h5>
                                 <div class="d-flex gap-1">
-                                    <!-- 🟢 NEW BUTTON -->
                                     <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.createCustomModel('direct.deposit')">New</button>
                                     <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
                                 </div>
@@ -108,7 +106,6 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h5 class="card-title text-success mb-0">Journal Transfers</h5>
                                 <div class="d-flex gap-1">
-                                    <!-- 🟢 NEW BUTTON -->
                                     <button class="btn btn-sm btn-success" t-on-click="() => this.createCustomModel('journal.transfer')">New</button>
                                     <button class="btn btn-sm btn-outline-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
                                 </div>
@@ -135,6 +132,21 @@
                 </div>
 
             </div>
+
+            <!-- 🟢 GRAPH SECTION -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Treasury Trend Analysis</h5>
+                        </div>
+                        <div class="card-body" style="height: 400px; position: relative;">
+                            <canvas t-ref="mainChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </t>
 </templates>
