@@ -504,3 +504,27 @@ class POSCheque(models.Model):
                 'target': 'new',
             }
         return {'type': 'ir.actions.act_window_close'}
+    
+    @api.model
+    def get_bounced_cheque_for_return(self, order_id):
+        """Fetch order details to prepare a POS return for a bounced cheque."""
+        order = self.browse(order_id)
+        if not order.exists() or order.cheque_state != 'bounce':
+            raise ValidationError("Only bounced cheques can be returned.")
+        
+        # We return the lines and details needed to build the negative order
+        lines = []
+        for line in order.lines:
+            lines.append({
+                'product_id': line.product_id.id,
+                'qty': line.qty,
+                'price_unit': line.price_unit,
+            })
+
+        return {
+            'partner_id': order.partner_id.id,
+            'lines': lines,
+            'cheque_number': order.cheque_number,
+            'bank_name': order.bank_name,
+            'pos_cheque_id': order.pos_cheque_id.id,
+        }
