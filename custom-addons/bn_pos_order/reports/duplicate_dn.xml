@@ -99,12 +99,7 @@
                                     </div>
                                     <div>
                                         <strong>Remarks:</strong>
-                                        <t t-set="count" t-value="1"/>
-                                        <t t-foreach="order.lines" t-as="l">
-                                            <t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="l.customer_note or '-'"/>
-                                            <br/>
-                                            <t t-set="count" t-value="count + 1"/>
-                                        </t>
+                                        <t t-esc="order.customer_note or '-'"/>
                                     </div>
                                 </div>
                                 <div class="col-6">
