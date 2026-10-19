@@ -49,6 +49,53 @@ export class PaymentPopup extends AbstractAwaitablePopup {
         this.maxDate = endOfYear.toISOString().split("T")[0];
     }
 
+    async processReturn(orderID) {
+        try {
+            // 1. Fetch the return data from backend (method we created earlier)
+            const returnData = await this.orm.call('pos.order', 'get_bounced_cheque_for_return', [orderID]);
+            
+            const selectedOrder = this.pos.get_order();
+            
+            // 2. Add items as negative quantities (Refund)
+            for (let line of returnData.lines) {
+                const product = this.pos.db.get_product_by_id(line.product_id);
+                if (product) {
+                    selectedOrder.add_product(product, {
+                        quantity: -line.qty,
+                        price: line.price_unit,
+                    });
+                }
+            }
+
+            // 3. Set Partner so the return is linked to the correct donor
+            if (returnData.partner_id) {
+                const partner = this.pos.db.get_partner_by_id(returnData.partner_id);
+                if (partner) {
+                    selectedOrder.set_partner(partner);
+                }
+            }
+
+            // 4. Link the original bounced cheque order ID (optional but good for tracking)
+            selectedOrder.set_pos_cheque_order_id(orderID); 
+
+            // 5. Notify the cashier and close the popup
+            this.notification.add(
+                `Return prepared. Please click Payment and select the "Cheque Return" method to enter the new cheque details.`,
+                { type: 'info', sticky: true }
+            );
+            
+            // Close the ChequePopup so they can go to the payment screen
+            super.confirm();
+
+        } catch (error) {
+            console.error("Error preparing return:", error);
+            this.notification.add(
+                "Failed to prepare return for this cheque.",
+                { type: 'danger' }
+            );
+        }
+    }
+
     async loadBanks() {
         try {
             const banks = await this.orm.call("bank", "get_banks", []);
