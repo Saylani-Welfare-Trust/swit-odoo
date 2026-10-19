@@ -10,6 +10,28 @@
                 </div>
             </div>
 
+            <!-- 🟢 DATE FILTER BAR -->
+            <div class="row mb-4 align-items-end bg-light p-3 rounded shadow-sm mx-1">
+                <div class="col-md-3">
+                    <label class="form-label text-muted mb-1">From Date</label>
+                    <input type="date" class="form-control" t-model="state.date_from"/>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted mb-1">To Date</label>
+                    <input type="date" class="form-control" t-model="state.date_to"/>
+                </div>
+                <div class="col-md-6 d-flex gap-2">
+                    <button class="btn btn-primary" t-on-click="applyFilter">Apply Filter</button>
+                    <button class="btn btn-outline-secondary" t-on-click="clearFilter">Clear</button>
+                    
+                    <div class="ms-auto d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => setQuickFilter('this_month')">This Month</button>
+                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => setQuickFilter('last_month')">Last Month</button>
+                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => setQuickFilter('this_year')">This Year</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- 🟢 CUSTOM TREASURY OPERATIONS SECTION -->
             <div class="row g-3">
                 
@@ -30,7 +52,6 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.cheques.total_amount)"/>
                                 </div>
-                                <!-- Status Badges -->
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
                                         <span class="badge rounded-pill bg-secondary">
@@ -39,7 +60,6 @@
                                     </t>
                                 </div>
                             </div>
-                            <!-- Sparkline Chart -->
                             <div class="mt-auto" style="height: 40px; width: 100%;">
                                 <canvas t-ref="chequeChart"></canvas>
                             </div>
@@ -64,7 +84,6 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.deposits.total_amount)"/>
                                 </div>
-                                <!-- Status Badges -->
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
                                         <span class="badge rounded-pill bg-secondary">
@@ -73,7 +92,6 @@
                                     </t>
                                 </div>
                             </div>
-                            <!-- Sparkline Chart -->
                             <div class="mt-auto" style="height: 40px; width: 100%;">
                                 <canvas t-ref="depositChart"></canvas>
                             </div>
@@ -98,7 +116,6 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.transfers.total_amount)"/>
                                 </div>
-                                <!-- Status Badges -->
                                 <div class="d-flex flex-wrap gap-1 mb-2">
                                     <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
                                         <span class="badge rounded-pill bg-secondary">
@@ -107,7 +124,6 @@
                                     </t>
                                 </div>
                             </div>
-                            <!-- Sparkline Chart -->
                             <div class="mt-auto" style="height: 40px; width: 100%;">
                                 <canvas t-ref="transferChart"></canvas>
                             </div>

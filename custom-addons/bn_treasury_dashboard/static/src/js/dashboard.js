@@ -12,13 +12,14 @@ export class TreasuryDashboard extends Component {
         this.actionService = useService("action");
         
         this.state = useState({
+            date_from: '',
+            date_to: '',
             currency: { symbol: '$', position: 'before' },
             cheques: { count: 0, total_amount: 0, states: {}, trend_data: [] },
             deposits: { count: 0, total_amount: 0, states: {}, trend_data: [] },
             transfers: { count: 0, total_amount: 0, states: {}, trend_data: [] },
         });
 
-        // References for the mini charts
         this.chequeChartRef = useRef("chequeChart");
         this.depositChartRef = useRef("depositChart");
         this.transferChartRef = useRef("transferChart");
@@ -26,23 +27,70 @@ export class TreasuryDashboard extends Component {
 
         onWillStart(async () => {
             await loadJS("/web/static/lib/Chart/Chart.js");
-            const data = await this.env.services.rpc("/treasury/dashboard/data", {});
-            this.state.currency = data.currency;
-            this.state.cheques = data.cheques;
-            this.state.deposits = data.deposits;
-            this.state.transfers = data.transfers;
+            await this.fetchData();
         });
 
         onMounted(() => {
-            // Render mini line charts
-            this.renderSparkline(this.chequeChartRef, this.state.cheques.trend_data, '#17a2b8'); // Info color
-            this.renderSparkline(this.depositChartRef, this.state.deposits.trend_data, '#ffc107'); // Warning color
-            this.renderSparkline(this.transferChartRef, this.state.transfers.trend_data, '#28a745'); // Success color
+            this.renderCharts();
         });
 
         onWillUnmount(() => {
-            this.charts.forEach(chart => chart.destroy());
+            this.destroyCharts();
         });
+    }
+
+    async fetchData() {
+        const data = await this.env.services.rpc("/treasury/dashboard/data", {
+            date_from: this.state.date_from,
+            date_to: this.state.date_to
+        });
+        this.state.currency = data.currency;
+        this.state.cheques = data.cheques;
+        this.state.deposits = data.deposits;
+        this.state.transfers = data.transfers;
+    }
+
+    async applyFilter() {
+        this.destroyCharts();
+        await this.fetchData();
+        // Wait a tiny bit for OWL to update the DOM before drawing new charts
+        setTimeout(() => this.renderCharts(), 50); 
+    }
+
+    clearFilter() {
+        this.state.date_from = '';
+        this.state.date_to = '';
+        this.applyFilter();
+    }
+
+    setQuickFilter(type) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+
+        if (type === 'this_month') {
+            this.state.date_from = new Date(year, month, 1).toISOString().split('T')[0];
+            this.state.date_to = new Date(year, month + 1, 0).toISOString().split('T')[0];
+        } else if (type === 'last_month') {
+            this.state.date_from = new Date(year, month - 1, 1).toISOString().split('T')[0];
+            this.state.date_to = new Date(year, month, 0).toISOString().split('T')[0];
+        } else if (type === 'this_year') {
+            this.state.date_from = new Date(year, 0, 1).toISOString().split('T')[0];
+            this.state.date_to = new Date(year, 11, 31).toISOString().split('T')[0];
+        }
+        this.applyFilter();
+    }
+
+    renderCharts() {
+        this.destroyCharts();
+        this.renderSparkline(this.chequeChartRef, this.state.cheques.trend_data, '#17a2b8');
+        this.renderSparkline(this.depositChartRef, this.state.deposits.trend_data, '#ffc107');
+        this.renderSparkline(this.transferChartRef, this.state.transfers.trend_data, '#28a745');
+    }
+
+    destroyCharts() {
+        this.charts.forEach(chart => chart.destroy());
+        this.charts = [];
     }
 
     renderSparkline(ref, data, color) {
@@ -52,24 +100,21 @@ export class TreasuryDashboard extends Component {
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: new Array(data.length).fill(''), // Hide X axis labels
+                labels: new Array(data.length).fill(''),
                 datasets: [{
                     data: data,
                     borderColor: color,
                     borderWidth: 2,
                     fill: false,
-                    tension: 0.3, // Makes the line smooth
-                    pointRadius: 0 // Hides the dots on the line
+                    tension: 0.3,
+                    pointRadius: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                scales: { 
-                    x: { display: false }, 
-                    y: { display: false, beginAtZero: true } 
-                }
+                scales: { x: { display: false }, y: { display: false, beginAtZero: true } }
             }
         });
         this.charts.push(chart);
