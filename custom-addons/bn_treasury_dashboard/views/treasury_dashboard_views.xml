@@ -12,5 +12,5 @@
           parent="bn_treasury_dashboard.menu_treasury"
           action="action_treasury_dashboard"
           sequence="5"
-          groups="account.group_account_readonly"/>
+          />
 </odoo>
