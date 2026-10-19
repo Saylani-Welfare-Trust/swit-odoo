@@ -69,9 +69,7 @@
                                     <h1 class="text-transform" style="font-size: 12px;">
                                         Saylani Welfare International Trust
                                         <br/>
-                                        <!-- 👇 CHANGED HERE 👇 -->
                                         <t t-if="order.session_id.config_id.analytic_account_id">
-                                            <!-- Use .name for the full name, or .code if you only want 'BNZ', 'BMC', etc. -->
                                             (<t t-esc="order.session_id.config_id.analytic_account_id.name"/>)
                                         </t>
                                     </h1>
