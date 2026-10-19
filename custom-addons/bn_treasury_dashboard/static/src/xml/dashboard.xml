@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <!-- 🟢 CUSTOM TREASURY OPERATIONS SECTION -->
+            <!-- 🟢 CARDS SECTION -->
             <div class="row g-3">
                 
                 <!-- 1. Cheque Dashboard Card -->
@@ -55,7 +55,7 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.cheques.total_amount)"/>
                                 </div>
-                                <!-- Status Badges with dynamic colors -->
+                                <!-- State Badges -->
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
                                         <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
@@ -88,7 +88,7 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.deposits.total_amount)"/>
                                 </div>
-                                <!-- Status Badges with dynamic colors -->
+                                <!-- State Badges -->
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
                                         <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
@@ -121,7 +121,7 @@
                                     <span class="fw-bold">Total Amount:</span>
                                     <span t-esc="formatCurrency(state.transfers.total_amount)"/>
                                 </div>
-                                <!-- Status Badges with dynamic colors -->
+                                <!-- State Badges -->
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
                                         <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">

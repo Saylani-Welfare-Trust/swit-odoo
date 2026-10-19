@@ -71,27 +71,26 @@ export class TreasuryDashboard extends Component {
         this.applyFilter();
     }
 
-    // 🟢 Helper to format state names (e.g., "draft" -> "Draft", "to_pay" -> "To Pay")
     formatStateName(stateName) {
         if (!stateName) return '';
         return stateName.charAt(0).toUpperCase() + stateName.slice(1).replace(/_/g, ' ');
     }
 
-    // 🟢 Helper to assign colors based on common Odoo state names
+    // 🟢 UPDATED: Colors now match Odoo standard exactly
     getStateColor(stateName) {
         if (!stateName) return 'bg-secondary';
         const s = stateName.toLowerCase();
         
         // Green for successful/cleared states
-        if (['clear', 'cleared', 'posted', 'paid', 'done'].includes(s)) {
+        if (['clear', 'cleared', 'posted', 'paid', 'done', 'transfer', 'transferred'].includes(s)) {
             return 'bg-success';
         }
         // Orange for pending/draft states
-        if (['draft', 'pending', 'to_pay', 'unpaid', 'to_validate'].includes(s)) {
+        if (['draft', 'pending', 'to_pay', 'unpaid', 'to_validate', 'waiting'].includes(s)) {
             return 'bg-warning text-dark'; // text-dark ensures readability on orange
         }
         // Red for failed/cancelled states
-        if (['bounce', 'bounced', 'cancel', 'cancelled', 'late'].includes(s)) {
+        if (['bounce', 'bounced', 'cancel', 'cancelled', 'late', 'rejected'].includes(s)) {
             return 'bg-danger';
         }
         // Blue for informational states

@@ -1,6 +1,5 @@
 from odoo import http
 from odoo.http import request
-from datetime import datetime
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ class TreasuryDashboardController(http.Controller):
                 date_field = possible_field
                 break
 
-        # Build Base Domain for the Cards
+        # Build Base Domain
         base_domain = []
         if date_field:
             if date_from:
@@ -37,17 +36,39 @@ class TreasuryDashboardController(http.Controller):
             _logger.error(f"❌ TREASURY ERROR on {model_name}: {str(e)}")
             return {'count': 0, 'total_amount': 0.0, 'states': {}}
 
-        # 2. Fetch Status Badges
+        # 2. Fetch Status Badges (Robust Method)
         states = {}
-        if state_field and state_field in Model._fields:
+        # Check if the provided state field exists, otherwise fallback to 'status' or 'state'
+        actual_state_field = state_field
+        if actual_state_field not in Model._fields:
+            if 'status' in Model._fields:
+                actual_state_field = 'status'
+            elif 'state' in Model._fields:
+                actual_state_field = 'state'
+
+        if actual_state_field and actual_state_field in Model._fields:
             try:
-                groups = Model.read_group(base_domain, ['id:count'], [state_field], lazy=False)
-                for g in groups:
-                    state_val = g.get(state_field)
-                    if state_val:
-                        states[state_val] = g['id_count']
+                field = Model._fields[actual_state_field]
+                # If it's a selection field (like Draft, Clear, Bounce)
+                if field.type == 'selection':
+                    selection_list = field.selection
+                    if callable(selection_list):
+                        selection_list = selection_list(Model)
+                    
+                    for key, label in selection_list:
+                        # Count records for this specific state within the date filter
+                        state_count = Model.search_count(base_domain + [(actual_state_field, '=', key)])
+                        if state_count > 0:
+                            states[key] = state_count
+                else:
+                    # Fallback for char fields
+                    groups = Model.read_group(base_domain, ['id:count'], [actual_state_field], lazy=False)
+                    for g in groups:
+                        state_val = g.get(actual_state_field)
+                        if state_val:
+                            states[state_val] = g['id_count']
             except Exception as e:
-                _logger.warning(f"⚠️ TREASURY WARNING on {model_name}: {str(e)}")
+                _logger.warning(f"⚠️ TREASURY WARNING (State Badge) on {model_name}: {str(e)}")
 
         return {
             'count': count, 
@@ -65,6 +86,6 @@ class TreasuryDashboardController(http.Controller):
                 'position': currency.position,
             },
             'cheques': self._get_custom_model_stats('pos.cheque', 'amount', 'state', date_from, date_to),
-            'deposits': self._get_custom_model_stats('direct.deposit', 'amount', 'status', date_from, date_to),
+            'deposits': self._get_custom_model_stats('direct.deposit', 'amount', 'state', date_from, date_to),
             'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status', date_from, date_to),
         }
