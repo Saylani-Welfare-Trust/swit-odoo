@@ -10,9 +10,7 @@
                 <t t-set="order" t-value="props.data"/>
                 <t t-set="partner" t-value="props.data.partner"/>
                 <t t-set="lines" t-value="props.data.orderlines"/>
-                <!-- 🟢 SAFETY FIX: Handle empty payment lines safely -->
-                <t t-set="payment" t-value="props.data.paymentlines and props.data.paymentlines[0] or {}"/>
-                
+                <t t-set="payment" t-value="props.data.paymentlines[0]"/>
                 <t t-set="date_format" t-value="order.date" />
                 <t t-set="format_currency_amount_zero" t-value="props.formatCurrency(0)" />
                 <t t-set="format_currency_amount" t-value="props.formatCurrency(Math.round(order.amount_total))" />
@@ -52,6 +50,7 @@
                             <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
                         <div name="custom-donor">
+
                         </div>
                         <div>
                             <strong>CNIC No.:</strong>
@@ -133,7 +132,7 @@
                             <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
                             <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                         </div>
-                        <!-- ===== MEDICAL EQUIPMENT REFERENCE (After Total Amount) ===== -->
+                                                <!-- ===== MEDICAL EQUIPMENT REFERENCE (After Total Amount) ===== -->
                         <div t-if="order.extra_data and order.extra_data.medical_equipment and order.extra_data.medical_equipment.medical_equipment_request_no">
                             <strong>Medical Eq. Ref:</strong>
                             <t t-esc="order.extra_data.medical_equipment.medical_equipment_request_no"/>
