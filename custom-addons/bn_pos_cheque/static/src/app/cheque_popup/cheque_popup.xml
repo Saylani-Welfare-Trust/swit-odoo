@@ -2,7 +2,7 @@
 <templates id="template" xml:space="preserve">
 
     <t t-name="bn_pos_cheque.ChequePopup" owl="1">
-        <div class="popup popup-textinput chequeorder" style="max-width: 1100px; width: 100%;">
+        <div class="popup popup-textinput chequeorder" style="max-width: 1000px; width: 100%;">
             <!-- Header -->
             <div class="modal-header">
                 <h4 class="modal-title">
@@ -27,7 +27,7 @@
                 </button>
                 <span class="text-muted fw-bold">
                     Page <t t-esc="state.currentPage" /> of 
-                    <t t-esc="Math.ceil(state.totalRecords / state.limit) || 1" />
+                    <t t-esc="Math.ceil(state.totalRecords / state.limit)" />
                 </span>
                 <button class="btn btn-sm btn-outline-secondary" 
                         t-on-click="next"
@@ -48,57 +48,35 @@
                             <th>Bank Name</th>
                             <th>Cheque Number</th>
                             <th>Status</th>
-                            <th style="min-width: 150px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <t t-if="state.chequeorder &amp;&amp; state.chequeorder.length">
                             <t t-foreach="state.chequeorder" t-as="order" t-key="order['id']">
                                 <tr>
-                                    <td class="text-center"><t t-esc="order['name']"/></td>
-                                    <td class="text-center"><t t-esc="order['date']"/></td>
+                                    <td><t t-esc="order['name']"/></td>
+                                    <td><t t-esc="order['date']"/></td>
                                     <td><t t-esc="order['customer']"/></td>
-                                    <td class="text-center"><t t-esc="order['ref']"/></td>
+                                    <td><t t-esc="order['ref']"/></td>
                                     <td><t t-esc="order['bank_name']"/></td>
-                                    <td class="text-center"><t t-esc="order['cheque_number']"/></td>
-                                    <td class="text-center">
+                                    <td><t t-esc="order['cheque_number']"/></td>
+                                    <td>
                                         <span t-if="order['status'] == 'Cleared'" class="badge bg-success">Cleared</span>
                                         <span t-elif="order['status'] == 'Pending'" class="badge bg-warning text-dark">Pending</span>
-                                        <span t-elif="order['status'] == 'Bounce'" class="badge bg-danger">Bounced</span>
-                                        <span t-elif="order['status'] == 'Cancelled'" class="badge bg-secondary">Cancelled</span>
                                         <span t-else="" class="badge bg-secondary"><t t-esc="order['status']"/></span>
                                     </td>
-                                    
-                                    <!-- 🟢 Actions Column -->
-                                    <td class="text-center">
-                                        <t t-if="order['status'] == 'Bounce'">
-                                            <!-- Re-Deposit Button -->
-                                            <button t-if="order['bounce_count'] &lt;= 3" 
-                                                    class="btn btn-warning btn-sm me-1" 
-                                                    t-on-click="() => this.reDeposite(order['id'])">
-                                                Re-Deposit
-                                            </button>
-                                            
-                                            <!-- 🟢 NEW: Process Return Button -->
-                                            <button class="btn btn-danger btn-sm me-1" 
-                                                    t-on-click="() => this.processReturn(order['id'])">
-                                                Process Return
-                                            </button>
-                                            
-                                            <!-- Settle Order Button (Only if bounced more than 3 times) -->
-                                            <button t-if="order['bounce_count'] &gt; 3" 
-                                                    class="btn btn-info btn-sm" 
-                                                    t-on-click="() => this.settleOrder(order['id'])">
-                                                Settle Order
-                                            </button>
-                                        </t>
+                                    <td t-if="order['status'] == 'Bounce' &amp;&amp; order['bounce_count'] &lt;= 3">
+                                        <button class="btn btn-warning btn-sm me-2 btn_edit" t-on-click="() => this.reDeposite(order['id'])">Re-Deposite</button>
+                                    </td>
+                                    <td t-if="order['status'] == 'Bounce' &amp;&amp; order['bounce_count'] &gt; 3">
+                                        <button class="btn btn-info btn-sm me-2 btn_edit" t-on-click="() => this.settleOrder(order['id'])">Settle Order</button>
                                     </td>
                                 </tr>
                             </t>
                         </t>
                         <t t-else="">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-3">No Data Found!</td>
+                                <td colspan="7" class="text-center text-muted py-3">No Data Found!</td>
                             </tr>
                         </t>
                     </tbody>

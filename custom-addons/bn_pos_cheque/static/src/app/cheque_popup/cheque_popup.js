@@ -42,6 +42,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
 
         onMounted(() => {
             this.get_pos_cheque();
+            this.state.isFilterVisible = false
         });
     }
 
@@ -58,59 +59,6 @@ export class ChequePopup extends AbstractAwaitablePopup {
             this.state.currentPage -= 1;
             
             this.get_pos_cheque();
-        }
-    }
-
-    async processReturn(orderID) {
-        try {
-            // 1. Fetch the return data from backend
-            const returnData = await this.orm.call('pos.order', 'get_bounced_cheque_for_return', [orderID]);
-            
-            const selectedOrder = this.pos.get_order();
-            
-            // 2. Clear current order (optional, depends if you want a fresh return)
-            // selectedOrder.remove_all_items(); 
-
-            // 3. Add items as negative quantities
-            for (let line of returnData.lines) {
-                const product = this.pos.db.get_product_by_id(line.product_id);
-                if (product) {
-                    selectedOrder.add_product(product, {
-                        quantity: -line.qty,
-                        price: line.price_unit,
-                    });
-                }
-            }
-
-            // 4. Set Partner
-            if (returnData.partner_id) {
-                const partner = this.pos.db.get_partner_by_id(returnData.partner_id);
-                if (partner) {
-                    selectedOrder.set_partner(partner);
-                }
-            }
-
-            // 5. Link the cheque details to the new return order
-            selectedOrder.set_bank_name(returnData.bank_name);
-            selectedOrder.set_cheque_number(`RETURN-${returnData.cheque_number}`);
-            // Set the cheque state to cancel/draft so it doesn't show up as bounce anymore
-            selectedOrder.set_pos_cheque_order_id(orderID); 
-
-            // 6. Notify and close popup
-            this.notification.add(
-                `Return prepared for Cheque: ${returnData.cheque_number}`,
-                { type: 'success' }
-            );
-            
-            // Close the popup to let cashier select payment method (Cash)
-            super.confirm();
-
-        } catch (error) {
-            console.error("Error preparing return:", error);
-            this.notification.add(
-                "Failed to prepare return for this cheque.",
-                { type: 'danger' }
-            );
         }
     }
 
