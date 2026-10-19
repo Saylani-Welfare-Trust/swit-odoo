@@ -23,9 +23,10 @@
         <field name="inherit_id" ref="point_of_sale.view_pos_order_tree"/>
         <field name="priority">20</field>
         <field name="arch" type="xml">
-            <!-- Select a row, then click its Customer Note to edit it -->
+            <!-- Click a row's Customer Note to type in it; the arrow at the end of the row opens the order -->
             <xpath expr="//tree" position="attributes">
-                <attribute name="multi_edit">1</attribute>
+                <attribute name="editable">bottom</attribute>
+                <attribute name="open_form_view">1</attribute>
             </xpath>
 
             <xpath expr="//field[@name='state']" position="before">
