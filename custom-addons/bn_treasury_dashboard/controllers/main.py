@@ -2,49 +2,60 @@ from odoo import http
 from odoo.http import request
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
+import logging
+
+_logger = logging.getLogger(__name__)
 
 class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount', state_field='state'):
-        """Helper to safely fetch stats and 6-month trend for custom models"""
+        """Fetch stats and trend for custom models"""
+        # Check if model exists
         if model_name not in request.env:
+            _logger.warning(f"Treasury Dashboard: Model '{model_name}' not found in env.")
             return {'count': 0, 'total_amount': 0.0, 'states': {}, 'trend_labels': [], 'trend_data': []}
         
         try:
-            records = request.env[model_name].search([])
+            Model = request.env[model_name]
+            
+            # Check if amount_field exists
+            if amount_field not in Model._fields:
+                _logger.error(f"Treasury Dashboard: Field '{amount_field}' does not exist on model '{model_name}'. Available fields: {list(Model._fields.keys())}")
+                return {'count': 0, 'total_amount': 0.0, 'states': {}, 'trend_labels': [], 'trend_data': []}
+                
+            records = Model.search([])
             total_amount = sum(records.mapped(amount_field))
             
             # 1. Fetch Status Badges
             states = {}
-            if state_field:
-                groups = request.env[model_name].read_group([], ['id:count'], [state_field], lazy=False)
+            if state_field and state_field in Model._fields:
+                groups = Model.read_group([], ['id:count'], [state_field], lazy=False)
                 for g in groups:
                     state_val = g.get(state_field)
                     if state_val:
                         states[state_val] = g['id_count']
-            
+            elif state_field:
+                _logger.warning(f"Treasury Dashboard: State field '{state_field}' does not exist on model '{model_name}'.")
+
             # 2. Fetch 6-Month Trend Data
             trend_labels = []
-            trend_data = [0.0] * 6
             today = date.today()
             start_date = (today.replace(day=1) - relativedelta(months=5))
             
             # Determine which date field to use
             date_field = 'create_date'
-            if 'date' in request.env[model_name]._fields:
-                date_field = 'date'
-            elif 'transfer_date' in request.env[model_name]._fields:
-                date_field = 'transfer_date'
-            elif 'transaction_date' in request.env[model_name]._fields:
-                date_field = 'transaction_date'
+            for possible_field in ['date', 'transfer_date', 'transaction_date', 'deposit_date']:
+                if possible_field in Model._fields:
+                    date_field = possible_field
+                    break
 
-            # Generate the last 6 months labels (e.g., ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'])
+            # Generate the last 6 months labels
             for i in range(6):
                 m = start_date + relativedelta(months=i)
                 trend_labels.append(m.strftime('%b'))
 
             # Group by month
-            monthly_groups = request.env[model_name].read_group(
+            monthly_groups = Model.read_group(
                 [(date_field, '>=', start_date.strftime('%Y-%m-%d'))],
                 [amount_field + ':sum'],
                 [date_field + ':month'],
@@ -68,19 +79,21 @@ class TreasuryDashboardController(http.Controller):
                 'trend_data': trend_data
             }
         except Exception as e:
+            # THIS WILL NOW PRINT THE EXACT ERROR IN YOUR ODOO LOGS
+            _logger.error(f"Treasury Dashboard Error on model {model_name}: {str(e)}")
             return {'count': 0, 'total_amount': 0.0, 'states': {}, 'trend_labels': [], 'trend_data': []}
 
     @http.route('/treasury/dashboard/data', type='json', auth='user', methods=['POST'], csrf=False)
     def get_dashboard_data(self, **kwargs):
-        # Fetch System Currency details
         currency = request.env.company.currency_id
 
         return {
             'currency': {
                 'symbol': currency.symbol,
-                'position': currency.position, # 'before' or 'after'
+                'position': currency.position,
             },
-            'cheques': self._get_custom_model_stats('pos.cheque', 'amount', 'state'),
-            'deposits': self._get_custom_model_stats('direct.deposit', 'amount', 'state'),
-            'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status'),
+            # If your fields are named differently, change them here:
+            'cheques': self._get_custom_model_stats('pos.cheque', amount_field='amount', state_field='state'),
+            'deposits': self._get_custom_model_stats('direct.deposit', amount_field='amount', state_field='state'),
+            'transfers': self._get_custom_model_stats('journal.transfer', amount_field='amount', state_field='status'),
         }
