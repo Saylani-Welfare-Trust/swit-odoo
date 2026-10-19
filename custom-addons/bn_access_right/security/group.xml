@@ -21,8 +21,4 @@
         <field name="name">Expense Menu</field>
     </record>
 
-    <record id="accounting_menu_group" model="res.groups">
-        <field name="name">Accounting Menu</field>
-    </record>
-
 </odoo>

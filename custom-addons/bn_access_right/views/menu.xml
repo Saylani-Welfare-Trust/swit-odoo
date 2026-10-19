@@ -21,8 +21,4 @@
         <field name="groups_id" eval="[(6, 0, [ref('expense_menu_group')])]"/>
     </record>
 
-    <record id="account.menu_finance" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('accounting_menu_group')])]"/>
-    </record>
-
 </odoo>
