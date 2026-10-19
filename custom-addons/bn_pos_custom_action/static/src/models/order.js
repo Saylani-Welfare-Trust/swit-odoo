@@ -4,18 +4,39 @@ import { patch } from "@web/core/utils/patch";
 
 patch(Order.prototype, {
     /**
-     * Override export_as_JSON to include custom fields like CNIC and source_document
+     * Override export_as_JSON to include custom fields
      */
     export_as_JSON() {
-        // Get the original JSON
         const json = super.export_as_JSON(...arguments);
 
-        // Include source_document if set
         json.source_document = this.source_document || false;
         json.receive_voucher = this.receive_voucher || false;
         json.pos_order_seq = this.pos_order_seq || false;
         json.qurbani = this.qurbani || false;
-        json.extra_data = this.extra_data || false;   // <-- NEW: welfare/medical_equipment/microfinance payloads
+        json.extra_data = this.extra_data || false;
+        
+        return json;
+    },
+
+    /**
+     * 🟢 NEW: Override export_for_printing so the receipt gets the data
+     */
+    export_for_printing() {
+        const json = super.export_for_printing(...arguments);
+
+        // Fetch branch details from the POS Config (Shop)
+        if (this.pos && this.pos.config) {
+            json.branch_name = this.pos.config.branch_name || false;
+            json.branch_code = this.pos.config.branch_code || false;
+        }
+
+        // Also pass the existing custom fields for the receipt
+        json.source_document = this.source_document || false;
+        json.receive_voucher = this.receive_voucher || false;
+        json.pos_order_seq = this.pos_order_seq || false;
+        json.qurbani = this.qurbani || false;
+        json.extra_data = this.extra_data || false;
+
         return json;
     },
 
@@ -55,7 +76,7 @@ patch(Order.prototype, {
     },
 
     /**
-     * Getter for qurbani
+     * Getter for receive_voucher
      */
     get_receive_voucher() {
         return this.receive_voucher;
