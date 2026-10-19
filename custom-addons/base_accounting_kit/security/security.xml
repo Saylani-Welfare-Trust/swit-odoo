@@ -28,7 +28,7 @@
             <field name="category_id"
                    ref="base.module_category_accounting_accounting"/>
         </record>
-        <!--    Rename user group as Chief Accountant    -->
+        <!--    Rename user Accounting menugroup as Chief Accountant    -->
         <record id="account.group_account_manager" model="res.groups">
             <field name="name">Chief Accountant</field>
             <field name="implied_ids"
