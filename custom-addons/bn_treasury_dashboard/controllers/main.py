@@ -1,7 +1,6 @@
 from odoo import http
 from odoo.http import request
-from datetime import date, datetime
-from dateutil.relativedelta import relativedelta
+from datetime import datetime
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -10,7 +9,7 @@ class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount', state_field='state', date_from=None, date_to=None):
         if model_name not in request.env:
-            return {'count': 0, 'total_amount': 0.0, 'states': {}, 'trend_labels': [], 'trend_data': []}
+            return {'count': 0, 'total_amount': 0.0, 'states': {}}
         
         Model = request.env[model_name]
         
@@ -21,7 +20,7 @@ class TreasuryDashboardController(http.Controller):
                 date_field = possible_field
                 break
 
-        # Build Base Domain for the Cards (Count, Total Amount, Badges)
+        # Build Base Domain for the Cards
         base_domain = []
         if date_field:
             if date_from:
@@ -36,7 +35,7 @@ class TreasuryDashboardController(http.Controller):
             total_amount = sum(records.mapped(amount_field)) if amount_field in Model._fields else 0.0
         except Exception as e:
             _logger.error(f"❌ TREASURY ERROR on {model_name}: {str(e)}")
-            return {'count': 0, 'total_amount': 0.0, 'states': {}, 'trend_labels': [], 'trend_data': []}
+            return {'count': 0, 'total_amount': 0.0, 'states': {}}
 
         # 2. Fetch Status Badges
         states = {}
@@ -50,55 +49,10 @@ class TreasuryDashboardController(http.Controller):
             except Exception as e:
                 _logger.warning(f"⚠️ TREASURY WARNING on {model_name}: {str(e)}")
 
-        # 3. Fetch Trend Data
-        trend_labels = []
-        trend_data = []
-        
-        # Determine trend period (default to last 6 months if no filter is applied)
-        if date_from and date_to:
-            start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
-            end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
-            months_diff = (end_date.year - start_date.year) * 12 + end_date.month - start_date.month + 1
-            months_diff = min(months_diff, 12) # Cap at 12 months to prevent UI overflow
-        else:
-            end_date = date.today()
-            start_date = end_date.replace(day=1) - relativedelta(months=5)
-            months_diff = 6
-
-        try:
-            if date_field and amount_field in Model._fields:
-                for i in range(months_diff):
-                    m = start_date + relativedelta(months=i)
-                    trend_labels.append(m.strftime('%b'))
-
-                trend_domain = [(date_field, '>=', start_date.strftime('%Y-%m-%d'))]
-                if date_from and date_to:
-                     trend_domain.append((date_field, '<=', date_to))
-
-                monthly_groups = Model.read_group(
-                    trend_domain,
-                    [amount_field + ':sum'],
-                    [date_field + ':month'],
-                    lazy=False
-                )
-                
-                month_map = {}
-                for g in monthly_groups:
-                    month_str = g.get(date_field + ':month')
-                    if month_str:
-                        dt = datetime.strptime(month_str, '%B %Y')
-                        month_map[dt.strftime('%b')] = g[amount_field]
-                
-                trend_data = [month_map.get(m, 0.0) for m in trend_labels]
-        except Exception as e:
-            _logger.error(f"❌ TREASURY ERROR (Trend Chart) on {model_name}: {str(e)}")
-
         return {
             'count': count, 
             'total_amount': total_amount, 
-            'states': states,
-            'trend_labels': trend_labels,
-            'trend_data': trend_data
+            'states': states
         }
 
     @http.route('/treasury/dashboard/data', type='json', auth='user', methods=['POST'], csrf=False)

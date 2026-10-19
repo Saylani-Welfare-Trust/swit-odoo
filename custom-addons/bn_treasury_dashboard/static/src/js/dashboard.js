@@ -1,8 +1,7 @@
 /** @odoo-module **/
 
-import { Component, onWillStart, onMounted, onWillUnmount, useRef, useState } from "@odoo/owl";
+import { Component, onWillStart, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
-import { loadJS } from "@web/core/assets";
 import { useService } from "@web/core/utils/hooks";
 
 export class TreasuryDashboard extends Component {
@@ -15,27 +14,13 @@ export class TreasuryDashboard extends Component {
             date_from: '',
             date_to: '',
             currency: { symbol: '$', position: 'before' },
-            cheques: { count: 0, total_amount: 0, states: {}, trend_data: [] },
-            deposits: { count: 0, total_amount: 0, states: {}, trend_data: [] },
-            transfers: { count: 0, total_amount: 0, states: {}, trend_data: [] },
+            cheques: { count: 0, total_amount: 0, states: {} },
+            deposits: { count: 0, total_amount: 0, states: {} },
+            transfers: { count: 0, total_amount: 0, states: {} },
         });
-
-        this.chequeChartRef = useRef("chequeChart");
-        this.depositChartRef = useRef("depositChart");
-        this.transferChartRef = useRef("transferChart");
-        this.charts = [];
 
         onWillStart(async () => {
-            await loadJS("/web/static/lib/Chart/Chart.js");
             await this.fetchData();
-        });
-
-        onMounted(() => {
-            this.renderCharts();
-        });
-
-        onWillUnmount(() => {
-            this.destroyCharts();
         });
     }
 
@@ -51,10 +36,7 @@ export class TreasuryDashboard extends Component {
     }
 
     async applyFilter() {
-        this.destroyCharts();
         await this.fetchData();
-        // Wait a tiny bit for OWL to update the DOM before drawing new charts
-        setTimeout(() => this.renderCharts(), 50); 
     }
 
     clearFilter() {
@@ -63,7 +45,7 @@ export class TreasuryDashboard extends Component {
         this.applyFilter();
     }
 
-    // Helper to format local dates safely without timezone shifts
+    // Helper to format local dates safely
     formatLocalDate(d) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -88,45 +70,6 @@ export class TreasuryDashboard extends Component {
         }
         
         this.applyFilter();
-    }
-
-    renderCharts() {
-        this.destroyCharts();
-        this.renderSparkline(this.chequeChartRef, this.state.cheques.trend_data, '#17a2b8');
-        this.renderSparkline(this.depositChartRef, this.state.deposits.trend_data, '#ffc107');
-        this.renderSparkline(this.transferChartRef, this.state.transfers.trend_data, '#28a745');
-    }
-
-    destroyCharts() {
-        this.charts.forEach(chart => chart.destroy());
-        this.charts = [];
-    }
-
-    renderSparkline(ref, data, color) {
-        if (!ref.el || !data || data.length === 0) return;
-        
-        const ctx = ref.el.getContext('2d');
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: new Array(data.length).fill(''),
-                datasets: [{
-                    data: data,
-                    borderColor: color,
-                    borderWidth: 2,
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                scales: { x: { display: false }, y: { display: false, beginAtZero: true } }
-            }
-        });
-        this.charts.push(chart);
     }
 
     openCustomModel(modelName) {
