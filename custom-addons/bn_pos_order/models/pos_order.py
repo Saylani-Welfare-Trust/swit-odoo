@@ -73,7 +73,17 @@ class POSOrder(models.Model):
         [('draft', 'New'), ('cancel', 'Cancelled'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced'), ('refund', 'Refunded'), ('reject', 'Reject')],
         'Status', readonly=True, copy=False, default='draft', index=True)
     
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account', 
+        string="Analytic Account", 
+        compute="_compute_config_analytic_account", 
+        store=True
+    )
+    
+    @api.depends('config_id', 'config_id.analytic_account_id')
+    def _compute_config_analytic_account(self):
+        for rec in self:
+            rec.analytic_account_id = rec.config_id.analytic_account_id or None
     
 
     @api.constrains('mobile')

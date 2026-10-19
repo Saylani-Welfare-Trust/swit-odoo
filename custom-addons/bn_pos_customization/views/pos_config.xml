@@ -6,15 +6,17 @@
         <field name="model">pos.config</field>
         <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
         <field name="arch" type="xml">
-            
+
             <xpath expr="//div[@id='restaurant_on_create']" position="after">
                 <setting>
                     <field name="user_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                    
-                    <!-- Updated domain to use plan_id -->
-                    <field name="analytic_account_id" 
-                           options="{'no_create': True}" 
-                           domain="[('plan_id.name', '=', 'Location')]"/>
+
+
+                </setting>
+            </xpath>
+            <xpath expr="//div[@id='restaurant_on_create']" position="after">
+                <setting>
+                    <field name="analytic_account_id" options="{'no_create': True}" domain="[('plan_id.name', '=', 'Location')]"/>
                 </setting>
             </xpath>
 
