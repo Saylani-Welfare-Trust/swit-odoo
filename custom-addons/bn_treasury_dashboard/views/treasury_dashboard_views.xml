@@ -8,9 +8,9 @@
 
     <!-- 2. Menu Item (Placed under Accounting > Dashboard) -->
     <menuitem id="menu_treasury_dashboard"
-              name="Treasury"
-              parent="account.menu_finance"
-              action="action_treasury_dashboard"
-              sequence="5"
-              groups="account.group_account_readonly"/>
+          name="Treasury Dashboard"
+          parent="bn_treasury_dashboard.menu_treasury"
+          action="action_treasury_dashboard"
+          sequence="5"
+          groups="account.group_account_readonly"/>
 </odoo>
