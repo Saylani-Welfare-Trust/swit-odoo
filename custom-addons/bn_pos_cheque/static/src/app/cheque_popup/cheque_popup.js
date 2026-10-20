@@ -90,7 +90,6 @@ export class ChequePopup extends AbstractAwaitablePopup {
         
         if (this.success) {
             selectedOrder.set_pos_cheque_order_id(orderID);
-            selectedOrder.set_return_cheque(this.returnCheque);
         }
     }
 
@@ -102,17 +101,11 @@ export class ChequePopup extends AbstractAwaitablePopup {
             const record = await this.orm.searchRead(
                 'pos.order',
                 [['id', '=', orderID]],
-                ['name', 'state', 'partner_id', 'lines', 'bank_name', 'cheque_number', 'cheque_date'],
+                ['name', 'state', 'partner_id', 'lines'],
                 { limit: 1 }
             );
-
+            
             if (record && record.length > 0) {
-                this.returnCheque = {
-                    bank_name: record[0].bank_name || "",
-                    cheque_number: record[0].cheque_number || "",
-                    cheque_date: record[0].cheque_date || "",
-                };
-
                 await this.handleRecordFound(record[0], selectedOrder);
             } else {
                 this.handleRecordNotFound();

@@ -491,7 +491,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         // Direct Deposit
         if (this.action_type === 'dd') {
             const userId = this.pos.user ? this.pos.user.id : false;
-            const payload = {
+            const payload ={
                 'donor_id': this.donor_id,
                 'favor': this.favor,
                 'bank_id': this.state.selected_bank_id,
@@ -501,12 +501,13 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'user_id': userId,
                 'transfer_to_dhs': this.state.transfer_to_dhs,
                 'address': this.state.address,
+                // NEW: carry the linked request info through to the backend record
                 'source_request_type': this.state.source_request_type,
                 'source_request_no': this.state.source_request_no,
-                'source_welfare_line_ids': this.state.source_welfare_line_ids || [],
+                'source_welfare_line_ids': this.state.source_welfare_line_ids || [],           // NEW
                 'source_welfare_recurring_line_ids': this.state.source_welfare_recurring_line_ids || [],
             }
-
+    
             console.log("DD popup - payload sent:", payload); // TEMP DEBUG
 
             const data = await this.orm.call('direct.deposit', "create_dd_record", [payload]);
@@ -534,6 +535,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             this.pos.add_new_order();
         } // <-- closes "if (this.action_type === 'dd')"
     }
+
     /**
      * Process partner assignment
      */
