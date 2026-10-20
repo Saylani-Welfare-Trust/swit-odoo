@@ -15,7 +15,7 @@
                 <field name="descripiton" />
                 <field name="analytic_account_id" string="Branch"/>
                 <field name="reference" />
-                <field name="source_journal_id" />
+                <field name="source_journal_id" optional="hide"/>
                 <field name="dest_journal_id" />
                 <field name="date" />
                 <field name="remarks"/>
