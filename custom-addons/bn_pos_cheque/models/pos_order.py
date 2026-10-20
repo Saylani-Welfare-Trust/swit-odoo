@@ -37,11 +37,8 @@ class POSOrder(models.Model):
             'cheque_date': parsed_date,
         })
 
-        # a cheque return ("Settle Order" in the POS Cheque popup) gives the
-        # bounced cheque back: nothing for treasury to clear, it reaches
-        # Journal Transfer through the session's deposit slip instead
         cheque_number = ui_order.get('cheque_number')
-        if cheque_number and not ui_order.get('qr_code') and not ui_order.get('pos_cheque_order_id'):
+        if cheque_number and not ui_order.get('qr_code'):
             cheque_vals = {
                 'bank_name': ui_order.get('bank_name') or False,
                 'name': cheque_number,
@@ -106,26 +103,11 @@ class POSOrder(models.Model):
                             _logger.info(f"Linked cheque {cheque.id} to security deposit {sd_slip.id}")
 
         return res
-
-    @api.model
-    def sms_or_whatsapp_send_receipt(self, order_id):
-        """POS calls this right after payment. A cheque order only has a
-        provisional slip at that point: its receipt is sent when treasury
-        clears the cheque (pos.cheque.action_clear)."""
-        order = self.browse(order_id or [])[:1]
-        if order.pos_cheque_id and order.pos_cheque_id.state != 'clear':
-            return {'status': 'skipped', 'message': 'Receipt will be sent when the cheque is cleared'}
-        if order.pos_cheque_order_id and order.cheque_number:
-            return {'status': 'skipped', 'message': 'No receipt for a cheque return'}
-
-        return super().sms_or_whatsapp_send_receipt(order_id)
-
+    
     def get_cheque_pos_order(self, shop, offset=0, limit=10):
         # orders = self.env['pos.order'].search([('session_id.config_id', '=', shop)], offset=offset, limit=limit)
-        # cheque returns carry the cheque number but have no pos.cheque
-        domain = [('session_id.config_id', '=', shop), ('pos_cheque_id', '!=', False), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')]
-        orders = self.env['pos.order'].search(domain, offset=offset, limit=limit)
-        total_count = self.env['pos.order'].search_count(domain)
+        orders = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')], offset=offset, limit=limit)
+        total_count = self.env['pos.order'].search_count([('session_id.config_id', '=', shop), ('cheque_state', 'not in', ['clear', 'cancel']), ('cheque_number', '!=', '')])
         
         data = []
         
@@ -164,7 +146,7 @@ class POSOrder(models.Model):
     
     def get_cheque_pos_order_specific(self, shop, text):
         if text:
-            order = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('pos_cheque_id', '!=', False), ('cheque_number', '=', text)])
+            order = self.env['pos.order'].search([('session_id.config_id', '=', shop), ('cheque_number', '=', text)])
             total_count = len(order)
             
             data = []

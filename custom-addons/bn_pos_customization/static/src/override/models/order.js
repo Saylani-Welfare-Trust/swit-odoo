@@ -22,14 +22,10 @@ patch(Order.prototype, {
             },
 
             branch_code: this.cashier.branch_code,
-            
-            // 👇 CHANGED HERE: Pull from pos.config analytic_account_id 👇
-            branch_name: this.pos.config.analytic_account_id ? this.pos.config.analytic_account_id[1] : this.cashier.branch_name,
-            
+            branch_name: this.cashier.branch_name,
             receive_voucher: this.receive_voucher || false,
             is_bank: this.paymentlines[0]?.payment_method?.is_bank,
             is_donation_in_kind: this.paymentlines[0]?.payment_method?.is_donation_in_kind,
-            extra_data: this.extra_data || {},
         };
     },
 

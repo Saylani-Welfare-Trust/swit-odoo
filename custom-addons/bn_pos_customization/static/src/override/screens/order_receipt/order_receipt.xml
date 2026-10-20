@@ -18,9 +18,8 @@
                 <!-- Header Row -->
                 <div class="row mb-2 receipt_header">
                     <div name="custom-title" class="col-6">
-                        <h1 t-if="order.is_provisional">Provisional Receipt</h1>
-                        <h1 t-elif="order.receive_voucher">Receipt Voucher</h1>
-                        <h1 t-else="">Donation Receipt</h1>
+                        <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
+                        <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
                     </div>
                     <div class="col-6 text-end">
                         <h1 class="text-transform" style="font-size: 12px;">
@@ -33,18 +32,12 @@
 
                 <hr/>
 
-                <!-- Cheque not cleared by treasury yet -->
-                <div t-if="order.is_provisional" class="pos-receipt-watermark-anchor">
-                    <div class="pos-receipt-watermark">Provisional</div>
-                </div>
-
                 <!-- ===== BASIC INFO ===== -->
                 <div class="row mb-2" style="font-size: 11px;">
                     <div class="col-6">
                         <div>
                             <strong>DN #:</strong>
                             <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
-                            <t t-set="counter" t-value="order.counter or '0'"/>
                             <t t-set="current_year" t-value="new Date().getFullYear()"/>
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
@@ -132,12 +125,6 @@
                             <t t-if="order.amount_total"><t t-esc="format_currency_amount"/></t>
                             <t t-else=""><t t-esc="format_currency_amount_zero"/></t>
                         </div>
-                                                <!-- ===== MEDICAL EQUIPMENT REFERENCE (After Total Amount) ===== -->
-                        <div t-if="order.extra_data and order.extra_data.medical_equipment and order.extra_data.medical_equipment.medical_equipment_request_no">
-                            <strong>Medical Eq. Ref:</strong>
-                            <t t-esc="order.extra_data.medical_equipment.medical_equipment_request_no"/>
-                        </div>
-
                     </div>
                 </div>
 
@@ -212,18 +199,9 @@
                         <div><strong>Entered By:</strong><t t-esc="order.cashier"/></div>
                     </div>
                 </div>
-
+                
                 <div name="custom-footer" style="text-align: center; font-size: 12px;">
                     Powered by BytesNode
-                </div>
-
-                <!-- ✅ FIX: Hidden Orderline placeholder so downstream modules
-                     (pos_sale, pos_loyalty, pos_restaurant, l10n_*_pos) can inject
-                     into //Orderline without breaking the asset bundle compile. -->
-                <div style="display:none;" aria-hidden="true">
-                    <t t-foreach="lines" t-as="line" t-key="line.id">
-                        <Orderline line="line"/>
-                    </t>
                 </div>
 
             </div>

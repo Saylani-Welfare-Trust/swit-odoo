@@ -33,32 +33,32 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
-        // if (currentOrder.donation_in_kind) {
-        //     const donor_id = currentOrder.partner.id;
-        //     const orderLines = currentOrder.get_orderlines();
+        if (currentOrder.donation_in_kind) {
+            const donor_id = currentOrder.partner.id;
+            const orderLines = currentOrder.get_orderlines();
 
-        //     const payload = {
-        //         'donor_id': donor_id,
-        //         'order_lines': this.prepareOrderLines(orderLines),
-        //     }
+            const payload = {
+                'donor_id': donor_id,
+                'order_lines': this.prepareOrderLines(orderLines),
+            }
 
-        //     await this.orm.call('donation.in.kind', "create_din_record", [payload]).then((data) => {
-        //         if (data.status === 'error') {
-        //             this.popup.add(ErrorPopup, {
-        //                 title: _t("Error"),
-        //                 body: data.body,
-        //             });
-        //         }
+            await this.orm.call('donation.in.kind', "create_din_record", [payload]).then((data) => {
+                if (data.status === 'error') {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: data.body,
+                    });
+                }
                 
-        //         if (data.status === 'success') {
-        //             currentOrder.set_source_document(data.origin)
+                if (data.status === 'success') {
+                    currentOrder.set_source_document(data.origin)
 
-        //             this.notification.add(_t("Operation Successful"), {
-        //                 type: "info",
-        //             });
-        //         }
-        //     })
-        // }
+                    this.notification.add(_t("Operation Successful"), {
+                        type: "info",
+                    });
+                }
+            })
+        }
 
         // Continue with normal POS flow
         super.validateOrder(isForceValidate);
