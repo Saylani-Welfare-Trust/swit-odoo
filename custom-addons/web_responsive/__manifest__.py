@@ -29,7 +29,7 @@
             "/web_responsive/static/src/legacy/scss/primary_variable.scss",
         },
         "web.assets_backend": [
-            "web_responsive/static/src/lib/fuse/fuse.basic.min.js",
+            "web_responsive/static/src/libs/fuse/fuse.basic.min.js",
             "/web_responsive/static/src/legacy/scss/web_responsive.scss",
             "/web_responsive/static/src/legacy/scss/big_boxes.scss",
             "/web_responsive/static/src/legacy/scss/list_sticky_header.scss",
