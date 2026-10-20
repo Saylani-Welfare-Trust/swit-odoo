@@ -22,7 +22,7 @@ class POSCheque(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
     bank_name = fields.Char('Bank Name')
-    date = fields.Date('Date')
+    date = fields.Date('Cheque Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
     source_model = fields.Selection([
