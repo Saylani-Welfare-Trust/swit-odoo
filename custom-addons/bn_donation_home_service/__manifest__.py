@@ -13,18 +13,15 @@
         'security/group.xml',
         'security/access_right.xml',
         'security/ir.model.access.csv',
-        
         'data/server_action.xml',
         'data/sequence.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
-        
-        'reports/donation_home_service_report.xml',
-        
         'views/donation_home_service.xml',
         'views/product_template.xml',
         'views/product_product.xml',
         'views/res_company.xml',
+        'reports/donation_home_service_report.xml',
     ],
     'auto_install': False,
     'application': False,

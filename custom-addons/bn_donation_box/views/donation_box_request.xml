@@ -7,8 +7,8 @@
         <field name="arch" type="xml">
             <form>
                  <header>
-                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_request_approve_reject_group" />
-                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_request_approve_reject_group" />
+                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
+                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
                     
                     <field name="status" widget="statusbar" statusbar_visible="draft, approved, rejected"/>
                 </header>
@@ -19,7 +19,6 @@
                         <h1><field name="name" readonly="1" /></h1>
                     </div>
 
-                    
                     <group>
                         <group name="donation_box_request_col_1">
                             <field name="employee_category_id" invisible="1" />
@@ -29,7 +28,7 @@
                         </group>
                         <group name="donation_box_request_col_2">
                             <field name="warehouse_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status != 'draft'" />
-                            <field name="picking_type_id" string="Operation Type" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status != 'draft'" />
+                            <field name="picking_type_id" string="Operation Type" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" readonly="status != 'draft'" domain="[('name', 'ilike', 'Donation Box')]" />
                             <field name="source_location_id" readonly="1" />
                             <field name="destination_location_id" readonly="1" />
                         </group>

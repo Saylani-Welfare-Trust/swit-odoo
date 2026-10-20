@@ -5,7 +5,7 @@ from odoo.tools import float_compare
 
 from .bn_workflow import bn_transition
 
-APPROVE_GROUP = 'bn_donation_box.donation_box_request_approve_reject_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 
 
 class DonationBoxRequestLine(models.Model):

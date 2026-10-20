@@ -8,7 +8,7 @@ status_selection = [
     ('rejected', 'Rejected'),
 ]
 
-APPROVE_GROUP = 'bn_donation_box.donation_box_request_approve_reject_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 
 
 class DonationBoxRequest(models.Model):
@@ -49,7 +49,7 @@ class DonationBoxRequest(models.Model):
     request_date = fields.Datetime(string='Request Date', default=fields.Datetime.now, tracking=True)
 
     status = fields.Selection(selection=status_selection, string='Status', default='draft',
-                              tracking=True, copy=False)
+                              tracking=True, copy=False, index=True)
 
     key_tag_assign = fields.Boolean('Key Tag Assign', default=False, copy=False)
 
