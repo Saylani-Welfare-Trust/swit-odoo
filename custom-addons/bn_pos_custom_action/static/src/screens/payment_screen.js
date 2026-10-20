@@ -69,6 +69,23 @@ patch(PaymentScreen.prototype, {
         );
     },
 
+    /**
+     * HOD welfare lines the cashier deleted from the order are not disbursed:
+     * drop them from the welfare data and keep their ids to cancel them on the request.
+     */
+    _dropDeletedWelfareHodLines(order, welfareData) {
+        const keptIds = order.get_orderlines().map((line) => line.welfare_hod_line_id).filter(Boolean);
+        const deletedIds = (welfareData.welfare_line_ids || [])
+            .filter((line) => line.is_hod && !keptIds.includes(line.id))
+            .map((line) => line.id);
+        if (!deletedIds.length) {
+            return;
+        }
+        welfareData.welfare_line_ids = welfareData.welfare_line_ids.filter((line) => !deletedIds.includes(line.id));
+        welfareData.disbursed_line_ids = (welfareData.disbursed_line_ids || []).filter((line) => !deletedIds.includes(line.id));
+        welfareData.removed_hod_line_ids = [...(welfareData.removed_hod_line_ids || []), ...deletedIds];
+    },
+
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
@@ -547,6 +564,7 @@ patch(PaymentScreen.prototype, {
             
             // Only process if it's a welfare order and not already completed
             if (welfareData.is_welfare_order === true && welfareData.disbursement_status !== 'completed') {
+                this._dropDeletedWelfareHodLines(currentOrder, welfareData);
                 try {
                     const welfareLineIds = welfareData.is_recurring
                     ? (welfareData.recurring_line_ids || [])
@@ -678,6 +696,24 @@ patch(PaymentScreen.prototype, {
                         { type: 'danger' }
                     );
                     return;
+                }
+            }
+
+            // Cancel the deleted HOD lines on the welfare request once the rest is disbursed
+            if (welfareData.disbursement_status === 'completed' && welfareData.removed_hod_line_ids?.length) {
+                try {
+                    await this.env.services.orm.call(
+                        'welfare.line',
+                        'action_cancel_from_pos',
+                        [welfareData.removed_hod_line_ids]
+                    );
+                    welfareData.removed_hod_line_ids = [];
+                } catch (error) {
+                    console.error("Welfare HOD Line Cancel Error:", error);
+                    this.env.services.notification.add(
+                        "Welfare disbursed, but the deleted HOD lines could not be cancelled on the welfare request.",
+                        { type: 'warning' }
+                    );
                 }
             }
         }
