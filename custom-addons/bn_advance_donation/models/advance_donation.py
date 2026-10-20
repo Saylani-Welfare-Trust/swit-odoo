@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
+    _description = "Advance Donation"
     # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
@@ -222,6 +223,8 @@ class AdvanceDonation(models.Model):
                 serial += 1
                 total_lines += 1
         else:
+            # Lines that are not spread over days are dated the day they are computed
+            today = fields.Date.context_today(self)
             if self.contract_type != 'open_contract':
                 for i in range(self.total_no_of_product):
                     self.advance_donation_lines.create({
@@ -231,6 +234,7 @@ class AdvanceDonation(models.Model):
                         'service_charge_amount': line_service_charge,
                         'remaining_amount': amount + line_service_charge,
                         'advance_donation_id': self.id,
+                        'date': today,
                     })
                     total_lines += 1
             else:
@@ -241,6 +245,7 @@ class AdvanceDonation(models.Model):
                     'service_charge_amount': line_service_charge,
                     'remaining_amount': self.total_product_amount + line_service_charge,
                     'advance_donation_id': self.id,
+                    'date': today,
                 })
                 total_lines = 1
 

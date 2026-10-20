@@ -45,7 +45,8 @@ class HREmployee(models.Model):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
             
     def create(self, vals):
-        if 'barcode' in vals:
-            vals['name'] = vals['name'] + " ( " + vals['barcode'] + " )"
-
+        # Only append barcode if it exists, is truthy (not False, None, or empty string),
+        # and name is provided. Also, explicitly convert to str for safety.
+        if vals.get('name') and vals.get('barcode'):
+            vals['name'] = f"{vals['name']} ( {vals['barcode']} )"
         return super(HREmployee, self).create(vals)

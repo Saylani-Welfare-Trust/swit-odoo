@@ -12,6 +12,7 @@ payment_type_selection = [
 payment_method_selection = [
     ('cash', 'Cash'),
     ('cheque', 'Cheque'),
+    ('direct_deposit', 'Direct Deposit'),
 ]
 
 state_selection = [

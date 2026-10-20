@@ -19,3 +19,5 @@ from . import hr_employee
 from . import welfare_limit
 from . import welfare_consolidated_lines
 from . import welfare_document
+from . import disbursement_category
+from . import disbursement_application_type

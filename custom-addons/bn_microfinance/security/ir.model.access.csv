@@ -10,3 +10,8 @@ access_microfinance_recovery_line,microfinance.recovery.line,bn_microfinance.mod
 access_security_offered_user,access.security.offered.user,model_security_offered,base.group_user,1,1,1,1
 access_microfinance_pdc_line_user,microfinance.pdc.line.user,model_microfinance_pdc_line,base.group_user,1,1,1,1
 access_microfinance_pdc_line_manager,microfinance.pdc.line.manager,model_microfinance_pdc_line,base.group_system,1,1,1,1
+
+access_microfinance_scheme,access.microfinance.scheme,model_microfinance_scheme,,1,1,1,1
+access_microfinance_scheme_line,access.microfinance.scheme.line,model_microfinance_scheme_line,,1,1,1,1
+access_loan_product_line,access.loan.product.line,model_loan_product_line,,1,1,1,1
+access_loan_product_installment,access.loan.product.installment,model_loan_product_installment,,1,1,1,1

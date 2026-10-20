@@ -8,7 +8,10 @@ from . import microfinance_family
 from . import microfinance_installment
 from . import product_product
 from . import product_template
+from . import microfinance_scheme
+from . import microfinance_scheme_line
 from . import loan_product_line
+from . import loan_product_installment
 from . import stock_picking
 from . import account_payment
 from . import security_offered
