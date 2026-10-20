@@ -11,9 +11,17 @@
         'bn_kitchen',
     ],
     'data': [
-        'data/stock_location.xml',
         'security/ir.model.access.csv',
-        'views/daily_planning.xml',
+        
+        'data/stock_location.xml',
+        'data/ir_cron.xml',
+        
+        'views/monthly_planning_views.xml',
+        'views/planning_type_view.xml',
+        'views/report_monthly_planning_line_views.xml',
+        
+        'wizard/import_monthly_planning_wizard_views.xml',
+        'wizard/purchase_request_wizard.xml',
     ],
     'auto_install': False,
     'application': True,
