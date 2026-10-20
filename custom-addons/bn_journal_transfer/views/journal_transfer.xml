@@ -12,7 +12,9 @@
 
                 <field name="accounting_date" readonly="1" />
                 <!-- <field name="name" readonly="1" /> -->
-                <field name="descripiton" />
+                <field name="session" />
+                <field name="category" />
+                <field name="deposit_slip_no" />
                 <field name="analytic_account_id" string="Branch"/>
                 <field name="reference" />
                 <field name="source_journal_id" optional="hide"/>

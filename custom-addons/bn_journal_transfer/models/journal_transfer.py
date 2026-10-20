@@ -16,6 +16,10 @@ class JournalTransfer(models.Model):
 
     name = fields.Char('Name', default="New")
     descripiton = fields.Char('Description')
+    
+    session = fields.Char('Session')
+    category = fields.Char('Category')
+    deposit_slip_no = fields.Char('Deposit Slip No')
 
     user_id = fields.Many2one('res.users', string="User")
     move_id = fields.Many2one('account.move', string="Account Move")
@@ -140,10 +144,21 @@ class JournalTransfer(models.Model):
             )
 
             for line in debit_lines | credit_lines:
+                # Parse the line name to break it into 3 parts
+                line_name = line.name or move.ref or move.name or ''
+                parts = [part.strip() for part in line_name.split(' - ')]
+                
+                session_val = parts[0] if len(parts) > 0 else ''
+                category_val = parts[1] if len(parts) > 1 else ''
+                deposit_slip_val = parts[2] if len(parts) > 2 else ''
+
                 records.append({
                     'pos_move_id': move.id,
                     'accounting_date': move.date,
-                    'descripiton': line.name or move.ref or move.name,
+                    'descripiton': line_name, # Keeping original for reference
+                    'session': session_val,            # New field
+                    'category': category_val,          # New field
+                    'deposit_slip_no': deposit_slip_val, # New field
                     'reference': line.name.rsplit(' - ', 1)[-1].strip() if line.name else '',                    
                     'source_journal_id': move.journal_id.id,
                     'dest_journal_id': line.bank_journal_id.id,
@@ -151,9 +166,6 @@ class JournalTransfer(models.Model):
                     'amount': line.debit - line.credit,
                     'user_id': pos_session.user_id.id,
                 })
-
-        # raise UserError(str(records))
-    
+        
         if records:
             self.create(records)
-                
