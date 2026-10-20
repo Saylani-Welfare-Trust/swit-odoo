@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree view for welfare.line -->
+    <record id="view_welfare_line_tree" model="ir.ui.view">
+        <field name="name">welfare.line.tree</field>
+        <field name="model">welfare.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for welfare.recurring.line -->
+    <record id="view_welfare_recurring_line_tree" model="ir.ui.view">
+        <field name="name">welfare.recurring.line.tree</field>
+        <field name="model">welfare.recurring.line</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for microfinance.education -->
+    <record id="view_microfinance_education_tree" model="ir.ui.view">
+        <field name="name">microfinance.education.tree</field>
+        <field name="model">microfinance.education</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for microfinance.guarantor -->
+    <record id="view_microfinance_guarantor_tree" model="ir.ui.view">
+        <field name="name">microfinance.guarantor.tree</field>
+        <field name="model">microfinance.guarantor</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for microfinance.family -->
+    <record id="view_microfinance_family_tree" model="ir.ui.view">
+        <field name="name">microfinance.family.tree</field>
+        <field name="model">microfinance.family</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for welfare.committee.member -->
+    <record id="view_welfare_committee_member_tree" model="ir.ui.view">
+        <field name="name">welfare.committee.member.tree</field>
+        <field name="model">welfare.committee.member</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for welfare.teacher -->
+    <record id="view_welfare_teacher_tree" model="ir.ui.view">
+        <field name="name">welfare.teacher.tree</field>
+        <field name="model">welfare.teacher</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for welfare.inquiry.report -->
+    <record id="view_welfare_inquiry_report_tree" model="ir.ui.view">
+        <field name="name">welfare.inquiry.report.tree</field>
+        <field name="model">welfare.inquiry.report</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for welfare.masjid -->
+    <record id="view_welfare_masjid_tree" model="ir.ui.view">
+        <field name="name">welfare.masjid.tree</field>
+        <field name="model">welfare.masjid</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Tree view for welfare.madrasa -->
+    <record id="view_welfare_madrasa_tree" model="ir.ui.view">
+        <field name="name">welfare.madrasa.tree</field>
+        <field name="model">welfare.madrasa</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+            </tree>
+        </field>
+    </record>
+</odoo>

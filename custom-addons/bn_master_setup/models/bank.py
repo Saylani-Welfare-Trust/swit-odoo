@@ -3,7 +3,7 @@ from odoo import models, fields, api
 
 class Bank(models.Model):
     _name = 'bank'
-    _description = "Bank"
+    _descripiton = "Bank"
 
 
     name = fields.Char('Name')

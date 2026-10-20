@@ -15,12 +15,6 @@
                 <field name="used_amount"/>
                 <field name="remaining_amount"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'paid'"/>
-                <field name="has_pos_source" column_invisible="True"/>
-                <button name="action_print_pos_receipt"
-                        string="Print POS Receipt"
-                        type="object"
-                        icon="fa-print"
-                        invisible="not has_pos_source"/>
             </tree>
         </field>
     </record>
@@ -42,17 +36,6 @@
                             type="action" 
                             class="oe_highlight" 
                             context="{'active_ids': [active_id]}"/>      
-                    <field name="has_pos_source" invisible="1"/>
-                    <button name="action_print_pos_receipt"
-                            string="Print POS Receipt"
-                            type="object"
-                            invisible="not has_pos_source"/>
-                    <field name="has_disbursement" invisible="1"/>
-                    <button name="action_print_disbursement_receipt"
-                            string="Print Disbursement Receipt"
-                            type="object"
-                            class="oe_highlight"
-                            invisible="not has_disbursement"/>
             
                     <field name="state" widget="statusbar" statusbar_visible="draft,paid"/>
                 </header>
@@ -87,56 +70,6 @@
                     </group>
                 </sheet>
             </form>
-        </field>
-    </record>
-
-    <record id="view_advance_donation_receipt_search" model="ir.ui.view">
-        <field name="name">view.advance.donation.receipt.search</field>
-        <field name="model">advance.donation.receipt</field>
-        <field name="arch" type="xml">
-            <search string="Donation Receipts">
-                <field name="name" string="Reference"/>
-                <field name="donation_id" string="Donation"/>
-                <field name="donor_id" string="Donor"/>
-                <field name="product_id" string="Product"/>
-                <field name="payment_type" string="Payment Type"/>
-                <field name="bank_id" string="Bank"/>
-                <field name="cheque_number" string="Cheque Number"/>
-                <field name="amount" string="Amount"/>
-                <field name="date" string="Date"/>
-                <field name="state" string="Status"/>
-                <field name="create_date" string="Created On"/>
-
-                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
-                <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
-                <filter name="paid" string="Paid" domain="[('state', '=', 'paid')]"/>
-                <filter name="bounced" string="Bounced" domain="[('state', '=', 'bounced')]"/>
-
-                <separator/>
-
-                <filter name="payment_cash" string="Cash" domain="[('payment_type', '=', 'cash')]"/>
-                <filter name="payment_cheque" string="Cheque" domain="[('payment_type', '=', 'cheque')]"/>
-
-                <separator/>
-
-                <filter name="has_remaining" string="With Remaining Amount" domain="[('remaining_amount', '>', 0)]"/>
-                <filter name="fully_used" string="Fully Used" domain="[('remaining_amount', '=', 0)]"/>
-
-                <separator/>
-
-                <filter name="today" string="Today" domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
-                <filter name="this_month" string="This Month" domain="[('date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]"/>
-
-                <group expand="0" string="Group By">
-                    <filter name="group_by_donor" string="Donor" context="{'group_by': 'donor_id'}"/>
-                    <filter name="group_by_donation" string="Donation" context="{'group_by': 'donation_id'}"/>
-                    <filter name="group_by_product" string="Product" context="{'group_by': 'product_id'}"/>
-                    <filter name="group_by_payment_type" string="Payment Type" context="{'group_by': 'payment_type'}"/>
-                    <filter name="group_by_bank" string="Bank" context="{'group_by': 'bank_id'}"/>
-                    <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
-                    <filter name="group_by_date" string="Date" context="{'group_by': 'date'}"/>
-                </group>
-            </search>
         </field>
     </record>
 

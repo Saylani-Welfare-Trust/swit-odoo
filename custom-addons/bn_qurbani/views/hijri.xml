@@ -1,27 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Tree View with inline editing -->
     <record id="hijri_view_tree" model="ir.ui.view">
         <field name="name">hijri.view.tree</field>
         <field name="model">hijri</field>
         <field name="arch" type="xml">
-            <tree delete="0" editable="bottom">
+            <tree delete="0">
                 <field name="name"/>
-                <field name="approved"/>
+                <field name="state"/>
             </tree>
         </field>
     </record>
 
-    <!-- Minimal Form View (optional - for when you need to edit) -->
     <record id="hijri_view_form" model="ir.ui.view">
         <field name="name">hijri.view.form</field>
         <field name="model">hijri</field>
         <field name="arch" type="xml">
             <form>
+                <header>
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="oe_highlight"
+                            groups="bn_qurbani.group_hijri_approver"
+                            invisible="state == 'approved'"/>
+                </header>
                 <sheet>
                     <group>
-                        <field name="name"/>
-                        <field name="approved"/>
+                        <field name="name" readonly="state == 'approved'"/>
+                        <field name="state" invisible="1"/>
                     </group>
                 </sheet>
             </form>
@@ -45,4 +51,5 @@
         action="hijri_action"
         parent="bn_qurbani.qurbani_menu"
         sequence="10"/>
+        
 </odoo>

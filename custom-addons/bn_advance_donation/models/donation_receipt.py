@@ -7,7 +7,6 @@ _logger = logging.getLogger(__name__)
 
 class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
-    _description = "Advance Donation Receipt"
 
 
     category_id = fields.Many2one('product.category', string='Category')    
@@ -30,7 +29,6 @@ class DonationReceipt(models.Model):
        # POS related fields
     pos_session_id = fields.Many2one('pos.session', string='POS Session')
     pos_order_id = fields.Many2one('pos.order', string='POS Order')
-    pos_reference = fields.Char(string='POS Order Reference', copy=False, readonly=True)
     remarks = fields.Text(string='Remarks') 
     product_name = fields.Char(string='Product Name')  # If you want a separate text field
     payment_type = fields.Selection([
@@ -46,8 +44,6 @@ class DonationReceipt(models.Model):
         string='Status',
         default='draft')
     bank_id = fields.Many2one('bank', string='Bank')
-    has_pos_source = fields.Boolean(compute='_compute_has_pos_source')
-    has_disbursement = fields.Boolean(compute='_compute_has_disbursement')
     
     @api.model
     def create(self, vals):
@@ -311,70 +307,7 @@ class DonationReceipt(models.Model):
                 raise UserError(f'You cannot delete record in {rec.state} state')
 
 
-    def _get_disbursement_lines(self):
-        """Disbursement lines of the advance donation(s) this receipt was used on."""
-        self.ensure_one()
-        usages = self.env['advance.donation.slip.usage'].search([('donation_slip_id', '=', self.id)])
-        donations = self.donation_id | usages.advance_donation_id
-        donations |= self.env['advance.donation'].search([('donation_slip_ids', 'in', self.ids)])
-        return donations.disbursement_line_ids
-
-    def _compute_has_disbursement(self):
-        for rec in self:
-            rec.has_disbursement = bool(rec._get_disbursement_lines())
-
-    def action_print_disbursement_receipt(self):
-        self.ensure_one()
-        lines = self._get_disbursement_lines()
-        if not lines:
-            raise UserError(_('Nothing has been disbursed against this receipt yet.'))
-        return lines.action_print_line_non_cash_disbursement_report()
-
     # ------------POS Functions----------------
-    def _get_pos_source_record(self):
-        """Return the POS record this receipt was created from, if any."""
-        self.ensure_one()
-        order = self.order_id or self.pos_order_id
-        if not order and self.name:
-            # Cash receipts are created from the payment screen before the
-            # order reaches the backend - the order keeps the receipt number.
-            order = self.env['pos.order'].search([('source_document', '=', self.name)], limit=1)
-        if not order:
-            # An order keeps a single source document, so it can point to
-            # another receipt of the same order - use the order reference.
-            reference = self.pos_reference
-            if not reference and (self.cheque_number or '').startswith('POS-'):
-                # Older cheque receipts only carry it in the cheque number.
-                reference = self.cheque_number[4:]
-            if reference:
-                order = self.env['pos.order'].search([('pos_reference', '=', reference)], order='id', limit=1)
-        return order
-
-    def _get_pos_source_report(self, source):
-        return self.env.ref('bn_pos_order.pos_donation_receipt_report')
-
-    def _compute_has_pos_source(self):
-        for rec in self:
-            rec.has_pos_source = bool(rec._get_pos_source_record())
-
-    def action_print_pos_receipt(self):
-        # Also called from the Print menu, so several receipts can be selected.
-        sources = {}
-        for rec in self:
-            source = rec._get_pos_source_record()
-            if source:
-                report = rec._get_pos_source_report(source)
-                sources[report] = sources.get(report, source.browse()) | source
-        if not sources:
-            raise UserError(_('The selected receipt was not created from POS.'))
-        if len(sources) > 1:
-            raise UserError(_(
-                'The selected receipts are printed with different reports (%s). Please print them separately.',
-                ', '.join(report.name for report in sources),
-            ))
-        report, records = next(iter(sources.items()))
-        return report.report_action(records)
-
     @api.model
     def register_pos_payment(self, data):
         _logger.info(f"Registering POS payment with data: {data}")
@@ -427,7 +360,6 @@ class DonationReceipt(models.Model):
                 'is_donation_id': data.get('is_donation_id', False),
                 'amount': amount,
                 'product_id': data.get('product_id'),
-                'pos_reference': data.get('order_name') or False,
             }
 
             payment = self.env['advance.donation.receipt'].create(payment_vals)

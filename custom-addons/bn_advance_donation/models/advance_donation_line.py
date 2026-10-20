@@ -6,7 +6,6 @@ from datetime import date as td
 
 class AdvanceDonationLine(models.Model):
     _name = 'advance.donation.lines'
-    _description = "Advance Donation Line"
     # _table = 'advance_donation_line_new'   
 
     advance_donation_id = fields.Many2one('advance.donation', 'Donation ID', ondelete='cascade', required=True)
@@ -115,9 +114,6 @@ class AdvanceDonationLine(models.Model):
     def _get_receipt_day(self):
         """Day a line stands for on the receipt: its own date (frequency based), else the disbursement date"""
         self.ensure_one()
-        if self.advance_donation_id.contract_type == 'product':
-            # Quantity based lines only carry the day they were computed
-            return self.disbursement_date
         return self.date or self.disbursement_date
 
     def _get_receipt_groups(self, per_day=True):

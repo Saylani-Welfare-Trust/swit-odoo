@@ -14,15 +14,7 @@
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
-        
         'data/sequence.xml',
-        
-        'reports/microfinance_pdc_template_report.xml',
-        'reports/microfinance_receipt_report.xml',
-        'reports/microfinance_security_deposit_report.xml',
-        'reports/microfinance_installment_plan_report.xml',
-        'reports/microfinance_approval_certificate_report.xml',
-        
         'views/microfinance.xml',
         'views/microfinance_installment.xml',
         'views/product_product.xml',
@@ -31,10 +23,13 @@
         'views/record_search.xml',
         'views/microfinance_pdc_consolidated_views.xml',
         'views/consolidate_installment_lines.xml',
-        'views/microfinance_scheme.xml',
         'views/security_offered.xml',
-        
         'wizards/return_microfinance_product.xml',
+        'reports/microfinance_pdc_template_report.xml',
+        'reports/microfinance_receipt_report.xml',
+        'reports/microfinance_security_deposit_report.xml',
+        'reports/microfinance_installment_plan_report.xml',
+        'reports/microfinance_approval_certificate_report.xml',
     ],
     'auto_install': False,
     'application': True,

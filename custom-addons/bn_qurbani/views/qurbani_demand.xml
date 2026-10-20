@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="qurbani_demand_view_tree" model="ir.ui.view">
+        <field name="name">qurbani.demand.view.tree</field>
+        <field name="model">qurbani.demand</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0">
+                <field name="day_id"/>
+                <field name="hijri_id"/>
+                <field name="city_location_id"/>
+                <field name="city_demand"/>
+                <field name="total_city_demand"/>
+                <field name="remaining_city_demand"/>
+                <field name="slaughter_location_id"/>
+                <field name="slaughter_start_time" widget="float_time"/>
+                <field name="slaughter_end_time" widget="float_time"/>
+                <field name="distribution_location_id"/>
+                <field name="distribution_start_time" widget="float_time"/>
+                <field name="distribution_end_time" widget="float_time"/>
+                <field name="inventory_product_id"/>
+                <field name="pos_product_id"/>
+                <field name="inventory_on_hand"/>
+                <field name="pos_on_hand"/>
+                <field name="total_hissa"/>
+                <field name="booked_hissa"/>
+                <field name="current_hissa"/>
+                <field name="remaining_hissa"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="qurbani_demand_action" model="ir.actions.act_window">
+        <field name="name">Qurbani Demand</field>
+        <field name="res_model">qurbani.demand</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new qurbani demand....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="qurbani_demand_menu"
+        name="Qurbani Demand"
+        action="qurbani_demand_action"
+        parent="bn_qurbani.menu_qurbani_root"
+        sequence="2"/>
+
+</odoo>

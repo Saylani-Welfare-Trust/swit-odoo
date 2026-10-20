@@ -14,23 +14,18 @@
         'product',
     ],
     'data': [
-        
         'security/group.xml',
         'security/access_right.xml',
         'security/ir.model.access.csv',
-        
         'data/sequence.xml',
-        'data/stock_location.xml',
-        'data/stock_picking_type.xml',
-        
         'views/product_template.xml',
         'views/product_product.xml',
+        'data/stock_location.xml',
+        'data/stock_picking_type.xml',
         'views/medical_equipment.xml',
         'views/medical_equipment_reference.xml',
         'views/medical_security_deposit.xml',
         'views/res_partner.xml',
-        'views/medical_equipment_category.xml',
-        
         'wizards/medical_equipment_donation.xml',
     ],
     'auto_install': False,

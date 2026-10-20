@@ -33,6 +33,6 @@
         name="Location Option"
         action="location_option_action"
         parent="analytical_accounting_menu"
-        sequence="1"/>
+        sequence="0"/>
 
 </odoo>

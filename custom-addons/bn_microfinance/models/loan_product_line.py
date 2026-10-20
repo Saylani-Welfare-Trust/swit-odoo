@@ -2,19 +2,9 @@ from odoo import models, fields
 
 
 class LoanProductLine(models.Model):
-    _name = 'loan.product.line'
-    _description = "Loan Product Line"
+    _inherit = 'loan.product.line'
 
 
-    product_id = fields.Many2one('product.product', string='Product')
-    microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string='Microfinance Scheme Line')
+    product_id = fields.Many2one('product.product', string='Product', domain="[('is_microfinance', '=', True)]")
 
-    sd_amount = fields.Float('SD Amount')
-    inst_amount = fields.Float('Ins. Amount')
-
-    product_ids = fields.Many2many('product.product', string='Products')
-
-    installment_ids = fields.One2many('loan.product.installment', 'loan_product_line_id', string='No. of Installments')
-
-    is_recover = fields.Boolean('Is Recover?')
-    
+    product_ids = fields.Many2many('product.product', string='Products', domain="[('is_microfinance', '=', True)]")

@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields
 
 
 class AnalyticAccount(models.Model):
@@ -8,10 +8,3 @@ class AnalyticAccount(models.Model):
     location_option_id = fields.Many2one('location.option', string="Location Option", tracking=True)
 
     address = fields.Text('Address', tracking=True)
-    
-    @api.depends('name')
-    def _compute_display_name(self):
-        # Override the default display_name to only show the main name
-        # instead of the complete hierarchical path.
-        for account in self:
-            account.display_name = account.name or ''

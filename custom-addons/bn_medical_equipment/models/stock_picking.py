@@ -4,6 +4,7 @@ from odoo import models, fields
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
+
     is_medical_recovery = fields.Boolean('Is Medical Recovery')
 
     def button_validate(self):
@@ -12,6 +13,8 @@ class StockPicking(models.Model):
                 ('name', '=', self.origin),
                 ('state', '=', 'waiting_for_inventory_approval')
             ], limit=1)
+
             if medical_equipment:
                 medical_equipment.state = 'recovered'
-        return super(StockPicking, self).button_validate()
+
+        super(StockPicking, self).button_validate()

@@ -25,8 +25,7 @@ state_selection = [
     ('disbursed', 'Disbursed'),
     ('pending', 'Pending'),
     ('collected', 'Collected'),
-    ('return', 'Returned'),
-    ('cancel', 'Cancelled'),
+    ('return', 'Returned'),  
 ]
 
 recurring_duration_selection = [
@@ -75,7 +74,6 @@ class WelfareLine(models.Model):
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
     product_id = fields.Many2one('product.product', string="Product")
-    is_hod = fields.Boolean('Is HOD', readonly=True, help="Line added automatically at HOD Approval.")
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
@@ -88,18 +86,7 @@ class WelfareLine(models.Model):
     #     compute='_compute_net_amount',
     #     store=True
     # )
-    
 
-    on_hand_qty = fields.Float(
-        string='On Hand Quantity',
-        compute='_compute_on_hand_qty'
-    )
-
-    @api.depends('product_id')
-    def _compute_on_hand_qty(self):
-        for rec in self:
-            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
-    
     # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
         'res.company',
@@ -556,18 +543,7 @@ class WelfareLine(models.Model):
                 line.welfare_id._auto_disburse_if_all_lines_delivered()
 
         return True
-
-    def action_cancel_from_pos(self):
-        """Cancel the HOD lines the cashier removed from the POS order (welfare lines are never deleted)."""
-        lines = self.exists().filtered(lambda l: l.is_hod and l.state == 'draft')
-        for welfare in lines.welfare_id:
-            products = lines.filtered(lambda l: l.welfare_id == welfare).product_id
-            welfare.message_post(body=_("HOD line(s) removed at POS by %s: %s") % (
-                self.env.user.name, ", ".join(products.mapped('display_name'))
-            ))
-        lines.write({'state': 'cancel'})
-        return True
-
+                            
     def action_delivered(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
             in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')

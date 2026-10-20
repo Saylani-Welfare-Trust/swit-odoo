@@ -152,12 +152,21 @@ class Welfare(models.Model):
 
     
 
-    # NOTE: the *_ids document One2many fields (application_form_ids, frc_ids,
-    # electricity_bill_ids, gas_bill_ids, family_cnic_ids) are defined once
-    # above. The duplicated second set (app_form_ids / elec_bill_ids and the
-    # re-declared frc_ids / gas_bill_ids / family_cnic_ids) was removed: in
-    # Python only the last assignment survived, silently overriding the first
-    # definitions with different labels.
+    app_form_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                string='Application Forms', 
+                                domain=[('document_type', '=', 'application_form')])
+    frc_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                            string='FRC', 
+                            domain=[('document_type', '=', 'frc')])
+    elec_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                    string='Electricity Bill', 
+                                    domain=[('document_type', '=', 'electricity_bill')])
+    gas_bill_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                string='Gas Bill', 
+                                domain=[('document_type', '=', 'gas_bill')])
+    family_cnic_ids = fields.One2many('welfare.document.image', 'welfare_id', 
+                                    string='Family CNIC', 
+                                    domain=[('document_type', '=', 'family_cnic')])
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # Store raw URLs (never touched by sanitizer)
@@ -167,38 +176,39 @@ class Welfare(models.Model):
     gas_bill_urls          = fields.Text('Gas Bill URLs')
     family_cnic_urls       = fields.Text('Family CNIC URLs')
     # Computed fields for filtered document images
-    # NOTE: One2many fields cannot be computed in Odoo (a comodel inverse name
-    # is required and the ORM never calls a compute on x2many), so these were
-    # broken no-op declarations. Replaced with the equivalent Many2many fields
-    # computed from document_image_ids in _compute_filtered_images below.
-    application_form_images = fields.Many2many(
+    application_form_images = fields.One2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Application Forms',
+        readonly=True
     )
-
-    frc_images = fields.Many2many(
+    
+    frc_images = fields.One2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='FRC Documents',
+        readonly=True
     )
-
-    electricity_bill_images = fields.Many2many(
+    
+    electricity_bill_images = fields.One2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Electricity Bills',
+        readonly=True
     )
-
-    gas_bill_images = fields.Many2many(
+    
+    gas_bill_images = fields.One2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Gas Bills',
+        readonly=True
     )
-
-    family_cnic_images = fields.Many2many(
+    
+    family_cnic_images = fields.One2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
         string='Family CNICs',
+        readonly=True
     )
     # Computed Html fields for display only — never written by the form
 
@@ -348,6 +358,14 @@ class Welfare(models.Model):
             record.family_cnic_images = record.document_image_ids.filtered(
                 lambda img: img.document_type == 'family_cnic'
             )                    
+    @api.depends('employee_category_id', 'donee_id')
+    def _compute_employee_domain(self):
+        for record in self:
+            if record.employee_category_id:
+                record.employee_domain = f"[('category_ids', 'in', [{record.employee_category_id.id}]),('area.id', '=', [{record.donee_id.area.id}])]"
+            else:
+                record.employee_domain = "[]"
+
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
         default=0.0
@@ -602,7 +620,7 @@ class Welfare(models.Model):
         records = self.search([('state', 'in', ['recurring', 'approve'])])
         for rec in records:
             if rec.order_type == 'one_time':
-                lines = rec.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+                lines = rec.welfare_line_ids
                 if lines and all(l.state == 'disbursed' for l in lines):
                     rec.state = 'disbursed'
             elif rec.order_type == 'recurring':
@@ -1301,29 +1319,9 @@ class Welfare(models.Model):
 
             # Move to HOD approval state
             record.state = 'hod_approve'
-            record._add_hod_lines()
-
+            
             # Add chatter message
             record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
-
-    def _add_hod_lines(self):
-        """Add an HOD line for every HOD product that has none yet (manual lines of the same product are separate)."""
-        hod_products = self.env['product.product'].search([('product_tmpl_id.is_hod', '=', True)])
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
-        for record in self:
-            new_products = hod_products - record.welfare_line_ids.filtered('is_hod').product_id
-            if not new_products:
-                continue
-            self.env['welfare.line'].create([{
-                'welfare_id': record.id,
-                'product_id': product.id,
-                'is_hod': True,
-                'disbursement_category_id': cash_category.id if cash_category else False,
-                'collection_point': 'branch',
-                # The field default is frozen at server start; POS only picks lines due this month
-                'collection_date': fields.Date.context_today(record),
-            } for product in new_products])
-
     def action_move_to_member(self):
         for record in self:
             current_user = self.env.user
@@ -1354,10 +1352,7 @@ class Welfare(models.Model):
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             record.state = 'approve'
-
-        # HOD lines may all have been disbursed from POS during Final Approval already
-        self._auto_disburse_if_all_lines_delivered()
-
+        
         # Print report
         return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
     
@@ -1581,8 +1576,7 @@ class Welfare(models.Model):
         # Use sudo to bypass potential access restrictions on the partner (e.g., inactive record)
         partner = self.donee_id.sudo()
         
-        # Pass the welfare record ID in `data` (the action context is dropped for PDF downloads)
-        # so the report can show welfare‑specific data
+        # Pass the welfare record ID in the context so the report can show welfare‑specific data
         return self.env.ref(
             'bn_profile_management.action_profile_management_report'
-        ).report_action(partner, data={'welfare_id': self.id, 'partner_ids': partner.ids})
+        ).with_context(active_welfare_id=self.id).report_action(partner)

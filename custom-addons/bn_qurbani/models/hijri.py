@@ -1,4 +1,5 @@
-from odoo import models, fields, api, exceptions
+from odoo import models, fields
+from odoo.exceptions import UserError
 
 
 class Hijri(models.Model):
@@ -7,23 +8,18 @@ class Hijri(models.Model):
     _description = 'Hijri'
 
     name = fields.Char('Hijri', tracking=True)
-    approved = fields.Boolean('Approved', default=True, tracking=True)
-    
-    can_create_new = fields.Boolean(string='Can Create New', compute='_compute_can_create_new')
-    
-    @api.depends()
-    def _compute_can_create_new(self):
-        """Compute if user can create new records"""    
-        for record in self:
-            unapproved_count = self.search_count([('approved', '=', True)])
-            record.can_create_new = unapproved_count == 0
-    
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create to enforce rule"""
-        unapproved_count = self.search_count([('approved', '=', True)])
-        if unapproved_count > 0:
-            raise exceptions.UserError(
-                "Cannot create new records. Please unchecked all existing approved records first."
-            )
-        return super(Hijri, self).create(vals_list)
+    state = fields.Selection(
+        [('draft', 'Draft'), ('approved', 'Approved')],
+        default='draft',
+        tracking=True,
+    )
+
+    def action_approve(self):
+        self.write({'state': 'approved'})
+
+    def write(self, vals):
+        if 'state' not in vals or len(vals) > 1:
+            for rec in self:
+                if rec.state == 'approved' and not self.env.user.has_group('bn_qurbani.group_hijri_approver'):
+                    raise UserError("This record is approved. Only an approver can edit it.")
+        return super().write(vals)
