@@ -25,6 +25,8 @@
                         <field name="cxo_approved" widget="boolean_toggle" readonly="1"/>
                         <field name="cxo_approved_by" readonly="1"/>
                         <field name="cxo_approved_date" readonly="1"/>
+
+                        <field name="designated_cxo_approver_id" readonly="cxo_approved" options="{'no_create': True}"/>
                     </group>
                     <group>
                         <field name="hod_approved" widget="boolean_toggle" readonly="1"/>

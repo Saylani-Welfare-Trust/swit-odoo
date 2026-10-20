@@ -15,27 +15,36 @@ class PurchaseOrder(models.Model):
     cfo_approved_by = fields.Many2one('res.users', string='CFO Approved By', readonly=True, copy=False)
     cfo_approved_date = fields.Datetime(string='CFO Approved On', readonly=True, copy=False)
 
+    # NEW FIELD: Assign a specific person to approve this RFQ
+    designated_cxo_approver_id = fields.Many2one(
+        'res.users', 
+        string='Assigned CXO Approver', 
+        tracking=True,
+        help='If set, ONLY this user can give CXO approval to this RFQ. If empty, the HOD approver rule applies.'
+    )
+
     is_cxo_approver_allowed = fields.Boolean(
         compute='_compute_is_cxo_approver_allowed',
-        help='Whether the current user may CXO-approve this RFQ: when it comes from a '
-             'Material Request, only the user who gave that request its HOD approval can.')
+        help='Whether the current user may CXO-approve this RFQ.')
 
-    # The RFQ's state is left untouched while on hold (its CXO / HOD approval
-    # flags carry its position in the flow), so once the CFO releases it the
-    # flow simply carries on from where it stopped.
+    # The RFQ's state is left untouched while on hold...
     shariah_hold = fields.Boolean(string='Shariah Hold', copy=False, readonly=True, tracking=True)
     shariah_hold_reason = fields.Text(string='Shariah Hold Reason', copy=False, readonly=True)
 
     @api.depends_context('uid')
-    @api.depends('material_request_id.hod_approved_by')
+    @api.depends('designated_cxo_approver_id', 'material_request_id.hod_approved_by')
     def _compute_is_cxo_approver_allowed(self):
         for order in self:
-            # sudo: the Material Request record rule hides requests the user didn't create.
-            hod_user = order.material_request_id.sudo().hod_approved_by
-            order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
+            if order.designated_cxo_approver_id:
+                # If a specific person is assigned, ONLY they can approve
+                order.is_cxo_approver_allowed = (order.designated_cxo_approver_id == self.env.user)
+            else:
+                # Fallback: sudo the Material Request to check the original HOD user
+                hod_user = order.material_request_id.sudo().hod_approved_by
+                order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
 
     # ------------------------------------------------------------------
-    # CFO budget approval
+    # CFO budget approval (Unchanged)
     # ------------------------------------------------------------------
     def _get_accounting_budget_rows(self):
         """Every (analytic account, budget, required, available) row of the
@@ -301,30 +310,27 @@ class PurchaseOrder(models.Model):
         return True
 
     # ------------------------------------------------------------------
-    # Approval steps
+    # Approval steps (UPDATED)
     # ------------------------------------------------------------------
     def action_cxo_approve_po(self):
-        """CXO approval on this RFQ is the only CXO approval in the Procurement
-        workflow - reflect it onto the requisition's own state so the PR
-        doesn't need a second, duplicate CXO Approval step of its own.
-
-        If the requisition doesn't have a selected RFQ yet, approving one
-        here claims it as the winning quote - this doesn't require having
-        gone through the Bulk RFQ Price wizard's "Confirm Selected Lines"
-        first, since that's an easy step to miss when there's only one
-        vendor to compare anyway.
-
-        When the RFQ comes from a Material Request, only the user who gave that
-        request its HOD approval may do this CXO approval."""
+        """CXO approval on this RFQ..."""
         for order in self:
-            # sudo: the Material Request record rule hides requests the user didn't create.
-            request = order.material_request_id.sudo()
-            hod_user = request.hod_approved_by
-            if hod_user and hod_user != self.env.user:
+            # 1. Enforce the newly assigned approver
+            if order.designated_cxo_approver_id and order.designated_cxo_approver_id != self.env.user:
                 raise UserError(_(
-                    'Only %(user)s, who gave HOD approval to Material Request %(request)s, '
-                    'can give CXO approval to this RFQ.'
-                ) % {'user': hod_user.display_name, 'request': request.name})
+                    'Only the assigned approver, %s, can give CXO approval to this RFQ.'
+                ) % order.designated_cxo_approver_id.name)
+
+            # 2. Fallback to your existing HOD rule if no one is specifically assigned
+            if not order.designated_cxo_approver_id:
+                request = order.material_request_id.sudo()
+                hod_user = request.hod_approved_by
+                if hod_user and hod_user != self.env.user:
+                    raise UserError(_(
+                        'Only %(user)s, who gave HOD approval to Material Request %(request)s, '
+                        'can give CXO approval to this RFQ.'
+                    ) % {'user': hod_user.display_name, 'request': request.name})
+                    
         res = super().action_cxo_approve_po()
         for order in self:
             requisition = order.requisition_id
