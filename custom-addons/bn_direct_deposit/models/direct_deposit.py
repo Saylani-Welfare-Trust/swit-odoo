@@ -34,10 +34,10 @@ class DirectDeposit(models.Model):
     name = fields.Char('Name', default="New")
     transaction_ref = fields.Char('Transaction Reference')
     payment_type = fields.Selection([
-    ('cash', 'Cash'),
-    ('cheque', 'Cheque'),
-    ('directdeposit', 'Direct Deposit'),
-], string="Payment Type", default='directdeposit')
+        ('cash', 'Cash'),
+        ('cheque', 'Cheque'),
+        ('directdeposit', 'Direct Deposit'),
+    ], string="Payment Type", default='directdeposit')
     remarks = fields.Text('Remarks')
 
     transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
