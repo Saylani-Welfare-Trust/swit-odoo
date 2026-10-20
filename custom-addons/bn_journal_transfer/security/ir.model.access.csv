@@ -1,2 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_journal_transfer,access.journal.transfer,bn_journal_transfer.model_journal_transfer,,1,1,1,1
+access_journal_transfer,access.journal.transfer,bn_journal_transfer.model_journal_transfer,bn_pos_cheque.group_treasury,1,1,1,1
