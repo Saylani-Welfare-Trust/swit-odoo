@@ -7,11 +7,17 @@
     'category': 'BytesNode/POS Cheque',
     'depends': [
         'account',
+        'bn_closing_session',
         'bn_pos_custom_action',
+        'bn_pos_order',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
+        
+        'reports/pos_order_receipt.xml',
+        
         'views/pos_cheque.xml',
         'views/pos_order.xml',
     ],

@@ -17,23 +17,51 @@
                 <field name="bank_name" />
                 <field name="date" />
                 <field name="bounce_count" />
-                <!-- TEMPORARY DEBUG FIELDS — remove once confirmed -->
-                <field name="medical_security_deposit_id" 
-                    string="Security Deposit"
-                    />
-
-                <button name="action_view_security_deposit" 
-                        string="View Security Deposit"
-                        type="object"
-                        />
-                <!-- end debug fields -->
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'bounce'" decoration-success="state == 'clear'" decoration-danger="state == 'cancel'" />
 
                 <button string="Show Linked POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
 
                 <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state in ['cancel', 'clear'] or bounce_count &gt;= 4" />
                 <button string="Bounce" name="action_bounce" type="object" invisible="state == 'clear' or bounce_count > 3" />
+                <button string="Print Receipt" name="action_print_receipt" type="object" icon="fa-print" invisible="state != 'clear'" />
             </tree>
+        </field>
+    </record>
+
+    <record id="pos_cheque_view_search" model="ir.ui.view">
+        <field name="name">pos.cheque.view.search</field>
+        <field name="model">pos.cheque</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Searchable Fields -->
+                <field name="name" string="Cheque No."/>
+                <field name="order_reference" string="Order Ref"/>
+                <field name="donor_id" string="Donor"/>
+                <field name="bank_id" string="Bank Journal"/>
+                <field name="bank_name" string="Bank Name"/>
+                <field name="analytic_account_id" string="Branch"/>
+                <field name="amount"/>
+
+                <!-- Quick Filters -->
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Cleared" name="filter_clear" domain="[('state', '=', 'clear')]"/>
+                <filter string="Bounced" name="filter_bounce" domain="[('state', '=', 'bounce')]"/>
+                <filter string="Cancelled" name="filter_cancel" domain="[('state', '=', 'cancel')]"/>
+                
+                <separator/>
+                
+                <!-- Date Filter -->
+                <filter string="Cheque Date" name="filter_date" date="date"/>
+
+                <!-- Group By Options -->
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Branch" name="group_analytic" context="{'group_by': 'analytic_account_id'}"/>
+                    <filter string="Bank Journal" name="group_bank" context="{'group_by': 'bank_id'}"/>
+                    <filter string="Donor" name="group_donor" context="{'group_by': 'donor_id'}"/>
+                    <filter string="Creation Month" name="group_create_date" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
@@ -58,8 +86,8 @@
         id="pos_cheque_menu"
         name="POS Cheque"
         action="pos_cheque_action"
-        groups="pos_cheque_menu_group"
+        groups="bn_pos_cheque.group_treasury"
         parent="bn_pos_cheque.treasury_menu"
-        sequence="0"/>
+        sequence="1"/>
 
 </odoo>

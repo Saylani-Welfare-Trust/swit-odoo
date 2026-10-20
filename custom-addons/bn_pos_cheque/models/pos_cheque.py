@@ -22,13 +22,15 @@ class POSCheque(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
     bank_name = fields.Char('Bank Name')
-    date = fields.Date('Date')
+    date = fields.Date('Cheque Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
     source_model = fields.Selection([
         ('welfare', 'Welfare'),
         ('medical_equipment', 'Medical Equipment'),
     ], string="Source Type")
+    
+    move_id = fields.Many2one('account.move', string="Journal Entry", readonly=True)
     source_record_id = fields.Integer(string="Source Record ID")
 
     welfare_line_ids = fields.Many2many(
@@ -95,6 +97,7 @@ class POSCheque(models.Model):
                 'cheque_number': self.name,
                 'cheque_date': self.date,
                 'date': fields.Date.today(),
+                'order_id': line.order_id.id,
                 'remarks': 'Auto-created from POS Cheque %s' % self.name,
                 'state': 'paid',
             })
@@ -176,6 +179,38 @@ class POSCheque(models.Model):
             'target': 'new',
         }
 
+    def action_print_receipt(self):
+        """Donation receipt of the linked POS order. Only once the cheque is
+        cleared - until then the donor holds the provisional slip from POS."""
+        self.ensure_one()
+        if self.state != 'clear':
+            raise ValidationError('The donation receipt can be printed only after the cheque is cleared.')
+
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            raise ValidationError('No POS order is linked to this cheque.')
+
+        # the clean (non-duplicate) receipt, same one the donor gets on WhatsApp
+        action = self.env.ref('bn_pos_order.pos_whatsapp_donation_receipt_report').report_action(pos_order)
+        action['name'] = 'Donation Receipt'
+        return action
+
+    def _send_clear_notification(self):
+        """WhatsApp / SMS the donation receipt of the linked POS order. POS
+        holds this message back for cheque orders until the cheque is cleared
+        (see pos.order.sms_or_whatsapp_send_receipt)."""
+        self.ensure_one()
+        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not pos_order:
+            return
+
+        # a failed message must never block the clearing itself
+        try:
+            with self.env.cr.savepoint():
+                pos_order.send_whatsapp_after_payment(pos_order.id)
+        except Exception as e:
+            _logger.error('Cheque %s: clear notification failed: %s', self.name, str(e))
+
     def _get_or_repair_microfinance_line(self, pdc_line):
         """Get microfinance line from link or fallback to installment_number search, and repair the link"""
         microfinance_line = pdc_line.microfinance_line_id
@@ -253,6 +288,92 @@ class POSCheque(models.Model):
             _logger.info(f"Security deposit {security_deposit.id} marked as bounced for cheque {self.name}")
         else:
             _logger.warning(f"No security deposit found for cheque {self.name}")
+    
+    def _create_bank_deposit_entry(self):
+        self.ensure_one()
+        if self.move_id or not self.bank_id:
+            return
+
+        order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        if not order or not order.payment_ids:
+            _logger.warning(f"No POS order or payments found for cheque {self.name}")
+            return
+
+        # 1. Find the specific payment method for the cheque (avoiding split payment issues)
+        cheque_payment = order.payment_ids.filtered(
+            lambda p: p.payment_method_id.type == 'bank' or 'cheque' in p.payment_method_id.name.lower()
+        )[:1]
+        
+        if not cheque_payment:
+            cheque_payment = order.payment_ids[0] # Fallback
+
+        outstanding_account = cheque_payment.payment_method_id.outstanding_account_id
+        bank_account = self.bank_id.default_account_id
+
+        # 2. Safety check for accounts
+        if not outstanding_account or not bank_account:
+            raise ValidationError(
+                f"Cannot generate entry for Cheque {self.name}. "
+                f"Please ensure the Bank journal has a default account, and the POS Payment Method has an Outstanding Account."
+            )
+
+        # 3. Prepare Analytic Distribution (Fixing your custom _post validation)
+        analytic_dist = {}
+        if self.analytic_account_id:
+            # Odoo 17 format: {"analytic_account_id": 100}
+            analytic_dist = {str(self.analytic_account_id.id): 100}
+
+        # 4. Create the Entry
+        move_vals = {
+            'move_type': 'entry',
+            'journal_id': self.bank_id.id,
+            'date': fields.Date.context_today(self),
+            'ref': f"Cheque Deposit {self.name} - {order.name}",
+            'partner_id': self.donor_id.id or False, # Good practice to link partner
+            'line_ids': [
+                (0, 0, {
+                    'name': f"Cheque Deposit {self.name}",
+                    'account_id': bank_account.id,
+                    'debit': self.amount,
+                    'credit': 0.0,
+                    'partner_id': self.donor_id.id or False,
+                    'analytic_distribution': analytic_dist, # 🟢 Fixes your custom validation
+                }),
+                (0, 0, {
+                    'name': f"Cheque Deposit {self.name}",
+                    'account_id': outstanding_account.id,
+                    'debit': 0.0,
+                    'credit': self.amount,
+                    'partner_id': self.donor_id.id or False,
+                    'analytic_distribution': analytic_dist, # 🟢 Fixes your custom validation
+                })
+            ]
+        }
+
+        try:
+            move = self.env['account.move'].create(move_vals)
+            move.action_post()
+            self.move_id = move.id
+            _logger.info(f"Generated Journal Entry {move.name} for Cheque {self.name}")
+            
+            # 5. Optional but recommended: Reconcile the Outstanding line
+            # This ensures the Outstanding Receipts account balance cleans up properly
+            outstanding_line = move.line_ids.filtered(lambda l: l.account_id.id == outstanding_account.id)
+            if outstanding_line:
+                # Find the matching original POS line in the outstanding account
+                pos_line = self.env['account.move.line'].search([
+                    ('account_id', '=', outstanding_account.id),
+                    ('partner_id', '=', self.donor_id.id),
+                    ('credit', '=', self.amount),
+                    ('reconciled', '=', False)
+                ], limit=1)
+                if pos_line:
+                    (outstanding_line + pos_line).reconcile()
+
+        except Exception as e:
+            _logger.error(f"Failed to create entry for Cheque {self.name}: {str(e)}")
+            raise ValidationError(f"Failed to generate Journal Entry: {str(e)}")
+        
     # ---------- LIFECYCLE ----------
     def action_clear(self):
         self._create_advance_donation_receipts()
@@ -273,7 +394,12 @@ class POSCheque(models.Model):
         elif self.source_model == 'medical_equipment':
             self._clear_medical_equipment()
 
+        # 🟢 Call the entry generation method here
+        self._create_bank_deposit_entry()
+
         self.state = 'clear'
+
+        self._send_clear_notification()
 
     def action_bounce(self):
         if self.bounce_count >= 4:
