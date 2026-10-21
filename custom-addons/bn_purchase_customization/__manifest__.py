@@ -7,7 +7,6 @@
     'category': 'BytesNode/Purchase Customization',
     'depends': [
         'purchase_requisition',
-        'bn_master_setup',
     ],
     'data': [
         'security/group.xml',
