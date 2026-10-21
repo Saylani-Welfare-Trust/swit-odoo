@@ -82,32 +82,13 @@ class DirectDeposit(models.Model):
 #         user_id = data.get('user_id') or self.env.user.id
 #         transaction_ref = data.get('transaction_ref')
 
-#         # -------------------------
-#         # 1. Prepare Line Items
-#         # -------------------------
-#         product_lines = []
-#         for line in data['order_lines']:
-#             product_lines.append((0, 0, {
-#                 'product_id': line['product_id'],
-#                 'quantity': line['quantity'],
-#                 'amount': line['price'],
-#                 'remarks': line['remarks'] if line.get('remarks') else '',
-#             }))
+        params = self.env['ir.config_parameter'].sudo()
+        enable_qurbani = params.get_param('enable_qurbani', default=False)
 
-#         # -------------------------
-#         # 2. Create DD Record
-#         # -------------------------
-#         dd = self.create({
-#             'donor_id': data['donor_id'],
-#             'favor': favor,
-#             'bank_id': bank_id,
-#             'user_id': user_id,
-#             'address': address,
-#             'service_charges': service_charges,
-#             'transaction_ref': transaction_ref,
-#             'transfer_to_dhs': data.get('transfer_to_dhs', False),
-#             'direct_deposit_line_ids': product_lines,
-#         })
+        if enable_qurbani:
+            qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+
+            dd.qurbani_order_id = qurbani_details.get('id')
 
 #         # -------------------------
 #         # 3. Calculate prices & taxes for all lines
