@@ -32,14 +32,14 @@ class PurchaseOrder(models.Model):
     shariah_hold_reason = fields.Text(string='Shariah Hold Reason', copy=False, readonly=True)
 
     @api.depends_context('uid')
-    @api.depends('designated_cxo_approver_id', 'material_request_id.hod_approved_by')
+    @api.depends('designated_cxo_approver_id.user_id', 'material_request_id.hod_approved_by')
     def _compute_is_cxo_approver_allowed(self):
         for order in self:
             if order.designated_cxo_approver_id:
-                # If a specific person is assigned, ONLY they can approve
-                order.is_cxo_approver_allowed = (order.designated_cxo_approver_id == self.env.user)
+                # Point to the user_id field inside the master.cxo.approver model
+                order.is_cxo_approver_allowed = (order.designated_cxo_approver_id.user_id == self.env.user)
             else:
-                # Fallback: sudo the Material Request to check the original HOD user
+                # Fallback to HOD user
                 hod_user = order.material_request_id.sudo().hod_approved_by
                 order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
 
@@ -316,10 +316,10 @@ class PurchaseOrder(models.Model):
         """CXO approval on this RFQ..."""
         for order in self:
             # 1. Enforce the newly assigned approver
-            if order.designated_cxo_approver_id and order.designated_cxo_approver_id != self.env.user:
+            if order.designated_cxo_approver_id and order.designated_cxo_approver_id.user_id != self.env.user:
                 raise UserError(_(
                     'Only the assigned approver, %s, can give CXO approval to this RFQ.'
-                ) % order.designated_cxo_approver_id.name)
+                ) % order.designated_cxo_approver_id.user_id.name)
 
             # 2. Fallback to your existing HOD rule if no one is specifically assigned
             if not order.designated_cxo_approver_id:
@@ -345,6 +345,7 @@ class PurchaseOrder(models.Model):
                 requisition.write({'state': 'cxo_approved'})
                 requisition.message_post(body=_('CXO approved the selected RFQ %s.') % order.name)
         return res
+
 
     def action_hod_approve_po(self):
         """HOD approval. Then the budget decides the CFO stage: within budget the

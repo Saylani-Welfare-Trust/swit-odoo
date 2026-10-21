@@ -11,9 +11,9 @@ class PurchaseOrder(models.Model):
     cxo_approved_by = fields.Many2one('res.users', string='CXO Approved By', readonly=True, copy=False)
     cxo_approved_date = fields.Datetime(string='CXO Approved On', readonly=True, copy=False)
 
-    # --- MOVED HERE SO THE VIEW CAN SEE IT ---
+    # UPDATED: Point to the new master model
     designated_cxo_approver_id = fields.Many2one(
-        'res.users', 
+        'master.cxo.approver', 
         string='Assigned CXO Approver', 
         tracking=True,
         help='If set, ONLY this user can give CXO approval to this RFQ. If empty, the HOD approver rule applies.'
