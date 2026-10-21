@@ -8,7 +8,7 @@
             <!-- Only the HOD approver of the source Material Request may CXO-approve;
                  nothing can be approved or confirmed while waiting for the CFO's budget decision. -->
             <xpath expr="//button[@name='action_cxo_approve_po']" position="attributes">
-                <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed</attribute>
+                <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed or not designated_cxo_approver_id</attribute>
             </xpath>
             <xpath expr="//button[@name='action_hod_approve_po']" position="attributes">
                 <attribute name="invisible">not cxo_approved or hod_approved or state not in ('draft', 'sent') or shariah_hold</attribute>
