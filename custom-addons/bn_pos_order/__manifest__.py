@@ -6,16 +6,20 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Order Customizaiton',
     'depends': [
-        'bn_pos_customization',
+        # 'bn_pos_customization',
         'bn_profile_management'
     ],
     'data': [
-        'data/paper_format.xml',
         'security/group.xml',
+        
+        'data/paper_format.xml',
+        'data/server_action.xml',
+        
+        'reports/whatsapp_dn.xml',
+        'reports/duplicate_dn.xml',
+        
         'views/pos_order.xml',
         'views/res_partner.xml',
-        'reports/duplicate_dn.xml',
-        'reports/whatsapp_dn.xml',
     ],
     'auto_install': False,
     'application': False,
