@@ -6,8 +6,8 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Order Customizaiton',
     'depends': [
-        # 'bn_pos_customization',
-        'bn_profile_management'
+        'bn_pos_customization',
+        # 'bn_profile_management'
     ],
     'data': [
         'security/group.xml',
