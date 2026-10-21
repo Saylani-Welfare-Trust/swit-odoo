@@ -16,6 +16,13 @@ class PurchaseOrder(models.Model):
     hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False)
     hod_approved_date = fields.Datetime(string='HOD Approved On', readonly=True, copy=False)
 
+    designated_cxo_approver_id = fields.Many2one(
+            'master.cxo.approver', 
+            string='Assigned CXO Approver', 
+            tracking=True,
+            help='If set, ONLY this user can give CXO approval to this RFQ.'
+        )
+    
     def action_cxo_approve_po(self):
         for order in self:
             order.write({
