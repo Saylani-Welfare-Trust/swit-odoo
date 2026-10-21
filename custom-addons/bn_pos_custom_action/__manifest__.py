@@ -10,6 +10,7 @@
     ],
     'data': [
         'data/sequence.xml',
+        
         'views/pos_order.xml',
         'views/res_company.xml',
         'views/res_config_setting.xml',
@@ -26,6 +27,7 @@
             'bn_pos_custom_action/static/src/app/provisional_popup/provisional_popup.xml',
             'bn_pos_custom_action/static/src/app/receiving_popup/receiving_popup.js',
             'bn_pos_custom_action/static/src/app/receiving_popup/receiving_popup.xml',
+            'bn_pos_custom_action/static/src/app/customer_note_validation.js',
             'bn_pos_custom_action/static/src/screens/**/*',
             'bn_pos_custom_action/static/src/override/app/**/*',
             'bn_pos_custom_action/static/src/models/*',
