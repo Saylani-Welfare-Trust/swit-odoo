@@ -13,13 +13,10 @@
         'bn_material_request',
         'bn_shariah_law',
         'bn_inventory_customization',
-        'bn_master_setup',
-        
     ],
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
-        
         'views/procurement_defer_wizard_views.xml',
         'views/arrange_budget_wizard_views.xml',
         'views/purchase_requisition_views.xml',
@@ -27,7 +24,6 @@
         'views/purchase_order_views.xml',
         'views/stock_picking_views.xml',
         'views/rfq_price_wizard_views.xml',
-        'views/master_cxo_approver_views.xml',
     ],
     'installable': True,
     'auto_install': False,

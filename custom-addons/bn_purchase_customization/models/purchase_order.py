@@ -5,20 +5,12 @@ from odoo.exceptions import ValidationError, UserError
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
+
     comparative_count = fields.Integer('Comparative Count', compute="_set_comparative_count")
 
     cxo_approved = fields.Boolean('CXO Approved', copy=False, tracking=True)
     cxo_approved_by = fields.Many2one('res.users', string='CXO Approved By', readonly=True, copy=False)
     cxo_approved_date = fields.Datetime(string='CXO Approved On', readonly=True, copy=False)
-
-    # UPDATED: Point to the new master model
-    designated_cxo_approver_id = fields.Many2one(
-        'master.cxo.approver', 
-        string='Assigned CXO Approver', 
-        tracking=True,
-        help='If set, ONLY this user can give CXO approval to this RFQ. If empty, the HOD approver rule applies.'
-    )
-    # -----------------------------------------
 
     hod_approved = fields.Boolean('HOD Approved', copy=False, tracking=True)
     hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False)
