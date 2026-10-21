@@ -64,7 +64,7 @@ class ManualKeyIssuance(models.TransientModel):
         for rec in self:
             rec.key_id = False
             if rec.lot_id:
-                key = self.env['key'].search([('lot_id', '=', rec.lot_id.id)], limit=1)
+                key = self.env['key'].search([('lot_id', '=', rec.lot_id.id), ('state', '!=', 'closed')], limit=1)
                 if not key:
                     raise ValidationError(_('Key with Box No. "%s" not found.') % rec.lot_id.display_name)
                 rec.key_id = key.id
