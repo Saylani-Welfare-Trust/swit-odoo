@@ -16,12 +16,12 @@ class PurchaseOrder(models.Model):
     cfo_approved_date = fields.Datetime(string='CFO Approved On', readonly=True, copy=False)
 
     # NEW FIELD: Assign a specific person to approve this RFQ
-    designated_cxo_approver_id = fields.Many2one(
-        'res.users', 
-        string='Assigned CXO Approver', 
-        tracking=True,
-        help='If set, ONLY this user can give CXO approval to this RFQ. If empty, the HOD approver rule applies.'
-    )
+    # designated_cxo_approver_id = fields.Many2one(
+    #     'res.users', 
+    #     string='Assigned CXO Approver', 
+    #     tracking=True,
+    #     help='If set, ONLY this user can give CXO approval to this RFQ. If empty, the HOD approver rule applies.'
+    # )
 
     is_cxo_approver_allowed = fields.Boolean(
         compute='_compute_is_cxo_approver_allowed',
