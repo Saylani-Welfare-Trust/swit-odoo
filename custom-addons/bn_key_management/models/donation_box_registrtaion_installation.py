@@ -39,7 +39,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.ensure_one()
         if not self.key_bunch_id:
             raise ValidationError(_('Please select a Key Bunch before approving.'))
-        # keys = self.key_ids.filtered(lambda k: k.state != 'closed')
+        keys = self.key_ids.filtered(lambda k: k.state != 'closed')
         # if not keys:
         #     raise ValidationError(_('No key found for this registration.'))
         for key in keys:
