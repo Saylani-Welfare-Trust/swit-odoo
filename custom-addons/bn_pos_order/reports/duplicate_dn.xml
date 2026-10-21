@@ -61,7 +61,7 @@
 
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
-                                <div class="col-6">
+                                <div name="custom-title" class="col-6">
                                     <h1 style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
