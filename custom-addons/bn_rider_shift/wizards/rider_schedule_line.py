@@ -67,7 +67,7 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
 
-        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
+        key = self.env['key'].search([('lot_id', '=', self.lot_id.id), ('state', '!=', 'closed')], limit=1)
         if not key:
             raise ValidationError('No key found for box "%s".' % self.lot_id.display_name)
 
