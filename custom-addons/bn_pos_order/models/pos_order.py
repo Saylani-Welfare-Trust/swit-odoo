@@ -57,3 +57,9 @@ class POSOrder(models.Model):
         for rec in self:
             if rec.user_id:
                 rec.analytic_account_id = rec.user_id.employee_id.analytic_account_id.id or None
+                
+    def action_archive(self):
+        if not self.env.user.has_group('your_module_name.pos_config_archive_group'):
+            raise ValidationError(_("You are not allowed to archive a shop."))
+
+        return super().action_archive()
