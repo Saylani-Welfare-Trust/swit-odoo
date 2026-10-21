@@ -89,9 +89,13 @@ class DonationHomeService(models.Model):
         dhs.set_remarks()
         dhs.calculate_service_charges()
 
-        qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+        params = self.env['ir.config_parameter'].sudo()
+        enable_qurbani = params.get_param('enable_qurbani', default=False)
 
-        dhs.qurbani_order_id = qurbani_details.get('id')
+        if enable_qurbani:
+            qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+
+            dhs.qurbani_order_id = qurbani_details.get('id')
 
         return {
             "status": "success",

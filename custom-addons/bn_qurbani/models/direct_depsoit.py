@@ -96,9 +96,13 @@ class DirectDeposit(models.Model):
         dd.calculate_amount()
         dd.set_remarks()
 
-        qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+        params = self.env['ir.config_parameter'].sudo()
+        enable_qurbani = params.get_param('enable_qurbani', default=False)
 
-        dd.qurbani_order_id = qurbani_details.get('id')
+        if enable_qurbani:
+            qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+
+            dd.qurbani_order_id = qurbani_details.get('id')
 
         return {
             "status": "success",
