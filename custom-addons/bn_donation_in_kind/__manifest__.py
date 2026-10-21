@@ -11,18 +11,15 @@
         'bn_sms_whatsapp',
     ],
     'data': [
-        'security/group.xml',
-        'security/ir.model.access.csv',
-        'security/access_right.xml',
-        
         'data/data.xml',
         'data/ir_module_category.xml',
         'data/sequence.xml',
         'data/server_action.xml',
-        
+        'security/group.xml',
+        'security/ir.model.access.csv',
+        'security/access_right.xml',
         'reports/donation_in_kind_report.xml',
         'reports/donation_in_kind_transfer_report.xml',
-        
         'views/donation_in_kind.xml',
         'views/res_partner.xml',
         'views/product_template.xml',

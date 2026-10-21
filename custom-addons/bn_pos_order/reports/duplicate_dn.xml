@@ -17,7 +17,7 @@
                                 }
 
                                 h1 {
-                                    font-size: 14px;
+                                    font-size: 10px;
                                     font-weight: bold;
                                     margin: 2px 0;
                                 }
@@ -62,15 +62,14 @@
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <h1 t-if="order.is_non_donation_receipt">Non Donation Receipt</h1>
-                                    <h1 t-else="">Donation Receipt</h1>
+                                    <h1 style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1 class="text-transform" style="font-size: 12px;">
                                         Saylani Welfare International Trust
                                         <br/>
-                                        <t t-if="order.session_id.config_id.analytic_account_id">
-                                            (<t t-esc="order.session_id.config_id.analytic_account_id.name"/>)
+                                        <t t-if="order.user_id.branch_name">
+                                            (<t t-esc="order.user_id.branch_name"/>)
                                         </t>
                                     </h1>
                                 </div>
@@ -97,14 +96,19 @@
                                     </div>
                                     <div>
                                         <strong>Remarks:</strong>
-                                        <t t-esc="order.customer_note or '-'"/>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="order.lines" t-as="l">
+                                            <t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="l.customer_note or '-'"/>
+                                            <br/>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <div>
                                         <strong>Date &amp; Time:</strong>
                                          <t t-esc="(order.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if order.create_date and not isinstance(order.create_date, str) else (order.create_date or '--')"/>
-                                    </div>
+                                    </div>  
                                     <div t-if="'Cheque' in payment_method">
                                         <strong>Cheque Date:</strong>
                                         <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
