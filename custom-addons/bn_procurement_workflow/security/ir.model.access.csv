@@ -2,3 +2,6 @@ id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_procurement_defer_wizard,procurement.defer.wizard,model_procurement_defer_wizard,,1,1,1,1
 access_procurement_arrange_budget_wizard,procurement.arrange.budget.wizard,model_procurement_arrange_budget_wizard,,1,1,1,1
 access_procurement_arrange_budget_wizard_line,procurement.arrange.budget.wizard.line,model_procurement_arrange_budget_wizard_line,,1,1,1,1
+access_master_cxo_approver_user,master.cxo.approver.user.access,model_master_cxo_approver,base.group_user,1,0,0,0
+access_master_cxo_approver_manager,master.cxo.approver.manager.access,model_master_cxo_approver,bn_master_setup.master_setup_group,1,1,1,1
+access_master_cxo_approver_system,master.cxo.approver.system.access,model_master_cxo_approver,base.group_system,1,1,1,1
