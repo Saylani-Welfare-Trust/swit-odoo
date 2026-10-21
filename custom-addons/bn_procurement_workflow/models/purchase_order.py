@@ -22,6 +22,12 @@ class PurchaseOrder(models.Model):
     #     tracking=True,
     #     help='If set, ONLY this user can give CXO approval to this RFQ. If empty, the HOD approver rule applies.'
     # )
+    
+    user_id = fields.Many2one(
+        'res.users',
+        string='User',
+        required=True
+    )
 
     is_cxo_approver_allowed = fields.Boolean(
         compute='_compute_is_cxo_approver_allowed',

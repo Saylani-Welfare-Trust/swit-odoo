@@ -14,7 +14,7 @@
         'bn_shariah_law',
         'bn_inventory_customization',
         'bn_master_setup',
-        'contacts',
+        
     ],
     'data': [
         'security/group.xml',
