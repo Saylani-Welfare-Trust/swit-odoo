@@ -16,6 +16,23 @@ class PosOrder(models.Model):
         configs = self.env['pos.config'].search([])
         return [{'id': c.id, 'name': c.name} for c in configs]
 
+    @api.model
+    def get_location_hierarchy(self):
+        # Top level accounts (Provinces) have no parent
+        provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        
+        # Level 2 accounts (Cities) have a parent (Province)
+        cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
+        
+        # Fetch Segments (Assuming they belong to a plan named 'Segment')
+        segments = self.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
+        
+        return {
+            'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
+            'cities': [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
+            'segments': [{'id': s.id, 'name': s.display_name} for s in segments],
+        }
+
     def _shop_id(self, config_id):
         try:
             return int(config_id) if config_id else None
@@ -30,23 +47,6 @@ class PosOrder(models.Model):
             return None
         return d
 
-    def _date_sql(self, date_from, date_to, default_monthly=False,
-                  default_yearly=False, table='pos_order'):
-        """SQL fragment (leading AND) that filters `table`.date_order."""
-        date_from = self._validate_date(date_from)
-        date_to = self._validate_date(date_to)
-        if date_from and date_to:
-            return " AND %s.date_order::date BETWEEN '%s' AND '%s'" % (table, date_from, date_to)
-        elif date_from:
-            return " AND %s.date_order::date >= '%s'" % (table, date_from)
-        elif date_to:
-            return " AND %s.date_order::date <= '%s'" % (table, date_to)
-        elif default_monthly:
-            return " AND EXTRACT(month FROM %s.date_order::date) = EXTRACT(month FROM CURRENT_DATE)" % table
-        elif default_yearly:
-            return " AND EXTRACT(year FROM %s.date_order::date) = EXTRACT(year FROM CURRENT_DATE)" % table
-        return ""
-
     def _date_domain(self, date_from, date_to):
         domain = []
         date_from = self._validate_date(date_from)
@@ -57,55 +57,81 @@ class PosOrder(models.Model):
             domain.append(('date_order', '<=', date_to + ' 23:59:59'))
         return domain
 
-    def _date_filter_conditions(self, date_from, date_to, prefix='pos_order'):
-        """For line-level queries that need to join pos_order."""
-        conds = []
-        date_from = self._validate_date(date_from)
-        date_to = self._validate_date(date_to)
-        if date_from:
-            conds.append("%s.date_order::date >= '%s'" % (prefix, date_from))
-        if date_to:
-            conds.append("%s.date_order::date <= '%s'" % (prefix, date_to))
-        return conds
+    def _get_order_domain(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+        domain = []
+        if config_id:
+            domain.append(('config_id', '=', int(config_id)))
+        domain.extend(self._date_domain(date_from, date_to))
+
+        # Analytic Filters (Province, City, Segment)
+        if province_id or city_id or segment_id:
+            analytic_domain = []
+            if province_id:
+                analytic_domain.append(('analytic_account_id', 'child_of', int(province_id)))
+            if city_id:
+                analytic_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+            if segment_id:
+                analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
+            
+            accounts = self.env['account.analytic.account'].search(analytic_domain)
+            if not accounts:
+                domain.append(('id', '=', 0)) # Force empty result
+            else:
+                # Fallback logic to find the correct analytic field
+                if 'analytic_account_id' in self._fields:
+                    domain.append(('analytic_account_id', 'in', accounts.ids))
+                elif 'session_id' in self._fields:
+                    domain.append(('session_id.analytic_account_id', 'in', accounts.ids))
+                elif 'config_id' in self._fields:
+                    domain.append(('config_id.analytic_account_id', 'in', accounts.ids))
+                elif 'user_id' in self._fields:
+                    domain.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
+        return domain
+
+    def _get_order_ids_sql(self, domain):
+        """Converts the Odoo domain into a raw SQL IN clause"""
+        if not domain:
+            return ""
+        orders = self.env['pos.order'].search(domain)
+        if not orders:
+            return " AND 1=0 "
+        return " AND pos_order.id IN (%s) " % ','.join(str(i) for i in orders.ids)
 
     # ------------------------------------------------------------------
     # sales chart
     # ------------------------------------------------------------------
     @api.model
-    def get_department(self, option, config_id=None, date_from=None, date_to=None):
+    def get_department(self, option, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        shop_id = self._shop_id(config_id)
-        shop_sql = (' AND pos_order.config_id = %d' % shop_id) if shop_id else ''
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        order_sql = self._get_order_ids_sql(domain)
 
-        default_monthly = option in ('pos_hourly_sales', 'pos_monthly_sales')
-        default_yearly  = option == 'pos_year_sales'
-        date_sql = self._date_sql(date_from, date_to,
-                                  default_monthly=default_monthly,
-                                  default_yearly=default_yearly)
+        if "1=0" in order_sql:
+            return [[], [], 'HOURS']
 
         if option == 'pos_hourly_sales':
             user_tz = self.env.user.tz if self.env.user.tz else pytz.UTC
             query = (
                 "select EXTRACT(hour FROM date_order at time zone 'utc' at time zone '%s') "
                 "as date_month, sum(amount_total) from pos_order "
-                "where pos_order.company_id = %d%s%s "
+                "where pos_order.company_id = %d %s "
                 "group by date_month order by date_month"
-            ) % (user_tz, company_id, shop_sql, date_sql)
+            ) % (user_tz, company_id, order_sql)
             label = 'HOURS'
         elif option == 'pos_monthly_sales':
             query = (
                 "select date_order::date as date_month, sum(amount_total) from pos_order "
-                "where pos_order.company_id = %d%s%s "
+                "where pos_order.company_id = %d %s "
                 "group by date_month order by date_month"
-            ) % (company_id, shop_sql, date_sql)
+            ) % (company_id, order_sql)
             label = 'DAYS'
         else:
             query = (
                 "select TO_CHAR(date_order,'MON') as date_month, sum(amount_total) from pos_order "
-                "where pos_order.company_id = %d%s%s "
+                "where pos_order.company_id = %d %s "
                 "group by date_month, EXTRACT(month FROM date_order) "
                 "order by EXTRACT(month FROM date_order)"
-            ) % (company_id, shop_sql, date_sql)
+            ) % (company_id, order_sql)
             label = 'MONTHS'
 
         self._cr.execute(query)
@@ -120,12 +146,14 @@ class PosOrder(models.Model):
     # tiles + tables
     # ------------------------------------------------------------------
     @api.model
-    def get_details(self, config_id=None, date_from=None, date_to=None):
+    def get_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        shop_id = self._shop_id(config_id)
-        shop_sql = (' AND pos_order.config_id = %d' % shop_id) if shop_id else ''
-        date_sql = self._date_sql(date_from, date_to)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        order_sql = self._get_order_ids_sql(domain)
         cr = self._cr
+
+        if "1=0" in order_sql:
+            return {'payment_details': [], 'salesperson': [], 'selling_product': []}
 
         # ---------- payment methods ----------
         cr.execute("""
@@ -133,10 +161,10 @@ class PosOrder(models.Model):
             from pos_payment
             inner join pos_payment_method on pos_payment_method.id = pos_payment.payment_method_id
             inner join pos_order on pos_order.id = pos_payment.pos_order_id
-            where pos_order.company_id = %d%s%s
+            where pos_order.company_id = %d %s
             group by pos_payment_method.name
             order by sum(amount) DESC
-        """ % (company_id, shop_sql, date_sql))
+        """ % (company_id, order_sql))
         payment_details = cr.fetchall()
 
         # ---------- salesperson ----------
@@ -145,14 +173,14 @@ class PosOrder(models.Model):
                    count(pos_order.amount_paid) as orders
             from pos_order
             inner join hr_employee on pos_order.user_id = hr_employee.user_id
-            where pos_order.company_id = %d%s%s
+            where pos_order.company_id = %d %s
             group by hr_employee.name
             order by total DESC
-        """ % (company_id, shop_sql, date_sql))
+        """ % (company_id, order_sql))
         salesperson = cr.fetchall()
 
         # ---------- sessions ----------
-        configs = self.env['pos.config'].search([('id', '=', shop_id)] if shop_id else [])
+        configs = self.env['pos.config'].search([('id', '=', config_id)] if config_id else [])
         states_label = {'opened': 'Opened', 'opening_control': 'Opening Control'}
         sessions_list = [
             {'session': c.name, 'status': states_label.get(c.pos_session_state, 'Closed')}
@@ -178,12 +206,8 @@ class PosOrder(models.Model):
     # tiles
     # ------------------------------------------------------------------
     @api.model
-    def get_refund_details(self, config_id=None, date_from=None, date_to=None):
-        shop_id = self._shop_id(config_id)
-        domain = []
-        if shop_id:
-            domain.append(('config_id', '=', shop_id))
-        domain.extend(self._date_domain(date_from, date_to))
+    def get_refund_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         pos_orders = self.env['pos.order'].search(domain)
 
         default_date = datetime.today().date()
@@ -210,8 +234,8 @@ class PosOrder(models.Model):
             mag_total /= 1000.0
         val = '%.2f%s' % (mag_total, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
 
-        if shop_id:
-            total_session = 1 if self.env['pos.config'].search_count([('id', '=', shop_id)]) else 0
+        if config_id:
+            total_session = 1 if self.env['pos.config'].search_count([('id', '=', config_id)]) else 0
         else:
             total_session = self.env['pos.session'].search_count([])
 
@@ -228,85 +252,82 @@ class PosOrder(models.Model):
     # charts
     # ------------------------------------------------------------------
     @api.model
-    def get_the_top_customer(self, config_id=None, date_from=None, date_to=None):
+    def get_the_top_customer(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        shop_id = self._shop_id(config_id)
-        shop_sql = (' AND pos_order.config_id = %d' % shop_id) if shop_id else ''
-        date_sql = self._date_sql(date_from, date_to)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        order_sql = self._get_order_ids_sql(domain)
+        
+        if "1=0" in order_sql:
+            return [[], []]
+
         self._cr.execute("""
             select res_partner.name as customer, pos_order.partner_id,
                    sum(pos_order.amount_paid) as amount_total
             from pos_order
             inner join res_partner on res_partner.id = pos_order.partner_id
-            where pos_order.company_id = %d%s%s
+            where pos_order.company_id = %d %s
             group by pos_order.partner_id, res_partner.name
             order by amount_total DESC
             limit 10
-        """ % (company_id, shop_sql, date_sql))
+        """ % (company_id, order_sql))
         docs = self._cr.dictfetchall()
         return [[r.get('amount_total') for r in docs], [r.get('customer') for r in docs]]
 
     @api.model
-    def get_the_top_products(self, config_id=None, date_from=None, date_to=None):
+    def get_the_top_products(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        shop_id = self._shop_id(config_id)
-
-        conds = []
-        if shop_id:
-            conds.append('pos_order.config_id = %d' % shop_id)
-        conds.extend(self._date_filter_conditions(date_from, date_to))
-
-        if conds:
-            join = ' inner join pos_order on pos_order.id = pos_order_line.order_id '
-            where_extra = ' AND ' + ' AND '.join(conds)
-        else:
-            join = ''
-            where_extra = ''
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        order_sql = self._get_order_ids_sql(domain)
+        
+        if "1=0" in order_sql:
+            return [[], [], []]
 
         self._cr.execute("""
             select (product_template.name)->>'en_US' as product_name,
-                   sum(qty) as total_quantity
+                   sum(case when qty > 0 then qty else 0 end) as sales_qty,
+                   sum(case when qty < 0 then qty else 0 end) as refund_qty
             from pos_order_line
+            inner join pos_order on pos_order.id = pos_order_line.order_id
             inner join product_product on product_product.id = pos_order_line.product_id
             inner join product_template on product_product.product_tmpl_id = product_template.id
-            %s
-            where pos_order_line.company_id = %d%s
+            where pos_order_line.company_id = %d %s
             group by product_template.id
             order by ABS(sum(qty)) DESC
             limit 10
-        """ % (join, company_id, where_extra))
+        """ % (company_id, order_sql))
         docs = self._cr.dictfetchall()
-        return [[r.get('total_quantity') for r in docs], [r.get('product_name') for r in docs]]
+        return [
+            [r.get('sales_qty') for r in docs],
+            [r.get('refund_qty') for r in docs],
+            [r.get('product_name') for r in docs]
+        ]
 
     @api.model
-    def get_the_top_categories(self, config_id=None, date_from=None, date_to=None):
+    def get_the_top_categories(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        shop_id = self._shop_id(config_id)
-
-        conds = []
-        if shop_id:
-            conds.append('pos_order.config_id = %d' % shop_id)
-        conds.extend(self._date_filter_conditions(date_from, date_to))
-
-        if conds:
-            join = ' inner join pos_order on pos_order.id = pos_order_line.order_id '
-            where_extra = ' AND ' + ' AND '.join(conds)
-        else:
-            join = ''
-            where_extra = ''
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        order_sql = self._get_order_ids_sql(domain)
+        
+        if "1=0" in order_sql:
+            return [[], [], []]
 
         self._cr.execute("""
             select product_category.complete_name as product_category,
-                   sum(qty) as total_quantity
+                   sum(case when qty > 0 then qty else 0 end) as sales_qty,
+                   sum(case when qty < 0 then qty else 0 end) as refund_qty
             from pos_order_line
+            inner join pos_order on pos_order.id = pos_order_line.order_id
             inner join product_product on product_product.id = pos_order_line.product_id
             inner join product_template on product_product.product_tmpl_id = product_template.id
             inner join product_category on product_category.id = product_template.categ_id
-            %s
-            where pos_order_line.company_id = %d%s
+            where pos_order_line.company_id = %d %s
             group by product_category
             order by ABS(sum(qty)) DESC
             limit 10
-        """ % (join, company_id, where_extra))
+        """ % (company_id, order_sql))
         docs = self._cr.dictfetchall()
-        return [[r.get('total_quantity') for r in docs], [r.get('product_category') for r in docs]]
+        return [
+            [r.get('sales_qty') for r in docs],
+            [r.get('refund_qty') for r in docs],
+            [r.get('product_category') for r in docs]
+        ]

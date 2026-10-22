@@ -14,45 +14,70 @@
             <!-- ==================== FILTER BAR ==================== -->
             <div class="card oh-filter-card mb-4">
                 <div class="card-body p-3">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-2">
+                    <!-- Row 1: Dropdowns -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">From Date</label>
                             <input type="date" class="form-control"
                                    t-model="state.date_from"
                                    t-on-change="onchange_filter"/>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">To Date</label>
                             <input type="date" class="form-control"
                                    t-model="state.date_to"
                                    t-on-change="onchange_filter"/>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">Shop</label>
-                            <select class="form-select"
-                                    t-model="state.config_id"
-                                    t-on-change="onchange_filter">
+                            <select class="form-select" t-model="state.config_id" t-on-change="onchange_filter">
                                 <option value="">All Shops</option>
                                 <t t-foreach="state.shops" t-as="shop" t-key="shop.id">
                                     <option t-att-value="shop.id" t-esc="shop.name"/>
                                 </t>
                             </select>
                         </div>
-                        <div class="col-md-5 d-flex align-items-center gap-2 flex-wrap">
-                            <div class="d-flex gap-1 flex-wrap">
-                                <button class="oh-quick-btn"
-                                        t-on-click="() => this.set_quick_date('today')">Today</button>
-                                <button class="oh-quick-btn"
-                                        t-on-click="() => this.set_quick_date('this_month')">This Month</button>
-                                <button class="oh-quick-btn"
-                                        t-on-click="() => this.set_quick_date('last_month')">Last Month</button>
-                                <button class="oh-quick-btn"
-                                        t-on-click="() => this.set_quick_date('this_year')">This Year</button>
-                            </div>
-                            <button class="btn btn-sm btn-outline-secondary ms-auto"
-                                    t-on-click="clear_filter">
-                                <i class="fa fa-times me-1"/>Clear
+                        <div class="col-lg-2 col-md-4">
+                            <label class="form-label">Province</label>
+                            <select class="form-select" t-model="state.province_id" t-on-change="onchange_province">
+                                <option value="">All Provinces</option>
+                                <t t-foreach="state.provinces" t-as="province" t-key="province.id">
+                                    <option t-att-value="province.id" t-esc="province.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label class="form-label">City</label>
+                            <select class="form-select" t-model="state.city_id" t-on-change="onchange_filter">
+                                <option value="">All Cities</option>
+                                <t t-foreach="filteredCities" t-as="city" t-key="city.id">
+                                    <option t-att-value="city.id" t-esc="city.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label class="form-label">Segment</label>
+                            <select class="form-select" t-model="state.segment_id" t-on-change="onchange_filter">
+                                <option value="">All Segments</option>
+                                <t t-foreach="state.segments" t-as="segment" t-key="segment.id">
+                                    <option t-att-value="segment.id" t-esc="segment.name"/>
+                                </t>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Row 2: Buttons -->
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" t-on-click="clear_filter">
+                                <i class="fa fa-times me-1"/>Clear Filters
                             </button>
+                            <div class="d-flex gap-1">
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('today')">Today</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('this_month')">This Month</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('last_month')">Last Month</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('this_year')">This Year</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -176,8 +201,7 @@
                         <div class="oh-card-header">
                             <h4><i class="fa fa-user me-2 text-primary"/>Sale by Salesperson</h4>
                         </div>
-                        <div class="oh-card-body p-0"
-                             style="max-height: 340px; overflow-y: auto;">
+                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
                             <table class="table oh-table mb-0">
                                 <thead>
                                     <tr>
@@ -187,8 +211,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="state.top_salesperson"
-                                       t-as="sp" t-key="sp_index">
+                                    <t t-foreach="state.top_salesperson" t-as="sp" t-key="sp_index">
                                         <tr>
                                             <td><t t-esc="sp[0]"/></td>
                                             <td class="text-center"><t t-esc="sp[2]"/></td>
@@ -215,8 +238,7 @@
                         <div class="oh-card-header">
                             <h4><i class="fa fa-credit-card me-2 text-primary"/>Payment Methods</h4>
                         </div>
-                        <div class="oh-card-body p-0"
-                             style="max-height: 340px; overflow-y: auto;">
+                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
                             <table class="table oh-table mb-0">
                                 <thead>
                                     <tr>
@@ -225,8 +247,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="state.payment_details"
-                                       t-as="pm" t-key="pm_index">
+                                    <t t-foreach="state.payment_details" t-as="pm" t-key="pm_index">
                                         <tr>
                                             <td><t t-esc="pm[0]"/></td>
                                             <td class="text-end fw-semibold"><t t-esc="pm[1]"/></td>
@@ -252,8 +273,7 @@
                         <div class="oh-card-header">
                             <h4><i class="fa fa-window-maximize me-2 text-primary"/>Session Status</h4>
                         </div>
-                        <div class="oh-card-body p-0"
-                             style="max-height: 340px; overflow-y: auto;">
+                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
                             <table class="table oh-table mb-0">
                                 <thead>
                                     <tr>
@@ -262,8 +282,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="state.selling_product"
-                                       t-as="session" t-key="session_index">
+                                    <t t-foreach="state.selling_product" t-as="session" t-key="session_index">
                                         <tr>
                                             <td><t t-esc="session['session']"/></td>
                                             <td class="text-end">

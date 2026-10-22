@@ -14,6 +14,12 @@ export class PosDashboard extends Component {
         this.state = useState({
             config_id: null,
             shops: [],
+            province_id: null,
+            city_id: null,
+            segment_id: null,
+            provinces: [],
+            cities: [],
+            segments: [],
             date_from: '',
             date_to: '',
             sales_period: 'pos_hourly_sales',
@@ -31,7 +37,7 @@ export class PosDashboard extends Component {
         this._charts = {};
 
         onWillStart(async () => {
-            await this.fetch_shops();
+            await this.fetch_dropdowns();
             await this.refresh();
         });
 
@@ -41,8 +47,18 @@ export class PosDashboard extends Component {
     }
 
     // ---------------- loaders ----------------
-    async fetch_shops() {
+    async fetch_dropdowns() {
         this.state.shops = await this.orm.call('pos.order', 'get_shops', []);
+        const hierarchy = await this.orm.call('pos.order', 'get_location_hierarchy', []);
+        this.state.provinces = hierarchy.provinces || [];
+        this.state.cities = hierarchy.cities || [];
+        this.state.segments = hierarchy.segments || [];
+    }
+
+    get filteredCities() {
+        if (!this.state.province_id) return this.state.cities;
+        const pId = parseInt(this.state.province_id, 10);
+        return this.state.cities.filter(c => c.province_id === pId);
     }
 
     async refresh() {
@@ -51,11 +67,8 @@ export class PosDashboard extends Component {
     }
 
     async fetch_data() {
-        const cfg = this.state.config_id ? parseInt(this.state.config_id, 10) : null;
-        const df = this.state.date_from || null;
-        const dt = this.state.date_to   || null;
-
-        const result = await this.orm.call('pos.order', 'get_refund_details', [cfg, df, dt]);
+        const args = this._filter_args();
+        const result = await this.orm.call('pos.order', 'get_refund_details', args);
         this.state.total_sale         = result['total_sale'];
         this.state.total_order_count  = result['total_order_count'];
         this.state.total_refund_count = result['total_refund_count'];
@@ -63,19 +76,27 @@ export class PosDashboard extends Component {
         this.state.today_refund_total = result['today_refund_total'];
         this.state.today_sale         = result['today_sale'];
 
-        const data = await this.orm.call('pos.order', 'get_details', [cfg, df, dt]);
+        const data = await this.orm.call('pos.order', 'get_details', args);
         this.state.payment_details = data['payment_details'];
         this.state.top_salesperson = data['salesperson'];
         this.state.selling_product = data['selling_product'];
     }
 
     // ---------------- filter handlers ----------------
-    async onchange_filter(ev) {
+    async onchange_province() {
+        this.state.city_id = null;
+        await this.refresh();
+    }
+
+    async onchange_filter() {
         await this.refresh();
     }
 
     async clear_filter() {
         this.state.config_id = null;
+        this.state.province_id = null;
+        this.state.city_id = null;
+        this.state.segment_id = null;
         this.state.date_from = '';
         this.state.date_to   = '';
         await this.refresh();
@@ -110,15 +131,25 @@ export class PosDashboard extends Component {
         return `${yyyy}-${mm}-${dd}`;
     }
 
+    // ---------------- helper to standardise arguments ----------------
+    _filter_args() {
+        return [
+            this.state.config_id ? parseInt(this.state.config_id, 10) : null,
+            this.state.date_from || null,
+            this.state.date_to   || null,
+            this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+            this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+            this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
+        ];
+    }
+
     // ---------------- sales chart ----------------
     load_sales_chart(option) {
         const self = this;
         const ctx = $("#canvas_1");
-        const cfg = this.state.config_id ? parseInt(this.state.config_id, 10) : null;
-        const df = this.state.date_from || null;
-        const dt = this.state.date_to   || null;
+        const args = this._filter_args();
 
-        return this.orm.call('pos.order', 'get_department', [option, cfg, df, dt])
+        return this.orm.call('pos.order', 'get_department', [option, ...args])
             .then(function (arrays) {
                 const data = {
                     labels: arrays[1],
@@ -145,10 +176,10 @@ export class PosDashboard extends Component {
                 const options = {
                     responsive: true,
                     maintainAspectRatio: false,
-                    title: { display: true, position: "top",
-                             text: "SALE DETAILS", fontSize: 18, fontColor: "#111" },
-                    legend: { display: true, position: "bottom",
-                              labels: { fontColor: "#333", fontSize: 16 } },
+                    plugins: {
+                        legend: { display: true, position: "bottom",
+                                  labels: { fontColor: "#333", fontSize: 16 } },
+                    },
                 };
                 if (window.myCharts != undefined) window.myCharts.destroy();
                 window.myCharts = new Chart(ctx, { type: "bar", data, options });
@@ -170,43 +201,47 @@ export class PosDashboard extends Component {
     }
 
     // ---------------- pie / bar charts ----------------
-    _filter_args() {
-        return [
-            this.state.config_id ? parseInt(this.state.config_id, 10) : null,
-            this.state.date_from || null,
-            this.state.date_to   || null,
-        ];
-    }
-
     render_top_customer_graph() {
         const self = this;
         const ctx = $(".top_customer");
         return this.orm.call('pos.order', 'get_the_top_customer', this._filter_args())
             .then(function (arrays) {
+                const labels = arrays[1].map(l => l && l.length > 22 ? l.substring(0, 22) + '…' : (l || ''));
+
                 const data = {
-                    labels: arrays[1],
+                    labels: labels,
                     datasets: [{
-                        label: "",
                         data: arrays[0],
                         backgroundColor: [
                             "rgb(148, 22, 227)", "rgba(54, 162, 235)",
-                            "rgba(75, 192, 192)", "rgba(153, 102, 255)", "rgba(10,20,30)",
+                            "rgba(75, 192, 192)", "rgba(153, 102, 255)",
+                            "rgba(10,20,30)",   "rgba(255, 99, 132)",
+                            "rgba(120, 200, 90)", "rgba(255, 159, 64)",
+                            "rgba(201, 203, 207)", "rgba(100, 100, 100)",
                         ],
-                        borderColor: [
-                            "rgba(255, 99, 132)", "rgba(54, 162, 235)",
-                            "rgba(75, 192, 192)", "rgba(153, 102, 255)", "rgba(10,20,30)",
-                        ],
-                        borderWidth: 1,
+                        borderColor: "#fff",
+                        borderWidth: 2,
                     }],
                 };
+
                 const options = {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: { x: { title: { display: true, text: "Top Customer",
-                                           position: "top", fontSize: 24, color: "#111" } } },
-                    legend: { display: true, position: "bottom",
-                              labels: { fontColor: "#333", fontSize: 16 } },
+                    legend: {
+                        display: true,
+                        position: 'right',
+                        labels: { font: { size: 10 }, boxWidth: 10, boxHeight: 10, padding: 6 },
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (ctx) {
+                                const full = arrays[1][ctx.dataIndex] || '';
+                                return full + ': ' + ctx.parsed.toLocaleString('en-US');
+                            },
+                        },
+                    },
                 };
+
                 if (self._charts.top_customer) self._charts.top_customer.destroy();
                 self._charts.top_customer = new Chart(ctx, { type: "pie", data, options });
             });
@@ -217,27 +252,23 @@ export class PosDashboard extends Component {
         const ctx = $(".top_selling_product");
         return this.orm.call('pos.order', 'get_the_top_products', this._filter_args())
             .then(function (arrays) {
-                const values = arrays[0];
-                // Truncate long product names
-                const labels = arrays[1].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
-
-                // Split positives and negatives
-                const positives = values.map(v => v >= 0 ? v : null);
-                const negatives = values.map(v => v < 0 ? v : null);
+                const sales = arrays[0];
+                const refunds = arrays[1];
+                const labels = arrays[2].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
 
                 const data = {
                     labels: labels,
                     datasets: [
                         {
                             label: 'Sales',
-                            data: positives,
+                            data: sales,
                             backgroundColor: 'rgba(67, 233, 123, 0.85)',
                             borderColor: 'rgba(67, 233, 123, 1)',
                             borderWidth: 1,
                         },
                         {
                             label: 'Refunds',
-                            data: negatives,
+                            data: refunds,
                             backgroundColor: 'rgba(255, 106, 136, 0.85)',
                             borderColor: 'rgba(255, 106, 136, 1)',
                             borderWidth: 1,
@@ -250,10 +281,8 @@ export class PosDashboard extends Component {
                     indexAxis: 'y',
                     scales: {
                         x: {
-                            beginAtZero: true, // Keeps the 0-line centered when negatives exist
-                            ticks: {
-                                callback: v => Number(v).toLocaleString('en-US'),
-                            },
+                            beginAtZero: true,
+                            ticks: { callback: v => Number(v).toLocaleString('en-US') },
                         },
                     },
                     plugins: {
@@ -274,27 +303,23 @@ export class PosDashboard extends Component {
         const ctx = $(".top_product_categories");
         return this.orm.call('pos.order', 'get_the_top_categories', this._filter_args())
             .then(function (arrays) {
-                const values = arrays[0];
-                // Truncate long category names
-                const labels = arrays[1].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
-
-                // Split positives and negatives
-                const positives = values.map(v => v >= 0 ? v : null);
-                const negatives = values.map(v => v < 0 ? v : null);
+                const sales = arrays[0];
+                const refunds = arrays[1];
+                const labels = arrays[2].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
 
                 const data = {
                     labels: labels,
                     datasets: [
                         {
                             label: 'Sales',
-                            data: positives,
+                            data: sales,
                             backgroundColor: 'rgba(67, 233, 123, 0.85)',
                             borderColor: 'rgba(67, 233, 123, 1)',
                             borderWidth: 1,
                         },
                         {
                             label: 'Refunds',
-                            data: negatives,
+                            data: refunds,
                             backgroundColor: 'rgba(255, 106, 136, 0.85)',
                             borderColor: 'rgba(255, 106, 136, 1)',
                             borderWidth: 1,
@@ -307,10 +332,8 @@ export class PosDashboard extends Component {
                     indexAxis: 'y',
                     scales: {
                         x: {
-                            beginAtZero: true, // Keeps the 0-line centered when negatives exist
-                            ticks: {
-                                callback: v => Number(v).toLocaleString('en-US'),
-                            },
+                            beginAtZero: true,
+                            ticks: { callback: v => Number(v).toLocaleString('en-US') },
                         },
                     },
                     plugins: {
