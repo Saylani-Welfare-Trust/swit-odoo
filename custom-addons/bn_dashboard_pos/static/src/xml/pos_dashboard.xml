@@ -1,0 +1,741 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <!-- Template for Pos Dashboard -->
+    <t t-name="PosDashboard">
+        <div class="pos-dashboard-container">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <i class="fa fa-dashboard mr-2"></i>
+                    POS Analytics Dashboard
+                </h1>
+                <div class="dashboard-subtitle">
+                    Real-time sales analytics and performance metrics
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="row align-items-end">
+                    <div class="col-md-3 mb-2">
+                        <label for="date_range">
+                            <i class="fa fa-calendar-alt mr-1"></i> Date Range:
+                        </label>
+                        <select id="date_range" class="form-control form-control-sm">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="last_week">Last 7 Days</option>
+                            <option value="last_month">Last 30 Days</option>
+                            <option value="last_year">Last 12 Months</option>
+                            <option value="this_month">This Month</option>
+                            <option value="last_month_complete">Last Month</option>
+                            <option value="this_year">This Year</option>
+                            <option value="last_year_complete">Last Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 mb-2" id="start_date_container" style="display: none;">
+                        <label for="start_date">From:</label>
+                        <input type="date" id="start_date" class="form-control form-control-sm" 
+                            t-att-value="state.start_date"/>
+                    </div>
+
+                    <div class="col-md-2 mb-2" id="end_date_container" style="display: none;">
+                        <label for="end_date">To:</label>
+                        <input type="date" id="end_date" class="form-control form-control-sm"
+                            t-att-value="state.end_date"/>
+                    </div>
+
+                    <div class="col-md-4 mb-2 text-right">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" t-on-click="refresh_dashboard">
+                                <i class="fa fa-refresh mr-1"></i> Refresh
+                            </button>
+                            <button class="btn btn-outline-success" t-on-click="open_target_settings">
+                                <i class="fa fa-bullseye mr-1"></i> Target
+                            </button>
+                            <button class="btn btn-outline-info" t-on-click="print_report">
+                                <i class="fa fa-print mr-1"></i> Print
+                            </button>
+                            <button class="btn btn-outline-warning" t-on-click="reset_to_default">
+                                <i class="fa fa-undo mr-1"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Statistics Cards - Compact Layout -->
+            <div class="row mb-3">
+                <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6 mb-2">
+                    <div class="stat-card sales-card h-100" t-on-click="pos_order_today">
+                        <div class="stat-icon">
+                            <i class="fa fa-shopping-bag"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Today Orders</div>
+                            <div class="stat-value">
+                                <t t-esc="state.today_sale"/>
+                            </div>
+                            <small class="text-muted">Click to view</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6 mb-2">
+                    <div class="stat-card revenue-card h-100" t-on-click="pos_order">
+                        <div class="stat-icon" style="background: #85d05b;">
+                            <i class="fa fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Sales</div>
+                            <div class="stat-value">
+                                <t t-esc="state.total_sale"/>
+                            </div>
+                            <small class="text-muted">
+                                <t t-esc="state.total_order_count"/> orders
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6 mb-2">
+                    <div class="stat-card session-card h-100" t-on-click="pos_session">
+                        <div class="stat-icon" style="background: #d05bb8;">
+                            <i class="fa fa-signal"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Sessions</div>
+                            <div class="stat-value">
+                                <t t-esc="state.total_session"/>
+                            </div>
+                            <small class="text-muted">Active sessions</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-2 col-lg-3 col-md-6 col-sm-6 mb-2">
+                    <div class="stat-card refund-card h-100" t-on-click="pos_refund_today_orders">
+                        <div class="stat-icon" style="background: #ff6b6b;">
+                            <i class="fa fa-undo"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Refunds</div>
+                            <div class="stat-value">
+                                <t t-esc="state.today_refund_total"/>
+                            </div>
+                            <small class="text-muted">Today's refunds</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4 col-lg-6 col-md-12 mb-2">
+                    <div class="stat-card target-card h-100">
+                        <div class="stat-icon" style="background: #4facfe;">
+                            <i class="fa fa-bullseye"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="stat-label">Sales Target</div>
+                                    <div class="stat-value">
+                                        <t t-esc="state.sales_target.achievement_percentage.toFixed(1)"/>
+%
+                                    </div>
+                                    <small class="text-muted">
+                                        <t t-esc="state.sales_target.current_amount.toFixed(0)"/>
+ / 
+                                        <t t-esc="state.sales_target.target_amount.toFixed(0)"/>
+                                    </small>
+                                </div>
+                                <div class="text-right">
+                                    <div class="progress" style="width: 150px; height: 8px;">
+                                        <div class="progress-bar" t-att-style="'width: ' + state.sales_target.achievement_percentage.toFixed(1) + '%'">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        <t t-esc="state.sales_target.period"/>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts Row -->
+            <div class="row mb-3">
+                <!-- Sales Performance Chart -->
+                <div class="col-lg-8 mb-3">
+                    <div class="chart-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-line-chart mr-2"></i>
+                                Sales Performance
+                            </h5>
+                            <select id="sales_period" class="form-control form-control-sm w-auto" t-on-change="onclick_pos_sales">
+                                <option value="pos_hourly_sales">Hourly</option>
+                                <option value="pos_monthly_sales">Daily</option>
+                                <option value="pos_year_sales">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="card-body p-2">
+                            <div style="height: 250px;">
+                                <canvas id="sales_chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profit Summary Cards -->
+                <div class="col-lg-4 mb-3">
+                    <div class="chart-card h-100">
+                        <div class="card-header py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-money mr-2"></i>
+                                Profit Summary
+                            </h5>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="row">
+                                <div class="col-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm">Revenue</div>
+                                        <div class="stat-value-sm text-primary">
+                                            <t t-esc="state.profit_summary.total_revenue_display"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm">Cost</div>
+                                        <div class="stat-value-sm text-danger">
+                                            <t t-esc="state.profit_summary.total_cost_display"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm">Profit</div>
+                                        <div class="stat-value-sm text-success">
+                                            <t t-esc="state.profit_summary.total_profit_display"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm">Margin</div>
+                                        <div class="stat-value-sm text-warning">
+                                            <t t-esc="state.profit_summary.overall_margin_percentage_display"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-center">
+                                <small class="text-muted">
+                                    <i class="fa fa-filter mr-1"></i>
+                                    Filter: <t t-esc="state.date_range"/>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profit Trend Chart -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="chart-card">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-line-chart mr-2"></i>
+                                Profit Trend Analysis
+                            </h5>
+                            <span class="badge badge-success">
+                                Overall Margin: <t t-esc="state.profit_summary.overall_margin_percentage_display"/>
+                            </span>
+                        </div>
+                        <div class="card-body p-2">
+                            <div style="height: 200px;">
+                                <canvas id="profit_trend_chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Products and Categories -->
+            <div class="row mb-3">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="chart-card h-100">
+                        <div class="card-header py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-cube mr-2"></i>
+                                Top Products
+                            </h5>
+                        </div>
+                        <div class="card-body p-2">
+                            <div style="height: 180px;">
+                                <canvas id="products_chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="chart-card h-100">
+                        <div class="card-header py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-tags mr-2"></i>
+                                Top Categories
+                            </h5>
+                        </div>
+                        <div class="card-body p-2">
+                            <div style="height: 180px;">
+                                <canvas id="categories_chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-12 mb-3">
+                    <div class="chart-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-clock-o mr-2"></i>
+                                Peak Hours
+                            </h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button t-att-class="'btn ' + (state.peak_hours_chart_type === 'bar' ? 'btn-primary' : 'btn-outline-primary')" 
+                                        t-on-click="changePeakHoursChartTypeBar"
+                                        title="Bar Chart">
+                                    <i class="fa fa-bar-chart"></i>
+                                </button>
+                                <button t-att-class="'btn ' + (state.peak_hours_chart_type === 'line' ? 'btn-primary' : 'btn-outline-primary')" 
+                                        t-on-click="changePeakHoursChartTypeLine"
+                                        title="Line Chart">
+                                    <i class="fa fa-minus"></i>
+                                </button>
+                                <button t-att-class="'btn ' + (state.peak_hours_chart_type === 'curve' ? 'btn-primary' : 'btn-outline-primary')" 
+                                        t-on-click="changePeakHoursChartTypeCurve"
+                                        title="Curve Chart">
+                                    <i class="fa fa-line-chart"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-2">
+                            <div style="height: 180px;">
+                                <canvas id="hours_chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Profit Margin Analysis -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="table-card">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-bar-chart mr-2"></i>
+                                Profit Margin Analysis
+                            </h5>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button t-att-class="'btn ' + (state.profit_chart_type === 'doughnut' ? 'btn-primary' : 'btn-outline-primary')" 
+                                        t-on-click="changeProfitChartTypeDoughnut"
+                                        title="Donut Chart">
+                                    <i class="fa fa-donut-chart"></i>
+                                </button>
+                                <button t-att-class="'btn ' + (state.profit_chart_type === 'pie' ? 'btn-primary' : 'btn-outline-primary')" 
+                                        t-on-click="changeProfitChartTypePie"
+                                        title="Pie Chart">
+                                    <i class="fa fa-pie-chart"></i>
+                                </button>
+                                <button t-att-class="'btn ' + (state.profit_chart_type === 'bar' ? 'btn-primary' : 'btn-outline-primary')" 
+                                        t-on-click="changeProfitChartTypeBar"
+                                        title="Bar Chart">
+                                    <i class="fa fa-bar-chart"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="row">
+                                <div class="col-lg-5 mb-3">
+                                    <div style="height: 200px;">
+                                        <canvas id="profit_margin_chart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-lg-7">
+                                    <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                        <table class="table table-sm table-hover mb-0">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Qty</th>
+                                                    <th>Profit</th>
+                                                    <th>Margin</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <t t-foreach="state.profit_margin_data" t-as="product" t-key="product.product_id">
+                                                    <tr t-on-click="() => view_product_details(product.product_id)" style="cursor: pointer;">
+                                                        <td>
+                                                            <small>
+                                                                <t t-esc="product.product_name"/>
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge badge-info badge-pill">
+                                                                <t t-esc="product.total_quantity"/>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <small class="font-weight-bold text-success">
+                                                                <t t-esc="product.total_profit_display"/>
+                                                            </small>
+                                                        </td>
+                                                        <td>
+                                                            <span t-att-class="'badge badge-pill ' + 
+                                                                (product.profit_margin_percentage >= 40 ? 'badge-success' : 
+                                                                product.profit_margin_percentage >= 20 ? 'badge-warning' : 
+                                                                'badge-danger')">
+                                                                <t t-esc="product.profit_margin_percentage_display"/>
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <span t-att-class="'badge badge-pill ' + 
+                                                                (product.margin_status === 'high' ? 'badge-success' : 
+                                                                product.margin_status === 'medium' ? 'badge-warning' : 
+                                                                'badge-danger')">
+                                                                <t t-esc="product.margin_status_label"/>
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                </t>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Expense vs Revenue Comparison -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="chart-card">
+                        <div class="card-header d-flex justify-content-between align-items-center py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-balance-scale mr-2"></i>
+                                Expense vs Revenue Analysis
+                            </h5>
+                            <div class="d-flex align-items-center">
+                                <div class="mr-2">
+                                    <select id="expense_year" class="form-control form-control-sm">
+                                        <t t-foreach="state.available_years" t-as="year" t-key="year">
+                                            <option t-att-value="year" t-att-selected="year === state.selected_year">
+                                                <t t-esc="year"/>
+                                            </option>
+                                        </t>
+                                    </select>
+                                </div>
+                                <div class="mr-2">
+                                    <select id="expense_month" class="form-control form-control-sm">
+                                        <option value="all" t-att-selected="!state.selected_month">All Months</option>
+                                        <option value="1" t-att-selected="state.selected_month === 1">January</option>
+                                        <option value="2" t-att-selected="state.selected_month === 2">February</option>
+                                        <option value="3" t-att-selected="state.selected_month === 3">March</option>
+                                        <option value="4" t-att-selected="state.selected_month === 4">April</option>
+                                        <option value="5" t-att-selected="state.selected_month === 5">May</option>
+                                        <option value="6" t-att-selected="state.selected_month === 6">June</option>
+                                        <option value="7" t-att-selected="state.selected_month === 7">July</option>
+                                        <option value="8" t-att-selected="state.selected_month === 8">August</option>
+                                        <option value="9" t-att-selected="state.selected_month === 9">September</option>
+                                        <option value="10" t-att-selected="state.selected_month === 10">October</option>
+                                        <option value="11" t-att-selected="state.selected_month === 11">November</option>
+                                        <option value="12" t-att-selected="state.selected_month === 12">December</option>
+                                    </select>
+                                </div>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button t-att-class="'btn ' + (state.expense_chart_type === 'bar' ? 'btn-primary' : 'btn-outline-primary')" 
+                                            t-on-click="() => change_expense_chart_type('bar')"
+                                            title="Bar Chart">
+                                        <i class="fa fa-bar-chart"></i>
+                                    </button>
+                                    <button t-att-class="'btn ' + (state.expense_chart_type === 'line' ? 'btn-primary' : 'btn-outline-primary')" 
+                                            t-on-click="() => change_expense_chart_type('line')"
+                                            title="Line Chart">
+                                        <i class="fa fa-line-chart"></i>
+                                    </button>
+                                    <button t-att-class="'btn ' + (state.expense_chart_type === 'stacked' ? 'btn-primary' : 'btn-outline-primary')" 
+                                            t-on-click="() => change_expense_chart_type('stacked')"
+                                            title="Stacked Chart">
+                                        <i class="fa fa-layer-group"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="row mb-3">
+
+                                <div class="d-flex align-items-center mb-2">
+                                    <h5 class="mb-0 fw-semibold text-dark text-center">
+                                        <i class="fa fa-calendar-check-o me-1 text-primary"></i>
+                                        Summary for
+                                        <span class="text-primary">
+                                            <t t-esc="state.expense_revenue_data.period"/>
+                                        </span>
+                                    </h5>
+                                </div>
+                                <!-- Summary Cards -->
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm text-primary">
+                                            <i class="fa fa-money mr-1"></i> Revenue
+                                        </div>
+                                        <div class="stat-value-sm font-weight-bold text-primary">
+                                            <t t-esc="state.expense_revenue_data.total_revenue_display"/>
+                                        </div>
+                                        <small class="text-muted">
+                                            <t t-esc="state.expense_revenue_data.period"/>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm text-danger">
+                                            <i class="fa fa-shopping-cart mr-1"></i> Expense
+                                        </div>
+                                        <div class="stat-value-sm font-weight-bold text-danger">
+                                            <t t-esc="state.expense_revenue_data.total_expense_display"/>
+                                        </div>
+                                        <small class="text-muted">
+                                            <span t-esc="Math.round((state.expense_revenue_data.total_expense / state.expense_revenue_data.total_revenue * 100) || 0)"/>% of Revenue
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm text-success">
+                                            <i class="fa fa-line-chart mr-1"></i> Profit
+                                        </div>
+                                        <div class="stat-value-sm font-weight-bold text-success">
+                                            <t t-esc="state.expense_revenue_data.total_profit_display"/>
+                                        </div>
+                                        <small class="text-muted">
+                                            <t t-esc="state.expense_revenue_data.profit_margin_display"/> Margin
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="small-stat-card p-2 text-center">
+                                        <div class="stat-label-sm">
+                                            <i class="fa fa-calendar mr-1"></i> Year Summary
+                                        </div>
+                                        <div class="stat-value-sm">
+                                            <t t-esc="state.expense_revenue_monthly.summary.total_profit_display"/>
+                                        </div>
+                                        <small class="text-muted">
+                                            <t t-esc="state.expense_revenue_monthly.summary.avg_margin_display"/> Avg Margin
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chart -->
+                            <div style="height: 300px;">
+                                <canvas id="expense_revenue_chart"></canvas>
+                            </div>
+                            
+                            <!-- Monthly Details -->
+                            <div class="mt-3">
+                                <h6 class="mb-2">
+                                    <i class="fa fa-calendar mr-2"></i>
+                                    Monthly Breakdown - <t t-esc="state.selected_year"/>
+                                </h6>
+                                <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                    <table class="table table-sm table-hover mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th>Month</th>
+                                                <th class="text-right">Revenue</th>
+                                                <th class="text-right">Expense</th>
+                                                <th class="text-right">Profit</th>
+                                                <th class="text-right">Margin</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="state.expense_revenue_monthly.months" t-as="monthData" t-key="monthData.month">
+                                                <tr t-att-class="monthData.is_current ? 'table-info' : ''">
+                                                    <td>
+                                                        <strong>
+                                                            <t t-esc="monthData.month_name"/>
+                                                        </strong>
+                                                        <t t-if="monthData.is_current">
+                                                            <span class="badge badge-info badge-pill ml-2">Current</span>
+                                                        </t>
+                                                    </td>
+                                                    <td class="text-right text-primary font-weight-bold">
+                                                        <t t-esc="monthData.revenue_display"/>
+                                                    </td>
+                                                    <td class="text-right text-danger">
+                                                        <t t-esc="monthData.expense_display"/>
+                                                    </td>
+                                                    <td t-att-class="'text-right font-weight-bold ' + (monthData.profit >= 0 ? 'text-success' : 'text-danger')">
+                                                        <t t-esc="monthData.profit_display"/>
+                                                    </td>
+                                                    <td class="text-right">
+                                                        <span t-att-class="'badge badge-pill ' + 
+                                                            (monthData.margin >= 30 ? 'badge-success' : 
+                                                            monthData.margin >= 15 ? 'badge-warning' : 
+                                                            'badge-danger')">
+                                                            <t t-esc="monthData.margin_display"/>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                        <tfoot class="thead-light">
+                                            <tr>
+                                                <th>Year Total</th>
+                                                <th class="text-right">
+                                                    <t t-esc="state.expense_revenue_monthly.summary.total_revenue_display"/>
+                                                </th>
+                                                <th class="text-right">
+                                                    <t t-esc="state.expense_revenue_monthly.summary.total_expense_display"/>
+                                                </th>
+                                                <th class="text-right">
+                                                    <t t-esc="state.expense_revenue_monthly.summary.total_profit_display"/>
+                                                </th>
+                                                <th class="text-right">
+                                                    <span class="badge badge-pill badge-info">
+                                                        <t t-esc="state.expense_revenue_monthly.summary.avg_margin_display"/>
+                                                    </span>
+                                                </th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Tables -->
+            <div class="row mb-3">
+                <!-- Top Customers -->
+                <div class="col-lg-6 mb-3">
+                    <div class="table-card h-100">
+                        <div class="card-header py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-users mr-2"></i>
+                                Top Customers
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Customer</th>
+                                            <th>Orders</th>
+                                            <th>Total</th>
+                                            <th>Last Order</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.top_customers_detailed" t-as="customer" t-key="customer.id">
+                                            <tr t-on-click="() => view_customer_details(customer.id)" style="cursor: pointer;">
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar mr-2">
+                                                            <i class="fa fa-user-circle"></i>
+                                                        </div>
+                                                        <div>
+                                                            <strong class="small">
+                                                                <t t-esc="customer.customer_name"/>
+                                                            </strong>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-info badge-pill">
+                                                        <t t-esc="customer.order_count"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <small>
+                                                        <t t-esc="customer.total_spent_display"/>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <small class="text-muted">
+                                                        <t t-esc="customer.last_order_date_display"/>
+                                                    </small>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="col-lg-6 mb-3">
+                    <div class="table-card h-100">
+                        <div class="card-header py-2">
+                            <h5 class="mb-0">
+                                <i class="fa fa-credit-card mr-2"></i>
+                                Payment Methods
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                                <table class="table table-sm table-hover mb-0">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Method</th>
+                                            <th>Amount</th>
+                                            <th>%</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.payment_details" t-as="payment" t-key="payment_index">
+                                            <tr>
+                                                <td>
+                                                    <i class="fa fa-money mr-2"></i>
+                                                    <small>
+                                                        <t t-esc="payment[0]"/>
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <strong class="small">
+                                                        <t t-esc="payment[1]"/>
+                                                    </strong>
+                                                </td>
+                                                <td>
+                                                    <div class="progress" style="height: 5px;">
+                                                        <div class="progress-bar" style="width: 30%;"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

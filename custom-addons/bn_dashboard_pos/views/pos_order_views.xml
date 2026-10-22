@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Action for pos order model as root menu -->
+    <record id="pos_dashboard_action" model="ir.actions.client">
+        <field name="name">POS Dashboard</field>
+        <field name="tag">pos_order_menu</field>
+        <field name="params">{'model': 'pos.order'}</field>
+    </record>
+    
+    <!-- Root Menu for POS Dashboard -->
+    <menuitem id="menu_pos_dashboard_root" 
+              name="POS Dashboard" 
+              web_icon="point_of_sale,static/description/icon.png"
+              sequence="10"/>
+    
+    <!-- Dashboard Menu Item -->
+    <menuitem id="menu_pos_dashboard" 
+              name="Dashboard" 
+              parent="menu_pos_dashboard_root"
+              sequence="1"
+              action="pos_dashboard_action"
+              groups="base.group_user"/>
+    
+    <!-- Action for POS Sales Target -->
+    <record id="action_pos_sales_target" model="ir.actions.act_window">
+        <field name="name">POS Sales Targets</field>
+        <field name="res_model">pos.sales.target</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Set sales targets for your POS
+            </p>
+        </field>
+    </record>
+    
+    <!-- Sales Targets Menu Item -->
+    <menuitem id="menu_pos_sales_target" 
+              name="Sales Targets" 
+              parent="menu_pos_dashboard_root"
+              sequence="2"
+              action="action_pos_sales_target"
+              groups="base.group_user"/>
+    
+    <!-- Tree view for POS Sales Target -->
+    <record id="view_pos_sales_target_tree" model="ir.ui.view">
+        <field name="name">pos.sales.target.tree</field>
+        <field name="model">pos.sales.target</field>
+        <field name="arch" type="xml">
+            <tree string="POS Sales Targets">
+                <field name="period"/>
+                <field name="year_month"/>
+                <field name="target_amount"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="user_id"/>
+                <field name="date_set"/>
+            </tree>
+        </field>
+    </record>
+    
+    <!-- Form view for POS Sales Target -->
+    <record id="view_pos_sales_target_form" model="ir.ui.view">
+        <field name="name">pos.sales.target.form</field>
+        <field name="model">pos.sales.target</field>
+        <field name="arch" type="xml">
+            <form string="POS Sales Target">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="period"/>
+                            <field name="year_month" placeholder="YYYY-MM"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="target_amount"/>
+                            <field name="period"/>
+                            <field name="year_month"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="user_id"/>
+                            <field name="date_set" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

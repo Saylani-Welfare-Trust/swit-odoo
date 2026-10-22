@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <!-- Search view for POS Sales Target -->
+    <record id="view_pos_sales_target_search" model="ir.ui.view">
+        <field name="name">pos.sales.target.search</field>
+        <field name="model">pos.sales.target</field>
+        <field name="arch" type="xml">
+            <search string="POS Sales Targets">
+                <field name="period"/>
+                <field name="year_month"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <separator/>
+                <filter name="this_month" string="This Month" domain="[('year_month', '=', context_today().strftime('%Y-%m'))]"/>
+                <filter name="monthly" string="Monthly" domain="[('period', '=', 'monthly')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_period" string="Period" context="{'group_by': 'period'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>
