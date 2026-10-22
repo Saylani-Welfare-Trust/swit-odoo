@@ -66,18 +66,19 @@ class PosOrder(models.Model):
         # Analytic Filters (Province, City, Segment)
         if province_id or city_id or segment_id:
             analytic_domain = []
+            # FIX: Changed 'analytic_account_id' to 'id' when searching the analytic account model itself
             if province_id:
-                analytic_domain.append(('analytic_account_id', 'child_of', int(province_id)))
+                analytic_domain.append(('id', 'child_of', int(province_id)))
             if city_id:
-                analytic_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+                analytic_domain.append(('id', 'child_of', int(city_id)))
             if segment_id:
-                analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
+                analytic_domain.append(('id', 'child_of', int(segment_id)))
             
             accounts = self.env['account.analytic.account'].search(analytic_domain)
             if not accounts:
                 domain.append(('id', '=', 0)) # Force empty result
             else:
-                # Fallback logic to find the correct analytic field
+                # Fallback logic to find the correct analytic field on pos.order
                 if 'analytic_account_id' in self._fields:
                     domain.append(('analytic_account_id', 'in', accounts.ids))
                 elif 'session_id' in self._fields:
