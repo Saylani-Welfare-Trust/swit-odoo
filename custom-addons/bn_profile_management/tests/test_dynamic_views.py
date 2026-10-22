@@ -97,3 +97,50 @@ class TestDynamicProfileViews(TransactionCase):
         for xmlid in ('bn_master_setup.master_setup_menu', 'bn_profile_management.profile_management_config_menu',
                       'bn_profile_management.res_partner_category_menu_profile', 'bn_profile_management.area_menu'):
             self.assertIn(self.env.ref(xmlid).id, visible, xmlid)
+
+    def _set_order(self, view_type, names):
+        lines = self.student._profile_view_lines(view_type)
+        for position, name in enumerate(names):
+            lines.filtered(lambda l: l.field_id.name == name).sequence = position
+
+    def test_list_columns_in_chosen_order(self):
+        self._set_order('list', ['image_1920', 'phone', 'religion'])
+        columns = [c for c in self._fields(self._arch('tree', self.student), 'field') if c not in ('complete_name', 'state')]
+        self.assertEqual(columns, ['image_1920', 'phone', 'religion'])
+        self._set_order('list', ['religion', 'image_1920', 'phone'])
+        columns = [c for c in self._fields(self._arch('tree', self.student), 'field') if c not in ('complete_name', 'state')]
+        self.assertEqual(columns, ['religion', 'image_1920', 'phone'])
+
+    def test_search_fields_in_chosen_order(self):
+        self._set_order('search', ['religion', 'phone'])
+        fields = self._fields(self._arch('search', self.student), 'field')
+        self.assertLess(fields.index('religion'), fields.index('phone'))
+        self._set_order('search', ['phone', 'religion'])
+        fields = self._fields(self._arch('search', self.student), 'field')
+        self.assertLess(fields.index('phone'), fields.index('religion'))
+
+    def test_form_fields_in_chosen_order(self):
+        self.student.profile_form_field_ids = [(6, 0, self._ids(['religion', 'phone', 'gender', 'cnic_no']))]
+        self._set_order('form', ['cnic_no', 'religion', 'phone', 'gender'])
+        page = self._arch('form', self.student).xpath('//page[@name="general_info"]')[0]
+        left = [n.get('name') for n in page.xpath('.//group[@name="general_info_col_1"]/field')]
+        right = [n.get('name') for n in page.xpath('.//group[@name="general_info_col_2"]/field')]
+        self.assertEqual(left, ['cnic_no', 'religion'])
+        self.assertEqual(right[:2], ['phone', 'gender'])
+        cnic = page.xpath('.//field[@name="cnic_no"]')[0]
+        self.assertIn("has_cnic == 'no'", cnic.get('invisible'), 'the field keeps its own rules')
+
+    def test_selection_and_lines_stay_in_sync(self):
+        self.student.profile_list_field_ids = [(4, self._ids(['vat'])[0])]
+        lines = self.student._profile_view_lines('list')
+        self.assertEqual(lines[-1].field_id.name, 'vat', 'new field added at the end')
+        lines.filtered(lambda l: l.field_id.name == 'phone').unlink()
+        self.assertNotIn('phone', self.student.profile_list_field_ids.mapped('name'))
+
+    def test_order_from_the_tag_form(self):
+        from odoo.tests import Form
+        with Form(self.student, view='bn_profile_management.res_partner_category_view_form_profile') as form:
+            with form.profile_list_line_ids.new() as line:
+                line.field_id = self.env['ir.model.fields'].browse(self._ids(['website']))
+        self.assertIn('website', self.student.profile_list_field_ids.mapped('name'))
+        self.assertIn('website', self._fields(self._arch('tree', self.student), 'field'))

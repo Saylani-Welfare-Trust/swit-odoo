@@ -44,10 +44,10 @@ class ResPartner(models.Model):
         key = super()._get_view_cache_key(view_id, view_type, **options)
         tag = self._profile_view_tag()
         if tag:
-            # The selected fields themselves (not write_date, which does not
-            # change between two edits of the same transaction).
-            key += ('profile_tag', tag.id, tuple(tag.profile_list_field_ids.ids),
-                    tuple(tag.profile_search_field_ids.ids))
+            # The selected fields and their positions (not write_date, which
+            # does not change between two edits of the same transaction).
+            lines = self.env['profile.view.field'].sudo().search([('category_id', '=', tag.id)])
+            key += ('profile_tag', tag.id, tuple((l.view_type, l.field_id.id, l.sequence) for l in lines))
         return key
 
     @api.model
@@ -57,10 +57,12 @@ class ResPartner(models.Model):
             if view_type in PROFILE_VIEWS else None
         if not profile_view or view != profile_view:
             return arch, view
+        tag = self._profile_view_tag()
         if view_type == 'form':
             self._profile_build_form(arch)
+            if tag:
+                self._profile_order_form(arch, tag)
             return arch, view
-        tag = self._profile_view_tag()
         if tag:
             if view_type == 'tree':
                 self._profile_build_list(arch, tag)
@@ -69,9 +71,11 @@ class ResPartner(models.Model):
         return arch, view
 
     # ------------------------------------------------------------------
-    def _profile_selected(self, fields_rel):
-        selected = set(fields_rel.mapped('name'))
-        return [name for name in CURATED_PROFILE_FIELDS if name in selected and name in self._fields]
+    def _profile_selected(self, tag, view_type):
+        """Field names selected on ``tag`` for ``view_type``, in the order
+        chosen by the administrator."""
+        names = tag._profile_view_lines(view_type).mapped('field_id.name')
+        return [name for name in names if name in self._fields]
 
     def _profile_build_list(self, arch, tag):
         """Columns = the tag's List View Fields, then the status."""
@@ -80,7 +84,7 @@ class ResPartner(models.Model):
                 node.getparent().remove(node)
         state = arch.xpath('//tree/field[@name="state"]')
         anchor = state[0] if state else None
-        for name in self._profile_selected(tag.profile_list_field_ids):
+        for name in self._profile_selected(tag, 'list'):
             field = self._fields[name]
             node = etree.Element('field', name=name, optional='show')
             if field.type == 'many2many':
@@ -99,7 +103,7 @@ class ResPartner(models.Model):
             if node.get('name') not in SEARCH_FIXED:
                 search.remove(node)
         anchor = search.xpath('./field[@name="category_id"]')
-        for name in self._profile_selected(tag.profile_search_field_ids):
+        for name in self._profile_selected(tag, 'search'):
             field = self._fields[name]
             if field.type in ('binary', 'one2many') or not (field.store or field.search):
                 continue
@@ -133,3 +137,33 @@ class ResPartner(models.Model):
             node = etree.SubElement(group, 'field', name=name, invisible=condition % name)
             if self._fields[name].type == 'many2many':
                 node.set('widget', 'many2many_tags')
+
+    def _profile_order_form(self, arch, tag):
+        """Lay out the General Information page in the order chosen on the
+        menu's tag: its form fields first, in that order, then the others.
+        The field nodes are moved as they are, keeping all their rules
+        (required, read-only, file name ...). The header (name, photo,
+        address, mobile, email, tags) keeps its place."""
+        page = arch.xpath('//page[@name="general_info"]')
+        if not page:
+            return
+        page = page[0]
+        nodes = [node for node in page.xpath('.//field[@name]') if not node.xpath('ancestor::field')]
+        by_name = {node.get('name'): node for node in nodes}
+        chosen = [name for name in self._profile_selected(tag, 'form') if name in by_name]
+        ordered = [by_name[name] for name in chosen] + [n for n in nodes if n.get('name') not in chosen]
+        for node in nodes:
+            node.getparent().remove(node)
+        for child in list(page):
+            page.remove(child)
+        grid = etree.SubElement(page, 'group', name='general_info_ordered')
+        columns = (etree.SubElement(grid, 'group', name='general_info_col_1'),
+                   etree.SubElement(grid, 'group', name='general_info_col_2'))
+        visible = [n for n in ordered if n.get('name') in chosen]
+        others = [n for n in ordered if n.get('name') not in chosen]
+        # Positions run down the left column, then down the right column.
+        half = (len(visible) + 1) // 2
+        for index, node in enumerate(visible):
+            columns[0 if index < half else 1].append(node)
+        for node in others:
+            columns[1].append(node)

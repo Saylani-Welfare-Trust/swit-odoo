@@ -15,6 +15,7 @@ are validated, and the profile types can be configured without code.
 | `res.partner.category` (extended) | A tag can be a **profile type**. Its list, form and search fields and its notebook pages are configurable, and it gets its own menu |
 | `profile.management.page` | Catalogue of form pages (General, Donation, Welfare, Microfinance, Medical) |
 | `res.partner.registration` | The unique ID a contact received for one tag (one per tag) |
+| `profile.view.field` | One field of a Profile Type's list / search / form view, with its position |
 | `area` | Area master |
 | `record.search` → `confirm.search` (wizards) | **Record Search**: find a profile before creating a new one |
 | `microfinance.application.wizard` | Prints the microfinance application for a selected scheme |
@@ -141,30 +142,34 @@ when the module is upgraded.
 ## Configuring a profile type
 
 *Master Setup > Profile Management > Profile Types (Tags)*: tick **Enable in
-Profile Management**, then choose:
+Profile Management**, choose the **Form Pages**, then under **Fields and
+their position** fill three lists. Add a field with *Add a line*, remove it
+with the bin, and **drag the handle (⠿) to set its position**:
 
-| Setting | What it drives |
-| --- | --- |
-| **List View** fields | The columns of the tag's list, in catalogue order, then *State* |
-| **Search View** fields | The fields offered when typing in the tag's search bar (images and computed fields such as Age cannot be searched and are skipped) |
-| **Form View** fields | The fields shown on the profile form of a contact carrying the tag |
-| **Form Pages** | The notebook pages shown on that form |
+| Tab | What it drives | Position |
+| --- | --- | --- |
+| **List View** | The columns of the tag's list (then *State*) | Left to right |
+| **Search View** | The fields offered when typing in the tag's search bar (images and computed fields such as Age cannot be searched and are skipped) | Order of the suggestions |
+| **Form View** | The fields of the profile form's **General Information** page for contacts carrying the tag | Down the left column, then down the right column |
 
 A menu and window action are created / updated for the tag automatically.
-The views are **built from these settings** each time they are loaded:
+The views are **built from these lists** each time they are loaded:
 
 - **List / search** follow the tag of the **menu** used (its action passes
-  `profile_tag_view_ref`). Changing the settings takes effect on the next
-  page load.
-- **Form** follows the **contact**: a contact with several profile tags shows
-  everything any of them selects. *Name*, *Tags*, *Mobile* and *Phone Code*
-  are always shown. Fields the form had no place for (Phone, Job Position,
-  Title, Website, Tax ID ...) appear in an **Other Details** group on the
-  General Information page.
+  `profile_tag_view_ref`). Changes take effect on the next page load.
+- **Form**: which fields show follows the **contact** - a contact with
+  several profile tags shows everything any of them selects. Their
+  **position** follows the tag of the menu the form was opened from; fields
+  of the contact's other tags come after them. *Name*, *Tags*, *Mobile* and
+  *Phone Code* are always shown. The header (name, photo, address, mobile,
+  email, tags) keeps its place; fields the form had no place for (Phone, Job
+  Position, Website, Tax ID ...) are laid out on the General Information page.
 - The kanban view is the same for every tag.
 
 Donor and Donee start with the columns, search fields and form fields their
-screens showed before this version.
+screens showed before. (Technically the selections are also kept as
+`profile_list_field_ids` / `profile_search_field_ids` /
+`profile_form_field_ids`, synchronised with the ordered lists both ways.)
 
 ## Reports
 
@@ -181,7 +186,7 @@ Profile information sheet, microfinance application, user profile report
 | *Audit* | Read-only, including the configuration under Master Setup |
 | *Admin* | Everything, including delete |
 
-## What changed in 17.0.1.2.0 - 17.0.1.5.0
+## What changed in 17.0.1.2.0 - 17.0.1.6.0
 
 | Problem in 17.0.1.1.0 | Fix |
 | --- | --- |
@@ -201,6 +206,7 @@ Profile information sheet, microfinance application, user profile report
 | Only Donor / Donee had an ID, in a hard-coded format | One ID per tag, pattern configured on the tag |
 | Only 16 list / 10 search fields had a slot: choosing any other field on a tag silently did nothing | List, search and form built from the tag's settings |
 | Configuration lived inside the Profile Management app | Moved to *Master Setup > Profile Management* (Profile Types, Area) |
+| The position of fields was fixed | Set per tag by dragging, for list, search and form |
 
 ## Known gaps
 

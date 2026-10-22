@@ -40,18 +40,41 @@
                             <field name="profile_page_ids" widget="many2many_tags"
                                    placeholder="e.g. General Information, Donation..."/>
                         </group>
-                        <group string="Fields">
-                            <group name="profile_fields_col_1">
-                                <field name="profile_form_field_ids" widget="many2many_tags"
-                                       string="Form View" placeholder="Fields shown on the form"/>
-                                <field name="profile_list_field_ids" widget="many2many_tags"
-                                       string="List View" placeholder="Columns shown in the list"/>
-                            </group>
-                            <group name="profile_fields_col_2">
-                                <field name="profile_search_field_ids" widget="many2many_tags"
-                                       string="Search View" placeholder="Fields searchable/filterable"/>
-                            </group>
-                        </group>
+                        <separator string="Fields and their position"/>
+                        <p class="text-muted">
+                            Add the fields each view shows and drag the handle to set their position.
+                            List: columns from left to right. Search: order of the search suggestions.
+                            Form: General Information page, down the left column then down the right one.
+                        </p>
+                        <notebook>
+                            <page string="List View" name="profile_list">
+                                <field name="profile_list_line_ids" nolabel="1">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="field_id" options="{'no_create': True, 'no_open': True}"/>
+                                        <field name="field_name"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Search View" name="profile_search">
+                                <field name="profile_search_line_ids" nolabel="1">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="field_id" options="{'no_create': True, 'no_open': True}"/>
+                                        <field name="field_name"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Form View" name="profile_form">
+                                <field name="profile_form_line_ids" nolabel="1">
+                                    <tree editable="bottom">
+                                        <field name="sequence" widget="handle"/>
+                                        <field name="field_id" options="{'no_create': True, 'no_open': True}"/>
+                                        <field name="field_name"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
                         <separator string="Unique Registration ID"/>
                         <p class="text-muted">
                             Contacts get one ID per tag when they are registered. Tokens:

@@ -73,6 +73,14 @@ class ResPartnerCategory(models.Model):
     profile_search_field_ids = fields.Many2many(
         'ir.model.fields', 'res_partner_category_search_field_rel', 'category_id', 'field_id',
         string='Search View Fields', domain=lambda self: self._profile_field_domain())
+    # The same selections, in the order chosen by the administrator. The
+    # Many2many fields above stay the selection itself (kept in sync both ways).
+    profile_list_line_ids = fields.One2many('profile.view.field', 'category_id', string='List View',
+                                            domain=[('view_type', '=', 'list')], context={'default_view_type': 'list'})
+    profile_search_line_ids = fields.One2many('profile.view.field', 'category_id', string='Search View',
+                                              domain=[('view_type', '=', 'search')], context={'default_view_type': 'search'})
+    profile_form_line_ids = fields.One2many('profile.view.field', 'category_id', string='Form View',
+                                            domain=[('view_type', '=', 'form')], context={'default_view_type': 'form'})
     profile_page_ids = fields.Many2many(
         'profile.management.page', 'res_partner_category_page_rel', 'category_id', 'page_id',
         string='Form Pages')
@@ -193,6 +201,7 @@ class ResPartnerCategory(models.Model):
                 vals['profile_form_field_ids'] = [(6, 0, ids(keep))]
             if vals:
                 tag.write(vals)
+            tag._profile_sync_lines_from_m2m()
             tag._sync_profile_menu()
 
     @api.model
@@ -211,9 +220,52 @@ class ResPartnerCategory(models.Model):
                     'pages selected. Please configure what it should show before saving.'
                 ) % category.name)
 
+    # ------------------------------------------------------------------
+    # Ordered view fields <-> selections
+    # ------------------------------------------------------------------
+    PROFILE_VIEW_M2M = {'list': 'profile_list_field_ids', 'search': 'profile_search_field_ids',
+                        'form': 'profile_form_field_ids'}
+
+    def _profile_view_lines(self, view_type):
+        self.ensure_one()
+        return self.env['profile.view.field'].search(
+            [('category_id', '=', self.id), ('view_type', '=', view_type)])
+
+    def _profile_sync_m2m_from_lines(self):
+        """The ordered lines changed: make the selections match."""
+        if self.env.context.get('profile_view_sync'):
+            return
+        for category in self:
+            vals = {}
+            for view_type, m2m in self.PROFILE_VIEW_M2M.items():
+                ids = category._profile_view_lines(view_type).field_id.ids
+                if set(ids) != set(category[m2m].ids):
+                    vals[m2m] = [(6, 0, ids)]
+            if vals:
+                category.with_context(profile_view_sync=True).write(vals)
+
+    def _profile_sync_lines_from_m2m(self):
+        """The selections changed (code, import, older screens): add the new
+        fields at the end, drop the removed ones, keep everyone's position."""
+        Line = self.env['profile.view.field'].with_context(profile_view_sync=True)
+        order = {name: i for i, name in enumerate(CURATED_PROFILE_FIELDS)}
+        for category in self:
+            for view_type, m2m in self.PROFILE_VIEW_M2M.items():
+                lines = category._profile_view_lines(view_type)
+                selected = category[m2m]
+                removed = lines.filtered(lambda l: l.field_id not in selected)
+                lines -= removed
+                removed.with_context(profile_view_sync=True).unlink()
+                missing = (selected - lines.field_id).sorted(lambda f: order.get(f.name, 999))
+                start = max(lines.mapped('sequence') or [0]) + 1
+                Line.create([{'category_id': category.id, 'view_type': view_type, 'field_id': f.id,
+                              'sequence': start + i} for i, f in enumerate(missing)])
+
     @api.model_create_multi
     def create(self, vals_list):
         categories = super().create(vals_list)
+        if not self.env.context.get('profile_view_sync'):
+            categories._profile_sync_lines_from_m2m()
         categories._ensure_registration_sequence()
         for category in categories:
             if category.is_profile_type:
@@ -222,6 +274,8 @@ class ResPartnerCategory(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
+        if not self.env.context.get('profile_view_sync') and any(m2m in vals for m2m in self.PROFILE_VIEW_M2M.values()):
+            self._profile_sync_lines_from_m2m()
         if 'registration_pattern' in vals:
             self._ensure_registration_sequence()
         if 'is_profile_type' in vals or any(
