@@ -28,7 +28,7 @@ class KitchenMenu(models.Model):
     _description = "Kitchen Menu"
 
 
-    product_tmpl_id = fields.Many2one('product.template', string="Product")
+    product_tmpl_id = fields.Many2one('product.template', domain=[('is_kitchen', '=', True)], string="Product")
 
     name = fields.Char(related='product_tmpl_id.name', string="Name")
 

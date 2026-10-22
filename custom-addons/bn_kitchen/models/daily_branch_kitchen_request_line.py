@@ -3,7 +3,7 @@ from odoo import models, fields
 
 class DailyBranchKitchenRequestLine(models.Model):
     _name = 'daily.branch.kitchen.request.line'
-    _descripiton = "Daily Branch Kitchen Request Line"
+    _description = "Daily Branch Kitchen Request Line"
 
 
     branch_kitchen_request_id = fields.Many2one('branch.kitchen.request', string="Branch Kitchen Request")

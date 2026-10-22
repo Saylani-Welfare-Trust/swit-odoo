@@ -4,5 +4,4 @@ from odoo import models, fields
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
-
     is_issuance_request = fields.Boolean('Is Issuance Request')
