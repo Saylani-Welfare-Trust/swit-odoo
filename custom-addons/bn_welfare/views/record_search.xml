@@ -26,7 +26,7 @@
         id="welfare_profile_management_menu"
         name="Profile"
         groups="bn_welfare.group_welfare_profile"
-        parent="bn_welfare.welfare_menu"
+        parent="welfare_menu"
         sequence="2"/>
 
     <menuitem
