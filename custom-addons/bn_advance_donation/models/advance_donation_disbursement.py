@@ -5,7 +5,7 @@ class AdvanceDonationDisbursementLine(models.Model):
     _description = 'Advance Donation Disbursement Line'
 
     advance_donation_id = fields.Many2one('advance.donation', string="Advance Donation")
-    advance_donation_line_id = fields.Many2one('advance.donation.line', string="Donation Line", ondelete='cascade',)
+    advance_donation_line_id = fields.Many2one('advance.donation.lines', string="Donation Line", ondelete='cascade',)
 
     product_id = fields.Many2one('product.product', string="Product")
     date = fields.Date(string="Date")
