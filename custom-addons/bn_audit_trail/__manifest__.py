@@ -1,6 +1,6 @@
 {
     'name': 'Audit Trail',
-    'version': '17.0.2.4.0',
+    'version': '17.0.2.5.0',
     'category': 'BytesNode/Audit Trail',
     'summary': 'Track create, update, view and delete activity across all Odoo models by default (standard & custom)',
     'description': """
@@ -17,12 +17,11 @@ Key features
   read or changed in other records listed under it as sub-operations.
 * Field-level Before/After values on updates. Passwords, 2FA secrets,
   API keys and tokens are masked.
-* Audit Trail > Excluded Models turns a specific model off; adding or
-  removing an exclusion is itself logged.
+* Audit Trail > Excluded Models turns a specific model off; removing an
+  exclusion is logged.
 * Deleting log entries always leaves a purge entry.
 * Groups: Access Root Menu, User (own activity), Audit (all, read-only),
-  Manager (+ Excluded Models), Admin (+ purge). Viewing the trail itself
-  is logged too.
+  Manager (+ Excluded Models), Admin (+ purge).
 """,
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',

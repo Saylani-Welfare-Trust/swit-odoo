@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import contextvars
 import re
 
 from odoo import api, fields, models, _
@@ -9,10 +8,6 @@ SECRET_FIELD_PATTERN = re.compile(
     r'(^|_)(password|passwd|pwd|secret|token|apikey|api_key|totp|otp|'
     r'private_key|signing_key|access_key|secret_key)(_|$)')
 MASK = '********'
-
-# Set while the web client reads one audit log entry, so the sub-operation
-# rows displayed inside it are not logged as separate views.
-_VIEWING_LOG = contextvars.ContextVar('bn_audit_viewing_log', default=False)
 
 
 def outer_hands_up(frame, outer):
@@ -313,40 +308,6 @@ class AuditTrailLog(models.Model):
                 "UPDATE audit_trail_log SET operation_ref = %s WHERE id IN %s",
                 (str(ids[0]), tuple(ids)))
             self.browse(ids).invalidate_recordset(['operation_ref'])
-
-    # ---------------------------------------------------------------
-    # Who looked at the audit trail itself
-    # ---------------------------------------------------------------
-    # audit.trail.log is excluded from the generic logging (it would log
-    # itself endlessly). Views of the trail are logged here instead: one
-    # entry per list / search, one per entry opened.
-    def _log_trail_view(self, summary, res_id=0, record_name=''):
-        self.sudo().create(dict(
-            self._base_vals('audit.trail.log'),
-            res_id=res_id, record_name=record_name or _('Audit Trail'),
-            method='read', summary=summary,
-        ))
-
-    @api.model
-    def web_search_read(self, domain, specification, offset=0, limit=None, order=None, count_limit=None):
-        result = super().web_search_read(domain, specification, offset=offset, limit=limit,
-                                         order=order, count_limit=count_limit)
-        if not _VIEWING_LOG.get():
-            self._audit_safe(self._log_trail_view,
-                             _('Viewed the audit trail list (%s entries)') % result.get('length', 0))
-        return result
-
-    def web_read(self, specification):
-        if _VIEWING_LOG.get() or len(self) != 1:
-            return super().web_read(specification)
-        token = _VIEWING_LOG.set(True)
-        try:
-            result = super().web_read(specification)
-        finally:
-            _VIEWING_LOG.reset(token)
-        self._audit_safe(self._log_trail_view, _('Viewed audit entry: %s') % (self.summary or self.id),
-                         res_id=self.id, record_name=self.summary)
-        return result
 
     # ---------------------------------------------------------------
     # Deleting log entries always leaves a trace

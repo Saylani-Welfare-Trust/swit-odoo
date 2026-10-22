@@ -105,13 +105,15 @@ class TestAuditTrail(TransactionCase):
         self.assertEqual(master.record_name, contact.display_name)
         self.assertIn(company.id, master.child_ids.mapped('res_id'))
 
-    def test_exclusion_changes_are_logged(self):
+    def test_exclusions_only_deletion_is_logged(self):
+        start = self._last_id()
         exclusion = self.env['audit.trail.exclusion'].create({
-            'model_id': self.env['ir.model']._get_id('res.partner.category')})
+            'model_id': self.env['ir.model']._get_id('res.partner.category'), 'reason': 'noise'})
+        exclusion.write({'reason': 'changed'})
+        exclusion.read(['reason'])
         exclusion.unlink()
-        methods = self.Log.search([('model_name', '=', 'audit.trail.exclusion')]).mapped('method')
-        self.assertIn('create', methods)
-        self.assertIn('unlink', methods)
+        methods = self._new_logs(start, [('model_name', '=', 'audit.trail.exclusion')]).mapped('method')
+        self.assertEqual(methods, ['unlink'])
         with self.assertRaises(Exception), mute_logger('odoo.sql_db'):
             self.env['audit.trail.exclusion'].create({
                 'model_id': self.env['ir.model']._get_id('audit.trail.log')})
@@ -182,13 +184,10 @@ class TestAuditTrailAccess(TransactionCase):
                 Exclusion.with_user(user).create({'model_id': model_id})
         Exclusion.with_user(self.manager).create({'model_id': model_id}).unlink()
 
-    def test_viewing_the_trail_is_logged(self):
+    def test_viewing_the_trail_is_not_logged(self):
         Log = self.Log.with_user(self.auditor)
-        before = self.Log.sudo().search_count([('model_name', '=', 'audit.trail.log'), ('user_id', '=', self.auditor.id)])
+        start = self.Log.sudo().search([], order='id desc', limit=1).id
         call_kw(Log, 'web_search_read', [], {'domain': [], 'specification': {'summary': {}}, 'limit': 10})
         call_kw(Log, 'web_read', [[self.other.id]], {'specification': {
             'summary': {}, 'child_ids': {'fields': {'summary': {}}}, 'line_ids': {'fields': {'field_name': {}}}}})
-        views = self.Log.sudo().search([('model_name', '=', 'audit.trail.log'), ('user_id', '=', self.auditor.id)], order='id')
-        self.assertEqual(len(views) - before, 2)
-        self.assertIn('Viewed the audit trail list', views[-2].summary)
-        self.assertEqual(views[-1].res_id, self.other.id)
+        self.assertFalse(self.Log.sudo().search([('id', '>', start)]))

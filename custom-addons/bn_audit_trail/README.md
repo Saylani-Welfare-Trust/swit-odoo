@@ -83,9 +83,8 @@ flowchart LR
    **Today** and **Date** respect the user's time zone. Group by **User**,
    **Model**, **Action**, **Triggered By** or **Date**.
 4. To stop logging a model: **Audit Trail > Excluded Models** > add the
-   model. It takes effect immediately. Adding, changing and removing
-   exclusions is itself logged, and the Audit Trail models cannot be
-   excluded.
+   model. It takes effect immediately. Removing an exclusion is logged;
+   the Audit Trail models cannot be excluded.
 
 ## Rules
 
@@ -110,7 +109,7 @@ flowchart LR
 | *Access Root Menu* | See the Audit Trail app menu (implied by every group below; not assigned alone) |
 | *User* | Read **his/her own** activity only |
 | *Audit* | Read **everybody's** activity and the Excluded Models |
-| *Manager* | Audit + add / change / remove Excluded Models (every change is logged) |
+| *Manager* | Audit + add / change / remove Excluded Models (removals are logged) |
 | *Admin* | Manager + delete (purge) log entries (every purge leaves a permanent entry). The seed Administrator is added automatically |
 
 Assign them in *Settings > Users > Access Rights*, category *Audit Trail*.
@@ -118,10 +117,9 @@ On upgrade, members of the former *Viewer* group become *Audit* and the
 former *Manager* group stays *Manager*; deleting log entries now needs
 *Admin*.
 
-**Who looked at the trail is logged too.** Opening or searching the log list
-records one entry ("Viewed the audit trail list (N entries)"), and opening
-an entry records one entry ("Viewed audit entry: ..."). The sub-operation
-rows shown inside an opened entry are not logged separately.
+**The Audit Trail's own screens are not logged**, except deletions:
+viewing the log, and creating or changing an exclusion, leave no entry;
+**removing an exclusion** and **purging log entries** always do.
 
 ## Performance & volume
 
@@ -155,7 +153,7 @@ rows shown inside an opened entry are not logged separately.
 | Passwords and 2FA secrets stored in plain text | Any Audit Viewer could read users' passwords | Values masked. Existing entries: run the SQL under *Install / upgrade* |
 | Logging savepoint flushed the user's pending changes *outside* the savepoint | A real error such as a duplicate login was swallowed, and the request failed later with "current transaction is aborted". Chatter tracking was also finalised early | Non-flushing savepoints |
 | Savepoint + flush on every read (12 extra statements for 3 reads) | Slower screens | No SQL for cached exclusions or repeated views |
-| Exclusion changes not logged | Auditing could be switched off and on without a trace | Logged. Audit models cannot be excluded |
+| Exclusion changes not logged | Auditing could be switched off and on without a trace | Removing an exclusion is logged. Audit models cannot be excluded |
 | Deleting log entries left no trace | History could be removed silently | Purge entry |
 | Uninstalling a module deleted all its audit history (`ondelete='cascade'`) | Lost history | Kept |
 | One-to-many / many-to-many changes showed "1 change command(s)" | Unreadable diff | Shows the resulting records |

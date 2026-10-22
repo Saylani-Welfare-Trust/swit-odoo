@@ -17,9 +17,9 @@ _logger = logging.getLogger(__name__)
 # attachments). For excluding OTHER models via the UI, see
 # audit.trail.exclusion (Audit Trail > Excluded Models).
 #
-# audit.trail.exclusion is deliberately NOT in this set: switching auditing
-# off for a model must itself leave a trace. Deleting audit.trail.log
-# entries is traced separately (see AuditTrailLog.unlink).
+# audit.trail.exclusion is NOT in this set: removing an exclusion is logged
+# (see AUDIT_DELETE_ONLY_MODELS). Deleting audit.trail.log entries is traced
+# separately (see AuditTrailLog.unlink).
 #
 # To add another permanent, code-level exclusion, add its technical name
 # here and redeploy - this set is deliberately not meant to be end-user
@@ -42,6 +42,13 @@ AUDIT_EXCLUDED_MODELS = {
     'mail.tracking.value',
     'mail.followers',
     'mail.activity',
+}
+
+# The Audit Trail's own configuration: only deletions are logged (removing
+# an exclusion), never views, creations or updates. Purging log entries is
+# traced separately (see AuditTrailLog.unlink).
+AUDIT_DELETE_ONLY_MODELS = {
+    'audit.trail.exclusion',
 }
 
 
@@ -104,6 +111,10 @@ class Base(models.AbstractModel):
             excluded = set()
         return self._name not in excluded
 
+    def _audit_logs_changes(self):
+        """Create / Update / View logging (Delete uses _audit_is_enabled)."""
+        return self._name not in AUDIT_DELETE_ONLY_MODELS and self._audit_is_enabled()
+
     def _audit_stack(self):
         """Open audit frames of the current transaction, innermost last."""
         transaction = self.env.transaction
@@ -157,7 +168,7 @@ class Base(models.AbstractModel):
     # -----------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
-        if not self._audit_is_enabled():
+        if not self._audit_logs_changes():
             return super().create(vals_list)
         with self._audit_frame('create'):
             records = super().create(vals_list)
@@ -166,7 +177,7 @@ class Base(models.AbstractModel):
         return records
 
     def write(self, vals):
-        if not self._audit_is_enabled():
+        if not self._audit_logs_changes():
             return super().write(vals)
         with self._audit_frame('write'):
             def _snapshot():
@@ -202,7 +213,7 @@ class Base(models.AbstractModel):
     # -----------------------------------------------------------------
     def _audit_read_frame_enabled(self):
         return bool(self._ids) and not self.env.context.get('_audit_trail_skip_read') \
-            and self._audit_is_enabled()
+            and self._audit_logs_changes()
 
     def read(self, fields=None, load='_classic_read'):
         if not self._audit_read_frame_enabled():
@@ -224,7 +235,7 @@ class Base(models.AbstractModel):
         # @api.model is required: the web client calls this without record
         # ids, and call_kw() decides how to call it from the decorator.
         kwargs = dict(offset=offset, limit=limit, order=order, count_limit=count_limit)
-        if not self._audit_is_enabled():
+        if not self._audit_logs_changes():
             return super().web_search_read(domain, specification, **kwargs)
         with self._audit_frame('read'):
             return super().web_search_read(domain, specification, **kwargs)
@@ -237,7 +248,7 @@ class Base(models.AbstractModel):
         # access path (browser UI, RPC, XML-RPC) uniformly.
         result = super()._read_format(fnames, load=load)
         if (self._ids and not self.env.context.get('_audit_trail_skip_read')
-                and self._audit_is_enabled()):
+                and self._audit_logs_changes()):
             Log = self.env['audit.trail.log']
             rows = Log._unseen_read_rows(self._name, result)
             if rows:
