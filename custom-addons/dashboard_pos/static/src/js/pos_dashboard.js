@@ -14,6 +14,8 @@ export class PosDashboard extends Component {
         this.state = useState({
             config_id: null,
             shops: [],
+            date_from: '',
+            date_to: '',
             sales_period: 'pos_hourly_sales',
             payment_details: [],
             top_salesperson: [],
@@ -26,12 +28,11 @@ export class PosDashboard extends Component {
             today_sale: [],
         });
 
-        // track Chart.js instances so re-renders clean them up
         this._charts = {};
 
         onWillStart(async () => {
             await this.fetch_shops();
-            await this.fetch_data();
+            await this.refresh();
         });
 
         onMounted(async () => {
@@ -39,15 +40,22 @@ export class PosDashboard extends Component {
         });
     }
 
-    // ---------------- data loading ----------------
+    // ---------------- loaders ----------------
     async fetch_shops() {
         this.state.shops = await this.orm.call('pos.order', 'get_shops', []);
     }
 
-    async fetch_data() {
-        const cfg = this.state.config_id;
+    async refresh() {
+        await this.fetch_data();
+        await this.render_all_charts();
+    }
 
-        const result = await this.orm.call('pos.order', 'get_refund_details', [cfg]);
+    async fetch_data() {
+        const cfg = this.state.config_id ? parseInt(this.state.config_id, 10) : null;
+        const df = this.state.date_from || null;
+        const dt = this.state.date_to   || null;
+
+        const result = await this.orm.call('pos.order', 'get_refund_details', [cfg, df, dt]);
         this.state.total_sale         = result['total_sale'];
         this.state.total_order_count  = result['total_order_count'];
         this.state.total_refund_count = result['total_refund_count'];
@@ -55,32 +63,62 @@ export class PosDashboard extends Component {
         this.state.today_refund_total = result['today_refund_total'];
         this.state.today_sale         = result['today_sale'];
 
-        const data = await this.orm.call('pos.order', 'get_details', [cfg]);
+        const data = await this.orm.call('pos.order', 'get_details', [cfg, df, dt]);
         this.state.payment_details = data['payment_details'];
         this.state.top_salesperson = data['salesperson'];
         this.state.selling_product = data['selling_product'];
     }
 
-    // ---------------- shop filter ----------------
-    async onchange_shop(ev) {
-        const val = ev.target.value;
-        this.state.config_id = val ? parseInt(val, 10) : null;
-        await this.fetch_data();
-        await this.render_all_charts();
+    // ---------------- filter handlers ----------------
+    async onchange_filter(ev) {
+        await this.refresh();
     }
 
-    async render_all_charts() {
-        await this.render_top_customer_graph();
-        await this.render_top_product_graph();
-        await this.render_product_category_graph();
-        await this.load_sales_chart(this.state.sales_period || 'pos_hourly_sales');
+    async clear_filter() {
+        this.state.config_id = null;
+        this.state.date_from = '';
+        this.state.date_to   = '';
+        await this.refresh();
+    }
+
+    async set_quick_date(type) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const month = today.getMonth();
+
+        if (type === 'this_month') {
+            this.state.date_from = this._fmt_date(new Date(yyyy, month, 1));
+            this.state.date_to   = this._fmt_date(new Date(yyyy, month + 1, 0));
+        } else if (type === 'last_month') {
+            this.state.date_from = this._fmt_date(new Date(yyyy, month - 1, 1));
+            this.state.date_to   = this._fmt_date(new Date(yyyy, month, 0));
+        } else if (type === 'this_year') {
+            this.state.date_from = `${yyyy}-01-01`;
+            this.state.date_to   = `${yyyy}-12-31`;
+        } else if (type === 'today') {
+            const d = this._fmt_date(today);
+            this.state.date_from = d;
+            this.state.date_to   = d;
+        }
+        await this.refresh();
+    }
+
+    _fmt_date(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
     }
 
     // ---------------- sales chart ----------------
     load_sales_chart(option) {
         const self = this;
         const ctx = $("#canvas_1");
-        return this.orm.call('pos.order', 'get_department', [option, this.state.config_id])
+        const cfg = this.state.config_id ? parseInt(this.state.config_id, 10) : null;
+        const df = this.state.date_from || null;
+        const dt = this.state.date_to   || null;
+
+        return this.orm.call('pos.order', 'get_department', [option, cfg, df, dt])
             .then(function (arrays) {
                 const data = {
                     labels: arrays[1],
@@ -106,14 +144,10 @@ export class PosDashboard extends Component {
                 };
                 const options = {
                     responsive: true,
-                    title: {
-                        display: true, position: "top",
-                        text: "SALE DETAILS", fontSize: 18, fontColor: "#111",
-                    },
-                    legend: {
-                        display: true, position: "bottom",
-                        labels: { fontColor: "#333", fontSize: 16 },
-                    },
+                    title: { display: true, position: "top",
+                             text: "SALE DETAILS", fontSize: 18, fontColor: "#111" },
+                    legend: { display: true, position: "bottom",
+                              labels: { fontColor: "#333", fontSize: 16 } },
                 };
                 if (window.myCharts != undefined) window.myCharts.destroy();
                 window.myCharts = new Chart(ctx, { type: "bar", data, options });
@@ -127,11 +161,26 @@ export class PosDashboard extends Component {
         this.load_sales_chart(option);
     }
 
-    // ---------------- pie / bar charts (with re-render safety) ----------------
+    async render_all_charts() {
+        await this.render_top_customer_graph();
+        await this.render_top_product_graph();
+        await this.render_product_category_graph();
+        await this.load_sales_chart(this.state.sales_period || 'pos_hourly_sales');
+    }
+
+    // ---------------- pie / bar charts ----------------
+    _filter_args() {
+        return [
+            this.state.config_id ? parseInt(this.state.config_id, 10) : null,
+            this.state.date_from || null,
+            this.state.date_to   || null,
+        ];
+    }
+
     render_top_customer_graph() {
         const self = this;
         const ctx = $(".top_customer");
-        return this.orm.call('pos.order', 'get_the_top_customer', [this.state.config_id])
+        return this.orm.call('pos.order', 'get_the_top_customer', this._filter_args())
             .then(function (arrays) {
                 const data = {
                     labels: arrays[1],
@@ -139,36 +188,22 @@ export class PosDashboard extends Component {
                         label: "",
                         data: arrays[0],
                         backgroundColor: [
-                            "rgb(148, 22, 227)",
-                            "rgba(54, 162, 235)",
-                            "rgba(75, 192, 192)",
-                            "rgba(153, 102, 255)",
-                            "rgba(10,20,30)",
+                            "rgb(148, 22, 227)", "rgba(54, 162, 235)",
+                            "rgba(75, 192, 192)", "rgba(153, 102, 255)", "rgba(10,20,30)",
                         ],
                         borderColor: [
-                            "rgba(255, 99, 132)",
-                            "rgba(54, 162, 235)",
-                            "rgba(75, 192, 192)",
-                            "rgba(153, 102, 255)",
-                            "rgba(10,20,30)",
+                            "rgba(255, 99, 132)", "rgba(54, 162, 235)",
+                            "rgba(75, 192, 192)", "rgba(153, 102, 255)", "rgba(10,20,30)",
                         ],
                         borderWidth: 1,
                     }],
                 };
                 const options = {
                     responsive: true,
-                    scales: {
-                        x: {
-                            title: {
-                                display: true, text: "Top Customer",
-                                position: "top", fontSize: 24, color: "#111",
-                            },
-                        },
-                    },
-                    legend: {
-                        display: true, position: "bottom",
-                        labels: { fontColor: "#333", fontSize: 16 },
-                    },
+                    scales: { x: { title: { display: true, text: "Top Customer",
+                                           position: "top", fontSize: 24, color: "#111" } } },
+                    legend: { display: true, position: "bottom",
+                              labels: { fontColor: "#333", fontSize: 16 } },
                 };
                 if (self._charts.top_customer) self._charts.top_customer.destroy();
                 self._charts.top_customer = new Chart(ctx, { type: "pie", data, options });
@@ -178,7 +213,7 @@ export class PosDashboard extends Component {
     render_top_product_graph() {
         const self = this;
         const ctx = $(".top_selling_product");
-        return this.orm.call('pos.order', 'get_the_top_products', [this.state.config_id])
+        return this.orm.call('pos.order', 'get_the_top_products', this._filter_args())
             .then(function (arrays) {
                 const data = {
                     labels: arrays[1],
@@ -186,36 +221,22 @@ export class PosDashboard extends Component {
                         label: "Quantity",
                         data: arrays[0],
                         backgroundColor: [
-                            "rgba(255, 99, 132,1)",
-                            "rgba(54, 162, 235,1)",
-                            "rgba(75, 192, 192,1)",
-                            "rgba(153, 102, 255,1)",
-                            "rgba(10,20,30,1)",
+                            "rgba(255, 99, 132,1)", "rgba(54, 162, 235,1)",
+                            "rgba(75, 192, 192,1)", "rgba(153, 102, 255,1)", "rgba(10,20,30,1)",
                         ],
                         borderColor: [
-                            "rgba(255, 99, 132, 0.2)",
-                            "rgba(54, 162, 235, 0.2)",
-                            "rgba(75, 192, 192, 0.2)",
-                            "rgba(153, 102, 255, 0.2)",
-                            "rgba(10,20,30,0.3)",
+                            "rgba(255, 99, 132, 0.2)", "rgba(54, 162, 235, 0.2)",
+                            "rgba(75, 192, 192, 0.2)", "rgba(153, 102, 255, 0.2)", "rgba(10,20,30,0.3)",
                         ],
                         borderWidth: 1,
                     }],
                 };
                 const options = {
                     responsive: true, indexAxis: 'y',
-                    legend: {
-                        display: true, position: "bottom",
-                        labels: { fontColor: "#333", fontSize: 16 },
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true, text: "Top products",
-                                position: "top", fontSize: 24, color: "#111",
-                            },
-                        },
-                    },
+                    legend: { display: true, position: "bottom",
+                              labels: { fontColor: "#333", fontSize: 16 } },
+                    scales: { x: { title: { display: true, text: "Top products",
+                                           position: "top", fontSize: 24, color: "#111" } } },
                 };
                 if (self._charts.top_products) self._charts.top_products.destroy();
                 self._charts.top_products = new Chart(ctx, { type: "bar", data, options });
@@ -225,7 +246,7 @@ export class PosDashboard extends Component {
     render_product_category_graph() {
         const self = this;
         const ctx = $(".top_product_categories");
-        return this.orm.call('pos.order', 'get_the_top_categories', [this.state.config_id])
+        return this.orm.call('pos.order', 'get_the_top_categories', this._filter_args())
             .then(function (arrays) {
                 const data = {
                     labels: arrays[1],
@@ -233,36 +254,22 @@ export class PosDashboard extends Component {
                         label: "Quantity",
                         data: arrays[0],
                         backgroundColor: [
-                            "rgba(255, 99, 132,1)",
-                            "rgba(54, 162, 235,1)",
-                            "rgba(75, 192, 192,1)",
-                            "rgba(153, 102, 255,1)",
-                            "rgba(10,20,30,1)",
+                            "rgba(255, 99, 132,1)", "rgba(54, 162, 235,1)",
+                            "rgba(75, 192, 192,1)", "rgba(153, 102, 255,1)", "rgba(10,20,30,1)",
                         ],
                         borderColor: [
-                            "rgba(255, 99, 132, 0.2)",
-                            "rgba(54, 162, 235, 0.2)",
-                            "rgba(75, 192, 192, 0.2)",
-                            "rgba(153, 102, 255, 0.2)",
-                            "rgba(10,20,30,0.3)",
+                            "rgba(255, 99, 132, 0.2)", "rgba(54, 162, 235, 0.2)",
+                            "rgba(75, 192, 192, 0.2)", "rgba(153, 102, 255, 0.2)", "rgba(10,20,30,0.3)",
                         ],
                         borderWidth: 1,
                     }],
                 };
                 const options = {
                     responsive: true, indexAxis: 'y',
-                    legend: {
-                        display: true, position: "bottom",
-                        labels: { fontColor: "#333", fontSize: 16 },
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true, text: "Top product categories",
-                                position: "top", fontSize: 24, color: "#111",
-                            },
-                        },
-                    },
+                    legend: { display: true, position: "bottom",
+                              labels: { fontColor: "#333", fontSize: 16 } },
+                    scales: { x: { title: { display: true, text: "Top product categories",
+                                           position: "top", fontSize: 24, color: "#111" } } },
                 };
                 if (self._charts.top_categories) self._charts.top_categories.destroy();
                 self._charts.top_categories = new Chart(ctx, { type: "bar", data, options });
@@ -321,7 +328,8 @@ export class PosDashboard extends Component {
                 res_model: 'pos.order',
                 view_mode: 'tree,form,calendar',
                 views: [[false, 'list'], [false, 'form']],
-                domain: [['amount_total', '<', 0.0], ['date_order', '<=', date], ['date_order', '>=', yesterday]],
+                domain: [['amount_total', '<', 0.0],
+                         ['date_order', '<=', date], ['date_order', '>=', yesterday]],
                 target: 'current',
             }, { on_reverse_breadcrumb: self.on_reverse_breadcrumb });
         });

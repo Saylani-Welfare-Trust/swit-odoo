@@ -5,16 +5,45 @@
         <div class="oh_dashboards">
         <div class="container-fluid o_pos_dashboard">
         <div class="row mb-3 p-3 bg-light rounded shadow-sm" style="margin: 10px 0;">
-            <div class="col-md-4">
+            <div class="col-md-2">
+                <label class="form-label fw-bold mb-1">From Date</label>
+                <input type="date" class="form-control"
+                       t-model="state.date_from"
+                       t-on-change="onchange_filter"/>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold mb-1">To Date</label>
+                <input type="date" class="form-control"
+                       t-model="state.date_to"
+                       t-on-change="onchange_filter"/>
+            </div>
+            <div class="col-md-3">
                 <label class="form-label fw-bold mb-1">Shop</label>
-                <select class="form-select" t-on-change="onchange_shop">
+                <select class="form-select"
+                        t-model="state.config_id"
+                        t-on-change="onchange_filter">
                     <option value="">All Shops</option>
                     <t t-foreach="state.shops" t-as="shop" t-key="shop.id">
                         <option t-att-value="shop.id" t-esc="shop.name"/>
                     </t>
                 </select>
             </div>
-        </div>    
+            <div class="col-md-5 d-flex align-items-end gap-2">
+                <button class="btn btn-outline-secondary" t-on-click="clear_filter">
+                    Clear
+                </button>
+                <div class="ms-auto d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary"
+                            t-on-click="() => this.set_quick_date('today')">Today</button>
+                    <button class="btn btn-sm btn-outline-primary"
+                            t-on-click="() => this.set_quick_date('this_month')">This Month</button>
+                    <button class="btn btn-sm btn-outline-primary"
+                            t-on-click="() => this.set_quick_date('last_month')">Last Month</button>
+                    <button class="btn btn-sm btn-outline-primary"
+                            t-on-click="() => this.set_quick_date('this_year')">This Year</button>
+                </div>
+            </div>
+        </div>
         <div class="row main-section" align="center">
             <div class="col-md-4 col-sm-6 pos_order_today oh-payslip"
                  t-on-click="pos_order_today">
