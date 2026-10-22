@@ -85,7 +85,7 @@
                     <div class="card h-100 shadow-sm border-top border-4 border-warning">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title text-warning mb-0">Bank Transfers / Deposits</h5>
+                                <h5 class="card-title text-warning mb-0">Bank Transfers / Direct Deposits</h5>
                                 <div class="d-flex gap-1">
                                     <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.createCustomModel('direct.deposit')">New</button>
                                     <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
