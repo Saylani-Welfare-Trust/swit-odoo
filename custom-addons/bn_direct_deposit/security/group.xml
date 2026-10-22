@@ -5,4 +5,9 @@
         <field name="name">Direct Deposit / POS Action</field>
     </record>
 
+    <!-- Extend the Treasury group to also imply Direct Deposit menu -->
+    <!-- <record id="bn_pos_cheque.group_treasury" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('direct_deposit_pos_action_group'))]"/>
+    </record> -->
+
 </odoo>

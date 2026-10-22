@@ -83,7 +83,7 @@
         id="journal_transfer_menu"
         name="Journal Transfer"
         action="journal_transfer_action"
-        groups="journal_transfer_group"
+        groups="journal_transfer_group"  
         parent="bn_pos_cheque.treasury_menu"
         sequence="3"/>
 

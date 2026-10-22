@@ -86,7 +86,7 @@
         id="pos_cheque_menu"
         name="POS Cheque"
         action="pos_cheque_action"
-        groups="bn_pos_cheque.group_treasury"
+        groups="pos_cheque_menu_group"
         parent="bn_pos_cheque.treasury_menu"
         sequence="1"/>
 
