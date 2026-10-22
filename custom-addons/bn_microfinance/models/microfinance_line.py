@@ -38,7 +38,9 @@ class MicrofinanceLine(models.Model):
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id', default=0)
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id', compute='_compute_remaining_amount', store=True)
     donee_id = fields.Many2one('res.partner', string="Donee")
-    currency_id = fields.Many2one(related='microfinance_id.currency_id', string="Currency")
+    # NOTE: duplicate 'currency_id' declaration removed; the stored related
+    # definition (store=True) is the effective one kept here.
+    currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
 
     state = fields.Selection(selection=state_selection, string='State', default="unpaid")
     state_cheque = fields.Selection(selection=state_cheque_selection, string='Cheque Status', default='draft')
@@ -47,7 +49,6 @@ class MicrofinanceLine(models.Model):
     payment_date = fields.Date('Payment Date')
     paid_date = fields.Date('Paid Date')
 
-    currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
     @api.depends('state')
     def _get_payment_status(self):
         for line in self:

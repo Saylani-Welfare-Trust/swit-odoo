@@ -25,7 +25,7 @@
     <menuitem
         id="microfinance_profile_management_menu"
         name="Profile"
-        parent="bn_microfinance.microfinance_menu"
+        parent="microfinance_menu"
         sequence="2"/>
 
     <menuitem
