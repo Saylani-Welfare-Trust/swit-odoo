@@ -265,7 +265,8 @@ class PosOrder(models.Model):
 
         self._cr.execute("""
             select (product_template.name)->>'en_US' as product_name,
-                   sum(qty) as total_quantity
+                   sum(case when qty > 0 then qty else 0 end) as sales_qty,
+                   sum(case when qty < 0 then qty else 0 end) as refund_qty
             from pos_order_line
             inner join product_product on product_product.id = pos_order_line.product_id
             inner join product_template on product_product.product_tmpl_id = product_template.id
@@ -276,7 +277,13 @@ class PosOrder(models.Model):
             limit 10
         """ % (join, company_id, where_extra))
         docs = self._cr.dictfetchall()
-        return [[r.get('total_quantity') for r in docs], [r.get('product_name') for r in docs]]
+        
+        # Return 3 arrays: [Sales Data, Refund Data, Labels]
+        return [
+            [r.get('sales_qty') for r in docs],
+            [r.get('refund_qty') for r in docs],
+            [r.get('product_name') for r in docs]
+        ]
 
     @api.model
     def get_the_top_categories(self, config_id=None, date_from=None, date_to=None):
@@ -297,7 +304,8 @@ class PosOrder(models.Model):
 
         self._cr.execute("""
             select product_category.complete_name as product_category,
-                   sum(qty) as total_quantity
+                   sum(case when qty > 0 then qty else 0 end) as sales_qty,
+                   sum(case when qty < 0 then qty else 0 end) as refund_qty
             from pos_order_line
             inner join product_product on product_product.id = pos_order_line.product_id
             inner join product_template on product_product.product_tmpl_id = product_template.id
@@ -309,4 +317,10 @@ class PosOrder(models.Model):
             limit 10
         """ % (join, company_id, where_extra))
         docs = self._cr.dictfetchall()
-        return [[r.get('total_quantity') for r in docs], [r.get('product_category') for r in docs]]
+        
+        # Return 3 arrays: [Sales Data, Refund Data, Labels]
+        return [
+            [r.get('sales_qty') for r in docs],
+            [r.get('refund_qty') for r in docs],
+            [r.get('product_category') for r in docs]
+        ]
