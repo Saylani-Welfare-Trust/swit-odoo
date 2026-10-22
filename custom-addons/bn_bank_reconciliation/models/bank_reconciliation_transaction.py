@@ -129,6 +129,12 @@ class BankReconciliationTransaction(models.Model):
         compute='_compute_is_already_reconciled',
         store=False
     )
+    reconciliation_move_id = fields.Many2one(
+        'account.move',
+        string='Reconciliation Entry',
+        compute='_compute_reconciliation_move_id',
+        help='Entry created by Validate & Complete that moves this line from the holding account to the Posted Account'
+    )
 
     is_adjustment = fields.Boolean(
         string='Is Adjustment Entry',
@@ -198,6 +204,17 @@ class BankReconciliationTransaction(models.Model):
             else:
                 record.matched_move_line_name = False
                 record.matched_move_ref = False
+
+    @api.depends('state', 'master_id.move_id', 'master_id.posted_account_id', 'matched_move_line_id.account_id')
+    def _compute_reconciliation_move_id(self):
+        for record in self:
+            master = record.master_id
+            # A line already booked on the Posted Account is not part of that entry
+            if (record.state == 'reconciled' and master.move_id
+                    and record.matched_move_line_id.account_id != master.posted_account_id):
+                record.reconciliation_move_id = master.move_id
+            else:
+                record.reconciliation_move_id = False
 
     def _compute_is_already_reconciled(self):
         for record in self:
@@ -793,6 +810,18 @@ class BankReconciliationTransaction(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'account.move.line',
             'res_id': self.matched_move_line_id.id,
+            'view_mode': 'form',
+            'target': 'current'
+        }
+
+    def action_view_reconciliation_move(self):
+        self.ensure_one()
+        if not self.reconciliation_move_id:
+            raise UserError(_('No reconciliation entry found for this line.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'res_id': self.reconciliation_move_id.id,
             'view_mode': 'form',
             'target': 'current'
         }

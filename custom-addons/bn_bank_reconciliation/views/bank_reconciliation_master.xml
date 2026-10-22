@@ -109,8 +109,12 @@
                                             class="btn-primary"
                                             invisible="state != 'matched'"/>
                                     <button name="action_view_related_move" type="object"
-                                            string="View Entry" icon="fa-eye"
+                                            string="Original Entry" icon="fa-eye"
                                             invisible="not matched_move_id"/>
+                                    <field name="reconciliation_move_id" column_invisible="1"/>
+                                    <button name="action_view_reconciliation_move" type="object"
+                                            string="Reconciliation Entry" icon="fa-book"
+                                            invisible="not reconciliation_move_id"/>
                                     <button name="action_view_related_move_line" type="object"
                                             string="View Line" icon="fa-list"
                                             invisible="not matched_move_line_id"/>
@@ -147,7 +151,7 @@
                                             class="btn-primary"
                                             invisible="state != 'matched'"/>
                                     <button name="action_view_related_move" type="object"
-                                            string="View Entry" icon="fa-eye"
+                                            string="Original Entry" icon="fa-eye"
                                             invisible="not matched_move_id"/>
                                     <button name="action_view_related_move_line" type="object"
                                             string="View Line" icon="fa-list"
@@ -193,8 +197,12 @@
                                             string="Reject Match" icon="fa-times"
                                             invisible="state != 'matched'"/>
                                     <button name="action_view_related_move" type="object"
-                                            string="View Entry" icon="fa-eye"
+                                            string="Original Entry" icon="fa-eye"
                                             invisible="not matched_move_id"/>
+                                    <field name="reconciliation_move_id" column_invisible="1"/>
+                                    <button name="action_view_reconciliation_move" type="object"
+                                            string="Reconciliation Entry" icon="fa-book"
+                                            invisible="not reconciliation_move_id"/>
                                     <button name="action_view_related_move_line" type="object"
                                             string="View Line" icon="fa-list"
                                             invisible="not matched_move_line_id"/>
