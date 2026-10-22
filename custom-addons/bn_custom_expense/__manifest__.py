@@ -6,12 +6,16 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/HR Expense Customization',
     'depends': [
-        'hr_expense'
+        'hr_expense',
+        'bn_analytic_account_customization',
     ],
     'data': [
         'security/group.xml',
         'security/access_right.xml',
+        
         'views/hr_expense.xml',
+        
+        'report/report_paperformat.xml',
     ],
     'auto_install': False,
     'application': False,
