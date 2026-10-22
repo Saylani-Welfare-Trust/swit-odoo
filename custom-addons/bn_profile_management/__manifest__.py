@@ -9,7 +9,6 @@
     'depends': [
         'bn_analytic_account_customization',
         'bn_pos_customization',
-        'bn_microfinance'
     ],
     'data': [
         'security/group.xml',
