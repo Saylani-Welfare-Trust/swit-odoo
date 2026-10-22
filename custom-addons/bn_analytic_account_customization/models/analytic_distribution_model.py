@@ -27,63 +27,69 @@ class AnalyticDistributionModel(models.Model):
 
 
     @api.model
+    def _bn_product_commands(self, vals):
+        """product_id is a Many2many here, but Odoo (and imports) may still
+        give one product id, as for the standard Many2one."""
+        if isinstance(vals.get('product_id'), int):
+            vals = dict(vals, product_id=[(6, 0, [vals['product_id']] if vals['product_id'] else [])])
+        return vals
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        return super().create([self._bn_product_commands(vals) for vals in vals_list])
+
+    def write(self, vals):
+        return super().write(self._bn_product_commands(vals))
+
+    @api.model
     def _get_distribution(self, vals):
-        # Make a mutable copy of the input frozendict
+        """Odoo's matching, plus the user's branch: the analytic account of
+        the current user's employee is matched against the model's Branch."""
         vals = dict(vals)
-
-        # Now safe to modify
         vals['analytic_account_id'] = self.env.user.employee_id.analytic_account_id.id
+        return super()._get_distribution(vals)
 
-        """ Returns the distribution model that has the most fields that corresponds to the vals given
-            This method should be called to prefill analytic distribution field on several models """
-        domain = []
-        for fname, value in vals.items():
-            domain += self._create_domain(fname, value) or []
+    def _get_fields_to_check(self):
+        # The chatter (mail.thread / mail.activity.mixin) adds fields such as
+        # message_ids: they are not matching conditions.
+        chatter = set(self.env['mail.thread']._fields) | set(self.env['mail.activity.mixin']._fields)
+        return super()._get_fields_to_check() - chatter
 
-        best_score = 0
-        res = {}
-        fnames = set(self._get_fields_to_check())
+    def _create_domain(self, fname, value):
+        if fname == 'product_id' and value:
+            # product_id holds several products here: a model applies to one
+            # of its products, or to every product when it has none.
+            return ['|', ('product_id', 'in', [value]), ('product_id', '=', False)]
+        return super()._create_domain(fname, value)
 
-        for rec in self.search(domain):
-            try:
-                score = sum(rec._check_score(key, vals.get(key)) for key in fnames)
-
-                if score > best_score:
-                    res = rec.analytic_distribution
-                    best_score = score
-            except NonMatchingDistribution:
-                continue
-        return res
-    
     def _check_score(self, key, value):
+        """As in Odoo: a condition the model sets but the line does not meet
+        rejects the model (NonMatchingDistribution); it does not just score 0."""
         self.ensure_one()
-
-        if key == 'company_id':
-            if not self.company_id or value == self.company_id.id:
-                return 1 if self.company_id else 0.5
+        if key == 'product_id':
+            if not self.product_id:
+                return 0
+            if value and value in self.product_id.ids:
+                return 1
             raise NonMatchingDistribution
-        if not self[key]:
-            return 0
-        if value and ((self[key].id in value) if isinstance(value, (list, tuple))
-                      else (value.startswith(self[key])) if key.endswith('_prefix')
-                      else (value == self[key].id) if key != 'product_id' else  (value in self[key].ids)
-                      ):
-            return 1
-        
-        return 0
-    
+        return super()._check_score(key, value)
+
     @api.onchange('analytic_account_id')
     def _onchange_analytic_account_id(self):
-        if self.analytic_account_id:
-            if self.analytic_distribution:
-                analytic_distribution = self.analytic_distribution
-                self.analytic_distribution = {}
-
-                for key, value in analytic_distribution.items():
-                    custom_key = f"{str(self.analytic_account_id.id)},{key}"
-                    
-                    self.analytic_distribution[custom_key] = value
-            else:
-                self.analytic_distribution = {
-                    str(self.analytic_account_id.id): 100
-                }
+        """Put the Branch in front of every distribution line, replacing a
+        branch of the same plan chosen before (instead of piling them up)."""
+        branch = self.analytic_account_id
+        if not branch:
+            return
+        distribution = self.analytic_distribution or {}
+        if not distribution:
+            self.analytic_distribution = {str(branch.id): 100}
+            return
+        Account = self.env['account.analytic.account']
+        new = {}
+        for key, value in distribution.items():
+            ids = [int(i) for i in key.split(',') if i]
+            others = [i for i in ids if Account.browse(i).plan_id != branch.plan_id]
+            new_key = ','.join(str(i) for i in [branch.id] + others)
+            new[new_key] = new.get(new_key, 0) + value
+        self.analytic_distribution = new

@@ -7,3 +7,5 @@ access_sub_zone_user,sub.zone.user,model_sub_zone,analytic_account_customization
 access_sub_zone_manager,sub.zone.manager,model_sub_zone,analytic_account_customization_manager_group,1,1,1,0
 access_sub_zone_admin,sub.zone.admin,model_sub_zone,analytic_account_customization_admin_group,1,1,1,1
 access_sub_zone_audit,sub.zone.audit,model_sub_zone,analytic_account_customization_audit_group,1,0,0,0
+access_location_option_employee,location.option.employee,model_location_option,base.group_user,1,0,0,0
+access_sub_zone_employee,sub.zone.employee,model_sub_zone,base.group_user,1,0,0,0

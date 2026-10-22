@@ -26,6 +26,7 @@
         id="analytical_accounting_menu"
         name="Analytical Accounting"
         parent="bn_master_setup.master_setup_menu"
+        groups="analytic_account_customization_root_group"
         sequence="0"/>
 
     <menuitem
