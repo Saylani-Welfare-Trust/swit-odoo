@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_company_form_inherit_bn_qurbani" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.qurbani</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="bn_pos_custom_action.base_view_company_form_inherit_bn_pos_custom_action"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='product_configuration']//group[@name='product_configuration_col_1']" position="inside">
+                <field name="web_no_meat_distribution_location_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
