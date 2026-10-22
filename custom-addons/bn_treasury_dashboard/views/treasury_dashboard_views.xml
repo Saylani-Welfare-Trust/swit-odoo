@@ -6,10 +6,15 @@
         <field name="tag">treasury_dashboard</field>
     </record>
 
-    <!-- 2. Sub Menu attached to the existing Treasury menu in bn_pos_cheque -->
-    <menuitem id="menu_treasury_dashboard"
+    <!-- 2. Root menu: Dashboard (top-level app bar item) -->
+    <menuitem id="menu_dashboard_root"
               name="Dashboard"
-              parent="bn_pos_cheque.treasury_menu"
+              sequence="10"/>
+
+    <!-- 3. Sub menu: Treasury Dashboard under Dashboard -->
+    <menuitem id="menu_treasury_dashboard"
+              name="Treasury Dashboard"
+              parent="menu_dashboard_root"
               action="action_treasury_dashboard"
-              sequence="0"/>
+              sequence="1"/>
 </odoo>
