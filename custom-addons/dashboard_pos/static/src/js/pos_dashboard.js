@@ -69,12 +69,14 @@ export class PosDashboard extends Component {
     async fetch_data() {
         const args = this._filter_args();
         const result = await this.orm.call('pos.order', 'get_refund_details', args);
+        
+        // ADD .toLocaleString('en-US') TO FORMAT NUMBERS WITH COMMAS
         this.state.total_sale         = result['total_sale'];
-        this.state.total_order_count  = result['total_order_count'];
-        this.state.total_refund_count = result['total_refund_count'];
-        this.state.total_session      = result['total_session'];
-        this.state.today_refund_total = result['today_refund_total'];
-        this.state.today_sale         = result['today_sale'];
+        this.state.total_order_count  = (result['total_order_count'] || 0).toLocaleString('en-US');
+        this.state.total_refund_count = (result['total_refund_count'] || 0).toLocaleString('en-US');
+        this.state.total_session      = (result['total_session'] || 0).toLocaleString('en-US');
+        this.state.today_refund_total = (result['today_refund_total'] || 0).toLocaleString('en-US');
+        this.state.today_sale         = (result['today_sale'] || 0).toLocaleString('en-US');
 
         const data = await this.orm.call('pos.order', 'get_details', args);
         this.state.payment_details = data['payment_details'];

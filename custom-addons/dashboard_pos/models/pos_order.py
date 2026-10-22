@@ -188,11 +188,16 @@ class PosOrder(models.Model):
             for c in configs
         ]
 
-        # ---------- currency formatting ----------
+        # ---------- currency formatting (UPDATED WITH COMMAS) ----------
         currency = self.env.company.currency_id
         def _fmt(v):
-            return ("%s %s" % (v, currency.symbol) if currency.position == 'after'
-                    else "%s %s" % (currency.symbol, v))
+            try:
+                # Adds commas (e.g. 1234567.89 -> 1,234,567.89)
+                val = "{:,.2f}".format(float(v or 0.0))
+            except (ValueError, TypeError):
+                val = "0.00"
+            return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
+                    else "%s %s" % (currency.symbol, val))
 
         payments    = [(r[0], _fmt(r[1])) for r in payment_details]
         total_sales = [(r[0], _fmt(r[1]), r[2]) for r in salesperson]
