@@ -272,7 +272,7 @@ class PosOrder(models.Model):
             %s
             where pos_order_line.company_id = %d%s
             group by product_template.id
-            order by total_quantity DESC
+            order by ABS(sum(qty)) DESC
             limit 10
         """ % (join, company_id, where_extra))
         docs = self._cr.dictfetchall()
@@ -305,7 +305,8 @@ class PosOrder(models.Model):
             %s
             where pos_order_line.company_id = %d%s
             group by product_category
-            order by total_quantity DESC
+            order by ABS(sum(qty)) DESC
+            limit 10
         """ % (join, company_id, where_extra))
         docs = self._cr.dictfetchall()
         return [[r.get('total_quantity') for r in docs], [r.get('product_category') for r in docs]]

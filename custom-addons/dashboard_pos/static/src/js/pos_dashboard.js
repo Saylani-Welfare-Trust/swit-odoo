@@ -217,30 +217,52 @@ export class PosDashboard extends Component {
         const ctx = $(".top_selling_product");
         return this.orm.call('pos.order', 'get_the_top_products', this._filter_args())
             .then(function (arrays) {
+                const values = arrays[0];
+                // Truncate long product names
+                const labels = arrays[1].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
+
+                // Split positives and negatives
+                const positives = values.map(v => v >= 0 ? v : null);
+                const negatives = values.map(v => v < 0 ? v : null);
+
                 const data = {
-                    labels: arrays[1],
-                    datasets: [{
-                        label: "Quantity",
-                        data: arrays[0],
-                        backgroundColor: [
-                            "rgba(255, 99, 132,1)", "rgba(54, 162, 235,1)",
-                            "rgba(75, 192, 192,1)", "rgba(153, 102, 255,1)", "rgba(10,20,30,1)",
-                        ],
-                        borderColor: [
-                            "rgba(255, 99, 132, 0.2)", "rgba(54, 162, 235, 0.2)",
-                            "rgba(75, 192, 192, 0.2)", "rgba(153, 102, 255, 0.2)", "rgba(10,20,30,0.3)",
-                        ],
-                        borderWidth: 1,
-                    }],
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales',
+                            data: positives,
+                            backgroundColor: 'rgba(67, 233, 123, 0.85)',
+                            borderColor: 'rgba(67, 233, 123, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'Refunds',
+                            data: negatives,
+                            backgroundColor: 'rgba(255, 106, 136, 0.85)',
+                            borderColor: 'rgba(255, 106, 136, 1)',
+                            borderWidth: 1,
+                        },
+                    ],
                 };
                 const options = {
                     responsive: true,
                     maintainAspectRatio: false,
                     indexAxis: 'y',
-                    legend: { display: true, position: "bottom",
-                              labels: { fontColor: "#333", fontSize: 16 } },
-                    scales: { x: { title: { display: true, text: "Top products",
-                                           position: "top", fontSize: 24, color: "#111" } } },
+                    scales: {
+                        x: {
+                            beginAtZero: true, // Keeps the 0-line centered when negatives exist
+                            ticks: {
+                                callback: v => Number(v).toLocaleString('en-US'),
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+                            labels: { font: { size: 12 }, boxWidth: 12, padding: 10 },
+                        },
+                    },
                 };
                 if (self._charts.top_products) self._charts.top_products.destroy();
                 self._charts.top_products = new Chart(ctx, { type: "bar", data, options });
@@ -252,29 +274,52 @@ export class PosDashboard extends Component {
         const ctx = $(".top_product_categories");
         return this.orm.call('pos.order', 'get_the_top_categories', this._filter_args())
             .then(function (arrays) {
+                const values = arrays[0];
+                // Truncate long category names
+                const labels = arrays[1].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
+
+                // Split positives and negatives
+                const positives = values.map(v => v >= 0 ? v : null);
+                const negatives = values.map(v => v < 0 ? v : null);
+
                 const data = {
-                    labels: arrays[1],
-                    datasets: [{
-                        label: "Quantity",
-                        data: arrays[0],
-                        backgroundColor: [
-                            "rgba(255, 99, 132,1)", "rgba(54, 162, 235,1)",
-                            "rgba(75, 192, 192,1)", "rgba(153, 102, 255,1)", "rgba(10,20,30,1)",
-                        ],
-                        borderColor: [
-                            "rgba(255, 99, 132, 0.2)", "rgba(54, 162, 235, 0.2)",
-                            "rgba(75, 192, 192, 0.2)", "rgba(153, 102, 255, 0.2)", "rgba(10,20,30,0.3)",
-                        ],
-                        borderWidth: 1,
-                    }],
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Sales',
+                            data: positives,
+                            backgroundColor: 'rgba(67, 233, 123, 0.85)',
+                            borderColor: 'rgba(67, 233, 123, 1)',
+                            borderWidth: 1,
+                        },
+                        {
+                            label: 'Refunds',
+                            data: negatives,
+                            backgroundColor: 'rgba(255, 106, 136, 0.85)',
+                            borderColor: 'rgba(255, 106, 136, 1)',
+                            borderWidth: 1,
+                        },
+                    ],
                 };
                 const options = {
                     responsive: true,
-                    maintainAspectRatio: false,indexAxis: 'y',
-                    legend: { display: true, position: "bottom",
-                              labels: { fontColor: "#333", fontSize: 16 } },
-                    scales: { x: { title: { display: true, text: "Top product categories",
-                                           position: "top", fontSize: 24, color: "#111" } } },
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true, // Keeps the 0-line centered when negatives exist
+                            ticks: {
+                                callback: v => Number(v).toLocaleString('en-US'),
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+                            labels: { font: { size: 12 }, boxWidth: 12, padding: 10 },
+                        },
+                    },
                 };
                 if (self._charts.top_categories) self._charts.top_categories.destroy();
                 self._charts.top_categories = new Chart(ctx, { type: "bar", data, options });
