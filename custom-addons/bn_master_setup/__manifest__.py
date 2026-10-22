@@ -13,10 +13,10 @@
         'account',
     ],
     'data': [
+        'data/ir_module_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         
-        'data/ir_module_category.xml',
         
         'views/menu.xml',
         'views/city.xml',
