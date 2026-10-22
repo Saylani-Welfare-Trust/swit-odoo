@@ -14,7 +14,11 @@ export class TreasuryDashboard extends Component {
             date_from: '',
             date_to: '',
             branch_id: '',
+            province_id: '',
+            city: '',
             analytic_accounts: [],
+            provinces: [],
+            cities: [],
             currency: { symbol: '$', position: 'before' },
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
@@ -29,15 +33,18 @@ export class TreasuryDashboard extends Component {
             date_from: this.state.date_from,
             date_to: this.state.date_to,
             analytic_account_id: this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+            province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+            city: this.state.city || null,
         });
         this.state.analytic_accounts = data.analytic_accounts || [];
+        this.state.provinces = data.provinces || [];
+        this.state.cities = data.cities || [];
         this.state.currency  = data.currency;
         this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
         this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
         this.state.transfers = { ...this.state.transfers, ...data.transfers };
     }
 
-    // NEW helper (optional but clean)
     getStateAmount(category, stateName) {
         const amounts = this.state[category].state_amounts || {};
         return amounts[stateName] || 0;
@@ -51,6 +58,8 @@ export class TreasuryDashboard extends Component {
         this.state.date_from = '';
         this.state.date_to = '';
         this.state.branch_id = '';
+        this.state.province_id = '';
+        this.state.city = '';
         this.applyFilter();
     }
 
@@ -88,23 +97,18 @@ export class TreasuryDashboard extends Component {
         if (!stateName) return 'bg-secondary text-white';
         const s = stateName.toLowerCase();
         
-        // Green for successful/cleared states
         if (['clear', 'cleared', 'posted', 'paid', 'done', 'transfer', 'transferred'].includes(s)) {
             return 'bg-success text-white';
         }
-        // Orange for pending/draft states
         if (['draft', 'pending', 'to_pay', 'unpaid', 'to_validate', 'waiting'].includes(s)) {
             return 'bg-warning text-dark'; 
         }
-        // Red for failed/cancelled states
         if (['bounce', 'bounced', 'cancel', 'cancelled', 'late', 'rejected'].includes(s)) {
             return 'bg-danger text-white';
         }
-        // Blue for informational states
         if (['new', 'in_progress', 'open'].includes(s)) {
             return 'bg-info text-dark';
         }
-        // Default grey for anything else
         return 'bg-secondary text-white';
     }
 
