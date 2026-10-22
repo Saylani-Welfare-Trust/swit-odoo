@@ -8,6 +8,13 @@ class BankStatementConfig(models.Model):
 
 
     name = fields.Char('Name', tracking=True)
+    journal_id = fields.Many2one(
+        'account.journal',
+        string='Journal',
+        domain="[('type', 'in', ['bank', 'cash'])]",
+        tracking=True,
+        help='Bank journal of this statement, selected automatically on a bank reconciliation'
+    )
 
     bank_statement_header_line_ids = fields.One2many('bank.statement.config.header', 'bank_statement_config_id', string="Bank Statement Header Lines")
 

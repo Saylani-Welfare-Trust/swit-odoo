@@ -53,9 +53,6 @@
                     <button name="action_reject_match" type="object"
                             string="Reject Match" class="btn-danger"
                             invisible="state != 'matched'"/>
-                    <button name="action_manual_reconcile" type="object"
-                            string="Manual Reconcile" class="btn-primary"
-                            invisible="state not in ['matched','unmatched']"/>
                     <button name="action_view_related_move" type="object"
                             string="View Entry" class="btn-info"
                             invisible="not matched_move_id"/>

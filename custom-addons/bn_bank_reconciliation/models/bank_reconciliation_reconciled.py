@@ -191,23 +191,39 @@ class BankReconciliationReconciled(models.Model):
         if self.master_id.state == 'completed':
             raise UserError(_('Cannot unreconcile from a completed reconciliation.'))
         
+        # Statement lines matched together with one entry are unreconciled together
+        group = self
+        if self.matched_move_line_id:
+            group |= self.search([
+                ('master_id', '=', self.master_id.id),
+                ('matched_move_line_id', '=', self.matched_move_line_id.id),
+            ])
+
         # Reconciled records are never deleted: archive to keep the history
-        self.active = False
-        
+        group.write({'active': False})
+
         # The matched entry is the journal's own accounting entry: it is only
         # released for matching again, never cancelled or deleted.
-        if self.transaction_id:
-            released_lines = self.transaction_id._release_move_lines()
-            self.transaction_id.write({
+        transactions = group.mapped('transaction_id')
+        if transactions:
+            released_lines = transactions._release_move_lines()
+            transactions.write({
                 'state': 'matched',
                 'reconciled': False,
                 'reconciled_date': False,
                 'reconciled_by': False,
             })
-            if len(released_lines.mapped('move_id')) > 1:
-                # Only one entry is kept as the pending match, so a match made
-                # against several entries has to be done again
-                self.transaction_id.action_reject_match()
+            if len(group) > 1 or len(released_lines.mapped('move_id')) > 1:
+                # Only one entry is kept as the pending match of one statement line,
+                # so a match against several entries or of several lines has to be
+                # done again
+                for transaction in transactions:
+                    transaction.action_reject_match()
+
+        # An entry the reconciliation created for these lines is not needed any more
+        group.mapped('matched_move_id').filtered(
+            lambda move: move.bank_reconciliation_created_id and move.state == 'draft'
+        ).button_cancel()
         
         return True
 

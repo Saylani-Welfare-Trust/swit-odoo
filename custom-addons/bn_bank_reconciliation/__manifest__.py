@@ -26,6 +26,7 @@
         'views/bank_statement_config.xml',
         
         'wizards/reconcile_wizard.xml',
+        'wizards/multi_match_wizard.xml',
         'wizards/import_bank_statement.xml',
     ],
     'auto_install': False,

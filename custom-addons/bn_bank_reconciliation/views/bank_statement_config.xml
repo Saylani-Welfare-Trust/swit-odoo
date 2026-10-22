@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <tree>
                 <field name="name" />
+                <field name="journal_id" />
             </tree>
         </field>
     </record>
@@ -21,6 +22,11 @@
                         <label for="name" string="Name"/>
                         <h1><field name="name" class="oe_inline" /></h1>
                     </div>
+                    <group>
+                        <group>
+                            <field name="journal_id" options="{'no_create': True}" />
+                        </group>
+                    </group>
 
                     <notebook>
                         <page name="gateway_config_header" string="Config. Header">

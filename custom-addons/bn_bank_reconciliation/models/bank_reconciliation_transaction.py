@@ -325,7 +325,12 @@ class BankReconciliationTransaction(models.Model):
                     'move_line_display': move_line.display_name or move_line.name,
                     'move_ref': move_line.move_id.ref or '',
                 })
-        return sorted(matches, key=lambda x: x['score'], reverse=True)
+        # On the same score the entry closest to the statement date comes first,
+        # so that same-amount donations are not matched with another day's entry
+        return sorted(matches, key=lambda x: (
+            -x['score'],
+            abs((x['date'] - self.date).days) if self.date and x['date'] else 0,
+        ))
 
     def _check_amount_match(self, move_line):
         tolerance = self.master_id.match_tolerance_amount or 0.01
@@ -564,9 +569,12 @@ class BankReconciliationTransaction(models.Model):
         if existing:
             raise UserError(_('This transaction already has a reconciled record. Cannot reconcile again.'))
         if self.matched_move_line_id.is_bank_reconciled:
-            raise UserError(_(
-                'The matched journal item (%s) is already reconciled with another bank statement line.'
-            ) % self.matched_move_line_id.display_name)
+            # Statement lines matched together with one entry share its journal item
+            owner = self.matched_move_line_id.bank_reconciliation_transaction_id
+            if owner.master_id != self.master_id or owner.matched_move_line_id != self.matched_move_line_id:
+                raise UserError(_(
+                    'The matched journal item (%s) is already reconciled with another bank statement line.'
+                ) % self.matched_move_line_id.display_name)
         
         Reconciled = self.env['bank.reconciliation.reconciled']
         vals = {

@@ -5,4 +5,10 @@
         <field name="name">Bank Reconciliation / Menu</field>
     </record>
 
+    <record id="bank_reconciliation_master_reconcile_group" model="res.groups">
+        <field name="name">Bank Reconciliation / Master Reconcile</field>
+        <field name="implied_ids" eval="[(4, ref('bank_reconciliation_group'))]"/>
+        <field name="comment">Can accept all matched statement lines of a reconciliation at once with Master Reconcile.</field>
+    </record>
+
 </odoo>

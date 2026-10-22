@@ -20,6 +20,14 @@ class AccountMove(models.Model):
         'bank.reconciliation.master',
         string='Bank Reconciliations'
     )
+    bank_reconciliation_created_id = fields.Many2one(
+        'bank.reconciliation.master',
+        string='Created by Bank Reconciliation',
+        readonly=True,
+        copy=False,
+        index='btree_not_null',
+        help='Bank reconciliation that created this entry for statement lines with no entry in Odoo'
+    )
 
     @api.depends('line_ids.is_bank_reconciled', 'line_ids.bank_reconciliation_id')
     def _compute_bank_reconciliation(self):

@@ -106,6 +106,12 @@ class BankReconciliationMaster(models.Model):
         string='Unreconciled Transactions',
         compute='_compute_unreconciled_transactions'
     )
+    matched_transaction_ids = fields.One2many(
+        'bank.reconciliation.transaction',
+        'master_id',
+        string='Matched and Reconciled Transactions',
+        compute='_compute_unreconciled_transactions'
+    )
     reconciled_ids = fields.One2many(
         'bank.reconciliation.reconciled',
         'master_id',
@@ -217,6 +223,12 @@ class BankReconciliationMaster(models.Model):
     #         else:
     #             rec.file_type = False
 
+    @api.onchange('bank_statement_config_id')
+    def _onchange_bank_statement_config_id(self):
+        # The journal can only be changed on a draft reconciliation
+        if self.state == 'draft' and self.bank_statement_config_id.journal_id:
+            self.journal_id = self.bank_statement_config_id.journal_id
+
     @api.model
     def create(self, vals):
         if vals.get('name', _('New')) == _('New'):
@@ -245,14 +257,18 @@ class BankReconciliationMaster(models.Model):
         'reconciled_ids.transaction_id'
     )
     def _compute_unreconciled_transactions(self):
+        # Lines with a match (ready to accept) or already reconciled go to the
+        # Reconciled tab; the Unreconciled tab keeps the lines with no match
         for record in self:
             reconciled_transactions = record.reconciled_ids.mapped('transaction_id')
-            record.unreconciled_transaction_ids = record.transaction_ids.filtered(
+            matched = record.transaction_ids.filtered(
                 lambda transaction: (
-                    transaction.state != 'reconciled'
-                    and transaction not in reconciled_transactions
+                    transaction.state in ['matched', 'reconciled']
+                    or transaction in reconciled_transactions
                 )
             )
+            record.matched_transaction_ids = matched
+            record.unreconciled_transaction_ids = record.transaction_ids - matched
 
     @api.depends('transaction_ids', 'transaction_ids.debit', 'transaction_ids.credit', 'reconciled_ids', 'opening_balance')
     def _compute_totals(self):
@@ -286,7 +302,7 @@ class BankReconciliationMaster(models.Model):
             ('master_id.journal_id', '=', journal.id),
         ]
         if transaction:
-            matched_domain.append(('id', '!=', transaction.id))
+            matched_domain.append(('id', 'not in', transaction.ids))
         matched_moves = self.env['bank.reconciliation.transaction'].search(
             matched_domain
         ).mapped('matched_move_line_id.move_id')
@@ -335,11 +351,13 @@ class BankReconciliationMaster(models.Model):
         
         if processed == 0:
             raise UserError(_('No transactions were processed for matching.'))
-        
+
         self.state = 'in_progress'
 
     def action_master_reconcile(self):
         self.ensure_one()
+        if not self.env.user.has_group('bn_bank_reconciliation.bank_reconciliation_master_reconcile_group'):
+            raise UserError(_('You are not allowed to use Master Reconcile.'))
         if self.state == 'completed':
             raise UserError(_('This reconciliation is already completed.'))
         if self.state == 'cancelled':
@@ -367,8 +385,21 @@ class BankReconciliationMaster(models.Model):
         
         if reconciled_count == 0:
             raise UserError(_('No transactions were reconciled.'))
-        
+
         self.state = 'in_progress'
+
+    def action_open_multi_match(self):
+        self.ensure_one()
+        if self.state not in ['uploaded', 'in_progress']:
+            raise UserError(_('Statement lines can only be matched while the reconciliation is uploaded or in progress.'))
+        return {
+            'name': _('Match Several Statement Lines'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'reconcile.multi.match.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_master_id': self.id},
+        }
 
     def action_validate_reconciliation(self):
         self.ensure_one()
@@ -479,6 +510,11 @@ class BankReconciliationMaster(models.Model):
         # Reconciled records are never deleted: archive them to keep the history
         self.reconciled_ids.write({'active': False})
         self.transaction_ids._release_move_lines()
+        # Entries created for statement lines with no entry in Odoo are not needed any more
+        self.env['account.move'].search([
+            ('bank_reconciliation_created_id', '=', self.id),
+            ('state', '=', 'draft'),
+        ]).button_cancel()
         
         self.transaction_ids.write({
             'state': 'draft',

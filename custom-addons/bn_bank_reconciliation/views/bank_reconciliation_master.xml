@@ -35,7 +35,11 @@
                             invisible="state != 'uploaded'"/>
                     <button name="action_master_reconcile" string="Master Reconcile" type="object"
                             class="btn-primary"
-                            invisible="state != 'in_progress'"/>
+                            invisible="state != 'in_progress'"
+                            groups="bn_bank_reconciliation.bank_reconciliation_master_reconcile_group"/>
+                    <button name="action_open_multi_match" string="Match Multiple Lines" type="object"
+                            class="btn-secondary"
+                            invisible="state not in ['uploaded', 'in_progress']"/>
                     <button name="action_validate_reconciliation" string="Validate &amp; Complete" type="object"
                             class="btn-success"
                             invisible="state != 'in_progress'"/>
@@ -83,13 +87,13 @@
                                     <field name="credit" sum="Total Credit"/>
                                     <field name="amount" optional="hide" sum="Net Total"/>
                                     <field name="reference"/>
-                                    <field name="partner_id"/>
-                                    <field name="account_id"/>
+                                    <field name="partner_id" optional="show"/>
+                                    <field name="account_id" optional="show"/>
                                     <field name="state" widget="badge"/>
                                     <field name="confidence_level" widget="badge"/>
                                     <field name="match_score" optional="hide"/>
-                                    <field name="matched_move_line_id" invisible="1"/>
-                                    <field name="matched_move_id" invisible="1"/>
+                                    <field name="matched_move_line_id" optional="hide"/>
+                                    <field name="matched_move_id" optional="show"/>
                                     <field name="matched_move_line_name" string="Matched Line" optional="show"/>
                                     <field name="matched_move_ref" string="Entry Ref" optional="show"/>
                                     <field name="matched_by_manual" widget="boolean_toggle" optional="hide"/>
@@ -123,33 +127,83 @@
                                     <field name="description"/>
                                     <field name="debit" sum="Total Debit"/>
                                     <field name="credit" sum="Total Credit"/>
-                                    <field name="amount" sum="Net Total"/>
+                                    <field name="amount" optional="hide" sum="Net Total"/>
                                     <field name="reference"/>
-                                    <field name="partner_id"/>
-                                    <field name="account_id"/>
+                                    <field name="partner_id" optional="show"/>
+                                    <field name="account_id" optional="show"/>
                                     <field name="state" widget="badge"/>
-                                    <field name="matched_move_line_name" string="Matched Line"/>
-                                    <field name="matched_move_ref" string="Entry Ref"/>
+                                    <field name="confidence_level" widget="badge"/>
+                                    <field name="match_score" optional="hide"/>
+                                    <field name="matched_move_line_id" optional="hide"/>
+                                    <field name="matched_move_id" optional="show"/>
+                                    <field name="matched_move_line_name" string="Matched Line" optional="show"/>
+                                    <field name="matched_move_ref" string="Entry Ref" optional="show"/>
+                                    <button name="action_accept_match" type="object"
+                                            string="Accept &amp; Reconcile" icon="fa-check"
+                                            class="btn-success"
+                                            invisible="state != 'matched'"/>
+                                    <button name="action_accept_and_create_journal" type="object"
+                                            string="Accept &amp; Create Journal" icon="fa-check-circle"
+                                            class="btn-primary"
+                                            invisible="state != 'matched'"/>
+                                    <button name="action_view_related_move" type="object"
+                                            string="View Entry" icon="fa-eye"
+                                            invisible="not matched_move_id"/>
+                                    <button name="action_view_related_move_line" type="object"
+                                            string="View Line" icon="fa-list"
+                                            invisible="not matched_move_line_id"/>
+                                    <button name="action_manual_match" type="object"
+                                            string="Manual Match" icon="fa-hand-pointer-o"
+                                            invisible="state in ['reconciled']"/>
                                 </tree>
                             </field>
                         </page>
                         <page string="Reconciled" name="reconciled_page">
-                            <field name="reconciled_ids">
-                                <tree string="Reconciled Transactions">
+                            <!-- Lines with a match waiting to be accepted, and the reconciled ones -->
+                            <field name="matched_transaction_ids" readonly="1">
+                                <tree string="Matched and Reconciled Transactions">
                                     <field name="date"/>
                                     <field name="description"/>
                                     <field name="debit" sum="Total Debit"/>
                                     <field name="credit" sum="Total Credit"/>
                                     <field name="amount" optional="hide" sum="Net Total"/>
-                                    <field name="account_id"/>
-                                    <field name="confidence_level" widget="badge" optional="hide"/>
+                                    <field name="reference"/>
+                                    <field name="partner_id" optional="show"/>
+                                    <field name="account_id" optional="show"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'matched'"
+                                           decoration-success="state == 'reconciled'"/>
+                                    <field name="confidence_level" widget="badge"/>
                                     <field name="match_score" optional="hide"/>
-                                    <field name="matched_move_id"/>
-                                    <field name="reconciled_by"/>
-                                    <field name="reconciliation_date"/>
-                                    <field name="is_posted" widget="boolean_toggle" optional="hide"/>
-                                    <button name="action_view_move" type="object" string="View Entry" icon="fa-eye"/>
-                                    <button name="action_unreconcile" type="object" string="Unreconcile" icon="fa-undo"/>
+                                    <field name="matched_move_line_id" optional="hide"/>
+                                    <field name="matched_move_id" optional="show"/>
+                                    <field name="matched_move_line_name" string="Matched Line" optional="show"/>
+                                    <field name="matched_move_ref" string="Entry Ref" optional="show"/>
+                                    <field name="reconciled_by" optional="show"/>
+                                    <field name="reconciled_date" optional="hide"/>
+                                    <button name="action_accept_match" type="object"
+                                            string="Accept &amp; Reconcile" icon="fa-check"
+                                            class="btn-success"
+                                            invisible="state != 'matched'"/>
+                                    <button name="action_accept_and_create_journal" type="object"
+                                            string="Accept &amp; Create Journal" icon="fa-check-circle"
+                                            class="btn-primary"
+                                            invisible="state != 'matched'"/>
+                                    <button name="action_reject_match" type="object"
+                                            string="Reject Match" icon="fa-times"
+                                            invisible="state != 'matched'"/>
+                                    <button name="action_view_related_move" type="object"
+                                            string="View Entry" icon="fa-eye"
+                                            invisible="not matched_move_id"/>
+                                    <button name="action_view_related_move_line" type="object"
+                                            string="View Line" icon="fa-list"
+                                            invisible="not matched_move_line_id"/>
+                                    <button name="action_manual_match" type="object"
+                                            string="Manual Match" icon="fa-hand-pointer-o"
+                                            invisible="state in ['reconciled']"/>
+                                    <button name="action_unreconcile" type="object"
+                                            string="Unreconcile" icon="fa-undo"
+                                            invisible="state != 'reconciled' or parent.state == 'completed'"/>
                                 </tree>
                             </field>
                         </page>
