@@ -19,18 +19,22 @@
     'data': [
         'security/stock_security.xml',
         'security/ir.model.access.csv',
+        
         'data/demo_data.xml',
+        'data/backfill.xml',
+        
+        'reports/purchase_order_report.xml',
+        
         'views/livestock_variant.xml',
         'views/product_attribute_value.xml',
         'views/product_template.xml',
         'views/product_product.xml',
         'views/account_analytic_account.xml',
-        'data/backfill.xml',
         'views/purchase_order.xml',
         'views/stock_picking.xml',
         'views/stock_move.xml',
+        
         'wizards/receive_by_weight.xml',
-        'reports/purchase_order_report.xml'
     ],
     'auto_install': False,
     'application': False,
