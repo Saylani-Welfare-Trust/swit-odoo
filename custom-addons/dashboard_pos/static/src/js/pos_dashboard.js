@@ -283,7 +283,7 @@ export class PosDashboard extends Component {
                     indexAxis: 'y',
                     scales: {
                         x: {
-                            beginAtZero: true,
+                            stacked: false,
                             ticks: { callback: v => Number(v).toLocaleString('en-US') },
                         },
                     },
@@ -334,7 +334,7 @@ export class PosDashboard extends Component {
                     indexAxis: 'y',
                     scales: {
                         x: {
-                            beginAtZero: true,
+                            stacked: false,
                             ticks: { callback: v => Number(v).toLocaleString('en-US') },
                         },
                     },

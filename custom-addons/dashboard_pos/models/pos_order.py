@@ -18,13 +18,8 @@ class PosOrder(models.Model):
 
     @api.model
     def get_location_hierarchy(self):
-        # Top level accounts (Provinces) have no parent
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        
-        # Level 2 accounts (Cities) have a parent (Province)
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        
-        # Fetch Segments (Assuming they belong to a plan named 'Segment')
         segments = self.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
         
         return {
@@ -63,10 +58,8 @@ class PosOrder(models.Model):
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
 
-        # Analytic Filters (Province, City, Segment)
         if province_id or city_id or segment_id:
             analytic_domain = []
-            # FIX: Changed 'analytic_account_id' to 'id' when searching the analytic account model itself
             if province_id:
                 analytic_domain.append(('id', 'child_of', int(province_id)))
             if city_id:
@@ -76,9 +69,8 @@ class PosOrder(models.Model):
             
             accounts = self.env['account.analytic.account'].search(analytic_domain)
             if not accounts:
-                domain.append(('id', '=', 0)) # Force empty result
+                domain.append(('id', '=', 0))
             else:
-                # Fallback logic to find the correct analytic field on pos.order
                 if 'analytic_account_id' in self._fields:
                     domain.append(('analytic_account_id', 'in', accounts.ids))
                 elif 'session_id' in self._fields:
@@ -90,7 +82,6 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_ids_sql(self, domain):
-        """Converts the Odoo domain into a raw SQL IN clause"""
         if not domain:
             return ""
         orders = self.env['pos.order'].search(domain)
@@ -156,7 +147,6 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return {'payment_details': [], 'salesperson': [], 'selling_product': []}
 
-        # ---------- payment methods ----------
         cr.execute("""
             select pos_payment_method.name->>'en_US', sum(amount)
             from pos_payment
@@ -168,7 +158,6 @@ class PosOrder(models.Model):
         """ % (company_id, order_sql))
         payment_details = cr.fetchall()
 
-        # ---------- salesperson ----------
         cr.execute("""
             select hr_employee.name, sum(pos_order.amount_paid) as total,
                    count(pos_order.amount_paid) as orders
@@ -180,7 +169,6 @@ class PosOrder(models.Model):
         """ % (company_id, order_sql))
         salesperson = cr.fetchall()
 
-        # ---------- sessions ----------
         configs = self.env['pos.config'].search([('id', '=', config_id)] if config_id else [])
         states_label = {'opened': 'Opened', 'opening_control': 'Opening Control'}
         sessions_list = [
@@ -188,11 +176,9 @@ class PosOrder(models.Model):
             for c in configs
         ]
 
-        # ---------- currency formatting (UPDATED WITH COMMAS) ----------
         currency = self.env.company.currency_id
         def _fmt(v):
             try:
-                # Adds commas (e.g. 1234567.89 -> 1,234,567.89)
                 val = "{:,.2f}".format(float(v or 0.0))
             except (ValueError, TypeError):
                 val = "0.00"
@@ -303,8 +289,8 @@ class PosOrder(models.Model):
         """ % (company_id, order_sql))
         docs = self._cr.dictfetchall()
         return [
-            [r.get('sales_qty') for r in docs],
-            [r.get('refund_qty') for r in docs],
+            [r.get('sales_qty') or 0 for r in docs],
+            [r.get('refund_qty') or 0 for r in docs],
             [r.get('product_name') for r in docs]
         ]
 
@@ -333,7 +319,7 @@ class PosOrder(models.Model):
         """ % (company_id, order_sql))
         docs = self._cr.dictfetchall()
         return [
-            [r.get('sales_qty') for r in docs],
-            [r.get('refund_qty') for r in docs],
+            [r.get('sales_qty') or 0 for r in docs],
+            [r.get('refund_qty') or 0 for r in docs],
             [r.get('product_category') for r in docs]
         ]
