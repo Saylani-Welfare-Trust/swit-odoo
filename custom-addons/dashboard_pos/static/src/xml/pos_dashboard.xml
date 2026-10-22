@@ -4,6 +4,17 @@
     <t t-name="PosDashboard">
         <div class="oh_dashboards">
         <div class="container-fluid o_pos_dashboard">
+        <div class="row mb-3 p-3 bg-light rounded shadow-sm" style="margin: 10px 0;">
+            <div class="col-md-4">
+                <label class="form-label fw-bold mb-1">Shop</label>
+                <select class="form-select" t-on-change="onchange_shop">
+                    <option value="">All Shops</option>
+                    <t t-foreach="state.shops" t-as="shop" t-key="shop.id">
+                        <option t-att-value="shop.id" t-esc="shop.name"/>
+                    </t>
+                </select>
+            </div>
+        </div>    
         <div class="row main-section" align="center">
             <div class="col-md-4 col-sm-6 pos_order_today oh-payslip"
                  t-on-click="pos_order_today">
