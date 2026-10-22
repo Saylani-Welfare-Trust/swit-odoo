@@ -8,6 +8,7 @@
                 <t t-set="sources" t-value="docs.mapped('source_location_id')"/>
                 <t t-set="destinations" t-value="docs.mapped('transfer_location')"/>
                 <t t-set="pickings" t-value="docs.mapped('transfer_picking_id')"/>
+                <t t-set="user_branch" t-value="user.sudo().employee_id.analytic_account_id.name"/>
                 <div class="page">
                     <h3 class="text-center mb-3">Livestock Bulk Transfer</h3>
 
@@ -19,7 +20,7 @@
                         <div class="col-6 text-end">
                             <div><strong>Transfer #:</strong> <t t-esc="', '.join(pickings.mapped('name')) or '-'"/></div>
                             <div><strong>Date:</strong> <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %H:%M')"/></div>
-                            <div><strong>Printed by:</strong> <t t-esc="user.name"/></div>
+                            <div><strong>Printed by:</strong> <t t-esc="user.name"/><t t-if="user_branch"> (<t t-esc="user_branch"/>)</t></div>
                         </div>
                     </div>
 
