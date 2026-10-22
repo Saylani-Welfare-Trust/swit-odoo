@@ -9,30 +9,34 @@ export class TreasuryDashboard extends Component {
 
     setup() {
         this.actionService = useService("action");
-        
+
         this.state = useState({
             date_from: '',
             date_to: '',
             currency: { symbol: '$', position: 'before' },
-            cheques: { count: 0, total_amount: 0, states: {} },
-            deposits: { count: 0, total_amount: 0, states: {} },
-            transfers: { count: 0, total_amount: 0, states: {} },
+            cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
+            deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
+            transfers: { count: 0, total_amount: 0, states: {}, state_amounts: {} },
         });
 
-        onWillStart(async () => {
-            await this.fetchData();
-        });
+        onWillStart(async () => { await this.fetchData(); });
     }
 
     async fetchData() {
         const data = await this.env.services.rpc("/treasury/dashboard/data", {
             date_from: this.state.date_from,
-            date_to: this.state.date_to
+            date_to: this.state.date_to,
         });
-        this.state.currency = data.currency;
-        this.state.cheques = data.cheques;
-        this.state.deposits = data.deposits;
-        this.state.transfers = data.transfers;
+        this.state.currency  = data.currency;
+        this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
+        this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
+        this.state.transfers = { ...this.state.transfers, ...data.transfers };
+    }
+
+    // NEW helper (optional but clean)
+    getStateAmount(category, stateName) {
+        const amounts = this.state[category].state_amounts || {};
+        return amounts[stateName] || 0;
     }
 
     async applyFilter() {

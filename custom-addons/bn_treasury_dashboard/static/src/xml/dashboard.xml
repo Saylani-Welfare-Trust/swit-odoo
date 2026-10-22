@@ -59,7 +59,10 @@
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
                                         <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
-                                            <t t-esc="formatStateName(state_name)"/>: <t t-esc="state.cheques.states[state_name]"/>
+                                            <t t-esc="formatStateName(state_name)"/>:
+                                            <t t-esc="state.cheques.states[state_name]"/>
+                                            —
+                                            <t t-esc="formatCurrency((state.cheques.state_amounts || {})[state_name] || 0)"/>
                                         </span>
                                     </t>
                                 </div>
@@ -92,7 +95,10 @@
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
                                         <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
-                                            <t t-esc="formatStateName(state_name)"/>: <t t-esc="state.deposits.states[state_name]"/>
+                                            <t t-esc="formatStateName(state_name)"/>:
+                                            <t t-esc="state.deposits.states[state_name]"/>
+                                            —
+                                            <t t-esc="formatCurrency((state.deposits.state_amounts || {})[state_name] || 0)"/>
                                         </span>
                                     </t>
                                 </div>
@@ -125,7 +131,10 @@
                                 <div class="d-flex flex-wrap gap-1">
                                     <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
                                         <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
-                                            <t t-esc="formatStateName(state_name)"/>: <t t-esc="state.transfers.states[state_name]"/>
+                                            <t t-esc="formatStateName(state_name)"/>:
+                                            <t t-esc="state.transfers.states[state_name]"/>
+                                            —
+                                            <t t-esc="formatCurrency((state.transfers.state_amounts || {})[state_name] || 0)"/>
                                         </span>
                                     </t>
                                 </div>
