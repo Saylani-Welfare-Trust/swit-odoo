@@ -264,7 +264,7 @@ class PosOrder(models.Model):
             where_extra = ''
 
         self._cr.execute("""
-            select DISTINCT(product_template.name)->>'en_US' as product_name,
+            select (product_template.name)->>'en_US' as product_name,
                    sum(qty) as total_quantity
             from pos_order_line
             inner join product_product on product_product.id = pos_order_line.product_id
@@ -296,7 +296,7 @@ class PosOrder(models.Model):
             where_extra = ''
 
         self._cr.execute("""
-            select DISTINCT(product_category.complete_name) as product_category,
+            select product_category.complete_name as product_category,
                    sum(qty) as total_quantity
             from pos_order_line
             inner join product_product on product_product.id = pos_order_line.product_id
