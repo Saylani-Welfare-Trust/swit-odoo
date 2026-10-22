@@ -6,8 +6,8 @@
     </record>
 
     <!-- Extend the Treasury group to also imply Journal Transfer menu -->
-    <record id="bn_pos_cheque.group_treasury" model="res.groups">
+    <!-- <record id="bn_pos_cheque.group_treasury" model="res.groups">
         <field name="implied_ids" eval="[(4, ref('journal_transfer_group'))]"/>
-    </record>
+    </record> -->
 
 </odoo>

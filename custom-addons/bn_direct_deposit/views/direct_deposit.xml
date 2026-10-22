@@ -152,7 +152,6 @@
         id="direct_deposit_menu"
         name="Bank transfers / Direct deposit"
         action="direct_deposit_action"
-        groups="bn_pos_cheque.group_treasury"  
         parent="bn_pos_cheque.treasury_menu"
         sequence="1"/>
 
