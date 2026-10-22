@@ -13,6 +13,8 @@ export class TreasuryDashboard extends Component {
         this.state = useState({
             date_from: '',
             date_to: '',
+            branch_id: '',
+            analytic_accounts: [],
             currency: { symbol: '$', position: 'before' },
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
@@ -26,7 +28,9 @@ export class TreasuryDashboard extends Component {
         const data = await this.env.services.rpc("/treasury/dashboard/data", {
             date_from: this.state.date_from,
             date_to: this.state.date_to,
+            analytic_account_id: this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
         });
+        this.state.analytic_accounts = data.analytic_accounts || [];
         this.state.currency  = data.currency;
         this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
         this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
@@ -46,6 +50,7 @@ export class TreasuryDashboard extends Component {
     clearFilter() {
         this.state.date_from = '';
         this.state.date_to = '';
+        this.state.branch_id = '';
         this.applyFilter();
     }
 
@@ -71,7 +76,6 @@ export class TreasuryDashboard extends Component {
             this.state.date_from = this.formatLocalDate(new Date(year, 0, 1));
             this.state.date_to = this.formatLocalDate(new Date(year, 11, 31));
         }
-        
         this.applyFilter();
     }
 
@@ -80,28 +84,21 @@ export class TreasuryDashboard extends Component {
         return stateName.charAt(0).toUpperCase() + stateName.slice(1).replace(/_/g, ' ');
     }
 
-    // 🟢 UPDATED: Colors now match Odoo standard exactly
     getStateColor(stateName) {
         if (!stateName) return 'bg-secondary';
         const s = stateName.toLowerCase();
-        
-        // Green for successful/cleared states
         if (['clear', 'cleared', 'posted', 'paid', 'done', 'transfer', 'transferred'].includes(s)) {
             return 'bg-success';
         }
-        // Orange for pending/draft states
         if (['draft', 'pending', 'to_pay', 'unpaid', 'to_validate', 'waiting'].includes(s)) {
-            return 'bg-warning text-dark'; // text-dark ensures readability on orange
+            return 'bg-warning text-dark';
         }
-        // Red for failed/cancelled states
         if (['bounce', 'bounced', 'cancel', 'cancelled', 'late', 'rejected'].includes(s)) {
             return 'bg-danger';
         }
-        // Blue for informational states
         if (['new', 'in_progress', 'open'].includes(s)) {
             return 'bg-info text-dark';
         }
-        // Default grey for anything else
         return 'bg-secondary';
     }
 

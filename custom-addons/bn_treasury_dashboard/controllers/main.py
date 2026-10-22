@@ -8,7 +8,8 @@ _logger = logging.getLogger(__name__)
 class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount',
-                                state_field='state', date_from=None, date_to=None):
+                                state_field='state', date_from=None, date_to=None,
+                                analytic_account_id=None):
         empty = {
             'count': 0,
             'total_amount': 0.0,
@@ -35,9 +36,15 @@ class TreasuryDashboardController(http.Controller):
             if date_to:
                 base_domain.append((date_field, '<=', date_to))
 
+        # ---- Branch filter ----
+        if analytic_account_id and 'analytic_account_id' in Model._fields:
+            try:
+                base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
+            except (ValueError, TypeError):
+                pass
+
         has_amount = amount_field in Model._fields
 
-        # ---- 1. Fetch records & total ----
         try:
             records = Model.search(base_domain)
             count = len(records)
@@ -46,7 +53,6 @@ class TreasuryDashboardController(http.Controller):
             _logger.error(f"❌ TREASURY ERROR on {model_name}: {str(e)}")
             return empty
 
-        # ---- 2. Resolve state field ----
         actual_state_field = state_field
         if actual_state_field not in Model._fields:
             if 'status' in Model._fields:
@@ -56,10 +62,8 @@ class TreasuryDashboardController(http.Controller):
             else:
                 actual_state_field = None
 
-        # ---- 3. Build states + state_amounts in ONE pass ----
         states = {}
         state_amounts = {}
-
         if actual_state_field:
             try:
                 for rec in records:
@@ -76,12 +80,33 @@ class TreasuryDashboardController(http.Controller):
             'count': count,
             'total_amount': total_amount,
             'states': states,
-            'state_amounts': state_amounts,   # <-- NEW
+            'state_amounts': state_amounts,
         }
+
+    def _get_analytic_accounts(self):
+        """All branches that have at least one treasury record — stable list,
+        independent of the current date filter."""
+        ids = set()
+        for model_name in ['pos.cheque', 'direct.deposit', 'journal.transfer']:
+            if model_name in request.env:
+                Model = request.env[model_name]
+                if 'analytic_account_id' in Model._fields:
+                    ids.update(
+                        Model.search([('analytic_account_id', '!=', False)])
+                        .mapped('analytic_account_id').ids
+                    )
+        if not ids:
+            return []
+        accounts = request.env['account.analytic.account'].browse(list(ids))
+        return [
+            {'id': a.id, 'name': a.display_name}
+            for a in sorted(accounts, key=lambda a: (a.display_name or '').lower())
+        ]
 
     @http.route('/treasury/dashboard/data', type='json', auth='user',
                 methods=['POST'], csrf=False)
-    def get_dashboard_data(self, date_from=None, date_to=None, **kwargs):
+    def get_dashboard_data(self, date_from=None, date_to=None,
+                           analytic_account_id=None, **kwargs):
         currency = request.env.company.currency_id
 
         return {
@@ -89,7 +114,8 @@ class TreasuryDashboardController(http.Controller):
                 'symbol': currency.symbol,
                 'position': currency.position,
             },
-            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to),
-            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to),
-            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to),
+            'analytic_accounts': self._get_analytic_accounts(),
+            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id),
+            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id),
+            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id),
         }

@@ -10,20 +10,29 @@
                 </div>
             </div>
 
-            <!-- 🟢 DATE FILTER BAR -->
+            <!-- 🟢 DATE + BRANCH FILTER BAR -->
             <div class="row mb-4 align-items-end bg-light p-3 rounded shadow-sm mx-1">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted mb-1">From Date</label>
                     <input type="date" class="form-control" t-model="state.date_from"/>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label text-muted mb-1">To Date</label>
                     <input type="date" class="form-control" t-model="state.date_to"/>
                 </div>
-                <div class="col-md-6 d-flex gap-2">
+                <div class="col-md-3">
+                    <label class="form-label text-muted mb-1">Branch</label>
+                    <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
+                        <option value="">All Branches</option>
+                        <t t-foreach="state.analytic_accounts" t-as="branch" t-key="branch.id">
+                            <option t-att-value="branch.id" t-esc="branch.name"/>
+                        </t>
+                    </select>
+                </div>
+                <div class="col-md-5 d-flex gap-2">
                     <button class="btn btn-primary" t-on-click="applyFilter">Apply Filter</button>
                     <button class="btn btn-outline-secondary" t-on-click="clearFilter">Clear</button>
-                    
+
                     <div class="ms-auto d-flex gap-1">
                         <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('this_month')">This Month</button>
                         <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('last_month')">Last Month</button>
