@@ -12,20 +12,24 @@
         'bn_pos_customization',
     ],
     'data': [
-        'data/sequence.xml',
-        'data/server_action.xml',
-        'data/res_partner_category.xml',
         'security/group.xml',
         'security/access_right.xml',
         'security/record_rule.xml',
         'security/ir.model.access.csv',
+        
+        'data/sequence.xml',
+        'data/server_action.xml',
+        'data/res_partner_category.xml',
+        
+        'reports/profile_management_report.xml',
+        'reports/microfinance_report.xml',
+        
         'views/res_partner.xml',
         'views/res_partner_layer.xml',
+        
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
         'wizards/microfinance_application_wizard.xml',
-        'reports/profile_management_report.xml',
-        'reports/microfinance_report.xml',
     ],
     'auto_install': False,
     'application': True,
