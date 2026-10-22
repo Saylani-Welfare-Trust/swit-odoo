@@ -194,8 +194,8 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if self.state not in ('done', 'rfq_sent'):
             raise ValidationError(_('This request is neither Closed nor in RFQ Sent state.'))
-        if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
-            raise ValidationError(_('Only a Procurement Manager can create the Purchase Request for the remaining products.'))
+        # if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+        #     raise ValidationError(_('Only a Procurement Manager can create the Purchase Request for the remaining products.'))
         if not self.material_request_id:
             raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
         if self._has_newer_request():
