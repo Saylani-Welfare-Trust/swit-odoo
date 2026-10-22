@@ -210,20 +210,24 @@ class Base(models.AbstractModel):
         with self._audit_frame('read'):
             return super().read(fields=fields, load=load)
 
-    def web_read(self, *args, **kwargs):
+    def web_read(self, specification):
         # Opening a form: the record itself is read first, then a nested
         # web_read() per linked record shown (partner, company, lines ...).
         # The frame puts those linked reads under the record's View entry.
         if not self._audit_read_frame_enabled():
-            return super().web_read(*args, **kwargs)
+            return super().web_read(specification)
         with self._audit_frame('read'):
-            return super().web_read(*args, **kwargs)
+            return super().web_read(specification)
 
-    def web_search_read(self, *args, **kwargs):
+    @api.model
+    def web_search_read(self, domain, specification, offset=0, limit=None, order=None, count_limit=None):
+        # @api.model is required: the web client calls this without record
+        # ids, and call_kw() decides how to call it from the decorator.
+        kwargs = dict(offset=offset, limit=limit, order=order, count_limit=count_limit)
         if not self._audit_is_enabled():
-            return super().web_search_read(*args, **kwargs)
+            return super().web_search_read(domain, specification, **kwargs)
         with self._audit_frame('read'):
-            return super().web_search_read(*args, **kwargs)
+            return super().web_search_read(domain, specification, **kwargs)
 
     def _read_format(self, fnames, load='_classic_read'):
         # Logged here rather than in read() - Odoo 17's web client mostly

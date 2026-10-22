@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from psycopg2 import IntegrityError
 
+from odoo.api import call_kw
 from odoo.tests import TransactionCase, tagged
 from odoo.tools import mute_logger
 
@@ -24,6 +25,24 @@ class TestAuditTrail(TransactionCase):
 
     def _last_id(self):
         return self.Log.search([], order='id desc', limit=1).id or 0
+
+    def test_web_client_calls(self):
+        """The overridden read methods must keep their RPC signature: the
+        web client goes through call_kw(), which relies on @api.model."""
+        Partner = self.env['res.partner']
+        partner = Partner.create({'name': 'Audit RPC'})
+        result = call_kw(Partner, 'web_search_read', [], {
+            'domain': [('id', '=', partner.id)], 'specification': {'display_name': {}}, 'limit': 1})
+        self.assertEqual(result['records'][0]['id'], partner.id)
+        result = call_kw(Partner, 'web_search_read', [[('id', '=', partner.id)], {'display_name': {}}], {})
+        self.assertEqual(result['length'], 1)
+        result = call_kw(Partner, 'web_read', [[partner.id]], {'specification': {'display_name': {}}})
+        self.assertEqual(result[0]['id'], partner.id)
+        result = call_kw(Partner, 'read', [[partner.id], ['name']], {})
+        self.assertEqual(result[0]['name'], 'Audit RPC')
+        new_id = call_kw(Partner, 'create', [{'name': 'Audit RPC 2'}], {})
+        self.assertTrue(call_kw(Partner, 'write', [[new_id], {'name': 'Audit RPC 3'}], {}))
+        self.assertTrue(call_kw(Partner, 'unlink', [[new_id]], {}))
 
     def test_secrets_are_masked(self):
         user = self.env['res.users'].create({'name': 'Audit U', 'login': 'audit_u', 'password': 'Plain#Create1'})
