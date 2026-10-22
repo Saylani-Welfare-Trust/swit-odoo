@@ -8,7 +8,7 @@ class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount',
                                 state_field='state', date_from=None, date_to=None,
-                                analytic_account_id=None, province_id=None, city_id=None):
+                                analytic_account_id=None, province_id=None, city_id=None, segment_id=None):
         empty = {
             'count': 0,
             'total_amount': 0.0,
@@ -52,6 +52,13 @@ class TreasuryDashboardController(http.Controller):
         if city_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+            except (ValueError, TypeError):
+                pass
+                
+        # ---- Segment filter (Includes all child segments) ----
+        if segment_id and 'analytic_account_id' in Model._fields:
+            try:
+                base_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
             except (ValueError, TypeError):
                 pass
 
@@ -116,23 +123,26 @@ class TreasuryDashboardController(http.Controller):
 
     def _get_location_hierarchy(self):
         # Top level accounts (Provinces) have no parent
-        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False)])
+        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         
         # Level 2 accounts (Cities) have a parent (Province)
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         
-        return [
-            {'id': p.id, 'name': p.name} for p in provinces
-        ], [
-            {'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities
-        ]
+        # Fetch Segments (Assuming they belong to a plan named 'Segment')
+        segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
+        
+        return (
+            [{'id': p.id, 'name': p.name} for p in provinces],
+            [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
+            [{'id': s.id, 'name': s.display_name} for s in segments]
+        )
 
     @http.route('/treasury/dashboard/data', type='json', auth='user',
                 methods=['POST'], csrf=False)
     def get_dashboard_data(self, date_from=None, date_to=None,
-                           analytic_account_id=None, province_id=None, city_id=None, **kwargs):
+                           analytic_account_id=None, province_id=None, city_id=None, segment_id=None, **kwargs):
         currency = request.env.company.currency_id
-        provinces, cities = self._get_location_hierarchy()
+        provinces, cities, segments = self._get_location_hierarchy()
 
         return {
             'currency': {
@@ -142,7 +152,8 @@ class TreasuryDashboardController(http.Controller):
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': provinces,
             'cities': cities,
-            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id),
-            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id),
-            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id),
+            'segments': segments,
+            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, segment_id),
+            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, segment_id),
+            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id, segment_id),
         }

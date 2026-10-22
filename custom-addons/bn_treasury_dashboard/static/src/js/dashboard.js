@@ -16,9 +16,11 @@ export class TreasuryDashboard extends Component {
             branch_id: '',
             province_id: '',
             city_id: '',
+            segment_id: '',
             analytic_accounts: [],
             provinces: [],
             cities: [],
+            segments: [],
             currency: { symbol: '$', position: 'before' },
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
@@ -43,10 +45,12 @@ export class TreasuryDashboard extends Component {
                 analytic_account_id: this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
                 province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
                 city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                segment_id: this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
             });
             this.state.analytic_accounts = data.analytic_accounts || [];
             this.state.provinces = data.provinces || [];
             this.state.cities = data.cities || [];
+            this.state.segments = data.segments || [];
             this.state.currency  = data.currency;
             this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
             this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
@@ -57,7 +61,6 @@ export class TreasuryDashboard extends Component {
     }
 
     async onchange_province() {
-        // If a province is selected, clear the city if it doesn't belong to it
         this.state.city_id = '';
         await this.applyFilter();
     }
@@ -72,6 +75,7 @@ export class TreasuryDashboard extends Component {
         this.state.branch_id = '';
         this.state.province_id = '';
         this.state.city_id = '';
+        this.state.segment_id = '';
         this.applyFilter();
     }
 
