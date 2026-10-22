@@ -34,10 +34,10 @@ class DirectDeposit(models.Model):
     name = fields.Char('Name', default="New")
     transaction_ref = fields.Char('Transaction Reference')
     payment_type = fields.Selection([
-    ('cash', 'Cash'),
-    ('cheque', 'Cheque'),
-    ('directdeposit', 'Direct Deposit'),
-], string="Payment Type", default='directdeposit')
+        ('cash', 'Cash'),
+        ('cheque', 'Cheque'),
+        ('directdeposit', 'Direct Deposit'),
+    ], string="Payment Type", default='directdeposit')
     remarks = fields.Text('Remarks')
 
     transfer_to_dhs=fields.Boolean('Transfer to DHS', default=False)
@@ -251,6 +251,7 @@ May Allah bless you!
                 'product_id': line.product_id.id,
                 'payment_type': self.payment_type or 'directdeposit',
                 'date': fields.Date.today(),
+                'direct_deposit_id': self.id,
                 'remarks': _('Auto-created from Direct Deposit %s') % self.name,
                 'state': 'paid',
             })

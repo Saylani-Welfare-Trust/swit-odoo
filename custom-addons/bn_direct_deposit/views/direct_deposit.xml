@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree create="0" delete="0" editable="bottom">
                 <field name="state" column_invisible="1" />
-                <field name="name" readonly="1" />
+                <field name="name" string="DD No" readonly="1"/>
                 <field name="donor_id" string="Donor" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1" />
                 <field name="amount" readonly="state in ['clear']" />
                 <field name="analytic_account_id" string="Branch" readonly="1" />
@@ -98,6 +98,41 @@
                     </notebook>
                 </sheet>
             </form>
+        </field>
+    </record>
+
+    <record id="direct_deposit_view_search" model="ir.ui.view">
+        <field name="name">direct.deposit.view.search</field>
+        <field name="model">direct.deposit</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Searchable Fields -->
+                <field name="name" string="Request No."/>
+                <field name="donor_id" string="Donor"/>
+                <field name="transaction_ref" string="Transaction Ref"/>
+                <field name="analytic_account_id" string="Branch"/>
+                <field name="bank_id" string="Bank Journal"/>
+                <field name="amount"/>
+
+                <!-- Quick Filters -->
+                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Clear" name="filter_clear" domain="[('state', '=', 'clear')]"/>
+                <filter string="Not Clear" name="filter_not_clear" domain="[('state', '=', 'not_clear')]"/>
+                
+                <separator/>
+                
+                <!-- Date Filter -->
+                <filter string="Creation Date" name="filter_create_date" date="create_date"/>
+
+                <!-- Group By Options -->
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Branch" name="group_analytic" context="{'group_by': 'analytic_account_id'}"/>
+                    <filter string="Bank Journal" name="group_bank" context="{'group_by': 'bank_id'}"/>
+                    <filter string="Donor" name="group_donor" context="{'group_by': 'donor_id'}"/>
+                    <filter string="Creation Month" name="group_create_date" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
