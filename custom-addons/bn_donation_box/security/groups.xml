@@ -29,7 +29,12 @@
         <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, Complain Center resolution, and the POS donation-box action.</field>
         <field name="implied_ids" eval="[(4, ref('donation_box_user_group'))]"/>
     </record>
-
+    <record id="donation_box_pos_action_group" model="res.groups">
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_donation_box"/>
+        <field name="comment">Access to POS donation-box actions.</field>
+        <field name="implied_ids" eval="[(4, ref('donation_box_user_group'))]"/>
+    </record>
     <record id="donation_box_audit_group" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_donation_box"/>
