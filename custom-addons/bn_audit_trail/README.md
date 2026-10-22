@@ -61,6 +61,23 @@ you actively want to turn a specific model off.
   transaction and break unrelated functionality for the rest of that
   request - which is exactly what happened before this fix.
 
+## Process flow
+
+```mermaid
+flowchart TD
+    A([Any create / write / unlink / read<br/>on any model]) --> B{Model excluded?<br/>built-in list or<br/>Audit Trail > Excluded Models}
+    B -->|Yes| Z[No log]
+    B -->|No| C[Open SAVEPOINT]
+    C --> D{Operation}
+    D -->|Create| L1[Log: Create]
+    D -->|Update| L2[Log: Update<br/>+ Before / After per field]
+    D -->|Delete| L3[Log: Delete<br/>display name snapshot]
+    D -->|View| L4[Log: View<br/>deduplicated per request]
+    L1 & L2 & L3 & L4 --> E{Logging error?}
+    E -->|No| OK[Release savepoint]
+    E -->|Yes| RB[Roll back only the savepoint,<br/>user operation continues]
+```
+
 ## Usage
 
 1. Install/upgrade - Create/Update/Delete/View are logged for every
