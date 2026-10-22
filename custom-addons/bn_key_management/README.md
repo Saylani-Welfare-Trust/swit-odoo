@@ -67,6 +67,10 @@ their issuance is closed directly.
 - A key can be issued only when it is **Available** and has no other open
   issuance. Concurrent issue/return operations lock the key row.
 - Keys and issuances cannot be deleted. They are closed by the workflow.
+- A closed key belongs to a box taken out of service and is never issued
+  again. When the same Box No. is reused in a new request it gets a new
+  key; **Manual Key Issuance** and the POS deposit pick the key / registration
+  in service, never the closed one (17.0.1.2.0).
 - A bulk issuance is refused while any key of the bunch is still out.
 - Only issuances in *Donation Received* or *Pending* can be returned.
 - Scheduled action **Hit Overdue Action | BN** (daily) turns *Issued*

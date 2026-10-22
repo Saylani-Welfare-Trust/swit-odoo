@@ -62,7 +62,26 @@ or → Pending.
   **Foreign Currency Collection** can change a foreign currency amount.
 - A pending box needs remarks and an active key issuance for that date.
 - A generated complaint stays in Draft until the Complain Officer processes
-  it in the Complain Center.
+  it in the Complain Center. A box taken out of service (registration
+  Closed) cannot get a complaint.
+- When a Box No. was reused after the box was taken out of service, *Pending*,
+  FCB and CFB use the registration and key **in service**, never the closed
+  ones (17.0.1.2.0; before, *Pending* failed and FCB / CFB could post to the
+  old registration).
+
+## Tests
+
+`tests/test_closed_box.py` covers a box taken out of service and its Box No.
+reused, across `bn_donation_box`, `bn_key_management` and this module:
+
+```bash
+odoo-bin -d <db> -u bn_rider_shift --test-enable --test-tags /bn_rider_shift --stop-after-init
+```
+
+The tests are `post_install`. Run them on a database where the modules are
+already upgraded (or run the command twice): during the upgrade run itself,
+`key.issuance.rider_collection_id` is not resolved yet, because
+`rider.collection` is defined in this module.
 
 ## Security groups
 

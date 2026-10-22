@@ -254,8 +254,10 @@ class KeyIssuance(models.Model):
         if not issuance:
             return {"status": "error", "body": "Invalid Donation Box"}
 
-        box = self.env['donation.box.registration.installation'].search([
+        # The issuance's own registration: a reused box number also has closed ones.
+        box = issuance.donation_box_registration_installation_id or self.env['donation.box.registration.installation'].search([
             ('lot_id', '=', data.get('lot_id')),
+            ('status', '!=', 'close'),
             ('shop_name', '=', data.get('shop_name')),
             ('contact_person', '=', data.get('contact_person')),
             ('contact_no', '=', data.get('contact_number')),

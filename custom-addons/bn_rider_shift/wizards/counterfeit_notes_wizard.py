@@ -48,9 +48,12 @@ class CounterfeitNotesWizard(models.TransientModel):
 
         # Get all unique boxes/lots from selected notes
         unique_lots = notes.mapped('lot_id')
-        unique_boxes = self.env['donation.box.registration.installation'].search([
-            ('lot_id', 'in', unique_lots.ids)
-        ])
+        # One registration per box: the one in service wins over closed ones of a
+        # reused box number.
+        Registration = self.env['donation.box.registration.installation']
+        unique_boxes = Registration.browse()
+        for lot in unique_lots:
+            unique_boxes |= Registration._bn_find_by_lot(lot)
 
         # Create key issuance for each box
         for box in unique_boxes:

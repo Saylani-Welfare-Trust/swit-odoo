@@ -44,6 +44,9 @@ flowchart TD
     K -->|Approve again| J
 
     H -.->|Return button on request line<br/>before installation| RET[Return transfer,<br/>registration + key closed,<br/>serial free again]
+    J -.->|Complaint resolved:<br/>returned, scrapped or lost| CL
+    RET --> CL[Registration: Closed<br/>OUT OF SERVICE, final]
+    CL -.->|same Box No. in a<br/>NEW request| A
 ```
 
 ### Complaint flow
@@ -65,12 +68,37 @@ flowchart TD
 In every resolution path the registration is set to **Closed** and its
 key is closed.
 
+## A box taken out of service
+
+A registration is **Closed** when its box is taken out of service: returned
+to the warehouse (request line **Return** or complaint **Box Return**),
+scrapped, or reported lost / robbed. Closed is **final**:
+
+- The form shows an *Out of Service* ribbon and *Box Status* reads
+  **Removed**.
+- Nothing on it can be edited any more (only the chatter), from any screen,
+  import or API. **Change Request** is not offered.
+- No new complaint can be raised on it. Complaint actions (Process,
+  Resolve, Scrap, Box Return) on a box another path already took out of
+  service are refused.
+- Its key is closed and cannot be issued.
+
+To install the same box again, create a **new request** with that Box No.
+It gets a new registration and a new key. Wherever only the Box No. is
+known, the registration **in service** is used, never the closed one:
+complaints raised by Box No., manual key issuance, the rider's
+*Pending* button, foreign currency (FCB), counterfeit notes (CFB) and the
+POS deposit.
+
+While a *Return* complaint is resolved but its box not yet taken back
+(Box Return), the box counts as having an open complaint.
+
 ## Statuses
 
 | Record | Statuses |
 | --- | --- |
 | Request | Draft → Approved / Rejected |
-| Registration | Draft → Installed → Available ⇄ Change Request → Closed |
+| Registration | Draft → Installed → Available ⇄ Change Request; Draft / Available → Closed (final) |
 | Complaint | Draft → Process → Resolved / Not Recovered |
 
 ## Rules enforced on the server
@@ -99,6 +127,26 @@ key is closed.
    control who appears in the installer / rider / officer fields.
 4. Server actions in the list view: **Bulk Install**, **Bulk Approved**,
    **Populate Lock No**.
+
+## Install / upgrade
+
+On every install or upgrade (idempotent, `data/upgrade_hooks.xml`):
+warehouses without a Donation Box operation type get one, and boxes
+closed by earlier versions get Box Status *Removed*.
+
+## What changed in 17.0.1.2.0
+
+| Problem in 17.0.1.1.0 | Fix |
+| --- | --- |
+| A complaint could be raised on a closed registration | Refused |
+| A closed registration stayed editable (contact person, key bunch ...) | Read-only, except the chatter |
+| **Change Request** was shown on closed registrations and always failed | Removed; Closed is final |
+| After a Box No. was reused, the manual key issuance, rider *Pending*, FCB, CFB and POS deposit could pick the **old closed** registration or key | They use the registration / key in service |
+| A new complaint could be raised while a *Return* complaint waited for Box Return; Box Return then ran on a box already closed | Counted as open; actions on a box already out of service are refused |
+| Box Status still read *Installed* after the box was removed | *Removed* |
+| A fresh install left warehouses without the Donation Box operation type | Created on install / upgrade |
+
+Tests covering the whole chain are in `bn_rider_shift/tests/test_closed_box.py`.
 
 ## Security groups
 

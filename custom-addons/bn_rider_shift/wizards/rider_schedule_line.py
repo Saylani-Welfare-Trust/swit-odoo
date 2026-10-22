@@ -67,9 +67,14 @@ class RiderScheduleLine(models.TransientModel):
         self.rider_collection_id.counterfeit_notes = self.counterfeit_notes
         self.rider_collection_id.remarks = self.remarks
 
-        key = self.env['key'].search([('lot_id', '=', self.lot_id.id)], limit=1)
+        # The key of this line's own registration: a reused box number also has
+        # the closed keys of its earlier registrations.
+        key = self.env['key'].search([
+            ('donation_box_registration_installation_id', '=', self.donation_box_registration_installation_id.id),
+            ('state', '!=', 'closed'),
+        ], order='id desc', limit=1)
         if not key:
-            raise ValidationError('No key found for box "%s".' % self.lot_id.display_name)
+            raise ValidationError('No key in service found for box "%s".' % self.lot_id.display_name)
 
         key_issuance = self.env['key.issuance'].search([
             ('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id),

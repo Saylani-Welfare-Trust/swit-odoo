@@ -229,7 +229,7 @@ class DonationBoxRequestLine(models.Model):
         return_picking = request._bn_return_lot(picking, self.lot_id)
 
         with bn_transition():
-            registration._bn_write({'status': 'close'})
+            registration._bn_take_out_of_service()
             registration._bn_key_close()
             self.lot_id.write({'lot_consume': False})
             self.write({'is_returned': True, 'return_picking_id': return_picking.id})

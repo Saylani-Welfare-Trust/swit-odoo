@@ -77,7 +77,8 @@ class ForeignCurrency(models.Model):
             })
 
         # Find the donation box registration for this lot
-        box = self.env['donation.box.registration.installation'].search([('lot_id', '=', lot.id)], limit=1)
+        # The registration in service wins over closed ones of a reused box number.
+        box = self.env['donation.box.registration.installation']._bn_find_by_lot(lot)
         if not box:
             raise UserError('Could not find a donation box registration for the selected box.')
 

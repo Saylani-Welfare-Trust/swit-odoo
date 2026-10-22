@@ -7,6 +7,7 @@ from .bn_workflow import in_transition
 box_status_selection = [
     ('not_installed', 'Not Installed'),
     ('installed', 'Installed'),
+    ('removed', 'Removed'),
 ]
 
 status_selection = [
@@ -131,8 +132,10 @@ class DonationBoxRegistrationInstallation(models.Model):
             'installed': {'location', 'donor_id'},
             'change_request': change_request,
             'available': approved,
-            'close': approved,
         }
+
+    # Fields that may still change on a Closed registration (chatter only).
+    _bn_closed_writable_prefixes = ('message_', 'activity_', 'website_message')
 
     def write(self, vals):
         if not self.env.su and not in_transition():
@@ -142,6 +145,13 @@ class DonationBoxRegistrationInstallation(models.Model):
                 raise UserError(_('The field(s) "%s" are set by the request and cannot be edited.') % labels)
             locked_map = self._bn_locked_fields_by_status()
             touched = set(vals)
+            if any(rec.status == 'close' for rec in self):
+                business = {name for name in touched
+                            if not name.startswith(self._bn_closed_writable_prefixes)}
+                if business:
+                    raise UserError(_(
+                        'A closed registration belongs to a box taken out of service and cannot be '
+                        'edited. Create a new request to install a box again.'))
             for rec in self:
                 locked = touched & locked_map.get(rec.status, set())
                 if locked:
@@ -157,6 +167,37 @@ class DonationBoxRegistrationInstallation(models.Model):
                 'Registrations cannot be deleted. Use the "Return" button of the request line '
                 'or the Complain Center to take a box out of service.'))
         return super().unlink()
+
+    @api.model
+    def _bn_find_by_lot(self, lot):
+        """The registration of a box number. A box can be reused after it was taken
+        out of service, so the registration in service wins over closed ones; when
+        every registration is closed, the most recent one is returned."""
+        if not lot:
+            return self.browse()
+        return (self.search([('lot_id', '=', lot.id), ('status', '!=', 'close')], order='id desc', limit=1)
+                or self.search([('lot_id', '=', lot.id)], order='id desc', limit=1))
+
+    def _bn_take_out_of_service(self):
+        """Close the registration: the box was returned, scrapped or lost."""
+        for rec in self.filtered(lambda r: r.status != 'close'):
+            vals = {'status': 'close'}
+            if rec.box_status == 'installed':
+                vals['box_status'] = 'removed'
+            rec._bn_write(vals)
+
+    @api.model
+    def _bn_setup_removed_box_status(self):
+        """Data hook: boxes closed by earlier versions still read "Installed"."""
+        self.sudo().search([('status', '=', 'close'), ('box_status', '=', 'installed')]) \
+            ._bn_write({'box_status': 'removed'})
+
+    def _bn_check_in_service(self):
+        for rec in self:
+            if rec.status == 'close':
+                raise ValidationError(_(
+                    'Box "%(lot)s" was taken out of service (registration %(name)s is Closed).'
+                ) % {'lot': rec.lot_id.display_name, 'name': rec.name})
 
     # ------------------------------------------------------------------
     # Hooks overridden by bn_key_management (the key model lives there)
@@ -246,25 +287,12 @@ class DonationBoxRegistrationInstallation(models.Model):
             rec._bn_write({'status': 'available'})
         return True
 
-    def _bn_check_can_reopen(self):
-        """A closed registration may only be re-opened when it was closed by a mere
-        complaint report, never after the box was returned, scrapped or lost."""
-        self.ensure_one()
-        finished = self.complain_center_ids.filtered(lambda c: c.status in ('resolved', 'not_recovered'))
-        request = self.donation_box_request_id
-        returned = request.donation_box_request_line_ids.filtered(
-            lambda l: l.lot_id == self.lot_id and l.is_returned)
-        if finished or returned:
-            raise ValidationError(_(
-                'Box "%s" was already returned, scrapped or reported lost, so its registration '
-                'cannot be re-opened. Please create a new request.') % self.lot_id.display_name)
-
     def action_change_request(self):
+        # Closed is final: a registration is only closed once its box was returned,
+        # scrapped or reported lost. Installing the box again needs a new request.
         self._bn_require_group(CHANGE_REQUEST_GROUP)
-        self._bn_check_state('status', ('available', 'close'), _('Change Request'))
+        self._bn_check_state('status', ('available',), _('Change Request'))
         for rec in self:
-            if rec.status == 'close':
-                rec._bn_check_can_reopen()
             rec._bn_key_change_request()
             rec._bn_write({'status': 'change_request'})
         return True
@@ -278,7 +306,7 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     def populate_lock_no(self, records):
         self._bn_require_group(ADMIN_GROUP, APPROVE_GROUP)
-        for rec in records:
+        for rec in records.filtered(lambda r: r.status != 'close'):
             lines = rec.donation_box_request_id.donation_box_request_line_ids.filtered(
                 lambda x: x.lot_id == rec.lot_id and not x.is_returned)
             lock_no = lines[:1].lock_no
