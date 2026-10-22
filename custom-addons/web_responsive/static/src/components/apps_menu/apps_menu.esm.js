@@ -145,6 +145,7 @@ export class AppsMenu extends Component {
             const {href, hash} = location;
             const menuId = this.router.current.hash.menu_id;
             if (menuId && menuId != redirect_menuId) {
+                console.log(this.router.current.hash.menu_id);
                 browser.localStorage.setItem(
                     "redirect_menuId",
                     this.router.current.hash.menu_id
