@@ -85,21 +85,27 @@ export class TreasuryDashboard extends Component {
     }
 
     getStateColor(stateName) {
-        if (!stateName) return 'bg-secondary';
+        if (!stateName) return 'bg-secondary text-white';
         const s = stateName.toLowerCase();
+        
+        // Green for successful/cleared states
         if (['clear', 'cleared', 'posted', 'paid', 'done', 'transfer', 'transferred'].includes(s)) {
-            return 'bg-success';
+            return 'bg-success text-white';
         }
+        // Orange for pending/draft states
         if (['draft', 'pending', 'to_pay', 'unpaid', 'to_validate', 'waiting'].includes(s)) {
-            return 'bg-warning text-dark';
+            return 'bg-warning text-dark'; 
         }
+        // Red for failed/cancelled states
         if (['bounce', 'bounced', 'cancel', 'cancelled', 'late', 'rejected'].includes(s)) {
-            return 'bg-danger';
+            return 'bg-danger text-white';
         }
+        // Blue for informational states
         if (['new', 'in_progress', 'open'].includes(s)) {
             return 'bg-info text-dark';
         }
-        return 'bg-secondary';
+        // Default grey for anything else
+        return 'bg-secondary text-white';
     }
 
     createCustomModel(modelName) {

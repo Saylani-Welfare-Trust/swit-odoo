@@ -1,152 +1,229 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="treasury_dashboard.Dashboard">
-        <div class="o_treasury_dashboard container-fluid p-3">
+        <div class="pos-dash-v2 o_treasury_dashboard">
             
-            <!-- Header -->
-            <div class="row mb-3">
-                <div class="col">
-                    <h1 class="h3">Treasury Dashboard</h1>
+            <!-- ==================== HEADER ==================== -->
+            <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fa fa-bank me-2 text-primary"/>Treasury Dashboard</h2>
+                    <p>Overview of cheques, deposits, and journal transfers</p>
                 </div>
             </div>
 
-            <!-- 🟢 DATE + BRANCH FILTER BAR -->
-            <div class="row mb-4 align-items-end bg-light p-3 rounded shadow-sm mx-1">
-                <div class="col-md-2">
-                    <label class="form-label text-muted mb-1">From Date</label>
-                    <input type="date" class="form-control" t-model="state.date_from"/>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label text-muted mb-1">To Date</label>
-                    <input type="date" class="form-control" t-model="state.date_to"/>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label text-muted mb-1">Branch</label>
-                    <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
-                        <option value="">All Branches</option>
-                        <t t-foreach="state.analytic_accounts" t-as="branch" t-key="branch.id">
-                            <option t-att-value="branch.id" t-esc="branch.name"/>
-                        </t>
-                    </select>
-                </div>
-                <div class="col-md-5 d-flex gap-2">
-                    <button class="btn btn-primary" t-on-click="applyFilter">Apply Filter</button>
-                    <button class="btn btn-outline-secondary" t-on-click="clearFilter">Clear</button>
-
-                    <div class="ms-auto d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('this_month')">This Month</button>
-                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('last_month')">Last Month</button>
-                        <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('this_year')">This Year</button>
+            <!-- ==================== FILTER BAR ==================== -->
+            <div class="card oh-filter-card mb-4">
+                <div class="card-body p-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" t-model="state.date_from" t-on-change="applyFilter"/>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" t-model="state.date_to" t-on-change="applyFilter"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
+                                <option value="">All Branches</option>
+                                <t t-foreach="state.analytic_accounts" t-as="branch" t-key="branch.id">
+                                    <option t-att-value="branch.id" t-esc="branch.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-5 d-flex align-items-center gap-2 flex-wrap">
+                            <div class="d-flex gap-1 flex-wrap">
+                                <button class="oh-quick-btn" t-on-click="() => this.setQuickFilter('this_month')">This Month</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.setQuickFilter('last_month')">Last Month</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.setQuickFilter('this_year')">This Year</button>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary ms-auto" t-on-click="clearFilter">
+                                <i class="fa fa-times me-1"/>Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 🟢 CARDS SECTION -->
+            <!-- ==================== CARDS SECTION ==================== -->
             <div class="row g-3">
                 
-                <!-- 1. Cheque Dashboard Card -->
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-top border-4 border-info">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title text-info mb-0">Cheques</h5>
-                                <div class="d-flex gap-1">
-                                    <button class="btn btn-sm btn-info text-white" t-on-click="() => this.createCustomModel('pos.cheque')">New</button>
-                                    <button class="btn btn-sm btn-outline-info" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
+                <!-- 1. Cheques Card -->
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-money me-2 text-info"/>Cheques</h4>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-info text-white" t-on-click="() => this.createCustomModel('pos.cheque')">New</button>
+                                <button class="btn btn-sm btn-outline-info" t-on-click="() => this.openCustomModel('pos.cheque')">View All</button>
+                            </div>
+                        </div>
+                        <div class="oh-card-body">
+                            <!-- Totals -->
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div>
+                                    <div class="oh-kpi-label text-muted mb-1">Total Cheques</div>
+                                    <div class="fw-bold fs-5 text-dark"><t t-esc="state.cheques.count"/></div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="oh-kpi-label text-muted mb-1">Total Amount</div>
+                                    <div class="fw-bold fs-5 text-info"><t t-esc="formatCurrency(state.cheques.total_amount)"/></div>
                                 </div>
                             </div>
-                            <div class="text-muted small">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="fw-bold">Total Cheques:</span>
-                                    <span t-esc="state.cheques.count"/>
-                                </div>
-                                <div class="d-flex justify-content-between mb-3">
-                                    <span class="fw-bold">Total Amount:</span>
-                                    <span t-esc="formatCurrency(state.cheques.total_amount)"/>
-                                </div>
-                                <!-- State Badges -->
-                                <div class="d-flex flex-wrap gap-1">
-                                    <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
-                                        <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
-                                            <t t-esc="formatStateName(state_name)"/>:
-                                            <t t-esc="state.cheques.states[state_name]"/>
-                                            —
-                                            <t t-esc="formatCurrency((state.cheques.state_amounts || {})[state_name] || 0)"/>
-                                        </span>
-                                    </t>
-                                </div>
+                            
+                            <!-- States Table -->
+                            <div style="max-height: 250px; overflow-y: auto;">
+                                <table class="table oh-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>State</th>
+                                            <th class="text-center">Count</th>
+                                            <th class="text-end">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.cheques.states" t-as="state_name" t-key="state_name">
+                                            <tr>
+                                                <td>
+                                                    <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }} px-3 py-2">
+                                                        <t t-esc="formatStateName(state_name)"/>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center fw-semibold"><t t-esc="state.cheques.states[state_name]"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="formatCurrency((state.cheques.state_amounts || {})[state_name] || 0)"/></td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!Object.keys(state.cheques.states).length">
+                                            <tr>
+                                                <td colspan="3" class="oh-empty">
+                                                    <i class="fa fa-folder-open"/>
+                                                    No Cheques found
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 2. Bank Transfers / Direct Deposit Card -->
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-top border-4 border-warning">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title text-warning mb-0">Bank Transfers / Direct Deposits</h5>
-                                <div class="d-flex gap-1">
-                                    <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.createCustomModel('direct.deposit')">New</button>
-                                    <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
+                <!-- 2. Bank Transfers / Direct Deposits Card -->
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-exchange me-2 text-warning"/>Bank Transfers / Deposits</h4>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-warning text-white" t-on-click="() => this.createCustomModel('direct.deposit')">New</button>
+                                <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.openCustomModel('direct.deposit')">View All</button>
+                            </div>
+                        </div>
+                        <div class="oh-card-body">
+                            <!-- Totals -->
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div>
+                                    <div class="oh-kpi-label text-muted mb-1">Total Transfers</div>
+                                    <div class="fw-bold fs-5 text-dark"><t t-esc="state.deposits.count"/></div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="oh-kpi-label text-muted mb-1">Total Amount</div>
+                                    <div class="fw-bold fs-5 text-warning"><t t-esc="formatCurrency(state.deposits.total_amount)"/></div>
                                 </div>
                             </div>
-                            <div class="text-muted small">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="fw-bold">Total Transfers:</span>
-                                    <span t-esc="state.deposits.count"/>
-                                </div>
-                                <div class="d-flex justify-content-between mb-3">
-                                    <span class="fw-bold">Total Amount:</span>
-                                    <span t-esc="formatCurrency(state.deposits.total_amount)"/>
-                                </div>
-                                <!-- State Badges -->
-                                <div class="d-flex flex-wrap gap-1">
-                                    <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
-                                        <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
-                                            <t t-esc="formatStateName(state_name)"/>:
-                                            <t t-esc="state.deposits.states[state_name]"/>
-                                            —
-                                            <t t-esc="formatCurrency((state.deposits.state_amounts || {})[state_name] || 0)"/>
-                                        </span>
-                                    </t>
-                                </div>
+                            
+                            <!-- States Table -->
+                            <div style="max-height: 250px; overflow-y: auto;">
+                                <table class="table oh-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>State</th>
+                                            <th class="text-center">Count</th>
+                                            <th class="text-end">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.deposits.states" t-as="state_name" t-key="state_name">
+                                            <tr>
+                                                <td>
+                                                    <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }} px-3 py-2">
+                                                        <t t-esc="formatStateName(state_name)"/>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center fw-semibold"><t t-esc="state.deposits.states[state_name]"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="formatCurrency((state.deposits.state_amounts || {})[state_name] || 0)"/></td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!Object.keys(state.deposits.states).length">
+                                            <tr>
+                                                <td colspan="3" class="oh-empty">
+                                                    <i class="fa fa-folder-open"/>
+                                                    No Deposits found
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. Journal Transfer Card -->
-                <div class="col-md-4">
-                    <div class="card h-100 shadow-sm border-top border-4 border-success">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="card-title text-success mb-0">Journal Transfers</h5>
-                                <div class="d-flex gap-1">
-                                    <button class="btn btn-sm btn-success" t-on-click="() => this.createCustomModel('journal.transfer')">New</button>
-                                    <button class="btn btn-sm btn-outline-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
+                <!-- 3. Journal Transfers Card -->
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-random me-2 text-success"/>Journal Transfers</h4>
+                            <div class="d-flex gap-1">
+                                <button class="btn btn-sm btn-success" t-on-click="() => this.createCustomModel('journal.transfer')">New</button>
+                                <button class="btn btn-sm btn-outline-success" t-on-click="() => this.openCustomModel('journal.transfer')">View All</button>
+                            </div>
+                        </div>
+                        <div class="oh-card-body">
+                            <!-- Totals -->
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+                                <div>
+                                    <div class="oh-kpi-label text-muted mb-1">Total Transfers</div>
+                                    <div class="fw-bold fs-5 text-dark"><t t-esc="state.transfers.count"/></div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="oh-kpi-label text-muted mb-1">Total Amount</div>
+                                    <div class="fw-bold fs-5 text-success"><t t-esc="formatCurrency(state.transfers.total_amount)"/></div>
                                 </div>
                             </div>
-                            <div class="text-muted small">
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span class="fw-bold">Total Transfers:</span>
-                                    <span t-esc="state.transfers.count"/>
-                                </div>
-                                <div class="d-flex justify-content-between mb-3">
-                                    <span class="fw-bold">Total Amount:</span>
-                                    <span t-esc="formatCurrency(state.transfers.total_amount)"/>
-                                </div>
-                                <!-- State Badges -->
-                                <div class="d-flex flex-wrap gap-1">
-                                    <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
-                                        <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }}">
-                                            <t t-esc="formatStateName(state_name)"/>:
-                                            <t t-esc="state.transfers.states[state_name]"/>
-                                            —
-                                            <t t-esc="formatCurrency((state.transfers.state_amounts || {})[state_name] || 0)"/>
-                                        </span>
-                                    </t>
-                                </div>
+                            
+                            <!-- States Table -->
+                            <div style="max-height: 250px; overflow-y: auto;">
+                                <table class="table oh-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>State</th>
+                                            <th class="text-center">Count</th>
+                                            <th class="text-end">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.transfers.states" t-as="state_name" t-key="state_name">
+                                            <tr>
+                                                <td>
+                                                    <span t-attf-class="badge rounded-pill {{ getStateColor(state_name) }} px-3 py-2">
+                                                        <t t-esc="formatStateName(state_name)"/>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center fw-semibold"><t t-esc="state.transfers.states[state_name]"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="formatCurrency((state.transfers.state_amounts || {})[state_name] || 0)"/></td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!Object.keys(state.transfers.states).length">
+                                            <tr>
+                                                <td colspan="3" class="oh-empty">
+                                                    <i class="fa fa-folder-open"/>
+                                                    No Transfers found
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
