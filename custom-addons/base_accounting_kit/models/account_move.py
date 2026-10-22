@@ -160,6 +160,9 @@ class AccountInvoiceLine(models.Model):
         """Onchange function for product that's call the UOM compute function
          and the asset category function"""
         result = super(AccountInvoiceLine, self)._compute_product_uom_id()
+        if self.product_id and self.move_id.move_type == 'in_invoice':
+            self.asset_category_id = (
+                self.product_id.product_tmpl_id.asset_category_id)
         self.onchange_asset_category_id()
         return result
 
