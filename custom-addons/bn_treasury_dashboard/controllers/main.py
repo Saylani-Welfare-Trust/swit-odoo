@@ -4,12 +4,11 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-
 class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount',
                                 state_field='state', date_from=None, date_to=None,
-                                analytic_account_id=None):
+                                analytic_account_id=None, province_id=None, city=None):
         empty = {
             'count': 0,
             'total_amount': 0.0,
@@ -22,7 +21,6 @@ class TreasuryDashboardController(http.Controller):
 
         Model = request.env[model_name]
 
-        # Which date field to filter on
         date_field = None
         for possible_field in ['date', 'transfer_date', 'deposit_date', 'create_date']:
             if possible_field in Model._fields:
@@ -42,6 +40,22 @@ class TreasuryDashboardController(http.Controller):
                 base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except (ValueError, TypeError):
                 pass
+
+        # ---- Province & City filter (Safe ORM approach) ----
+        if (province_id or city) and 'donor_id' in Model._fields:
+            donor_domain = []
+            if province_id:
+                try:
+                    donor_domain.append(('state_id', '=', int(province_id)))
+                except (ValueError, TypeError):
+                    pass
+            if city:
+                donor_domain.append(('city', '=', city))
+            
+            if donor_domain:
+                # Find matching donor IDs first
+                donors = request.env['res.partner'].search(donor_domain)
+                base_domain.append(('donor_id', 'in', donors.ids))
 
         has_amount = amount_field in Model._fields
 
@@ -64,6 +78,7 @@ class TreasuryDashboardController(http.Controller):
 
         states = {}
         state_amounts = {}
+
         if actual_state_field:
             try:
                 for rec in records:
@@ -74,7 +89,7 @@ class TreasuryDashboardController(http.Controller):
                     if has_amount:
                         state_amounts[key] = state_amounts.get(key, 0.0) + (rec[amount_field] or 0.0)
             except Exception as e:
-                _logger.warning(f"⚠️ TREASURY WARNING (State Badge) on {model_name}: {str(e)}")
+                _logger.warning(f"⚠️ TREASURY WARNING on {model_name}: {str(e)}")
 
         return {
             'count': count,
@@ -84,8 +99,6 @@ class TreasuryDashboardController(http.Controller):
         }
 
     def _get_analytic_accounts(self):
-        """All branches that have at least one treasury record — stable list,
-        independent of the current date filter."""
         ids = set()
         for model_name in ['pos.cheque', 'direct.deposit', 'journal.transfer']:
             if model_name in request.env:
@@ -103,11 +116,33 @@ class TreasuryDashboardController(http.Controller):
             for a in sorted(accounts, key=lambda a: (a.display_name or '').lower())
         ]
 
+    def _get_location_filters(self):
+        # Safely pull donors linked to Cheques and Deposits
+        cheque_donors = request.env['pos.cheque'].search([]).mapped('donor_id')
+        deposit_donors = request.env['direct.deposit'].search([]).mapped('donor_id')
+        all_donors = cheque_donors | deposit_donors
+        
+        if not all_donors:
+            return [], []
+            
+        # Provinces
+        state_ids = list(set([d.state_id.id for d in all_donors if d.state_id]))
+        states = request.env['res.country.state'].browse(state_ids)
+        provinces = [{'id': s.id, 'name': s.name} for s in states]
+        provinces.sort(key=lambda x: x['name'])
+        
+        # Cities
+        cities = list(set([d.city for d in all_donors if d.city]))
+        cities.sort()
+        
+        return provinces, cities
+
     @http.route('/treasury/dashboard/data', type='json', auth='user',
                 methods=['POST'], csrf=False)
     def get_dashboard_data(self, date_from=None, date_to=None,
-                           analytic_account_id=None, **kwargs):
+                           analytic_account_id=None, province_id=None, city=None, **kwargs):
         currency = request.env.company.currency_id
+        provinces, cities = self._get_location_filters()
 
         return {
             'currency': {
@@ -115,7 +150,9 @@ class TreasuryDashboardController(http.Controller):
                 'position': currency.position,
             },
             'analytic_accounts': self._get_analytic_accounts(),
-            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id),
-            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id),
-            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id),
+            'provinces': provinces,
+            'cities': cities,
+            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city),
+            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city),
+            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city),
         }

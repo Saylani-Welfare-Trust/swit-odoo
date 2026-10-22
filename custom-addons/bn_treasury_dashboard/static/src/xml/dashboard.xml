@@ -15,15 +15,15 @@
             <div class="card oh-filter-card mb-4">
                 <div class="card-body p-3">
                     <div class="row g-3 align-items-end">
-                        <div class="col-md-2">
+                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">From Date</label>
                             <input type="date" class="form-control" t-model="state.date_from" t-on-change="applyFilter"/>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">To Date</label>
                             <input type="date" class="form-control" t-model="state.date_to" t-on-change="applyFilter"/>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">Branch</label>
                             <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
                                 <option value="">All Branches</option>
@@ -32,15 +32,33 @@
                                 </t>
                             </select>
                         </div>
-                        <div class="col-md-5 d-flex align-items-center gap-2 flex-wrap">
-                            <div class="d-flex gap-1 flex-wrap">
+                        <div class="col-lg-2 col-md-4">
+                            <label class="form-label">Province</label>
+                            <select class="form-select" t-model="state.province_id" t-on-change="applyFilter">
+                                <option value="">All Provinces</option>
+                                <t t-foreach="state.provinces" t-as="province" t-key="province.id">
+                                    <option t-att-value="province.id" t-esc="province.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label class="form-label">City</label>
+                            <select class="form-select" t-model="state.city" t-on-change="applyFilter">
+                                <option value="">All Cities</option>
+                                <t t-foreach="state.cities" t-as="city" t-key="city">
+                                    <option t-att-value="city" t-esc="city"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4 d-flex align-items-center gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-outline-secondary w-100 mb-1" t-on-click="clearFilter">
+                                <i class="fa fa-times me-1"/>Clear
+                            </button>
+                            <div class="d-flex gap-1 flex-wrap w-100 justify-content-center">
                                 <button class="oh-quick-btn" t-on-click="() => this.setQuickFilter('this_month')">This Month</button>
                                 <button class="oh-quick-btn" t-on-click="() => this.setQuickFilter('last_month')">Last Month</button>
                                 <button class="oh-quick-btn" t-on-click="() => this.setQuickFilter('this_year')">This Year</button>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary ms-auto" t-on-click="clearFilter">
-                                <i class="fa fa-times me-1"/>Clear
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -60,7 +78,6 @@
                             </div>
                         </div>
                         <div class="oh-card-body">
-                            <!-- Totals -->
                             <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
                                 <div>
                                     <div class="oh-kpi-label text-muted mb-1">Total Cheques</div>
@@ -72,7 +89,6 @@
                                 </div>
                             </div>
                             
-                            <!-- States Table -->
                             <div style="max-height: 250px; overflow-y: auto;">
                                 <table class="table oh-table mb-0">
                                     <thead>
@@ -120,7 +136,6 @@
                             </div>
                         </div>
                         <div class="oh-card-body">
-                            <!-- Totals -->
                             <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
                                 <div>
                                     <div class="oh-kpi-label text-muted mb-1">Total Transfers</div>
@@ -132,7 +147,6 @@
                                 </div>
                             </div>
                             
-                            <!-- States Table -->
                             <div style="max-height: 250px; overflow-y: auto;">
                                 <table class="table oh-table mb-0">
                                     <thead>
@@ -180,7 +194,6 @@
                             </div>
                         </div>
                         <div class="oh-card-body">
-                            <!-- Totals -->
                             <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
                                 <div>
                                     <div class="oh-kpi-label text-muted mb-1">Total Transfers</div>
@@ -192,7 +205,6 @@
                                 </div>
                             </div>
                             
-                            <!-- States Table -->
                             <div style="max-height: 250px; overflow-y: auto;">
                                 <table class="table oh-table mb-0">
                                     <thead>
