@@ -39,6 +39,21 @@ REGISTRATION_TOKENS = {
 }
 TOKEN_RE = re.compile(r'{([A-Z-]+)}')
 
+# What the profile views really showed before they were built from the tag
+# (only these fields had a slot). Used once, on upgrade, for tags still on
+# the install default "every field", so their screens do not change.
+LEGACY_LIST_FIELDS = [
+    'primary_registration_id', 'secondary_registration_id', 'old_system_id', 'gender', 'martial_status',
+    'street', 'country_code_id', 'mobile', 'email', 'cnic_no', 'date_of_birth', 'age', 'city',
+    'analytic_account_id', 'father_name', 'area',
+]
+LEGACY_SEARCH_FIELDS = [
+    'primary_registration_id', 'secondary_registration_id', 'old_system_id', 'cnic_no', 'mobile',
+    'email', 'city', 'area', 'analytic_account_id', 'father_name',
+]
+LEGACY_FORM_ABSENT = ['phone', 'function', 'title', 'parent_id', 'website', 'company_type', 'vat',
+                      'analytic_account_id']
+
 
 class ResPartnerCategory(models.Model):
     _inherit = 'res.partner.category'
@@ -153,6 +168,32 @@ class ResPartnerCategory(models.Model):
                     'registration_sequence_id': sequence.id if sequence else False,
                 })
         self.env['res.partner']._bn_backfill_registration_ids()
+        self._bn_setup_dynamic_views()
+
+    @api.model
+    def _bn_setup_dynamic_views(self):
+        """Views are built from the tag configuration. Tags still on the
+        install default (every field everywhere) get what their screens
+        really showed until now, then every profile menu is refreshed so it
+        passes its tag to the views."""
+        Field = self.env['ir.model.fields']
+        everything = set(Field.search(self._profile_field_domain()).ids)
+
+        def ids(names):
+            return Field.search([('model', '=', 'res.partner'), ('name', 'in', names)]).ids
+
+        for tag in self.search([('is_profile_type', '=', True)]):
+            vals = {}
+            if everything and set(tag.profile_list_field_ids.ids) >= everything:
+                vals['profile_list_field_ids'] = [(6, 0, ids(LEGACY_LIST_FIELDS))]
+            if everything and set(tag.profile_search_field_ids.ids) >= everything:
+                vals['profile_search_field_ids'] = [(6, 0, ids(LEGACY_SEARCH_FIELDS))]
+            if everything and set(tag.profile_form_field_ids.ids) >= everything:
+                keep = [f for f in CURATED_PROFILE_FIELDS if f not in LEGACY_FORM_ABSENT]
+                vals['profile_form_field_ids'] = [(6, 0, ids(keep))]
+            if vals:
+                tag.write(vals)
+            tag._sync_profile_menu()
 
     @api.model
     def _profile_field_domain(self):
@@ -200,7 +241,9 @@ class ResPartnerCategory(models.Model):
                 self.profile_menu_id.active = False
             return
 
-        context = {'default_category_id': [(6, 0, [self.id])]}
+        # profile_tag_view_ref: the list / search views are built from this
+        # tag's configuration (models/res_partner_views.py).
+        context = {'default_category_id': [(6, 0, [self.id])], 'profile_tag_view_ref': self.id}
         for fname in self.profile_list_field_ids.mapped('name'):
             context['show_list_%s' % fname] = True
         for fname in self.profile_search_field_ids.mapped('name'):
@@ -219,7 +262,7 @@ class ResPartnerCategory(models.Model):
                 existing_context = {}
             merged_context = {
                 k: v for k, v in existing_context.items()
-                if not (k.startswith('show_list_') or k.startswith('show_search_'))
+                if not (k.startswith('show_list_') or k.startswith('show_search_') or k == 'profile_category_id')
             }
             merged_context.update(context)
             self.profile_action_id.write({'name': self.name, 'context': merged_context})

@@ -103,8 +103,8 @@ Use *Contacts > select both > Action > Merge* to merge them.
 
 ### A unique ID per tag
 
-Each tag can define its own ID format under *Profile Management >
-Configuration > Profile Types (Tags) > Unique Registration ID*:
+Each tag can define its own ID format under *Master Setup > Profile
+Management > Profile Types (Tags) > Unique Registration ID*:
 
 | Token | Meaning |
 | --- | --- |
@@ -140,9 +140,31 @@ when the module is upgraded.
 
 ## Configuring a profile type
 
-*Profile Management > Configuration > Profile Types (Tags)*: tick **Is
-Profile Type** and pick the list, form and search fields and the pages. A
-menu and window action are created or updated automatically for that tag.
+*Master Setup > Profile Management > Profile Types (Tags)*: tick **Enable in
+Profile Management**, then choose:
+
+| Setting | What it drives |
+| --- | --- |
+| **List View** fields | The columns of the tag's list, in catalogue order, then *State* |
+| **Search View** fields | The fields offered when typing in the tag's search bar (images and computed fields such as Age cannot be searched and are skipped) |
+| **Form View** fields | The fields shown on the profile form of a contact carrying the tag |
+| **Form Pages** | The notebook pages shown on that form |
+
+A menu and window action are created / updated for the tag automatically.
+The views are **built from these settings** each time they are loaded:
+
+- **List / search** follow the tag of the **menu** used (its action passes
+  `profile_tag_view_ref`). Changing the settings takes effect on the next
+  page load.
+- **Form** follows the **contact**: a contact with several profile tags shows
+  everything any of them selects. *Name*, *Tags*, *Mobile* and *Phone Code*
+  are always shown. Fields the form had no place for (Phone, Job Position,
+  Title, Website, Tax ID ...) appear in an **Other Details** group on the
+  General Information page.
+- The kanban view is the same for every tag.
+
+Donor and Donee start with the columns, search fields and form fields their
+screens showed before this version.
 
 ## Reports
 
@@ -155,11 +177,11 @@ Profile information sheet, microfinance application, user profile report
 | --- | --- |
 | *Access Root Menu* | See the Profile Management app (implied by every group below) |
 | *User* | Create, edit, register, reject and raise change requests on profiles |
-| *Manager* | User + configure profile types and Areas |
-| *Audit* | Read-only |
+| *Manager* | User + configure profile types and Areas (*Master Setup > Profile Management*; the group gives access to the Master Setup menu) |
+| *Audit* | Read-only, including the configuration under Master Setup |
 | *Admin* | Everything, including delete |
 
-## What changed in 17.0.1.2.0 - 17.0.1.3.0
+## What changed in 17.0.1.2.0 - 17.0.1.5.0
 
 | Problem in 17.0.1.1.0 | Fix |
 | --- | --- |
@@ -177,6 +199,8 @@ Profile information sheet, microfinance application, user profile report
 | *Update Country Name* server action appended the phone code again on every run | Only once |
 | The same person could exist as several contacts (one per role) | One contact per person; duplicates refused |
 | Only Donor / Donee had an ID, in a hard-coded format | One ID per tag, pattern configured on the tag |
+| Only 16 list / 10 search fields had a slot: choosing any other field on a tag silently did nothing | List, search and form built from the tag's settings |
+| Configuration lived inside the Profile Management app | Moved to *Master Setup > Profile Management* (Profile Types, Area) |
 
 ## Known gaps
 

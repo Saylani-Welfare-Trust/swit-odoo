@@ -19,8 +19,12 @@ def post_init_hook(env):
     def page_ids(technical_names):
         return Page.search([('technical_name', 'in', technical_names)]).ids
 
-    from .models.res_partner_category import CURATED_PROFILE_FIELDS
-    all_curated = field_ids(CURATED_PROFILE_FIELDS)
+    from .models.res_partner_category import (
+        CURATED_PROFILE_FIELDS, LEGACY_FORM_ABSENT, LEGACY_LIST_FIELDS, LEGACY_SEARCH_FIELDS)
+    # The views are built from these selections (models/res_partner_views.py).
+    list_fields = field_ids(LEGACY_LIST_FIELDS)
+    search_fields = field_ids(LEGACY_SEARCH_FIELDS)
+    form_fields = field_ids([f for f in CURATED_PROFILE_FIELDS if f not in LEGACY_FORM_ABSENT])
 
     donor = env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
     if donor and not donor.is_profile_type:
@@ -28,9 +32,9 @@ def post_init_hook(env):
         menu = env.ref('bn_profile_management.donor_profile_management_menu', raise_if_not_found=False)
         donor.write({
             'is_profile_type': True,
-            'profile_list_field_ids': [(6, 0, all_curated)],
-            'profile_form_field_ids': [(6, 0, all_curated)],
-            'profile_search_field_ids': [(6, 0, all_curated)],
+            'profile_list_field_ids': [(6, 0, list_fields)],
+            'profile_form_field_ids': [(6, 0, form_fields)],
+            'profile_search_field_ids': [(6, 0, search_fields)],
             'profile_page_ids': [(6, 0, page_ids(['general_info', 'donation']))],
             # Already has a hand-built menu/action - point config at it so the
             # write-triggered sync updates it in place instead of creating a
@@ -45,9 +49,9 @@ def post_init_hook(env):
         menu = env.ref('bn_profile_management.donee_profile_management_menu', raise_if_not_found=False)
         donee.write({
             'is_profile_type': True,
-            'profile_list_field_ids': [(6, 0, all_curated)],
-            'profile_form_field_ids': [(6, 0, all_curated)],
-            'profile_search_field_ids': [(6, 0, all_curated)],
+            'profile_list_field_ids': [(6, 0, list_fields)],
+            'profile_form_field_ids': [(6, 0, form_fields)],
+            'profile_search_field_ids': [(6, 0, search_fields)],
             'profile_page_ids': [(6, 0, page_ids(['general_info', 'welfare', 'microfinance', 'medical']))],
             'profile_action_id': action.id if action else False,
             'profile_menu_id': menu.id if menu else False,

@@ -100,10 +100,10 @@
 
     <menuitem
         id="profile_management_config_menu"
-        name="Configuration"
-        parent="bn_profile_management.profile_management_menu"
+        name="Profile Management"
+        parent="bn_master_setup.master_setup_menu"
         groups="bn_profile_management.profile_management_manager_group,bn_profile_management.profile_management_audit_group"
-        sequence="99"/>
+        sequence="1"/>
 
     <menuitem
         id="res_partner_category_menu_profile"

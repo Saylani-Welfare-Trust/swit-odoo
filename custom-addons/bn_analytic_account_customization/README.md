@@ -66,8 +66,9 @@ payable, bank and tax lines are exempt. Each entry is checked on its own.
 | *Admin* | Everything, including delete |
 
 Every internal user can **read** Location Options and Sub Zones (they are
-picked on donation box, key bunch and rider screens). The menu sits under
-*Master Setup*, so users also need a Master Setup group to reach it.
+picked on donation box, key bunch and rider screens). The menu is
+*Master Setup > Analytical Accounting*; every group here gives access to the
+Master Setup menu (only the menus the user's groups allow are shown).
 
 ## Server actions
 
