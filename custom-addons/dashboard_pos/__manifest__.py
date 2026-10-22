@@ -38,6 +38,7 @@
             'dashboard_pos/static/src/xml/pos_dashboard.xml',
             'dashboard_pos/static/src/js/pos_dashboard.js',
             'dashboard_pos/static/src/css/pos_dashboard.css',
+            'dashboard_pos/static/src/css/pos_dashboard_v2.scss',
             'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
         ],
     },

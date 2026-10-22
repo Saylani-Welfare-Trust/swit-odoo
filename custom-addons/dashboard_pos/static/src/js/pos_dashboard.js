@@ -144,6 +144,7 @@ export class PosDashboard extends Component {
                 };
                 const options = {
                     responsive: true,
+                    maintainAspectRatio: false,
                     title: { display: true, position: "top",
                              text: "SALE DETAILS", fontSize: 18, fontColor: "#111" },
                     legend: { display: true, position: "bottom",
@@ -200,6 +201,7 @@ export class PosDashboard extends Component {
                 };
                 const options = {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: { x: { title: { display: true, text: "Top Customer",
                                            position: "top", fontSize: 24, color: "#111" } } },
                     legend: { display: true, position: "bottom",
@@ -232,7 +234,9 @@ export class PosDashboard extends Component {
                     }],
                 };
                 const options = {
-                    responsive: true, indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
                     legend: { display: true, position: "bottom",
                               labels: { fontColor: "#333", fontSize: 16 } },
                     scales: { x: { title: { display: true, text: "Top products",
@@ -265,7 +269,8 @@ export class PosDashboard extends Component {
                     }],
                 };
                 const options = {
-                    responsive: true, indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,indexAxis: 'y',
                     legend: { display: true, position: "bottom",
                               labels: { fontColor: "#333", fontSize: 16 } },
                     scales: { x: { title: { display: true, text: "Top product categories",

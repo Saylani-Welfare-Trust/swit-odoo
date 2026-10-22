@@ -1,353 +1,293 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates id="template" xml:space="preserve">
-    <!--  Template for Pos Dashboard  -->
     <t t-name="PosDashboard">
-        <div class="oh_dashboards">
-        <div class="container-fluid o_pos_dashboard">
-        <div class="row mb-3 p-3 bg-light rounded shadow-sm" style="margin: 10px 0;">
-            <div class="col-md-2">
-                <label class="form-label fw-bold mb-1">From Date</label>
-                <input type="date" class="form-control"
-                       t-model="state.date_from"
-                       t-on-change="onchange_filter"/>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label fw-bold mb-1">To Date</label>
-                <input type="date" class="form-control"
-                       t-model="state.date_to"
-                       t-on-change="onchange_filter"/>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold mb-1">Shop</label>
-                <select class="form-select"
-                        t-model="state.config_id"
-                        t-on-change="onchange_filter">
-                    <option value="">All Shops</option>
-                    <t t-foreach="state.shops" t-as="shop" t-key="shop.id">
-                        <option t-att-value="shop.id" t-esc="shop.name"/>
-                    </t>
-                </select>
-            </div>
-            <div class="col-md-5 d-flex align-items-end gap-2">
-                <button class="btn btn-outline-secondary" t-on-click="clear_filter">
-                    Clear
-                </button>
-                <div class="ms-auto d-flex gap-1">
-                    <button class="btn btn-sm btn-outline-primary"
-                            t-on-click="() => this.set_quick_date('today')">Today</button>
-                    <button class="btn btn-sm btn-outline-primary"
-                            t-on-click="() => this.set_quick_date('this_month')">This Month</button>
-                    <button class="btn btn-sm btn-outline-primary"
-                            t-on-click="() => this.set_quick_date('last_month')">Last Month</button>
-                    <button class="btn btn-sm btn-outline-primary"
-                            t-on-click="() => this.set_quick_date('this_year')">This Year</button>
+        <div class="pos-dash-v2">
+
+            <!-- ==================== HEADER ==================== -->
+            <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fa fa-bar-chart me-2 text-primary"/>POS Order Dashboard</h2>
+                    <p>Overview of point of sale performance</p>
                 </div>
             </div>
-        </div>
-        <div class="row main-section" align="center">
-            <div class="col-md-4 col-sm-6 pos_order_today oh-payslip"
-                 t-on-click="pos_order_today">
-                        <div class="oh-card" style="width: 288px;">
-                            <div class="oh-card-body">
-                                <div class="stat-widget-one">
-                                    <div class="stat-icon"
-                                         style="background:#5bcbd0"><i class="fa fa-shopping-bag"/></div>
-                                    <div class="stat-content">
-                                        <div class="stat-head">Today Orders</div>
-                                        <div class="stat_count"><t t-esc="state.today_sale"/></div>
-                                    </div>
-                                </div>
+
+            <!-- ==================== FILTER BAR ==================== -->
+            <div class="card oh-filter-card mb-4">
+                <div class="card-body p-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control"
+                                   t-model="state.date_from"
+                                   t-on-change="onchange_filter"/>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control"
+                                   t-model="state.date_to"
+                                   t-on-change="onchange_filter"/>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Shop</label>
+                            <select class="form-select"
+                                    t-model="state.config_id"
+                                    t-on-change="onchange_filter">
+                                <option value="">All Shops</option>
+                                <t t-foreach="state.shops" t-as="shop" t-key="shop.id">
+                                    <option t-att-value="shop.id" t-esc="shop.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-md-5 d-flex align-items-center gap-2 flex-wrap">
+                            <div class="d-flex gap-1 flex-wrap">
+                                <button class="oh-quick-btn"
+                                        t-on-click="() => this.set_quick_date('today')">Today</button>
+                                <button class="oh-quick-btn"
+                                        t-on-click="() => this.set_quick_date('this_month')">This Month</button>
+                                <button class="oh-quick-btn"
+                                        t-on-click="() => this.set_quick_date('last_month')">Last Month</button>
+                                <button class="oh-quick-btn"
+                                        t-on-click="() => this.set_quick_date('this_year')">This Year</button>
                             </div>
+                            <button class="btn btn-sm btn-outline-secondary ms-auto"
+                                    t-on-click="clear_filter">
+                                <i class="fa fa-times me-1"/>Clear
+                            </button>
                         </div>
                     </div>
-            <div class="col-md-4 col-sm-6 pos_order oh-payslip"
-                 t-on-click="pos_order">
-                                    <div class="oh-card" style="width: 288px;">
-                                        <div class="oh-card-body">
-                                            <div class="stat-widget-one">
-                                                <div class="stat-icon"
-                                                     style="background:#645bd0"><i class="fa fa-shopping-bag"/></div>
-                                                <div class="stat-content">
-                                                    <div class="stat-head">Total Orders</div>
-                                                    <div class="stat_count"><t t-esc="state.total_order_count"/></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-            <div class="col-md-4 col-sm-6 pos_total_sales oh-payslip"
-                 t-on-click="pos_order">
-                                    <div class="oh-card" style="width: 350px;">
-                                        <div class="oh-card-body">
-                                            <div class="stat-widget-one">
-                                                <div class="stat-icon"
-                                                     style="background:#85d05b"><i class="fa fa-shopping-cart"/></div>
-                                                <div class="stat-content">
-                                                    <div class="stat-head">Total Sales</div>
-                                                    <div class="stat_count"><t t-esc="state.total_sale"/></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-            <div class="col-md-4 col-sm-6 pos_session oh-payslip"
-                 t-on-click="pos_session">
-                                            <div class="oh-card"
-                                                 style="width: 288px;">
-                                                <div class="oh-card-body">
-                                                    <div class="stat-widget-one">
-                                                        <div class="stat-icon"
-                                                             style="background:#d05bb8"><i class="fa fa-signal"/></div>
-                                                        <div class="stat-content">
-                                                            <div class="stat-head">Sessions</div>
-                                                            <div class="stat_count"><t t-esc="state.total_session"/></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                </div>
+                </div>
+            </div>
 
-            <div class="col-md-4 col-sm-6 pos_refund_orders oh-payslip"
-                 t-on-click="pos_refund_orders">
-                                    <div class="oh-card" style="width: 288px;">
-                                        <div class="oh-card-body">
-                                            <div class="stat-widget-one">
-                                                <div class="stat-icon"
-                                                     style="background:#d0c35b"><i class="fa fa-minus-circle"/></div>
-                                                <div class="stat-content">
-                                                    <div class="stat-head">Total Refund Orders</div>
-                                                    <div class="stat_count"><t t-esc="state.total_refund_count"/></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-            <div class="col-md-4 col-sm-6 pos_refund_today_orders oh-payslip"
-                 t-on-click="pos_refund_today_orders">
-                                    <div class="oh-card" style="width: 350px;">
-                                        <div class="oh-card-body">
-                                            <div class="stat-widget-one">
-                                                <div class="stat-icon"
-                                                     style="background:#5b8ed0"><i class="fa fa-minus-circle"/></div>
-                                                <div class="stat-content">
-                                                    <div class="stat-head">Today Refund Order</div>
-                                                    <div class="stat_count"><t t-esc="state.today_refund_total"/></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+            <!-- ==================== KPI TILES ==================== -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-blue" t-on-click="pos_order_today">
+                        <i class="fa fa-calendar-check-o oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Today Orders</div>
+                        <div class="oh-kpi-value"><t t-esc="state.today_sale"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-purple" t-on-click="pos_order">
+                        <i class="fa fa-shopping-bag oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Total Orders</div>
+                        <div class="oh-kpi-value"><t t-esc="state.total_order_count"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-green" t-on-click="pos_order">
+                        <i class="fa fa-money oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Total Sales</div>
+                        <div class="oh-kpi-value"><t t-esc="state.total_sale"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-orange" t-on-click="pos_session">
+                        <i class="fa fa-signal oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Sessions</div>
+                        <div class="oh-kpi-value"><t t-esc="state.total_session"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-amber" t-on-click="pos_refund_orders">
+                        <i class="fa fa-minus-circle oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Total Refunds</div>
+                        <div class="oh-kpi-value"><t t-esc="state.total_refund_count"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-red" t-on-click="pos_refund_today_orders">
+                        <i class="fa fa-undo oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Today Refunds</div>
+                        <div class="oh-kpi-value"><t t-esc="state.today_refund_total"/></div>
+                    </div>
+                </div>
             </div>
-            </div>
-        </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-lg-12 col-md-12">
-            <div class="row" style="margin:0px;">
-                <div class="col-md-6" id="col-graph">
-                    <div class="card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <b>
-                                    <h3 class="custom-h3">SALE REPORT</h3>
-                                </b>
-                            </div>
-                            <div class="card-tools">
-                            <select id="pos_sales"
-                                    t-on-click="onclick_pos_sales">
-                                <option style="display:none;"> -- select an option -- </option>
+
+            <!-- ==================== CHART ROW 1 ==================== -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-line-chart me-2 text-primary"/>Sales Report</h4>
+                            <select class="form-select form-select-sm"
+                                    style="width:auto;"
+                                    id="pos_sales"
+                                    t-on-change="onclick_pos_sales">
                                 <option value="pos_hourly_sales">Hourly</option>
                                 <option value="pos_monthly_sales">Monthly</option>
                                 <option value="pos_year_sales">Yearly</option>
                             </select>
                         </div>
-                        </div>
-                        <h4>SALE DETAILS</h4>
-                        <div class="card-body mt-3" id="in_ex_body_hide">
-                             <div class="row">
-                                <div class="col-md-12">
-                                   <p id="myelement1"> </p>
-                                    <div class="chart">
-                                      <canvas id="canvas_1" width="200"
-                                              height="90"> </canvas>
-                                   </div>
-                                </div>
-                             </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap">
+                                <canvas id="canvas_1"/>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-4 col-lg-4  top_customer_graph_view">
-                    <div class="oh-card text-color">
-                        <div class="oh-card-body pb-0">
-                            <h4 class="mb-0">
-                            </h4>
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-users me-2 text-primary"/>Top Customers</h4>
                         </div>
-                        <canvas class="top_customer" width="100" height="80"/>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-lg-6  selling_product_graph_view">
-                    <div class="oh-card text-color">
-                        <div class="oh-card-body pb-0">
-                            <h4 class="mb-0">
-                            </h4>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap">
+                                <canvas class="top_customer"/>
+                            </div>
                         </div>
-                        <canvas class="top_selling_product" width="200"
-                                height="120"/>
-                    </div>
-                </div>
-                <div class="col-sm-6 col-lg-6  selling_product_graph_view">
-                    <div class="oh-card text-color">
-                        <div class="oh-card-body pb-0">
-                            <h4 class="mb-0">
-                            </h4>
-                        </div>
-                        <canvas class="top_product_categories" width="200"
-                                height="120"/>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="employee_dashboard_main">
-        <div class="row main-section">
-            <div class="col-md-4 col-lg-4">
-                <div class="hr_notification" style="background: #fff;transition: transform 0.2s ease, box-shadow 0.2s ease;will-change: transform, box-shadow;box-shadow: 0 10px 40px 0 rgba(62,57,107,0.07), 0 2px 9px 0 rgba(62,57,107,0.06);
-                height: 316px;overflow-y: auto;margin-bottom: 15px;">
-                    <div class="hr_notification_head"
-                         style="font-size: 17px;text-align: center;padding: 12px 0;color: #fff;font-weight: 300;background: #de6a5e;margin-bottom: 9px;">
-                   Sale by Salesperson
-                    </div>
-                    <div class="col-sm-12 col-lg-12" style="padding:0;">
-                            <div class="text-color">
-                                <div class="">
-                                <div class="media">
-                                <div class="media-body">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th rowspan="12">Name&#160;&#160;&#160;</th>
-                                                <th rowspan="12">Orders</th>
-                                                <th rowspan="12">Amount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                             <t t-foreach="state.top_salesperson"
-                                                t-as="salesperson"
-                                                t-key="salesperson.id">
-                                                <tr>
-                                                    <td>
-                                                        <h2 class="text-color display-6"
-                                                            style="font-size: 15px;">
-                                                            <t t-esc="salesperson[0]"/>
-                                                        </h2>
-                                                    </td>
-                                                    <td>
-                                                        <h2 class="text-color display-6"
-                                                            style="font-size: 15px;">
-                                                            <t t-esc="salesperson[2]"/>
-                                                        </h2>
-                                                    </td>
-                                                    <td>
-                                                        <h2 class="text-color display-6"
-                                                            style="font-size: 15px;">
-                                                            <t t-esc="salesperson[1]"/>
-                                                        </h2>
-                                                    </td>
-                                                </tr>
-                                            </t>
-                                        </tbody>
-                                    </table>
-                                </div></div></div></div>
-                            </div>
-                    </div>
-            </div>
-            <div class="col-md-4 col-lg-4">
-                    <div class="hr_notification" style="background: #fff;transition: transform 0.2s ease, box-shadow 0.2s ease;will-change: transform, box-shadow;box-shadow: 0 10px 40px 0 rgba(62,57,107,0.07), 0 2px 9px 0 rgba(62,57,107,0.06);
-                    height: 316px;overflow-y: auto;margin-bottom: 15px;">
-                        <div class="hr_notification_head"
-                             style="font-size: 17px;text-align: center;padding: 12px 0;color: #fff;font-weight: 300;background:#de6a5e;;margin-bottom: 9px;">
-                          Payment Method
+            <!-- ==================== CHART ROW 2 ==================== -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-cube me-2 text-primary"/>Top Products</h4>
                         </div>
-                        <div class="col-sm-12 col-lg-12" style="padding:0;">
-                                <div class="text-color">
-                                    <div class="">
-                                    <div class="media">
-                                    <div class="media-body">
-                                        <table class="table table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th rowspan="12">Payment Method&#160;&#160;&#160;</th>
-                                                    <th rowspan="12">Amount</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                 <t t-foreach="state.payment_details"
-                                                    t-as="payment_method"
-                                                    t-key="payment_method.id">
-                                                    <tr>
-                                                        <td>
-                                                            <h2 class="text-color display-6"
-                                                                style="font-size: 15px;">
-                                                                <t t-esc="payment_method[0]"/>
-                                                            </h2>
-                                                        </td>
-                                                        <td>
-                                                            <h2 class="text-color display-6"
-                                                                style="font-size: 15px;">
-                                                                <t t-esc="payment_method[1]"/>
-                                                            </h2>
-                                                        </td>
-                                                    </tr>
-                                                </t>
-                                            </tbody>
-                                        </table>
-                                    </div></div></div></div>
-                                </div>
-                    </div>
-            </div>
-            <div class="col-md-4 col-lg-4">
-                <div class="hr_notification" style="background: #fff;transition: transform 0.2s ease, box-shadow 0.2s ease;will-change: transform, box-shadow;box-shadow: 0 10px 40px 0 rgba(62,57,107,0.07), 0 2px 9px 0 rgba(62,57,107,0.06);
-                height: 316px;overflow-y: auto;margin-bottom: 15px;">
-                    <div class="hr_notification_head"
-                         style="font-size: 17px;text-align: center;padding: 12px 0;color: #fff;font-weight: 300;background: #de6a5e;margin-bottom: 9px;">
-                 Session Status
-                    </div>
-                    <div class="col-sm-12 col-lg-12" style="padding:0;">
-                            <div class="text-color">
-                                <div class="">
-                                <div class="media">
-                                <div class="media-body">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th rowspan="12">Session&#160;&#160;&#160;</th>
-                                                <th rowspan="12">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                             <t t-foreach="state.selling_product"
-                                                t-as="session"
-                                                t-key="session.id">
-                                                <tr>
-                                                    <td>
-                                                        <h2 class="text-color display-6"
-                                                            style="font-size: 15px;">
-                                                            <t t-esc="session['session']"/>
-                                                        </h2>
-                                                    </td>
-                                                    <td>
-                                                        <h2 class="text-color display-6"
-                                                            style="font-size: 15px;">
-                                                            <t t-esc="session['status']"/>
-                                                        </h2>
-                                                    </td>
-                                                </tr>
-                                            </t>
-                                        </tbody>
-                                    </table>
-                                </div></div></div></div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap">
+                                <canvas class="top_selling_product"/>
                             </div>
+                        </div>
                     </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-tags me-2 text-primary"/>Top Product Categories</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap">
+                                <canvas class="top_product_categories"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- ==================== TABLES ==================== -->
+            <div class="row g-3">
+                <!-- Sale by Salesperson -->
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-user me-2 text-primary"/>Sale by Salesperson</h4>
+                        </div>
+                        <div class="oh-card-body p-0"
+                             style="max-height: 340px; overflow-y: auto;">
+                            <table class="table oh-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="text-center">Orders</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.top_salesperson"
+                                       t-as="sp" t-key="sp_index">
+                                        <tr>
+                                            <td><t t-esc="sp[0]"/></td>
+                                            <td class="text-center"><t t-esc="sp[2]"/></td>
+                                            <td class="text-end fw-semibold"><t t-esc="sp[1]"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.top_salesperson.length">
+                                        <tr>
+                                            <td colspan="3" class="oh-empty">
+                                                <i class="fa fa-users"/>
+                                                No salesperson data
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-credit-card me-2 text-primary"/>Payment Methods</h4>
+                        </div>
+                        <div class="oh-card-body p-0"
+                             style="max-height: 340px; overflow-y: auto;">
+                            <table class="table oh-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.payment_details"
+                                       t-as="pm" t-key="pm_index">
+                                        <tr>
+                                            <td><t t-esc="pm[0]"/></td>
+                                            <td class="text-end fw-semibold"><t t-esc="pm[1]"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.payment_details.length">
+                                        <tr>
+                                            <td colspan="2" class="oh-empty">
+                                                <i class="fa fa-credit-card"/>
+                                                No payment data
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session Status -->
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-window-maximize me-2 text-primary"/>Session Status</h4>
+                        </div>
+                        <div class="oh-card-body p-0"
+                             style="max-height: 340px; overflow-y: auto;">
+                            <table class="table oh-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Session</th>
+                                        <th class="text-end">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.selling_product"
+                                       t-as="session" t-key="session_index">
+                                        <tr>
+                                            <td><t t-esc="session['session']"/></td>
+                                            <td class="text-end">
+                                                <span t-attf-class="oh-status-badge #{session['status'] === 'Opened' ? 'oh-status-opened' : (session['status'] === 'Opening Control' ? 'oh-status-control' : 'oh-status-closed')}">
+                                                    <t t-esc="session['status']"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.selling_product.length">
+                                        <tr>
+                                            <td colspan="2" class="oh-empty">
+                                                <i class="fa fa-window-maximize"/>
+                                                No session data
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
-         </div>
+
+        </div>
     </t>
 </templates>
