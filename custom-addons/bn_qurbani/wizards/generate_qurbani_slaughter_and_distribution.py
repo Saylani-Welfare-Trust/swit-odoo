@@ -16,7 +16,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     type = fields.Selection(selection=type_selection, string="Type", default='slaughter')
 
     day_id = fields.Many2one('qurbani.day', string="Day")
-    hijri_id = fields.Many2one('hijri', string="Hijri")
+    hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
     slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
 
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
@@ -59,7 +59,7 @@ class GenerateQurbaniSlaughterAndDistribution(models.TransientModel):
     def action_generate_slaughter(self):
         self.ensure_one()
 
-        current_hijri = self.env['hijri'].search([], order="id desc", limit=1)
+        current_hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
 
         if not current_hijri:
             raise UserError(_("No Hijri date found!"))

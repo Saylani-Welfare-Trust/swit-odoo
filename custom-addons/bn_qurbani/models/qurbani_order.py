@@ -72,7 +72,7 @@ class QurbaniOrder(models.Model):
         """
 
         def _get_latest_hijri():
-            return self.env['hijri'].search([], order='id desc', limit=1)
+            return self.env['hijri'].search([('approved', '=', True)], order='id desc', limit=1)
 
         def convert_to_24hr(time_str):
             if not time_str:
@@ -82,17 +82,62 @@ class QurbaniOrder(models.Model):
             except:
                 return time_str
 
+        def _resolve_product(api_line, default_product=False):
+            product = default_product
+            if isinstance(product, str):
+                product = self.env['product.product'].search([('name', 'ilike', product)], limit=1)
+            if product and hasattr(product, 'name'):
+                return product
+
+            candidate_values = []
+            for field_name in ('item', 'type', 'donation_type', 'name'):
+                value = getattr(api_line, field_name, False)
+                if value:
+                    candidate_values.append(str(value).strip())
+
+            for candidate in candidate_values:
+                product = self.env['product.product'].search([('name', 'ilike', candidate)], limit=1)
+                if product:
+                    return product
+                product = self.env['product.product'].search([('display_name', 'ilike', candidate)], limit=1)
+                if product:
+                    return product
+
+            return False
+
+        def _normalize_day_tokens(value):
+            if not value:
+                return set()
+            return set(re.findall(r'[a-z0-9]+', str(value).lower()))
+
+        def _match_qurbani_day(raw_value):
+            input_tokens = _normalize_day_tokens(raw_value)
+            if not input_tokens:
+                return False
+
+            for day in self.env['qurbani.day'].search([]):
+                for field_name in ('name', 'web_qurbani_day'):
+                    field_value = getattr(day, field_name, False)
+                    field_tokens = _normalize_day_tokens(field_value)
+                    if field_tokens and (
+                        input_tokens == field_tokens
+                        or input_tokens.issubset(field_tokens)
+                        or field_tokens.issubset(input_tokens)
+                    ):
+                        return day
+
+            return False
+
         def _get_demand(line, default_hijri, default_product):
-            product = line.product_id or default_product
+            product = _resolve_product(line, default_product)
             if not product:
-                raise ValidationError(f"Line {line.id if line else '?'} has no product_id")
+                raise ValidationError(f"Line {line.id if line else '?'} has no matching qurbani product")
 
             # DAY MAPPING
-            day = False
-            if getattr(line, 'day', False):
-                day = self.env['qurbani.day'].search([('web_qurbani_day', 'ilike', line.day)], limit=1)
+            day = _match_qurbani_day(getattr(line, 'day', False) or getattr(line, 'name', False))
             if not day:
-                raise ValidationError(f"Unable to map qurbani day '{line.day}'")
+                raw_day = getattr(line, 'day', False) or getattr(line, 'name', False) or ''
+                raise ValidationError(f"Unable to map qurbani day '{raw_day}'")
 
             # HIJRI
             hijri = default_hijri
@@ -203,9 +248,13 @@ class QurbaniOrder(models.Model):
             if not api_line.exists():
                 raise ValidationError(f"Line ID {api_line.id} does not exist")
 
-            mapping_data = _get_demand(api_line, default_hijri, False)
+            product = _resolve_product(api_line, False)
+            if not product:
+                raise ValidationError(f"Unable to resolve qurbani product for API line {api_line.id}")
+
+            mapping_data = _get_demand(api_line, default_hijri, product)
             demand = mapping_data['demand']
-            qty = int(api_line.quantity or 1)
+            qty = int(getattr(api_line, 'qty', False) or getattr(api_line, 'quantity', False) or 1)
 
             if demand.id not in schedule_usage:
                 schedule_usage[demand.id] = {'demand': demand, 'qty': 0}
@@ -220,8 +269,8 @@ class QurbaniOrder(models.Model):
                 'distribution_id': mapping_data['distribution_id'],
                 'slaughter_location_id': mapping_data['slaughter_location_id'],
                 'quantity': qty,
-                'product_id': api_line.product_id.id,
-                'amount': api_line.amount or 0.0,
+                'product_id': product.id,
+                'amount': getattr(api_line, 'price', False) or getattr(api_line, 'total', 0.0) or 0.0,
                 'hissa_name': api_line.hissa_name or '',
                 'branch': api_line.branch or '',
             })
@@ -494,7 +543,7 @@ class QurbaniOrder(models.Model):
         schedule_usage = {}
         demand_cache = {}
 
-        Hijri = self.env['hijri'].search([], order="id desc", limit=1)
+        Hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
         if not Hijri:
             return {"status": "error", "body": "No Hijri found"}
 
@@ -642,15 +691,23 @@ class QurbaniOrder(models.Model):
 
             # ==================================================
             # GET CITY
+            # Kept as originally designed (single-record .location_id
+            # traversal), but wrapped so an unexpected multi-record
+            # result never rolls back the whole sync — it just leaves
+            # city_id blank and moves on.
             # ==================================================
             city_id = False
 
-            if demand.slaughter_location_id:
-                city_id = (
-                    demand.slaughter_location_id.location_id.id
-                    if hasattr(demand.slaughter_location_id, 'location_id')
-                    else False
-                )
+            try:
+                if demand.slaughter_location_id:
+                    city_id = (
+                        demand.slaughter_location_id.location_id.id
+                        if hasattr(demand.slaughter_location_id, 'location_id')
+                        else False
+                    )
+            except Exception as e:
+                _logger.warning(f"Could not resolve city_id for slot demand {demand.id}: {str(e)}")
+                city_id = False
 
             # fallback from schedule city
             if not city_id and schedule.get('city'):
