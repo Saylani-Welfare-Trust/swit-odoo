@@ -267,6 +267,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(67, 233, 123, 0.85)',
                             borderColor: 'rgba(67, 233, 123, 1)',
                             borderWidth: 1,
+                            minBarLength: 4, // Forces a minimum visible width
                         },
                         {
                             label: 'Refunds',
@@ -274,6 +275,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(255, 106, 136, 0.85)',
                             borderColor: 'rgba(255, 106, 136, 1)',
                             borderWidth: 1,
+                            minBarLength: 4, // Forces a minimum visible width
                         },
                     ],
                 };
@@ -318,6 +320,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(67, 233, 123, 0.85)',
                             borderColor: 'rgba(67, 233, 123, 1)',
                             borderWidth: 1,
+                            minBarLength: 4, // Forces a minimum visible width
                         },
                         {
                             label: 'Refunds',
@@ -325,6 +328,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(255, 106, 136, 0.85)',
                             borderColor: 'rgba(255, 106, 136, 1)',
                             borderWidth: 1,
+                            minBarLength: 4, // Forces a minimum visible width
                         },
                     ],
                 };
