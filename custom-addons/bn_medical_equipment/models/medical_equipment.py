@@ -1487,7 +1487,6 @@ class MedicalEquipment(models.Model):
                     "odooId": self.id,
                     "doneeOdooId": self.donee_id.id,
                     "inquiryOfficerOdooId": self.employee_id.id,
-                    "inquiryOfficerEmployeeId": self.employee_id.barcode,
                     "department": "medical",
                     "form": {
                         "category": "medical",
