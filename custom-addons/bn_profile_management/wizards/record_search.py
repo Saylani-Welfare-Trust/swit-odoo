@@ -31,7 +31,8 @@ class RecordSearch(models.TransientModel):
 
 
     registration_id = fields.Char('Registration ID')
-    mobile_no = fields.Char('Mobile No.', size=10)
+    # No size=: it would silently truncate longer input.
+    mobile_no = fields.Char('Mobile No.')
     cnic_no = fields.Char('CNIC No.', size=15)
     
     country_code_id = fields.Many2one('res.country', string="Country Code")

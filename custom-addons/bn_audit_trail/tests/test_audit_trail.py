@@ -3,6 +3,7 @@ from psycopg2 import IntegrityError
 
 from odoo.api import call_kw
 from odoo.tests import TransactionCase, tagged
+from odoo.exceptions import AccessError
 from odoo.tools import mute_logger
 
 from odoo.addons.bn_audit_trail.models.audit_log import MASK
@@ -131,3 +132,63 @@ class TestAuditTrail(TransactionCase):
         purge = self.Log.search([('record_name', '=', 'Audit log purge')], order='id desc', limit=1)
         self.assertTrue(purge)
         self.assertIn('Deleted %s audit log entries' % count, purge.summary)
+
+
+@tagged('post_install', '-at_install')
+class TestAuditTrailAccess(TransactionCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        group = lambda x: cls.env.ref('bn_audit_trail.group_audit_trail_' + x)
+        base = cls.env.ref('base.group_user')
+
+        def user(login, name):
+            return cls.env['res.users'].create({'name': login, 'login': login,
+                                               'groups_id': [(6, 0, [base.id, group(name).id])]})
+        cls.user = user('audit_t_user', 'user')
+        cls.auditor = user('audit_t_audit', 'viewer')
+        cls.manager = user('audit_t_manager', 'manager')
+        cls.admin = user('audit_t_admin', 'admin')
+        cls.Log = cls.env['audit.trail.log']
+        partner = cls.env['res.partner'].create({'name': 'Access Test'})
+        cls.own = cls.Log.sudo().create({'user_id': cls.user.id, 'model_name': 'res.partner', 'res_id': partner.id,
+                                         'method': 'write', 'summary': 'own entry'})
+        cls.other = cls.Log.sudo().create({'user_id': cls.admin.id, 'model_name': 'res.partner', 'res_id': partner.id,
+                                           'method': 'write', 'summary': 'other entry'})
+
+    def _visible(self, user):
+        return self.Log.with_user(user).search([('id', 'in', (self.own | self.other).ids)])
+
+    def test_user_sees_only_own_entries(self):
+        self.assertEqual(self._visible(self.user), self.own)
+
+    def test_audit_and_above_see_everything(self):
+        for user in (self.auditor, self.manager, self.admin):
+            self.assertEqual(self._visible(user), self.own | self.other, user.login)
+
+    def test_only_admin_can_purge(self):
+        for user in (self.user, self.auditor, self.manager):
+            with self.assertRaises(AccessError):
+                self.other.with_user(user).unlink()
+        self.other.with_user(self.admin).unlink()
+
+    def test_only_manager_and_admin_manage_exclusions(self):
+        model_id = self.env['ir.model']._get_id('res.partner.category')
+        Exclusion = self.env['audit.trail.exclusion']
+        self.assertFalse(Exclusion.with_user(self.auditor).search([]) and False)  # can read
+        for user in (self.user, self.auditor):
+            with self.assertRaises(AccessError):
+                Exclusion.with_user(user).create({'model_id': model_id})
+        Exclusion.with_user(self.manager).create({'model_id': model_id}).unlink()
+
+    def test_viewing_the_trail_is_logged(self):
+        Log = self.Log.with_user(self.auditor)
+        before = self.Log.sudo().search_count([('model_name', '=', 'audit.trail.log'), ('user_id', '=', self.auditor.id)])
+        call_kw(Log, 'web_search_read', [], {'domain': [], 'specification': {'summary': {}}, 'limit': 10})
+        call_kw(Log, 'web_read', [[self.other.id]], {'specification': {
+            'summary': {}, 'child_ids': {'fields': {'summary': {}}}, 'line_ids': {'fields': {'field_name': {}}}}})
+        views = self.Log.sudo().search([('model_name', '=', 'audit.trail.log'), ('user_id', '=', self.auditor.id)], order='id')
+        self.assertEqual(len(views) - before, 2)
+        self.assertIn('Viewed the audit trail list', views[-2].summary)
+        self.assertEqual(views[-1].res_id, self.other.id)

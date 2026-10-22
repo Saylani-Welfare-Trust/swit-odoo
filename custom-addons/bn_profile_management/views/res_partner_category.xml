@@ -52,6 +52,24 @@
                                        string="Search View" placeholder="Fields searchable/filterable"/>
                             </group>
                         </group>
+                        <separator string="Unique Registration ID"/>
+                        <p class="text-muted">
+                            Contacts get one ID per tag when they are registered. Tokens:
+                            <code>{YY}</code> / <code>{YYYY}</code> registration year,
+                            <code>{BY}</code> birth year, <code>{BY-}</code> birth year + "-" for Individuals only,
+                            <code>{SEQ}</code> next number, <code>{CHECK}</code> check digit.
+                        </p>
+                        <group>
+                            <group>
+                                <field name="registration_pattern" placeholder="e.g. WEL-{YYYY}-{SEQ}"/>
+                                <field name="registration_padding" invisible="not registration_pattern"/>
+                                <field name="registration_check_digit" invisible="not registration_pattern"/>
+                            </group>
+                            <group>
+                                <field name="registration_example" invisible="not registration_pattern"/>
+                                <field name="registration_sequence_id" readonly="1" invisible="not registration_pattern"/>
+                            </group>
+                        </group>
                         <group>
                             <field name="profile_menu_id" readonly="1"/>
                             <field name="profile_action_id" readonly="1"/>

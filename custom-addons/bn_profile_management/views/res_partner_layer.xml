@@ -92,6 +92,7 @@
         <field name="arch" type="xml">
             <search>
                 <field name="complete_name" string="Name"/>
+<field name="registration_ids" string="Registration ID" filter_domain="[('registration_ids.code', 'ilike', self)]"/>
                 <field name="primary_registration_id" invisible="not context.get('show_search_primary_registration_id')"/>
                 <field name="secondary_registration_id" invisible="not context.get('show_search_secondary_registration_id')"/>
                 <field name="old_system_id" invisible="not context.get('show_search_old_system_id')"/>
@@ -158,14 +159,24 @@
             <form>
                 <header>
                     <button string="Print Info" name="action_print_info" type="object" />
-                    <button string="Register" name="action_register" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Register" name="action_register" type="object" class="oe_highlight" invisible="state not in ('draft', 'change_request') and not has_pending_registration" />
                     <button string="Change Request" name="action_change_request" type="object" class="oe_highlight" invisible="state != 'register'" />
+                    <button string="Reject" name="action_reject" type="object" invisible="state not in ('draft', 'change_request')"
+                            confirm="Reject this profile?"/>
+                    <button string="Reset to Draft" name="action_reset_to_draft" type="object" invisible="state != 'reject'" />
                     
                     <button string="Print Microfinance Application" name="action_print_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register' or is_donor" />
                
-                    <field name="state" widget="statusbar" statusbar_visible="draft, register"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,register"/>
                 </header>
 
+                <div class="alert alert-info mb-0" role="status" invisible="not has_pending_registration">
+                    New tag(s) without a Registration ID: <field name="pending_registration_tags" class="fw-bold"/>.
+                    Click <b>Register</b> to check and register this role. If the role needs
+                    details this profile does not have yet, click <b>Change Request</b> first,
+                    complete them, then <b>Register</b>.
+                    <field name="has_pending_registration" invisible="1"/>
+                </div>
                 <sheet>
                     <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
                     <widget name="web_ribbon" title="Rejected" bg_color="text-bg-danger" invisible="state != 'reject'"/>
@@ -283,6 +294,16 @@
                         <page name="medical" string="Medical Equipment" invisible="',medical,' not in profile_visible_page_names">
 
                         </page>
+                        <page name="registration_ids" string="Registration IDs" invisible="not registration_ids">
+                            <field name="registration_ids" readonly="1" nolabel="1">
+                                <tree>
+                                    <field name="category_id"/>
+                                    <field name="code"/>
+                                    <field name="date"/>
+                                    <field name="user_id"/>
+                                </tree>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
                 <div class="oe_chatter">
@@ -304,7 +325,7 @@
                 ref('bn_profile_management.donee_partner_category'),
                 ref('bn_profile_management.individual_partner_category')
             ])],
-            'default_country_code_id': 177
+            'default_country_code_id': ref('base.pk')
         }"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -329,7 +350,7 @@
                 ref('bn_profile_management.donor_partner_category'),
                 ref('bn_profile_management.individual_partner_category')
             ])],
-            'default_country_code_id': 177
+            'default_country_code_id': ref('base.pk')
         }"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">

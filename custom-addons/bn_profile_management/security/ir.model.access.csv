@@ -10,3 +10,5 @@ access_area_user,area.user,model_area,profile_management_user_group,1,0,0,0
 access_area_manager,area.manager,model_area,profile_management_manager_group,1,1,1,0
 access_area_admin,area.admin,model_area,profile_management_admin_group,1,1,1,1
 access_area_audit,area.audit,model_area,profile_management_audit_group,1,0,0,0
+access_partner_registration_employee,partner.registration.employee,model_res_partner_registration,base.group_user,1,0,0,0
+access_partner_registration_admin,partner.registration.admin,model_res_partner_registration,profile_management_admin_group,1,1,1,1

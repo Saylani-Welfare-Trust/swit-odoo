@@ -107,12 +107,21 @@ flowchart LR
 
 | Group | Can |
 | --- | --- |
-| *Audit Trail / Viewer* | Read the log |
-| *Audit Trail / Manager* | Read and delete log entries (always traced), manage Excluded Models. The seed Administrator is added automatically |
+| *Access Root Menu* | See the Audit Trail app menu (implied by every group below; not assigned alone) |
+| *User* | Read **his/her own** activity only |
+| *Audit* | Read **everybody's** activity and the Excluded Models |
+| *Manager* | Audit + add / change / remove Excluded Models (every change is logged) |
+| *Admin* | Manager + delete (purge) log entries (every purge leaves a permanent entry). The seed Administrator is added automatically |
 
-Assign them in *Settings > Users > Access Rights* (category
-*Administration*). Viewers see every logged value, including fields they
-could not open in the original app (secrets excepted).
+Assign them in *Settings > Users > Access Rights*, category *Audit Trail*.
+On upgrade, members of the former *Viewer* group become *Audit* and the
+former *Manager* group stays *Manager*; deleting log entries now needs
+*Admin*.
+
+**Who looked at the trail is logged too.** Opening or searching the log list
+records one entry ("Viewed the audit trail list (N entries)"), and opening
+an entry records one entry ("Viewed audit entry: ..."). The sub-operation
+rows shown inside an opened entry are not logged separately.
 
 ## Performance & volume
 
@@ -134,7 +143,8 @@ could not open in the original app (secrets excepted).
   there is no way to tell which row they belong to. **Whole Operation**
   shows the full batch.
 - **A record viewed twice in one request** is logged once, under the
-  first operation that read it.
+  first operation that read it. Each new request (opening the screen again)
+  logs it again.
 - **Changes made with raw SQL** (some Odoo internals, `ondelete='cascade'`
   at database level) bypass the ORM and are not logged.
 

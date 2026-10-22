@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import ast
+import re
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
@@ -27,6 +28,18 @@ CURATED_PROFILE_FIELDS = [
 ]
 
 
+# Tokens of a Registration ID Pattern, e.g. '{YY}-{BY-}{SEQ}-{CHECK}'.
+REGISTRATION_TOKENS = {
+    'YY': 'Registration year, 2 digits (26)',
+    'YYYY': 'Registration year, 4 digits (2026)',
+    'BY': 'Birth year, 2 digits (90); date of birth required',
+    'BY-': 'Birth year + "-" for Individual contacts, nothing otherwise',
+    'SEQ': "Next number of the tag's own sequence, padded (00012)",
+    'CHECK': 'Check digit, from the Check Digit Rule',
+}
+TOKEN_RE = re.compile(r'{([A-Z-]+)}')
+
+
 class ResPartnerCategory(models.Model):
     _inherit = 'res.partner.category'
 
@@ -49,8 +62,97 @@ class ResPartnerCategory(models.Model):
         'profile.management.page', 'res_partner_category_page_rel', 'category_id', 'page_id',
         string='Form Pages')
 
+    # Unique ID per tag
+    registration_pattern = fields.Char(
+        'Registration ID Pattern',
+        help="Format of the unique ID a contact gets for this tag when registered. "
+             "Tokens: {YY} {YYYY} registration year, {BY} birth year, {BY-} birth year + '-' "
+             "for Individuals only, {SEQ} next number, {CHECK} check digit. "
+             "Example: WEL-{YYYY}-{SEQ}. Leave empty for tags without an ID.")
+    registration_sequence_id = fields.Many2one(
+        'ir.sequence', string='ID Sequence', copy=False,
+        help="Numbering used by {SEQ}. Created automatically.")
+    registration_padding = fields.Integer('Number Length', default=5,
+                                          help="Digits of {SEQ}, e.g. 5 gives 00012.")
+    registration_check_digit = fields.Selection([
+        ('none', 'None'),
+        ('donee', 'Donee rule: 0/1 adult F/M, 4/5 minor F/M, 2/3 employee F/M'),
+        ('donor', 'Donor rule: 6 individual, 7 organisation, 8 employee'),
+    ], string='Check Digit Rule', default='none', required=True)
+    registration_example = fields.Char('Example', compute='_compute_registration_example')
+
     profile_action_id = fields.Many2one('ir.actions.act_window', string='Profile Menu Action', readonly=True, copy=False)
     profile_menu_id = fields.Many2one('ir.ui.menu', string='Profile Menu', readonly=True, copy=False)
+
+    @api.depends('registration_pattern', 'registration_padding', 'registration_check_digit')
+    def _compute_registration_example(self):
+        for category in self:
+            try:
+                category.registration_example = category._render_registration_id(
+                    sequence_number=12, birth_year=1990, check_digit='1', individual=True,
+                ) if category.registration_pattern else False
+            except Exception:
+                category.registration_example = False
+
+    @api.constrains('registration_pattern', 'registration_check_digit')
+    def _check_registration_pattern(self):
+        for category in self.filtered('registration_pattern'):
+            tokens = TOKEN_RE.findall(category.registration_pattern)
+            unknown = [t for t in tokens if t not in REGISTRATION_TOKENS]
+            if unknown:
+                raise ValidationError(_('Unknown token(s) in the pattern of "%(tag)s": %(tokens)s. Allowed: %(allowed)s') % {
+                    'tag': category.name, 'tokens': ', '.join('{%s}' % t for t in unknown),
+                    'allowed': ', '.join('{%s}' % t for t in REGISTRATION_TOKENS)})
+            if 'SEQ' not in tokens:
+                raise ValidationError(_('The pattern of "%s" must contain {SEQ} so every ID is unique.') % category.name)
+            if 'CHECK' in tokens and category.registration_check_digit == 'none':
+                raise ValidationError(_('The pattern of "%s" uses {CHECK}: choose a Check Digit Rule.') % category.name)
+
+    def _render_registration_id(self, sequence_number, birth_year=None, check_digit='', individual=False):
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        values = {
+            'YY': str(today.year)[2:],
+            'YYYY': str(today.year),
+            'SEQ': str(sequence_number).zfill(self.registration_padding or 1),
+            'CHECK': str(check_digit),
+            'BY': str(birth_year)[2:] if birth_year else '',
+            'BY-': '%s-' % str(birth_year)[2:] if (birth_year and individual) else '',
+        }
+        return TOKEN_RE.sub(lambda m: values[m.group(1)], self.registration_pattern)
+
+    def _ensure_registration_sequence(self):
+        for category in self.filtered(lambda c: c.registration_pattern and not c.registration_sequence_id):
+            category.registration_sequence_id = self.env['ir.sequence'].sudo().create({
+                'name': _('Registration ID: %s') % category.name,
+                'padding': 0,
+                'implementation': 'no_gap',
+            })
+
+    @api.model
+    def _bn_setup_registration_ids(self):
+        """Run on every install/upgrade (data/profile_registration.xml).
+        Gives Donor and Donee their pattern - reusing their existing
+        sequences, so new IDs continue today's numbering in today's format -
+        unless an administrator already configured them, then records the
+        IDs already issued as per-tag Registration IDs."""
+        presets = [
+            ('bn_profile_management.donee_partner_category', '{YY}-{BY-}{SEQ}-{CHECK}', 'donee',
+             'bn_profile_management.donee_profile_management_sequence'),
+            ('bn_profile_management.donor_partner_category', '{YY}-{SEQ}-{CHECK}', 'donor',
+             'bn_profile_management.donor_profile_management_sequence'),
+        ]
+        for tag_xmlid, pattern, check, sequence_xmlid in presets:
+            tag = self.env.ref(tag_xmlid, raise_if_not_found=False)
+            sequence = self.env.ref(sequence_xmlid, raise_if_not_found=False)
+            if tag and not tag.registration_pattern:
+                tag.write({
+                    'registration_pattern': pattern,
+                    'registration_check_digit': check,
+                    'registration_padding': sequence.padding if sequence else 5,
+                    'registration_sequence_id': sequence.id if sequence else False,
+                })
+        self.env['res.partner']._bn_backfill_registration_ids()
 
     @api.model
     def _profile_field_domain(self):
@@ -71,6 +173,7 @@ class ResPartnerCategory(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         categories = super().create(vals_list)
+        categories._ensure_registration_sequence()
         for category in categories:
             if category.is_profile_type:
                 category._sync_profile_menu()
@@ -78,6 +181,8 @@ class ResPartnerCategory(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
+        if 'registration_pattern' in vals:
+            self._ensure_registration_sequence()
         if 'is_profile_type' in vals or any(
             f in vals for f in ('profile_list_field_ids', 'profile_form_field_ids',
                                 'profile_search_field_ids', 'profile_page_ids')

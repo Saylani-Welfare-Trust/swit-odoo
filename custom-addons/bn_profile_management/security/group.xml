@@ -10,14 +10,6 @@
         <field name="comment">Grants visibility of the Profile Management app menu. Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
     </record>
 
-    <!-- Row-level scope restriction (can only edit Donor-tagged contacts) -
-         a genuinely different kind of group from the CRUD tiers below, so
-         it stays separate rather than being folded into them. -->
-    <record id="profile_management_edit_donor_access_group" model="res.groups">
-        <field name="name">Edit Donor</field>
-        <field name="category_id" ref="module_profile_management"/>
-    </record>
-
     <record id="profile_management_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_profile_management"/>

@@ -9,7 +9,9 @@
             <field name="state">code</field>
             <field name="code">
 for rec in records:
-    rec['name'] = f"{rec.name} (+{rec.phone_code})"
+    suffix = " (+%s)" % rec.phone_code
+    if rec.phone_code and not rec.name.endswith(suffix):
+        rec['name'] = rec.name + suffix
             </field>
         </record>
 

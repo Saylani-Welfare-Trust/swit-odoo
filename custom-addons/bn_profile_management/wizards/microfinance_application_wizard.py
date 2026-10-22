@@ -13,7 +13,9 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     def action_print_application(self):
         """Create microfinance record and print the application form"""
         self.ensure_one()
-        
+        if 'microfinance' not in self.env:
+            raise UserError(_('The Microfinance module is not installed.'))
+
         # Check existing enrollment
         existing = self.env['microfinance'].search([
             ('donee_id', '=', self.partner_id.id),
