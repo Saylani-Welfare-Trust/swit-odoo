@@ -1,5 +1,6 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
+import logging
 
 
 class CounterfeitNotesWizard(models.TransientModel):

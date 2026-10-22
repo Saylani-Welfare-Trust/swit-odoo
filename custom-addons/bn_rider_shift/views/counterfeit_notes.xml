@@ -1,27 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="counterfeit_notes_view_search" model="ir.ui.view">
-        <field name="name">counterfeit.notes.view.search</field>
-        <field name="model">counterfeit.notes</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="rider_id" />
-                <field name="lot_id" string="Box No." />
-                <separator />
-                <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]" />
-                <filter string="Payment Received" name="filter_payment_received" domain="[('state', '=', 'payment_received')]" />
-                <filter string="Paid" name="filter_paid" domain="[('state', '=', 'paid')]" />
-                <separator />
-                <filter string="Submission Date" name="filter_submission_time" date="submission_time" />
-                <group string="Group By">
-                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
-                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
-                </group>
-            </search>
-        </field>
-    </record>
-
     <record id="counterfeit_notes_view_tree" model="ir.ui.view">
         <field name="name">counterfeit.notes.view.tree</field>
         <field name="model">counterfeit.notes</field>

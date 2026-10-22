@@ -10,14 +10,17 @@
         'bn_donation_box',
     ],
     'data': [
+        'security/ir.model.access.csv',
+        'security/groups.xml',
+        
         'data/ir_module_category.xml',
         'data/sequence.xml',
-        'security/groups.xml',
-        'security/ir.model.access.csv',
+        
         'views/rider_shift.xml',
         'views/rider_collection.xml',
         'views/counterfeit_notes.xml',
         'views/foreign_currency.xml',
+        
         'wizards/rider_schedule.xml',
         'wizards/foreign_currency_wizard.xml',
         'wizards/counterfeit_notes_wizard.xml',
