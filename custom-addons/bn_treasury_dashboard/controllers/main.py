@@ -8,7 +8,7 @@ class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount',
                                 state_field='state', date_from=None, date_to=None,
-                                analytic_account_id=None, province_id=None, city=None):
+                                analytic_account_id=None, province_id=None, city_id=None):
         empty = {
             'count': 0,
             'total_amount': 0.0,
@@ -34,28 +34,26 @@ class TreasuryDashboardController(http.Controller):
             if date_to:
                 base_domain.append((date_field, '<=', date_to))
 
-        # ---- Branch filter ----
+        # ---- Branch filter (Exact match) ----
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except (ValueError, TypeError):
                 pass
 
-        # ---- Province & City filter (Safe ORM approach) ----
-        if (province_id or city) and 'donor_id' in Model._fields:
-            donor_domain = []
-            if province_id:
-                try:
-                    donor_domain.append(('state_id', '=', int(province_id)))
-                except (ValueError, TypeError):
-                    pass
-            if city:
-                donor_domain.append(('city', '=', city))
-            
-            if donor_domain:
-                # Find matching donor IDs first
-                donors = request.env['res.partner'].search(donor_domain)
-                base_domain.append(('donor_id', 'in', donors.ids))
+        # ---- Province filter (Includes all child cities/zones/branches) ----
+        if province_id and 'analytic_account_id' in Model._fields:
+            try:
+                base_domain.append(('analytic_account_id', 'child_of', int(province_id)))
+            except (ValueError, TypeError):
+                pass
+
+        # ---- City filter (Includes all child zones/branches) ----
+        if city_id and 'analytic_account_id' in Model._fields:
+            try:
+                base_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+            except (ValueError, TypeError):
+                pass
 
         has_amount = amount_field in Model._fields
 
@@ -116,33 +114,25 @@ class TreasuryDashboardController(http.Controller):
             for a in sorted(accounts, key=lambda a: (a.display_name or '').lower())
         ]
 
-    def _get_location_filters(self):
-        # Safely pull donors linked to Cheques and Deposits
-        cheque_donors = request.env['pos.cheque'].search([]).mapped('donor_id')
-        deposit_donors = request.env['direct.deposit'].search([]).mapped('donor_id')
-        all_donors = cheque_donors | deposit_donors
+    def _get_location_hierarchy(self):
+        # Top level accounts (Provinces) have no parent
+        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False)])
         
-        if not all_donors:
-            return [], []
-            
-        # Provinces
-        state_ids = list(set([d.state_id.id for d in all_donors if d.state_id]))
-        states = request.env['res.country.state'].browse(state_ids)
-        provinces = [{'id': s.id, 'name': s.name} for s in states]
-        provinces.sort(key=lambda x: x['name'])
+        # Level 2 accounts (Cities) have a parent (Province)
+        cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         
-        # Cities
-        cities = list(set([d.city for d in all_donors if d.city]))
-        cities.sort()
-        
-        return provinces, cities
+        return [
+            {'id': p.id, 'name': p.name} for p in provinces
+        ], [
+            {'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities
+        ]
 
     @http.route('/treasury/dashboard/data', type='json', auth='user',
                 methods=['POST'], csrf=False)
     def get_dashboard_data(self, date_from=None, date_to=None,
-                           analytic_account_id=None, province_id=None, city=None, **kwargs):
+                           analytic_account_id=None, province_id=None, city_id=None, **kwargs):
         currency = request.env.company.currency_id
-        provinces, cities = self._get_location_filters()
+        provinces, cities = self._get_location_hierarchy()
 
         return {
             'currency': {
@@ -152,7 +142,7 @@ class TreasuryDashboardController(http.Controller):
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': provinces,
             'cities': cities,
-            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city),
-            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city),
-            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city),
+            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id),
+            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id),
+            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id),
         }
