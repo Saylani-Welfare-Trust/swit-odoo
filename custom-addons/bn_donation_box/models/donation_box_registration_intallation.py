@@ -17,10 +17,10 @@ status_selection = [
     ('close', 'Closed'),
 ]
 
-USER_GROUP = 'bn_donation_box.donation_box_user_group'
-ADMIN_GROUP = 'bn_donation_box.donation_box_admin_group'
-APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
-CHANGE_REQUEST_GROUP = 'bn_donation_box.donation_box_manager_group'
+USER_GROUP = 'bn_donation_box.donation_box_registration_user_group'
+ADMIN_GROUP = 'bn_donation_box.donation_box_registration_admin_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_registration_installation_approve_group'
+CHANGE_REQUEST_GROUP = 'bn_donation_box.donation_box_registration_installation_change_request_group'
 
 DONOR_CATEGORY_XMLIDS = (
     'bn_profile_management.donor_partner_category',
@@ -75,8 +75,8 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     complain_center_ids = fields.One2many('donation.box.complain.center', 'donation_box_registration_installation_id', string="Complain Centers")
 
-    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False, index=True)
-    box_status = fields.Selection(selection=box_status_selection, string="Box Status", default='not_installed', index=True,
+    status = fields.Selection(selection=status_selection, string='Status', default='draft', tracking=True, copy=False)
+    box_status = fields.Selection(selection=box_status_selection, string="Box Status", default='not_installed',
                                   tracking=True, copy=False)
 
     donor_category_ids = fields.Many2many(
