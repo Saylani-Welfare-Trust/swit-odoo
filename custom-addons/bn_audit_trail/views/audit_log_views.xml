@@ -16,6 +16,9 @@
                 <field name="record_name"/>
                 <field name="method"/>
                 <field name="summary"/>
+                <field name="child_count" string="Sub-Ops"/>
+                <field name="parent_id" optional="hide"/>
+                <field name="is_sudo" optional="hide"/>
             </tree>
         </field>
     </record>
@@ -31,21 +34,56 @@
                             <field name="date"/>
                             <field name="user_id"/>
                             <field name="method"/>
+                            <field name="is_sudo"/>
                         </group>
                         <group>
                             <field name="model_name"/>
                             <field name="res_id"/>
                             <field name="record_name"/>
+                            <field name="parent_id" invisible="not parent_id"/>
                         </group>
                     </group>
                     <field name="summary"/>
                     <notebook>
-                        <page string="Field Changes (Before / After)">
+                        <page string="Field Changes (Before / After)" name="changes"
+                              invisible="method not in ('create', 'write')">
                             <field name="line_ids" nolabel="1">
                                 <tree create="false" edit="false" delete="false">
                                     <field name="field_description" string="Field"/>
                                     <field name="old_value" string="Before"/>
                                     <field name="new_value" string="After"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Sub-Operations" name="children" invisible="not child_count">
+                            <field name="child_ids" nolabel="1">
+                                <tree create="false" edit="false" delete="false"
+                                      decoration-danger="method == 'unlink'"
+                                      decoration-success="method == 'create'"
+                                      decoration-info="method == 'write'"
+                                      decoration-muted="method == 'read'">
+                                    <field name="method"/>
+                                    <field name="model_name"/>
+                                    <field name="record_name"/>
+                                    <field name="summary"/>
+                                    <field name="child_count" string="Sub-Ops"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Whole Operation" name="operation" invisible="not operation_ref">
+                            <field name="operation_ref" invisible="1"/>
+                            <field name="child_count" invisible="1"/>
+                            <field name="operation_log_ids" nolabel="1">
+                                <tree create="false" edit="false" delete="false"
+                                      decoration-danger="method == 'unlink'"
+                                      decoration-success="method == 'create'"
+                                      decoration-info="method == 'write'"
+                                      decoration-muted="method == 'read'">
+                                    <field name="parent_id" string="Triggered By"/>
+                                    <field name="method"/>
+                                    <field name="model_name"/>
+                                    <field name="record_name"/>
+                                    <field name="summary"/>
                                 </tree>
                             </field>
                         </page>
@@ -64,17 +102,25 @@
                 <field name="model_name"/>
                 <field name="res_id"/>
                 <field name="record_name"/>
+                <filter string="Top-Level Operations" name="filter_root" domain="[('parent_id', '=', False)]"/>
+                <filter string="Triggered by Another Operation" name="filter_child" domain="[('parent_id', '!=', False)]"/>
+                <separator/>
                 <filter string="Create" name="filter_create" domain="[('method','=','create')]"/>
                 <filter string="Update" name="filter_write" domain="[('method','=','write')]"/>
                 <filter string="Delete" name="filter_unlink" domain="[('method','=','unlink')]"/>
                 <filter string="View" name="filter_read" domain="[('method','=','read')]"/>
                 <separator/>
+                <filter string="Changes Only" name="filter_changes" domain="[('method','!=','read')]"/>
+                <filter string="Internal (sudo)" name="filter_sudo" domain="[('is_sudo','=',True)]"/>
+                <separator/>
                 <filter string="Today" name="filter_today"
-                        domain="[('date','&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                        domain="[('date', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)).to_utc().strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <filter string="Date" name="filter_date" date="date"/>
                 <group expand="0" string="Group By">
                     <filter string="User" name="groupby_user" context="{'group_by': 'user_id'}"/>
                     <filter string="Model" name="groupby_model" context="{'group_by': 'model_name'}"/>
                     <filter string="Action" name="groupby_method" context="{'group_by': 'method'}"/>
+                    <filter string="Triggered By" name="groupby_parent" context="{'group_by': 'parent_id'}"/>
                     <filter string="Date" name="groupby_date" context="{'group_by': 'date:day'}"/>
                 </group>
             </search>
@@ -86,5 +132,6 @@
         <field name="res_model">audit.trail.log</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_audit_trail_log_search"/>
+        <field name="context">{'search_default_filter_root': 1}</field>
     </record>
 </odoo>

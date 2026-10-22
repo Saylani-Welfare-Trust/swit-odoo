@@ -1,138 +1,162 @@
-# Audit Trail (Odoo 17)
+# Audit Trail (`bn_audit_trail`)
 
-**Critical fix in this version:** every database-touching thing this
-module does now runs inside its own cursor SAVEPOINT. Previously, a
-failure inside our logging code could leave the surrounding database
-transaction "poisoned" for the rest of that request - every later query
-in it would then fail too, even completely unrelated ones (this
-happened in production: it took `/web` itself down with a 500). If
-you're on an earlier version of this module, upgrading to this one is
-not optional - install it as soon as possible.
+Audit trail for Saylani Welfare International Trust's Odoo 17 instance.
+**Every standard and custom model is audited automatically** for Create,
+Update, Delete and View, with field-level **Before / After** values, per
+user, per date. Each operation is recorded as a **master entry** with
+everything it read or changed in other records listed **under it**. This
+shows when an action in one module modifies records of another.
 
-Generic audit trail module for Saylani Welfare and International Trust's
-Odoo 17 instance. **Every standard and custom model is audited
-automatically** for Create / Update / Delete / View, with field-level
-**Before/After** values on updates, per user, per date. A small
-configuration screen (**Audit Trail > Excluded Models**) lets you turn
-off logging for specific models you've decided don't need a trail -
-everything else stays audited with no setup.
+**Depends on:** `base`, `web`
 
 ## Install / upgrade
 
-1. Copy the `bn_audit_trail` folder into your Odoo `addons` path
-   (e.g. `/mnt/extra-addons/bn_audit_trail`).
-2. Restart the Odoo service.
-3. Apps > Update Apps List > search "Audit Trail" > Install (or
-   Upgrade, if updating from an earlier version).
+1. Copy the `bn_audit_trail` folder into the Odoo addons path.
+2. Restart Odoo.
+3. *Apps > Update Apps List >* "Audit Trail" > **Install** (or **Upgrade**).
 
-Nothing else is required to start auditing. Use Excluded Models only if
-you actively want to turn a specific model off.
+Upgrading from 17.0.2.2.0 or earlier is strongly recommended (see
+*What changed in 17.0.2.3.0* below). New entries never store secrets, but
+entries written by earlier versions may still hold passwords in plain
+text. Mask them once after upgrading (back up the database first):
 
-## How it works
+```sql
+UPDATE audit_trail_log_line
+SET old_value = CASE WHEN COALESCE(old_value, '') = '' THEN old_value ELSE '********' END,
+    new_value = CASE WHEN COALESCE(new_value, '') = '' THEN new_value ELSE '********' END
+WHERE field_name ~ '(^|_)(password|passwd|pwd|secret|token|apikey|api_key|totp|otp|private_key|signing_key|access_key|secret_key)(_|$)';
+```
 
-- Inherits Odoo's `base` model, so `create()`, `write()`, `unlink()`
-  and `_read_format()` (the internal method that classic `read()`,
-  `web_read()` and `web_search_read()` all funnel through - this
-  matters because Odoo 17's web client mostly uses the latter two, not
-  classic `read()`) are wrapped for every model in the registry - no
-  per-module code needed, standard or custom.
-- **Default policy: audit everything.** A model is skipped only if:
-  1. It's in the small, fixed, code-level list in
-     `AUDIT_EXCLUDED_MODELS` (`models/base_override.py`) - internal
-     Odoo plumbing (document numbering, cron, bus, mail bookkeeping,
-     attachments, the audit tables themselves) that isn't meant to be
-     end-user configurable, or
-  2. It's been added to **Audit Trail > Excluded Models**
-     (`audit.trail.exclusion`) - the configuration screen for turning
-     off a specific model you've decided isn't worth logging.
-- The exclusion list is cached in memory for performance, and - unlike
-  an earlier version of this module - **the cache is correctly cleared**
-  every time you add, edit, or remove an exclusion, so changes apply
-  immediately with no restart. (The earlier bug was calling
-  `env.registry.clear_caches()`, which did not reliably invalidate
-  anything; this version uses `self.clear_caches()`, the documented,
-  stable Odoo API for clearing a model's own cached methods.)
-- **Every audit log write happens inside its own database SAVEPOINT**
-  (`_audit_safe()` in `models/base_override.py`). If the logging code
-  itself hits an error for any reason, only that savepoint is rolled
-  back - the real operation the user actually performed, and the rest
-  of that HTTP request, are unaffected. Without this, a single bad
-  query inside our logging could poison the entire surrounding
-  transaction and break unrelated functionality for the rest of that
-  request - which is exactly what happened before this fix.
+## Main models
+
+| Model | What it is |
+| --- | --- |
+| `audit.trail.log` | One entry per audited create / update / delete / view of one record |
+| `audit.trail.log.line` | One field's Before / After value of a create or update |
+| `audit.trail.exclusion` | Models switched off by the user (*Audit Trail > Excluded Models*) |
+
+Each log entry has a **Triggered By** link (`parent_id`) to the entry
+that was running when it happened. All entries of one top-level operation
+share an **Operation** reference (`operation_ref`).
 
 ## Process flow
 
 ```mermaid
 flowchart TD
-    A([Any create / write / unlink / read<br/>on any model]) --> B{Model excluded?<br/>built-in list or<br/>Audit Trail > Excluded Models}
+    A([User action: open, list, create,<br/>update or delete records]) --> B{Model excluded?<br/>built-in list or<br/>Excluded Models}
     B -->|Yes| Z[No log]
-    B -->|No| C[Open SAVEPOINT]
-    C --> D{Operation}
-    D -->|Create| L1[Log: Create]
-    D -->|Update| L2[Log: Update<br/>+ Before / After per field]
-    D -->|Delete| L3[Log: Delete<br/>display name snapshot]
-    D -->|View| L4[Log: View<br/>deduplicated per request]
-    L1 & L2 & L3 & L4 --> E{Logging error?}
-    E -->|No| OK[Release savepoint]
-    E -->|Yes| RB[Roll back only the savepoint,<br/>user operation continues]
+    B -->|No| F[Open an operation frame]
+    F --> O[Run the real operation]
+    O -->|other records read / created /<br/>changed meanwhile| N[Their entries are collected<br/>as sub-operations]
+    O --> L[Log the operation's own entry<br/>in its own savepoint]
+    L --> M{Operation}
+    M -->|Create / Update| L1[Field Before / After lines<br/>secrets masked]
+    M -->|Delete| L2[Display name snapshot]
+    M -->|View| L3[Once per record per request]
+    N --> K[Close frame: link sub-operations<br/>to the master entry]
+    L1 & L2 & L3 --> K
+    K -->|logging error| RB[Only the logging savepoint<br/>is rolled back; the user's<br/>operation is unaffected]
+```
+
+### Example: what a single action produces
+
+```mermaid
+flowchart LR
+    M["Created Verify Company<br/>(master)"] --> C1["Created Verify Contact<br/>(triggered by the company)"]
+    V["Viewed Verify User<br/>(form opened)"] --> R1[Viewed group: Internal User]
+    V --> R2[Viewed group: Contact Creation]
+    V --> R3["... every linked record<br/>shown on the form"]
 ```
 
 ## Usage
 
-1. Install/upgrade - Create/Update/Delete/View are logged for every
-   model already, no setup step.
-2. Go to **Audit Trail > Logs** to see the trail: filter/group-by user,
-   model, action, date. Click into any `Update` entry and open the
-   **"Field Changes (Before / After)"** tab to see exactly which fields
-   changed, with the old and new value side by side for each one.
-3. To audit a specific user's activity end to end: filter/search by
-   that user in Logs, then Group By > Model or > Date to see everything
-   they created, changed, deleted, and viewed.
-4. To stop logging a specific model: **Audit Trail > Excluded Models** >
-   add a line > pick the model > optionally note why. It stops being
-   logged (Create/Update/Delete/View, all of it) as soon as you save -
-   no restart, no upgrade needed.
+1. **Audit Trail > Logs** opens on **Top-Level Operations**. Remove that
+   filter to see every entry, or use *Triggered by Another Operation* to
+   see only side effects.
+2. Open an entry:
+   - **Field Changes (Before / After)**: values of a create or update.
+   - **Sub-Operations**: what this operation read, created, changed or
+     deleted in other records. Each one can be opened in turn.
+   - **Whole Operation**: every entry of the same top-level operation.
+3. Useful filters: **Changes Only** hides views. **Internal (sudo)** shows
+   what program code did with superuser rights on the user's behalf.
+   **Today** and **Date** respect the user's time zone. Group by **User**,
+   **Model**, **Action**, **Triggered By** or **Date**.
+4. To stop logging a model: **Audit Trail > Excluded Models** > add the
+   model. It takes effect immediately. Adding, changing and removing
+   exclusions is itself logged, and the Audit Trail models cannot be
+   excluded.
+
+## Rules
+
+- **Secrets are never stored.** Fields whose name contains password,
+  secret, token, api key, TOTP / OTP or a private key, and fields nobody
+  may read (`groups='.'`), are logged as `********`. You can still see
+  that they changed.
+- **Deleting log entries always leaves a trace.** Deleting an entry also
+  deletes its sub-operations. Every deletion writes an *Audit log purge*
+  entry with who deleted how many entries and from which dates.
+- **History survives module uninstall.** The model name is stored on the
+  entry, so uninstalling a module keeps its audit history.
+- **The user's operation always wins.** Logging runs in its own
+  non-flushing savepoint. If logging fails, only the log is lost: the
+  user's operation, its error messages and the rest of the request are
+  unaffected.
 
 ## Access control
 
-Two dedicated groups are created (nothing is exposed to normal users
-by default):
+| Group | Can |
+| --- | --- |
+| *Audit Trail / Viewer* | Read the log |
+| *Audit Trail / Manager* | Read and delete log entries (always traced), manage Excluded Models. The seed Administrator is added automatically |
 
-- **Audit Trail / Viewer** - can browse the log (read-only), cannot
-  see or change Excluded Models.
-- **Audit Trail / Manager** - can browse the log, delete old entries,
-  and manage Excluded Models. The default Administrator user is added
-  to this group automatically.
-
-Assign these from **Settings > Users > (user) > Access Rights**, under
-the "Administration" category. If you can't see the Audit Trail menu
-at all, this is the first thing to check - only `base.user_admin`
-(the literal seed Administrator account) is auto-added; any other
-admin/owner account needs to be added manually.
+Assign them in *Settings > Users > Access Rights* (category
+*Administration*). Viewers see every logged value, including fields they
+could not open in the original app (secrets excepted).
 
 ## Performance & volume
 
-- `unlink` (delete) logging is cheap - just a display name snapshot,
-  no diff.
-- `write` logging computes a per-field Before/After diff - the main
-  cost, negligible for normal business usage.
-- `View` (read) logging is the highest-volume type by far, since it
-  applies to every model by default. Duplicate reads of the same
-  record by the same user within one request are deduplicated
-  automatically, and the internal "before value" fetch that update
-  logging needs no longer generates a spurious View entry as a
-  side-effect (fixed in this version) - but expect View entries to
-  still be the largest share of the log table by a wide margin.
-- If a specific model turns out too noisy in practice - a detail-line
-  model rewritten constantly, a background sync hitting one model hard
-  - add it to **Excluded Models**. That's now the intended, working way
-  to do it.
-- Deliberately NOT excluded by default: core financial and inventory
-  line models (e.g. `account.move.line`, `stock.move.line`). Given
-  this is a donor-funded NGO, that trail is very likely something you
-  want kept - add it to Excluded Models yourself if experience after
-  go-live shows otherwise.
-- `audit.trail.log` will grow indefinitely by design. Plan a periodic
-  archiving/export policy (export + purge logs older than N months)
-  once you see real volume after go-live.
+- Once warm, the exclusion check costs no SQL. A repeated view of the
+  same record in one request costs no SQL either.
+- Views are the largest share of the table. Opening a form also logs the
+  linked records shown on it, as sub-operations. This is by design, so
+  the trail shows what a screen touched.
+- Use **Excluded Models** for a model that is too noisy, e.g. a detail-line
+  model rewritten constantly.
+- `audit.trail.log` grows indefinitely. Plan a periodic purge (it is
+  traced) once real volumes are known.
+
+## Known limitations
+
+- **Batch operations:** when one operation covers several records (a
+  list view, a write on many records), the linked records are filed under
+  the **first** record of the batch. Odoo processes them together, so
+  there is no way to tell which row they belong to. **Whole Operation**
+  shows the full batch.
+- **A record viewed twice in one request** is logged once, under the
+  first operation that read it.
+- **Changes made with raw SQL** (some Odoo internals, `ondelete='cascade'`
+  at database level) bypass the ORM and are not logged.
+
+## What changed in 17.0.2.3.0
+
+| Problem in 17.0.2.2.0 | Effect | Fix |
+| --- | --- | --- |
+| Passwords and 2FA secrets stored in plain text | Any Audit Viewer could read users' passwords | Values masked. Existing entries: run the SQL under *Install / upgrade* |
+| Logging savepoint flushed the user's pending changes *outside* the savepoint | A real error such as a duplicate login was swallowed, and the request failed later with "current transaction is aborted". Chatter tracking was also finalised early | Non-flushing savepoints |
+| Savepoint + flush on every read (12 extra statements for 3 reads) | Slower screens | No SQL for cached exclusions or repeated views |
+| Exclusion changes not logged | Auditing could be switched off and on without a trace | Logged. Audit models cannot be excluded |
+| Deleting log entries left no trace | History could be removed silently | Purge entry |
+| Uninstalling a module deleted all its audit history (`ondelete='cascade'`) | Lost history | Kept |
+| One-to-many / many-to-many changes showed "1 change command(s)" | Unreadable diff | Shows the resulting records |
+| Flat list of entries | No way to see what an action did to other records | Master / sub-operation structure |
+| `model.clear_caches()` (deprecated in 17) cleared every cache of the registry | Deprecation warnings, extra cache rebuilds | `registry.clear_cache()` |
+| "Today" filter compared a local date with UTC | Off by the time-zone offset | Time-zone aware |
+
+## Tests
+
+`tests/test_audit_trail.py`, run with:
+
+```bash
+odoo-bin -d <db> -u bn_audit_trail --test-enable --test-tags /bn_audit_trail --stop-after-init
+```

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models, tools
+from odoo import _, api, fields, models, tools
+from odoo.exceptions import ValidationError
 
 
 class AuditTrailExclusion(models.Model):
@@ -42,21 +43,33 @@ class AuditTrailExclusion(models.Model):
         """Cached set of technical model names currently excluded.
 
         Cached in memory so the check on every create/write/unlink/read
-        across the whole system is cheap. Cleared via self.clear_caches()
-        below on every create/write/unlink of this model - this is the
-        documented, stable Odoo API for clearing a model's own ormcache
-        entries (unlike env.registry.clear_caches(), which an earlier
-        version of this module called and which did not reliably clear
-        anything - that's why toggling a setting used to silently not
-        take effect).
+        across the whole system costs no SQL once warm. Cleared by
+        _clear_exclusion_cache() on every create/write/unlink of this
+        model, which also tells the other workers to drop their copy.
+
+        The query only runs on a cache miss, inside its own savepoint so a
+        failure can never abort the caller's transaction.
         """
-        self.env.cr.execute("""
-            SELECT im.model
-            FROM audit_trail_exclusion e
-            JOIN ir_model im ON im.id = e.model_id
-            WHERE e.active = true
-        """)
-        return {row[0] for row in self.env.cr.fetchall()}
+        with self.env.cr.savepoint(flush=False):
+            self.env.cr.execute("""
+                SELECT im.model
+                FROM audit_trail_exclusion e
+                JOIN ir_model im ON im.id = e.model_id
+                WHERE e.active = true
+            """)
+            return {row[0] for row in self.env.cr.fetchall()}
+
+    def _clear_exclusion_cache(self):
+        # model.clear_caches() is deprecated in Odoo 17 and clears every
+        # ormcache of the registry; only the default cache holds ours.
+        self.env.registry.clear_cache()
+
+    @api.constrains('model_id')
+    def _check_not_audit_model(self):
+        for exclusion in self:
+            if exclusion.model_id.model in ('audit.trail.exclusion', 'audit.trail.log',
+                                            'audit.trail.log.line'):
+                raise ValidationError(_('The Audit Trail models themselves cannot be excluded.'))
 
     # -----------------------------------------------------------------
     @api.model_create_multi
@@ -90,15 +103,15 @@ class AuditTrailExclusion(models.Model):
                 to_create.append(vals)
         if to_create:
             result_records |= super(AuditTrailExclusion, self).create(to_create)
-        self.clear_caches()
+        self._clear_exclusion_cache()
         return result_records
 
     def write(self, vals):
         res = super().write(vals)
-        self.clear_caches()
+        self._clear_exclusion_cache()
         return res
 
     def unlink(self):
         res = super().unlink()
-        self.clear_caches()
+        self._clear_exclusion_cache()
         return res

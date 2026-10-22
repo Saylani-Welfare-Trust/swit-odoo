@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
+from contextlib import contextmanager
 
 from odoo import api, models
+
+from .audit_log import outer_hands_up
 
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +15,11 @@ _logger = logging.getLogger(__name__)
 # recurse on itself (the audit log's own tables) or be high-volume,
 # low-value noise (document numbering, cron, bus, mail bookkeeping,
 # attachments). For excluding OTHER models via the UI, see
-# audit.trail.exclusion (Audit Trail > Excluded Models) below.
+# audit.trail.exclusion (Audit Trail > Excluded Models).
+#
+# audit.trail.exclusion is deliberately NOT in this set: switching auditing
+# off for a model must itself leave a trace. Deleting audit.trail.log
+# entries is traced separately (see AuditTrailLog.unlink).
 #
 # To add another permanent, code-level exclusion, add its technical name
 # here and redeploy - this set is deliberately not meant to be end-user
@@ -20,7 +27,6 @@ _logger = logging.getLogger(__name__)
 AUDIT_EXCLUDED_MODELS = {
     'audit.trail.log',
     'audit.trail.log.line',
-    'audit.trail.exclusion',
     'ir.logging',
     'ir.cron',
     'ir.cron.trigger',
@@ -47,34 +53,34 @@ class Base(models.AbstractModel):
     Policy: Create / Update / Delete / View are audited for every model
     by default, except:
       * AUDIT_EXCLUDED_MODELS above - fixed, code-level, not configurable.
-      * Models listed in Audit Trail > Excluded Models (audit.trail.exclusion)
-        - a small, purpose-built config screen for turning specific models
-        off, with a correctly-invalidated cache (see that model for why
-        this matters).
+      * Models listed in Audit Trail > Excluded Models (audit.trail.exclusion).
 
-    CRITICAL: every database-touching thing this module does (the
-    exclusion-list check AND the actual log write) runs inside its own
-    cursor SAVEPOINT via _audit_safe() below. A plain try/except around a
-    failed SQL statement stops Python from crashing, but it does NOT
-    un-poison the surrounding PostgreSQL transaction once a query inside
-    it has actually errored - every later query in that same request then
-    fails too ("current transaction is aborted"), which can take down
-    completely unrelated functionality (this happened in production: a
-    logging failure here caused /web itself to 500). A savepoint gives
-    our logging code its own rollback boundary, so if anything inside it
-    goes wrong, only that savepoint is rolled back - the real operation
-    (the user's actual create/write/read) and the rest of the request
-    continue unaffected.
+    Structure: every audited operation opens a "frame" for as long as it
+    runs. Whatever else gets audited while that frame is open (a write on
+    sale.order creating stock moves, a form opening reading the partner and
+    company it shows, ...) is linked under the operation's own log entry as
+    a sub-operation. See AuditTrailLog._audit_close_frame().
+
+    Transaction safety: the log writes run inside their own non-flushing
+    cursor SAVEPOINT via _audit_safe(). A failure in the logging code rolls
+    back only that savepoint; the user's own operation and the rest of the
+    request are unaffected. The savepoint must NOT flush: a flushing
+    savepoint flushes the caller's pending writes *before* the savepoint
+    exists, so a genuine error in those writes (e.g. a unique constraint)
+    would be swallowed here and leave the transaction aborted, and it would
+    also run the pre-commit hooks (chatter tracking ...) early.
     """
     _inherit = 'base'
 
+    # -----------------------------------------------------------------
+    # Helpers
     # -----------------------------------------------------------------
     def _audit_safe(self, func, *args, **kwargs):
         """Run func(*args, **kwargs) inside its own savepoint, swallowing
         (and logging) any exception - Python-level OR database-level -
         without ever letting it affect the caller's transaction."""
         try:
-            with self.env.cr.savepoint():
+            with self.env.cr.savepoint(flush=False):
                 return func(*args, **kwargs)
         except Exception:
             _logger.exception('Audit Trail: logging step failed for %s', self._name)
@@ -89,23 +95,80 @@ class Base(models.AbstractModel):
             # Avoid touching our own tables while they're still being
             # created during this module's own installation.
             return False
-        excluded = self._audit_safe(
-            lambda: self.env['audit.trail.exclusion'].sudo()._get_excluded_model_names()
-        )
-        return self._name not in (excluded or set())
+        try:
+            # Cached: no SQL once warm. The cache-miss query protects
+            # itself with a savepoint (see audit.trail.exclusion).
+            excluded = self.env['audit.trail.exclusion'].sudo()._get_excluded_model_names()
+        except Exception:
+            _logger.exception('Audit Trail: could not read the excluded models')
+            excluded = set()
+        return self._name not in excluded
 
+    def _audit_stack(self):
+        """Open audit frames of the current transaction, innermost last."""
+        transaction = self.env.transaction
+        stack = getattr(transaction, '_audit_stack', None)
+        if stack is None:
+            stack = transaction._audit_stack = []
+        return stack
+
+    @contextmanager
+    def _audit_frame(self, kind):
+        """Group everything audited while the operation runs under the
+        operation's own log entry. ``kind`` is 'read', 'create', 'write'
+        or 'unlink'."""
+        stack = self._audit_stack()
+        frame = {'model': self._name, 'kind': kind, 'own': [], 'children': [], 'descendants': []}
+        stack.append(frame)
+        try:
+            yield frame
+        except Exception:
+            stack.pop()
+            # No SQL here: the transaction may be aborted. Hand the ids to
+            # the enclosing frame so they are still linked if the error is
+            # caught higher up.
+            if stack:
+                outer_hands_up(frame, stack[-1])
+            raise
+        stack.pop()
+        outer = stack[-1] if stack else None
+        if (frame['own'] and frame['children']) or (outer is None and frame['descendants']):
+            # Linking needs SQL.
+            self._audit_safe(self.env['audit.trail.log']._audit_close_frame, frame, outer)
+        elif outer is not None:
+            outer_hands_up(frame, outer)
+
+    def _audit_register(self, logs, kind):
+        """Attach freshly created log entries of this model to the innermost
+        open frame: as the frame's own entries when they describe the
+        operation itself, otherwise as entries it triggered."""
+        stack = self._audit_stack()
+        if not stack:
+            return
+        frame = stack[-1]
+        if frame['model'] == self._name and frame['kind'] == kind:
+            frame['own'] += logs.ids
+        else:
+            frame['children'] += logs.ids
+            frame['descendants'] += logs.ids
+
+    # -----------------------------------------------------------------
+    # Create / Update / Delete
     # -----------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
-        records = super().create(vals_list)
-        if records and self._audit_is_enabled():
-            self._audit_safe(self.env['audit.trail.log']._log_create, records, vals_list)
+        if not self._audit_is_enabled():
+            return super().create(vals_list)
+        with self._audit_frame('create'):
+            records = super().create(vals_list)
+            if records:
+                self._audit_safe(self.env['audit.trail.log']._log_create, records, vals_list)
         return records
 
     def write(self, vals):
-        audit_enabled = self._audit_is_enabled()
-        old_values = {}
-        if audit_enabled:
+        if not self._audit_is_enabled():
+            return super().write(vals)
+        with self._audit_frame('write'):
             def _snapshot():
                 tracked = [f for f in vals.keys() if f in self._fields]
                 # Fetch pre-write values for the diff without that internal
@@ -114,14 +177,56 @@ class Base(models.AbstractModel):
                 return {rec.id: {f: rec[f] for f in tracked} for rec in rs}
             old_values = self._audit_safe(_snapshot) or {}
 
-        result = super().write(vals)
+            result = super().write(vals)
 
-        if audit_enabled:
             self._audit_safe(self.env['audit.trail.log']._log_write, self, vals, old_values)
         return result
 
+    def unlink(self):
+        if not self._audit_is_enabled():
+            return super().unlink()
+        with self._audit_frame('unlink'):
+            def _snapshot():
+                return {rec.id: self.env['audit.trail.log']._safe_display_name(rec)
+                        for rec in self}
+            snapshot = self._audit_safe(_snapshot) or {}
+
+            result = super().unlink()
+
+            if snapshot:
+                self._audit_safe(self.env['audit.trail.log']._log_unlink, self._name, snapshot)
+        return result
+
+    # -----------------------------------------------------------------
+    # View
+    # -----------------------------------------------------------------
+    def _audit_read_frame_enabled(self):
+        return bool(self._ids) and not self.env.context.get('_audit_trail_skip_read') \
+            and self._audit_is_enabled()
+
+    def read(self, fields=None, load='_classic_read'):
+        if not self._audit_read_frame_enabled():
+            return super().read(fields=fields, load=load)
+        with self._audit_frame('read'):
+            return super().read(fields=fields, load=load)
+
+    def web_read(self, *args, **kwargs):
+        # Opening a form: the record itself is read first, then a nested
+        # web_read() per linked record shown (partner, company, lines ...).
+        # The frame puts those linked reads under the record's View entry.
+        if not self._audit_read_frame_enabled():
+            return super().web_read(*args, **kwargs)
+        with self._audit_frame('read'):
+            return super().web_read(*args, **kwargs)
+
+    def web_search_read(self, *args, **kwargs):
+        if not self._audit_is_enabled():
+            return super().web_search_read(*args, **kwargs)
+        with self._audit_frame('read'):
+            return super().web_search_read(*args, **kwargs)
+
     def _read_format(self, fnames, load='_classic_read'):
-        # Hooked here rather than on read() - Odoo 17's web client mostly
+        # Logged here rather than in read() - Odoo 17's web client mostly
         # calls web_read()/web_search_read(), not the classic read(); both
         # of those, and classic read() itself, all funnel through
         # _read_format() internally. Hooking this one method catches every
@@ -129,20 +234,8 @@ class Base(models.AbstractModel):
         result = super()._read_format(fnames, load=load)
         if (self._ids and not self.env.context.get('_audit_trail_skip_read')
                 and self._audit_is_enabled()):
-            self._audit_safe(self.env['audit.trail.log']._log_read, self._name, result)
-        return result
-
-    def unlink(self):
-        audit_enabled = self._audit_is_enabled()
-        snapshot = {}
-        if audit_enabled:
-            def _snapshot():
-                return {rec.id: self.env['audit.trail.log']._safe_display_name(rec)
-                        for rec in self}
-            snapshot = self._audit_safe(_snapshot) or {}
-
-        result = super().unlink()
-
-        if audit_enabled and snapshot:
-            self._audit_safe(self.env['audit.trail.log']._log_unlink, self._name, snapshot)
+            Log = self.env['audit.trail.log']
+            rows = Log._unseen_read_rows(self._name, result)
+            if rows:
+                self._audit_safe(Log._log_read, self._name, rows)
         return result
