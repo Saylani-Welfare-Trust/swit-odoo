@@ -91,15 +91,6 @@
                                     <div t-if="'Cheque' in payment_method">
                                         <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
                                     </div>
-                                    <div>
-                                        <strong>Remarks:</strong>
-                                        <t t-set="count" t-value="1"/>
-                                        <t t-foreach="order.lines" t-as="l">
-                                            <t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="l.customer_note or '-'"/>
-                                            <br/>
-                                            <t t-set="count" t-value="count + 1"/>
-                                        </t>
-                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <div>
