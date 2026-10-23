@@ -5,9 +5,7 @@
             <field name="name">CXO Approval Request - Purchase Order</field>
             <field name="model_id" ref="purchase.model_purchase_order"/>
             
-            <!-- 移除 render_engine 字段，Odoo 15 不支持 -->
-            
-            <!-- subject 使用 inline_template 语法 -->
+            <!-- Subject uses Jinja (inline_template) -->
             <field name="subject">Approval Required: {{ 'New RFQ' if object.name == '/' else object.name }} ({{ object.partner_id.name or 'No Vendor' }})</field>
             
             <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
@@ -15,9 +13,9 @@
             <field name="partner_to">{{ object.designated_cxo_approver_id.user_id.partner_id.id }}</field>
             <field name="auto_delete" eval="False"/>
             
-            <!-- body_html 必须使用 QWeb 语法 -->
+            <!-- Body uses QWeb -->
             <field name="body_html" type="html">
-                <div style="font-family: Arial, sans-serif;">
+                <div style="font-family: Arial, sans-serif; color: #333;">
                     <p>Dear <t t-out="object.designated_cxo_approver_id.employee_id.name or ''"/>,</p>
                     
                     <p>A purchase order / RFQ has been assigned to you and needs your <strong>CXO approval</strong>.</p>
@@ -25,10 +23,44 @@
                     <p>
                         <strong>PO / RFQ:</strong> <t t-out="object.name if object.name != '/' else 'New RFQ'"/><br/>
                         <strong>Vendor:</strong> <t t-out="object.partner_id.name or 'Not specified'"/><br/>
-                        <strong>Amount:</strong> <t t-out="object.currency_id.symbol"/> <t t-out="'%.2f' % object.amount_total"/>
+                        <strong>Total Amount:</strong> <t t-out="object.currency_id.symbol"/> <t t-out="'%.2f' % object.amount_total"/>
                     </p>
+
+                    <p><strong>Order Details:</strong></p>
+                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 600px; text-align: left;">
+                        <thead style="background-color: #f2f2f2;">
+                            <tr>
+                                <th>Product</th>
+                                <th style="text-align: right;">Quantity</th>
+                                <th style="text-align: right;">Unit Price</th>
+                                <th style="text-align: right;">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="object.order_line" t-as="line">
+                                <tr>
+                                    <td>
+                                        <t t-out="line.product_id.name or line.name"/>
+                                        <!-- Optional: Show description if available -->
+                                        <t t-if="line.name and line.name != line.product_id.name">
+                                            <br/><small style="color: #666;"><t t-out="line.name"/></small>
+                                        </t>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <t t-out="line.product_qty"/> <t t-out="line.product_uom.name"/>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <t t-out="object.currency_id.symbol"/> <t t-out="'%.2f' % line.price_unit"/>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <t t-out="object.currency_id.symbol"/> <t t-out="'%.2f' % line.price_subtotal"/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
                     
-                    <p>Please log in to review and approve this purchase.</p>
+                    <p style="margin-top: 20px;">Please log in to review and approve this purchase.</p>
                     
                     <p>Thank you,<br/><t t-out="object.company_id.name"/></p>
                 </div>
