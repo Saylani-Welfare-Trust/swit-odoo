@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.tools.sql import column_exists, create_column
 
 import re
 
@@ -7,6 +8,37 @@ import re
 class POSOrder(models.Model):
     _inherit = 'pos.order'
 
+    customer_note = fields.Char(
+        string='Customer Note',
+        compute='_compute_customer_note',
+        store=True,
+        readonly=False,
+    )
+
+    @api.depends('lines.customer_note')
+    def _compute_customer_note(self):
+        # POS keeps the customer note on each line; the order shows them together
+        for order in self:
+            notes = (line.customer_note.strip() for line in order.lines if line.customer_note)
+            order.customer_note = ', '.join(note for note in notes if note) or False
+
+    def _auto_init(self):
+        # Fill the new column from the line notes in SQL, so the upgrade
+        # doesn't recompute it for every existing order through the ORM
+        if not column_exists(self.env.cr, 'pos_order', 'customer_note'):
+            create_column(self.env.cr, 'pos_order', 'customer_note', 'varchar')
+            self.env.cr.execute("""
+                UPDATE pos_order o
+                   SET customer_note = l.note
+                  FROM (
+                        SELECT order_id, string_agg(btrim(customer_note), ', ' ORDER BY id) AS note
+                          FROM pos_order_line
+                         WHERE btrim(customer_note) != ''
+                      GROUP BY order_id
+                       ) l
+                 WHERE o.id = l.order_id
+            """)
+        return super()._auto_init()
 
     mobile = fields.Char(related='partner_id.mobile', string="Mobile No.")
 

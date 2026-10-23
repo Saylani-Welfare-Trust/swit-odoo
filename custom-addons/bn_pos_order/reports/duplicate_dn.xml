@@ -94,6 +94,10 @@
                                     <div t-if="'Cheque' in payment_method">
                                         <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
                                     </div>
+                                    <div>
+                                        <strong>Remarks:</strong>
+                                        <t t-esc="order.customer_note or '-'"/>
+                                    </div>
                                 </div>
                                 <div class="col-6">
                                     <div>
