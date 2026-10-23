@@ -5,7 +5,7 @@
         <record id="email_template_cxo_approval_request" model="mail.template">
             <field name="name">CXO Approval Request - Purchase Order</field>
             <field name="model_id" ref="purchase.model_purchase_order"/>
-            <field name="render_engine">inline_template</field>   <!-- ← ADD THIS -->
+            <field name="render_engine">inline_template</field>
             <field name="subject">Approval Required: {{ object.name or object.display_name }}</field>
             <field name="email_from">{{ (object.company_id.email_formatted or user.email_formatted) }}</field>
             <field name="email_to">{{ object.designated_cxo_approver_id.work_email }}</field>
@@ -13,16 +13,16 @@
             <field name="auto_delete" eval="False"/>
             <field name="body_html" type="html">
                 <div style="font-family: Arial, sans-serif;">
-                    <p>Dear {{ object.designated_cxo_approver_id.employee_id.name or '' }},</p>
+                    <p>Dear <t t-out="object.designated_cxo_approver_id.employee_id.name or ''"/>,</p>
                     <p>A purchase order has been assigned to you and needs your
                     <strong>CXO approval</strong>.</p>
                     <p>
-                        <strong>PO / RFQ:</strong> {{ object.name or object.display_name }}<br/>
-                        <strong>Vendor:</strong> {{ object.partner_id.name or '' }}<br/>
-                        <strong>Amount:</strong> {{ object.currency_id.symbol }} {{ '%.2f' % object.amount_total }}
+                        <strong>PO / RFQ:</strong> <t t-out="object.name or object.display_name"/><br/>
+                        <strong>Vendor:</strong> <t t-out="object.partner_id.name or ''"/><br/>
+                        <strong>Amount:</strong> <t t-out="object.currency_id.symbol"/> <t t-out="'%.2f' % object.amount_total"/>
                     </p>
                     <p>Please log in to review and approve this purchase.</p>
-                    <p>Thank you,<br/>{{ object.company_id.name }}</p>
+                    <p>Thank you,<br/><t t-out="object.company_id.name"/></p>
                 </div>
             </field>
         </record>
