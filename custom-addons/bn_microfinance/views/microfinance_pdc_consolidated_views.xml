@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View for Consolidated Cheque List -->
+    <record id="view_microfinance_pdc_consolidated_tree" model="ir.ui.view">
+        <field name="name">microfinance.pdc.line.tree</field>
+        <field name="model">microfinance.pdc.line</field>
+        <field name="priority">10</field>
+        <field name="arch" type="xml">
+            <tree create="0" delete="0" edit="0">
+
+                <field name="microfinance_id" string="Application Number"/>
+                <field name="installment_number" string="Installment Number"/>
+                <field name="donee_id" string="Donee"/>
+                <field name="cheque_date" string="Cheque Date"/>
+                <field name="bank_name" string="Bank"/>
+                <field name="amount_total" string="Cheque Amount" sum="Total Amount"/>
+                <field name="state_cheque" string="State" widget="badge" 
+                       decoration-success="state_cheque == 'cleared'" 
+                       decoration-warning="state_cheque == 'deposited'" 
+                       decoration-danger="state_cheque == 'bounced'"
+                       decoration-info="state_cheque == 'draft'"/>
+                <!-- <field name="deposit_date" string="Deposit Date" optional="show"/> -->
+                <!-- Button in each line -->
+
+                <field name="is_deposit" widget = "boolean"/>
+                <button name="action_deposit" 
+                        string="Deposit" 
+                        type="object" 
+                        class="btn-primary"
+                        icon="fa-check-circle"
+                    />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_microfinance_pdc_consolidated_search" model="ir.ui.view">
+        <field name="name">microfinance.pdc.line.search</field>
+        <field name="model">microfinance.pdc.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="microfinance_id"/>
+                <field name="donee_id"/>
+                <field name="installment_number"/>
+                <field name="bank_name"/>
+                <field name="cheque_no"/>
+                <field name="cheque_date"/>
+                
+                <separator/>
+                
+                <!-- State Filters -->
+                <filter name="filter_draft" string="Draft" domain="[('state_cheque', '=', 'draft')]"/>
+                <filter name="filter_deposited" string="Deposited" domain="[('state_cheque', '=', 'deposited')]"/>
+                <filter name="filter_cleared" string="Cleared" domain="[('state_cheque', '=', 'cleared')]"/>
+                <filter name="filter_bounced" string="Bounced" domain="[('state_cheque', '=', 'bounced')]"/>
+                
+                <separator/>
+                
+                <!-- Date Filters -->
+                <filter name="filter_today" string="Today's Cheques" 
+                        domain="[('cheque_date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_this_week" string="This Week" 
+                        domain="[('cheque_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_overdue" string="Overdue" 
+                        domain="[('cheque_date', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                
+                <separator/>
+                
+                <!-- Group By -->
+                <group expand="0" string="Group By">
+                    <filter name="group_by_state" string="State" context="{'group_by': 'state_cheque'}"/>
+                    <filter name="group_by_bank" string="Bank" context="{'group_by': 'bank_name'}"/>
+                    <filter name="group_by_donee" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="group_by_date" string="Cheque Date" context="{'group_by': 'cheque_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Window -->
+    <record id="action_microfinance_pdc_consolidated" model="ir.actions.act_window">
+        <field name="name">Post-Dated Cheques</field>
+        <field name="res_model">microfinance.pdc.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_microfinance_pdc_consolidated_search"/>
+        <field name="context">{'search_default_filter_draft': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Post-Dated Cheques found.
+            </p>
+            <p>
+                Post-Dated Cheques will appear here once they are added to microfinance records.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_microfinance_pdc_consolidated" 
+              name="Post-Dated Cheques" 
+              action="action_microfinance_pdc_consolidated"
+              parent="microfinance_menu" 
+              sequence="10"/>
+</odoo>

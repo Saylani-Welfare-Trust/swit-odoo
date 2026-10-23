@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="return_microfinance_product_view_form" model="ir.ui.view">
+        <field name="name">return.microfinance.product.view.form</field>
+        <field name="model">return.microfinance.product</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group name="return_microfinance_product_col_1">
+                            <field name="product_domain" invisible="1"/>
+                            <field name="donee_id" invisible="1"/>
+                            <field name="microfinance_id" invisible="1"/>
+                            <field name="source_document" invisible="1"/>
+                            
+                            <field name="product_id" options="{'no_create': True, 'no_open': True}" required="1" domain="[('id', 'in', product_domain)]"/>
+                            <field name="destination_location_id" options="{'no_create': True, 'no_open': True}" domain="[('usage', '=', 'internal'),('replenish_location', '=', True)]" required="1"/>
+                        </group>
+                        <group name="return_microfinance_product_col_2">
+                            <field name="remarks" required="1"/>
+                        </group>
+
+                    </group>
+                    <footer>
+                        <button name="action_recovery_done" string="Recover" type="object" class="btn-primary" />
+                        <button string="Cancel" class="btn-secondary" special="cancel" />
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="return_microfinance_product_action" model="ir.actions.act_window">
+        <field name="name">Return Microfinance Product</field>
+        <field name="res_model">return.microfinance.product</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

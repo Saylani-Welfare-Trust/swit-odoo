@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <template id="microfinance_installment_plan_template">
+            <t t-call="web.external_layout">
+                <main>
+                    <t t-foreach="docs" t-as="doc">
+                        <div class="page">
+                            <style>
+                                .compact-section {
+                                    margin-bottom: 12px;
+                                }
+                                .compact-row {
+                                    margin-bottom: 6px;
+                                }
+                                .tight-padding {
+                                    padding: 6px !important;
+                                }
+                                .no-margin {
+                                    margin: 0;
+                                }
+                                .info-box {
+                                    border: 1px solid #000;
+                                    padding: 10px;
+                                    margin-bottom: 12px;
+                                    font-size: 11px;
+                                }
+                                .flex-container {
+                                    display: flex;
+                                    width: 100%;
+                                }
+                                .flex-column {
+                                    width: 50%;
+                                }
+                                .flex-left {
+                                    padding-right: 10px;
+                                }
+                                .flex-right {
+                                    padding-left: 10px;
+                                }
+                                .flex-row {
+                                    display: flex;
+                                    margin-bottom: 6px;
+                                }
+                                .flex-label {
+                                    width: 45%;
+                                    font-size: 11px;
+                                    font-weight: normal;
+                                }
+                                .flex-value {
+                                    width: 55%;
+                                    font-size: 11px;
+                                    font-weight: 500;
+                                }
+                                .table-bordered-custom {
+                                    border-collapse: collapse !important;
+                                    border-spacing: 0 !important;
+                                    border: 1px solid #000 !important;
+                                    font-size: 11px;
+                                    width: 100%;
+                                }
+                                .table-bordered-custom th,
+                                .table-bordered-custom td {
+                                    border: 1px solid #000 !important;
+                                    padding: 6px !important;
+                                }
+                                .table-bordered-custom th {
+                                    background-color: #f5f5f5;
+                                    font-weight: bold;
+                                }
+                                .text-center {
+                                    text-align: center !important;
+                                }
+                                .text-right {
+                                    text-align: right !important;
+                                }
+                                .text-uppercase {
+                                    text-transform: uppercase !important;
+                                }
+                                .fw-bold {
+                                    font-weight: bold !important;
+                                }
+                                .mb-1 {
+                                    margin-bottom: 0.25rem !important;
+                                }
+                                .tight-margin {
+                                    margin-left: 8px;
+                                    margin-right: 8px;
+                                }
+                                .status-paid {
+                                    color: #28a745;
+                                    font-weight: bold;
+                                }
+                                .status-unpaid {
+                                    color: #dc3545;
+                                    font-weight: bold;
+                                }
+                                .status-partial {
+                                    color: #ffc107;
+                                    font-weight: bold;
+                                }
+                                .summary-box {
+                                    border: 2px solid #000;
+                                    padding: 10px;
+                                    margin-top: 15px;
+                                    font-size: 12px;
+                                }
+                                .summary-row {
+                                    display: flex;
+                                    justify-content: space-between;
+                                    margin-bottom: 5px;
+                                }
+                            </style>
+
+                            <!-- Header -->
+                            <div class="compact-section tight-margin">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h5 class="fw-bold text-uppercase mb-1 no-margin" style="font-size: 16px;">
+                                        Installment Plan
+                                    </h5>
+                                    <h6 class="fw-bold text-uppercase mb-1 no-margin" style="font-size: 14px;">
+                                        <t t-esc="doc.name"/>
+                                    </h6>
+                                </div>
+                            </div>
+
+                            <!-- Microfinance Information Section -->
+                            <div class="info-box compact-section">
+                                <div class="flex-container">
+                                    <!-- Left Column -->
+                                    <div class="flex-column flex-left">
+                                        <div class="flex-row">
+                                            <div class="flex-label">Microfinance #:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.name"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Donee Name:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.name"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">CNIC #:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.cnic_no"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Phone:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.donee_id.phone or doc.donee_id.mobile or '-'"/>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column -->
+                                    <div class="flex-column flex-right">
+                                        <div class="flex-row">
+                                            <div class="flex-label">Product:</div>
+                                            <div class="flex-value">
+                                                <t t-esc="doc.product_id.name or '-'"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Total Amount:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Installment Amount:</div>
+                                            <div class="flex-value">
+                                                <span t-field="doc.installment_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </div>
+                                        </div>
+                                        <div class="flex-row">
+                                            <div class="flex-label">Delivery Date:</div>
+                                            <div class="flex-value">
+                                                <t t-if="doc.delivery_date">
+                                                    <t t-esc="doc.delivery_date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
+                                                </t>
+                                                <t t-else="">-</t>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Installment Plan Table -->
+                            <div class="compact-section tight-margin">
+                                <h6 class="fw-bold mb-1" style="font-size: 12px;">Installment Schedule</h6>
+                                <table class="table table-bordered-custom">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center; width: 5%;">#</th>
+                                            <th style="text-align: center; width: 20%;">Installment No.</th>
+                                            <th style="text-align: center; width: 15%;">Due Date</th>
+                                            <th style="text-align: right; width: 15%;">Amount</th>
+                                            <th style="text-align: right; width: 15%;">Paid Amount</th>
+                                            <th style="text-align: right; width: 15%;">Remaining</th>
+                                            <th style="text-align: center; width: 15%;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="counter" t-value="0"/>
+                                        <t t-set="total_amount" t-value="0"/>
+                                        <t t-set="total_paid" t-value="0"/>
+                                        <t t-set="total_remaining" t-value="0"/>
+                                        <t t-foreach="doc.microfinance_line_ids" t-as="line">
+                                            <t t-set="counter" t-value="counter + 1"/>
+                                            <t t-set="total_amount" t-value="total_amount + line.amount"/>
+                                            <t t-set="total_paid" t-value="total_paid + line.paid_amount"/>
+                                            <t t-set="total_remaining" t-value="total_remaining + line.remaining_amount"/>
+                                            <tr>
+                                                <td class="text-center">
+                                                    <t t-esc="counter"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <t t-esc="line.installment_no or '-'"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <t t-if="line.due_date">
+                                                        <t t-esc="line.due_date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
+                                                    </t>
+                                                    <t t-else="">-</t>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span t-field="line.amount" t-options="{'widget': 'monetary', 'display_currency': line.currency_id}"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span t-field="line.paid_amount" t-options="{'widget': 'monetary', 'display_currency': line.currency_id}"/>
+                                                </td>
+                                                <td class="text-right">
+                                                    <span t-field="line.remaining_amount" t-options="{'widget': 'monetary', 'display_currency': line.currency_id}"/>
+                                                </td>
+                                                <td class="text-center">
+                                                    <t t-if="line.state == 'paid'">
+                                                        <span class="status-paid">Paid</span>
+                                                    </t>
+                                                    <t t-elif="line.state == 'partial'">
+                                                        <span class="status-partial">Partial</span>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span class="status-unpaid">Unpaid</span>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style="font-weight: bold; background-color: #f5f5f5;">
+                                            <td colspan="3" class="text-right">Total:</td>
+                                            <td class="text-right">
+                                                <t t-esc="total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <t t-esc="total_paid" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </td>
+                                            <td class="text-right">
+                                                <t t-esc="total_remaining" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Summary Section -->
+                            <div class="summary-box tight-margin">
+                                <div class="summary-row">
+                                    <span><strong>Total Installments:</strong></span>
+                                    <span><t t-esc="len(doc.microfinance_line_ids)"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Total Amount:</strong></span>
+                                    <span><t t-esc="total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Total Paid:</strong></span>
+                                    <span><t t-esc="total_paid" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span><strong>Total Remaining:</strong></span>
+                                    <span><t t-esc="total_remaining" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
+                                </div>
+                            </div>
+
+                            <!-- Signature Section -->
+                            <div class="compact-section tight-margin" style="margin-top: 40px;">
+                                <div class="flex-container">
+                                    <div class="flex-column flex-left">
+                                        <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px; padding-top: 5px; text-align: center;">
+                                            Donee Signature
+                                        </div>
+                                    </div>
+                                    <div class="flex-column flex-right" style="text-align: right;">
+                                        <div style="border-top: 1px solid #000; width: 200px; margin-top: 50px; padding-top: 5px; text-align: center; margin-left: auto;">
+                                            Authorized Signature
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Print Date -->
+                            <div class="tight-margin" style="margin-top: 20px; font-size: 10px; color: #666;">
+                                <span>Print Date: <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %H:%M')"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </main>
+            </t>
+        </template>
+
+        <record id="microfinance_installment_plan_report_action" model="ir.actions.report">
+            <field name="name">Installment Plan</field>
+            <field name="model">microfinance</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">bn_microfinance.microfinance_installment_plan_template</field>
+            <field name="report_file">bn_microfinance.microfinance_installment_plan_template</field>
+            <field name="binding_model_id" ref="bn_microfinance.model_microfinance"/>
+            <field name="binding_type">report</field>
+        </record>
+    </data>
+</odoo>
