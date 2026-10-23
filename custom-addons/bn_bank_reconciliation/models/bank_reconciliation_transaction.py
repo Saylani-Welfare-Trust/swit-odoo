@@ -281,9 +281,15 @@ class BankReconciliationTransaction(models.Model):
         
         # Only the selected journal's entries are compared with the statement
         domain = self.master_id._get_candidate_move_line_domain(self)
-        
+        if self.master_id.match_by_amount:
+            # Searching on the amount keeps every candidate: a busy journal has more
+            # items in the date window than the search limit
+            tolerance = self.master_id.match_tolerance_amount or 0.01
+            balance = abs(self.amount) if self.credit > self.debit else -abs(self.amount)
+            domain += [('balance', '>=', balance - tolerance), ('balance', '<=', balance + tolerance)]
+
         if self.date:
-            days = self.master_id.match_tolerance_days or 3
+            days = 0 if self.env.context.get('bank_rec_same_day') else self.master_id.match_tolerance_days or 3
             from_date = self.date - timedelta(days=days)
             to_date = self.date + timedelta(days=days)
             domain.append(('date', '>=', from_date))
@@ -350,16 +356,10 @@ class BankReconciliationTransaction(models.Model):
         ))
 
     def _check_amount_match(self, move_line):
+        # The side is already checked by the candidate domain: money in on the
+        # statement (Credit) is a debit on the bank side, money out a credit
         tolerance = self.master_id.match_tolerance_amount or 0.01
-        if self.debit and move_line.debit:
-            if abs(move_line.debit - self.debit) <= tolerance:
-                return True
-        if self.credit and move_line.credit:
-            if abs(move_line.credit - self.credit) <= tolerance:
-                return True
-        if abs(abs(move_line.balance) - abs(self.amount)) <= tolerance:
-            return True
-        return False
+        return abs(abs(move_line.balance) - abs(self.amount)) <= tolerance
 
     def _check_reference_match(self, move_line):
         if not self.reference:
