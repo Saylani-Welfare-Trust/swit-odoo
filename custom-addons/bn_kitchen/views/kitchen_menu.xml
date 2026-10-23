@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="kitchen_menu_view_tree" model="ir.ui.view">
+        <field name="name">kitchen.menu.view.tree</field>
+        <field name="model">kitchen.menu</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name" />
+                <field name="month" />
+                <field name="state" widget="badge" decoration-info="state == 'to_be_approved'" decoration-success="state == 'approved'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="kitchen_menu_view_form" model="ir.ui.view">
+        <field name="name">kitchen.menu.view.form</field>
+        <field name="model">kitchen.menu</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Submit" name="action_submit" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button string="Approved" name="action_approve" type="object" class="oe_highlight" invisible="state != 'approved'" />
+
+                    <field name="state" widget="statusbar" statusbar_visible="draft, to_be_approved, approved"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_title">
+                        <label for="product_tmpl_id"/>
+                        <h1><field name="product_tmpl_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="kitchen_menu_col_1">
+                            <field name="month" />
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="items" string="Items">
+                            <field name="kitchen_menu_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="quantity" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="kitchen_menu_action" model="ir.actions.act_window">
+        <field name="name">Menu</field>
+        <field name="res_model">kitchen.menu</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new kitchen menu...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="kitchen_menu_menu"
+        name="Menu"
+        action="kitchen_menu_action"
+        parent="bn_kitchen.kitchen_menu"
+        sequence="2"/>
+
+</odoo>

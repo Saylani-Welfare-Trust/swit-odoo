@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="welfare_view_form_inherit_bn_shariah_law" model="ir.ui.view">
+        <field name="name">welfare.view.form.inherit.bn.shariah.law</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.welfare_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='applicantLocationLink']" position="after">
+                <field name="is_sync_shariah_law" readonly="1" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

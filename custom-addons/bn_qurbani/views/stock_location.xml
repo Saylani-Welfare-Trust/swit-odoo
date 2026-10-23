@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_stock_location_stock_view_location_form_inherit_bn_qurbani" model="ir.ui.view">
+        <field name="name">bn.stock.location.stock.view.location.form.inherit.bn.qurbani</field>
+        <field name="model">stock.location</field>
+        <field name="inherit_id" ref="bn_stock_location.stock_view_location_form_inherit_bn_stock_locaiton"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_option_id']" position="after">
+                <field name="cow_sequence_number" invisible="not is_slaughter_location" />
+                <field name="goat_sequence_number" invisible="not is_slaughter_location" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

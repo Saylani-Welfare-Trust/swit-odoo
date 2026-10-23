@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_reconcile_wizard_form" model="ir.ui.view">
+        <field name="name">reconcile.wizard.form</field>
+        <field name="model">reconcile.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Manual Reconciliation">
+                <header>
+                    <button name="action_preview_matching" string="Preview Matching" type="object" 
+                            class="btn-info"/>
+                    <button name="action_show_match_details" string="Show Match Details" type="object" 
+                            class="btn-info"
+                            invisible="not selected_line_ids"/>
+                    <button name="action_clear_selection" string="Clear Selection" type="object" 
+                            class="btn-warning"
+                            invisible="not selected_line_ids"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
+                        <i class="fa fa-info-circle"/> 
+                        <span>Select the accounting entry lines that match this bank transaction.</span>
+                    </div>
+                    
+                    <group>
+                        <group>
+                            <field name="master_id" invisible="1"/>
+                            <field name="transaction_id" invisible="1"/>
+                            <field name="account_id" required="1"/>
+                            <field name="match_type"/>
+                            <field name="match_threshold" invisible="match_type != 'intelligent'"/>
+                        </group>
+                        <group>
+                            <field name="create_journal_entry"/>
+                            <field name="journal_id" invisible="not create_journal_entry"/>
+                            <field name="view_mode"/>
+                        </group>
+                    </group>
+                    
+                    <group string="Filters">
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                        <field name="partner_id"/>
+                        <field name="show_only_matching_amount"/>
+                    </group>
+                    
+                    <notebook>
+                        <page name="unreconciled" string="Unreconciled Entries">
+                            <field name="unreconciled_line_ids">
+                                <tree string="Unreconciled Entries" editable="bottom">
+                                    <field name="date"/>
+                                    <field name="move_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="balance" sum="Total"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Credit"/>
+                                    <field name="currency_id"/>
+                                    <field name="amount_currency" optional="hide"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="selected" string="Selected Entries">
+                            <field name="selected_line_ids">
+                                <tree string="Selected Entries" create="0">
+                                    <field name="date"/>
+                                    <field name="move_id"/>
+                                    <field name="partner_id"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="balance" sum="Total"/>
+                                    <field name="debit" sum="Total Debit"/>
+                                    <field name="credit" sum="Total Credit"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_reconcile" string="Reconcile" type="object" class="btn-primary"
+                            invisible="not selected_line_ids"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_reconcile_preview_wizard_form" model="ir.ui.view">
+        <field name="name">reconcile.preview.wizard.form</field>
+        <field name="model">reconcile.preview.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reconciliation Preview">
+                <sheet>
+                    <group>
+                        <field name="message" nolabel="1" readonly="1"/>
+                    </group>
+                    <group string="Summary">
+                        <group>
+                            <field name="total_debit" readonly="1"/>
+                            <field name="total_credit" readonly="1"/>
+                            <field name="total_net" readonly="1"/>
+                            <field name="line_count" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_reconcile_wizard" model="ir.actions.act_window">
+        <field name="name">Reconcile</field>
+        <field name="res_model">reconcile.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Select accounting entries to reconcile with bank transactions.
+            </p>
+        </field>
+    </record>
+
+</odoo>

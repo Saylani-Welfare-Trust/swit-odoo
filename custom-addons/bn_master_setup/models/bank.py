@@ -5,7 +5,9 @@ class Bank(models.Model):
     _name = 'bank'
     _description = "Bank"
 
+
     name = fields.Char('Name')
+
 
     @api.model
     def get_banks(self):

@@ -1,0 +1,610 @@
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
+
+
+class MemberApproval(models.Model):
+
+    _name = 'material.request'
+    _description = 'Member Approval - Internal Transfer Request'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _order = 'id desc'
+
+    name = fields.Char('Reference', default='New', readonly=True, copy=False, tracking=True)
+    
+    # Request Details
+    user_id = fields.Many2one('res.users', string='Requested By', default=lambda self: self.env.user, readonly=True, tracking=True)
+    department_id = fields.Many2one(related='user_id.employee_id.department_id', string="Department", store=True)
+    purchase_request_id =   fields.Many2one('purchase.requisition', string="Purchase Request")
+    auto_purchase_request_id = fields.Many2one('purchase.requisition', string="Auto Purchase Request (Stock Shortage)", readonly=True, copy=False, help="Automatically created purchase requisition when stock is insufficient.")
+    # Every Purchase Request made for this request: the first one above, and
+    # the ones created afterwards for what its Purchase Order did not cover.
+    purchase_requisition_ids = fields.One2many(
+        'purchase.requisition', 'material_request_id', string='Purchase Requests', readonly=True)
+    purchase_requisition_count = fields.Integer(
+        string='Purchase Requests', compute='_compute_purchase_requisition_count')
+   
+    employee_location_id = fields.Many2one(
+        'account.analytic.account',
+        string='Employee Location',
+        related='user_id.employee_id.analytic_account_id',
+        readonly=True,
+        store=True,
+        help='Location (Branch) of the employee who requested the items. Not editable.'
+    )
+    request_date = fields.Date('Request Date', default=fields.Date.today, readonly=True, tracking=True)
+    
+    # Source and Destination Locations
+    source_location_id = fields.Many2one(
+        'stock.location', 
+        string='Source Location',
+        tracking=True
+    )
+
+    source_location_domain = fields.Char(
+        compute='_compute_source_location_domain',
+        store=False
+    )
+
+    allowed_location_ids = fields.Many2many(
+        'stock.location',
+        related='user_id.allowed_location_ids',
+        string='Allowed Locations',
+        readonly=True,
+        store=False
+    )
+
+    # dest_location_domain = fields.Char(
+    #     compute='_compute_dest_location_domain',
+    #     store=False
+    # )
+
+    dest_location_id = fields.Many2one(
+        'stock.location',
+        string='Destination Location',
+        tracking=True
+    )
+
+    is_in_budget = fields.Boolean('In Budget', readonly=True, copy=False, tracking=True)
+    budget_amount = fields.Float('Available Budget', readonly=True, copy=False)
+    
+    # Amounts
+    currency_id = fields.Many2one('res.currency', string='Currency', default=lambda self: self.env.company.currency_id)
+    total_amount = fields.Monetary('Total Amount', compute='_compute_total_amount', store=True, currency_field='currency_id')
+    
+    # Approvals
+    cfo_approved = fields.Boolean('CFO Approved', readonly=True, copy=False, tracking=True)
+    coo_approved = fields.Boolean('COO Approved', readonly=True, copy=False, tracking=True)
+    hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False, tracking=True)
+    hod_approved_date = fields.Datetime('HOD Approved On', readonly=True, copy=False)
+    is_current_user_hod = fields.Boolean(
+        compute='_compute_is_current_user_hod',
+        help='Whether the current user is the manager of the requesting department (may HOD approve).')
+    
+    # State
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('budget_check', 'Budget Checked'),
+        ('hod_approval', 'HOD Approval'),
+        # ('cfo_approval', 'CFO Approval'),
+        # ('coo_approval', 'COO Approval'),
+        ('committee_approval', 'Budget Approval'),
+        ('pending', 'Waiting for Delivery'),
+        ('done', 'Done'),
+        ('purchase_request', 'Purchase Request'),
+        ('rejected', 'Rejected'),
+    ], string='Status', default='draft', readonly=True, copy=False, tracking=True)
+
+    request_type = fields.Selection([
+        ('internal', 'Internal'),
+        ('purchase_request', 'Purchase Request'),
+    ], string='Request Type', default='internal')
+    
+    # Picking
+    picking_id = fields.Many2one('stock.picking', string='Internal Transfer', readonly=True, copy=False)
+    shortage_picking_id = fields.Many2one('stock.picking', string='Shortage Internal Transfer', readonly=True, copy=False)
+    
+    # Lines
+    line_ids = fields.One2many('material.request.line', 'approval_id', string='Products', copy=True)
+    
+    # Remarks
+    rejection_reason = fields.Text('Rejection Reason', tracking=True)
+    committee_remarks = fields.Text('Committee Remarks')
+    cfo_remarks = fields.Text('CFO Remarks')
+    coo_remarks = fields.Text('COO Remarks')
+
+
+   
+    
+    
+    @api.model
+    def create(self, vals):
+        if vals.get('name', 'New') == 'New':
+            vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
+        return super().create(vals)
+
+    @api.depends_context('uid')
+    @api.depends('department_id.manager_id')
+    def _compute_is_current_user_hod(self):
+        employee = self.env.user.employee_id
+        for rec in self:
+            rec.is_current_user_hod = not rec.department_id or rec.department_id.manager_id == employee
+
+    @api.depends('line_ids.subtotal')
+    def _compute_total_amount(self):
+        for rec in self:
+            rec.total_amount = sum(line.subtotal for line in rec.line_ids)
+
+
+
+    @api.depends('user_id.allowed_warehouse_ids')
+    def _compute_source_location_domain(self):
+        for rec in self:
+            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+            
+            if warehouse_ids:
+                rec.source_location_domain = str([
+                    ('warehouse_id', 'in', warehouse_ids),
+                    ('complete_name', 'ilike', 'Stock'),
+                ])
+            else:
+                rec.source_location_domain = "[]"
+
+
+
+    # @api.depends('user_id.allowed_warehouse_ids')
+    # def _compute_source_location_domain(self):
+    #     for rec in self:
+    #         warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+    #         if warehouse_ids:
+    #             rec.source_location_domain = (
+    #                 "[('usage','=','internal'),"
+    #                 "('warehouse_id','in',%s)]"
+    #                 % warehouse_ids
+    #             )
+    #         else:
+    #             rec.source_location_domain = "[('usage','=','internal')]"
+    
+
+    def action_check_budget(self):
+        """Check budget per analytic account (supports multiple lines)"""
+        self.ensure_one()
+
+        if not self.line_ids:
+            raise ValidationError(_('Please add at least one product line.'))
+
+        today = fields.Date.today()
+
+        # Budget check per line (analytic + budget)
+        total_available_budget = 0.0
+        is_in_budget = True
+
+        for line in self.line_ids:
+            # Search for analytic account linked to the product
+            analytic = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [line.product_id.id])
+            ], limit=1)
+
+            if not analytic:
+                raise ValidationError(
+                    _('Product "%s" is not linked to any Analytic Account.')
+                    % line.product_id.display_name
+                )
+
+            budget = line.budget_id
+            # if not budget:
+            #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
+            
+            # sudo: practical_amount reads account.budget.post, which only
+            # accounting users may access; requesters just need the figure.
+            budget_lines = self.env['budget.lines'].sudo().search([
+                ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
+                ('budget_id', '=', budget.id),
+                ('date_from', '<=', today),
+                ('date_to', '>=', today),
+            ])
+            
+            # if not budget_lines:
+            #     raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
+            
+            available_budget = sum(
+                abs(l.practical_amount)
+                for l in budget_lines
+            )
+            total_available_budget += available_budget
+            
+            if line.subtotal > available_budget:
+                is_in_budget = False
+
+        # Set state for approval cycle
+        next_state = 'hod_approval'
+        self.write({
+            'budget_amount': total_available_budget,
+            'is_in_budget': is_in_budget,
+            'state': next_state,
+        })
+        return True
+
+    def _shariah_hold_gate(self):
+        """Called by every approval step once its own validation has passed.
+        Returns a client action when the request has been put on hold (the
+        approval must then not go ahead), False otherwise. Overridden by
+        bn_procurement_workflow, which knows about the Shariah Law balances."""
+        return False
+
+    def action_hod_approve(self):
+        """HOD approves the request - next step depends on budget status"""
+        self.ensure_one()
+        if self.state not in ['hod_approval', 'budget_check']:
+            raise ValidationError(_('This request is not in HOD Approval state.'))
+
+        if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:
+            raise ValidationError(_('This request can only be approved by its respected Manager.'))
+
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
+
+        self.write({
+            'hod_approved_by': self.env.user.id,
+            'hod_approved_date': fields.Datetime.now(),
+        })
+
+        if self.is_in_budget:
+            # Deduct approved amount from available budget
+            self.budget_amount = float(self.budget_amount or 0.0) - float(self.total_amount or 0.0)
+            if self.budget_amount < 0:
+                self.budget_amount = 0.0
+                
+                
+            # Update budget lines for each product
+            # today = fields.Date.today()
+            # updated_lines = self.env['budget.lines']
+
+            # for line in self.line_ids:
+            #     # Find analytic account via product
+            #     analytic = self.env['analytical.product.line'].search(
+            #         [('product_id', '=', line.product_id.id)], limit=1
+            #     ).analytic_account_id
+            #     if analytic:
+            #         # Find active budget line(s)
+            #         budget_lines = self.env['budget.lines'].search([
+            #             ('analytic_account_id', '=', analytic.id),
+            #             ('budget_id', '=', line.budget_id.id),
+            #             ('date_from', '<=', today),
+            #             ('date_to', '>=', today),
+            #         ])
+            #         if budget_lines:
+            #             # Deduct line.subtotal (practical_amount is negative, so add)
+            #             budget_lines[0].practical_amount += line.subtotal
+            #             updated_lines |= budget_lines
+
+            # # Recompute total remaining budget
+            # self.budget_amount = sum(abs(bl.practical_amount) for bl in updated_lines)
+
+       
+
+            # Within budget: go to procurement (simulate with 'done' state and create transfer)
+            if self.request_type == 'internal':
+                self._create_internal_transfer()
+                self.state = 'pending'
+            elif self.request_type == 'purchase_request':
+                self._create_purchase_request()
+                self.state = 'purchase_request'
+        else:
+            # Outside budget: go to COO/CFO approval
+            self.state = 'committee_approval'
+
+    def action_cfo_approve(self):
+        """CFO approves the request"""
+        self.ensure_one()
+        if self.state != 'committee_approval' or self.cfo_approved:
+            raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
+        if not self.cfo_remarks:
+            raise ValidationError(_('CFO Remarks are required to approve.'))
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
+        self.cfo_approved = True
+        self._check_committee_approval()
+        return True
+
+    def action_coo_approve(self):
+        """COO approves the request"""
+        self.ensure_one()
+        if self.state != 'committee_approval' or self.coo_approved:
+            raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
+        if not self.coo_remarks:
+            raise ValidationError(_('COO Remarks are required to approve.'))
+        hold = self._shariah_hold_gate()
+        if hold:
+            return hold
+        self.coo_approved = True
+        self._check_committee_approval()
+        return True
+
+    def _check_committee_approval(self):
+        """Check if both CFO and COO have approved"""
+        if self.cfo_approved and self.coo_approved:
+            # Both approved: go to procurement (simulate with 'done' state and create transfer)
+            if self.request_type == 'internal':
+                self._create_internal_transfer()
+                self.state = 'pending'
+            elif self.request_type == 'purchase_request':
+                self._create_purchase_request()
+                self.state = 'purchase_request'
+
+    def _create_internal_transfer(self):
+        self.ensure_one()
+
+        if not self.source_location_id:
+            raise ValidationError(_('Please specify a Source Location.'))
+        if not self.dest_location_id:
+            raise ValidationError(_('Please specify a Destination Location.'))
+
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+
+        if not picking_type:
+            raise ValidationError(_('No internal transfer picking type found.'))
+
+        move_vals = []
+        shortage_move_vals = []
+        purchase_lines = []
+        stock_info = []
+
+        for line in self.line_ids:
+            stock_quant = self.env['stock.quant'].search([
+                ('product_id', '=', line.product_id.id),
+                ('location_id', '=', self.source_location_id.id),
+            ])
+
+            available_qty = sum(stock_quant.mapped('available_quantity'))
+
+            stock_info.append({
+                'product': line.product_id.display_name,
+                'requested': line.quantity,
+                'available': available_qty,
+            })
+
+            if available_qty >= line.quantity:
+                move_vals.append((0, 0, {
+                    'name': line.product_id.display_name,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom_id.id,
+                    'product_uom_qty': line.quantity,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.dest_location_id.id,
+                    'description_picking': line.description,
+                }))
+
+            elif available_qty > 0:
+                move_vals.append((0, 0, {
+                    'name': line.product_id.display_name,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom_id.id,
+                    'product_uom_qty': available_qty,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.dest_location_id.id,
+                    'description_picking': line.description,
+                }))
+
+                shortage_qty = line.quantity - available_qty
+
+                purchase_lines.append((0, 0, {
+                    'product_id': line.product_id.id,
+                    'product_uom_id': line.product_uom_id.id,
+                    'product_qty': shortage_qty,
+                    'product_description_variants': line.description,
+                }))
+
+                shortage_move_vals.append((0, 0, {
+                    'name': line.product_id.display_name,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom_id.id,
+                    'product_uom_qty': shortage_qty,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.dest_location_id.id,
+                    'description_picking': line.description,
+                }))
+
+            else:
+                purchase_lines.append((0, 0, {
+                    'product_id': line.product_id.id,
+                    'product_uom_id': line.product_uom_id.id,
+                    'product_qty': line.quantity,
+                    'product_description_variants': line.description,
+                }))
+
+                shortage_move_vals.append((0, 0, {
+                    'name': line.product_id.display_name,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom_id.id,
+                    'product_uom_qty': line.quantity,
+                    'location_id': self.source_location_id.id,
+                    'location_dest_id': self.dest_location_id.id,
+                    'description_picking': line.description,
+                }))
+
+        # Create transfer for available stock
+        if move_vals:
+            picking = self.env['stock.picking'].create({
+                'picking_type_id': picking_type.id,
+                'location_id': self.source_location_id.id,
+                'location_dest_id': self.dest_location_id.id,
+                'origin': self.name,
+                'material_request_id': self.id,
+                'move_ids_without_package': move_vals,
+            })
+
+            self.picking_id = picking.id
+
+        # Create purchase requisition and shortage transfer
+        if purchase_lines:
+            # sudo: the approver (HOD / CFO / COO) need not be a purchase user.
+            purchase_request = self.env['purchase.requisition'].sudo().create({
+                'origin': "%s (Stock Shortage)" % self.name,
+                'line_ids': purchase_lines,
+                'material_request_id': self.id,   # <-- autopopulate here
+                'user_id': self.user_id.id,   # Purchase Representative = MR requester
+            })
+
+            self.auto_purchase_request_id = purchase_request.id
+
+            shortage_picking = self.env['stock.picking'].create({
+                'picking_type_id': picking_type.id,
+                'location_id': self.source_location_id.id,
+                'location_dest_id': self.dest_location_id.id,
+                'origin': "%s (Stock Shortage)" % self.name,
+                'material_request_id': self.id,
+                'move_ids_without_package': shortage_move_vals,
+            })
+
+            self.shortage_picking_id = shortage_picking.id
+
+        if not move_vals and not purchase_lines:
+            raise ValidationError(
+                _('No products to transfer or purchase.')
+            )
+
+        return self.picking_id
+    
+    def _create_purchase_request(self):
+        """Create a purchase request (purchase.requisition) for the approved request"""
+        self.ensure_one()
+
+        # Create purchase line
+        line_vals = []
+        for line in self.line_ids:
+            line_vals.append((0, 0, {
+                'product_id': line.product_id.id,
+                'product_uom_id': line.product_uom_id.id,
+                'product_qty': line.quantity,
+                'product_description_variants': line.description,
+            }))
+        # sudo: the approver (HOD / CFO / COO) need not be a purchase user.
+        purchase_request = self.env['purchase.requisition'].sudo().create({
+            'origin': self.name,
+            'line_ids': line_vals,
+            'material_request_id': self.id,   # <-- autopopulate here
+            'user_id': self.user_id.id,   # Purchase Representative = MR requester
+        })
+        # Confirm and assign purchase
+        self.purchase_request_id = purchase_request.id
+        return purchase_request
+
+    def action_reject(self):
+        """Reject the request"""
+        self.ensure_one()
+        
+        if not self.rejection_reason:
+            raise ValidationError(_('Please provide a rejection reason.'))
+        
+        self.picking_id.action_cancel()
+
+        self.state = 'rejected'
+        
+        return True
+
+    def action_reset_to_draft(self):
+        """Reset to draft state"""
+        self.ensure_one()
+        
+        self.write({
+            'state': 'draft',
+            'is_in_budget': False,
+            'budget_amount': 0.0,
+            'cfo_approved': False,
+            'coo_approved': False,
+            'hod_approved_by': False,
+            'hod_approved_date': False,
+            'rejection_reason': False,
+        })
+        
+        return True
+
+    def action_view_picking(self):
+        """View the created internal transfer"""
+        self.ensure_one()
+        
+        if not self.picking_id:
+            raise ValidationError(_('No internal transfer found.'))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Internal Transfer'),
+            'res_model': 'stock.picking',
+            'res_id': self.picking_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+    def action_view_shortage_picking(self):
+        """View the created shortage internal transfer"""
+        self.ensure_one()
+        if not self.shortage_picking_id:
+            raise ValidationError(_('No shortage internal transfer found.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Shortage Internal Transfer'),
+            'res_model': 'stock.picking',
+            'res_id': self.shortage_picking_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }  
+    def action_view_purchase_request(self):
+        """View the created purchase request"""
+        self.ensure_one()
+        
+        if not self.purchase_request_id:
+            raise ValidationError(_('No Purchase Request found.'))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase Request'),
+            'res_model': 'purchase.requisition',
+            'res_id': self.purchase_request_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+    
+    @api.depends('purchase_requisition_ids')
+    def _compute_purchase_requisition_count(self):
+        for rec in self:
+            # sudo: the requester need not be a purchase user.
+            rec.purchase_requisition_count = len(rec.sudo().purchase_requisition_ids)
+
+    def action_view_purchase_requisitions(self):
+        """View every Purchase Request made for this request"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase Requests of %s', self.name),
+            'res_model': 'purchase.requisition',
+            'view_mode': 'tree,form',
+            'domain': [('material_request_id', '=', self.id)],
+            'context': {'create': False},
+            'target': 'current',
+        }
+
+    def action_view_auto_purchase_request(self):
+        """View the auto-created purchase request (due to stock shortage)"""
+        self.ensure_one()
+        
+        if not self.auto_purchase_request_id:
+            raise ValidationError(_('No Auto Purchase Request found.'))
+        
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Auto Purchase Request (Stock Shortage)'),
+            'res_model': 'purchase.requisition',
+            'res_id': self.auto_purchase_request_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    # def action_committee_approve(self):
+    #     if self.state != 'hod_approval':
+    #         raise ValidationError(_('This request is not in HOD Approval state.'))
+        
+    #     self.state = 'committee_approval'

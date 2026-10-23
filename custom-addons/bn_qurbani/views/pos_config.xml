@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_pos_customization_point_of_sale_pos_config_view_form_inherit_bn_qurbani" model="ir.ui.view">
+        <field name="name">bn.pos.customization.point.of.sale.pos.config.view.form.inherit.bn.qurbani</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="bn_pos_customization.point_of_sale_pos_config_view_form_inherit_bn_pos_customization"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='restaurant_on_create']" position="after">
+                <setting>
+                    <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'City')]" />
+                </setting>
+                <setting>
+                    <field name="distribution_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('is_distribution_location', '=', True)]" />
+                </setting>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

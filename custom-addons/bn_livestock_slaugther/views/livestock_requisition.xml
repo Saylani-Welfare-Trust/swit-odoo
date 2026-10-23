@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="livestock_requisition_view_tree" model="ir.ui.view">
+        <field name="name">livestock.requisition.view.tree</field>
+        <field name="model">livestock.requisition</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="delivery_location" />
+                <field name="type" />
+                <field name="source_location_id" />
+                <field name="destination_location_id" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="livestock_requisition_view_form" model="ir.ui.view">
+        <field name="name">livestock.requisition.view.form</field>
+        <field name="model">livestock.requisition</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="delivery_location"/>
+                        <h1><field name="delivery_location" required="1" /></h1>
+                    </div>
+
+                    <group>
+                        <group name="livestock_requisition_col_1">
+                            <field name="type" options="{'horizontal': True}" widget="radio" required="1" />
+                            <field name="source_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                        </group>
+                        <group name="livestock_requisition_col_2">
+                            <field name="date" required="1" />
+                            <field name="destination_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="product" string="Products">
+                            <field name="livestock_requisition_line_ids">
+                                <tree editable="bottom">
+                                    <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                                    <field name="quantity" required="1" />
+                                    <field name="uom_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="livestock_requisition_action" model="ir.actions.act_window">
+        <field name="name">Requisition</field>
+        <field name="res_model">livestock.requisition</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new livestock requisition...
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="requisition_menu"
+        name="Requisition"
+        action="livestock_requisition_action"
+        parent="bn_livestock_slaugther.livestock_menu"
+        sequence="4"/>
+
+</odoo>

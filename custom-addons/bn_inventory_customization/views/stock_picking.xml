@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Add bill_amount field to stock picking form -->
+    <record id="view_picking_form_inherit_bill_amount" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.bill.amount</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <!-- Place bill_amount right after origin -->
+            <field name="origin" position="after">
+                <field name="bill_amount"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Receipts: replace Validate with Receive Product, then Create Bill -->
+    <record id="view_picking_form_inherit_receive_product_create_bill" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.receive.product.create.bill</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='button_validate'][hasclass('oe_highlight')]" position="attributes">
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
+            </xpath>
+            <!-- An internal transfer only gets Validate once Mark as Todo has been pressed -->
+            <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="attributes">
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel') or (picking_type_code == 'internal' and state == 'draft')</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="after">
+                <button name="button_validate"
+                        type="object"
+                        string="Receive Product"
+                        class="oe_highlight"
+                        groups="stock.group_stock_user"
+                        invisible="picking_type_code != 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')"
+                        data-hotkey="v"/>
+                <button name="button_validate"
+                        type="object"
+                        string="Receive Product"
+                        groups="stock.group_stock_user"
+                        invisible="picking_type_code != 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel')"
+                        data-hotkey="v"/>
+                <field name="show_create_bill" invisible="1"/>
+                <button name="action_create_bill"
+                        type="object"
+                        string="Create Bill"
+                        class="oe_highlight"
+                        invisible="not show_create_bill"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Add Receive by Weight button to stock picking form -->
+    <record id="stock_view_picking_form_inherit_bn_inventory_customization" model="ir.ui.view">
+        <field name="name">stock.view.picking.form.inherit.bn.inventory.customization</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="show_receive_by_weight" invisible="1"/>
+                <button name="open_receive_by_weight_wizard"
+                        type="object"
+                        string="Receive by Weight"
+                        class="btn-primary"
+                        invisible="show_receive_by_weight != True"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

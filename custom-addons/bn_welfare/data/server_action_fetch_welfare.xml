@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_fetch_institution_applications" model="ir.actions.server">
+        <field name="name">Fetch Institution Applications</field>
+        <field name="model_id" ref="model_welfare_institution_fetch_log"/>
+        <field name="binding_model_id" ref="model_welfare_institution_fetch_log"/>
+        <field name="state">code</field>
+        <field name="code">
+env['welfare.institution.fetch.log'].fetch_institution_applications()        
+
+</field>
+    </record>
+    
+
+</odoo>

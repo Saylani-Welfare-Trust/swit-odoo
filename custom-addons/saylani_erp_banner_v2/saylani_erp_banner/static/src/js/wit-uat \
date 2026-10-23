@@ -1,0 +1,12 @@
+○ swituat.service - swituat
+     Loaded: loaded (/etc/systemd/system/swituat.service; enabled; vendor preset: enabled)
+     Active: inactive (dead) since Sat 2026-09-19 14:04:50 PKT; 8s ago
+    Process: 3603634 ExecStart=/opt/swituat/swituat-venv/bin/python3 /opt/swituat/swituat/odoo-bin -c /etc/swituat.conf (code=exited, status=0/SUCCESS)
+   Main PID: 3603634 (code=exited, status=0/SUCCESS)
+        CPU: 1min 6.509s
+
+Sep 19 13:57:17 uat-qa systemd[1]: Started swituat.
+Sep 19 14:04:50 uat-qa systemd[1]: Stopping swituat...
+Sep 19 14:04:50 uat-qa systemd[1]: swituat.service: Deactivated successfully.
+Sep 19 14:04:50 uat-qa systemd[1]: Stopped swituat.
+Sep 19 14:04:50 uat-qa systemd[1]: swituat.service: Consumed 1min 6.509s CPU time.

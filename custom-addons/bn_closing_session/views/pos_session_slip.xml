@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_session_slip_view_tree" model="ir.ui.view">
+        <field name="name">pos.session.slip.view.tree</field>
+        <field name="model">pos.session.slip</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="session_id" column_invisible="1" />
+                <field name="journal_entry_posted" column_invisible="1" />
+                <field name="bank_id" />
+                <field name="pos_payment_method_id" />
+                <field name="type" />
+                <field name="slip_no" />
+                <field name="amount" readonly="journal_entry_posted" />
+                <field name="description" />
+            </tree>
+        </field>
+    </record>
+
+    <!-- Same fields as the form Odoo generates by itself, laid out so that the
+         Description comes right after the Amount -->
+    <record id="pos_session_slip_view_form" model="ir.ui.view">
+        <field name="name">pos.session.slip.view.form</field>
+        <field name="model">pos.session.slip</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="bank_id" />
+                            <field name="pos_payment_method_id" />
+                            <field name="type" />
+                            <field name="slip_no" />
+                            <field name="amount" />
+                            <field name="description" />
+                        </group>
+                        <group>
+                            <field name="session_id" />
+                            <field name="journal_entry_posted" invisible="1" />
+                            <field name="currency_id" />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Purchase users only see vendor bills among the journal entries (purchase.purchase_user_account_move_rule).
+         A payment is a journal entry too, so the advance payment of a Purchase Order needs this to be readable from it. -->
+    <record id="purchase_user_po_advance_payment_move_rule" model="ir.rule">
+        <field name="name">Purchase User PO Advance Payment Entry</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="domain_force">[('payment_id.purchase_order_id', '!=', False)]</field>
+        <field name="groups" eval="[(4, ref('purchase.group_purchase_user'))]"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+</odoo>

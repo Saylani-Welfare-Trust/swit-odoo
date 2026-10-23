@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Purchase Order Line Tree View - Show Livestock Fields -->
+    <record id="purchase_order_line_tree_view_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.line.tree.inherit.livestock</field>
+        <field name="model">purchase.order.line</field>
+        <field name="inherit_id" ref="purchase.purchase_order_line_tree"/>
+        <field name="arch" type="xml">
+            <field name="price_unit" position="after">
+                <field name="x_base_price" optional="hide" readonly="1"/>
+                <field name="to_kg_multiplier" optional="hide" readonly="1"/>
+            </field>
+        </field>
+    </record>
+
+    <!-- Purchase Order Form View - Show Livestock Fields in Order Lines -->
+    <record id="purchase_order_form_view_inherit" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.livestock</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='order_line']/tree/field[@name='price_unit']" position="after">
+                <field name="x_base_price" optional="hide" readonly="1"/>
+                <field name="to_kg_multiplier" optional="hide" readonly="1"/>
+                <field name="main_attribute_id" column_invisible="1"/>
+            </xpath>
+
+            <xpath expr="//header/button[@name='action_create_invoice'][1]" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_create_invoice'][2]" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+
+            <!-- Once the order is confirmed, the status bar shows what it is waiting for:
+                 its receipt, then its bill (created from the receipt) -->
+            <xpath expr="//header/field[@name='state']" position="attributes">
+                <attribute name="invisible">state in ('purchase', 'done')</attribute>
+            </xpath>
+            <xpath expr="//header/field[@name='state']" position="after">
+                <field name="receipt_bill_state" widget="statusbar" invisible="state not in ('purchase', 'done')"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Purchase Orders list: which orders have been received and still need their bill -->
+    <record id="purchase_order_view_tree_inherit_receipt_bill_state" model="ir.ui.view">
+        <field name="name">purchase.order.view.tree.inherit.receipt.bill.state</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='invoice_status']" position="before">
+                <field name="receipt_bill_state" widget="badge" optional="show"
+                       decoration-info="receipt_bill_state == 'to_receive'"
+                       decoration-warning="receipt_bill_state == 'to_bill'"
+                       decoration-success="receipt_bill_state == 'billed'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_kpis_tree_inherit_receipt_bill_state" model="ir.ui.view">
+        <field name="name">purchase.order.kpis.tree.inherit.receipt.bill.state</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="receipt_bill_state" widget="badge" optional="show"
+                       decoration-info="receipt_bill_state == 'to_receive'"
+                       decoration-warning="receipt_bill_state == 'to_bill'"
+                       decoration-success="receipt_bill_state == 'billed'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_order_view_search_inherit_receipt_bill_state" model="ir.ui.view">
+        <field name="name">purchase.order.view.search.inherit.receipt.bill.state</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='not_invoiced']" position="before">
+                <filter name="received_to_bill" string="Received - To Bill" domain="[('receipt_bill_state', '=', 'to_bill')]"/>
+            </xpath>
+            <xpath expr="//filter[@name='vendor']" position="before">
+                <filter string="Receipt / Bill Status" name="groupby_receipt_bill_state" domain="[]" context="{'group_by': 'receipt_bill_state'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_purchase_order_filter_inherit_receipt_bill_state" model="ir.ui.view">
+        <field name="name">view.purchase.order.filter.inherit.receipt.bill.state</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='to_approve']" position="after">
+                <filter name="received_to_bill" string="Received - To Bill" domain="[('receipt_bill_state', '=', 'to_bill')]"/>
+            </xpath>
+            <xpath expr="//filter[@name='vendor']" position="before">
+                <filter string="Receipt / Bill Status" name="groupby_receipt_bill_state" domain="[]" context="{'group_by': 'receipt_bill_state'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Purchase Order Form View - Hide the Receive Products button for everyone -->
+    <record id="purchase_order_form_view_inherit_hide_receive_products" model="ir.ui.view">
+        <field name="name">purchase.order.form.inherit.hide.receive.products</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase_stock.purchase_order_view_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_view_picking']" position="attributes">
+                <attribute name="invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

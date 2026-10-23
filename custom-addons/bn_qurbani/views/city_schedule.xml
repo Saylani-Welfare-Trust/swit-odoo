@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="city_schedule_view_tree" model="ir.ui.view">
+        <field name="name">city.schedule.view.tree</field>
+        <field name="model">city.schedule</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="inventory_product_name" column_invisible="1" />
+                
+                <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="pos_product_ids" widget="many2many_tags"  domain="[('name', 'ilike', inventory_product_name), ('type', '=', 'product'), ('is_pos_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" required="1"/>
+                <field name="location_id" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                <field name="distribution_location_ids" widget="many2many_tags" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="city_schedule_action" model="ir.actions.act_window">
+        <field name="name">City Schedule</field>
+        <field name="res_model">city.schedule</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new city schedule....
+            </p>
+        </field>
+    </record>
+
+    <!-- Parent Menu -->
+    <menuitem id="qurbani_schedule_menu"
+        name="Schedule"
+        parent="bn_qurbani.qurbani_menu"
+        sequence="0"/>
+
+    <menuitem
+        id="city_menu"
+        name="City"
+        action="city_schedule_action"
+        parent="qurbani_schedule_menu"
+        sequence="0"/>
+
+</odoo>

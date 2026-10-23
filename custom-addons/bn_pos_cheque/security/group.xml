@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_cheque_menu_group" model="res.groups">
+        <field name="name">Menu</field>
+    </record>
+    
+    <record id="pos_cheque_pos_action_group" model="res.groups">
+        <field name="name">Cheque / POS Action</field>
+    </record>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- NEW: Treasury master group — implies the POS Cheque menu   -->
+    <!-- Other modules (journal_transfer, bn_direct_deposit) will   -->
+    <!-- extend this record to add their own menu groups.           -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- <record id="group_treasury" model="res.groups">
+        <field name="name">Treasury</field>
+        <field name="implied_ids" eval="[
+            (4, ref('pos_cheque_menu_group')),
+            (4, ref('pos_cheque_pos_action_group')),
+        ]"/>
+    </record> -->
+
+</odoo>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="bn_import_donation_donation_view_form_inherit_bn_shariah_law" model="ir.ui.view">
+        <field name="name">bn.import.donation.donation.view.tree.inherit.bn.shariah.law</field>
+        <field name="model">donation</field>
+        <field name="inherit_id" ref="bn_import_donation.donation_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='transaction_id']" position="after">
+                <field name="is_sync_shariah_law" readonly="1" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

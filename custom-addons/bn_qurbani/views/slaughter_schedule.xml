@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="slaughter_schedule_view_tree" model="ir.ui.view">
+        <field name="name">slaughter.schedule.view.tree</field>
+        <field name="model">slaughter.schedule</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0">
+                <field name="inventory_product_name" column_invisible="1" />
+
+                <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="start_time" widget="float_time" readonly="1"/>
+                <field name="end_time" widget="float_time" readonly="1"/>
+                <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                <field name="city_location_id" readonly="1" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="location_id" readonly="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="slaughter_schedule_action" model="ir.actions.act_window">
+        <field name="name">Slaughter Schedule</field>
+        <field name="res_model">slaughter.schedule</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a new slaughter schedule....
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="slaughter_schedule_menu"
+        name="Slaughter"
+        action="slaughter_schedule_action"
+        parent="bn_qurbani.qurbani_schedule_menu"
+        sequence="1"/>
+
+</odoo>

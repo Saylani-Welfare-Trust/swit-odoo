@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="bn_qurbani.QurbaniSchedule">
+
+        <div class="popup popup-selection">
+
+            <!-- HEADER -->
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title">
+                    Cashier
+                </h4>
+                <t t-esc="this.pos.get_cashier().name"/>
+            </div>
+
+            <!-- BODY -->
+            <main class="modal-body">
+
+                <!-- NAME -->
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Name</div>
+                    <div class="col-8">
+                        <input type="text"
+                               class="form-control form-control-sm"
+                               placeholder="Enter Name"
+                               t-att-value="state.name"
+                               t-on-input="onNameInput"/>
+                    </div>
+                </div>
+
+                <!-- CITY -->
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">City</div>
+                    <div class="col-8">
+
+                        <select class="form-control form-control-sm"
+                                t-model="state.selectedCity"
+                                t-on-change="onCityChange">
+
+                            <option value="">Select City</option>
+
+                            <t t-foreach="Object.keys(state.data)" t-as="city" t-key="city">
+                                <option t-att-value="city">
+                                    <t t-esc="city"/>
+                                </option>
+                            </t>
+
+                        </select>
+
+                    </div>
+                </div>
+
+                <!-- LOCATION -->
+                <t t-if="state.selectedCity">
+
+                    <div class="row mb-2 text-start">
+                        <div class="col-4 fw-semibold">Location</div>
+                        <div class="col-8">
+
+                            <select class="form-control form-control-sm"
+                                    t-model="state.selectedLocation"
+                                    t-on-change="onLocationChange">
+
+                                <option value="">Select Location</option>
+
+                                <t t-foreach="Object.keys(state.data[state.selectedCity])"
+                                   t-as="loc"
+                                   t-key="loc">
+
+                                    <option t-att-value="loc">
+                                        <t t-esc="loc"/>
+                                    </option>
+
+                                </t>
+
+                            </select>
+
+                        </div>
+                    </div>
+
+                </t>
+
+                <!-- SLOT LIST -->
+                <t t-if="state.selectedLocation">
+
+                    <t t-foreach="state.data[state.selectedCity][state.selectedLocation]"
+                       t-as="slot"
+                       t-key="slot.id">
+
+                        <div class="card p-2 mb-2"
+                             t-att-data-id="slot.id"
+                             t-att-class="
+                                (slot.remaining_hissa &lt;= 0 and 'opacity-50 ' or '') +
+                                (state.selectedSlotId === slot.id and 'border border-primary bg-light shadow' or '')
+                             "
+                             t-on-click="selectSlot">
+
+                            <div class="d-flex justify-content-between">
+
+                                <div>
+                                    <strong><t t-esc="slot.day"/></strong>
+                                </div>
+
+                                <div>
+                                    <t t-esc="slot.start_time"/> -
+                                    <t t-esc="slot.end_time"/>
+                                </div>
+
+                                <div>
+                                    <span class="badge bg-success">
+                                        <t t-esc="slot.remaining_hissa"/> Left
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </t>
+
+                </t>
+
+            </main>
+
+            <!-- FOOTER -->
+            <footer class="modal-footer">
+
+                <button class="btn btn-primary"
+                        t-on-click="confirmSelection"
+                        t-att-disabled="!state.name">
+                    Confirm
+                </button>
+
+                <button class="btn btn-secondary"
+                        t-on-click="cancel">
+                    Cancel
+                </button>
+
+            </footer>
+
+        </div>
+
+    </t>
+
+</templates>

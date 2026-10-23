@@ -1,0 +1,23 @@
+## HOW TO INSTALL FLASK API
+
+# Following are the steps to install flask api as a service
+
+1. RUN pyinstaller --onefile printer_flask_api.py after activating environment, it will create .exe file in dist folder
+
+2. Download and extract nssm from google
+
+3. Copy nssm.exe from win64 into C:\
+
+4. Open Command Prompt as Administrator
+
+5. cd C:\
+
+6. nssm install
+
+7. Select your exe file and name the service
+
+8. After that click install
+
+9. Now open services by searching through search bar
+
+10. Search for the service that you installed just now, and start the service

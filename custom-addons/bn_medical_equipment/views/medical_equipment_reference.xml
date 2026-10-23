@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="medical_equipment_reference_view_tree" model="ir.ui.view">
+        <field name="name">medical.equipment.reference.view.tree</field>
+        <field name="model">medical.equipment.reference</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="contact_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="medical_equipment_reference_view_form" model="ir.ui.view">
+        <field name="name">medical.equipment.reference.view.form</field>
+        <field name="model">medical.equipment.reference</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="contact_id"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="medical_equipment_reference_action" model="ir.actions.act_window">
+        <field name="name">Medical Equipment Reference</field>
+        <field name="res_model">medical.equipment.reference</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add reference names and select a contact from the contact list.
+            </p>
+        </field>
+    </record>
+
+    <menuitem
+        id="medical_equipment_reference_menu"
+        name="Medical Equipment Reference"
+        action="medical_equipment_reference_action"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="6"/>
+</odoo>
