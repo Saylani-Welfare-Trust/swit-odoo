@@ -12,6 +12,11 @@
             </xpath>
             <xpath expr="//field[@name='cxo_approved_date']" position="after">
                 <field name="designated_cxo_approver_id" readonly="cxo_approved" options="{'no_create': True}"/>
+                <button name="action_resend_cxo_approval_email"
+                    type="object"
+                    string="Resend Approval Email"
+                    icon="fa-envelope"
+                    invisible="not designated_cxo_approver_id"/>
             </xpath>
             <xpath expr="//button[@name='action_hod_approve_po']" position="attributes">
                 <attribute name="invisible">not cxo_approved or hod_approved or state not in ('draft', 'sent') or shariah_hold</attribute>

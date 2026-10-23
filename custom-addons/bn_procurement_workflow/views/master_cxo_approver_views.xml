@@ -5,8 +5,11 @@
         <field name="name">master.cxo.approver.tree</field>
         <field name="model">master.cxo.approver</field>
         <field name="arch" type="xml">
-            <tree editable="bottom">
+            <tree>
+                <field name="employee_id"/>
                 <field name="user_id"/>
+                <field name="work_email"/>
+                <field name="department_id"/>
                 <field name="active" widget="boolean_toggle"/>
             </tree>
         </field>

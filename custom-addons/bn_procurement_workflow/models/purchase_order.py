@@ -31,6 +31,95 @@ class PurchaseOrder(models.Model):
     shariah_hold = fields.Boolean(string='Shariah Hold', copy=False, readonly=True, tracking=True)
     shariah_hold_reason = fields.Text(string='Shariah Hold Reason', copy=False, readonly=True)
 
+    # ------------------------------------------------------------------
+    # Notify the designated CXO approver by email
+    # ------------------------------------------------------------------
+    def _send_cxo_approval_email(self):
+        """Send the 'please approve' email to the assigned approver's
+        work_email. Silently skips if no approver / no email."""
+        self.ensure_one()
+        approver = self.designated_cxo_approver_id
+        if not approver:
+            return
+        if not approver.work_email:
+            self.message_post(body=_(
+                'No work email set for the assigned CXO approver (%s) - '
+                'email notification skipped.'
+            ) % approver.employee_id.name)
+            return
+
+        template = self.env.ref(APPROVAL_TEMPLATE, raise_if_not_found=False)
+        if template:
+            template.send_mail(self.id, force_send=True)
+        else:
+            # Fallback if the XML template was not installed
+            self.env['mail.mail'].create({
+                'subject': _('Approval Required: %s') % (self.name or self.display_name),
+                'email_to': approver.work_email,
+                'email_from': self.company_id.email or self.env.user.email,
+                'model': self._name,
+                'res_id': self.id,
+                'body_html': _(
+                    '<p>Dear %(name)s,</p>'
+                    '<p>Purchase order <strong>%(po)s</strong> needs your CXO approval.</p>'
+                    '<p>Amount: %(currency)s %(amount).2f</p>'
+                ) % {
+                    'name': approver.employee_id.name,
+                    'po': self.name or self.display_name,
+                    'currency': self.currency_id.name,
+                    'amount': self.amount_total,
+                },
+            }).send()
+
+        self.message_post(body=_(
+            'CXO approval request emailed to %(name)s &lt;%(email)s&gt;.'
+        ) % {
+            'name': approver.employee_id.name,
+            'email': approver.work_email,
+        })
+
+    # ------------------------------------------------------------------
+    # Trigger the email whenever the approver is (re)assigned
+    # ------------------------------------------------------------------
+    @api.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        for order in orders:
+            if order.designated_cxo_approver_id:
+                order._send_cxo_approval_email()
+        return orders
+
+    def write(self, vals):
+        old_approvers = {}
+        if 'designated_cxo_approver_id' in vals:
+            old_approvers = {rec.id: rec.designated_cxo_approver_id for rec in self}
+
+        res = super().write(vals)
+
+        if 'designated_cxo_approver_id' in vals:
+            for order in self:
+                new_approver = order.designated_cxo_approver_id
+                if new_approver and new_approver != old_approvers.get(order.id):
+                    order._send_cxo_approval_email()
+        return res
+
+    # Optional: a manual "resend" button
+    def action_resend_cxo_approval_email(self):
+        for order in self:
+            if not order.designated_cxo_approver_id:
+                raise UserError(_('No CXO approver is assigned to %s.') % order.display_name)
+            order._send_cxo_approval_email()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Email Sent'),
+                'message': _('Approval email has been sent to the assigned approver.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
     @api.depends_context('uid')
     @api.depends('designated_cxo_approver_id', 'material_request_id.hod_approved_by')
     def _compute_is_cxo_approver_allowed(self):
