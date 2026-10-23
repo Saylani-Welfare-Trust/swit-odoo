@@ -45,14 +45,16 @@ class PurchaseOrder(models.Model):
             self.message_post(body=_(
                 'No work email set for the assigned CXO approver (%s) - '
                 'email notification skipped.'
-            ) % approver.employee_id.name)
+            ) % (approver.employee_id.name or approver.display_name))
             return
 
-        template = self.env.ref(APPROVAL_TEMPLATE, raise_if_not_found=False)
+        template = self.env.ref(
+            'bn_procurement_workflow.email_template_cxo_approval_request',
+            raise_if_not_found=False,
+        )
         if template:
             template.send_mail(self.id, force_send=True)
         else:
-            # Fallback if the XML template was not installed
             self.env['mail.mail'].create({
                 'subject': _('Approval Required: %s') % (self.name or self.display_name),
                 'email_to': approver.work_email,
@@ -64,7 +66,7 @@ class PurchaseOrder(models.Model):
                     '<p>Purchase order <strong>%(po)s</strong> needs your CXO approval.</p>'
                     '<p>Amount: %(currency)s %(amount).2f</p>'
                 ) % {
-                    'name': approver.employee_id.name,
+                    'name': approver.employee_id.name or '',
                     'po': self.name or self.display_name,
                     'currency': self.currency_id.name,
                     'amount': self.amount_total,
@@ -74,7 +76,7 @@ class PurchaseOrder(models.Model):
         self.message_post(body=_(
             'CXO approval request emailed to %(name)s &lt;%(email)s&gt;.'
         ) % {
-            'name': approver.employee_id.name,
+            'name': approver.employee_id.name or '',
             'email': approver.work_email,
         })
 
