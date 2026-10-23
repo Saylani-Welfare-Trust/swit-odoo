@@ -1,6 +1,6 @@
 {
     'name': 'Master Setup',
-    'version': '1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',

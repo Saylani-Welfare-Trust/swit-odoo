@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 import math
 import re
@@ -52,6 +52,13 @@ state_selection = [
     ('close', 'Closed'),
     ('reject', 'Rejected'),
 ]
+USER = 'bn_microfinance.microfinance_user_group'
+HOD = 'bn_microfinance.microfinance_hod_group'
+MEMBER = 'bn_microfinance.microfinance_member_group'
+RECOVERY = 'bn_microfinance.microfinance_recovery_group'
+WRITE_OFF_1 = 'bn_microfinance.microfinance_write_off_approval_1_group'
+WRITE_OFF_2 = 'bn_microfinance.microfinance_write_off_approval_2_group'
+
 secuirty_offered_selection = [
     ('guarantor', 'Guarantor'),
     ('collateral', 'Collateral'),
@@ -115,11 +122,13 @@ class Microfinance(models.Model):
     def _compute_on_hand_qty(self):
         for rec in self:
             if rec.product_id and rec.warehouse_location_id:
-                rec.on_hand_qty = rec.product_id.with_context(
+                # Stock figures are read as superuser: Microfinance users need
+                # no Inventory rights to see them.
+                rec.on_hand_qty = rec.product_id.sudo().with_context(
                     location=rec.warehouse_location_id.id
                 ).qty_available
             elif rec.product_id:
-                rec.on_hand_qty = rec.product_id.qty_available
+                rec.on_hand_qty = rec.product_id.sudo().qty_available
             else:
                 rec.on_hand_qty = 0.0
        
@@ -437,7 +446,7 @@ class Microfinance(models.Model):
             rec.asset_availability = 'not_available'
 
             if rec.product_id:
-                if rec.product_id.qty_available > 0:
+                if rec.product_id.sudo().qty_available > 0:
                     rec.asset_availability = 'available'
 
 
@@ -457,7 +466,7 @@ class Microfinance(models.Model):
     @api.onchange('landlord_cnic_no')
     def _onchange_landlord_cnic_no(self):
         if self.landlord_cnic_no:
-            cleaned_cnic = re.sub(r'[^0-9]', '', self.cnic_no)
+            cleaned_cnic = re.sub(r'[^0-9]', '', self.landlord_cnic_no)
             if len(cleaned_cnic) >= 13:
                 self.landlord_cnic_no = f"{cleaned_cnic[:5]}-{cleaned_cnic[5:12]}-{cleaned_cnic[12:]}"
             elif len(cleaned_cnic) > 5:
@@ -544,8 +553,47 @@ class Microfinance(models.Model):
             move = self.env['account.move'].create(move_vals)
             move.action_post()
     
+    # ------------------------------------------------------------------
+    # Workflow guards
+    # ------------------------------------------------------------------
+    def _mf_check(self, action, states, *groups):
+        """Refuse ``action`` unless every loan is in one of ``states`` and the
+        user is in one of ``groups`` (the buttons' own conditions, enforced on
+        the server as well)."""
+        if groups and not self.env.su and not any(self.env.user.has_group(g) for g in groups):
+            names = ', '.join(self.env.ref(g).full_name for g in groups)
+            raise AccessError(_('You are not allowed to "%(action)s" (group required: %(groups)s).')
+                              % {'action': action, 'groups': names})
+        labels = dict(self._fields['state'].selection)
+        for rec in self:
+            if rec.state not in states:
+                raise UserError(_('"%(action)s" is not possible for %(loan)s in status "%(state)s".') % {
+                    'action': action, 'loan': rec.name, 'state': labels.get(rec.state, rec.state)})
+
+    def _mf_set_state(self, state):
+        self.with_context(mf_state_change=True).write({'state': state})
+
+    def write(self, vals):
+        if 'state' in vals and not self.env.su and not self.env.context.get('mf_state_change'):
+            raise UserError(_('The status of a loan can only be changed with its buttons.'))
+        return super().write(vals)
+
+    def _mf_security_deposit_paid(self):
+        """Raise unless the security deposit (if any) was received."""
+        for rec in self:
+            if rec.security_deposit > 0 and (not rec.sd_slip_id or rec.sd_slip_id.state != 'paid'):
+                raise ValidationError(_('%s: the Security Deposit has not been received yet '
+                                        '(select its paid SD slip).') % rec.name)
+
     def action_move_to_hod(self):
-        self.state = 'hod_approve'
+        self._mf_check(_('Move to HOD'), ('draft',), USER)
+        for rec in self:
+            missing = [rec._fields[f].string for f in ('donee_id', 'microfinance_scheme_id', 'microfinance_scheme_line_id', 'product_id') if not rec[f]]
+            if missing:
+                raise ValidationError(_('%(loan)s: please fill in %(fields)s.') % {'loan': rec.name, 'fields': ', '.join(missing)})
+            if rec.installment_domain and not rec.no_of_installment_id:
+                raise ValidationError(_('%s: please select the No. of Installments.') % rec.name)
+        self._mf_set_state('hod_approve')
         # self.used_advance_donation_line_id.is_disbursed = True
         # 4️⃣ Apply new disbursement
         # if self.used_advance_donation_line_id and self.advance_donation_amount:
@@ -553,6 +601,9 @@ class Microfinance(models.Model):
         #     self.used_advance_donation_line_id.disbursed_amount += self.advance_donation_amount
 
     def action_send_to_recovery(self):
+        self._mf_check(_('Send for Recovery'), ('done',), USER)
+        if self.in_recovery:
+            raise UserError(_('%s is already in recovery.') % self.name)
         lines = []
         
         for line in self.microfinance_line_ids:
@@ -567,20 +618,29 @@ class Microfinance(models.Model):
 
         self.in_recovery = True
 
-        self.state = 'in_recovery'
+        self._mf_set_state('in_recovery')
 
     def action_move_to_member(self):
-        self.state = 'mem_approve'
+        self._mf_check(_('Move to Member'), ('hod_approve',), HOD)
+        self._mf_set_state('mem_approve')
+
+    def _mf_check_approver(self, action):
+        """HOD decides in HOD Approval, Member in Member Approval."""
+        self._mf_check(action, ('hod_approve', 'mem_approve'))
+        for rec in self:
+            self._mf_check(action, (rec.state,), HOD if rec.state == 'hod_approve' else MEMBER)
 
     def action_reject(self):
+        self._mf_check_approver(_('Reject'))
         if self.state == 'hod_approve' and not self.hod_remarks:
             raise ValidationError('Please provide HOD Remarks.')
         elif self.state == 'mem_approve' and not self.mem_remarks:
             raise ValidationError('Please provide Member Remarks.')
         
-        self.state = 'reject'
+        self._mf_set_state('reject')
 
     def action_revert(self):
+        self._mf_check_approver(_('Revert'))
         if self.state == 'hod_approve':
             if not self.hod_remarks:
                 raise ValidationError('Please provide HOD Remarks.')
@@ -589,23 +649,26 @@ class Microfinance(models.Model):
             #     self.used_advance_donation_line_id = False
             #     self.advance_donation_amount = 0
             #     self.advance_donation_id = False
-            self.state = 'draft'
+            self._mf_set_state('draft')
         elif self.state == 'mem_approve':
             if not self.mem_remarks:
                 raise ValidationError('Please provide Member Remarks.')
-            self.state = 'hod_approve'
+            self._mf_set_state('hod_approve')
 
     def action_approve(self):
-        self.state = 'approve'
+        self._mf_check(_('Approve'), ('mem_approve',), MEMBER)
+        self._mf_set_state('approve')
         # Auto-trigger the approval certificate report
         return self.env.ref('bn_microfinance.microfinance_approval_certificate_report_action').report_action(self)
 
     def action_move_to_treasury(self):
         """Move to treasury state for cash asset type and create a bill for the donee."""
+        self._mf_check(_('Move to Treasury'), ('approve',), USER)
         if self.asset_type != 'cash':
             raise ValidationError("This action is only for Cash asset type.")
         if not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
+        self._mf_security_deposit_paid()
         # Create a vendor bill (account.move) for the donee
         expense_account = self.product_id.property_account_expense_id if self.product_id.property_account_expense_id else self.product_id.categ_id.property_account_expense_categ_id
 
@@ -622,15 +685,19 @@ class Microfinance(models.Model):
                     'product_id': self.product_id.id,
                     'quantity': 1,
                     'price_unit': self.total_amount,
+                    # The loan amount is paid out as is: no purchase tax on it.
+                    'tax_ids': [(5, 0, 0)],
                     # 'account_id': expense_account.id,
                 })
             ]
         }
-        bill = self.env['account.move'].create(move_vals)
+        # Accounting document created as superuser: the Microfinance group
+        # checked above is the gate.
+        bill = self.env['account.move'].sudo().create(move_vals)
         # Optionally, you can post the bill automatically:
         # bill.action_post()
 
-        self.state = 'treasury'
+        self._mf_set_state('treasury')
         self.bill_ids = [(4, bill.id)]
 
         # return {
@@ -643,37 +710,41 @@ class Microfinance(models.Model):
         # }
 
     def action_proceed(self):
-        if self.asset_type != 'cash' and not self.sd_slip_id:
+        self._mf_check(_('Proceed'), ('approve',), USER)
+        if self.asset_type == 'cash':
+            raise UserError(_('Cash loans go through "Move to Treasury".'))
+        if not self.sd_slip_id and self.security_deposit > 0:
             raise ValidationError("Please select a Security Deposit Receipt.")
         elif not self.delivery_date:
             raise ValidationError("Please select a Delivery Date.")
+        self._mf_security_deposit_paid()
         
         # Create Sale Order for movable assets (delivery auto-generates from confirmed SO)
         if self.asset_type == 'movable_asset':
             self._create_microfinance_sale_order()
         
-        self.state = 'wfd'
+        self._mf_set_state('wfd')
 
     def _create_microfinance_sale_order(self):
         """Create and confirm a Sale Order; delivery picking auto-generates from it."""
         if not self.in_recovery:
-            product_quantity = self.product_id.qty_available
+            product_quantity = self.product_id.sudo().qty_available
             
             if product_quantity <= 0:
                 self.asset_availability = 'not_available'
                 raise ValidationError('Not enough stock available.')
             
-            stock_quant = self.env['stock.quant'].search([
-                ('location_id', '=', self.warehouse_location_id.id),
-                ('product_id', '=', self.product_id.id),
-                ('inventory_quantity_auto_apply', '>', 0)
-            ], limit=1)
+            if not self.warehouse_location_id:
+                raise ValidationError(_('Please select the Warehouse Location the asset is delivered from.'))
+            available = self.env['stock.quant'].sudo()._get_available_quantity(
+                self.product_id, self.warehouse_location_id)
 
-            if not stock_quant:
+            if available < 1:
                 raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
 
-        # Create Sale Order
-        sale_order = self.env['sale.order'].create({
+        # Sale order and delivery created as superuser: the Microfinance group
+        # checked by the calling action is the gate.
+        sale_order = self.env['sale.order'].sudo().create({
             'partner_id': self.donee_id.id,
             'origin': self.name,
             'date_order': fields.Datetime.now(),
@@ -760,19 +831,18 @@ class Microfinance(models.Model):
     def _create_microfinance_picking(self):
         """Create stock picking for movable asset microfinance - to be validated manually"""
         if not self.in_recovery:
-            product_quantity = self.product_id.qty_available
+            product_quantity = self.product_id.sudo().qty_available
             
             if product_quantity <= 0:
                 self.asset_availability = 'not_available'
                 raise ValidationError('Not enough stock available.')
             
-            stock_quant = self.env['stock.quant'].search([
-                ('location_id', '=', self.warehouse_location_id.id),
-                ('product_id', '=', self.product_id.id),
-                ('inventory_quantity_auto_apply', '>', 0)
-            ], limit=1)
+            if not self.warehouse_location_id:
+                raise ValidationError(_('Please select the Warehouse Location the asset is delivered from.'))
+            available = self.env['stock.quant'].sudo()._get_available_quantity(
+                self.product_id, self.warehouse_location_id)
 
-            if not stock_quant:
+            if available < 1:
                 raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
             
             location_id = self.warehouse_location_id.id
@@ -814,11 +884,15 @@ class Microfinance(models.Model):
         """Called when the picking is validated to complete the microfinance record"""
         # Compute installments
         if not self.in_recovery:
+            if self.state not in ('wfd', 'treasury'):
+                return
             self.compute_installment()
-            self.state='done'
+            self._mf_set_state('done')
         else:
+            if self.state != 'in_recovery':
+                return
             # self.compute_recovery_installment()
-            self.state = 'recover'
+            self._mf_set_state('recover')
 
     def action_view_picking(self):
         """Open the picking form view"""
@@ -837,6 +911,9 @@ class Microfinance(models.Model):
 
 
     def action_sd_slip(self):
+        self._mf_check(_('SD Slip'), ('approve',), USER)
+        if self.security_deposit <= 0:
+            raise UserError(_('%s has no security deposit.') % self.name)
         # Check if security deposit installment already exists for this microfinance
         existing_installment = self.env['microfinance.installment'].search([
             ('microfinance_id', '=', self.id),
@@ -959,12 +1036,20 @@ class Microfinance(models.Model):
             if not row:
                 continue
 
+            # Columns of the PDC template: Installment ID, Cheque Number, Bank Name,
+            # Amount, Cheque Date.
+            if len(row) < 5 or not row[0]:
+                continue
             microfinance_line_id = row[0]
             cheque_number = row[1]
             bank_name = row[2]
-            cheque_date = row[3]
+            cheque_date = row[4]
 
-            line = self.microfinance_line_ids.browse(microfinance_line_id)
+            # Only the installments of this loan.
+            line = self.microfinance_line_ids.filtered(lambda l: l.id == int(microfinance_line_id))
+            if not line:
+                raise ValidationError(_('Installment ID %(id)s does not belong to %(loan)s.') % {
+                    'id': microfinance_line_id, 'loan': self.name})
 
             line.write({
                 'cheque_no': cheque_number,
@@ -984,6 +1069,8 @@ class Microfinance(models.Model):
     
     # --- Recovery Process: New Methods and State Flow ---
     def action_temp_recovered(self):
+        self._mf_check(_('Temporary Recovered'), ('in_recovery',), RECOVERY)
+        product_line = self.env['loan.product.line']
         if self.asset_type == 'movable_asset':
             if self.microfinance_scheme_line_id:
                 microfinance_scheme_line = self.env['microfinance.scheme.line'].browse(self.microfinance_scheme_line_id.id)
@@ -992,7 +1079,7 @@ class Microfinance(models.Model):
                     ('product_id', '=', self.product_id.id)
                 ], limit=1)
 
-            action = self.env.ref('bn_microfinance.return_microfinance_product_action').read()[0]
+            action = self.env['ir.actions.actions']._for_xml_id('bn_microfinance.return_microfinance_product_action')
             form_view_id = self.env.ref('bn_microfinance.return_microfinance_product_view_form').id
             action['views'] = [
                 [form_view_id, 'form']
@@ -1006,11 +1093,14 @@ class Microfinance(models.Model):
                 }
             return action
         else:
-            self.state = 'recover'
+            self._mf_set_state('recover')
 
     def action_fully_recovered(self):
-        self.state = 'fully_recover'
+        self._mf_check(_('Fully Recovered'), ('recover',), RECOVERY)
+        self._mf_set_state('fully_recover')
+
     def action_move_to_done_serveraction(self):
+        self._mf_check(_('Move to Done'), ('approve', 'wfd'), USER)
         for rec in self:
             if rec.asset_type == 'movable_asset':
                 # Create SO + delivery picking only if not already created
@@ -1028,9 +1118,19 @@ class Microfinance(models.Model):
             else:
                 rec.compute_recovery_installment()
 
-            rec.state = 'done'
+            rec._mf_set_state('done')
 
     def action_move_to_done(self):
+        # Immovable assets are delivered off-system (Waiting For Delivery); cash
+        # loans are completed by paying their bill (Treasury); recovered loans
+        # by the Recovery team.
+        for rec in self:
+            if rec.state == 'recover':
+                rec._mf_check(_('Move to Done'), ('recover',), RECOVERY)
+            else:
+                rec._mf_check(_('Move to Done'), ('wfd', 'treasury'), USER)
+                if rec.state == 'wfd' and rec.asset_type == 'movable_asset':
+                    raise UserError(_('%s is completed by validating its delivery.') % rec.name)
 
         if self.asset_type != 'cash' and not self.delivery_date:
             raise ValidationError('Please select a Delivery Date.')
@@ -1038,34 +1138,44 @@ class Microfinance(models.Model):
             self.compute_installment()
         else:
             self.compute_recovery_installment()
-        self.state = 'done'
+        self._mf_set_state('done')
 
     def request_write_off(self):
+        self._mf_check(_('Write Off Request'), ('fully_recover',), RECOVERY)
         if not self.remarks:
             raise ValidationError('Please provide remarks')
         self.member_right_of_remarks = False
         self.cfo_right_of_remarks = False
-        self.state = 'right_of_approval_1'
+        self._mf_set_state('right_of_approval_1')
+
+    def _mf_check_write_off(self, action):
+        self._mf_check(action, ('right_of_approval_1', 'right_of_approval_2'))
+        for rec in self:
+            rec._mf_check(action, (rec.state,),
+                          WRITE_OFF_1 if rec.state == 'right_of_approval_1' else WRITE_OFF_2)
 
     def action_right_of_granted(self):
+        self._mf_check_write_off(_('Approve Write Off'))
         if self.state == 'right_of_approval_1':
-            self.state = 'right_of_approval_2'
+            self._mf_set_state('right_of_approval_2')
         elif self.state == 'right_of_approval_2':
-            self.state = 'right_granted'
+            self._mf_set_state('right_granted')
 
     def action_right_of_rejected(self):
+        self._mf_check_write_off(_('Reject Write Off'))
         if self.state == 'right_of_approval_1':
             if not self.member_right_of_remarks:
                 raise ValidationError('Please provide remarks')
             self.remarks = False
-            self.state = 'fully_recover'
-        if self.state == 'right_of_approval_2':
+            self._mf_set_state('fully_recover')
+        elif self.state == 'right_of_approval_2':
             if not self.member_right_of_remarks:
                 raise ValidationError('Please provide remarks')
             if not self.cfo_right_of_remarks:
                 raise ValidationError('Please provide remarks')
             self.remarks = False
-            self.state = 'fully_recover'
+            self._mf_set_state('fully_recover')
+
     def action_view_sale_order(self):
         return {
             'type': 'ir.actions.act_window',

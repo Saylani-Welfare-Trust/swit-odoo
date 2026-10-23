@@ -31,7 +31,7 @@ class MicrofinanceRecoveryLine(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('NEW') == _('NEW')):
+        if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
             vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_recovery_line') or ('New')
                 
         return super(MicrofinanceRecoveryLine, self).create(vals)

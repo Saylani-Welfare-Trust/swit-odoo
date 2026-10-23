@@ -20,7 +20,7 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         existing = self.env['microfinance'].search([
             ('donee_id', '=', self.partner_id.id),
             ('microfinance_scheme_id', '=', self.microfinance_scheme_id.id),
-            ('state', '!=', 'rejected'),
+            ('state', '!=', 'reject'),
             ('in_recovery', '=', False),
 
         ], limit=1)

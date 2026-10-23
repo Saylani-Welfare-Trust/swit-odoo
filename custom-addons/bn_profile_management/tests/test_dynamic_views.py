@@ -95,7 +95,7 @@ class TestDynamicProfileViews(TransactionCase):
                                   self.env.ref('bn_profile_management.profile_management_manager_group').id])]})
         visible = self.env['ir.ui.menu'].with_user(manager)._visible_menu_ids()
         for xmlid in ('bn_master_setup.master_setup_menu', 'bn_profile_management.profile_management_config_menu',
-                      'bn_profile_management.res_partner_category_menu_profile', 'bn_profile_management.area_menu'):
+                      'bn_profile_management.res_partner_category_menu_profile', 'bn_master_setup.area_menu'):
             self.assertIn(self.env.ref(xmlid).id, visible, xmlid)
 
     def _set_order(self, view_type, names):

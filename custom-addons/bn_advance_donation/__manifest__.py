@@ -1,6 +1,6 @@
 {
     'name': 'Advance Donation',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'description': "",
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',
@@ -11,6 +11,7 @@
         'bn_import_donation',
         'dynamic_accounts_report',
         'bn_master_setup',
+        'bn_pos_custom_action',
     ],
     'data': [
         'security/groups.xml',

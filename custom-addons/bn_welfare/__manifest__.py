@@ -23,8 +23,8 @@
         
         'reports/report_welfare_collection_document.xml',
         
-        'views/welfare.xml',
         'views/welfare_institution_fetch_log.xml',
+        'views/welfare.xml',
         'views/product_product.xml',
         'views/product_template.xml',
         'views/record_search.xml',

@@ -11,12 +11,12 @@
         'bn_sms_whatsapp',
     ],
     'data': [
+        'data/ir_module_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'security/access_right.xml',
         
         'data/data.xml',
-        'data/ir_module_category.xml',
         'data/sequence.xml',
         'data/server_action.xml',
         

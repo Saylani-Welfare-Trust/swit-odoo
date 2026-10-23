@@ -6,7 +6,8 @@
         <record id="kitchen_stock_location" model="stock.location">
             <field name="name">Kitchen</field>
             <field name="usage">internal</field>
-            <field name="location_id" ref="__custom__.wh" />
+            <!-- The main warehouse's view location ("WH"). -->
+            <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
         </record>
     
     </data>

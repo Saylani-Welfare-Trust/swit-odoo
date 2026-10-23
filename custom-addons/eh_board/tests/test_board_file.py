@@ -18,7 +18,7 @@ import math
 from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
-from odoo.addons.eh_board.lib import tabular
+from odoo.addons.eh_board.libs import tabular
 
 CSV = (
     b"Country,Team,Sales,Signed\n"

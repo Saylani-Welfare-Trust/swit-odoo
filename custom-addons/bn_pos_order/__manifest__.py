@@ -1,13 +1,14 @@
 {
     'name': 'POS Order Customizaiton',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Order Customizaiton',
     'depends': [
         'bn_pos_customization',
-        'bn_profile_management'
+        'bn_profile_management',
+        'bn_pos_custom_action',
     ],
     'data': [
         'security/group.xml',

@@ -6,7 +6,7 @@
         <record id="distribution_location" model="stock.location">
             <field name="name">Ration / Distribution</field>
             <field name="usage">transit</field>
-            <field name="location_id" ref="__custom__.wh" />
+            <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
         </record>
     
     </data>

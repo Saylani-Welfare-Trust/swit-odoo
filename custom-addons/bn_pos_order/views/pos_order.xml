@@ -13,6 +13,12 @@
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </xpath>
+
+            <!-- Source Document (bn_pos_custom_action) is only on the form: add it here so the
+                 editable list below can make it read-only -->
+            <xpath expr="//field[@name='pos_reference']" position="after">
+                <field name="source_document" optional="show" />
+            </xpath>
         </field>
     </record>
 

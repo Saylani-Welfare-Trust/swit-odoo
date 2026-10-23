@@ -4,7 +4,7 @@
     <record id="bn_pos_customization_point_of_sale_pos_config_view_form_inherit_bn_qurbani" model="ir.ui.view">
         <field name="name">bn.pos.customization.point.of.sale.pos.config.view.form.inherit.bn.qurbani</field>
         <field name="model">pos.config</field>
-        <field name="inherit_id" ref="bn_pos_customization.point_of_sale_pos_config_view_form_inherit_bn_pos_customization"/>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//div[@id='restaurant_on_create']" position="after">
                 <setting>

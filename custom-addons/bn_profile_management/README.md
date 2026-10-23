@@ -16,7 +16,7 @@ are validated, and the profile types can be configured without code.
 | `profile.management.page` | Catalogue of form pages (General, Donation, Welfare, Microfinance, Medical) |
 | `res.partner.registration` | The unique ID a contact received for one tag (one per tag) |
 | `profile.view.field` | One field of a Profile Type's list / search / form view, with its position |
-| `area` | Area master |
+| `area` | Area master (defined in `bn_master_setup`; Profile Management Managers can edit it) |
 | `record.search` → `confirm.search` (wizards) | **Record Search**: find a profile before creating a new one |
 | `microfinance.application.wizard` | Prints the microfinance application for a selected scheme |
 

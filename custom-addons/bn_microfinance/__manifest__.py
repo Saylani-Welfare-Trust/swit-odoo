@@ -1,6 +1,6 @@
 {
     'name': 'Microfinance',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -10,6 +10,9 @@
         'bn_profile_management',
         'bn_pos_order',
         'bn_advance_donation',
+        'bn_pos_custom_action',
+        'sale_stock',
+        'report_xlsx',
     ],
     'data': [
         'security/group.xml',

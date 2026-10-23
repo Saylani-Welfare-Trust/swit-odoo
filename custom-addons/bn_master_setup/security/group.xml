@@ -1,9 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="master_setup_group" model="res.groups">
-        <field name="name">Menu</field>
+    <!-- Sole gate on the root app menu. Every tier below implies it, so being
+         in ANY tier is enough to see the app; the tiers then decide what you
+         can actually do once inside. Not meant to be assigned on its own. -->
+    <record id="master_setup_root_group" model="res.groups">
+        <field name="name">Access Root Menu</field>
         <field name="category_id" ref="module_master_setup"/>
+        <field name="comment">Grants visibility of the Master Setup app menu. Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
+    </record>
+
+    <record id="master_setup_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_master_setup"/>
+        <field name="implied_ids" eval="[(4, ref('master_setup_root_group'))]"/>
+        <field name="comment">Can look up City, Bank and Area reference data. Cannot edit it.</field>
+    </record>
+
+    <record id="master_setup_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_master_setup"/>
+        <field name="implied_ids" eval="[(4, ref('master_setup_user_group'))]"/>
+        <field name="comment">Maintains the City, Bank and Area lists: create and edit entries.</field>
+    </record>
+
+    <record id="master_setup_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_master_setup"/>
+        <field name="implied_ids" eval="[(4, ref('master_setup_root_group'))]"/>
+        <field name="comment">Read-only oversight of Master Setup data for reporting.</field>
+    </record>
+
+    <record id="master_setup_admin_group" model="res.groups">
+        <field name="name">Admin</field>
+        <field name="category_id" ref="module_master_setup"/>
+        <field name="implied_ids" eval="[(4, ref('master_setup_manager_group')), (4, ref('master_setup_audit_group'))]"/>
+        <field name="comment">Full control: everything Manager can do, plus deleting City / Bank / Area entries.</field>
+    </record>
+
+    <!-- Former single "Menu" group, kept so the users who have it keep the menu. -->
+    <record id="master_setup_group" model="res.groups">
+        <field name="name">Menu (legacy)</field>
+        <field name="category_id" ref="module_master_setup"/>
+        <field name="implied_ids" eval="[(4, ref('master_setup_root_group'))]"/>
     </record>
 
 </odoo>

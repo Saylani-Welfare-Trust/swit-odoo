@@ -6,10 +6,10 @@ access_profile_management_page_user,profile.management.page.user,bn_profile_mana
 access_profile_management_page_manager,profile.management.page.manager,bn_profile_management.model_profile_management_page,profile_management_manager_group,1,1,1,0
 access_profile_management_page_admin,profile.management.page.admin,bn_profile_management.model_profile_management_page,profile_management_admin_group,1,1,1,1
 access_profile_management_page_audit,profile.management.page.audit,bn_profile_management.model_profile_management_page,profile_management_audit_group,1,0,0,0
-access_area_user,area.user,model_area,profile_management_user_group,1,0,0,0
-access_area_manager,area.manager,model_area,profile_management_manager_group,1,1,1,0
-access_area_admin,area.admin,model_area,profile_management_admin_group,1,1,1,1
-access_area_audit,area.audit,model_area,profile_management_audit_group,1,0,0,0
+access_area_user,area.user,bn_master_setup.model_area,profile_management_user_group,1,0,0,0
+access_area_manager,area.manager,bn_master_setup.model_area,profile_management_manager_group,1,1,1,0
+access_area_admin,area.admin,bn_master_setup.model_area,profile_management_admin_group,1,1,1,1
+access_area_audit,area.audit,bn_master_setup.model_area,profile_management_audit_group,1,0,0,0
 access_partner_registration_employee,partner.registration.employee,model_res_partner_registration,base.group_user,1,0,0,0
 access_partner_registration_admin,partner.registration.admin,model_res_partner_registration,profile_management_admin_group,1,1,1,1
 access_profile_view_field_user,profile.view.field.user,model_profile_view_field,profile_management_user_group,1,0,0,0
