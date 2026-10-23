@@ -32,7 +32,8 @@ DONOR_CATEGORY_XMLIDS = (
 class DonationBoxRegistrationInstallation(models.Model):
     _name = 'donation.box.registration.installation'
     _description = 'Donation Box Registration'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    # _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
     _rec_name = 'shop_name'
     _bn_guarded_fields = ('status', 'box_status')
 
