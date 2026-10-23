@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_advance_donation_statement" model="ir.actions.client">
+        <field name="name">Advance Donation Statement</field>
+        <field name="tag">advance_donation_statement</field>
+    </record>
+
+    <menuitem id="menu_advance_donation_statement"
+              name="Donation Statement"
+              parent="main_menu_advance_donation"
+              action="action_advance_donation_statement"
+              sequence="15"
+              groups="bn_advance_donation.group_adv_don_menu"/>
+
+</odoo>

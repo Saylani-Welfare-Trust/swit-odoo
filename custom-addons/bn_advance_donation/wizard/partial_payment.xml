@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+        <record id="view_advance_donation_payment_wizard" model="ir.ui.view">
+        <field name="name">advance.donation.payment.wizard.form</field>
+        <field name="model">advance.donation.payment.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="donor_id" invisible="1"/>
+                        <field name="advance_donation_id" invisible="1"/>
+                        <field name="available_balance" widget="monetary"/>
+                        <field name="payment_amount" widget="monetary"/>
+                        <field name="receipt_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>
