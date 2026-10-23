@@ -14,7 +14,7 @@
                 <field name="designated_cxo_approver_id" readonly="cxo_approved" options="{'no_create': True}"/>
                 <button name="action_resend_cxo_approval_email"
                     type="object"
-                    string="Resend Approval Email"
+                    string="Send Approval Email"
                     icon="fa-envelope"
                     invisible="not designated_cxo_approver_id"/>
             </xpath>
