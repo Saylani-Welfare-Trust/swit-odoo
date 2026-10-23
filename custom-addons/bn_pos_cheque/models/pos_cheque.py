@@ -308,7 +308,7 @@ class POSCheque(models.Model):
             cheque_payment = order.payment_ids[0] # Fallback
 
         # outstanding_account = cheque_payment.payment_method_id.outstanding_account_id
-        outstanding_account = 6943
+        outstanding_account = self.env['account.account'].browser(6943)
         bank_account = self.bank_id.default_account_id
 
         # 2. Safety check for accounts
