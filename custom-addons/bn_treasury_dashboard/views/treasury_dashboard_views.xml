@@ -10,7 +10,7 @@
     <menuitem id="menu_dashboard_root"
               name="Dashboard"
               sequence="10"
-              webicon="/static/description/icon_logo.png"/>
+              webicon="bn_treasury_dashboard,/static/description/icon_logo.png"/>
 
     <!-- 3. Sub menu: Treasury Dashboard under Dashboard -->
     <menuitem id="menu_treasury_dashboard"
