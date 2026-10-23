@@ -273,18 +273,21 @@ class BankReconciliationReconciled(models.Model):
                 'bank_reconciliation_date': master.date,
                 'analytic_distribution': line.analytic_distribution or False,
             }
+            # The reference names the original entry this line was matched with
+            reference = '%s - %s' % (master.name, line.move_id.ref or line.move_id.name)
             record.reconciliation_move_id = self.env['account.move'].create({
                 'journal_id': master.journal_id.id,
                 'date': record.date or master.date,
-                'ref': '%s - %s' % (master.name, record.reference or record.description[:40]),
+                'ref': reference,
                 'company_id': master.company_id.id,
-                'narration': _('Bank Reconciliation: %s') % master.name,
+                'narration': _('Bank Reconciliation: %s - Statement line: %s %s') % (
+                    master.name, record.reference or '', record.description),
                 'bank_reconciliation_created_id': master.id,
                 'line_ids': [
                     (0, 0, dict(common, account_id=line.account_id.id,
-                                name=_('Reconciliation: %s') % master.name, **{holding_side: amount})),
+                                name=_('Reconciliation: %s') % reference, **{holding_side: amount})),
                     (0, 0, dict(common, account_id=master.posted_account_id.id,
-                                name=_('Contra - %s') % master.posted_account_id.name, **{bank_side: amount})),
+                                name=_('Contra - %s') % reference, **{bank_side: amount})),
                 ],
             })
 
