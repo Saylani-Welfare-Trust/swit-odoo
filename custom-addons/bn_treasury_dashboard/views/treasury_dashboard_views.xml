@@ -9,7 +9,8 @@
     <!-- 2. Root menu: Dashboard (top-level app bar item) -->
     <menuitem id="menu_dashboard_root"
               name="Dashboard"
-              sequence="10"/>
+              sequence="10"
+              webicon="/static/description/icon_logo.png"/>
 
     <!-- 3. Sub menu: Treasury Dashboard under Dashboard -->
     <menuitem id="menu_treasury_dashboard"
