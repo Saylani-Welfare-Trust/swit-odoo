@@ -7,9 +7,18 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_bank_reconciliation_original_moves" type="object"
+                        class="oe_stat_button" icon="fa-link"
+                        invisible="bank_reconciliation_original_count &lt; 2">
+                    <field name="bank_reconciliation_original_count" widget="statinfo" string="Original Entries"/>
+                </button>
+            </xpath>
             <xpath expr="//group[@id='header_right_group']" position="inside">
                 <field name="is_bank_reconciled" widget="boolean_toggle" readonly="1" invisible="move_type != 'entry'"/>
                 <field name="bank_reconciliation_id" readonly="1" invisible="not bank_reconciliation_id"/>
+                <!-- Reconciliation entry: the entry its bank statement line was matched with -->
+                <field name="bank_reconciliation_original_move_id" readonly="1" invisible="not bank_reconciliation_original_move_id"/>
             </xpath>
         </field>
     </record>
