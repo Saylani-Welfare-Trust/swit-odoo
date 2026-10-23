@@ -17,7 +17,7 @@
                     <p>A purchase order has been assigned to you and needs your
                     <strong>CXO approval</strong>.</p>
                     <p>
-                        <strong>PO / RFQ:</strong> <t t-out="object.name or object.display_name"/><br/>
+                        <strong>PO/RFQ:</strong> <t t-out="object.name or object.display_name"/><br/>
                         <strong>Vendor:</strong> <t t-out="object.partner_id.name or ''"/><br/>
                         <strong>Amount:</strong> <t t-out="object.currency_id.symbol"/> <t t-out="'%.2f' % object.amount_total"/>
                     </p>
