@@ -494,6 +494,21 @@ class BankReconciliationMaster(models.Model):
             'target': 'current',
         }
 
+    def action_view_reconciliation_moves(self):
+        self.ensure_one()
+        # One entry per reconciled line; reconciliations validated before that have one for all
+        moves = (self.reconciled_ids.mapped('reconciliation_move_id') | self.move_id).exists()
+        if not moves:
+            raise UserError(_('No reconciliation entries found for this reconciliation.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'name': _('Reconciliation Entries'),
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', moves.ids)],
+            'target': 'current',
+        }
+
     def action_view_transactions(self):
         self.ensure_one()
         return {

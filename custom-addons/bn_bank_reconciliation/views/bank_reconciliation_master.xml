@@ -49,6 +49,9 @@
                     <button name="action_view_matched_moves" string="View Matched Entries" type="object"
                             class="btn-info"
                             invisible="not reconciled_transactions"/>
+                    <button name="action_view_reconciliation_moves" string="Reconciliation Entries" type="object"
+                            class="btn-info"
+                            invisible="not reconciled_transactions"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,uploaded,in_progress,completed"/>
                 </header>
                 <sheet>
