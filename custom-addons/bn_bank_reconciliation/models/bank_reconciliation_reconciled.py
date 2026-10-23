@@ -116,6 +116,14 @@ class BankReconciliationReconciled(models.Model):
         default=False,
         help='Indicates if this reconciled transaction has been posted to accounting'
     )
+    reconciliation_move_id = fields.Many2one(
+        'account.move',
+        string='Reconciliation Entry',
+        readonly=True,
+        copy=False,
+        help='Entry moving this line from the holding account to the Posted Account, '
+             'created on Accept and posted by Validate & Complete'
+    )
     
     journal_line_id = fields.Many2one(
         'account.move.line',
@@ -220,12 +228,65 @@ class BankReconciliationReconciled(models.Model):
                 for transaction in transactions:
                     transaction.action_reject_match()
 
-        # An entry the reconciliation created for these lines is not needed any more
-        group.mapped('matched_move_id').filtered(
+        # Entries the reconciliation created for these lines are not needed any more
+        (group.mapped('matched_move_id') | group.mapped('reconciliation_move_id')).filtered(
             lambda move: move.bank_reconciliation_created_id and move.state == 'draft'
         ).button_cancel()
         
         return True
+
+    def _check_bank_side(self):
+        """Each line must be matched with the bank side of its entry: never a
+        receivable or payable item, and a debit for money in (Credit on the
+        statement), a credit for money out. Otherwise the reconciliation entry
+        would move the wrong account, the wrong way."""
+        wrong = self.filtered(lambda r: r.matched_move_line_id and (
+            r.matched_move_line_id.account_id.account_type in ('asset_receivable', 'liability_payable')
+            or (r.transaction_id.credit > r.transaction_id.debit) != (r.matched_move_line_id.balance > 0)
+        ))
+        if wrong:
+            raise UserError(_(
+                'These lines are matched with the wrong item of their journal entry (a receivable or '
+                'payable item, or the wrong side). Reject or unreconcile them and match them again:\n%s'
+            ) % '\n'.join('- %s: %s %s' % (
+                r.description, r.matched_move_id.display_name, r.matched_move_line_id.account_id.display_name
+            ) for r in wrong[:20]))
+
+    def _create_reconciliation_move(self):
+        """Move each line's amount from the account holding it (the account of
+        the matched journal item) to the Posted Account, on the analytic accounts
+        of the matched item: when the holding account was debited it is credited
+        and the Posted Account debited, and vice versa. The entry stays in draft
+        until Validate & Complete posts it."""
+        for record in self:
+            master = record.master_id
+            line = record.matched_move_line_id
+            # Nothing to move when the entry is already on the Posted Account
+            if record.reconciliation_move_id or not line.balance or line.account_id == master.posted_account_id:
+                continue
+            record._check_bank_side()
+            amount = master.currency_id.round(abs(record.amount))
+            holding_side, bank_side = ('credit', 'debit') if line.balance > 0 else ('debit', 'credit')
+            common = {
+                'is_bank_reconciled': True,
+                'bank_reconciliation_id': master.id,
+                'bank_reconciliation_date': master.date,
+                'analytic_distribution': line.analytic_distribution or False,
+            }
+            record.reconciliation_move_id = self.env['account.move'].create({
+                'journal_id': master.journal_id.id,
+                'date': record.date or master.date,
+                'ref': '%s - %s' % (master.name, record.reference or record.description[:40]),
+                'company_id': master.company_id.id,
+                'narration': _('Bank Reconciliation: %s') % master.name,
+                'bank_reconciliation_created_id': master.id,
+                'line_ids': [
+                    (0, 0, dict(common, account_id=line.account_id.id,
+                                name=_('Reconciliation: %s') % master.name, **{holding_side: amount})),
+                    (0, 0, dict(common, account_id=master.posted_account_id.id,
+                                name=_('Contra - %s') % master.posted_account_id.name, **{bank_side: amount})),
+                ],
+            })
 
     @api.model
     def create(self, vals):

@@ -1,6 +1,5 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
-import json
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -433,98 +432,19 @@ class BankReconciliationMaster(models.Model):
             ) % ', '.join(not_posted.mapped('description')))
         self.reconciled_ids.write({'is_posted': True})
 
-        self._check_reconciled_bank_side()
-        self._create_reconciliation_journal_entry()
+        # Each reconciled line has its own reconciliation entry, created on Accept;
+        # lines accepted before the entries were made on Accept get theirs now
+        self.reconciled_ids._check_bank_side()
+        self.reconciled_ids._create_reconciliation_move()
+        self.reconciled_ids.mapped('reconciliation_move_id').filtered(
+            lambda move: move.state == 'draft'
+        ).action_post()
         
         self.write({
             'state': 'completed',
             'reconciled_by': self.env.user.id,
             'reconciliation_date': fields.Datetime.now(),
         })
-
-    def _check_reconciled_bank_side(self):
-        """Each reconciled line must be matched with the bank side of its entry:
-        never a receivable or payable item, and a debit for money in (Credit on the
-        statement), a credit for money out. Otherwise the reconciliation entry would
-        move the wrong account, the wrong way."""
-        self.ensure_one()
-        wrong = self.reconciled_ids.filtered(lambda r: (
-            r.matched_move_line_id.account_id.account_type in ('asset_receivable', 'liability_payable')
-            or (r.transaction_id.credit > r.transaction_id.debit) != (r.matched_move_line_id.balance > 0)
-        ))
-        if wrong:
-            raise UserError(_(
-                'These lines are matched with the wrong item of their journal entry (a receivable or '
-                'payable item, or the wrong side). Unreconcile them and match them again:\n%s'
-            ) % '\n'.join('- %s: %s %s' % (
-                r.description, r.matched_move_id.display_name, r.matched_move_line_id.account_id.display_name
-            ) for r in wrong[:20]))
-
-    def _create_reconciliation_journal_entry(self):
-        """Move the reconciled amounts from the accounts holding them (the
-        accounts of the matched journal items) to the Posted Account: when the
-        holding account is credited the Posted Account is debited, and vice versa.
-        Amounts are moved on the analytic accounts they were booked on."""
-        self.ensure_one()
-        if self.move_id:
-            raise UserError(_('Journal entry already exists for this reconciliation.'))
-
-        account_totals = {}
-        for reconciled in self.reconciled_ids:
-            matched_line = reconciled.matched_move_line_id
-            # Nothing to move when the entry is already on the Posted Account
-            if not matched_line.balance or matched_line.account_id == self.posted_account_id:
-                continue
-            analytic = matched_line.analytic_distribution or {}
-            key = (matched_line.account_id.id, json.dumps(analytic, sort_keys=True))
-            totals = account_totals.setdefault(key, {'debit': 0.0, 'credit': 0.0, 'analytic': analytic})
-            # The holding account is cleared on the opposite side of the matched item
-            if matched_line.balance > 0:
-                totals['credit'] += abs(reconciled.amount)
-            else:
-                totals['debit'] += abs(reconciled.amount)
-        
-        reconciled_vals = {
-            'is_bank_reconciled': True,
-            'bank_reconciliation_id': self.id,
-            'bank_reconciliation_date': self.date,
-        }
-        move_lines = []
-        for (account_id, _analytic_key), totals in account_totals.items():
-            for side, contra_side in (('credit', 'debit'), ('debit', 'credit')):
-                amount = self.currency_id.round(totals[side])
-                if not amount:
-                    continue
-                move_lines.append((0, 0, dict(reconciled_vals, **{
-                    'account_id': account_id,
-                    side: amount,
-                    'name': _('Reconciliation: %s') % self.name,
-                    'analytic_distribution': totals['analytic'] or False,
-                })))
-                move_lines.append((0, 0, dict(reconciled_vals, **{
-                    'account_id': self.posted_account_id.id,
-                    contra_side: amount,
-                    'name': _('Contra - %s') % self.posted_account_id.name,
-                    'analytic_distribution': totals['analytic'] or False,
-                })))
-        
-        if not move_lines:
-            return
-        
-        try:
-            move = self.env['account.move'].create({
-                'journal_id': self.journal_id.id,
-                'date': self.date or fields.Date.today(),
-                'ref': self.name,
-                'company_id': self.company_id.id,
-                'line_ids': move_lines,
-                'narration': _('Bank Reconciliation: %s') % self.name,
-                'state': 'draft',
-            })
-            move.action_post()
-            self.move_id = move.id
-        except Exception as e:
-            raise UserError(_('Error creating journal entry: %s') % str(e))
 
     def action_cancel_reconciliation(self):
         self.ensure_one()

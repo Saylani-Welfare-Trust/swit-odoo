@@ -133,7 +133,8 @@ class BankReconciliationTransaction(models.Model):
         'account.move',
         string='Reconciliation Entry',
         compute='_compute_reconciliation_move_id',
-        help='Entry created by Validate & Complete that moves this line from the holding account to the Posted Account'
+        help='Entry moving this line from the holding account to the Posted Account, '
+             'created on Accept and posted by Validate & Complete'
     )
 
     is_adjustment = fields.Boolean(
@@ -207,14 +208,19 @@ class BankReconciliationTransaction(models.Model):
 
     @api.depends('state', 'master_id.move_id', 'master_id.posted_account_id', 'matched_move_line_id.account_id')
     def _compute_reconciliation_move_id(self):
+        reconciled = self.env['bank.reconciliation.reconciled'].search([
+            ('transaction_id', 'in', [id_ for id_ in self.ids if isinstance(id_, int)]),
+        ])
+        moves = {record.transaction_id.id: record.reconciliation_move_id for record in reconciled}
         for record in self:
+            move = moves.get(record.id) if record.state == 'reconciled' else False
             master = record.master_id
-            # A line already booked on the Posted Account is not part of that entry
-            if (record.state == 'reconciled' and master.move_id
+            # Reconciliations validated before the entries were made per line have
+            # one entry for all their lines, except those booked on the Posted Account
+            if (not move and record.state == 'reconciled' and master.move_id
                     and record.matched_move_line_id.account_id != master.posted_account_id):
-                record.reconciliation_move_id = master.move_id
-            else:
-                record.reconciliation_move_id = False
+                move = master.move_id
+            record.reconciliation_move_id = move or False
 
     def _compute_is_already_reconciled(self):
         for record in self:
@@ -624,6 +630,7 @@ class BankReconciliationTransaction(models.Model):
         }
         reconciled = Reconciled.create(vals)
         self._mark_move_lines_reconciled(self.matched_move_line_id)
+        reconciled._create_reconciliation_move()
         return reconciled
 
     def _create_journal_entry_for_transaction(self, reconciled):
