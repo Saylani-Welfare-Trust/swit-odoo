@@ -77,6 +77,7 @@
         name="Schedule"
         action="rider_schedule_action"
         parent="bn_rider_shift.rider_shift_root_menu"
+        groups="bn_rider_shift.rider_shift_user_group"
         sequence="1"/>
 
 </odoo>

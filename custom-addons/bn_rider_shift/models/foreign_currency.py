@@ -70,15 +70,15 @@ class ForeignCurrency(models.Model):
         lot = lot_ids[0]
 
         # Find or create "Foreign Currency" rider
-        fc_rider = self.env['hr.employee'].search([('name', '=', 'Foreign Currency')], limit=1)
+        fc_rider = self.env['hr.employee'].sudo().search([('name', '=', 'Foreign Currency')], limit=1)
         if not fc_rider:
-            fc_rider = self.env['hr.employee'].create({
+            fc_rider = self.env['hr.employee'].sudo().create({
                 'name': 'Foreign Currency',
             })
 
         # Find the donation box registration for this lot
         # The registration in service wins over closed ones of a reused box number.
-        box = self.env['donation.box.registration.installation']._bn_find_by_lot(lot)
+        box = self.env['donation.box.registration.installation'].sudo()._bn_find_by_lot(lot)
         if not box:
             raise UserError('Could not find a donation box registration for the selected box.')
 
@@ -96,13 +96,13 @@ class ForeignCurrency(models.Model):
         self.write({'rider_collection_id': rider_collection.id})
 
         # Create key issuance for this box
-        key = self.env['key'].search([
+        key = self.env['key'].sudo().search([
             ('donation_box_registration_installation_id', '=', box.id),
             ('state', 'in', ['available', 'issued'])
         ], limit=1)
         
         if not key:
-            key = self.env['key'].search([
+            key = self.env['key'].sudo().search([
                 ('donation_box_registration_installation_id', '=', box.id)
             ], limit=1)
 
@@ -129,7 +129,7 @@ class ForeignCurrency(models.Model):
                 'is_fcb': True,
                 'rider_collection_id': rider_collection.id,
             }
-            self.env['key.issuance'].create(key_issuance_vals)
+            self.env['key.issuance'].sudo().create(key_issuance_vals)
 
         # CHANGE STATE TO PAYMENT_RECEIVED
         self.write({'state': 'payment_received'})

@@ -6,6 +6,8 @@ from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
+KEY_USER_GROUP = 'bn_key_management.key_management_user_group'
+
 key_selection = [
     ('draft', 'Draft'),
     ('issued', 'Issued'),
@@ -97,6 +99,7 @@ class KeyIssuance(models.Model):
     # Workflow
     # ------------------------------------------------------------------
     def action_issue(self):
+        self._bn_require_group(KEY_USER_GROUP)
         for record in self:
             record._bn_do_issue()
         return True
@@ -126,7 +129,9 @@ class KeyIssuance(models.Model):
         vals = {'state': 'issued', 'issued_on': fields.Datetime.now()}
 
         if self._bn_has_rider_collection():
-            collection = self.env['rider.collection'].create({
+            # Rider Shift record: created as superuser, the Key Management group
+            # checked by action_issue is the gate.
+            collection = self.env['rider.collection'].sudo().create({
                 'rider_id': self.rider_id.id,
                 'donation_box_registration_installation_id': key.donation_box_registration_installation_id.id,
                 'lot_id': key.lot_id.id,
@@ -140,6 +145,7 @@ class KeyIssuance(models.Model):
         self._bn_write(vals)
 
     def action_return(self):
+        self._bn_require_group(KEY_USER_GROUP)
         for record in self:
             record._bn_do_return()
         return True
@@ -162,6 +168,7 @@ class KeyIssuance(models.Model):
         return True
 
     def action_overdue(self):
+        self._bn_require_group(KEY_USER_GROUP)
         for rec in self:
             if rec.state == 'issued':
                 rec._bn_write({'state': 'overdue'})

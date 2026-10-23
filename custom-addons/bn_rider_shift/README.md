@@ -72,7 +72,9 @@ or → Pending.
 ## Tests
 
 `tests/test_closed_box.py` covers a box taken out of service and its Box No.
-reused, across `bn_donation_box`, `bn_key_management` and this module:
+reused; `tests/test_roles.py` runs each step of the flow as the role that
+owns it (Donation Box User / Manager, Key Management User, Rider, Audit).
+Both cover `bn_donation_box`, `bn_key_management` and this module:
 
 ```bash
 odoo-bin -d <db> -u bn_rider_shift --test-enable --test-tags /bn_rider_shift --stop-after-init
@@ -85,5 +87,21 @@ already upgraded (or run the command twice): during the upgrade run itself,
 
 ## Security groups
 
-*Access Root Menu*, *Rider Collection / Edit Amount / Notes*, *Foreign
-Currency Collection*, *User*, *Manager*, *Audit*, *Admin*.
+| Group | Menus | Buttons / actions |
+| --- | --- | --- |
+| *Access Root Menu* | Rider (implied by every group) | - |
+| *User* | Shift, Collection, **Schedule**, Counterfeit Notes, Foreign Currency | Report own collection (Done / Pending / Submit, Complain Center), **Move to Done**, **Convert** / **Reject** / **Create POS Order** (FCB), **Create CFB** |
+| *Rider Collection / Edit Amount / Notes* | - | Change the amount / counterfeit notes of a collection afterwards |
+| *Foreign Currency Collection* | - | Change the amount of a foreign currency entry |
+| *Manager* | Same as User | User + both edit groups above + report any rider's collection |
+| *Audit* | All except Schedule, read-only | None |
+| *Admin* | Same | Everything |
+
+**Riders report their own collections** in *Schedule*: the amount they
+enter is written to the collection although they cannot edit a collection's
+amount directly. A rider can only report collections of their own employee
+(a Manager can report any), and only while the collection is open (not yet
+submitted or pending). Marking Pending, raising a complaint, FCB and CFB
+update keys, issuances and complaints without needing Key Management or
+Donation Box rights. Riders can read the registrations, keys and issuances
+of their boxes.

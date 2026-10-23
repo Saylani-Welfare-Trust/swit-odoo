@@ -9,7 +9,7 @@
                 <header>
                     <field name="box_status" invisible="1"/>
                     <field name="box_recovered" invisible="1"/>
-                    <button name="action_process" string="Process Complain" type="object" invisible="status in ['process', 'resolved','not_recovered']"/>
+                    <button name="action_process" string="Process Complain" type="object" groups="bn_donation_box.donation_box_user_group" invisible="status in ['process', 'resolved','not_recovered']"/>
                     <button name="action_resolve" string="Complain Resolved" type="object" class="oe_highlight" invisible="status in ['draft', 'resolved','not_recovered']" groups="bn_donation_box.donation_box_manager_group"/>
                     
                     <button name="action_return" string="Box Return" type="object" class="oe_highlight" invisible="not ((box_status == 'return') or (box_status in ['missing', 'robbery'] and box_recovered)) or status != 'resolved' or return_picking_id" groups="bn_donation_box.donation_box_manager_group"/>

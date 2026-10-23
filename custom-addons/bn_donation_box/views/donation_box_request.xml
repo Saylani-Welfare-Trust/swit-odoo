@@ -47,7 +47,7 @@
                                     <field name="old_box_no" />
                                     <field name="key_tag" readonly="1" />
 
-                                    <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved' or is_returned" />
+                                    <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved' or is_returned" groups="bn_donation_box.donation_box_manager_group" confirm="Return this box to the warehouse? Its registration and key are closed." />
                                 </tree>
                             </field>
                         </page>
@@ -137,6 +137,7 @@
         name="Request"
         action="donation_box_request_action"
         parent="donation_box_root_menu"
+        groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group"
         sequence="0"/>
 
 </odoo>

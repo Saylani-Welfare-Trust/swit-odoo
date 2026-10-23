@@ -125,7 +125,7 @@ While a *Return* complaint is resolved but its box not yet taken back
    operation type are created for the main warehouse.
 3. HR employee tags *Installer*, *Donation Box Rider* and *Complain Officer*
    control who appears in the installer / rider / officer fields.
-4. Server actions in the list view: **Bulk Install**, **Bulk Approved**,
+4. Actions in the Registration list (*Action* menu): **Bulk Install** (User), **Bulk Approved** (Manager),
    **Populate Lock No**.
 
 ## Install / upgrade
@@ -150,5 +150,20 @@ Tests covering the whole chain are in `bn_rider_shift/tests/test_closed_box.py`.
 
 ## Security groups
 
-*Access Root Menu*, *User* (install), *Manager* (approve, reject, change
-request, resolve complaints, return, scrap, repair), *Audit*, *Admin*.
+| Group | Menus | Buttons / actions |
+| --- | --- | --- |
+| *Access Root Menu* | The app icon (implied by every group, also by Key Management and Rider Shift access) | - |
+| *User* | Request, Registration / Installation, Complain Center | Create requests, **Install**, **Process Complain**, *Bulk Install* |
+| *Manager* | + Donation Products Inventory | + **Approve** / **Reject** request, line **Return**, **Approved**, **Change Request**, **Complain Resolved**, **Box Return**, **Repair**, *Bulk Approved*, *Populate Lock No* |
+| *Audit* | All of the above, read-only | None |
+| *Admin* | + *Master Setup > Installation Category* | Everything, delete |
+
+Buttons are shown only to the groups that may use them, and each action
+checks the group on the server as well. *Bulk Install*, *Bulk Approved* and
+*Populate Lock No* are in the **Action** menu of the Registration list.
+
+A step's own group is enough to complete it: stock transfers, scraps, box
+serials and keys changed by an approval, a return or a complaint are
+handled by the system, so Donation Box users need no Inventory or Key
+Management rights. They can read box serials (to pick a Box No.), keys,
+key bunches and the related transfers.

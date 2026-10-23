@@ -205,7 +205,7 @@ class DonationBoxComplain(models.Model):
             lot_vals = {'is_not_return': True}
             if recovered:
                 lot_vals['lot_consume'] = False
-            self.lot_id.write(lot_vals)
+            self.lot_id.sudo().write(lot_vals)
             self._bn_write({'status': 'resolved' if recovered else 'not_recovered'})
         elif box_status == 'broken':
             self._bn_do_scrap()
@@ -244,7 +244,7 @@ class DonationBoxComplain(models.Model):
 
         self._bn_close_registration(registration)
         registration._bn_key_close()
-        self.lot_id.write({'lot_consume': False, 'is_not_return': False})
+        self.lot_id.sudo().write({'lot_consume': False, 'is_not_return': False})
         self._bn_write({'return_picking_id': return_picking.id})
 
     def action_scrap(self):
@@ -270,14 +270,15 @@ class DonationBoxComplain(models.Model):
         if not serial_used:
             raise ValidationError(_("This serial does not belong to the selected picking."))
 
-        scrap_location = self.env['stock.location'].search([
+        # Stock runs as superuser: the Manager group checked by the action is the gate.
+        scrap_location = self.env['stock.location'].sudo().search([
             ('scrap_location', '=', True),
             ('company_id', 'in', [picking.company_id.id, False]),
         ], limit=1)
         if not scrap_location:
             raise ValidationError(_("Scrap location not configured in the system."))
 
-        scrap = self.env['stock.scrap'].create({
+        scrap = self.env['stock.scrap'].sudo().create({
             'product_id': serial_used.product_id.id,
             'lot_id': self.lot_id.id,
             'scrap_qty': 1,
@@ -369,7 +370,7 @@ class DonationBoxComplain(models.Model):
 
     def _bn_do_repair(self):
         self.ensure_one()
-        scrap = self.scrap_picking_id
+        scrap = self.scrap_picking_id.sudo()
         registration = self._bn_registration()
         request = registration.donation_box_request_id
         original_picking = request._bn_find_done_picking(request)
@@ -379,7 +380,7 @@ class DonationBoxComplain(models.Model):
         if not stock_location:
             raise ValidationError(_("Cannot determine the warehouse stock location for this box."))
 
-        PickingType = self.env['stock.picking.type']
+        PickingType = self.env['stock.picking.type'].sudo()
         picking_type = PickingType.search([
             ('code', '=', 'internal'), ('warehouse_id', '=', warehouse.id)], limit=1)
         if not picking_type:
@@ -389,13 +390,13 @@ class DonationBoxComplain(models.Model):
             raise ValidationError(_("No internal transfer picking type found."))
 
         origin = _('Repair - %s') % (self.name or self.lot_id.name)
-        picking = self.env['stock.picking'].create({
+        picking = self.env['stock.picking'].sudo().create({
             'picking_type_id': picking_type.id,
             'location_id': scrap.scrap_location_id.id,
             'location_dest_id': stock_location.id,
             'origin': origin,
         })
-        move = self.env['stock.move'].create({
+        move = self.env['stock.move'].sudo().create({
             'name': _('Repair Return: %s') % self.lot_id.name,
             'product_id': scrap.product_id.id,
             'product_uom_qty': scrap.scrap_qty,
@@ -406,7 +407,7 @@ class DonationBoxComplain(models.Model):
             'origin': origin,
             'company_id': picking.company_id.id,
         })
-        self.env['stock.move.line'].create({
+        self.env['stock.move.line'].sudo().create({
             'move_id': move.id,
             'picking_id': picking.id,
             'product_id': scrap.product_id.id,
@@ -419,7 +420,7 @@ class DonationBoxComplain(models.Model):
         picking.action_confirm()
         request._bn_validate_picking(picking)
 
-        self.lot_id.write({'lot_consume': False, 'is_not_return': False})
+        self.lot_id.sudo().write({'lot_consume': False, 'is_not_return': False})
         self._bn_close_registration(registration)
         registration._bn_key_close()
         self._bn_write({

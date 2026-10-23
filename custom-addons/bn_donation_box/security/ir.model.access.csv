@@ -14,3 +14,15 @@ access_donation_box_complain_center_audit,donation.box.complain.center.audit,bn_
 access_donation_product_onhand,donation.product.onhand,bn_donation_box.model_donation_product_onhand,base.group_user,1,0,0,0
 access_installation_category_read,installation.category.read,bn_donation_box.model_installation_category,base.group_user,1,0,0,0
 access_installation_category_manage,installation.category.manage,bn_donation_box.model_installation_category,bn_donation_box.donation_box_admin_group,1,1,1,1
+access_stock_lot_donation_box_user,stock.lot donation box user,stock.model_stock_lot,donation_box_user_group,1,0,0,0
+access_stock_lot_donation_box_audit,stock.lot donation box audit,stock.model_stock_lot,donation_box_audit_group,1,0,0,0
+access_stock_quant_donation_box_user,stock.quant donation box user,stock.model_stock_quant,donation_box_user_group,1,0,0,0
+access_stock_quant_donation_box_audit,stock.quant donation box audit,stock.model_stock_quant,donation_box_audit_group,1,0,0,0
+access_stock_picking_donation_box_user,stock.picking donation box user,stock.model_stock_picking,donation_box_user_group,1,0,0,0
+access_stock_picking_donation_box_audit,stock.picking donation box audit,stock.model_stock_picking,donation_box_audit_group,1,0,0,0
+access_stock_move_donation_box_user,stock.move donation box user,stock.model_stock_move,donation_box_user_group,1,0,0,0
+access_stock_move_donation_box_audit,stock.move donation box audit,stock.model_stock_move,donation_box_audit_group,1,0,0,0
+access_stock_move_line_donation_box_user,stock.move.line donation box user,stock.model_stock_move_line,donation_box_user_group,1,0,0,0
+access_stock_move_line_donation_box_audit,stock.move.line donation box audit,stock.model_stock_move_line,donation_box_audit_group,1,0,0,0
+access_stock_scrap_donation_box_user,stock.scrap donation box user,stock.model_stock_scrap,donation_box_user_group,1,0,0,0
+access_stock_scrap_donation_box_audit,stock.scrap donation box audit,stock.model_stock_scrap,donation_box_audit_group,1,0,0,0

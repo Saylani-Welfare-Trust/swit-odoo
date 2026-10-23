@@ -7,8 +7,9 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 
-@tagged('post_install', '-at_install')
-class TestClosedBox(TransactionCase):
+class BoxFlowCase(TransactionCase):
+    """Shared fixture: one serial-tracked box in stock, analytic city / zone /
+    sub zone, a key bunch, an installer, a rider and a registered DB donor."""
 
     @classmethod
     def setUpClass(cls):
@@ -78,7 +79,11 @@ class TestClosedBox(TransactionCase):
         complaint.action_return()
         return complaint
 
-    # -- tests -----------------------------------------------------------
+
+
+@tagged('post_install', '-at_install')
+class TestClosedBox(BoxFlowCase):
+
     def test_closed_registration_is_final(self):
         registration = self._install('L1')
         key = registration.key_ids

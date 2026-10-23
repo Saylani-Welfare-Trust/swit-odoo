@@ -40,7 +40,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Move to Done" name="action_mark_done" type="object" class="oe_highlight" invisible = "state != 'draft'"/>
+                    <button string="Move to Done" name="action_mark_done" type="object" groups="bn_rider_shift.rider_shift_user_group" class="oe_highlight" invisible = "state != 'draft'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft, done"/>
                 </header>
 

@@ -78,4 +78,15 @@ their issuance is closed directly.
 
 ## Security groups
 
-*Access Root Menu*, *User*, *Manager*, *Audit*, *Admin*.
+| Group | Menus | Buttons / actions |
+| --- | --- | --- |
+| *Access Root Menu* | Key Management (implied by every group) | - |
+| *User* | Keys, Issuance (Bulk / Manual Assign / Return, History), Bunch | **Issued**, **Return**, **Overdue**, bulk and manual issue / return |
+| *Manager* | Same | + delete empty key bunches |
+| *Audit* | Keys, History, Bunch (read-only; no assign / return screens) | None |
+| *Admin* | Same | Everything |
+
+Issue / Return / Overdue are checked on the server too. Issuing a key
+creates the rider's collection without needing Rider Shift rights. Key
+staff can read the box registrations their keys belong to. Donation Box
+users can read keys and key bunches (registration form, Key Bunch field).

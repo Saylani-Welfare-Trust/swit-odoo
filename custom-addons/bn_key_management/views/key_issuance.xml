@@ -55,9 +55,9 @@
         <field name="arch" type="xml">
             <form create="0" edit="0">
                 <header>
-                    <button string="Issued" name="action_issue" type="object" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'pending', 'overdue']" />
-                    <button string="Return" name="action_return" type="object" class="oe_highlight" invisible="state not in ['donation_receive', 'pending']" />
-                    <button string="Overdue" name="action_overdue" type="object" class="oe_highlight" invisible="state in ['draft', 'issued', 'pending', 'returned', 'overdue']" />
+                    <button string="Issued" name="action_issue" type="object" groups="bn_key_management.key_management_user_group" class="oe_highlight" invisible="state in ['issued', 'donation_receive','returned', 'pending', 'overdue']" />
+                    <button string="Return" name="action_return" type="object" groups="bn_key_management.key_management_user_group" class="oe_highlight" invisible="state not in ['donation_receive', 'pending']" />
+                    <button string="Overdue" name="action_overdue" type="object" groups="bn_key_management.key_management_user_group" class="oe_highlight" invisible="state in ['draft', 'issued', 'pending', 'returned', 'overdue']" />
                     <button string="Print Receipt" name="%(bn_donation_box.donation_box_receipt_report_action)d" type="action" class="btn-secondary" icon="fa-print"  invisible="state in ['draft', 'issued', 'returned', 'overdue']"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft,issued,donation_receive,overdue,returned"/>
@@ -133,6 +133,7 @@
         name="Bulk Assign / Return"
         action="bn_key_management.bulk_key_issuance_action"
         parent="key_issuance_menu"
+        groups="bn_key_management.key_management_user_group"
         sequence="1"/>
     
     <menuitem
@@ -140,6 +141,7 @@
         name="Manual Assign / Return"
         action="bn_key_management.manual_key_issuance_action"
         parent="key_issuance_menu"
+        groups="bn_key_management.key_management_user_group"
         sequence="2"/>
 
     <menuitem

@@ -10,3 +10,9 @@ access_key_bunch_manager,key.bunch.manager,bn_key_management.model_key_bunch,key
 access_key_bunch_audit,key.bunch.audit,bn_key_management.model_key_bunch,key_management_audit_group,1,0,0,0
 access_bulk_key_issuance_user,bulk.key.issuance.user,bn_key_management.model_bulk_key_issuance,key_management_user_group,1,1,1,1
 access_manual_key_issuance_user,manual.key.issuance.user,bn_key_management.model_manual_key_issuance,key_management_user_group,1,1,1,1
+access_key_donation_box_user,key donation box user,bn_key_management.model_key,bn_donation_box.donation_box_user_group,1,0,0,0
+access_key_donation_box_audit,key donation box audit,bn_key_management.model_key,bn_donation_box.donation_box_audit_group,1,0,0,0
+access_key_bunch_donation_box_user,key.bunch donation box user,bn_key_management.model_key_bunch,bn_donation_box.donation_box_user_group,1,0,0,0
+access_key_bunch_donation_box_audit,key.bunch donation box audit,bn_key_management.model_key_bunch,bn_donation_box.donation_box_audit_group,1,0,0,0
+access_registration_key_user,donation.box.registration.installation key user,bn_donation_box.model_donation_box_registration_installation,key_management_user_group,1,0,0,0
+access_registration_key_audit,donation.box.registration.installation key audit,bn_donation_box.model_donation_box_registration_installation,key_management_audit_group,1,0,0,0

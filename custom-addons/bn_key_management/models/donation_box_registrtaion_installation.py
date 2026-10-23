@@ -21,12 +21,14 @@ class DonationBoxRegistrationInstallation(models.Model):
     # ------------------------------------------------------------------
     # Hooks called by donation.box.request / donation.box.request.line /
     # donation.box.complain.center (see bn_donation_box).
+    # They run as superuser: the Donation Box group checked by the calling
+    # action is the gate, so its users need no Key Management rights.
     # ------------------------------------------------------------------
     def _bn_key_create(self, line):
         self.ensure_one()
-        if self.key_ids:
-            return self.key_ids
-        key = self.env['key'].create({
+        if self.sudo().key_ids:
+            return self.sudo().key_ids
+        key = self.env['key'].sudo().create({
             'donation_box_request_id': self.donation_box_request_id.id,
             'donation_box_registration_installation_id': self.id,
             'name': line.key_tag,
@@ -39,7 +41,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.ensure_one()
         if not self.key_bunch_id:
             raise ValidationError(_('Please select a Key Bunch before approving.'))
-        keys = self.key_ids.filtered(lambda k: k.state != 'closed')
+        keys = self.sudo().key_ids.filtered(lambda k: k.state != 'closed')
         if not keys:
             raise ValidationError(_('No key found for this registration.'))
         for key in keys:
@@ -49,8 +51,8 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     def _bn_key_change_request(self):
         self.ensure_one()
-        open_issuance = self.env['key.issuance'].search([
-            ('key_id', 'in', self.key_ids.ids),
+        open_issuance = self.env['key.issuance'].sudo().search([
+            ('key_id', 'in', self.sudo().key_ids.ids),
             ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
         ], limit=1)
         if open_issuance:
@@ -62,15 +64,15 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     def _bn_key_close(self):
         self.ensure_one()
-        for key in self.key_ids.filtered(lambda k: k.state != 'closed'):
+        for key in self.sudo().key_ids.filtered(lambda k: k.state != 'closed'):
             key._bn_lock()
             key._bn_close()
         return True
 
     def _bn_check_can_release(self):
         self.ensure_one()
-        open_issuance = self.env['key.issuance'].search([
-            ('key_id', 'in', self.key_ids.ids),
+        open_issuance = self.env['key.issuance'].sudo().search([
+            ('key_id', 'in', self.sudo().key_ids.ids),
             ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
         ], limit=1)
         if open_issuance:
@@ -82,8 +84,8 @@ class DonationBoxRegistrationInstallation(models.Model):
     def _bn_unreturned_key_messages(self):
         self.ensure_one()
         messages = []
-        open_issuance = self.env['key.issuance'].search([
-            ('key_id', 'in', self.key_ids.ids),
+        open_issuance = self.env['key.issuance'].sudo().search([
+            ('key_id', 'in', self.sudo().key_ids.ids),
             ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
         ])
         for issuance in open_issuance:

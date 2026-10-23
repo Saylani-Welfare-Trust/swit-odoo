@@ -231,7 +231,7 @@ class DonationBoxRequestLine(models.Model):
         with bn_transition():
             registration._bn_take_out_of_service()
             registration._bn_key_close()
-            self.lot_id.write({'lot_consume': False})
+            self.lot_id.sudo().write({'lot_consume': False})
             self.write({'is_returned': True, 'return_picking_id': return_picking.id})
-        request.message_post(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
+        request._message_log(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
             'lot': self.lot_id.display_name, 'picking': return_picking.display_name})

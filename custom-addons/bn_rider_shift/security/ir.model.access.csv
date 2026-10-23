@@ -19,3 +19,11 @@ access_foreign_currency_admin,foreign.currency.admin,bn_rider_shift.model_foreig
 access_foreign_currency_audit,foreign.currency.audit,bn_rider_shift.model_foreign_currency,rider_shift_audit_group,1,0,0,0
 access_foreign_currency_wizard_user,foreign.currency.wizard.user,bn_rider_shift.model_foreign_currency_wizard,rider_shift_user_group,1,1,1,1
 access_foreign_currency_wizard_line_user,foreign.currency.wizard.line.user,bn_rider_shift.model_foreign_currency_wizard_line,rider_shift_user_group,1,1,1,1
+access_registration_rider_user,registration rider user,bn_donation_box.model_donation_box_registration_installation,rider_shift_user_group,1,0,0,0
+access_registration_rider_audit,registration rider audit,bn_donation_box.model_donation_box_registration_installation,rider_shift_audit_group,1,0,0,0
+access_key_rider_user,key rider user,bn_key_management.model_key,rider_shift_user_group,1,0,0,0
+access_key_rider_audit,key rider audit,bn_key_management.model_key,rider_shift_audit_group,1,0,0,0
+access_key_issuance_rider_user,key_issuance rider user,bn_key_management.model_key_issuance,rider_shift_user_group,1,0,0,0
+access_key_issuance_rider_audit,key_issuance rider audit,bn_key_management.model_key_issuance,rider_shift_audit_group,1,0,0,0
+access_key_bunch_rider_user,key_bunch rider user,bn_key_management.model_key_bunch,rider_shift_user_group,1,0,0,0
+access_key_bunch_rider_audit,key_bunch rider audit,bn_key_management.model_key_bunch,rider_shift_audit_group,1,0,0,0
