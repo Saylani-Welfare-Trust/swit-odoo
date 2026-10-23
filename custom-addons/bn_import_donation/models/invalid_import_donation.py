@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 import re
 
@@ -11,7 +11,7 @@ class InvalidImportDonation(models.Model):
 
     import_donation_id = fields.Many2one('import.donation', string="Import Donation")
 
-    transaction_id = fields.Char('Transacetion ID')
+    transaction_id = fields.Char('Transaction ID')
     donor_student_name = fields.Char('Donor / Student Name')
     mobile = fields.Char('Mobile No.', size=10)
     cnic_no = fields.Char('CNIC No.', size=15)
@@ -23,7 +23,6 @@ class InvalidImportDonation(models.Model):
 
     reason = fields.Char('Reason')
     is_student = fields.Boolean('Is Student', default=False)
-    create_record = fields.Boolean('Create Contact', default=False)
     hide_button = fields.Boolean('Hide Button', default=False)
 
 
@@ -37,58 +36,37 @@ class InvalidImportDonation(models.Model):
                     )
 
     def action_approve(self):
+        """Approve a corrected row: it is checked again like a row of the file.
+        Before the upload it becomes a valid line; after the upload its
+        donation is created right away."""
         self.ensure_one()
+        batch = self.import_donation_id
+        batch._check_group('bn_import_donation.import_donation_manager_group', _('Approve'))
+        batch._check_state(('validated', 'uploaded', 'sync_donor'), _('Approve'))
+        if self.hide_button:
+            raise UserError(_('This line has already been processed.'))
 
-        existing = self.env['donation'].search([('transaction_id', '=', self.transaction_id)], limit=1)
-        if existing:
-            self.reason = 'A Transaction with same ID already exist in the System.'
-            self.hide_button = True
-            return True
-
-        partner_id = self.env['res.partner'].search([('mobile', '=', self.mobile)], limit=1)
-
-        if not partner_id:
-            if self.create_record:
-                donor_category = self.env.ref('bn_profile_management.donor_partner_category', raise_if_not_found=False)
-                individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
-                partner_id = self.env['res.partner'].create({
-                    'name': self.donor_student_name,
-                    'mobile': self.mobile,
-                    'cnic_no': self.cnic_no,
-                    'email': self.email,
-                    'category_id': [(6, 0, [c.id for c in (donor_category, individual_category) if c])],
-                })
-                partner_id.action_register()
-            else:
-                self.reason = f'A Donor against specified mobile no. ( {self.mobile} ) does not exist in the System.'
-                self.create_record = True
-                return True
-
-        gateway_lines = self.import_donation_id.gateway_config_id.gateway_config_line_ids.filtered(
-            lambda x: x.name == self.product)
-
-        product = gateway_lines.mapped('product_id')[:1]
-        if not product:
-            raise ValidationError(_('The specified ( %s ) Product does not exist in the System.') % self.product)
-
-        credit_account = gateway_lines.mapped('account_id')[:1]
-        if not credit_account:
-            raise ValidationError(_(
-                'The specified ( %s ) Credit Account does not exist in the System or is not configured.'
-            ) % self.product)
-
-        self.env['valid.import.donation'].create({
-            'import_donation_id': self.import_donation_id.id,
-            'transaction_id': self.transaction_id,
-            'donor_student_name': self.donor_student_name,
-            'mobile': self.mobile,
-            'cnic_no': self.cnic_no,
-            'email': self.email,
-            'product': self.product,
-            'date': self.date,
-            'amount': self.amount,
-            'reference': self.reference,
-            'is_student': self.is_student,
-        })
-
-        self.hide_button = True
+        vals = {name: self[name] for name in
+                ('transaction_id', 'donor_student_name', 'mobile', 'cnic_no', 'email',
+                 'product', 'date', 'amount', 'reference', 'is_student')}
+        reason = batch._check_row(vals)
+        line = self.env['valid.import.donation']
+        if not reason:
+            vals['import_donation_id'] = batch.id
+            line = line.sudo().create(vals)
+            if batch.state in ('uploaded', 'sync_donor'):
+                failed = batch._upload_lines(line)
+                if failed:
+                    reason = failed[0][1]
+                    line.unlink()
+        if reason:
+            self.reason = reason
+            # Raising would roll the new reason back: show it on the line instead.
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {'title': _('Not approved'), 'message': reason, 'type': 'warning', 'sticky': False,
+                           'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'}},
+            }
+        self.write({'hide_button': True, 'reason': _('Approved')})
+        return True

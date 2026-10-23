@@ -1,6 +1,6 @@
 {
     'name': 'Import Donation',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -11,13 +11,17 @@
         'base_accounting_kit',
         'bn_profile_management',
     ],
+    'external_dependencies': {
+        'python': ['openpyxl', 'xlrd'],
+    },
     'data': [
         'data/sequence.xml',
         'data/schedule_action.xml',
         'data/server_action.xml',
         'data/ir_module_category.xml',
-        
-        
+        'data/stock_location.xml',
+        'data/stock_picking_type.xml',
+
         'security/group.xml',
         'security/ir.model.access.csv',
         
@@ -35,7 +39,10 @@
         'views/product_product.xml',
         'views/header_type.xml',
         'views/gateway_config.xml',
+        'views/res_company.xml',
+
+        'data/upgrade_hooks.xml',
     ],
     'auto_install': False,
     'application': True,
-} # type: ignore
+}

@@ -26,9 +26,12 @@
                     <group>
                         <group>
                             <field name="type" />
+                            <field name="is_fee" invisible="type == 'api'" />
                         </group>
                         <group>
                             <field name="account_id" string="Debit Account" invisible="type == 'api'" />
+                            <field name="bank_charges_account_id" invisible="type != 'api'" options="{'no_create': True}" />
+                            <field name="default_partner_id" invisible="type != 'api'" options="{'no_create': True}" />
                         </group>
                     </group>
                     <notebook>
