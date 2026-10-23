@@ -604,8 +604,11 @@ class ResPartner(models.Model):
         for rec in self:
             if rec._register_one():
                 microfinance |= rec
-        if len(self) == 1 and microfinance:
-            return self.action_print_microfinance_application()
+        return self._profile_after_register(microfinance)
+
+    def _profile_after_register(self, microfinance):
+        """Action returned by Register. ``microfinance``: the Microfinance donees
+        just registered (bn_microfinance then offers their application)."""
         return True
 
     def action_bulk_register_donee(self):
@@ -639,20 +642,3 @@ class ResPartner(models.Model):
         self._profile_write({'state': 'draft', 'is_change_request': False})
         return True
 
-    def action_print_microfinance_application(self):
-        self.ensure_one()
-        if 'Microfinance' not in self.category_id.mapped('name'):
-            raise ValidationError('This action is only restricted for Microfinance Application.')
-
-        # Open wizard to select microfinance scheme
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Select Microfinance Scheme',
-            'res_model': 'microfinance.application.wizard',
-            'view_mode': 'form',
-            'view_id': self.env.ref('bn_profile_management.microfinance_application_wizard_form').id,
-            'target': 'new',
-            'context': {
-                'default_partner_id': self.id,
-            }
-        }

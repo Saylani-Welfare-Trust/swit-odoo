@@ -40,7 +40,6 @@ class ConfirmSearch(models.TransientModel):
     cnic_no = fields.Char('CNIC No.', size=15)
 
     country_code_id = fields.Many2one('res.country', string="Country Code")
-    microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
 
     search_type = fields.Selection(selection=search_type_selection, string="Search Type", default="registration_id")
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
@@ -89,8 +88,6 @@ class ConfirmSearch(models.TransientModel):
             'target': 'new',
             'context': {},
         }
-        if self.microfinance_scheme_id:
-            action['context']['microfinance_scheme_id'] = self.microfinance_scheme_id.id
         if partner:
             action['res_id'] = partner.id
             return action

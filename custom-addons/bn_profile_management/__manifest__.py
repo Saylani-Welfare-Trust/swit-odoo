@@ -1,6 +1,6 @@
 {
     'name': 'Profile Management',
-    'version': '17.0.1.6.2',
+    'version': '17.0.1.7.0',
     'summary': 'Layer above Contacts',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
@@ -23,9 +23,7 @@
         'views/res_partner_category.xml',
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
-        'wizards/microfinance_application_wizard.xml',
         'reports/profile_management_report.xml',
-        'reports/microfinance_report.xml',
         # Last: needs the views and the Donor / Donee menus loaded above.
         'data/profile_registration.xml',
     ],

@@ -1,6 +1,6 @@
 {
     'name': 'Microfinance',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -38,6 +38,9 @@
         'views/security_offered.xml',
         
         'wizards/return_microfinance_product.xml',
+        'wizards/microfinance_application_wizard.xml',
+        'reports/microfinance_application_report.xml',
+        'views/res_partner_profile.xml',
     ],
     'auto_install': False,
     'application': True,

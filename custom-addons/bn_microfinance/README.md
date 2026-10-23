@@ -21,6 +21,7 @@ received at the Point of Sale.
 | `loan.product.line` / `loan.product.installment` | Product of a scheme line: SD amount, installment amount, allowed numbers of installments |
 | `security.offered` | Security types (guarantor, collateral ...) |
 | `return.microfinance.product` (wizard) | Takes a recovered asset back into stock |
+| `microfinance.application.wizard` | From a registered donee's profile: picks the scheme, creates the Draft loan and prints the application form (moved here from `bn_profile_management` in 17.0.1.2.0) |
 
 ## Process flow
 

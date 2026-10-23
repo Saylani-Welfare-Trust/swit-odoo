@@ -164,9 +164,6 @@
                     <button string="Reject" name="action_reject" type="object" invisible="state not in ('draft', 'change_request')"
                             confirm="Reject this profile?"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object" invisible="state != 'reject'" />
-                    
-                    <button string="Print Microfinance Application" name="action_print_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register' or is_donor" />
-               
                     <field name="state" widget="statusbar" statusbar_visible="draft,register"/>
                 </header>
 

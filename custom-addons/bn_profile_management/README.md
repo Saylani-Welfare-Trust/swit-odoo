@@ -18,7 +18,6 @@ are validated, and the profile types can be configured without code.
 | `profile.view.field` | One field of a Profile Type's list / search / form view, with its position |
 | `area` | Area master (defined in `bn_master_setup`; Profile Management Managers can edit it) |
 | `record.search` → `confirm.search` (wizards) | **Record Search**: find a profile before creating a new one |
-| `microfinance.application.wizard` | Prints the microfinance application for a selected scheme |
 
 Default tags created on install: Vendor, Donor, Donee, Individual,
 Corporate / Institute, Welfare, Microfinance, Medical, Student, Employee,
@@ -45,7 +44,6 @@ flowchart TD
     D -->|Reject| RJ[Rejected]
     CR -->|Reject| RJ
     RJ -->|Reset to Draft| D
-    R -->|Print Microfinance Application| MF[Microfinance application<br/>for a selected scheme]
 ```
 
 ### Checks on Register
@@ -208,11 +206,16 @@ Profile information sheet, microfinance application, user profile report
 | Configuration lived inside the Profile Management app | Moved to *Master Setup > Profile Management* (Profile Types, Area) |
 | The position of fields was fixed | Set per tag by dragging, for list, search and form |
 
+## Microfinance
+
+The Microfinance application (scheme wizard, application form, the *Print
+Microfinance Application* button and its opening after registering a
+Microfinance donee) belongs to `bn_microfinance` since 17.0.1.7.0. Profile
+Management works without it; the *Microfinance* tag and the *Microfinance
+Details* page stay here.
+
 ## Known gaps
 
-- `microfinance.scheme` is no longer loaded by `bn_master_setup` (since
-  29 Sep 2026), so the Microfinance Scheme fields of Record Search and the
-  microfinance application wizard have no data to choose from.
 - Profiles can still be created (e.g. imported) directly in status
   Registered, without the registration checks.
 

@@ -13,11 +13,15 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     def action_print_application(self):
         """Create microfinance record and print the application form"""
         self.ensure_one()
-        if 'microfinance' not in self.env:
-            raise UserError(_('The Microfinance module is not installed.'))
+        # Profile staff start the application: the loan record is created as
+        # superuser once the user is checked (Profile Management or Microfinance user).
+        user = self.env.user
+        if not self.env.su and not (user.has_group('bn_profile_management.profile_management_user_group')
+                                    or user.has_group('bn_microfinance.microfinance_user_group')):
+            raise UserError(_('You are not allowed to start a Microfinance application.'))
 
         # Check existing enrollment
-        existing = self.env['microfinance'].search([
+        existing = self.env['microfinance'].sudo().search([
             ('donee_id', '=', self.partner_id.id),
             ('microfinance_scheme_id', '=', self.microfinance_scheme_id.id),
             ('state', '!=', 'reject'),
@@ -32,7 +36,7 @@ class MicrofinanceApplicationWizard(models.TransientModel):
             ))
 
         # Create microfinance record
-        microfinance = self.env['microfinance'].create({
+        microfinance = self.env['microfinance'].sudo().create({
             'microfinance_scheme_id': self.microfinance_scheme_id.id,
             'donee_id': self.partner_id.id,
         })
@@ -41,4 +45,4 @@ class MicrofinanceApplicationWizard(models.TransientModel):
         microfinance._compute_microfinance_scheme_line_ids()
 
         # Return the report action
-        return self.env.ref('bn_profile_management.action_report_microfinance_application_form').report_action(self.partner_id)
+        return self.env.ref('bn_microfinance.action_report_microfinance_application_form').report_action(self.partner_id)
