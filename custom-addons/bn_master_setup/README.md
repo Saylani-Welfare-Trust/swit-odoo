@@ -1,38 +1,50 @@
 # Master Setup (`bn_master_setup`)
 
-Shared master data (lookup tables) used by the other `bn_*` modules and by
-the trust's feature modules (welfare, microfinance, medical equipment,
-Qurbani, direct deposit, advance donation). It has no workflow of its own.
-Other modules read these records.
+The **Master Setup** menu, and the lookup lists that many modules share.
+It has no workflow of its own.
 
-**Depends on:** `base`, `mail`
+**Depends on:** `base`, `mail`, `product`, `stock`, `account`
 
-## Masters
+## Shared masters
 
-| Model | Used for |
+| Model | Used by |
 | --- | --- |
-| `city` | City list |
-| `bank` | Bank list (POS provisional orders, direct deposit) |
-| `direct.deposit.account.setup` | Account prefix for direct deposits (default data) |
-| `disbursement.category` / `disbursement.application.type` | Welfare disbursement categories and application types (order type, product category, branches) |
-| `microfinance.scheme` (+ lines, `loan.product.line`) | Microfinance schemes: prefix, daily / monthly installments, recovery days, products, security deposit and installment amounts |
-| `medical.equipment.category` | Medical equipment with security deposit and approval flag |
-| `advance.donation.category` (+ lines) | Product groups for advance donations |
-| `product.master` (+ lines) | Product bundles (a product made of other products and quantities) |
-| `qurbani.day`, `qurbani.hijri`, `chand.raat` | Qurbani days, Hijri year and Chand Raat date (default data) |
-| `sms.template` | SMS message templates for donation notifications |
+| `city` | Profile Management, Welfare, Qurbani, Medical Equipment, Import Donation |
+| `bank` | POS (cheques, payment methods, closing session), Direct Deposit, Advance Donation, Welfare, bank reconciliation |
+| `area` | Profile Management, Welfare, Medical Equipment |
 
-## Where it sits
+## Feature configuration lives in its own module
 
-```mermaid
-flowchart LR
-    MS[bn_master_setup<br/>lookup tables] --> AN[bn_analytic_account_customization]
-    AN --> POS[bn_pos_custom_action / bn_pos_customization]
-    POS --> PM[bn_profile_management<br/>microfinance application uses schemes]
-    MS -.-> EXT[Feature modules outside this repo:<br/>welfare, microfinance, medical equipment,<br/>direct deposit, advance donation, Qurbani]
-```
+Every feature module keeps its own models, views and data, and only places
+its configuration menu under *Master Setup* (as Donation Box does with
+*Installation Category*):
+
+| Configuration | Module |
+| --- | --- |
+| Microfinance schemes, loan products, installments, security types | `bn_microfinance` |
+| Qurbani days, Hijri year, Chand Raat | `bn_qurbani` |
+| Disbursement categories / application types | `bn_welfare` |
+| Medical equipment categories | `bn_medical_equipment` |
+| Direct deposit account prefix | `bn_direct_deposit` |
+| Advance donation categories | `bn_advance_donation` |
+| Installation categories | `bn_donation_box` |
+| Profile types (tags), areas editing for profile managers | `bn_profile_management` |
+| Location options, sub zones | `bn_analytic_account_customization` |
+
+In 17.0.1.2.0 the stale copies of those models that were still in this
+module (not loaded since 29 Sep 2026) were removed, as well as three unused
+ones: `product.master`, `qurbani.hijri` and `sms.template`.
 
 ## Security groups
 
-*Access Root Menu*, *User*, *Manager*, *Audit*, *Admin*. Menus are under
-*Master Setup*.
+| Group | Can |
+| --- | --- |
+| *Access Root Menu* | See the Master Setup menu (implied by every group below, and by the managers / auditors of the feature modules) |
+| *User* | Read City, Bank and Area |
+| *Manager* | Create and edit City, Bank and Area |
+| *Audit* | Read-only |
+| *Admin* | Everything, including delete |
+| *Menu (legacy)* | Former single group; gives the menu only |
+
+Every internal user can read City, Bank and Area, so the forms of other
+modules can select them.

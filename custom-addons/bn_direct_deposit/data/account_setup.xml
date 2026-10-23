@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Default account prefix of direct deposits (only if none is configured). -->
+    <function model="direct.deposit.account.setup" name="_bn_setup_default_prefix"/>
+</odoo>

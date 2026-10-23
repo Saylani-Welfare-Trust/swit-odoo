@@ -22,6 +22,7 @@
         'views/direct_deposit.xml',
         'views/pos_direct_deposit.xml',
         'views/direct_deposit_account_setup.xml',
+        'data/account_setup.xml',
         
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
