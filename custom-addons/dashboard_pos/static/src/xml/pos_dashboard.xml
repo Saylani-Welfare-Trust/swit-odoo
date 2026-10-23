@@ -171,6 +171,9 @@
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
                             <h4><i class="fa fa-cube me-2 text-primary"/>Top Products</h4>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.open_view_all('products')">
+                                View All
+                            </button>
                         </div>
                         <div class="oh-card-body">
                             <div class="oh-chart-wrap">
@@ -183,6 +186,9 @@
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
                             <h4><i class="fa fa-tags me-2 text-primary"/>Top Product Categories</h4>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.open_view_all('categories')">
+                                View All
+                            </button>
                         </div>
                         <div class="oh-card-body">
                             <div class="oh-chart-wrap">

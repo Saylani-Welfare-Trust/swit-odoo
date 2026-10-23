@@ -355,6 +355,33 @@ export class PosDashboard extends Component {
             });
     }
 
+    // ---------------- view all actions ----------------
+    open_view_all(type) {
+        let res_model = '';
+        let name = '';
+        let context = {};
+
+        if (type === 'products') {
+            res_model = 'product.template';
+            name = 'All Products';
+        } else if (type === 'categories') {
+            res_model = 'product.category';
+            name = 'All Product Categories';
+            // If you want this button to open the PRODUCTS list filtered by category, 
+            // change res_model to 'product.template' and uncomment the line below:
+            // context = { 'search_default_categ_id': 1 }; 
+        }
+
+        this.actionService.doAction({
+            name: name,
+            type: 'ir.actions.act_window',
+            res_model: res_model,
+            views: [[false, 'list'], [false, 'form']],
+            target: 'current',
+            context: context,
+        });
+    }
+
     // ---------------- tile click actions (unchanged) ----------------
     pos_order_today(e) {
         const self = this;
