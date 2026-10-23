@@ -23,6 +23,12 @@
         <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
     </record>
 
+    <record id="donation_box_request_approve_reject_group" model="res.groups">
+        <field name="name">Request Approval / Reject</field>
+        <field name="category_id" ref="module_donation_box"/>
+        <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
+    </record>
+
     <record id="donation_box_complain_center_resolve_group" model="res.groups">
         <field name="name">Complain Resolve</field>
         <field name="category_id" ref="module_donation_box"/>
@@ -30,7 +36,7 @@
     </record>
 
     <record id="donation_box_registration_installation_approve_group" model="res.groups">
-        <field name="name">Approval</field>
+        <field name="name">Registration Approval</field>
         <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Day-to-day access: create and process Requests and Registrations. Cannot approve, resolve complaints, or change installations.</field>
     </record>
