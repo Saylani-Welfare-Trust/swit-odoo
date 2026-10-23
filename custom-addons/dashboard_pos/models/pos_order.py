@@ -52,7 +52,7 @@ class PosOrder(models.Model):
             domain.append(('date_order', '<=', date_to + ' 23:59:59'))
         return domain
 
-    def _get_order_domain(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+    def _get_order_domain(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         domain = []
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
@@ -79,6 +79,11 @@ class PosOrder(models.Model):
                     domain.append(('config_id.analytic_account_id', 'in', accounts.ids))
                 elif 'user_id' in self._fields:
                     domain.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
+
+        # Product Type Filter
+        if product_type and product_type in self.env['product.template']._fields:
+            domain.append(('lines.product_id.product_tmpl_id.' + product_type, '=', True))
+
         return domain
 
     def _get_order_ids_sql(self, domain):
@@ -93,9 +98,9 @@ class PosOrder(models.Model):
     # sales chart
     # ------------------------------------------------------------------
     @api.model
-    def get_department(self, option, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+    def get_department(self, option, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
         order_sql = self._get_order_ids_sql(domain)
 
         if "1=0" in order_sql:
@@ -138,9 +143,9 @@ class PosOrder(models.Model):
     # tiles + tables
     # ------------------------------------------------------------------
     @api.model
-    def get_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+    def get_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
         order_sql = self._get_order_ids_sql(domain)
         cr = self._cr
 
@@ -198,8 +203,8 @@ class PosOrder(models.Model):
     # tiles
     # ------------------------------------------------------------------
     @api.model
-    def get_refund_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+    def get_refund_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
         pos_orders = self.env['pos.order'].search(domain)
 
         default_date = datetime.today().date()
@@ -244,9 +249,9 @@ class PosOrder(models.Model):
     # charts
     # ------------------------------------------------------------------
     @api.model
-    def get_the_top_customer(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+    def get_the_top_customer(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
         order_sql = self._get_order_ids_sql(domain)
         
         if "1=0" in order_sql:
@@ -266,9 +271,9 @@ class PosOrder(models.Model):
         return [[r.get('amount_total') for r in docs], [r.get('customer') for r in docs]]
 
     @api.model
-    def get_the_top_products(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+    def get_the_top_products(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
         order_sql = self._get_order_ids_sql(domain)
         
         if "1=0" in order_sql:
@@ -295,9 +300,9 @@ class PosOrder(models.Model):
         ]
 
     @api.model
-    def get_the_top_categories(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+    def get_the_top_categories(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
         order_sql = self._get_order_ids_sql(domain)
         
         if "1=0" in order_sql:

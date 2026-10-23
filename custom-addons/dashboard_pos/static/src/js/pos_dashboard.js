@@ -17,9 +17,25 @@ export class PosDashboard extends Component {
             province_id: null,
             city_id: null,
             segment_id: null,
+            product_type: null,
             provinces: [],
             cities: [],
             segments: [],
+            // Add your product template boolean fields here
+            product_types: [
+                { value: 'is_course', name: 'Is Course' },
+                { value: 'is_medical_equipment', name: 'Is Medical Equipment' },
+                { value: 'is_livestock', name: 'Is Livestock' },
+                { value: 'is_donation_box', name: 'Is Donation Box' },
+                { value: 'is_microfinance', name: 'Is Microfinance' },
+                { value: 'is_advance_donation', name: 'Is Advance Donation' },
+                { value: 'is_service_charge', name: 'Is Service Charge' },
+                { value: 'is_qurbani_inventory', name: 'Is Qurbani Inventory' },
+                { value: 'is_pos_qurbani_inventory', name: 'Is POS Qurbani Inv.' },
+                { value: 'is_donation_in_kind', name: 'Is Donation In Kind' },
+                { value: 'is_livestock_product', name: 'Is Livestock Product' },
+                { value: 'is_kitchen', name: 'Is Kitchen' },
+            ],
             date_from: '',
             date_to: '',
             sales_period: 'pos_hourly_sales',
@@ -70,7 +86,6 @@ export class PosDashboard extends Component {
         const args = this._filter_args();
         const result = await this.orm.call('pos.order', 'get_refund_details', args);
         
-        // ADD .toLocaleString('en-US') TO FORMAT NUMBERS WITH COMMAS
         this.state.total_sale         = result['total_sale'];
         this.state.total_order_count  = (result['total_order_count'] || 0).toLocaleString('en-US');
         this.state.total_refund_count = (result['total_refund_count'] || 0).toLocaleString('en-US');
@@ -99,6 +114,7 @@ export class PosDashboard extends Component {
         this.state.province_id = null;
         this.state.city_id = null;
         this.state.segment_id = null;
+        this.state.product_type = null;
         this.state.date_from = '';
         this.state.date_to   = '';
         await this.refresh();
@@ -142,6 +158,7 @@ export class PosDashboard extends Component {
             this.state.province_id ? parseInt(this.state.province_id, 10) : null,
             this.state.city_id ? parseInt(this.state.city_id, 10) : null,
             this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
+            this.state.product_type || null,
         ];
     }
 
@@ -367,9 +384,6 @@ export class PosDashboard extends Component {
         } else if (type === 'categories') {
             res_model = 'product.category';
             name = 'All Product Categories';
-            // If you want this button to open the PRODUCTS list filtered by category, 
-            // change res_model to 'product.template' and uncomment the line below:
-            // context = { 'search_default_categ_id': 1 }; 
         }
 
         this.actionService.doAction({
