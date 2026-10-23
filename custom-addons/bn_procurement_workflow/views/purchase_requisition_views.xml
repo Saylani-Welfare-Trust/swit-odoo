@@ -37,11 +37,11 @@
                         groups="bn_procurement_workflow.group_procurement_manager"/>
 
                 <!-- A closed request whose Purchase Order covers only part of its Material Request,
-                     or a request sent out for quotation with only part of it: a new Purchase
-                     Request is created for what is neither ordered nor requested yet -->
+                     or a request whose RFQs cover only part of it: a new Purchase Request is
+                     created for what is not on an RFQ yet -->
                 <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
                         class="oe_highlight" invisible="state not in ('done', 'rfq_sent') or not has_pending_rfq_products"
-                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are neither ordered nor on an open Purchase Request yet. Continue?"/>
+                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not on an RFQ yet. Continue?"/>
 
                 <button string="Funds Available" name="action_funds_available" type="object"
                         class="oe_highlight" invisible="state != 'funds_check'"

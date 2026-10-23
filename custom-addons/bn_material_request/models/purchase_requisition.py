@@ -111,30 +111,52 @@ class PurchaseRequisition(models.Model):
         return reference
 
     def _get_request_shortfall(self):
-        """The confirmed Purchase Orders of the source Material Request - from
-        all its requisitions - and what its open requisitions still ask for,
-        matched against what that request needs purchased: {product: quantity
-        neither ordered nor requested yet, in the product's unit}. A closed
-        requisition no longer asks for what it did not order."""
+        """What the RFQs of the source Material Request - from all its
+        requisitions - cover, matched against what that request needs
+        purchased: {product: quantity not on an RFQ yet, in the product's
+        unit}. See _get_rfq_covered_quantities for what a requisition covers."""
         self.ensure_one()
         if not self.material_request_id:
             return {}
-        covered = self._get_ordered_quantities([('material_request_id', '=', self.material_request_id.id)])
+        covered = defaultdict(float)
         # sudo: requisitions the user may not all be allowed to read.
-        open_requests = self.sudo().search([
-            ('material_request_id', '=', self.material_request_id.id),
-            ('state', 'not in', ('done', 'cancel')),
-        ])
-        for requisition in open_requests:
-            for line, quantity in requisition._get_pending_rfq_line_quantities().items():
-                uom = line.product_id.uom_id
-                covered[line.product_id.id] += (line.product_uom_id or uom)._compute_quantity(quantity, uom)
+        requisitions = self.sudo().search([('material_request_id', '=', self.material_request_id.id)])
+        for requisition in requisitions:
+            for product_id, quantity in requisition._get_rfq_covered_quantities().items():
+                covered[product_id] += quantity
         shortfall = {}
         for product, (quantity, _description) in self._get_request_reference().items():
             missing = quantity - covered[product.id]
             if float_compare(missing, 0.0, precision_rounding=product.uom_id.rounding) > 0:
                 shortfall[product] = missing
         return shortfall
+
+    def _get_rfq_covered_quantities(self):
+        """{product id: quantity this requisition covers, in the product's
+        unit}. What its confirmed Purchase Orders order, and on an open
+        requisition what its other RFQs quote for: the RFQs of several vendors
+        quote for the same quantities, so the largest one counts, not their
+        sum. An open requisition without any RFQ yet covers what its lines ask
+        for. A closed or cancelled requisition no longer asks for what it did
+        not order."""
+        self.ensure_one()
+        covered = self._get_ordered_quantities([('requisition_id', '=', self.id)])
+        if self.state in ('done', 'cancel'):
+            return covered
+        # sudo: whoever opens the requisition need not be a purchase user.
+        rfqs = self.sudo().purchase_ids.filtered(lambda rfq: rfq.state != 'cancel')
+        if not rfqs:
+            for line in self.line_ids:
+                uom = line.product_id.uom_id
+                covered[line.product_id.id] += (line.product_uom_id or uom)._compute_quantity(line.product_qty, uom)
+            return covered
+        for rfq in rfqs.filtered(lambda rfq: rfq.state not in ('purchase', 'done')):
+            quoted = defaultdict(float)
+            for order_line in rfq.order_line:
+                quoted[order_line.product_id.id] += order_line.product_uom_qty
+            for product_id, quantity in quoted.items():
+                covered[product_id] = max(covered[product_id], quantity)
+        return covered
 
     def _has_newer_request(self):
         """Whether the source Material Request has a more recent requisition

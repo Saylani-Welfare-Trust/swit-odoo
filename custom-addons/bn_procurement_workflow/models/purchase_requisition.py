@@ -46,15 +46,13 @@ class PurchaseRequisition(models.Model):
 
     # The Purchase Order may cover only part of what the Material Request asks
     # for (fewer products, or a lower quantity), which leaves the request
-    # closed with something that was never ordered. The request itself may
-    # also have been sent out for quotation with less than the Material
-    # Request asks for.
+    # closed with something that was never ordered. The RFQs may also have
+    # been sent out for less than the Material Request asks for.
     has_pending_rfq_products = fields.Boolean(
         compute='_compute_has_pending_rfq_products',
         help='Whether the Material Request asks for products or quantities that '
-             'are neither on a confirmed Purchase Order nor on an open Purchase '
-             'Request yet, and no more recent Purchase Request has been created '
-             'for them.')
+             'are not on an RFQ yet, and no more recent Purchase Request has been '
+             'created for them.')
 
     # Automatic Shariah Law balance check for the Funds Availability gate
     funds_shariah_balance = fields.Monetary(
@@ -173,11 +171,11 @@ class PurchaseRequisition(models.Model):
                  'purchase_ids.order_line.product_id', 'purchase_ids.order_line.product_qty',
                  'line_ids.product_id', 'line_ids.product_qty')
     def _compute_has_pending_rfq_products(self):
-        """The confirmed Purchase Orders and the open requisitions are matched
-        against the Material Request, product by product and quantity by
-        quantity: any difference is pending. Only the latest requisition of a
-        Material Request offers to act on it, so the same remainder is never
-        requested twice."""
+        """The RFQs of the Material Request are matched against it, product by
+        product and quantity by quantity: any difference is pending, and once
+        every product and quantity is on an RFQ nothing is. Only the latest
+        requisition of a Material Request offers to act on it, so the same
+        remainder is never requested twice."""
         for requisition in self:
             requisition.has_pending_rfq_products = bool(
                 requisition.material_request_id
@@ -186,11 +184,11 @@ class PurchaseRequisition(models.Model):
 
     def action_create_remaining_request(self):
         """A closed request whose Purchase Order covers only part of its Material
-        Request, or a request sent out for quotation with only part of it:
-        create a new Purchase Request for the products and quantities that are
-        neither ordered nor requested yet. This one is left as it is. The new
-        one starts in Procurement Manager Approval, ready for RFQs: the
-        Procurement Manager creating it is the one who would approve it."""
+        Request, or a request whose RFQs cover only part of it: create a new
+        Purchase Request for the products and quantities that are not on an
+        RFQ yet. This one is left as it is. The new one starts in Procurement
+        Manager Approval, ready for RFQs: the Procurement Manager creating it
+        is the one who would approve it."""
         self.ensure_one()
         if self.state not in ('done', 'rfq_sent'):
             raise ValidationError(_('This request is neither Closed nor in RFQ Sent state.'))
@@ -202,14 +200,14 @@ class PurchaseRequisition(models.Model):
             raise ValidationError(_('A more recent Purchase Request already exists for this Material Request.'))
         shortfall = self._get_request_shortfall()
         if not shortfall:
-            raise ValidationError(_('Everything on the Material Request has already been ordered or requested.'))
+            raise ValidationError(_('Every product and quantity of the Material Request is already on an RFQ.'))
         new_request = self._create_remaining_request()
         new_request.action_procurement_approve()
         products = ', '.join(
             '%s (%g %s)' % (product.display_name, quantity, product.uom_id.name)
             for product, quantity in shortfall.items())
         self.message_post(body=_(
-            '%(user)s created %(request)s for what is not ordered or requested yet: %(products)s.',
+            '%(user)s created %(request)s for what is not on an RFQ yet: %(products)s.',
             user=self.env.user.display_name,
             request=new_request._get_html_link(), products=products))
         new_request.message_post(body=_(
