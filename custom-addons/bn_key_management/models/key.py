@@ -16,8 +16,7 @@ KEY_BUNCH_LIMIT = 50
 class Key(models.Model):
     _name = 'key'
     _description = 'Key'
-    # _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
     _bn_guarded_fields = ('state', 'key_bunch_id')
 
     donation_box_request_id = fields.Many2one('donation.box.request', string="Donation Box Request")
