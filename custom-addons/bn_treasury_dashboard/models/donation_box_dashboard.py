@@ -120,3 +120,23 @@ class DonationBoxDashboard(models.AbstractModel):
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
         }
+        
+        
+    @api.model
+    def get_monthly_summary(self):
+        # Here you can query your actual models to fill in these numbers.
+        # For example: 
+        # cash_bags = self.env['pos.order'].search_count([('state', '=', 'paid')])
+        
+        return {
+            'cash_bags': 0,
+            'nil_boxes': 0,
+            'compliant_boxes': self.env['donation.box.complain.center'].search_count([]),
+            'pending_shops': 0,
+            'visited_shops': 0,
+            'unvisited_shops': 0,
+            'donation': 0.0, # Format as needed
+            'comp_last_month': 0.0,
+            'diff_last_month': 0.0,
+            'new_shops': self.env['donation.box.registration.installation'].search_count([]),
+        }

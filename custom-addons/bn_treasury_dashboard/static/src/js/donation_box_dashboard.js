@@ -23,6 +23,11 @@ export class DonationBoxDashboard extends Component {
                 available: 0, installed: 0, closed: 0,
                 active_complaints: 0, resolved_complaints: 0, not_recovered: 0
             },
+            monthly_summary: {
+                cash_bags: 0, nil_boxes: 0, compliant_boxes: 0, pending_shops: 0,
+                visited_shops: 0, unvisited_shops: 0, donation: 0, comp_last_month: 0,
+                diff_last_month: 0, new_shops: 0
+            },
             chart_comp_status: { labels: [], data: [] },
             chart_installs: { labels: [], data: [] },
             recent_complaints: [],
@@ -78,6 +83,8 @@ export class DonationBoxDashboard extends Component {
             this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
             this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
         ]);
+        const summary = await this.orm.call('donation.box.dashboard', 'get_monthly_summary', []);
+        this.state.monthly_summary = summary;
         
         this.state.kpi = data.kpi;
         this.state.chart_comp_status = data.chart_comp_status;
