@@ -112,7 +112,7 @@ class RiderScheduleLine(models.TransientModel):
         if not self.box_status:
             raise ValidationError('Please select the box status first.')
 
-        complaint = self.env['donation.box.complain.center'].create({
+        self.env['donation.box.complain.center'].create({
             'donation_box_registration_installation_id': self.donation_box_registration_installation_id.id,
             'rider_id': self.rider_id.id,
             'lot_id': self.lot_id.id,
@@ -120,10 +120,6 @@ class RiderScheduleLine(models.TransientModel):
             'box_status': self.box_status,
             'remarks': self.remarks,
         })
-        # Moves the complaint from Draft to Process (its own required-field checks
-        # apply here). The registration itself is only closed later, when a Complain
-        # Officer resolves the complaint - not immediately on report, unreviewed.
-        complaint.action_process()
 
         # Hide button after complaint generation
         self.is_complain_generated = True

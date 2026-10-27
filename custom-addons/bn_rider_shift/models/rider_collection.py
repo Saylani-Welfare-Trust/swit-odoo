@@ -100,9 +100,7 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
-        # Only the collections of the cashier's city (record rules), read as sudo
-        # for the rider / box details.
-        collection_ids = self.sudo().browse(self.search([('state', '=', 'donation_submit')]).ids)
+        collection_ids = self.sudo().search([('amount', '!=', 0), ('state', '=', 'donation_submit')])
 
         if not collection_ids:
             return {
@@ -117,7 +115,7 @@ class RiderCollection(models.Model):
                 'day': collection.day,
                 'date': collection.date,
                 'lot_id': collection.lot_id.id if collection.lot_id else False,
-                'box_no': collection.remarks or (collection.lot_id.name if collection.lot_id else ''),
+                'box_no': collection.lot_id.name if collection.lot_id else '',
                 'shop_name': collection.shop_name,
                 'contact_person': collection.contact_person,
                 'contact_number': collection.contact_number,
