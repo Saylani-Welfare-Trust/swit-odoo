@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- City access, see bn_donation_box/security/record_rule.xml. -->
+
+    <!-- Rider Shift: city of a day of its schedule -->
+    <record id="rider_shift_own_city_rule" model="ir.rule">
+        <field name="name">Rider Shift: Own City</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_shift"/>
+        <field name="domain_force">[('schedule_day_ids.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rider_shift_all_cities_rule" model="ir.rule">
+        <field name="name">Rider Shift: All Cities</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_shift"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Rider Schedule Day -->
+    <record id="rider_schedule_day_own_city_rule" model="ir.rule">
+        <field name="name">Rider Schedule Day: Own City</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_schedule_day"/>
+        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rider_schedule_day_all_cities_rule" model="ir.rule">
+        <field name="name">Rider Schedule Day: All Cities</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_schedule_day"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Rider Collection: city of its registration -->
+    <record id="rider_collection_own_city_rule" model="ir.rule">
+        <field name="name">Rider Collection: Own City</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_collection"/>
+        <field name="domain_force">[('donation_box_registration_installation_id.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rider_collection_all_cities_rule" model="ir.rule">
+        <field name="name">Rider Collection: All Cities</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_collection"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Foreign Currency: city of the registration of its box -->
+    <record id="foreign_currency_own_city_rule" model="ir.rule">
+        <field name="name">Foreign Currency: Own City</field>
+        <field name="model_id" ref="bn_rider_shift.model_foreign_currency"/>
+        <field name="domain_force">[('lot_id.donation_box_registration_ids.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="foreign_currency_all_cities_rule" model="ir.rule">
+        <field name="name">Foreign Currency: All Cities</field>
+        <field name="model_id" ref="bn_rider_shift.model_foreign_currency"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Counterfeit Notes: city of the registration of its box -->
+    <record id="counterfeit_notes_own_city_rule" model="ir.rule">
+        <field name="name">Counterfeit Notes: Own City</field>
+        <field name="model_id" ref="bn_rider_shift.model_counterfeit_notes"/>
+        <field name="domain_force">[('lot_id.donation_box_registration_ids.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="counterfeit_notes_all_cities_rule" model="ir.rule">
+        <field name="name">Counterfeit Notes: All Cities</field>
+        <field name="model_id" ref="bn_rider_shift.model_counterfeit_notes"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

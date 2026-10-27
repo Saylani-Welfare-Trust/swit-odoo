@@ -1,4 +1,5 @@
 from . import bn_workflow
+from . import bn_city_access
 from . import stock_warehouse
 from . import donation_box_request
 from . import donation_box_request_line
