@@ -17,14 +17,20 @@ export class TreasuryDashboard extends Component {
             province_id: '',
             city_id: '',
             zone_id: '',
-            segment_id: '',
+            segment_l1: '',
+            segment_l2: '',
+            segment_l3: '',
+            segment_l4: '',
             amount_min: '',
             amount_max: '',
             analytic_accounts: [],
             provinces: [],
             cities: [],
             zones: [],
-            segments: [],
+            segments_l1: [],
+            segments_l2: [],
+            segments_l3: [],
+            segments_l4: [],
             currency: { symbol: '$', position: 'before' },
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
@@ -34,6 +40,7 @@ export class TreasuryDashboard extends Component {
         onWillStart(async () => { await this.fetchData(); });
     }
 
+    // Location Cascades
     get filteredCities() {
         if (!this.state.province_id) return this.state.cities;
         const pId = parseInt(this.state.province_id, 10);
@@ -62,8 +69,32 @@ export class TreasuryDashboard extends Component {
         return this.state.analytic_accounts;
     }
 
+    // Segment Cascades
+    get filteredSegmentsL2() {
+        if (!this.state.segment_l1) return [];
+        const pId = parseInt(this.state.segment_l1, 10);
+        return this.state.segments_l2.filter(s => s.parent_id === pId);
+    }
+    get filteredSegmentsL3() {
+        if (!this.state.segment_l2) return [];
+        const pId = parseInt(this.state.segment_l2, 10);
+        return this.state.segments_l3.filter(s => s.parent_id === pId);
+    }
+    get filteredSegmentsL4() {
+        if (!this.state.segment_l3) return [];
+        const pId = parseInt(this.state.segment_l3, 10);
+        return this.state.segments_l4.filter(s => s.parent_id === pId);
+    }
+
     async fetchData() {
         try {
+            // Determine which segment level is actually selected
+            let effective_segment_id = null;
+            if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
+            else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
+            else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
+            else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
+
             const data = await this.env.services.rpc("/treasury/dashboard/data", {
                 date_from: this.state.date_from,
                 date_to: this.state.date_to,
@@ -71,7 +102,7 @@ export class TreasuryDashboard extends Component {
                 province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
                 city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
                 zone_id: this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
-                segment_id: this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
+                segment_id: effective_segment_id,
                 amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
                 amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
             });
@@ -79,7 +110,10 @@ export class TreasuryDashboard extends Component {
             this.state.provinces = data.provinces || [];
             this.state.cities = data.cities || [];
             this.state.zones = data.zones || [];
-            this.state.segments = data.segments || [];
+            this.state.segments_l1 = data.segments_l1 || [];
+            this.state.segments_l2 = data.segments_l2 || [];
+            this.state.segments_l3 = data.segments_l3 || [];
+            this.state.segments_l4 = data.segments_l4 || [];
             this.state.currency  = data.currency;
             this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
             this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
@@ -89,21 +123,37 @@ export class TreasuryDashboard extends Component {
         }
     }
 
+    // Location Handlers
     async onchange_province() {
         this.state.city_id = '';
         this.state.zone_id = '';
         this.state.branch_id = '';
         await this.applyFilter();
     }
-
     async onchange_city() {
         this.state.zone_id = '';
         this.state.branch_id = '';
         await this.applyFilter();
     }
-    
     async onchange_zone() {
         this.state.branch_id = '';
+        await this.applyFilter();
+    }
+
+    // Segment Handlers
+    async onchange_segment_l1() {
+        this.state.segment_l2 = '';
+        this.state.segment_l3 = '';
+        this.state.segment_l4 = '';
+        await this.applyFilter();
+    }
+    async onchange_segment_l2() {
+        this.state.segment_l3 = '';
+        this.state.segment_l4 = '';
+        await this.applyFilter();
+    }
+    async onchange_segment_l3() {
+        this.state.segment_l4 = '';
         await this.applyFilter();
     }
 
@@ -118,7 +168,10 @@ export class TreasuryDashboard extends Component {
         this.state.province_id = '';
         this.state.city_id = '';
         this.state.zone_id = '';
-        this.state.segment_id = '';
+        this.state.segment_l1 = '';
+        this.state.segment_l2 = '';
+        this.state.segment_l3 = '';
+        this.state.segment_l4 = '';
         this.state.amount_min = '';
         this.state.amount_max = '';
         this.applyFilter();

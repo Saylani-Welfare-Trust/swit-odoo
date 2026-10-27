@@ -10,23 +10,25 @@ class TreasuryDashboardController(http.Controller):
     # Helpers for Hierarchy
     # ------------------------------------------------------------------
     def _get_location_hierarchy(self):
-        # Level 1: Province
+        # Location Hierarchy
         provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        
-        # Level 2: City
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        
-        # Level 3: Zone
         zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
         
-        # Segment
-        segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
+        # Segment Hierarchy (4 Levels)
+        seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+        seg_l2 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
+        seg_l3 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
+        seg_l4 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
         
         return (
             [{'id': p.id, 'name': p.name} for p in provinces],
             [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
             [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
-            [{'id': s.id, 'name': s.display_name} for s in segments]
+            [{'id': s.id, 'name': s.name} for s in seg_l1],
+            [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l2],
+            [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l3],
+            [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l4]
         )
 
     def _get_analytic_accounts(self):
@@ -49,7 +51,6 @@ class TreasuryDashboardController(http.Controller):
             city_id = False
             province_id = False
             
-            # Walk up the tree to find the exact parents
             parent = a.parent_id
             if parent:
                 zone_id = parent.id
@@ -188,7 +189,7 @@ class TreasuryDashboardController(http.Controller):
                            analytic_account_id=None, province_id=None, city_id=None, zone_id=None, segment_id=None, 
                            amount_min=None, amount_max=None, **kwargs):
         currency = request.env.company.currency_id
-        provinces, cities, zones, segments = self._get_location_hierarchy()
+        provinces, cities, zones, seg_l1, seg_l2, seg_l3, seg_l4 = self._get_location_hierarchy()
 
         return {
             'currency': {
@@ -199,7 +200,10 @@ class TreasuryDashboardController(http.Controller):
             'provinces': provinces,
             'cities': cities,
             'zones': zones,
-            'segments': segments,
+            'segments_l1': seg_l1,
+            'segments_l2': seg_l2,
+            'segments_l3': seg_l3,
+            'segments_l4': seg_l4,
             'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
             'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
             'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
