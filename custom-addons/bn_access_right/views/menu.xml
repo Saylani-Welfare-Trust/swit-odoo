@@ -37,5 +37,14 @@
             ])
         ]"/>
     </record>
+    
+    <!-- Dashboard -->
+    <record id="account.menu_finance" model="ir.ui.menu">
+        <field name="groups_id" eval="[
+            (4, [
+                ref('bn_access_right.custom_accounting_menu_group'),
+            ])
+        ]"/>
+    </record>
 
 </odoo>
