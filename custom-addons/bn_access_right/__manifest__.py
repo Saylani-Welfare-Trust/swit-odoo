@@ -7,6 +7,7 @@
     'category': 'BytesNode/Access Right',
     'depends': [
         'hr_attendance',
+        'spreadsheet_dashboard',
     ],
     'data': [
         'data/ir_module_category.xml',

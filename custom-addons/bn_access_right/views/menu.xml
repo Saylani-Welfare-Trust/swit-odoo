@@ -24,7 +24,16 @@
     <record id="contacts.menu_contacts" model="ir.ui.menu">
         <field name="groups_id" eval="[
             (6, 0, [
-                ref('bn_access_right.custom_app_menu_group'),
+                ref('bn_access_right.custom_contacts_menu_group'),
+            ])
+        ]"/>
+    </record>
+    
+    <!-- Dashboard -->
+    <record id="spreadsheet_dashboard.spreadsheet_dashboard_menu_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[
+            (6, 0, [
+                ref('bn_access_right.custom_dashboard_menu_group'),
             ])
         ]"/>
     </record>

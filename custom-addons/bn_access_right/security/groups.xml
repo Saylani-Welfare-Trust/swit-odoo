@@ -21,5 +21,11 @@
         <field name="name">Contacts</field>
         <field name="category_id" ref="base.module_category_administration_administration"/>
     </record>
+    
+    <!-- Dashboard -->
+    <record id="custom_dashboard_menu_group" model="res.groups">
+        <field name="name">Dashboard</field>
+        <field name="category_id" ref="base.module_category_administration_administration"/>
+    </record>
 
 </odoo>
