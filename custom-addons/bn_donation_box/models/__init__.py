@@ -12,3 +12,4 @@ from . import stock_lot
 from . import stock_move
 from . import installation_category
 from . import res_company
+from . import hr_employee
