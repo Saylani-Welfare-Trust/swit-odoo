@@ -20,6 +20,7 @@ export class DonationBoxDashboard extends Component {
             zones: [],
             branches: [],
             kpi: {
+                draft_boxes: 0,
                 available: 0, installed: 0, closed: 0,
                 draft_complaints: 0, process_complaints: 0, resolved_complaints: 0,
                 total_collection: '0.00',

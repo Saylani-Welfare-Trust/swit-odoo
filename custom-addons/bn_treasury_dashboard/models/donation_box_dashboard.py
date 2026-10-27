@@ -60,6 +60,7 @@ class DonationBoxDashboard(models.TransientModel):
         Collection = self.env['rider.collection']
 
         # --- Box KPIs ---
+        draft_boxes = Registration.search_count(reg_domain + [('status', '=', 'draft')])
         available = Registration.search_count(reg_domain + [('status', '=', 'available')])
         installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
         closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
@@ -128,6 +129,7 @@ class DonationBoxDashboard(models.TransientModel):
 
         return {
             'kpi': {
+                'draft_boxes': draft_boxes,
                 'available': available,
                 'installed': installed,
                 'closed': closed,

@@ -80,7 +80,7 @@
 
             <!-- ==================== KPI TILES ==================== -->
             <div class="row g-3 mb-4">
-                <!-- Row 1: Collection Status -->
+                <!-- Collection Status -->
                 <div class="col-md-6 col-lg-3 col-xl-2">
                     <div class="oh-kpi-card oh-kpi-green">
                         <i class="fa fa-money oh-kpi-icon"/>
@@ -110,7 +110,14 @@
                     </div>
                 </div>
 
-                <!-- Row 2: Boxes -->
+                <!-- Boxes -->
+                <div class="col-md-6 col-lg-3 col-xl-2">
+                    <div class="oh-kpi-card oh-kpi-secondary" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'draft']])">
+                        <i class="fa fa-file-text-o oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Draft Boxes</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.draft_boxes"/></div>
+                    </div>
+                </div>
                 <div class="col-md-6 col-lg-3 col-xl-2">
                     <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'available']])">
                         <i class="fa fa-check-circle oh-kpi-icon"/>
@@ -128,12 +135,12 @@
                 <div class="col-md-6 col-lg-3 col-xl-2">
                     <div class="oh-kpi-card oh-kpi-orange" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'close']])">
                         <i class="fa fa-archive oh-kpi-icon"/>
-                        <div class="oh-kpi-label">Closed</div>
+                        <div class="oh-kpi-label">Closed Boxes</div>
                         <div class="oh-kpi-value"><t t-esc="state.kpi.closed"/></div>
                     </div>
                 </div>
 
-                <!-- Row 3: Complaints -->
+                <!-- Complaints -->
                 <div class="col-md-6 col-lg-3 col-xl-2">
                     <div class="oh-kpi-card oh-kpi-light-green" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'draft']])">
                         <i class="fa fa-edit oh-kpi-icon"/>
