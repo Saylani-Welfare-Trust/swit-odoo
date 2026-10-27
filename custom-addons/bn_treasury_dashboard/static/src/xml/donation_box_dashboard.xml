@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="DonationBoxDashboard">
+        <div class="pos-dash-v2">
+            <!-- Header -->
+            <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fa fa-inbox me-2 text-primary"/>Donation Box Dashboard</h2>
+                    <p>Overview of Boxes, Installations and Complaints</p>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card oh-filter-card mb-4">
+                <div class="card-body p-3">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" t-model="state.date_from" t-on-change="applyFilter"/>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" t-model="state.date_to" t-on-change="applyFilter"/>
+                        </div>
+                        <div class="col-xl-8 col-lg-6 col-md-4 d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" t-on-click="clearFilter">
+                                <i class="fa fa-times me-1"/>Clear
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('this_month')">This Month</button>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('last_month')">Last Month</button>
+                            <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('this_year')">This Year</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI Tiles -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-green" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'available']])">
+                        <i class="fa fa-check-circle oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Available Boxes</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.available"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-blue" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'installed']])">
+                        <i class="fa fa-building oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Installed</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.installed"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'close']])">
+                        <i class="fa fa-archive oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Closed</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.closed"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-orange" t-on-click="() => this.openView('donation.box.complain.center', [['status', 'in', ['draft', 'process']]])">
+                        <i class="fa fa-exclamation-triangle oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Active Complaints</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.active_complaints"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-teal" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'resolved']])">
+                        <i class="fa fa-check oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Resolved</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.resolved_complaints"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-red" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'not_recovered']])">
+                        <i class="fa fa-times-circle oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Not Recovered</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.not_recovered"/></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-pie-chart me-2 text-primary"/>Complaints by Box Status</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap" style="height: 300px;">
+                                <canvas id="db_chart_complaints"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-bar-chart me-2 text-primary"/>Installations by Month</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap" style="height: 300px;">
+                                <canvas id="db_chart_installs"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tables -->
+            <div class="row g-3">
+                <!-- Recent Registrations -->
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-list me-2 text-primary"/>Recent Registrations</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
+                            <table class="table oh-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Shop Name</th>
+                                        <th>Box / Lot</th>
+                                        <th>City</th>
+                                        <th class="text-end">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.recent_registrations" t-as="reg" t-key="reg.id">
+                                        <tr>
+                                            <td><t t-esc="reg.shop_name"/></td>
+                                            <td><t t-esc="reg.lot_name"/></td>
+                                            <td><t t-esc="reg.city_name"/></td>
+                                            <td class="text-end"><t t-esc="reg.installation_date"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.recent_registrations.length">
+                                        <tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Complaints -->
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-wrench me-2 text-primary"/>Recent Complaints</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
+                            <table class="table oh-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Shop Name</th>
+                                        <th>Box / Lot</th>
+                                        <th>Box Status</th>
+                                        <th class="text-end">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.recent_complaints" t-as="comp" t-key="comp.id">
+                                        <tr>
+                                            <td><t t-esc="comp.shop_name"/></td>
+                                            <td><t t-esc="comp.lot_name"/></td>
+                                            <td><t t-esc="formatStateName(comp.box_status)"/></td>
+                                            <td class="text-end">
+                                                <span t-attf-class="badge {{ getStateColor(comp.status) }}">
+                                                    <t t-esc="formatStateName(comp.status)"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.recent_complaints.length">
+                                        <tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

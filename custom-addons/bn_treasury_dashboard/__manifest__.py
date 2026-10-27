@@ -8,11 +8,15 @@
     'data': [
         'security/ir.model.access.csv',
         'views/treasury_dashboard_views.xml',
+        'views/donation_box_dashboard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
             'bn_treasury_dashboard/static/src/js/dashboard.js',
             'bn_treasury_dashboard/static/src/xml/dashboard.xml',
+            'bn_treasury_dashboard/static/src/js/donation_box_dashboard.js',
+            'bn_treasury_dashboard/static/src/js/donation_box_dashboard.xml',
+            
         ],
     },
     'installable': True,
