@@ -9,6 +9,7 @@ class POSCheque(models.Model):
         cleared - now that this one is, let its POS order's livestock lines
         (if any) fall into livestock."""
         res = super().action_clear()
-        pos_orders = self.env['pos.order'].search([('pos_cheque_id', 'in', self.ids)])
+        # Treasury may have no POS rights: its group was checked by action_clear
+        pos_orders = self.env['pos.order'].sudo().search([('pos_cheque_id', 'in', self.ids)])
         pos_orders._create_livestock_slaughter_records()
         return res

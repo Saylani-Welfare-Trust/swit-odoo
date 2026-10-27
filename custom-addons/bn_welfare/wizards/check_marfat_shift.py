@@ -65,9 +65,10 @@ class WelfareLineDisbursementPopup(models.TransientModel):
                 "Please upload at least one image or video in the Media field "
                 "before marking this line as Done."
             ))
-        self.line_id.write({'media_ids': [(6, 0, self.media_ids.ids)]})
+        if self.line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Done."))
+        self.line_id.write({'media_ids': [(6, 0, self.media_ids.ids)], 'state': 'disbursed'})
         self.welfare_id._auto_disburse_if_all_lines_delivered()
-        self.line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
 
 
@@ -128,9 +129,10 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
                 "Please upload at least one image or video in the Media field "
                 "before marking this line as Done."
             ))
-        self.recurring_line_id.write({'media_ids': [(6, 0, self.media_ids.ids)]})
+        if self.recurring_line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Done."))
+        self.recurring_line_id.write({'media_ids': [(6, 0, self.media_ids.ids)], 'state': 'disbursed'})
         self.welfare_id._auto_disburse_if_all_lines_delivered()
-        self.recurring_line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
 
     def action_mark_pending(self):

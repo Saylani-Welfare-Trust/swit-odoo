@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_category_welfare" model="ir.module.category">
+        <field name="name">Welfare</field>
+        <field name="sequence">14</field>
+    </record>
+
+    <!-- The groups were in the hidden category, so they could not be given
+         from the user form. group.xml is noupdate: move them here on every
+         install / upgrade. -->
+    <function model="res.groups" name="write">
+        <value eval="[ref('welfare_group'), ref('welfare_pos_action_group'), ref('group_welfare_hod'), ref('group_welfare_member'), ref('group_marfat_officer'), ref('group_welfare_profile'), ref('welfare_consolidated_group'), ref('group_fetch_institution'), ref('group_individual_disbursement'), ref('group_institutional_disbursement'), ref('group_bn_welfare_user'), ref('group_bn_welfare_committee'), ref('group_bn_welfare_manager')]"/>
+        <value eval="{'category_id': ref('module_category_welfare')}"/>
+    </function>
+
+</odoo>

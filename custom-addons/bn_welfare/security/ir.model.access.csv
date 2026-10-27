@@ -1,18 +1,33 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_welfare,welfare,bn_welfare.model_welfare,,1,1,1,1
-access_welfare_line,welfare.line,bn_welfare.model_welfare_line,,1,1,1,1
-access_welfare_recurring_line,welfare.recurring.line,bn_welfare.model_welfare_recurring_line,,1,1,1,1
-access_welfare_institution_fetch_log,welfare.institution.fetch.log,bn_welfare.model_welfare_institution_fetch_log,,1,1,1,1
-access_welfare_committee_member,welfare.committee.member,bn_welfare.model_welfare_committee_member,,1,1,1,1
-access_welfare_inquiry_report,welfare.inquiry.report,bn_welfare.model_welfare_inquiry_report,,1,1,1,1
-access_welfare_madrasa,welfare.madrasa,bn_welfare.model_welfare_madrasa,,1,1,1,1
-access_welfare_masjid,welfare.masjid,bn_welfare.model_welfare_masjid,,1,1,1,1
-access_welfare_teacher,welfare.teacher,bn_welfare.model_welfare_teacher,,1,1,1,1
+access_welfare,welfare,bn_welfare.model_welfare,base.group_user,1,1,1,0
+access_welfare_line,welfare.line,bn_welfare.model_welfare_line,base.group_user,1,1,1,0
+access_welfare_recurring_line,welfare.recurring.line,bn_welfare.model_welfare_recurring_line,base.group_user,1,1,1,0
+access_welfare_institution_fetch_log,welfare.institution.fetch.log,bn_welfare.model_welfare_institution_fetch_log,base.group_user,1,1,1,0
+access_welfare_committee_member,welfare.committee.member,bn_welfare.model_welfare_committee_member,base.group_user,1,1,1,0
+access_welfare_inquiry_report,welfare.inquiry.report,bn_welfare.model_welfare_inquiry_report,base.group_user,1,1,1,0
+access_welfare_madrasa,welfare.madrasa,bn_welfare.model_welfare_madrasa,base.group_user,1,1,1,0
+access_welfare_masjid,welfare.masjid,bn_welfare.model_welfare_masjid,base.group_user,1,1,1,0
+access_welfare_teacher,welfare.teacher,bn_welfare.model_welfare_teacher,base.group_user,1,1,1,0
 access_welfare_fields_wizard_user,access_welfare_fields_wizard_user,model_welfare_fields_wizard,base.group_user,1,1,1,1
 access_welfare_line_disbursement_popup,welfare.line.disbursement.popup,bn_welfare.model_welfare_line_disbursement_popup,base.group_user,1,1,1,0
 access_welfare_recurring_line_disbursement_popup,welfare.recurring.line.disbursement.popup,bn_welfare.model_welfare_recurring_line_disbursement_popup,base.group_user,1,1,1,0
-access_check_marfat_shift,check.marfat.shift,bn_welfare.model_check_marfat_shift,,1,1,1,1
-access_welfare_approval_limit,access_welfare_approval_limit,model_welfare_approval_limit,,1,1,1,1
+access_check_marfat_shift,check.marfat.shift,bn_welfare.model_check_marfat_shift,base.group_user,1,1,1,1
+access_welfare_approval_limit,access_welfare_approval_limit,model_welfare_approval_limit,base.group_user,1,1,1,0
 access_welfare_document_image_user,welfare.document.image user,model_welfare_document_image,base.group_user,1,1,1,1
-access_disbursement_application_type,access.disbursement.application.type,model_disbursement_application_type,,1,1,1,1
-access_disbursement_category,access.disbursement.category,model_disbursement_category,,1,1,1,1
+access_disbursement_application_type,access.disbursement.application.type,model_disbursement_application_type,base.group_user,1,1,1,0
+access_disbursement_category,access.disbursement.category,model_disbursement_category,base.group_user,1,1,1,0
+access_welfare_welfare_user,welfare welfare user,bn_welfare.model_welfare,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_line_welfare_user,welfare.line welfare user,bn_welfare.model_welfare_line,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_recurring_line_welfare_user,welfare.recurring.line welfare user,bn_welfare.model_welfare_recurring_line,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_institution_fetch_log_welfare_user,welfare.institution.fetch.log welfare user,bn_welfare.model_welfare_institution_fetch_log,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_committee_member_welfare_user,welfare.committee.member welfare user,bn_welfare.model_welfare_committee_member,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_inquiry_report_welfare_user,welfare.inquiry.report welfare user,bn_welfare.model_welfare_inquiry_report,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_madrasa_welfare_user,welfare.madrasa welfare user,bn_welfare.model_welfare_madrasa,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_masjid_welfare_user,welfare.masjid welfare user,bn_welfare.model_welfare_masjid,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_teacher_welfare_user,welfare.teacher welfare user,bn_welfare.model_welfare_teacher,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_approval_limit_welfare_user,access_welfare_approval_limit welfare user,model_welfare_approval_limit,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_disbursement_application_type_welfare_user,access.disbursement.application.type welfare user,model_disbursement_application_type,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_disbursement_category_welfare_user,access.disbursement.category welfare user,model_disbursement_category,bn_welfare.group_bn_welfare_user,1,1,1,1
+access_welfare_admin,welfare admin,bn_welfare.model_welfare,base.group_system,1,1,1,1
+access_welfare_line_admin,welfare.line admin,bn_welfare.model_welfare_line,base.group_system,1,1,1,1
+access_welfare_recurring_line_admin,welfare.recurring.line admin,bn_welfare.model_welfare_recurring_line,base.group_system,1,1,1,1

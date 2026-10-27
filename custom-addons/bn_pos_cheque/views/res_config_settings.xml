@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_inherit_bn_pos_cheque" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.bn.pos.cheque</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <block id="bank_cash" position="inside">
+                <setting string="Cheque Clearing Account" help="Credited when treasury clears a POS cheque. Empty: the receivable account the POS session closing posted the cheque to.">
+                    <field name="pos_cheque_clearing_account_id"/>
+                </setting>
+            </block>
+        </field>
+    </record>
+
+</odoo>

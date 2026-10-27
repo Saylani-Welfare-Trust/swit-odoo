@@ -183,11 +183,15 @@ class TestMicrofinance(TransactionCase):
         line = loan.microfinance_line_ids[0]
         pdc = self.env['microfinance.pdc.line'].create({
             'microfinance_id': loan.id, 'microfinance_line_id': line.id, 'cheque_no': 'CHQ-T1'})
-        cheque = self.env['pos.cheque'].create({'name': 'CHQ-T1'})
+        bank = self.env['account.journal'].search([('type', '=', 'bank')], limit=1)
+        cheque = self.env['pos.cheque'].create({'name': 'CHQ-T1', 'bank_id': bank.id})
         cheque.action_clear()
         self.assertEqual((pdc.state_cheque, line.state, line.paid_amount), ('cleared', 'paid', line.amount))
-        cheque.action_bounce()
-        self.assertEqual((pdc.state_cheque, line.state, line.paid_amount), ('bounced', 'unpaid', 0))
+        line2 = loan.microfinance_line_ids[1]
+        pdc2 = self.env['microfinance.pdc.line'].create({
+            'microfinance_id': loan.id, 'microfinance_line_id': line2.id, 'cheque_no': 'CHQ-T2'})
+        self.env['pos.cheque'].create({'name': 'CHQ-T2', 'bank_id': bank.id}).action_bounce()
+        self.assertEqual((pdc2.state_cheque, line2.state, line2.paid_amount), ('bounced', 'unpaid', 0))
 
         line.write({'paid_amount': line.amount, 'state': 'paid'})
         loan.action_send_to_recovery()

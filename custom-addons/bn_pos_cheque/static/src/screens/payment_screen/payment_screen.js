@@ -4,32 +4,24 @@ import { PaymentScreen } from "@point_of_sale/app/screens/payment_screen/payment
 import { patch } from "@web/core/utils/patch";
 
 patch(PaymentScreen.prototype, {
+    // Settling a bounced cheque gives it back to the donor: done only once
+    // the return order is saved, so a cancelled payment leaves it open.
     async validateOrder(isForceValidate) {
-        const currentOrder = this.currentOrder;
-        const pos_cheque_order_id = currentOrder.get_pos_cheque_order_id();
-
-        if (currentOrder && pos_cheque_order_id) {
-            const data = await this.env.services.orm.call('pos.order', 'settle_cheque_order', [this.pos.pos_session.id, pos_cheque_order_id]);
-
-
-            if (data.status == "error") {
-                this.env.services.notification.add(
-                    data.body,
-                    { type: 'danger' }
-                );
-            } else if (data.status == "success") {
-                this.env.services.notification.add(
-                    data.body,
-                    { type: 'success' }
-                );
-            } else {
-                this.env.services.notification.add(
-                    "Unknown status",
-                    { type: 'warning' }
-                );
-            }
+        const order = this.currentOrder;
+        const pos_cheque_order_id = order && order.get_pos_cheque_order_id();
+        const result = await super.validateOrder(...arguments);
+        if (!pos_cheque_order_id || !order.finalized) {
+            return result;
         }
-
-        return super.validateOrder(isForceValidate);
+        try {
+            const data = await this.env.services.orm.call('pos.order', 'settle_cheque_order', [pos_cheque_order_id]);
+            this.env.services.notification.add(data.body, { type: data.status == "success" ? 'success' : 'danger' });
+        } catch (error) {
+            this.env.services.notification.add(
+                `Order ${order.name} is saved, but the cheque was not marked settled. Please inform treasury.`,
+                { type: 'danger', sticky: true }
+            );
+        }
+        return result;
     }
 });

@@ -1,18 +1,21 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Welfare',
     'depends': [
         'bn_microfinance',
+        'bn_pos_cheque',
         'bn_profile_management',
         'bn_analytic_account_customization',
         'bn_master_setup',
+        'bn_res_company',
     ],
     'data': [
         'security/group.xml',
+        'security/group_category.xml',
         'security/ir.model.access.csv',
         
         'data/sequence.xml',
@@ -43,6 +46,7 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_welfare/static/src/app/**/*',
+            'bn_welfare/static/src/screens/**/*',
         ],
     }
 } # type: ignore

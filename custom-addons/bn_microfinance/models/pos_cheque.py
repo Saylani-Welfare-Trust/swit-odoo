@@ -25,7 +25,8 @@ class POSCheque(models.Model):
 
     def _update_microfinance_pdc(self, state_cheque, paid):
         """Mirror the cheque state on its microfinance PDC line and installment."""
-        for rec in self:
+        # Treasury has no Microfinance rights: its group was checked by the caller
+        for rec in self.sudo():
             pdc_line = rec._get_microfinance_pdc_line()
             if not pdc_line:
                 continue

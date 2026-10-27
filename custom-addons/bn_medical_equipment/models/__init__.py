@@ -8,3 +8,4 @@ from . import medical_equipment_category
 from . import pos_session
 from . import res_partner
 from . import stock_picking
+from . import pos_cheque

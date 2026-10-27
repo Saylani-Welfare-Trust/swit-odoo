@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="pos_cheque_menu_group" model="res.groups">
-        <field name="name">Menu</field>
-    </record>
-    
-    <record id="pos_cheque_pos_action_group" model="res.groups">
-        <field name="name">Cheque / POS Action</field>
+    <record id="module_category_pos_cheque" model="ir.module.category">
+        <field name="name">POS Cheque</field>
+        <field name="sequence">30</field>
     </record>
 
-    <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- NEW: Treasury master group — implies the POS Cheque menu   -->
-    <!-- Other modules (journal_transfer, bn_direct_deposit) will   -->
-    <!-- extend this record to add their own menu groups.           -->
-    <!-- ═══════════════════════════════════════════════════════════ -->
-    <!-- <record id="group_treasury" model="res.groups">
+    <!-- Treasury: the Treasury > POS Cheque menu, Deposit to Bank, Clear / Bounce. -->
+    <record id="pos_cheque_menu_group" model="res.groups">
         <field name="name">Treasury</field>
-        <field name="implied_ids" eval="[
-            (4, ref('pos_cheque_menu_group')),
-            (4, ref('pos_cheque_pos_action_group')),
-        ]"/>
-    </record> -->
+        <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="comment">Treasury &gt; POS Cheque: choose the deposit bank, clear or bounce cheques.</field>
+        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <!-- Cashiers: the POS Cheques screen (re-deposit, settle bounced cheques). -->
+    <record id="pos_cheque_pos_action_group" model="res.groups">
+        <field name="name">Cheque / POS Action</field>
+        <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="comment">POS cashiers: list the cheques of their POS, re-deposit bounced cheques, settle cheques that bounced too often.</field>
+    </record>
 
 </odoo>

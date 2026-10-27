@@ -34,15 +34,21 @@ class AdvanceDonationWizard(models.TransientModel):
         for rec in self:
             if rec.product_id:
                 matching_donations = self.env['advance.donation'].search([
-                    ('advance_donation_lines.product_id', '=', rec.product_id.id)
+                    ('advance_donation_lines.product_id', '=', rec.product_id.id),
+                    ('state', '=', 'approved'),
                 ])
                 rec.advance_donation_domain = str([('id', 'in', matching_donations.ids)])
             else:
                 rec.advance_donation_domain = str([('id', 'in', [])])
 
+    def _check_approved_donation(self):
+        if self.advance_donation_id.state != 'approved':
+            raise UserError(_("Advance donation %s is not approved yet.") % self.advance_donation_id.name)
+
     def action_show_lines(self):
         if not self.advance_donation_id or not self.product_id:
             raise UserError(_("Please select both Advance Donation and Product."))
+        self._check_approved_donation()
 
         donation_lines = self.advance_donation_id.advance_donation_lines.filtered(
             lambda l: l.product_id.id == self.product_id.id
@@ -153,7 +159,8 @@ class AdvanceDonationLineSelectionWizard(models.TransientModel):
         for rec in self:
             if rec.product_id:
                 matching_donations = self.env['advance.donation'].search([
-                    ('advance_donation_lines.product_id', '=', rec.product_id.id)
+                    ('advance_donation_lines.product_id', '=', rec.product_id.id),
+                    ('state', '=', 'approved'),
                 ])
                 rec.advance_donation_domain = str([('id', 'in', matching_donations.ids)])
             else:
@@ -161,6 +168,8 @@ class AdvanceDonationLineSelectionWizard(models.TransientModel):
 
     def action_confirm(self):
         """Confirm selected donation line"""
+        if self.advance_donation_id.state != 'approved':
+            raise UserError(_("Advance donation %s is not approved yet.") % self.advance_donation_id.name)
         selected_line = self.donation_line_ids.filtered(lambda l: l.is_selected)
 
         if not selected_line:

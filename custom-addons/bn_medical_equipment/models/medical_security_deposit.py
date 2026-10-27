@@ -107,7 +107,7 @@ class MedicalSecurityDeposit(models.Model):
         # Always run the reach-back link, whether the SD was just created or already existed —
         # a pending cheque/DD created after an existing SD still needs to be linked.
         if security_deposit:
-            pending_cheque = self.env['pos.cheque'].search([
+            pending_cheque = self.env['pos.cheque'].sudo().search([
                 ('source_model', '=', 'medical_equipment'),
                 ('source_record_id', '=', medical_equipment_id.id),
                 ('medical_security_deposit_id', '=', False),

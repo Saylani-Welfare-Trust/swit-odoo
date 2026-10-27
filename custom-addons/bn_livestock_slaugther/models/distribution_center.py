@@ -29,7 +29,7 @@ class DistributionCenter(models.Model):
     purchase_requisition_id = fields.Many2one('purchase.requisition', string="Purchase Requisition")
     picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    request_date = fields.Date('Request Date', default=fields.Date.today())
+    request_date = fields.Date('Request Date', default=fields.Date.context_today)
     delivery_date = fields.Date('Delivery Date', compute="_set_delivery_date", store=True)
 
     type = fields.Selection(selection=type_selection, string="Type")

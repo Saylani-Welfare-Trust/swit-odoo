@@ -19,16 +19,6 @@ class PosSession(models.Model):
         ]
         return vals
 
-    def _loader_params_res_partner(self):
-        vals = super()._loader_params_res_partner()
-        vals["search_params"]["fields"] += ["categories", "cnic_no"]
-        return vals
-
-    def _loader_params_res_users(self):
-        vals = super()._loader_params_res_users()
-        vals["search_params"]["fields"] += ["branch_code", "branch_name"]
-        return vals
-
     @api.depends('user_id')
     def _set_employee_branch(self):
         for rec in self:

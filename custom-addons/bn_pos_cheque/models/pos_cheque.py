@@ -1,8 +1,16 @@
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
 import logging
+
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError, UserError, ValidationError
+
 _logger = logging.getLogger(__name__)
 
+TREASURY_GROUP = 'bn_pos_cheque.pos_cheque_menu_group'
+POS_GROUP = 'bn_pos_cheque.pos_cheque_pos_action_group'
+
+# A cheque can bounce this many times; after that it can only be settled
+# (given back to the donor) at the POS.
+MAX_BOUNCES = 4
 
 state_selection = [
     ('draft', 'Draft'),
@@ -11,9 +19,14 @@ state_selection = [
     ('cancel', 'Cancelled'),
 ]
 
+# pos.session._is_restricted_product() result -> slip type used on the closing screen
+SLIP_TYPES = {1: 'restricted', 2: 'unrestricted', 0: 'neutral'}
+
+
 class POSCheque(models.Model):
     _name = 'pos.cheque'
     _description = "POS Cheque"
+    _order = 'id desc'
 
     bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True)
@@ -25,86 +38,11 @@ class POSCheque(models.Model):
     date = fields.Date('Cheque Date')
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
-    source_model = fields.Selection([
-        ('welfare', 'Welfare'),
-        ('medical_equipment', 'Medical Equipment'),
-    ], string="Source Type")
-    
+    # Program modules add their own values (bn_welfare, bn_medical_equipment)
+    source_model = fields.Selection([], string="Source Type")
+
     move_id = fields.Many2one('account.move', string="Journal Entry", readonly=True)
     source_record_id = fields.Integer(string="Source Record ID")
-
-    welfare_line_ids = fields.Many2many(
-        'welfare.line',
-        'pos_cheque_welfare_line_rel_v2',
-        'pos_cheque_id',
-        'welfare_line_id',
-        string="Welfare Lines",
-    )
-    welfare_recurring_line_ids = fields.Many2many(
-        'welfare.recurring.line',
-        'pos_cheque_welfare_recurring_line_rel_v2',
-        'pos_cheque_id',
-        'welfare_recurring_line_id',
-        string="Welfare Recurring Lines",
-    )
-    medical_security_deposit_id = fields.Many2one('medical.security.deposit', string="Security Deposit")    # ---------- WELFARE ----------
-    def _update_welfare_lines_state(self, new_state):
-        """new_state: 'paid'/'disbursed' or 'unpaid'/'bounced' — confirm exact
-        selection values against welfare.line's state field before deploying."""
-        self.ensure_one()
-        if self.welfare_line_ids:
-            self.welfare_line_ids.write({'state': new_state})
-        if self.welfare_recurring_line_ids:
-            self.welfare_recurring_line_ids.write({'state': new_state})
-
-    # ---------- MEDICAL EQUIPMENT ----------
-    def _update_medical_equipment_lines_state(self, new_state):
-        self.ensure_one()
-        if self.medical_equipment_line_ids:
-            self.medical_equipment_line_ids.write({'state': new_state})
-            
-    def _get_donor_account_order_lines(self):
-        """Find the linked POS order's lines for the 'Donor A/c' product."""
-        self.ensure_one()
-        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
-        if not pos_order:
-            return self.env['pos.order.line']
-    
-        return pos_order.lines.filtered(
-            lambda l: l.product_id and (l.product_id.name or '').strip() == 'Donor A/c'
-        )
-    
-        
-    def _create_advance_donation_receipts(self):
-        """For any 'Donor A/c' line on the linked POS order, create a paid
-        advance.donation.receipt. Only runs when the cheque is cleared -
-        not when the cheque was first created/recorded."""
-        self.ensure_one()
-        donor_lines = self._get_donor_account_order_lines()
-        Receipt = self.env['advance.donation.receipt']
-        created = Receipt
-    
-        for line in donor_lines:
-            amount = line.price_subtotal_incl
-            if amount <= 0:
-                continue
-    
-            receipt = Receipt.create({
-                'donor_id': self.donor_id.id,
-                'amount': amount,
-                'product_id': line.product_id.id,
-                'payment_type': 'cheque',
-                'cheque_number': self.name,
-                'cheque_date': self.date,
-                'date': fields.Date.today(),
-                'order_id': line.order_id.id,
-                'remarks': 'Auto-created from POS Cheque %s' % self.name,
-                'state': 'paid',
-            })
-            created |= receipt
-    
-        return created
-    
 
     @api.depends('name')
     def _set_details(self):
@@ -113,7 +51,7 @@ class POSCheque(models.Model):
             rec.analytic_account_id = None
             rec.amount = 0
             rec.order_reference = ''
-            pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', rec.id)], limit=1)
+            pos_order = rec._get_pos_order()
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
                 rec.analytic_account_id = pos_order.analytic_account_id.id
@@ -124,15 +62,21 @@ class POSCheque(models.Model):
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
 
+    def _get_pos_order(self):
+        self.ensure_one()
+        if not self.id:
+            return self.env['pos.order']
+        return self.env['pos.order'].sudo().search([('pos_cheque_id', '=', self.id)], limit=1)
+
     def action_show_pos_order(self):
-        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])
+        self.ensure_one()
         return {
             'name': 'POS Order',
             'type': 'ir.actions.act_window',
             'res_model': 'pos.order',
             'context': {'edit': '0', 'delete': '0'},
             'view_mode': 'form',
-            'res_id': pos_order.id,
+            'res_id': self._get_pos_order().id,
             'target': 'new',
         }
 
@@ -143,7 +87,7 @@ class POSCheque(models.Model):
         if self.state != 'clear':
             raise ValidationError('The donation receipt can be printed only after the cheque is cleared.')
 
-        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        pos_order = self._get_pos_order()
         if not pos_order:
             raise ValidationError('No POS order is linked to this cheque.')
 
@@ -157,7 +101,7 @@ class POSCheque(models.Model):
         holds this message back for cheque orders until the cheque is cleared
         (see pos.order.sms_or_whatsapp_send_receipt)."""
         self.ensure_one()
-        pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        pos_order = self._get_pos_order()
         if not pos_order:
             return
 
@@ -168,255 +112,137 @@ class POSCheque(models.Model):
         except Exception as e:
             _logger.error('Cheque %s: clear notification failed: %s', self.name, str(e))
 
-    # ---------- WELFARE ----------
-    def _clear_welfare(self):
-        self.ensure_one()
-        # call the real action, not a raw write — this also handles
-        # advance_donation_line_id disbursement creation and calls
-        # welfare_id._auto_disburse_if_all_lines_delivered() internally
-        payable_lines = self.welfare_line_ids.filtered(lambda l: l.state in ('draft', 'delivered'))
-        if payable_lines:
-            payable_lines.action_disbursed()
+    # ---------- ACCOUNTING ----------
+    def _get_clearing_account(self, order, payment):
+        """Account the cheque sits in until it is cleared: the company's
+        *Cheque Clearing Account* if set, else the receivable account the
+        session closing posted the cheque to (bn_closing_session)."""
+        company = order.company_id
+        if company.pos_cheque_clearing_account_id:
+            return company.pos_cheque_clearing_account_id
+        session = order.session_id
+        payment_method = payment.payment_method_id
+        amounts = {}
+        for line in order.lines:
+            slip_type = SLIP_TYPES[session._is_restricted_product(line.product_id)]
+            amounts[slip_type] = amounts.get(slip_type, 0.0) + line.price_subtotal_incl
+        slip_type = max(amounts, key=amounts.get) if amounts else 'neutral'
+        getter = {
+            'restricted': session._get_restricted_receivable_account,
+            'unrestricted': session._get_unrestricted_receivable_account,
+            'neutral': session._get_neutral_receivable_account,
+        }[slip_type]
+        return (getter(payment_method)
+                or payment_method.outstanding_account_id
+                or company.account_journal_payment_debit_account_id)
 
-        payable_recurring = self.welfare_recurring_line_ids.filtered(lambda l: l.state in ('draft', 'delivered'))
-        if payable_recurring:
-            payable_recurring.action_disbursed()
-
-    def _bounce_welfare(self):
-        self.ensure_one()
-        lines = self.welfare_line_ids
-        recurring_lines = self.welfare_recurring_line_ids
-
-        if lines:
-            lines.write({'state': 'draft'})
-            lines.mapped('welfare_id').filtered(
-                lambda w: w.state == 'disbursed'
-            ).write({'state': 'approve'})
-
-        if recurring_lines:
-            recurring_lines.write({'state': 'draft'})
-            recurring_lines.mapped('welfare_id').filtered(
-                lambda w: w.state == 'disbursed'
-            ).write({'state': 'recurring'})
-
-    # ---------- MEDICAL EQUIPMENT ----------
-    def _clear_medical_equipment(self):
-        self.ensure_one()
-        
-        # Ensure security deposit is linked
-        security_deposit = self._ensure_security_deposit_link()
-        
-        if security_deposit:
-            security_deposit.write({'state': 'paid'})
-            equipment = security_deposit.medical_equipment_id
-            if equipment and equipment.state == 'approved':
-                equipment.write({'state': 'sd_received'})
-            
-            _logger.info(f"Security deposit {security_deposit.id} marked as paid for cheque {self.name}")
-        else:
-            _logger.warning(f"No security deposit found for cheque {self.name}")
-    def _bounce_medical_equipment(self):
-        self.ensure_one()
-        
-        # Ensure security deposit is linked
-        security_deposit = self._ensure_security_deposit_link()
-        
-        if security_deposit:
-            # Update security deposit state
-            security_deposit.write({'state': 'bounced'})
-            
-            # Update equipment
-            equipment = security_deposit.medical_equipment_id
-            if equipment and equipment.state == 'sd_received':
-                equipment.write({'state': 'approved'})
-            
-            _logger.info(f"Security deposit {security_deposit.id} marked as bounced for cheque {self.name}")
-        else:
-            _logger.warning(f"No security deposit found for cheque {self.name}")
-    
     def _create_bank_deposit_entry(self):
+        """Move the cheque amount from the clearing account to the bank of
+        the deposit (Treasury > POS Cheque > Deposit to Bank)."""
         self.ensure_one()
-        if self.move_id or not self.bank_id:
+        if self.move_id:
             return
+        if not self.bank_id:
+            raise UserError(_('Select the bank the cheque %s was deposited to (Deposit to Bank) before clearing it.') % self.name)
 
-        order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)], limit=1)
+        order = self._get_pos_order()
         if not order or not order.payment_ids:
-            _logger.warning(f"No POS order or payments found for cheque {self.name}")
+            _logger.warning("No POS order or payments found for cheque %s", self.name)
             return
 
-        # 1. Find the specific payment method for the cheque (avoiding split payment issues)
+        # the cheque payment of the order (an order can be split over methods)
         cheque_payment = order.payment_ids.filtered(
-            lambda p: p.payment_method_id.type == 'bank' or 'cheque' in p.payment_method_id.name.lower()
-        )[:1]
-        
-        if not cheque_payment:
-            cheque_payment = order.payment_ids[0] # Fallback
+            lambda p: p.payment_method_id.type == 'bank' or 'cheque' in (p.payment_method_id.name or '').lower()
+        )[:1] or order.payment_ids[:1]
 
-        # outstanding_account = cheque_payment.payment_method_id.outstanding_account_id
-        outstanding_account = self.env['account.account'].browse(6943)
-        
+        clearing_account = self._get_clearing_account(order, cheque_payment)
         bank_account = self.bank_id.default_account_id
+        if not clearing_account or not bank_account:
+            raise UserError(_(
+                "Cannot post the deposit of cheque %s: the bank journal needs a default account, and a "
+                "Cheque Clearing Account (Accounting settings) or the payment method's receivable account "
+                "must be set.") % self.name)
 
-        # 2. Safety check for accounts
-        if not outstanding_account or not bank_account:
-            raise ValidationError(
-                f"Cannot generate entry for Cheque {self.name}. "
-                f"Please ensure the Bank journal has a default account, and the POS Payment Method has an Outstanding Account."
-            )
-
-        # 3. Prepare Analytic Distribution (Fixing your custom _post validation)
-        analytic_dist = {}
-        if self.analytic_account_id:
-            # Odoo 17 format: {"analytic_account_id": 100}
-            analytic_dist = {str(self.analytic_account_id.id): 100}
-
-        # 4. Create the Entry
-        move_vals = {
+        analytic_dist = {str(self.analytic_account_id.id): 100} if self.analytic_account_id else {}
+        partner_id = self.donor_id.id or False
+        label = _("Cheque Deposit %s") % self.name
+        move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'journal_id': self.bank_id.id,
             'date': fields.Date.context_today(self),
-            'ref': f"Cheque Deposit {self.name} - {order.name}",
-            'partner_id': self.donor_id.id or False, # Good practice to link partner
+            'ref': f"{label} - {order.name}",
+            'partner_id': partner_id,
             'line_ids': [
-                (0, 0, {
-                    'name': f"Cheque Deposit {self.name}",
-                    'account_id': bank_account.id,
-                    'debit': self.amount,
-                    'credit': 0.0,
-                    'partner_id': self.donor_id.id or False,
-                    'analytic_distribution': analytic_dist, # 🟢 Fixes your custom validation
-                }),
-                (0, 0, {
-                    'name': f"Cheque Deposit {self.name}",
-                    'account_id': outstanding_account.id,
-                    'debit': 0.0,
-                    'credit': self.amount,
-                    'partner_id': self.donor_id.id or False,
-                    'analytic_distribution': analytic_dist, # 🟢 Fixes your custom validation
-                })
-            ]
-        }
+                (0, 0, {'name': label, 'account_id': bank_account.id, 'debit': self.amount, 'credit': 0.0,
+                        'partner_id': partner_id, 'analytic_distribution': analytic_dist}),
+                (0, 0, {'name': label, 'account_id': clearing_account.id, 'debit': 0.0, 'credit': self.amount,
+                        'partner_id': partner_id, 'analytic_distribution': analytic_dist}),
+            ],
+        })
+        move.action_post()
+        self.move_id = move.id
 
-        try:
-            move = self.env['account.move'].create(move_vals)
-            move.action_post()
-            self.move_id = move.id
-            _logger.info(f"Generated Journal Entry {move.name} for Cheque {self.name}")
-            
-            # 5. Optional but recommended: Reconcile the Outstanding line
-            # This ensures the Outstanding Receipts account balance cleans up properly
-            outstanding_line = move.line_ids.filtered(lambda l: l.account_id.id == outstanding_account.id)
-            if outstanding_line:
-                # Find the matching original POS line in the outstanding account
-                pos_line = self.env['account.move.line'].search([
-                    ('account_id', '=', outstanding_account.id),
-                    ('partner_id', '=', self.donor_id.id),
-                    ('credit', '=', self.amount),
-                    ('reconciled', '=', False)
-                ], limit=1)
-                if pos_line:
-                    (outstanding_line + pos_line).reconcile()
+        # Reconcile with the receivable line of the same donor and amount, if
+        # the clearing account allows it and such a line exists.
+        if clearing_account.reconcile:
+            clearing_line = move.line_ids.filtered(lambda l: l.account_id == clearing_account)
+            pos_line = self.env['account.move.line'].sudo().search([
+                ('account_id', '=', clearing_account.id),
+                ('partner_id', '=', partner_id),
+                ('debit', '=', self.amount),
+                ('reconciled', '=', False),
+                ('parent_state', '=', 'posted'),
+            ], limit=1)
+            if pos_line:
+                (clearing_line + pos_line).reconcile()
 
-        except Exception as e:
-            _logger.error(f"Failed to create entry for Cheque {self.name}: {str(e)}")
-            raise ValidationError(f"Failed to generate Journal Entry: {str(e)}")
-        
     # ---------- LIFECYCLE ----------
-    # Program modules (bn_microfinance, bn_livestock_slaugther ...) extend
-    # action_clear / action_bounce / action_cancel for their own records.
+    # Program modules (bn_advance_donation, bn_microfinance, bn_welfare,
+    # bn_medical_equipment, bn_livestock_slaugther ...) extend action_clear /
+    # action_bounce / action_cancel for their own records.
+    def _check_cheque_state(self, allowed, action):
+        labels = dict(state_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for cheque %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
+    def _check_treasury(self):
+        if not self.env.su and not self.env.user.has_group(TREASURY_GROUP):
+            raise AccessError(_('Only Treasury users can clear or bounce cheques.'))
+
     def action_clear(self):
-        self._create_advance_donation_receipts()
-
-        if self.source_model == 'welfare':
-            self._clear_welfare()
-        elif self.source_model == 'medical_equipment':
-            self._clear_medical_equipment()
-
-        # 🟢 Call the entry generation method here
-        self._create_bank_deposit_entry()
-
-        self.state = 'clear'
-
-        self._send_clear_notification()
-
-    def action_bounce(self):
-        if self.bounce_count >= 4:
-            raise ValidationError('You cannot bounce the cheque more than 3 times.')
-
-        if self.source_model == 'welfare':
-            self._bounce_welfare()
-        elif self.source_model == 'medical_equipment':
-            self._bounce_medical_equipment()
-
-        self.bounce_count += 1
-        self.state = 'bounce'
-
-    def action_cancel(self):
-        if self.source_model == 'welfare':
-            self._bounce_welfare()          # same reset as bounce
-        elif self.source_model == 'medical_equipment':
-            raise ValidationError('Cannot cancel cheque for medical equipment. Please contact support.')
-            self._bounce_medical_equipment()
-
-        self.state = 'cancel'
-
-    def link_security_deposit(self):
-        """Link the security deposit to this cheque if not already linked"""
-        self.ensure_one()
-
-        if self.source_model != 'medical_equipment':
-            return False
-
-        if self.medical_security_deposit_id:
-            return True  # already linked, nothing to do
-
-        if not self.source_record_id:
-            raise ValidationError(
-                f"DEBUG: Cheque {self.name} has no source_record_id set on it."
-            )
-
-        equipment = self.env['medical.equipment'].browse(self.source_record_id)
-
-        if not equipment.exists():
-            raise ValidationError(
-                f"DEBUG: medical.equipment id={self.source_record_id} does not exist."
-            )
-
-        sd_slip = equipment.sd_slip_id
-
-        if not sd_slip:
-            sd_slip = self.env['medical.security.deposit'].search(
-                [('medical_equipment_id', '=', self.source_record_id)], limit=1
-            )
-
-        if not sd_slip:
-            raise ValidationError(
-                f"DEBUG: No medical.security.deposit found for equipment id={self.source_record_id} "
-                f"(name={equipment.name}), neither via sd_slip_id nor via direct search."
-            )
-
-        self.write({'medical_security_deposit_id': sd_slip.id})
+        self._check_treasury()
+        self._check_cheque_state(('draft', 'bounce'), _('Clear'))
+        for rec in self:
+            if rec.bounce_count >= MAX_BOUNCES:
+                raise UserError(_('Cheque %s bounced %s times: settle it at the POS instead.') % (rec.name, rec.bounce_count))
+            rec._create_bank_deposit_entry()
+            rec.state = 'clear'
+            rec._send_clear_notification()
         return True
 
+    def action_bounce(self):
+        self._check_treasury()
+        self._check_cheque_state(('draft',), _('Bounce'))
+        for rec in self:
+            if rec.bounce_count >= MAX_BOUNCES:
+                raise UserError(_('A cheque cannot bounce more than %s times.') % MAX_BOUNCES)
+            rec.bounce_count += 1
+            rec.state = 'bounce'
+        return True
 
-    def _ensure_security_deposit_link(self):
-        self.ensure_one()
-        if self.source_model == 'medical_equipment':
-            if not self.medical_security_deposit_id:
-                self.link_security_deposit()
-            return self.medical_security_deposit_id
-        return False
-    
-    def action_view_security_deposit(self):
-        """View the linked security deposit"""
-        self.ensure_one()
-        if self.medical_security_deposit_id:
-            return {
-                'name': 'Security Deposit',
-                'type': 'ir.actions.act_window',
-                'res_model': 'medical.security.deposit',
-                'view_mode': 'form',
-                'res_id': self.medical_security_deposit_id.id,
-                'target': 'new',
-            }
-        return {'type': 'ir.actions.act_window_close'}
+    def action_redeposit(self):
+        """A bounced cheque presented again (POS Cheques > Re-Deposit)."""
+        self._check_cheque_state(('bounce',), _('Re-Deposit'))
+        for rec in self:
+            if rec.bounce_count >= MAX_BOUNCES:
+                raise UserError(_('Cheque %s bounced %s times: settle it instead.') % (rec.name, rec.bounce_count))
+            rec.state = 'draft'
+        return True
+
+    def action_cancel(self):
+        """Settled at the POS: the cheque is given back to the donor."""
+        self._check_cheque_state(('draft', 'bounce'), _('Settle'))
+        self.write({'state': 'cancel'})
+        return True

@@ -1,12 +1,13 @@
 {
     'name': 'Key Management',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.5.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Key Management',
     'depends': [
-        'bn_donation_box'
+        'bn_donation_box',
+        'bn_res_company'
     ],
     'data': [
         'data/schedule_action.xml',

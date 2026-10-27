@@ -1,5 +1,5 @@
 from odoo import models, fields, _, api, tools
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 import requests
 
@@ -10,6 +10,20 @@ import json
 from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
+
+WF = 'bn_welfare.%s'
+# Who acts on a welfare in each status (send on, revert, reject).
+STEP_GROUPS = {
+    'completed': WF % 'group_bn_welfare_user',
+    'send_for_inquiry': WF % 'group_bn_welfare_user',
+    'inquiry': WF % 'group_bn_welfare_user',
+    'committee_approval': WF % 'group_bn_welfare_committee',
+    'hod_approve': WF % 'group_welfare_hod',
+    'mem_approve': WF % 'group_welfare_member',
+    'approve': WF % 'group_welfare_member',
+    'recurring': WF % 'group_welfare_member',
+    'return': WF % 'group_welfare_member',
+}
 
 
 assest_availability_selection = [
@@ -91,7 +105,7 @@ class Welfare(models.Model):
     old_system_id = fields.Char('Old System ID')
     
     applicantLocationLink = fields.Char('Applicant Location Link') 
-    date = fields.Date('Date', default=fields.Date.today())
+    date = fields.Date('Date', default=fields.Date.context_today)
     cnic_expiration_date = fields.Date(related='donee_id.cnic_expiration', string="CNIC Expiration Date", store=True)
 
     hod_remarks = fields.Text('HOD Remarks')
@@ -597,9 +611,10 @@ class Welfare(models.Model):
                     )
                 }
             }
-    @api.model
     def _auto_disburse_if_all_lines_delivered(self):
-        records = self.search([('state', 'in', ['recurring', 'approve'])])
+        """Disburse the welfares whose lines are all disbursed. Called on
+        records (a line was paid) or on the empty model (all of them)."""
+        records = (self or self.search([])).filtered(lambda r: r.state in ('recurring', 'approve'))
         for rec in records:
             if rec.order_type == 'one_time':
                 lines = rec.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
@@ -1193,7 +1208,7 @@ class Welfare(models.Model):
         <b>Sync Date:</b> {fields.Datetime.now()}
         """
         
-        self.message_post(body=message_body)
+        self._message_log(body=message_body)
 
     def _show_notification(self, title, message, type='info'):
         """Show notification to user"""
@@ -1217,6 +1232,37 @@ class Welfare(models.Model):
             'Content-Type': 'application/json'
         }
 
+    @api.ondelete(at_uninstall=False)
+    def _unlink_only_draft(self):
+        locked = self.filtered(lambda r: r.state not in ('draft', 'reject'))
+        if locked:
+            raise UserError(_('Only Draft or Rejected welfare applications can be deleted (%s).')
+                            % ', '.join(locked.mapped('name')))
+
+    # ------------------------------------------------------------------
+    # Workflow checks
+    # ------------------------------------------------------------------
+    def _check_welfare_state(self, allowed, action):
+        labels = dict(state_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
+    def _check_welfare_group(self, xmlid, action):
+        user = self.env.user
+        if self.env.su or user._is_system() or user.has_group(xmlid):
+            return
+        group = self.env.ref(xmlid, raise_if_not_found=False)
+        raise AccessError(_('Only "%(group)s" can do "%(action)s".') % {
+            'group': group.name if group else xmlid, 'action': action})
+
+    def _check_step_group(self, action):
+        """The group in charge of the current status."""
+        for rec in self:
+            if rec.state in STEP_GROUPS:
+                rec._check_welfare_group(STEP_GROUPS[rec.state], action)
+
     def action_send_for_inquiry(self):
         """Send for Inquiry - No automatic routing"""
         if not self:
@@ -1225,6 +1271,7 @@ class Welfare(models.Model):
         invalid = self.filtered(lambda r: r.state != 'completed')
         if invalid:
             raise UserError("Some selected records are not completed and cannot be processed.")
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Send for Inquiry'))
         
         # Your existing portal sync code...
         success_msgs = []
@@ -1256,7 +1303,7 @@ class Welfare(models.Model):
                     'portal_last_sync_message': error_message,
                     'is_synced': False
                 })
-                rec.message_post(body=f"❌ {error_message}")
+                rec._message_log(body=f"❌ {error_message}")
                 error_msgs.append(error_message)
         
         # Show results
@@ -1271,6 +1318,8 @@ class Welfare(models.Model):
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     def action_move_to_hod(self):
         """HOD Approval - Check required fields and documents"""
+        self._check_welfare_state(('committee_approval',), _('Move to HOD'))
+        self._check_step_group(_('Move to HOD'))
         for record in self:
             # Check for required documents
             missing_fields = []
@@ -1304,7 +1353,7 @@ class Welfare(models.Model):
             record._add_hod_lines()
 
             # Add chatter message
-            record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
+            record._message_log(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
 
     def _add_hod_lines(self):
         """Add an HOD line for every HOD product that has none yet (manual lines of the same product are separate)."""
@@ -1325,32 +1374,21 @@ class Welfare(models.Model):
             } for product in new_products])
 
     def action_move_to_member(self):
+        """HOD decision: approved directly when within the HOD limit, else
+        on to Final Approval."""
+        self._check_welfare_state(('hod_approve',), _('Move to Member'))
+        self._check_step_group(_('Move to Member'))
         for record in self:
-            current_user = self.env.user
-            is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
-
-            if is_hod:
-                within_limit = record._check_amount_within_hod_limit()
-                # raise UserError(str(within_limit))
-                if within_limit == False:
-                    record.state = 'mem_approve'  # Move back to committee approval
-                    # raise ValidationError(error_message)
-                else:
-                    record.state = 'approve'
+            record.state = 'approve' if record._check_amount_within_hod_limit() else 'mem_approve'
+        # HOD lines may all have been disbursed from POS already
+        self.filtered(lambda r: r.state == 'approve')._auto_disburse_if_all_lines_delivered()
     def action_approve(self):
         """Final approval logic"""
+        self._check_welfare_state(('mem_approve',), _('Approve'))
+        self._check_step_group(_('Approve'))
         for record in self:
-            if record.order_type == 'recurring':
-                for line in record.welfare_line_ids:
-                    if self.env['welfare.recurring.line'].search_count([
-                        ('donee_id', '=', record.donee_id.id),
-                        ('disbursement_category_id', '=', line.disbursement_category_id.id),
-                        ('state', '=', 'draft')
-                    ]):
-                        pass
-            
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             record.state = 'approve'
@@ -1363,11 +1401,19 @@ class Welfare(models.Model):
     
 
     def action_reject(self):
-        if not self.rejection_remarks:
-            raise ValidationError('Please enter Rejection Remarks before rejection.')
-        self.state = 'reject'
+        self._check_welfare_state(tuple(STEP_GROUPS), _('Reject and Close'))
+        self._check_step_group(_('Reject and Close'))
+        for rec in self:
+            if not rec.rejection_remarks:
+                raise ValidationError('Please enter Rejection Remarks before rejection.')
+        self.write({'state': 'reject'})
 
     def action_create_recurring_order(self):
+        self.ensure_one()
+        self._check_welfare_state(('approve',), _('Create Recurring Orders'))
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Create Recurring Orders'))
+        if self.welfare_recurring_line_ids:
+            raise UserError(_('The recurring orders of %s were already created.') % self.name)
         for line in self.welfare_line_ids:
             # if line.order_type != 'recurring':
             #     raise ValidationError('This request does not belong to recurring order.')
@@ -1404,17 +1450,22 @@ class Welfare(models.Model):
 
     
     def action_committee_approval(self):
-
-            self.state = 'committee_approval'
-        
+        self._check_welfare_state(('inquiry',), _('Move to Committee Approval'))
+        self._check_step_group(_('Move to Committee Approval'))
+        self.write({'state': 'committee_approval'})
 
     def action_complete(self):
-        if not self.welfare_line_ids:
-            raise ValidationError(_('You must add Welfare Line before completing.'))
-        self.state = 'completed'
-    
+        self._check_welfare_state(('draft',), _('Mark as Completed'))
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Mark as Completed'))
+        for rec in self:
+            if not rec.welfare_line_ids:
+                raise ValidationError(_('You must add Welfare Line before completing.'))
+        self.write({'state': 'completed'})
+
     def action_disburse(self):
-        self.state = 'disbursed'
+        self._check_welfare_state(('approve', 'recurring'), _('Disburse'))
+        self._check_step_group(_('Disburse'))
+        self.write({'state': 'disbursed'})
     
     def action_view_previous_disbursement(self):
         """Open the form view of the most recent previous disbursement"""
@@ -1442,6 +1493,7 @@ class Welfare(models.Model):
             'recurring',
             'disbursed',
         ]
+        self._check_step_group(_('Revert'))
         for rec in self:
             if rec.state in ['draft', 'disbursed', 'reject','recurring','approve']:
                 continue
@@ -1483,7 +1535,7 @@ class Welfare(models.Model):
 
         hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
         if not hod_group:
-            return True, None
+            return True
 
         limit = self.env['welfare.approval.limit'].search([
             ('group_id', '=', hod_group.id),
@@ -1491,7 +1543,7 @@ class Welfare(models.Model):
         ], limit=1)
 
         if not limit:
-            return True, None
+            return True
 
         for line in self.welfare_line_ids:
             # Check amount limit
@@ -1513,7 +1565,7 @@ class Welfare(models.Model):
                 #     "Please contact your administrator."
                 # ) % line.product_id.name
 
-        return True, None
+        return True
 
 
     def action_return_to_pos(self):

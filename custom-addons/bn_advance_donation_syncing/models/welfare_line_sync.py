@@ -44,10 +44,18 @@ class WelfareLineSync(models.Model):
 
     #     return super(WelfareLineSync, self).action_disburse()
     
+    def action_disbursed(self):
+        res = super().action_disbursed()
+        for line in self.filtered('advance_donation_line_id'):
+            line.advance_donation_line_id.sudo()._register_disbursement(
+                line.advance_donation_amount, line.total_amount,
+                welfare=line.welfare_id, welfare_line=line, record_name=line.welfare_id.name or '')
+        return res
+
     def unlink(self):
-        raise UserError(_('You cannot delete a welfare line.'))
-        ## For each welfare line being deleted, unlink the associated donation line's reserved status
-        # for record in self:
-        #     if record.advance_donation_line_id and record.advance_donation_line_id.is_reserved:
-        #         record.advance_donation_line_id.write({'is_reserved': False})
-        # return super(WelfareLineSync, self).unlink()
+        # a line that holds part of an advance donation must give it back first
+        linked = self.filtered('advance_donation_line_id')
+        if linked:
+            raise UserError(_('Welfare lines linked to an advance donation cannot be deleted (%s).')
+                            % ', '.join(linked.mapped(lambda l: l.display_name or str(l.id))))
+        return super().unlink()

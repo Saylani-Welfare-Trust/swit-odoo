@@ -67,12 +67,13 @@ class PosSession(models.Model):
     def _is_restricted_product(self, product):
         if not product.categ_id:
             return 0
-        cat_name = product.categ_id.complete_name.lower()
-        restricted = self.company_id.restricted_category.lower()
-        unrestricted = self.company_id.unrestricted_category.lower()
-        if unrestricted in cat_name:
+        cat_name = (product.categ_id.complete_name or '').lower()
+        # an empty setting matches nothing (not every category)
+        restricted = (self.company_id.restricted_category or '').strip().lower()
+        unrestricted = (self.company_id.unrestricted_category or '').strip().lower()
+        if unrestricted and unrestricted in cat_name:
             return 2
-        if restricted in cat_name:
+        if restricted and restricted in cat_name:
             return 1
         return 0
 

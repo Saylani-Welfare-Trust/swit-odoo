@@ -1,6 +1,6 @@
 {
     'name': 'Advance Donation',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.3.0',
     'description': "",
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',
@@ -12,6 +12,8 @@
         'dynamic_accounts_report',
         'bn_master_setup',
         'bn_pos_custom_action',
+        'bn_pos_cheque',
+        'bn_res_company',
     ],
     'data': [
         'security/groups.xml',
@@ -43,10 +45,6 @@
             'bn_advance_donation/static/src/xml/advance_donation_statement.xml',
             'bn_advance_donation/static/src/js/x2many_selectable.js',
             'bn_advance_donation/static/src/xml/x2many_selectable.xml',
-        ],
-        'point_of_sale._assets_pos': [
-            'bn_advance_donation/static/src/app/**/*.js',
-            'bn_advance_donation/static/src/app/**/*.xml',
         ],
     },
     'license': 'AGPL-3',
