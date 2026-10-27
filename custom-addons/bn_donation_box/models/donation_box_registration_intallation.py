@@ -22,6 +22,14 @@ ADMIN_GROUP = 'bn_donation_box.donation_box_registration_admin_group'
 APPROVE_GROUP = 'bn_donation_box.donation_box_registration_installation_approve_group'
 CHANGE_REQUEST_GROUP = 'bn_donation_box.donation_box_registration_installation_change_request_group'
 
+# Same groups as security/record_rule.xml: a User is limited to the city of the
+# analytic account on their employee, unless they are also Manager or Audit.
+CITY_RESTRICTED_GROUP = 'bn_donation_box.donation_box_user_group'
+ALL_CITIES_GROUPS = (
+    'bn_donation_box.donation_box_manager_group',
+    'bn_donation_box.donation_box_audit_group',
+)
+
 DONOR_CATEGORY_XMLIDS = (
     'bn_profile_management.donor_partner_category',
     'bn_profile_management.individual_partner_category',
@@ -82,6 +90,9 @@ class DonationBoxRegistrationInstallation(models.Model):
     donor_category_ids = fields.Many2many(
         'res.partner.category', string="Donor Categories", compute='_compute_donor_category_ids',
         help="Categories given to a donor created from the donation box screens.")
+    allowed_city_ids = fields.Many2many(
+        'account.analytic.account', string="Allowed Cities", compute='_compute_allowed_city_ids',
+        help="Cities the current user may select: only their own city for a User.")
 
     # ------------------------------------------------------------------
     # Defaults / computes
@@ -104,6 +115,32 @@ class DonationBoxRegistrationInstallation(models.Model):
         categories = self._get_donor_categories()
         for rec in self:
             rec.donor_category_ids = categories
+
+    @api.model
+    def _bn_is_city_restricted(self):
+        if self.env.su:
+            return False
+        user = self.env.user
+        return user.has_group(CITY_RESTRICTED_GROUP) and not any(
+            user.has_group(xmlid) for xmlid in ALL_CITIES_GROUPS)
+
+    @api.model
+    def _bn_user_city_ids(self):
+        """City of the analytic account on the user's employee (the account
+        itself or one of its parents)."""
+        return self.env['account.analytic.account'].search([
+            ('id', 'parent_of', self.env.user.employee_id.analytic_account_id.ids),
+            ('location_option_id.name', '=', 'City'),
+        ])
+
+    @api.depends_context('uid')
+    def _compute_allowed_city_ids(self):
+        if self._bn_is_city_restricted():
+            cities = self._bn_user_city_ids()
+        else:
+            cities = self.env['account.analytic.account'].search([('location_option_id.name', '=', 'City')])
+        for rec in self:
+            rec.allowed_city_ids = cities
 
     # ------------------------------------------------------------------
     # ORM overrides
@@ -140,6 +177,9 @@ class DonationBoxRegistrationInstallation(models.Model):
             if immutable:
                 labels = ', '.join(self._fields[name].string for name in immutable)
                 raise UserError(_('The field(s) "%s" are set by the request and cannot be edited.') % labels)
+            if vals.get('city_id') and self._bn_is_city_restricted() \
+                    and vals['city_id'] not in self._bn_user_city_ids().ids:
+                raise UserError(_('You can only select the city of your own analytic account.'))
             locked_map = self._bn_locked_fields_by_status()
             touched = set(vals)
             for rec in self:

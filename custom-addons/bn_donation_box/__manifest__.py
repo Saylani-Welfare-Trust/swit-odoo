@@ -18,7 +18,8 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
-        
+        'security/record_rule.xml',
+
         'data/ir_module_category.xml',
         'data/server_action.xml',
         'data/sequence.xml',
