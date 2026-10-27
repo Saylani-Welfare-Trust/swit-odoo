@@ -70,9 +70,23 @@ export class DonationBoxDashboard extends Component {
     }
 
     get filteredBranches() {
-        if (!this.state.zone_id) return this.state.branches;
-        const zId = parseInt(this.state.zone_id, 10);
-        return this.state.branches.filter(b => b.zone_id === zId);
+        // 1. If Zone is selected, filter by Zone
+        if (this.state.zone_id) {
+            const zId = parseInt(this.state.zone_id, 10);
+            return this.state.branches.filter(b => b.zone_id === zId);
+        }
+        // 2. If City is selected, filter by City
+        if (this.state.city_id) {
+            const cId = parseInt(this.state.city_id, 10);
+            return this.state.branches.filter(b => b.city_id === cId);
+        }
+        // 3. If Province is selected, filter by Province
+        if (this.state.province_id) {
+            const pId = parseInt(this.state.province_id, 10);
+            return this.state.branches.filter(b => b.province_id === pId);
+        }
+        // 4. Otherwise, show all branches
+        return this.state.branches;
     }
 
     async fetch_data() {

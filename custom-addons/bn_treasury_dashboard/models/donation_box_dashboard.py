@@ -12,11 +12,25 @@ class DonationBoxDashboard(models.TransientModel):
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
         branches = self.env['account.analytic.account'].search([('parent_id', 'in', zones.ids)])
         
+        # Build branch data with their parent City and Province IDs
+        branch_data = []
+        for b in branches:
+            zone = b.parent_id
+            city = zone.parent_id
+            province = city.parent_id
+            branch_data.append({
+                'id': b.id, 
+                'name': b.name, 
+                'zone_id': zone.id if zone else False, 
+                'city_id': city.id if city else False, 
+                'province_id': province.id if province else False
+            })
+        
         return {
             'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
             'cities': [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
             'zones': [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
-            'branches': [{'id': b.id, 'name': b.name, 'zone_id': b.parent_id.id} for b in branches],
+            'branches': branch_data, # Updated to include city and province mapping
         }
 
     @api.model
