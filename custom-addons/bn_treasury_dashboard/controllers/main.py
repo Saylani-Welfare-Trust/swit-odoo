@@ -10,13 +10,22 @@ class TreasuryDashboardController(http.Controller):
     # Helpers for Hierarchy
     # ------------------------------------------------------------------
     def _get_location_hierarchy(self):
+        # Level 1: Province
         provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        
+        # Level 2: City
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
+        
+        # Level 3: Zone
+        zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
+        
+        # Segment
         segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
         
         return (
             [{'id': p.id, 'name': p.name} for p in provinces],
             [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
+            [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
             [{'id': s.id, 'name': s.display_name} for s in segments]
         )
 
@@ -36,22 +45,27 @@ class TreasuryDashboardController(http.Controller):
         accounts = request.env['account.analytic.account'].browse(list(ids))
         res = []
         for a in accounts:
-            province_id = False
+            zone_id = False
             city_id = False
+            province_id = False
+            
+            # Walk up the tree to find the exact parents
             parent = a.parent_id
-            # Walk up the tree to find the City and Province
-            while parent:
-                if not parent.parent_id:
-                    province_id = parent.id
-                elif not parent.parent_id.parent_id:
-                    city_id = parent.id
-                parent = parent.parent_id
+            if parent:
+                zone_id = parent.id
+                city_parent = parent.parent_id
+                if city_parent:
+                    city_id = city_parent.id
+                    prov_parent = city_parent.parent_id
+                    if prov_parent:
+                        province_id = prov_parent.id
             
             res.append({
                 'id': a.id, 
                 'name': a.name, 
-                'province_id': province_id,
-                'city_id': city_id
+                'zone_id': zone_id,
+                'city_id': city_id,
+                'province_id': province_id
             })
             
         return sorted(res, key=lambda a: (a['name'] or '').lower())
@@ -61,7 +75,7 @@ class TreasuryDashboardController(http.Controller):
     # ------------------------------------------------------------------
     def _get_custom_model_stats(self, model_name, amount_field='amount',
                                 state_field='state', date_from=None, date_to=None,
-                                analytic_account_id=None, province_id=None, city_id=None, segment_id=None,
+                                analytic_account_id=None, province_id=None, city_id=None, zone_id=None, segment_id=None,
                                 amount_min=None, amount_max=None):
         empty = {
             'count': 0,
@@ -103,6 +117,12 @@ class TreasuryDashboardController(http.Controller):
         if city_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+            except (ValueError, TypeError):
+                pass
+
+        if zone_id and 'analytic_account_id' in Model._fields:
+            try:
+                base_domain.append(('analytic_account_id', 'child_of', int(zone_id)))
             except (ValueError, TypeError):
                 pass
                 
@@ -165,10 +185,10 @@ class TreasuryDashboardController(http.Controller):
     @http.route('/treasury/dashboard/data', type='json', auth='user',
                 methods=['POST'], csrf=False)
     def get_dashboard_data(self, date_from=None, date_to=None,
-                           analytic_account_id=None, province_id=None, city_id=None, segment_id=None, 
+                           analytic_account_id=None, province_id=None, city_id=None, zone_id=None, segment_id=None, 
                            amount_min=None, amount_max=None, **kwargs):
         currency = request.env.company.currency_id
-        provinces, cities, segments = self._get_location_hierarchy()
+        provinces, cities, zones, segments = self._get_location_hierarchy()
 
         return {
             'currency': {
@@ -178,8 +198,9 @@ class TreasuryDashboardController(http.Controller):
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': provinces,
             'cities': cities,
+            'zones': zones,
             'segments': segments,
-            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, segment_id, amount_min, amount_max),
-            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, segment_id, amount_min, amount_max),
-            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id, segment_id, amount_min, amount_max),
+            'cheques':   self._get_custom_model_stats('pos.cheque',      'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
+            'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
+            'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
         }

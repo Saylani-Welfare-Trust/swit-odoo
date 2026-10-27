@@ -14,17 +14,17 @@
             <!-- ==================== FILTER BAR ==================== -->
             <div class="card oh-filter-card mb-4">
                 <div class="card-body p-3">
-                    <!-- Row 1: Filters -->
+                    <!-- Row 1: Location & Date Filters -->
                     <div class="row g-3 align-items-end mb-3">
-                        <div class="col-lg-2 col-md-4">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
                             <label class="form-label">From Date</label>
                             <input type="date" class="form-control" t-model="state.date_from" t-on-change="applyFilter"/>
                         </div>
-                        <div class="col-lg-2 col-md-4">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
                             <label class="form-label">To Date</label>
                             <input type="date" class="form-control" t-model="state.date_to" t-on-change="applyFilter"/>
                         </div>
-                        <div class="col-lg-2 col-md-4">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
                             <label class="form-label">Province</label>
                             <select class="form-select" t-model="state.province_id" t-on-change="onchange_province">
                                 <option value="">All Provinces</option>
@@ -33,7 +33,7 @@
                                 </t>
                             </select>
                         </div>
-                        <div class="col-lg-2 col-md-4">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
                             <label class="form-label">City</label>
                             <select class="form-select" t-model="state.city_id" t-on-change="onchange_city">
                                 <option value="">All Cities</option>
@@ -42,7 +42,16 @@
                                 </t>
                             </select>
                         </div>
-                        <div class="col-lg-2 col-md-4">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Zone</label>
+                            <select class="form-select" t-model="state.zone_id" t-on-change="onchange_zone">
+                                <option value="">All Zones</option>
+                                <t t-foreach="filteredZones" t-as="zone" t-key="zone.id">
+                                    <option t-att-value="zone.id" t-esc="zone.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
                             <label class="form-label">Branch</label>
                             <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
                                 <option value="">All Branches</option>
@@ -51,7 +60,7 @@
                                 </t>
                             </select>
                         </div>
-                        <div class="col-lg-2 col-md-4">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
                             <label class="form-label">Segment</label>
                             <select class="form-select" t-model="state.segment_id" t-on-change="applyFilter">
                                 <option value="">All Segments</option>

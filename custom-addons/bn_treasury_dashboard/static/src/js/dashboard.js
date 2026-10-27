@@ -16,12 +16,14 @@ export class TreasuryDashboard extends Component {
             branch_id: '',
             province_id: '',
             city_id: '',
+            zone_id: '',
             segment_id: '',
             amount_min: '',
             amount_max: '',
             analytic_accounts: [],
             provinces: [],
             cities: [],
+            zones: [],
             segments: [],
             currency: { symbol: '$', position: 'before' },
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
@@ -38,7 +40,17 @@ export class TreasuryDashboard extends Component {
         return this.state.cities.filter(c => c.province_id === pId);
     }
 
+    get filteredZones() {
+        if (!this.state.city_id) return this.state.zones;
+        const cId = parseInt(this.state.city_id, 10);
+        return this.state.zones.filter(z => z.city_id === cId);
+    }
+
     get filteredBranches() {
+        if (this.state.zone_id) {
+            const zId = parseInt(this.state.zone_id, 10);
+            return this.state.analytic_accounts.filter(b => b.zone_id === zId);
+        }
         if (this.state.city_id) {
             const cId = parseInt(this.state.city_id, 10);
             return this.state.analytic_accounts.filter(b => b.city_id === cId);
@@ -58,6 +70,7 @@ export class TreasuryDashboard extends Component {
                 analytic_account_id: this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
                 province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
                 city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                zone_id: this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
                 segment_id: this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
                 amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
                 amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -65,6 +78,7 @@ export class TreasuryDashboard extends Component {
             this.state.analytic_accounts = data.analytic_accounts || [];
             this.state.provinces = data.provinces || [];
             this.state.cities = data.cities || [];
+            this.state.zones = data.zones || [];
             this.state.segments = data.segments || [];
             this.state.currency  = data.currency;
             this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
@@ -77,12 +91,19 @@ export class TreasuryDashboard extends Component {
 
     async onchange_province() {
         this.state.city_id = '';
-        this.state.branch_id = ''; // Reset branch when province changes
+        this.state.zone_id = '';
+        this.state.branch_id = '';
         await this.applyFilter();
     }
 
     async onchange_city() {
-        this.state.branch_id = ''; // Reset branch when city changes
+        this.state.zone_id = '';
+        this.state.branch_id = '';
+        await this.applyFilter();
+    }
+    
+    async onchange_zone() {
+        this.state.branch_id = '';
         await this.applyFilter();
     }
 
@@ -96,6 +117,7 @@ export class TreasuryDashboard extends Component {
         this.state.branch_id = '';
         this.state.province_id = '';
         this.state.city_id = '';
+        this.state.zone_id = '';
         this.state.segment_id = '';
         this.state.amount_min = '';
         this.state.amount_max = '';
