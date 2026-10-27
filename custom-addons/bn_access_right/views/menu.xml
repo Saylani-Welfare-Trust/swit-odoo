@@ -48,10 +48,19 @@
     </record>
     
     <!-- Expense -->
-    <record id="stock.menu_stock_root" model="ir.ui.menu">
+    <record id="hr_expense.menu_hr_expense_root" model="ir.ui.menu">
         <field name="groups_id" eval="[
             (6, 0, [
                 ref('bn_access_right.custom_expense_menu_group'),
+            ])
+        ]"/>
+    </record>
+
+    <!-- Inventory -->
+    <record id="stock.menu_stock_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[
+            (6, 0, [
+                ref('bn_access_right.custom_inventory_menu_group'),
             ])
         ]"/>
     </record>
