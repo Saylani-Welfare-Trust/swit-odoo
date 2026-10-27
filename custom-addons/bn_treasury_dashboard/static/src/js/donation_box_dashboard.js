@@ -14,18 +14,11 @@ export class DonationBoxDashboard extends Component {
             province_id: null,
             city_id: null,
             zone_id: null,
-            segment_l1: null,
-            segment_l2: null,
-            segment_l3: null,
-            segment_l4: null,
-            segment_type: '',
+            branch_id: null, // NEW: Branch filter
             provinces: [],
             cities: [],
             zones: [],
-            segments_l1: [],
-            segments_l2: [],
-            segments_l3: [],
-            segments_l4: [],
+            branches: [],
             kpi: {
                 available: 0, installed: 0, closed: 0,
                 active_complaints: 0, resolved_complaints: 0, not_recovered: 0
@@ -55,10 +48,7 @@ export class DonationBoxDashboard extends Component {
         this.state.provinces = hierarchy.provinces || [];
         this.state.cities = hierarchy.cities || [];
         this.state.zones = hierarchy.zones || [];
-        this.state.segments_l1 = hierarchy.segments_l1 || [];
-        this.state.segments_l2 = hierarchy.segments_l2 || [];
-        this.state.segments_l3 = hierarchy.segments_l3 || [];
-        this.state.segments_l4 = hierarchy.segments_l4 || [];
+        this.state.branches = hierarchy.branches || [];
     }
 
     get filteredCities() {
@@ -73,22 +63,10 @@ export class DonationBoxDashboard extends Component {
         return this.state.zones.filter(z => z.city_id === cId);
     }
 
-    get filteredSegmentsL2() {
-        if (!this.state.segment_l1) return [];
-        const pId = parseInt(this.state.segment_l1, 10);
-        return this.state.segments_l2.filter(s => s.parent_id === pId);
-    }
-    
-    get filteredSegmentsL3() {
-        if (!this.state.segment_l2) return [];
-        const pId = parseInt(this.state.segment_l2, 10);
-        return this.state.segments_l3.filter(s => s.parent_id === pId);
-    }
-    
-    get filteredSegmentsL4() {
-        if (!this.state.segment_l3) return [];
-        const pId = parseInt(this.state.segment_l3, 10);
-        return this.state.segments_l4.filter(s => s.parent_id === pId);
+    get filteredBranches() {
+        if (!this.state.zone_id) return this.state.branches;
+        const zId = parseInt(this.state.zone_id, 10);
+        return this.state.branches.filter(b => b.zone_id === zId);
     }
 
     async fetch_data() {
@@ -98,11 +76,7 @@ export class DonationBoxDashboard extends Component {
             this.state.province_id ? parseInt(this.state.province_id, 10) : null,
             this.state.city_id ? parseInt(this.state.city_id, 10) : null,
             this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
-            this.state.segment_l1 ? parseInt(this.state.segment_l1, 10) : null,
-            this.state.segment_l2 ? parseInt(this.state.segment_l2, 10) : null,
-            this.state.segment_l3 ? parseInt(this.state.segment_l3, 10) : null,
-            this.state.segment_l4 ? parseInt(this.state.segment_l4, 10) : null,
-            this.state.segment_type || null
+            this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
         ]);
         
         this.state.kpi = data.kpi;
@@ -123,29 +97,18 @@ export class DonationBoxDashboard extends Component {
     async onchange_province() {
         this.state.city_id = null;
         this.state.zone_id = null;
+        this.state.branch_id = null;
         await this.applyFilter();
     }
 
     async onchange_city() {
         this.state.zone_id = null;
-        await this.applyFilter();
-    }
-
-    async onchange_segment_l1() {
-        this.state.segment_l2 = null;
-        this.state.segment_l3 = null;
-        this.state.segment_l4 = null;
+        this.state.branch_id = null;
         await this.applyFilter();
     }
     
-    async onchange_segment_l2() {
-        this.state.segment_l3 = null;
-        this.state.segment_l4 = null;
-        await this.applyFilter();
-    }
-    
-    async onchange_segment_l3() {
-        this.state.segment_l4 = null;
+    async onchange_zone() {
+        this.state.branch_id = null;
         await this.applyFilter();
     }
 
@@ -155,11 +118,7 @@ export class DonationBoxDashboard extends Component {
         this.state.province_id = null;
         this.state.city_id = null;
         this.state.zone_id = null;
-        this.state.segment_l1 = null;
-        this.state.segment_l2 = null;
-        this.state.segment_l3 = null;
-        this.state.segment_l4 = null;
-        this.state.segment_type = '';
+        this.state.branch_id = null;
         this.applyFilter();
     }
 

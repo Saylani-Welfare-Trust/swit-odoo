@@ -7,32 +7,22 @@ class DonationBoxDashboard(models.AbstractModel):
 
     @api.model
     def get_location_hierarchy(self):
-        # Location Hierarchy
+        # Location Hierarchy: Province -> City -> Zone -> Branch
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
-        
-        # Segment Hierarchy (4 Levels)
-        seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
-        seg_l2 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
-        seg_l3 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
-        seg_l4 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
+        branches = self.env['account.analytic.account'].search([('parent_id', 'in', zones.ids)])
         
         return {
             'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
             'cities': [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
             'zones': [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
-            'segments_l1': [{'id': s.id, 'name': s.name} for s in seg_l1],
-            'segments_l2': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l2],
-            'segments_l3': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l3],
-            'segments_l4': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l4],
+            'branches': [{'id': b.id, 'name': b.name, 'zone_id': b.parent_id.id} for b in branches],
         }
 
     @api.model
     def get_dashboard_data(self, date_from=None, date_to=None, 
-                           province_id=None, city_id=None, zone_id=None,
-                           segment_l1=None, segment_l2=None, segment_l3=None, segment_l4=None, 
-                           segment_type=None):
+                           province_id=None, city_id=None, zone_id=None, branch_id=None):
         reg_domain = []
         comp_domain = []
         
@@ -53,26 +43,14 @@ class DonationBoxDashboard(models.AbstractModel):
         if zone_id:
             reg_domain.append(('zone_id', '=', int(zone_id)))
             comp_domain.append(('zone_id', '=', int(zone_id)))
-            
-        # Segment Filters
-        effective_segment_id = segment_l4 or segment_l3 or segment_l2 or segment_l1
-        if effective_segment_id:
-            # If your model has a segment field or analytic account, filter by it
-            if 'segment_id' in self.env['donation.box.registration.installation']._fields:
-                reg_domain.append(('segment_id', 'child_of', int(effective_segment_id)))
-                comp_domain.append(('segment_id', 'child_of', int(effective_segment_id)))
-            elif 'analytic_account_id' in self.env['donation.box.registration.installation']._fields:
-                reg_domain.append(('analytic_account_id', 'child_of', int(effective_segment_id)))
-                comp_domain.append(('analytic_account_id', 'child_of', int(effective_segment_id)))
-                
-        if segment_type:
-            # If your model has a field to filter by (N) or (W)
-            if 'segment_type' in self.env['donation.box.registration.installation']._fields:
-                reg_domain.append(('segment_type', '=', segment_type))
-                comp_domain.append(('segment_type', '=', segment_type))
-            elif 'name' in self.env['donation.box.registration.installation']._fields:
-                reg_domain.append(('name', 'ilike', f'%({segment_type})%'))
-                comp_domain.append(('name', 'ilike', f'%({segment_type})%'))
+        if branch_id:
+            # Assuming the branch is linked via analytic_account_id
+            if 'analytic_account_id' in self.env['donation.box.registration.installation']._fields:
+                reg_domain.append(('analytic_account_id', '=', int(branch_id)))
+                comp_domain.append(('analytic_account_id', '=', int(branch_id)))
+            elif 'sub_zone_id' in self.env['donation.box.registration.installation']._fields:
+                reg_domain.append(('sub_zone_id', '=', int(branch_id)))
+                comp_domain.append(('sub_zone_id', '=', int(branch_id)))
 
         Registration = self.env['donation.box.registration.installation']
         Complain = self.env['donation.box.complain.center']
