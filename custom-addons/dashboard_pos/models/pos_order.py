@@ -331,11 +331,41 @@ class PosOrder(models.Model):
         
     @api.model
     def get_treasury_stats(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        # 1. Cheques (linked to pos.order via pos_cheque_id)
+        order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        cheque_count = self.search_count(order_domain + [('pos_cheque_id', '!=', False)])
+
+        # Build Analytic Domain for the treasury models
+        analytic_domain = []
+        if province_id: analytic_domain.append(('analytic_account_id', 'child_of', int(province_id)))
+        if city_id: analytic_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+        if segment_id: analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
         
-        cheque_count = self.search_count(domain + [('pos_cheque_id', '!=', False)])
-        deposit_count = self.search_count(domain + [('payment_ids.payment_method_id.name', 'ilike', 'Deposit')])
-        transfer_count = self.search_count(domain + [('payment_ids.payment_method_id.name', 'ilike', 'Transfer')])
+        accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
+
+        # 2. Direct Deposits (Query model directly)
+        dd_domain = []
+        if date_from: dd_domain.append(('date', '>=', date_from))
+        if date_to: dd_domain.append(('date', '<=', date_to))
+        if analytic_domain:
+            if accounts:
+                dd_domain.append(('analytic_account_id', 'in', accounts.ids))
+            else:
+                dd_domain.append(('id', '=', 0))
+                
+        deposit_count = self.env['direct.deposit'].search_count(dd_domain)
+
+        # 3. Journal Transfers (Query model directly)
+        jt_domain = []
+        if date_from: jt_domain.append(('date', '>=', date_from))
+        if date_to: jt_domain.append(('date', '<=', date_to))
+        if analytic_domain:
+            if accounts:
+                jt_domain.append(('analytic_account_id', 'in', accounts.ids))
+            else:
+                jt_domain.append(('id', '=', 0))
+                
+        transfer_count = self.env['journal.transfer'].search_count(jt_domain)
 
         return {
             'cheque_count': cheque_count,
@@ -345,24 +375,53 @@ class PosOrder(models.Model):
 
     @api.model
     def action_get_treasury_orders(self, ttype, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
-        name = "POS Orders"
+        analytic_domain = []
+        if province_id: analytic_domain.append(('analytic_account_id', 'child_of', int(province_id)))
+        if city_id: analytic_domain.append(('analytic_account_id', 'child_of', int(city_id)))
+        if segment_id: analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
         
-        if ttype == 'cheque':
-            domain.append(('pos_cheque_id', '!=', False))
-            name = "POS Orders with Cheques"
-        elif ttype == 'deposit':
-            domain.append(('payment_ids.payment_method_id.name', 'ilike', 'Deposit'))
-            name = "POS Orders with Direct Deposits"
-        elif ttype == 'transfer':
-            domain.append(('payment_ids.payment_method_id.name', 'ilike', 'Transfer'))
-            name = "POS Orders with Journal Transfers"
+        accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
 
-        return {
-            'name': name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'pos.order',
-            'view_mode': 'list,form',
-            'domain': domain,
-            'target': 'current',
-        }
+        if ttype == 'cheque':
+            order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+            domain = order_domain + [('pos_cheque_id', '!=', False)]
+            return {
+                'name': 'POS Orders with Cheques',
+                'type': 'ir.actions.act_window',
+                'res_model': 'pos.order',
+                'view_mode': 'list,form',
+                'domain': domain,
+                'target': 'current',
+            }
+
+        elif ttype == 'deposit':
+            domain = []
+            if date_from: domain.append(('date', '>=', date_from))
+            if date_to: domain.append(('date', '<=', date_to))
+            if analytic_domain:
+                if accounts: domain.append(('analytic_account_id', 'in', accounts.ids))
+                else: domain.append(('id', '=', 0))
+            return {
+                'name': 'Direct Deposits',
+                'type': 'ir.actions.act_window',
+                'res_model': 'direct.deposit',
+                'view_mode': 'list,form',
+                'domain': domain,
+                'target': 'current',
+            }
+
+        elif ttype == 'transfer':
+            domain = []
+            if date_from: domain.append(('date', '>=', date_from))
+            if date_to: domain.append(('date', '<=', date_to))
+            if analytic_domain:
+                if accounts: domain.append(('analytic_account_id', 'in', accounts.ids))
+                else: domain.append(('id', '=', 0))
+            return {
+                'name': 'Journal Transfers',
+                'type': 'ir.actions.act_window',
+                'res_model': 'journal.transfer',
+                'view_mode': 'list,form',
+                'domain': domain,
+                'target': 'current',
+            }

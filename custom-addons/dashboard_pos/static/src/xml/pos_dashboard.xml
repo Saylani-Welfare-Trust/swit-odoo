@@ -215,7 +215,7 @@
                 <div class="col-lg-4">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-money me-2 text-info"/>Linked Cheques</h4>
+                            <h4><i class="fa fa-money me-2 text-info"/>POS Cheques</h4>
                             <button class="btn btn-sm btn-outline-info" t-on-click="() => this.open_treasury_orders('cheque')">View List</button>
                         </div>
                         <div class="oh-card-body text-center py-4">
@@ -227,24 +227,24 @@
                 <div class="col-lg-4">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-exchange me-2 text-warning"/>Linked Deposits</h4>
+                            <h4><i class="fa fa-exchange me-2 text-warning"/>Direct Deposits</h4>
                             <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.open_treasury_orders('deposit')">View List</button>
                         </div>
                         <div class="oh-card-body text-center py-4">
                             <div class="display-4 fw-bold text-warning"><t t-esc="state.deposit_count"/></div>
-                            <div class="text-muted small mt-2">POS Orders with Direct Deposits</div>
+                            <div class="text-muted small mt-2">Direct Deposit records</div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-4">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-random me-2 text-success"/>Linked Transfers</h4>
+                            <h4><i class="fa fa-random me-2 text-success"/>Journal Transfers</h4>
                             <button class="btn btn-sm btn-outline-success" t-on-click="() => this.open_treasury_orders('transfer')">View List</button>
                         </div>
                         <div class="oh-card-body text-center py-4">
                             <div class="display-4 fw-bold text-success"><t t-esc="state.transfer_count"/></div>
-                            <div class="text-muted small mt-2">POS Orders with Journal Transfers</div>
+                            <div class="text-muted small mt-2">Journal Transfer records</div>
                         </div>
                     </div>
                 </div>
