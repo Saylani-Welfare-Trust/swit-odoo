@@ -124,5 +124,30 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
-
+    
+    <!-- Product Category -->
+    <!-- Point of Sale -->
+    <record id="point_of_sale.access_product_category_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Purchase -->
+    <record id="purchase.access_product_category_purchase_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Sales -->
+    <record id="sale.access_product_category_sale_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
 </odoo>
