@@ -1,6 +1,6 @@
 {
     'name': 'Microfinance',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.3.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -11,6 +11,7 @@
         'bn_pos_order',
         'bn_advance_donation',
         'bn_pos_custom_action',
+        'bn_pos_cheque',
         'sale_stock',
         'report_xlsx',
     ],
@@ -41,12 +42,15 @@
         'wizards/microfinance_application_wizard.xml',
         'reports/microfinance_application_report.xml',
         'views/res_partner_profile.xml',
+        'views/res_company.xml',
+        'views/advance_donation.xml',
     ],
     'auto_install': False,
     'application': True,
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_microfinance/static/src/app/**/*',
+            'bn_microfinance/static/src/screens/**/*',
         ],
     }
 } # type: ignore

@@ -175,3 +175,22 @@ class TestMicrofinance(TransactionCase):
         loan.write({'pdc_attachment': base64.b64encode(buffer.getvalue())})
         with self.assertRaises(ValidationError):
             loan.action_upload_cheques()
+
+    def test_pos_cheque_updates_pdc_and_recovery_copies_status(self):
+        loan = self._loan(self.cash_line, self.cash_product_line)
+        loan.action_move_to_treasury()
+        loan.sudo()._complete_application()
+        line = loan.microfinance_line_ids[0]
+        pdc = self.env['microfinance.pdc.line'].create({
+            'microfinance_id': loan.id, 'microfinance_line_id': line.id, 'cheque_no': 'CHQ-T1'})
+        cheque = self.env['pos.cheque'].create({'name': 'CHQ-T1'})
+        cheque.action_clear()
+        self.assertEqual((pdc.state_cheque, line.state, line.paid_amount), ('cleared', 'paid', line.amount))
+        cheque.action_bounce()
+        self.assertEqual((pdc.state_cheque, line.state, line.paid_amount), ('bounced', 'unpaid', 0))
+
+        line.write({'paid_amount': line.amount, 'state': 'paid'})
+        loan.action_send_to_recovery()
+        self.assertEqual(loan.state, 'in_recovery')
+        self.assertEqual(loan.microfinance_recovery_line_ids[0].state, 'paid')
+        self.assertEqual(loan.microfinance_recovery_line_ids[1].state, 'unpaid')

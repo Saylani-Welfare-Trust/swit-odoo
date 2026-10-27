@@ -1309,7 +1309,7 @@ class Welfare(models.Model):
     def _add_hod_lines(self):
         """Add an HOD line for every HOD product that has none yet (manual lines of the same product are separate)."""
         hod_products = self.env['product.product'].search([('product_tmpl_id.is_hod', '=', True)])
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
         for record in self:
             new_products = hod_products - record.welfare_line_ids.filtered('is_hod').product_id
             if not new_products:

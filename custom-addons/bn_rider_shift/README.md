@@ -85,6 +85,14 @@ already upgraded (or run the command twice): during the upgrade run itself,
 `key.issuance.rider_collection_id` is not resolved yet, because
 `rider.collection` is defined in this module.
 
+## Added to Key Management
+
+This module adds to `key.issuance`: `rider_collection_id`, the rider
+collection created when a key is issued, and the POS RPC
+`set_donation_amount`. The POS **Donation Box** popup and its payment check
+are in `static/src/`. The bulk key wizard only offers the riders and key
+bunches scheduled for the day.
+
 ## Security groups
 
 | Group | Menus | Buttons / actions |

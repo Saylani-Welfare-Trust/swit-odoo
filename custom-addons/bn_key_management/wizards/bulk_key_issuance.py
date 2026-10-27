@@ -22,14 +22,24 @@ class BulkKeyIssuance(models.TransientModel):
 
     date = fields.Date('Date', default=fields.Date.context_today)
 
+    # Who may get which bunch on the wizard's date. bn_rider_shift narrows
+    # these to the riders and bunches scheduled for that day.
+    def _get_scheduled_riders(self):
+        category = self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False)
+        if not category:
+            return self.env['hr.employee']
+        return self.env['hr.employee'].search([('category_ids', 'in', category.ids)])
+
+    def _get_scheduled_key_bunches(self):
+        return self.env['key.bunch'].search([])
+
     @api.depends('date', 'action_type')
     def _set_rider_domain(self):
         for rec in self:
             rec.domain_rider_ids = [(6, 0, [])]
 
             if rec.action_type == 'issue':
-                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
-                scheduled_riders = schedule_days.mapped('rider_shift_id.rider_id')
+                scheduled_riders = rec._get_scheduled_riders()
 
                 issued_riders = self.env['key.issuance'].search([
                     ('issue_date', '=', rec.date),
@@ -51,11 +61,7 @@ class BulkKeyIssuance(models.TransientModel):
 
             if rec.date and rec.rider_id:
                 if rec.action_type == 'issue':
-                    schedule_days = self.env['rider.schedule.day'].search([
-                        ('rider_shift_id.rider_id', '=', rec.rider_id.id),
-                        ('date', '=', rec.date),
-                    ])
-                    scheduled_bunches = schedule_days.mapped('key_bunch_id')
+                    scheduled_bunches = rec._get_scheduled_key_bunches()
 
                     issued_bunches = self.env['key.issuance'].search([
                         ('rider_id', '=', rec.rider_id.id),

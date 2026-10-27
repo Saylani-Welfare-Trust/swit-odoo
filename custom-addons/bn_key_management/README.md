@@ -18,7 +18,14 @@ the money and the key.
 
 It also extends the donation box registration with the key bunch, and
 implements the key hooks used by `bn_donation_box` (create, activate,
-change request, close, "can this box be released?").
+change request, close, "can this box be released?"). The **Donation Box
+Receipt** printed from an issuance is in this module.
+
+Everything that needs Rider Shift is in `bn_rider_shift`: the
+`rider_collection_id` link, creating the rider collection when a key is
+issued, the POS amount entry (`set_donation_amount`) and limiting the bulk
+wizard to the riders / bunches scheduled for the day. Without Rider Shift
+the bulk wizard offers every *Donation Box Rider* and every bunch.
 
 ## Process flow
 
@@ -46,7 +53,7 @@ flowchart TD
 sequenceDiagram
     participant Rider as Cashier / Rider
     participant POS
-    participant Odoo as key.issuance.set_donation_amount
+    participant Odoo as key.issuance.set_donation_amount (bn_rider_shift)
     Rider->>POS: Actions → Donation Box
     POS->>Odoo: list submitted collections (rider.collection)
     Rider->>POS: pick box, enter amount

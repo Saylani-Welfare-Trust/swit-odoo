@@ -6,7 +6,7 @@
             <div class="modal-header drag-handle">
                 <h3 class="modal-title"><t t-esc="this.title" /></h3>
             </div>
-            <main class="modal-body" t-if="!['mf', 'me'].includes(this.action_type)">
+            <main class="modal-body" t-if="!this.hasProgramBody">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Donor</div>
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
@@ -122,20 +122,6 @@
                 </div>
             </main>
 
-            <!-- Microfinance -->
-            <main class="modal-body" t-if="this.action_type == 'mf'">
-                <div class="row mb-2 text-start">
-                    <div class="col-4 fw-semibold">Request No.</div>
-                    <div class="col-8">
-                        <input type="text"
-                            class="form-control form-control-sm"
-                            t-att-value="this.state.microfinance_request_no"
-                            t-on-change="updateMicrofinanceRequestNo"
-                            placeholder="Enter Microfinance Requets No."/>
-                    </div>
-                </div>
-            </main>
-            
             <main class="modal-body" t-if="this.action_type == 'me'">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Request No.</div>

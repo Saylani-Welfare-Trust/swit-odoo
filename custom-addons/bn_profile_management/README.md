@@ -61,9 +61,11 @@ flowchart TD
 - If the same person is already registered as the other type (donor ↔
   donee), that registration ID is stored as the **Secondary Registration
   ID**.
-- Welfare donees: needs the Welfare module (not in this repository).
-  Without it, registration stops with a clear message. Re-registering never
-  creates a second Welfare application.
+- Welfare donees: needs `bn_welfare`, which creates the Welfare application
+  and fills the Welfare form of the profile report (hooks
+  `_profile_welfare_installed`, `action_welfare_application`,
+  `_get_welfare`). Without it, registration stops with a clear message.
+  Re-registering never creates a second Welfare application.
 
 ### Registered profiles are locked
 

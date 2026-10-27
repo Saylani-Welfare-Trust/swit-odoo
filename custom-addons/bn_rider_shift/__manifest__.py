@@ -1,6 +1,6 @@
 {
     'name': 'Rider Shift',
-    'version': '17.0.1.3.0',
+    'version': '17.0.1.4.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -27,6 +27,7 @@
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_rider_shift/static/src/app/**/*',
+            'bn_rider_shift/static/src/screen/*',
         ],
     },
 }

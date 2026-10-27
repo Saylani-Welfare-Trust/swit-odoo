@@ -13,8 +13,6 @@ class AdvanceDonationStatementWizard(models.TransientModel):
     def get_statement_data(self, date_from=None, date_to=None, donor_id=False):
         Receipt    = self.env['advance.donation.receipt']
         DonLine    = self.env['advance.donation.lines']
-        Welfare    = self.env['welfare.line']
-        Micro      = self.env['microfinance']
 
         df = self._to_date(date_from) if date_from else None
         dt = self._to_date(date_to)   if date_to   else None
@@ -30,31 +28,10 @@ class AdvanceDonationStatementWizard(models.TransientModel):
 
         receipts = Receipt.search(rec_domain)
 
-        # ---------------- OUT side : welfare / microfinance --------------
-        welfare_lines = Welfare.search([('advance_donation_line_id', '!=', False)])
-        micro_records = Micro.search([('advance_donation_line_id', '!=', False)])
-
-        def _keep(rec):
-            d = rec.advance_donation_line_id.advance_donation_id
-            if not d:
-                return False
-            if donor_id and d.donor_id.id != donor_id:
-                return False
-            # Prefer a real date field if it exists, otherwise fall back to create_date
-            rd = None
-            for fname in ('date', 'disbursement_date', 'create_date'):
-                if fname in rec._fields and rec[fname]:
-                    v = rec[fname]
-                    rd = v.date() if isinstance(v, datetime) else v
-                    break
-            if df and rd and rd < df:
-                return False
-            if dt and rd and rd > dt:
-                return False
-            return True
-
-        welfare_lines = welfare_lines.filtered(_keep)
-        micro_records = micro_records.filtered(_keep)
+        # ---------------- OUT side : program disbursements --------------
+        # Records of the program modules (welfare, microfinance ...) that
+        # used an advance donation line.
+        program_lines, linked_line_ids = self._get_program_disbursements(df, dt, donor_id)
 
         # ---------------- OUT side : disbursed donation lines -----------
         # This is the important addition. Even if no welfare / microfinance
@@ -68,16 +45,6 @@ class AdvanceDonationStatementWizard(models.TransientModel):
             disb_domain.append(('disbursement_date', '<=', dt))
 
         disbursed_lines = DonLine.search(disb_domain)
-
-        # Lines already represented by a welfare / microfinance row (avoid
-        # double counting). We key them by the donation‑line id.
-        linked_line_ids = set()
-        for w in welfare_lines:
-            if w.advance_donation_line_id:
-                linked_line_ids.add(w.advance_donation_line_id.id)
-        for m in micro_records:
-            if m.advance_donation_line_id:
-                linked_line_ids.add(m.advance_donation_line_id.id)
 
         # ---------------- assemble movements ----------------------------
         lines = []
@@ -97,52 +64,7 @@ class AdvanceDonationStatementWizard(models.TransientModel):
                 'amount_out':   0.0,
             })
 
-        for w in welfare_lines:
-            d = w.advance_donation_line_id.advance_donation_id
-            amount = self._pick_amount(w, [
-                'advance_donation_amount', 'total_amount',
-                'amount', 'disbursed_amount',
-            ])
-            if not amount:
-                continue
-            lines.append({
-                'date':         self._rec_date(w).strftime('%Y-%m-%d')
-                                 if self._rec_date(w) else '',
-                'reference':    w.display_name,
-                'partner':      d.donor_id.name or '',
-                'type':         'Disbursement',
-                'direction':    'out',
-                'purpose':      'Welfare',
-                'beneficiary':  (w.welfare_id.display_name
-                                 if getattr(w, 'welfare_id', False) else ''),
-                'description':  (w.product_id.display_name
-                                 if getattr(w, 'product_id', False) else ''),
-                'amount_in':    0.0,
-                'amount_out':   amount,
-            })
-
-        for m in micro_records:
-            d = m.advance_donation_line_id.advance_donation_id
-            amount = self._pick_amount(m, [
-                'advance_donation_amount', 'amount',
-                'loan_amount', 'disbursed_amount',
-            ])
-            if not amount:
-                continue
-            lines.append({
-                'date':         self._rec_date(m).strftime('%Y-%m-%d')
-                                 if self._rec_date(m) else '',
-                'reference':    m.display_name,
-                'partner':      d.donor_id.name or '',
-                'type':         'Disbursement',
-                'direction':    'out',
-                'purpose':      'Microfinance',
-                'beneficiary':  m.display_name,
-                'description':  (m.product_id.display_name
-                                 if getattr(m, 'product_id', False) else ''),
-                'amount_in':    0.0,
-                'amount_out':   amount,
-            })
+        lines += program_lines
 
         # ---- NEW: disbursed donation lines without a welfare/micro link ----
         for line in disbursed_lines:
@@ -189,6 +111,43 @@ class AdvanceDonationStatementWizard(models.TransientModel):
         }
 
     # ---------- helpers --------------------------------------------------
+    def _get_program_disbursements(self, df, dt, donor_id):
+        """Hook for the program modules: (statement lines, ids of the
+        advance donation lines they cover). The covered donation lines are
+        not listed again on their own."""
+        return [], set()
+
+    def _keep_disbursement(self, rec, df, dt, donor_id):
+        """Whether a program record linked to an advance donation line is
+        in the statement's donor / period."""
+        d = rec.advance_donation_line_id.advance_donation_id
+        if not d:
+            return False
+        if donor_id and d.donor_id.id != donor_id:
+            return False
+        rd = self._rec_date(rec)
+        if df and rd and rd < df:
+            return False
+        if dt and rd and rd > dt:
+            return False
+        return True
+
+    def _disbursement_line(self, rec, purpose, amount, beneficiary, description):
+        d = rec.advance_donation_line_id.advance_donation_id
+        rd = self._rec_date(rec)
+        return {
+            'date':         rd.strftime('%Y-%m-%d') if rd else '',
+            'reference':    rec.display_name,
+            'partner':      d.donor_id.name or '',
+            'type':         'Disbursement',
+            'direction':    'out',
+            'purpose':      purpose,
+            'beneficiary':  beneficiary,
+            'description':  description,
+            'amount_in':    0.0,
+            'amount_out':   amount,
+        }
+
     def _pick_amount(self, rec, field_names):
         for f in field_names:
             if f in rec._fields:

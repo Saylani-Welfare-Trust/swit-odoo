@@ -124,49 +124,6 @@ class POSCheque(models.Model):
                 order_ref = pos_order.name and pos_order.name[-4:] or '0000'
                 rec.order_reference = f'{branch_code}-{company}-{order_date}-{order_ref}'
 
-    def _get_microfinance_pdc_line(self):
-        """Get the PDC line linked to this cheque"""
-        self.ensure_one()
-        return self.env['microfinance.pdc.line'].search([
-            ('cheque_no', '=', self.name),
-        ], limit=1)
-
-    def _get_microfinance_line(self):
-        """Get the microfinance.line linked through the PDC line"""
-        self.ensure_one()
-        pdc_line = self._get_microfinance_pdc_line()
-        if pdc_line and pdc_line.microfinance_line_id:
-            return pdc_line.microfinance_line_id
-        return None
-
-    def _update_microfinance_cheque_line(self, new_state_cheque):
-        """Update the state_cheque on the matching microfinance.pdc.line"""
-        self.ensure_one()
-        pdc_line = self._get_microfinance_pdc_line()
-        if pdc_line:
-            pdc_line.write({'state_cheque': new_state_cheque})
-
-    def _update_microfinance_line_state(self, new_state):
-        """Update the state of the linked microfinance.line"""
-        self.ensure_one()
-        microfinance_line = self._get_microfinance_line()
-        if microfinance_line:
-            if new_state == 'paid':
-                microfinance_line.write({
-                    'state': 'paid',
-                    'paid_amount': microfinance_line.amount,
-                    'payment_date': fields.Date.today()
-                })
-            elif new_state == 'unpaid':
-                microfinance_line.write({
-                    'state': 'unpaid',
-                    'paid_amount': 0.0,
-                    'payment_date': False
-                })
-            elif new_state == 'partial':
-                # Handle partial payment logic if needed
-                pass
-
     def action_show_pos_order(self):
         pos_order = self.env['pos.order'].search([('pos_cheque_id', '=', self.id)])
         return {
@@ -210,18 +167,6 @@ class POSCheque(models.Model):
                 pos_order.send_whatsapp_after_payment(pos_order.id)
         except Exception as e:
             _logger.error('Cheque %s: clear notification failed: %s', self.name, str(e))
-
-    def _get_or_repair_microfinance_line(self, pdc_line):
-        """Get microfinance line from link or fallback to installment_number search, and repair the link"""
-        microfinance_line = pdc_line.microfinance_line_id
-        if not microfinance_line and pdc_line.installment_number and pdc_line.microfinance_id:
-            microfinance_line = self.env['microfinance.line'].search([
-                ('microfinance_id', '=', pdc_line.microfinance_id.id),
-                ('installment_no', '=', pdc_line.installment_number),
-            ], limit=1)
-            if microfinance_line:
-                pdc_line.microfinance_line_id = microfinance_line.id  # self-heal
-        return microfinance_line
 
     # ---------- WELFARE ----------
     def _clear_welfare(self):
@@ -377,19 +322,10 @@ class POSCheque(models.Model):
             raise ValidationError(f"Failed to generate Journal Entry: {str(e)}")
         
     # ---------- LIFECYCLE ----------
+    # Program modules (bn_microfinance, bn_livestock_slaugther ...) extend
+    # action_clear / action_bounce / action_cancel for their own records.
     def action_clear(self):
         self._create_advance_donation_receipts()
-
-        pdc_line = self._get_microfinance_pdc_line()
-        if pdc_line:
-            pdc_line.write({'state_cheque': 'cleared'})
-            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
-            if microfinance_line:
-                microfinance_line.write({
-                    'state': 'paid',
-                    'paid_amount': microfinance_line.amount,
-                    'payment_date': fields.Date.today(),
-                })
 
         if self.source_model == 'welfare':
             self._clear_welfare()
@@ -407,17 +343,6 @@ class POSCheque(models.Model):
         if self.bounce_count >= 4:
             raise ValidationError('You cannot bounce the cheque more than 3 times.')
 
-        pdc_line = self._get_microfinance_pdc_line()
-        if pdc_line:
-            pdc_line.write({'state_cheque': 'bounced'})
-            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
-            if microfinance_line:
-                microfinance_line.write({
-                    'state': 'unpaid',
-                    'paid_amount': 0.0,
-                    'payment_date': False,
-                })
-
         if self.source_model == 'welfare':
             self._bounce_welfare()
         elif self.source_model == 'medical_equipment':
@@ -427,17 +352,6 @@ class POSCheque(models.Model):
         self.state = 'bounce'
 
     def action_cancel(self):
-        pdc_line = self._get_microfinance_pdc_line()
-        if pdc_line:
-            pdc_line.write({'state_cheque': 'draft'})
-            microfinance_line = self._get_or_repair_microfinance_line(pdc_line)
-            if microfinance_line:
-                microfinance_line.write({
-                    'state': 'unpaid',
-                    'paid_amount': 0.0,
-                    'payment_date': False,
-                })
-
         if self.source_model == 'welfare':
             self._bounce_welfare()          # same reset as bounce
         elif self.source_model == 'medical_equipment':

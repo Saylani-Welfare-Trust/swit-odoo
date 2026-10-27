@@ -612,6 +612,7 @@ class Microfinance(models.Model):
                 'due_date': line.due_date,
                 'amount': line.amount,
                 'paid_amount': line.paid_amount,
+                'state': line.state,
             }))
 
         self.microfinance_recovery_line_ids = lines

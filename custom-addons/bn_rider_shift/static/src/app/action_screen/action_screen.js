@@ -2,7 +2,7 @@
 
 import { ActionScreen } from "@bn_pos_custom_action/app/action_screen/action_screen";
 import { patch } from "@web/core/utils/patch";
-import { DonationBoxPopup } from "@bn_key_management/app/donation_box_popup/donation_box_popup";
+import { DonationBoxPopup } from "../donation_box_popup/donation_box_popup";
 import {ErrorPopup} from "@point_of_sale/app/errors/popups/error_popup";
 import {_t} from "@web/core/l10n/translation";
 

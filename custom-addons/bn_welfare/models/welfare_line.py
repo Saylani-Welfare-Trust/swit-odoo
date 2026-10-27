@@ -292,7 +292,7 @@ class WelfareLine(models.Model):
 
     @api.model
     def create(self, vals):
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
         
         if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
             vals['collection_point'] = 'branch'
@@ -309,7 +309,7 @@ class WelfareLine(models.Model):
         _logger.info(f"Running scheduled action to auto-mark welfare lines as delivered for today: {today}")
         lines = self.search([('collection_date', '=', today), 
                                     ('state', '=', 'draft'),
-                                    ('disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id),
+                                    ('disbursement_category_id', '=', self.env.ref('bn_welfare.disbursement_category_in_kind').id),
                                     ('welfare_id.state', '=', 'approve'),
                                     ('collection_point', '=', 'branch'),
                                     ('welfare_id.order_type', 'in', ['one_time'])
@@ -328,7 +328,7 @@ class WelfareLine(models.Model):
     def _auto_create_bills_for_cash_bank(self):
         """Scheduled action to create bills for Cash + Bank collection on collection date"""
         today = fields.Date.today()
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
         
         if not cash_category:
             return
@@ -400,8 +400,8 @@ class WelfareLine(models.Model):
                 
     @api.depends('disbursement_category_id', 'welfare_id.order_type')
     def _compute_show_deliver_button(self):
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
         for rec in self:
             rec.show_deliver_button = False
             if rec.disbursement_category_id:
@@ -449,7 +449,7 @@ class WelfareLine(models.Model):
         # The compute method already handles manual_total correctly
         
         # Handle in_kind category auto-selection
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
         if 'disbursement_category_id' in vals:
             if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
                 vals['collection_point'] = 'branch'
@@ -504,7 +504,7 @@ class WelfareLine(models.Model):
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
         if in_kind_category and self.disbursement_category_id.id == in_kind_category.id:
             self.collection_point = 'branch'
     def can_disburse(self):
@@ -570,7 +570,7 @@ class WelfareLine(models.Model):
 
     def action_delivered(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
-            in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
+            in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind')
             if self.disbursement_category_id == in_kind_category:        
                 StockPicking = self.env['stock.picking']
                 StockMove = self.env['stock.move']

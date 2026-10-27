@@ -428,22 +428,18 @@ class ResPartner(models.Model):
                     '"%(action)s" is not possible for "%(name)s" in status "%(state)s".'
                 ) % {'action': action, 'name': rec.display_name, 'state': labels.get(rec.state, rec.state)})
 
+    def _profile_welfare_installed(self):
+        """True once bn_welfare is installed (it overrides this)."""
+        return False
+
     def action_welfare_application(self):
-        """Create the Welfare application of a newly registered welfare donee
-        (module bn_welfare, not part of this repository)."""
+        """Create the Welfare application of a newly registered welfare donee.
+        Implemented by bn_welfare; without it Welfare donees cannot be
+        registered."""
         self.ensure_one()
-        if 'welfare' not in self.env:
-            raise UserError(_(
-                'Cannot register "%s" for Welfare: the Welfare module is not installed.'
-            ) % self.display_name)
-        Welfare = self.env['welfare']
-        existing = Welfare.search([('donee_id', '=', self.id)], limit=1)
-        if existing:
-            return existing
-        return Welfare.create({
-            'donee_id': self.id,
-            'is_individual': 'Individual' in self.category_id.mapped('name'),
-        })
+        raise UserError(_(
+            'Cannot register "%s" for Welfare: the Welfare module is not installed.'
+        ) % self.display_name)
 
     def _find_registered_duplicate(self, category, cnic=False, mobile=False, country_check=True):
         """Registered partner of ``category`` sharing the given CNIC or mobile.
@@ -520,7 +516,7 @@ class ResPartner(models.Model):
                     'A Donor with same Mobile No. already exist in the System.'
                 )
 
-        if is_welfare and 'welfare' not in self.env:
+        if is_welfare and not rec._profile_welfare_installed():
             raise UserError(_(
                 'Cannot register "%s" for Welfare: the Welfare module is not installed.'
             ) % rec.display_name)

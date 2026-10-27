@@ -1,6 +1,6 @@
 {
     'name': 'Key Management',
-    'version': '17.0.1.3.0',
+    'version': '17.0.1.4.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -13,6 +13,7 @@
         'data/ir_module_category.xml',
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'reports/key_issuance_receipt_report.xml',
         'wizards/bulk_key_issuance.xml',
         'wizards/manual_key_issuance.xml',
         'views/key.xml',
@@ -23,10 +24,4 @@
     ],
     'auto_install': False,
     'application': False,
-    'assets': {
-        'point_of_sale._assets_pos': [
-            'bn_key_management/static/src/app/**/*',
-            'bn_key_management/static/src/screen/*',
-        ],
-    },
 }

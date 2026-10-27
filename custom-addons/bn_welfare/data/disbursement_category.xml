@@ -11,6 +11,9 @@
             <field name="name">Cash</field>
         </record>
     </data>
-    
+
+    <!-- Databases from before 29 Sep 2026 still have these categories as
+         bn_master_setup data: adopt them (idempotent). -->
+    <function model="disbursement.category" name="_bn_adopt_master_setup_categories"/>
 
 </odoo>

@@ -8,7 +8,7 @@
                 <t t-set="line" t-value="lines[:1]"/>
                 <t t-set="groups" t-value="lines._get_receipt_groups()"/>
                 <!-- Helper: Get donee from whichever source is present -->
-                <t t-set="donees" t-value="lines.mapped(lambda l: l.welfare_line_id.welfare_id.donee_id or l.microfinance_id.donee_id)"/>
+                <t t-set="donees" t-value="lines._get_donees()"/>
                 <div class="page">
                       
 
@@ -172,19 +172,12 @@
                             <h5 style="color: #2E4053; border-bottom: 1px solid #2E4053;">Disbursement Source (Traceability)</h5>
                             <div class="alert alert-info">
                                 <i class="fa fa-link"/> <strong>Linked Module:</strong>
-                                <!--<p t-if="line.welfare_line_id">-->
-                                <!--    <strong>Welfare Line:</strong>-->
-                                <!--    <span t-esc="line.welfare_line_id.display_name or line.welfare_line_id.welfare_id.name"/>-->
-                                <!--</p>-->
-                                <p t-foreach="lines.mapped('welfare_id')" t-as="welfare">
-                                    <!--<strong>Recurring Welfare Line:</strong>-->
-                                    <span t-esc="welfare.name or welfare.id"/>
+                                <t t-set="source_links" t-value="lines._get_source_links()"/>
+                                <p t-foreach="source_links" t-as="link">
+                                    <strong t-if="link[0]"><t t-esc="link[0]"/>:</strong>
+                                    <span t-esc="link[1]"/>
                                 </p>
-                                <p t-foreach="lines.mapped('microfinance_id')" t-as="microfinance">
-                                    <strong>Microfinance:</strong>
-                                    <span t-esc="microfinance.display_name or microfinance.id"/>
-                                </p>
-                                <p t-if="not (lines.welfare_id or lines.microfinance_id or lines.welfare_line_id)">
+                                <p t-if="not source_links">
                                     <em>No specific module link recorded.</em>
                                 </p>
                             </div>

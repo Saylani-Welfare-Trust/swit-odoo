@@ -16,3 +16,7 @@ from . import stock_picking
 from . import account_payment
 from . import security_offered
 from . import microfinance_pdc_lines
+from . import res_company
+from . import pos_session
+from . import pos_cheque
+from . import advance_donation_disbursement

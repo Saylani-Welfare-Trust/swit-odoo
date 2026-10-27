@@ -18,7 +18,8 @@ module reuses it.
 | `Order` patch | Sends `source_document`, `receive_voucher`, `pos_order_seq`, `qurbani` and `extra_data` (feature payloads) to the server |
 | `pos.order` fields | Same fields stored on the order |
 | `pos.session.analytic_account_id` | Session branch, taken from the cashier's employee analytic account |
-| `res.company` product fields | Names of the products used by each POS feature (donation box, welfare, microfinance installment / deposit, medical deposit, home service) |
+| `res.company` product fields | Names of the products used by the POS features still handled here (welfare, medical deposit, home service). Donation Box and Microfinance add their own fields |
+| Program hooks | `ProvisionalPopup.confirmProgram` / `hasProgramBody` and `ReceivingPopup.confirmProgram` / `_closeConfirmed`: a feature module handles its own `action_type` without code here |
 | `pos.config` counter / sequence | Receipt number per POS that restarts every year |
 | Refund / reprint overrides | Templates of the standard buttons adjusted |
 

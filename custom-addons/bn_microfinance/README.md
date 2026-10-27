@@ -6,7 +6,8 @@ daily installments. Security deposits, installments and recoveries are
 received at the Point of Sale.
 
 **Depends on:** `bn_master_setup`, `bn_profile_management`, `bn_pos_order`,
-`bn_advance_donation`, `bn_pos_custom_action`, `sale_stock`, `report_xlsx`
+`bn_advance_donation`, `bn_pos_custom_action`, `bn_pos_cheque`, `sale_stock`,
+`report_xlsx`
 
 ## Main models
 
@@ -69,9 +70,27 @@ the status cannot be written directly.
 
 POS cashiers (role *POS Action*) receive the security deposit, installments
 and recoveries through the POS *Action* button (`bn_pos_custom_action`).
-The POS installment payment checks the Shariah balance with the
-`shariah.law` / `shariah.law.blocker` models, which are **not in this
-repository**: that module must be installed for installment payments.
+
+All the microfinance POS code is in this module (`static/src/`); it plugs
+into the shared screens of `bn_pos_custom_action` through hooks:
+
+| File | What it does |
+| --- | --- |
+| `app/action_button` | Loads the *POS Action* right of the cashier |
+| `app/action_screen` | The **Microfinance** button and its menu |
+| `app/provisional_popup` | Security deposit: request no., SD product added to the order (`confirmProgram` hook) |
+| `app/receiving_popup` | Installment / recovery: loads the unpaid lines (`confirmProgram` hook) |
+| `screens/payment_screen.js` | After the order is **saved**: marks the SD slip paid, spreads the payment over the installment lines, pays the recovery lines |
+
+The loan is only updated once the POS order is validated and saved; a
+cancelled or failed validation leaves it untouched. If the update itself
+fails, the cashier gets a message to inform the Microfinance team.
+
+Also in this module: the company fields *Microfinance Installment /
+Security Deposit* (product names used by the POS), the POS cheque hooks
+(clearing, bouncing or cancelling a post-dated cheque updates its PDC line
+and installment) and the `microfinance_id` link on advance donation
+disbursement lines.
 
 ## Security groups
 
@@ -88,6 +107,18 @@ Roles (category *Microfinance Roles*, added on top of a tier; each implies
 reject, revert to HOD), **Recovery** (recovery steps, write-off request),
 **Write Off Approval 1 / 2**, and **POS Action** (POS cashiers: no access to
 the app itself, only what the POS needs).
+
+## What changed in 17.0.1.3.0
+
+| Problem | Fix |
+| --- | --- |
+| Microfinance POS code, company fields and cheque handling were in `bn_pos_custom_action` / `bn_pos_cheque`, which do not depend on this module | Moved here, plugged in through hooks |
+| POS marked installments / the SD slip paid **before** the order was saved | Only after the order is saved |
+| POS recovery refused every loan ("Unauthorized Request State"): it required *Done*, but a loan with recovery lines is *In Recovery* | Accepts *In Recovery* |
+| Recovery lines copied the paid amount of the installments but not their status | Status copied |
+| Installment / recovery receipt still closed the popup when the lines could not be loaded | Stops with the message |
+| SD added without its product when the product was missing | Error shown, nothing added |
+| The POS Shariah check could never run (it read a field of a record id string) | Removed; the Shariah sync checks the balance on the server |
 
 ## What changed in 17.0.1.1.0
 
