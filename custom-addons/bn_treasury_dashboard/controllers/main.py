@@ -6,6 +6,67 @@ _logger = logging.getLogger(__name__)
 
 class TreasuryDashboardController(http.Controller):
 
+    # ------------------------------------------------------------------
+    # Helpers for Hierarchy
+    # ------------------------------------------------------------------
+    def _get_hierarchical_name(self, account):
+        if not account:
+            return ''
+        depth = 0
+        p = account.parent_id
+        while p:
+            depth += 1
+            p = p.parent_id
+        
+        prefixes = {
+            0: 'Main',
+            1: 'Sub Main',
+            2: 'Sub Sub Main',
+            3: 'Sub Sub Sub Main',
+            4: 'Sub Sub Sub Sub Main'
+        }
+        prefix = prefixes.get(depth, f"{'Sub ' * depth}Main")
+        return f"{prefix} {account.name}"
+
+    def _get_location_hierarchy(self):
+        # Top level accounts (Provinces) have no parent
+        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        
+        # Level 2 accounts (Cities) have a parent (Province)
+        cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
+        
+        # Fetch Segments (Assuming they belong to a plan named 'Segment')
+        segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
+        
+        return (
+            [{'id': p.id, 'name': self._get_hierarchical_name(p)} for p in provinces],
+            [{'id': c.id, 'name': self._get_hierarchical_name(c), 'province_id': c.parent_id.id} for c in cities],
+            [{'id': s.id, 'name': self._get_hierarchical_name(s)} for s in segments]
+        )
+
+    def _get_analytic_accounts(self):
+        ids = set()
+        for model_name in ['pos.cheque', 'direct.deposit', 'journal.transfer']:
+            if model_name in request.env:
+                Model = request.env[model_name]
+                if 'analytic_account_id' in Model._fields:
+                    ids.update(
+                        Model.search([('analytic_account_id', '!=', False)])
+                        .mapped('analytic_account_id').ids
+                    )
+        if not ids:
+            return []
+        accounts = request.env['account.analytic.account'].browse(list(ids))
+        
+        # Apply hierarchical name to branches as well!
+        return [
+            {'id': a.id, 'name': self._get_hierarchical_name(a)}
+            for a in sorted(accounts, key=lambda a: (a.display_name or '').lower())
+        ]
+
+    # ------------------------------------------------------------------
+    # Custom Model Stats
+    # ------------------------------------------------------------------
     def _get_custom_model_stats(self, model_name, amount_field='amount',
                                 state_field='state', date_from=None, date_to=None,
                                 analytic_account_id=None, province_id=None, city_id=None, segment_id=None,
@@ -111,35 +172,9 @@ class TreasuryDashboardController(http.Controller):
             'state_amounts': state_amounts,
         }
 
-    def _get_analytic_accounts(self):
-        ids = set()
-        for model_name in ['pos.cheque', 'direct.deposit', 'journal.transfer']:
-            if model_name in request.env:
-                Model = request.env[model_name]
-                if 'analytic_account_id' in Model._fields:
-                    ids.update(
-                        Model.search([('analytic_account_id', '!=', False)])
-                        .mapped('analytic_account_id').ids
-                    )
-        if not ids:
-            return []
-        accounts = request.env['account.analytic.account'].browse(list(ids))
-        return [
-            {'id': a.id, 'name': a.display_name}
-            for a in sorted(accounts, key=lambda a: (a.display_name or '').lower())
-        ]
-
-    def _get_location_hierarchy(self):
-        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
-        
-        return (
-            [{'id': p.id, 'name': p.name} for p in provinces],
-            [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
-            [{'id': s.id, 'name': s.display_name} for s in segments]
-        )
-
+    # ------------------------------------------------------------------
+    # Main Route
+    # ------------------------------------------------------------------
     @http.route('/treasury/dashboard/data', type='json', auth='user',
                 methods=['POST'], csrf=False)
     def get_dashboard_data(self, date_from=None, date_to=None,
@@ -161,38 +196,3 @@ class TreasuryDashboardController(http.Controller):
             'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, segment_id, amount_min, amount_max),
             'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id, segment_id, amount_min, amount_max),
         }
-        
-    def _get_hierarchical_name(self, account):
-        if not account:
-            return ''
-        depth = 0
-        p = account.parent_id
-        while p:
-            depth += 1
-            p = p.parent_id
-        
-        prefixes = {
-            0: 'Main',
-            1: 'Sub Main',
-            2: 'Sub Sub Main',
-            3: 'Sub Sub Sub Main',
-            4: 'Sub Sub Sub Sub Main'
-        }
-        prefix = prefixes.get(depth, f"{'Sub ' * depth}Main")
-        return f"{prefix} {account.name}"
-
-    def _get_location_hierarchy(self):
-        # Top level accounts (Provinces) have no parent
-        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        
-        # Level 2 accounts (Cities) have a parent (Province)
-        cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        
-        # Fetch Segments (Assuming they belong to a plan named 'Segment')
-        segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
-        
-        return (
-            [{'id': p.id, 'name': self._get_hierarchical_name(p)} for p in provinces],
-            [{'id': c.id, 'name': self._get_hierarchical_name(c), 'province_id': c.parent_id.id} for c in cities],
-            [{'id': s.id, 'name': self._get_hierarchical_name(s)} for s in segments]
-        )
