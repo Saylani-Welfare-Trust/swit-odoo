@@ -90,7 +90,6 @@ class PosOrder(models.Model):
                 domain.append(('id', '=', 0))
             else:
                 analytic_filters = []
-                # 1. Check if the Order, Session, Config, or User has the Analytic Account
                 if 'analytic_account_id' in self._fields:
                     analytic_filters.append(('analytic_account_id', 'in', accounts.ids))
                 if 'session_id' in self._fields:
@@ -100,20 +99,18 @@ class PosOrder(models.Model):
                 if 'user_id' in self._fields:
                     analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
                 
-                # 2. Check if the Products on the Order Lines are tagged with the Analytic Account
                 if 'analytic_account_id' in self.env['product.template']._fields:
                     analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
                 elif 'analytic_account_ids' in self.env['product.template']._fields:
                     analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
 
-                # Combine all filters with OR so ANY match returns the order
+                # FIXED: Correct Odoo prefix syntax for OR conditions
                 if analytic_filters:
-                    combined_filter = []
-                    for i, f in enumerate(analytic_filters):
-                        if i > 0:
-                            combined_filter.append('|')
-                        combined_filter.append(f)
-                    domain.extend(combined_filter)
+                    if len(analytic_filters) == 1:
+                        domain.extend(analytic_filters)
+                    else:
+                        or_operators = ['|'] * (len(analytic_filters) - 1)
+                        domain.extend(or_operators + analytic_filters)
                 else:
                     domain.append(('id', '=', 0))
         return domain
@@ -263,7 +260,6 @@ class PosOrder(models.Model):
             mag_total /= 1000.0
         val = '%.2f%s' % (mag_total, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
 
-        # FIXED: Only count sessions within the date range
         session_domain = []
         if config_id:
             session_domain.append(('config_id', '=', int(config_id)))
@@ -371,11 +367,9 @@ class PosOrder(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_treasury_stats(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
-        # 1. Cheques
         order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         cheque_count = self.search_count(order_domain + [('pos_cheque_id', '!=', False)])
 
-        # 2. Analytic Domain
         analytic_domain = []
         if province_id: analytic_domain.append(('id', 'child_of', int(province_id)))
         if city_id: analytic_domain.append(('id', 'child_of', int(city_id)))
@@ -389,12 +383,10 @@ class PosOrder(models.Model):
             else:
                 analytic_filter.append(('id', '=', 0))
 
-        # 3. Direct Deposits
         DD = self.env['direct.deposit']
         dd_domain = self._get_treasury_date_domain(DD, date_from, date_to) + analytic_filter
         deposit_count = DD.search_count(dd_domain)
 
-        # 4. Journal Transfers
         JT = self.env['journal.transfer']
         jt_domain = self._get_treasury_date_domain(JT, date_from, date_to) + analytic_filter
         transfer_count = JT.search_count(jt_domain)
