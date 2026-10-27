@@ -7,7 +7,6 @@ class DonationBoxDashboard(models.TransientModel):
 
     @api.model
     def get_location_hierarchy(self):
-        # Location Hierarchy: Province -> City -> Zone -> Branch
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
@@ -70,13 +69,16 @@ class DonationBoxDashboard(models.TransientModel):
         process_complaints = Complain.search_count(comp_domain + [('status', '=', 'process')])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
 
-        # --- Collection KPI (Total Only) ---
+        # --- Collection KPIs ---
         collections = Collection.search(col_domain)
         total_collection = 0.0
         
         for col in collections:
             if col.state in ['donation_submit', 'pending', 'paid']:
                 total_collection += col.amount or 0.0
+
+        not_collected_count = Collection.search_count(col_domain + [('state', '=', 'donation_not_collected')])
+        paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
 
         # --- Charts ---
         comp_by_box_status = {}
@@ -108,7 +110,6 @@ class DonationBoxDashboard(models.TransientModel):
             limit=10, order='id desc'
         )
         
-        # NEW: Recent Collections
         recent_collections = Collection.search_read(
             col_domain,
             ['date', 'shop_name', 'rider_id', 'lot_id', 'amount', 'state'],
@@ -133,6 +134,8 @@ class DonationBoxDashboard(models.TransientModel):
                 'process_complaints': process_complaints,
                 'resolved_complaints': resolved_complaints,
                 'total_collection': "{:,.2f}".format(total_collection),
+                'not_collected_count': not_collected_count,
+                'paid_count': paid_count,
             },
             'chart_comp_status': {
                 'labels': list(comp_by_box_status.keys()),
@@ -144,5 +147,5 @@ class DonationBoxDashboard(models.TransientModel):
             },
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
-            'recent_collections': recent_collections, # Added to return
+            'recent_collections': recent_collections,
         }

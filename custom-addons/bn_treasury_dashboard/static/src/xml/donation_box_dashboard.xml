@@ -84,72 +84,72 @@ Clear Filters
 
             <!-- ==================== KPI TILES ==================== -->
             <div class="row g-3 mb-4">
-                <!-- 1. Total Collection -->
-                <div class="col-md-6 col-lg-3">
+                <!-- Row 1: Collection Status -->
+                <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-green">
                         <i class="fa fa-money oh-kpi-icon"/>
                         <div class="oh-kpi-label">Total Collection</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.total_collection"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.total_collection"/></div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="oh-kpi-card oh-kpi-amber" t-on-click="() => this.openView('rider.collection', [['state', '=', 'donation_not_collected']])">
+                        <i class="fa fa-exclamation-circle oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Donation Not Collected</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.not_collected_count"/></div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="oh-kpi-card oh-kpi-teal" t-on-click="() => this.openView('rider.collection', [['state', '=', 'paid']])">
+                        <i class="fa fa-check-double oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Paid</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.paid_count"/></div>
                     </div>
                 </div>
 
-                <!-- 2. Box Status -->
-                <div class="col-md-6 col-lg-3">
+                <!-- Row 2: Boxes -->
+                <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'available']])">
                         <i class="fa fa-check-circle oh-kpi-icon"/>
                         <div class="oh-kpi-label">Available Boxes</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.available"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.available"/></div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3">
+                <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-orange" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'installed']])">
                         <i class="fa fa-building oh-kpi-icon"/>
                         <div class="oh-kpi-label">Installed</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.installed"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.installed"/></div>
                     </div>
                 </div>
-                <div class="col-md-6 col-lg-3">
+                <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-red" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'close']])">
                         <i class="fa fa-archive oh-kpi-icon"/>
                         <div class="oh-kpi-label">Closed</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.closed"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.closed"/></div>
                     </div>
                 </div>
 
-                <!-- 3. Complaints (Draft, Process, Resolved) -->
+                <!-- Row 3: Complaints -->
                 <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-blue" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'draft']])">
                         <i class="fa fa-edit oh-kpi-icon"/>
                         <div class="oh-kpi-label">Draft Complaints</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.draft_complaints"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.draft_complaints"/></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
-                    <div class="oh-kpi-card oh-kpi-amber" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'process']])">
+                    <div class="oh-kpi-card oh-kpi-light-green" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'process']])">
                         <i class="fa fa-spinner oh-kpi-icon"/>
                         <div class="oh-kpi-label">Process Complaints</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.process_complaints"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.process_complaints"/></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-teal" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'resolved']])">
                         <i class="fa fa-check oh-kpi-icon"/>
                         <div class="oh-kpi-label">Resolved Complaints</div>
-                        <div class="oh-kpi-value">
-                            <t t-esc="state.kpi.resolved_complaints"/>
-                        </div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.resolved_complaints"/></div>
                     </div>
                 </div>
             </div>
