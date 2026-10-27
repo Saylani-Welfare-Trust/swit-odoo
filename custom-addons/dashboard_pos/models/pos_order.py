@@ -20,7 +20,6 @@ class PosOrder(models.Model):
             city_id = False
             zone_id = False
             
-            # Assuming pos.config has an 'analytic_account_id' field linked to the Branch
             if 'analytic_account_id' in c._fields and c.analytic_account_id:
                 p = c.analytic_account_id.parent_id
                 if p:
@@ -43,12 +42,10 @@ class PosOrder(models.Model):
 
     @api.model
     def get_location_hierarchy(self):
-        # Location Hierarchy
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
         
-        # Segment Hierarchy (4 Levels)
         seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
         seg_l2 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
         seg_l3 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
@@ -105,13 +102,13 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_domain(self, config_id=None, date_from=None, date_to=None,
-                          province_id=None, city_id=None, zone_id=None, segment_id=None):
+                          province_id=None, city_id=None, zone_id=None, segment_id=None, segment_type=None):
         domain = []
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
 
-        if province_id or city_id or zone_id or segment_id:
+        if province_id or city_id or zone_id or segment_id or segment_type:
             analytic_domain = []
             if province_id:
                 analytic_domain.append(('id', 'child_of', int(province_id)))
@@ -121,6 +118,8 @@ class PosOrder(models.Model):
                 analytic_domain.append(('id', 'child_of', int(zone_id)))
             if segment_id:
                 analytic_domain.append(('id', 'child_of', int(segment_id)))
+            if segment_type:
+                analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
             accounts = self.env['account.analytic.account'].search(analytic_domain)
             if not accounts:
@@ -152,7 +151,6 @@ class PosOrder(models.Model):
         return domain
 
     def _apply_dashboard_filters(self, domain, category_id=None, amount_min=None, amount_max=None):
-        """Append the category + amount-range filters to a pos.order domain."""
         if category_id:
             domain.append(('lines.product_id.categ_id', 'child_of', int(category_id)))
         if amount_min is not None:
@@ -175,10 +173,10 @@ class PosOrder(models.Model):
     @api.model
     def get_department(self, option, config_id=None, date_from=None, date_to=None,
                        province_id=None, city_id=None, zone_id=None, segment_id=None,
-                       category_id=None, amount_min=None, amount_max=None,
+                       segment_type=None, category_id=None, amount_min=None, amount_max=None,
                        *extra, **kwargs):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         order_sql = self._get_order_ids_sql(domain)
 
@@ -224,10 +222,10 @@ class PosOrder(models.Model):
     @api.model
     def get_details(self, config_id=None, date_from=None, date_to=None,
                     province_id=None, city_id=None, zone_id=None, segment_id=None,
-                    category_id=None, amount_min=None, amount_max=None,
+                    segment_type=None, category_id=None, amount_min=None, amount_max=None,
                     *extra, **kwargs):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         order_sql = self._get_order_ids_sql(domain)
         cr = self._cr
@@ -289,9 +287,9 @@ class PosOrder(models.Model):
     @api.model
     def get_refund_details(self, config_id=None, date_from=None, date_to=None,
                            province_id=None, city_id=None, zone_id=None, segment_id=None,
-                           category_id=None, amount_min=None, amount_max=None,
+                           segment_type=None, category_id=None, amount_min=None, amount_max=None,
                            *extra, **kwargs):
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         pos_orders = self.env['pos.order'].search(domain)
 
@@ -343,10 +341,10 @@ class PosOrder(models.Model):
     @api.model
     def get_the_top_customer(self, config_id=None, date_from=None, date_to=None,
                              province_id=None, city_id=None, zone_id=None, segment_id=None,
-                             category_id=None, amount_min=None, amount_max=None,
+                             segment_type=None, category_id=None, amount_min=None, amount_max=None,
                              *extra, **kwargs):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         order_sql = self._get_order_ids_sql(domain)
 
@@ -369,10 +367,10 @@ class PosOrder(models.Model):
     @api.model
     def get_the_top_products(self, config_id=None, date_from=None, date_to=None,
                              province_id=None, city_id=None, zone_id=None, segment_id=None,
-                             category_id=None, amount_min=None, amount_max=None,
+                             segment_type=None, category_id=None, amount_min=None, amount_max=None,
                              *extra, **kwargs):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         order_sql = self._get_order_ids_sql(domain)
 
@@ -402,10 +400,10 @@ class PosOrder(models.Model):
     @api.model
     def get_the_top_categories(self, config_id=None, date_from=None, date_to=None,
                                province_id=None, city_id=None, zone_id=None, segment_id=None,
-                               category_id=None, amount_min=None, amount_max=None,
+                               segment_type=None, category_id=None, amount_min=None, amount_max=None,
                                *extra, **kwargs):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         order_sql = self._get_order_ids_sql(domain)
 
@@ -439,9 +437,9 @@ class PosOrder(models.Model):
     @api.model
     def get_treasury_stats(self, config_id=None, date_from=None, date_to=None,
                            province_id=None, city_id=None, zone_id=None, segment_id=None,
-                           category_id=None, amount_min=None, amount_max=None,
+                           segment_type=None, category_id=None, amount_min=None, amount_max=None,
                            *extra, **kwargs):
-        order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         order_domain = self._apply_dashboard_filters(order_domain, category_id, amount_min, amount_max)
         cheque_count = self.search_count(order_domain + [('pos_cheque_id', '!=', False)])
 
@@ -454,6 +452,8 @@ class PosOrder(models.Model):
             analytic_domain.append(('id', 'child_of', int(zone_id)))
         if segment_id:
             analytic_domain.append(('id', 'child_of', int(segment_id)))
+        if segment_type:
+            analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -480,7 +480,7 @@ class PosOrder(models.Model):
     @api.model
     def action_get_treasury_orders(self, ttype, config_id=None, date_from=None, date_to=None,
                                    province_id=None, city_id=None, zone_id=None, segment_id=None,
-                                   category_id=None, amount_min=None, amount_max=None,
+                                   segment_type=None, category_id=None, amount_min=None, amount_max=None,
                                    *extra, **kwargs):
         analytic_domain = []
         if province_id:
@@ -491,6 +491,8 @@ class PosOrder(models.Model):
             analytic_domain.append(('id', 'child_of', int(zone_id)))
         if segment_id:
             analytic_domain.append(('id', 'child_of', int(segment_id)))
+        if segment_type:
+            analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -501,7 +503,7 @@ class PosOrder(models.Model):
                 analytic_filter.append(('id', '=', 0))
 
         if ttype == 'cheque':
-            order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+            order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
             order_domain = self._apply_dashboard_filters(order_domain, category_id, amount_min, amount_max)
             domain = order_domain + [('pos_cheque_id', '!=', False)]
             return {
@@ -538,10 +540,10 @@ class PosOrder(models.Model):
     @api.model
     def get_top_products_by_amount(self, config_id=None, date_from=None, date_to=None,
                                    province_id=None, city_id=None, zone_id=None, segment_id=None,
-                                   category_id=None, amount_min=None, amount_max=None,
+                                   segment_type=None, category_id=None, amount_min=None, amount_max=None,
                                    *extra, **kwargs):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
         order_sql = self._get_order_ids_sql(domain)
 

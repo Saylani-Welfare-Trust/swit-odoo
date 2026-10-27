@@ -23,6 +23,7 @@ export class PosDashboard extends Component {
             segment_l2: null,
             segment_l3: null,
             segment_l4: null,
+            segment_type: '', // <-- NEW
             provinces: [],
             cities: [],
             zones: [],
@@ -205,6 +206,7 @@ export class PosDashboard extends Component {
         this.state.segment_l2  = null;
         this.state.segment_l3  = null;
         this.state.segment_l4  = null;
+        this.state.segment_type = ''; // <-- NEW
         this.state.category_id = null;
         this.state.amount_min  = null;
         this.state.amount_max  = null;
@@ -259,6 +261,7 @@ export class PosDashboard extends Component {
             this.state.city_id     ? parseInt(this.state.city_id, 10)     : null,
             this.state.zone_id     ? parseInt(this.state.zone_id, 10)     : null,
             effective_segment_id,
+            this.state.segment_type || null, // <-- NEW
             this.state.category_id ? parseInt(this.state.category_id, 10) : null,
             num(this.state.amount_min),
             num(this.state.amount_max),
