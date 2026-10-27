@@ -5,8 +5,9 @@
          the city of the analytic account on their employee (a branch matches its
          parent City through parent_of). Records without a City stay hidden.
          Create is left out so flows can still create records that get their City later.
-         Managers / Admins / Audit and Settings administrators see every city
-         (bn_key_management adds its Manager / Audit groups to the "All Cities" rules).
+         Managers / Admins / Audit see every city (bn_key_management adds its
+         Manager / Audit groups to the "All Cities" rules after these set theirs).
+         Settings administrators are limited like everyone else.
          Keep the groups in line with ALL_CITIES_GROUPS in models/bn_city_access.py. -->
 
     <!-- Registration -->
@@ -25,7 +26,7 @@
         <field name="name">Registration: All Cities</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.donation_box_manager_group'), ref('bn_donation_box.donation_box_audit_group')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
@@ -48,7 +49,7 @@
         <field name="name">Complain Center: All Cities</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group'))]"/>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.donation_box_manager_group'), ref('bn_donation_box.donation_box_audit_group')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
