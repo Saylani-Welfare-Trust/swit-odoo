@@ -47,6 +47,10 @@ export class PosDashboard extends Component {
             total_session: [],
             today_refund_total: [],
             today_sale: [],
+            // NEW TREASURY COUNTS
+            cheque_count: 0,
+            deposit_count: 0,
+            transfer_count: 0,
         });
 
         this._charts = {};
@@ -96,6 +100,12 @@ export class PosDashboard extends Component {
         this.state.payment_details = data['payment_details'];
         this.state.top_salesperson = data['salesperson'];
         this.state.selling_product = data['selling_product'];
+
+        // Fetch Treasury Counts
+        const treasury = await this.orm.call('pos.order', 'get_treasury_stats', args);
+        this.state.cheque_count = (treasury.cheque_count || 0).toLocaleString('en-US');
+        this.state.deposit_count = (treasury.deposit_count || 0).toLocaleString('en-US');
+        this.state.transfer_count = (treasury.transfer_count || 0).toLocaleString('en-US');
     }
 
     // ---------------- filter handlers ----------------
@@ -148,7 +158,6 @@ export class PosDashboard extends Component {
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // ---------------- helper to standardise arguments ----------------
     _filter_args() {
         return [
             this.state.config_id ? parseInt(this.state.config_id, 10) : null,
@@ -395,20 +404,13 @@ export class PosDashboard extends Component {
         });
     }
 
-    // ---------------- treasury wizard ----------------
-    open_treasury_wizard() {
-        this.actionService.doAction({
-            name: 'Treasury Analysis',
-            type: 'ir.actions.act_window',
-            res_model: 'pos.treasury.wizard',
-            views: [[false, 'form']],
-            target: 'new',
-            context: {
-                default_date_from: this.state.date_from || false,
-                default_date_to: this.state.date_to || false,
-                default_config_id: this.state.config_id ? parseInt(this.state.config_id, 10) : false,
-            }
-        });
+    // ---------------- treasury integration ----------------
+    open_treasury_orders(ttype) {
+        const args = this._filter_args();
+        this.orm.call('pos.order', 'action_get_treasury_orders', [ttype, ...args])
+            .then(action => {
+                this.actionService.doAction(action);
+            });
     }
 
     // ---------------- tile click actions ----------------

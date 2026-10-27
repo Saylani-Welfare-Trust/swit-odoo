@@ -328,3 +328,41 @@ class PosOrder(models.Model):
             [r.get('refund_qty') or 0 for r in docs],
             [r.get('product_category') for r in docs]
         ]
+        
+    @api.model
+    def get_treasury_stats(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        
+        cheque_count = self.search_count(domain + [('pos_cheque_id', '!=', False)])
+        deposit_count = self.search_count(domain + [('payment_ids.payment_method_id.name', 'ilike', 'Deposit')])
+        transfer_count = self.search_count(domain + [('payment_ids.payment_method_id.name', 'ilike', 'Transfer')])
+
+        return {
+            'cheque_count': cheque_count,
+            'deposit_count': deposit_count,
+            'transfer_count': transfer_count,
+        }
+
+    @api.model
+    def action_get_treasury_orders(self, ttype, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        name = "POS Orders"
+        
+        if ttype == 'cheque':
+            domain.append(('pos_cheque_id', '!=', False))
+            name = "POS Orders with Cheques"
+        elif ttype == 'deposit':
+            domain.append(('payment_ids.payment_method_id.name', 'ilike', 'Deposit'))
+            name = "POS Orders with Direct Deposits"
+        elif ttype == 'transfer':
+            domain.append(('payment_ids.payment_method_id.name', 'ilike', 'Transfer'))
+            name = "POS Orders with Journal Transfers"
+
+        return {
+            'name': name,
+            'type': 'ir.actions.act_window',
+            'res_model': 'pos.order',
+            'view_mode': 'list,form',
+            'domain': domain,
+            'target': 'current',
+        }

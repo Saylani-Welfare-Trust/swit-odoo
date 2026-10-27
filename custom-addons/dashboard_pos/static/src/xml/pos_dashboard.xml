@@ -82,10 +82,6 @@
                                 <button class="btn btn-sm btn-outline-secondary" t-on-click="clear_filter">
                                     <i class="fa fa-times me-1"/>Clear Filters
                                 </button>
-                                <!-- TREASURY WIZARD BUTTON -->
-                                <button class="btn btn-sm btn-primary" t-on-click="open_treasury_wizard">
-                                    <i class="fa fa-magic me-1"/> Treasury Analysis
-                                </button>
                             </div>
                             <div class="d-flex gap-1">
                                 <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('today')">Today</button>
@@ -209,6 +205,46 @@
                             <div class="oh-chart-wrap">
                                 <canvas class="top_product_categories"/>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== TREASURY LINKS ==================== -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-money me-2 text-info"/>Linked Cheques</h4>
+                            <button class="btn btn-sm btn-outline-info" t-on-click="() => this.open_treasury_orders('cheque')">View List</button>
+                        </div>
+                        <div class="oh-card-body text-center py-4">
+                            <div class="display-4 fw-bold text-info"><t t-esc="state.cheque_count"/></div>
+                            <div class="text-muted small mt-2">POS Orders with Cheques</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-exchange me-2 text-warning"/>Linked Deposits</h4>
+                            <button class="btn btn-sm btn-outline-warning" t-on-click="() => this.open_treasury_orders('deposit')">View List</button>
+                        </div>
+                        <div class="oh-card-body text-center py-4">
+                            <div class="display-4 fw-bold text-warning"><t t-esc="state.deposit_count"/></div>
+                            <div class="text-muted small mt-2">POS Orders with Direct Deposits</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-random me-2 text-success"/>Linked Transfers</h4>
+                            <button class="btn btn-sm btn-outline-success" t-on-click="() => this.open_treasury_orders('transfer')">View List</button>
+                        </div>
+                        <div class="oh-card-body text-center py-4">
+                            <div class="display-4 fw-bold text-success"><t t-esc="state.transfer_count"/></div>
+                            <div class="text-muted small mt-2">POS Orders with Journal Transfers</div>
                         </div>
                     </div>
                 </div>

@@ -32,7 +32,6 @@
     'depends': ['hr', 'point_of_sale', 'web'],
     'data': [
         'views/pos_order_views.xml',
-        'wizard/pos_treasury_wizard_views.xml',
     ],
      'assets': {
         'web.assets_backend': [
