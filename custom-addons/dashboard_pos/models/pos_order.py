@@ -52,7 +52,26 @@ class PosOrder(models.Model):
             domain.append(('date_order', '<=', date_to + ' 23:59:59'))
         return domain
 
-    def _get_order_domain(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def _get_treasury_date_domain(self, model, date_from, date_to):
+        """Helper to safely apply date filters to different treasury models"""
+        domain = []
+        if date_from or date_to:
+            date_field = 'create_date' # Default fallback
+            is_datetime = True
+            
+            for f in ['date', 'transfer_date', 'deposit_date', 'create_date']:
+                if f in model._fields:
+                    date_field = f
+                    is_datetime = model._fields[date_field].type == 'datetime'
+                    break
+            
+            if date_from:
+                domain.append((date_field, '>=', date_from + ' 00:00:00' if is_datetime else date_from))
+            if date_to:
+                domain.append((date_field, '<=', date_to + ' 23:59:59' if is_datetime else date_to))
+        return domain
+
+    def _get_order_domain(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         domain = []
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
@@ -60,17 +79,19 @@ class PosOrder(models.Model):
 
         if province_id or city_id or segment_id:
             analytic_domain = []
+            # FIX: Changed 'analytic_account_id' to 'id' when searching the analytic account model itself
             if province_id:
                 analytic_domain.append(('id', 'child_of', int(province_id)))
             if city_id:
                 analytic_domain.append(('id', 'child_of', int(city_id)))
             if segment_id:
                 analytic_domain.append(('id', 'child_of', int(segment_id)))
-            
+
             accounts = self.env['account.analytic.account'].search(analytic_domain)
             if not accounts:
                 domain.append(('id', '=', 0))
             else:
+                # Fallback logic to find the correct analytic field on pos.order
                 if 'analytic_account_id' in self._fields:
                     domain.append(('analytic_account_id', 'in', accounts.ids))
                 elif 'session_id' in self._fields:
@@ -79,11 +100,9 @@ class PosOrder(models.Model):
                     domain.append(('config_id.analytic_account_id', 'in', accounts.ids))
                 elif 'user_id' in self._fields:
                     domain.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
-
-        # Product Type Filter
-        if product_type and product_type in self.env['product.template']._fields:
-            domain.append(('lines.product_id.product_tmpl_id.' + product_type, '=', True))
-
+                else:
+                    # If you tag products on the analytic account, filter by those products
+                    domain.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
         return domain
 
     def _get_order_ids_sql(self, domain):
@@ -98,9 +117,9 @@ class PosOrder(models.Model):
     # sales chart
     # ------------------------------------------------------------------
     @api.model
-    def get_department(self, option, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def get_department(self, option, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         order_sql = self._get_order_ids_sql(domain)
 
         if "1=0" in order_sql:
@@ -143,9 +162,9 @@ class PosOrder(models.Model):
     # tiles + tables
     # ------------------------------------------------------------------
     @api.model
-    def get_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def get_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         order_sql = self._get_order_ids_sql(domain)
         cr = self._cr
 
@@ -203,8 +222,8 @@ class PosOrder(models.Model):
     # tiles
     # ------------------------------------------------------------------
     @api.model
-    def get_refund_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+    def get_refund_details(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         pos_orders = self.env['pos.order'].search(domain)
 
         default_date = datetime.today().date()
@@ -249,9 +268,9 @@ class PosOrder(models.Model):
     # charts
     # ------------------------------------------------------------------
     @api.model
-    def get_the_top_customer(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def get_the_top_customer(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         order_sql = self._get_order_ids_sql(domain)
         
         if "1=0" in order_sql:
@@ -271,9 +290,9 @@ class PosOrder(models.Model):
         return [[r.get('amount_total') for r in docs], [r.get('customer') for r in docs]]
 
     @api.model
-    def get_the_top_products(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def get_the_top_products(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         order_sql = self._get_order_ids_sql(domain)
         
         if "1=0" in order_sql:
@@ -300,9 +319,9 @@ class PosOrder(models.Model):
         ]
 
     @api.model
-    def get_the_top_categories(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def get_the_top_categories(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id
-        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         order_sql = self._get_order_ids_sql(domain)
         
         if "1=0" in order_sql:
@@ -328,38 +347,21 @@ class PosOrder(models.Model):
             [r.get('refund_qty') or 0 for r in docs],
             [r.get('product_category') for r in docs]
         ]
-        
-    def _get_treasury_date_domain(self, model, date_from, date_to):
-        """Helper to safely apply date filters to different treasury models"""
-        domain = []
-        if date_from or date_to:
-            date_field = 'create_date' # Default fallback
-            is_datetime = True
-            
-            # Check if the model has a specific date field
-            for f in ['date', 'transfer_date', 'deposit_date', 'create_date']:
-                if f in model._fields:
-                    date_field = f
-                    is_datetime = model._fields[date_field].type == 'datetime'
-                    break
-            
-            if date_from:
-                domain.append((date_field, '>=', date_from + ' 00:00:00' if is_datetime else date_from))
-            if date_to:
-                domain.append((date_field, '<=', date_to + ' 23:59:59' if is_datetime else date_to))
-        return domain
 
+    # ------------------------------------------------------------------
+    # treasury
+    # ------------------------------------------------------------------
     @api.model
-    def get_treasury_stats(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
-        # 1. Cheques (linked to pos.order via pos_cheque_id)
-        order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+    def get_treasury_stats(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
+        # 1. Cheques
+        order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
         cheque_count = self.search_count(order_domain + [('pos_cheque_id', '!=', False)])
 
-        # Build Analytic Domain for the treasury models
+        # 2. Analytic Domain
         analytic_domain = []
-        if province_id: analytic_domain.append(('analytic_account_id', 'child_of', int(province_id)))
-        if city_id: analytic_domain.append(('analytic_account_id', 'child_of', int(city_id)))
-        if segment_id: analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
+        if province_id: analytic_domain.append(('id', 'child_of', int(province_id)))
+        if city_id: analytic_domain.append(('id', 'child_of', int(city_id)))
+        if segment_id: analytic_domain.append(('id', 'child_of', int(segment_id)))
         
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -369,12 +371,12 @@ class PosOrder(models.Model):
             else:
                 analytic_filter.append(('id', '=', 0))
 
-        # 2. Direct Deposits
+        # 3. Direct Deposits
         DD = self.env['direct.deposit']
         dd_domain = self._get_treasury_date_domain(DD, date_from, date_to) + analytic_filter
         deposit_count = DD.search_count(dd_domain)
 
-        # 3. Journal Transfers
+        # 4. Journal Transfers
         JT = self.env['journal.transfer']
         jt_domain = self._get_treasury_date_domain(JT, date_from, date_to) + analytic_filter
         transfer_count = JT.search_count(jt_domain)
@@ -386,11 +388,11 @@ class PosOrder(models.Model):
         }
 
     @api.model
-    def action_get_treasury_orders(self, ttype, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
+    def action_get_treasury_orders(self, ttype, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         analytic_domain = []
-        if province_id: analytic_domain.append(('analytic_account_id', 'child_of', int(province_id)))
-        if city_id: analytic_domain.append(('analytic_account_id', 'child_of', int(city_id)))
-        if segment_id: analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
+        if province_id: analytic_domain.append(('id', 'child_of', int(province_id)))
+        if city_id: analytic_domain.append(('id', 'child_of', int(city_id)))
+        if segment_id: analytic_domain.append(('id', 'child_of', int(segment_id)))
         
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -401,7 +403,7 @@ class PosOrder(models.Model):
                 analytic_filter.append(('id', '=', 0))
 
         if ttype == 'cheque':
-            order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
+            order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
             domain = order_domain + [('pos_cheque_id', '!=', False)]
             return {
                 'name': 'POS Orders with Cheques',

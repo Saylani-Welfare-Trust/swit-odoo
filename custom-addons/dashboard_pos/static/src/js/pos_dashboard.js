@@ -17,24 +17,9 @@ export class PosDashboard extends Component {
             province_id: null,
             city_id: null,
             segment_id: null,
-            product_type: null,
             provinces: [],
             cities: [],
             segments: [],
-            product_types: [
-                { value: 'is_course', name: 'Is Course' },
-                { value: 'is_medical_equipment', name: 'Is Medical Equipment' },
-                { value: 'is_livestock', name: 'Is Livestock' },
-                { value: 'is_donation_box', name: 'Is Donation Box' },
-                { value: 'is_microfinance', name: 'Is Microfinance' },
-                { value: 'is_advance_donation', name: 'Is Advance Donation' },
-                { value: 'is_service_charge', name: 'Is Service Charge' },
-                { value: 'is_qurbani_inventory', name: 'Is Qurbani Inventory' },
-                { value: 'is_pos_qurbani_inventory', name: 'Is POS Qurbani Inv.' },
-                { value: 'is_donation_in_kind', name: 'Is Donation In Kind' },
-                { value: 'is_livestock_product', name: 'Is Livestock Product' },
-                { value: 'is_kitchen', name: 'Is Kitchen' },
-            ],
             date_from: '',
             date_to: '',
             sales_period: 'pos_hourly_sales',
@@ -47,7 +32,6 @@ export class PosDashboard extends Component {
             total_session: [],
             today_refund_total: [],
             today_sale: [],
-            // NEW TREASURY COUNTS
             cheque_count: 0,
             deposit_count: 0,
             transfer_count: 0,
@@ -101,7 +85,6 @@ export class PosDashboard extends Component {
         this.state.top_salesperson = data['salesperson'];
         this.state.selling_product = data['selling_product'];
 
-        // Fetch Treasury Counts
         const treasury = await this.orm.call('pos.order', 'get_treasury_stats', args);
         this.state.cheque_count = (treasury.cheque_count || 0).toLocaleString('en-US');
         this.state.deposit_count = (treasury.deposit_count || 0).toLocaleString('en-US');
@@ -123,7 +106,6 @@ export class PosDashboard extends Component {
         this.state.province_id = null;
         this.state.city_id = null;
         this.state.segment_id = null;
-        this.state.product_type = null;
         this.state.date_from = '';
         this.state.date_to   = '';
         await this.refresh();
@@ -166,11 +148,10 @@ export class PosDashboard extends Component {
             this.state.province_id ? parseInt(this.state.province_id, 10) : null,
             this.state.city_id ? parseInt(this.state.city_id, 10) : null,
             this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
-            this.state.product_type || null,
         ];
     }
 
-    // ---------------- sales chart ----------------
+    // ---------------- charts ----------------
     load_sales_chart(option) {
         const self = this;
         const ctx = $("#canvas_1");
@@ -184,29 +165,16 @@ export class PosDashboard extends Component {
                         label: arrays[2],
                         data: arrays[0],
                         backgroundColor: [
-                            "rgba(255, 99, 132,1)",
-                            "rgba(54, 162, 235,1)",
-                            "rgba(75, 192, 192,1)",
-                            "rgba(153, 102, 255,1)",
+                            "rgba(255, 99, 132,1)", "rgba(54, 162, 235,1)",
+                            "rgba(75, 192, 192,1)", "rgba(153, 102, 255,1)",
                             "rgba(10,20,30,1)",
-                        ],
-                        borderColor: [
-                            "rgba(255, 99, 132, 0.2)",
-                            "rgba(54, 162, 235, 0.2)",
-                            "rgba(75, 192, 192, 0.2)",
-                            "rgba(153, 102, 255, 0.2)",
-                            "rgba(10,20,30,0.3)",
                         ],
                         borderWidth: 1,
                     }],
                 };
                 const options = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: "bottom",
-                                  labels: { fontColor: "#333", fontSize: 16 } },
-                    },
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: true, position: "bottom" } },
                 };
                 if (window.myCharts != undefined) window.myCharts.destroy();
                 window.myCharts = new Chart(ctx, { type: "bar", data, options });
@@ -227,48 +195,28 @@ export class PosDashboard extends Component {
         await this.load_sales_chart(this.state.sales_period || 'pos_hourly_sales');
     }
 
-    // ---------------- pie / bar charts ----------------
     render_top_customer_graph() {
         const self = this;
         const ctx = $(".top_customer");
         return this.orm.call('pos.order', 'get_the_top_customer', this._filter_args())
             .then(function (arrays) {
-                const labels = arrays[1].map(l => l && l.length > 22 ? l.substring(0, 22) + '…' : (l || ''));
-
                 const data = {
-                    labels: labels,
+                    labels: arrays[1].map(l => l && l.length > 22 ? l.substring(0, 22) + '…' : (l || '')),
                     datasets: [{
                         data: arrays[0],
                         backgroundColor: [
                             "rgb(148, 22, 227)", "rgba(54, 162, 235)",
                             "rgba(75, 192, 192)", "rgba(153, 102, 255)",
                             "rgba(10,20,30)",   "rgba(255, 99, 132)",
-                            "rgba(120, 200, 90)", "rgba(255, 159, 64)",
-                            "rgba(201, 203, 207)", "rgba(100, 100, 100)",
                         ],
-                        borderColor: "#fff",
-                        borderWidth: 2,
+                        borderColor: "#fff", borderWidth: 2,
                     }],
                 };
-
                 const options = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                        display: true,
-                        position: 'right',
-                        labels: { font: { size: 10 }, boxWidth: 10, boxHeight: 10, padding: 6 },
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                const full = arrays[1][ctx.dataIndex] || '';
-                                return full + ': ' + ctx.parsed.toLocaleString('en-US');
-                            },
-                        },
-                    },
+                    responsive: true, maintainAspectRatio: false,
+                    legend: { display: true, position: 'right', labels: { font: { size: 10 }, padding: 6 } },
+                    tooltip: { callbacks: { label: function (ctx) { return (arrays[1][ctx.dataIndex] || '') + ': ' + ctx.parsed.toLocaleString('en-US'); } } },
                 };
-
                 if (self._charts.top_customer) self._charts.top_customer.destroy();
                 self._charts.top_customer = new Chart(ctx, { type: "pie", data, options });
             });
@@ -279,48 +227,17 @@ export class PosDashboard extends Component {
         const ctx = $(".top_selling_product");
         return this.orm.call('pos.order', 'get_the_top_products', this._filter_args())
             .then(function (arrays) {
-                const sales = arrays[0];
-                const refunds = arrays[1];
-                const labels = arrays[2].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
-
                 const data = {
-                    labels: labels,
+                    labels: arrays[2].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || '')),
                     datasets: [
-                        {
-                            label: 'Sales',
-                            data: sales,
-                            backgroundColor: 'rgba(67, 233, 123, 0.85)',
-                            borderColor: 'rgba(67, 233, 123, 1)',
-                            borderWidth: 1,
-                            minBarLength: 4, 
-                        },
-                        {
-                            label: 'Refunds',
-                            data: refunds,
-                            backgroundColor: 'rgba(255, 106, 136, 0.85)',
-                            borderColor: 'rgba(255, 106, 136, 1)',
-                            borderWidth: 1,
-                            minBarLength: 4, 
-                        },
+                        { label: 'Sales', data: arrays[0], backgroundColor: 'rgba(67, 233, 123, 0.85)', minBarLength: 4 },
+                        { label: 'Refunds', data: arrays[1], backgroundColor: 'rgba(255, 106, 136, 0.85)', minBarLength: 4 },
                     ],
                 };
                 const options = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            stacked: false,
-                            ticks: { callback: v => Number(v).toLocaleString('en-US') },
-                        },
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: "bottom",
-                            labels: { font: { size: 12 }, boxWidth: 12, padding: 10 },
-                        },
-                    },
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    scales: { x: { stacked: false, ticks: { callback: v => Number(v).toLocaleString('en-US') } } },
+                    plugins: { legend: { position: "bottom" } },
                 };
                 if (self._charts.top_products) self._charts.top_products.destroy();
                 self._charts.top_products = new Chart(ctx, { type: "bar", data, options });
@@ -332,48 +249,17 @@ export class PosDashboard extends Component {
         const ctx = $(".top_product_categories");
         return this.orm.call('pos.order', 'get_the_top_categories', this._filter_args())
             .then(function (arrays) {
-                const sales = arrays[0];
-                const refunds = arrays[1];
-                const labels = arrays[2].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || ''));
-
                 const data = {
-                    labels: labels,
+                    labels: arrays[2].map(l => l && l.length > 30 ? l.substring(0, 30) + '…' : (l || '')),
                     datasets: [
-                        {
-                            label: 'Sales',
-                            data: sales,
-                            backgroundColor: 'rgba(67, 233, 123, 0.85)',
-                            borderColor: 'rgba(67, 233, 123, 1)',
-                            borderWidth: 1,
-                            minBarLength: 4, 
-                        },
-                        {
-                            label: 'Refunds',
-                            data: refunds,
-                            backgroundColor: 'rgba(255, 106, 136, 0.85)',
-                            borderColor: 'rgba(255, 106, 136, 1)',
-                            borderWidth: 1,
-                            minBarLength: 4, 
-                        },
+                        { label: 'Sales', data: arrays[0], backgroundColor: 'rgba(67, 233, 123, 0.85)', minBarLength: 4 },
+                        { label: 'Refunds', data: arrays[1], backgroundColor: 'rgba(255, 106, 136, 0.85)', minBarLength: 4 },
                     ],
                 };
                 const options = {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            stacked: false,
-                            ticks: { callback: v => Number(v).toLocaleString('en-US') },
-                        },
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: "bottom",
-                            labels: { font: { size: 12 }, boxWidth: 12, padding: 10 },
-                        },
-                    },
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    scales: { x: { stacked: false, ticks: { callback: v => Number(v).toLocaleString('en-US') } } },
+                    plugins: { legend: { position: "bottom" } },
                 };
                 if (self._charts.top_categories) self._charts.top_categories.destroy();
                 self._charts.top_categories = new Chart(ctx, { type: "bar", data, options });
@@ -382,125 +268,67 @@ export class PosDashboard extends Component {
 
     // ---------------- view all actions ----------------
     open_view_all(type) {
-        let res_model = '';
-        let name = '';
-        let context = {};
-
-        if (type === 'products') {
-            res_model = 'product.template';
-            name = 'All Products';
-        } else if (type === 'categories') {
-            res_model = 'product.category';
-            name = 'All Product Categories';
-        }
-
+        let res_model = type === 'products' ? 'product.template' : 'product.category';
+        let name = type === 'products' ? 'All Products' : 'All Product Categories';
         this.actionService.doAction({
-            name: name,
-            type: 'ir.actions.act_window',
-            res_model: res_model,
-            views: [[false, 'list'], [false, 'form']],
-            target: 'current',
-            context: context,
+            name: name, type: 'ir.actions.act_window', res_model: res_model,
+            views: [[false, 'list'], [false, 'form']], target: 'current',
         });
     }
 
-    // ---------------- treasury integration ----------------
     open_treasury_orders(ttype) {
         const args = this._filter_args();
         this.orm.call('pos.order', 'action_get_treasury_orders', [ttype, ...args])
-            .then(action => {
-                this.actionService.doAction(action);
-            });
+            .then(action => { this.actionService.doAction(action); });
     }
 
     // ---------------- tile click actions ----------------
     pos_order_today(e) {
-        const self = this;
         const date = new Date();
         const yesterday = new Date(date.getTime());
         yesterday.setDate(date.getDate() - 1);
         e.stopPropagation(); e.preventDefault();
-        this.user.hasGroup('hr.group_hr_user').then(function (has_group) {
-            if (!has_group) return;
-            self.actionService.doAction({
-                name: _t("Today Order"),
-                type: 'ir.actions.act_window',
-                res_model: 'pos.order',
-                view_mode: 'tree,form,calendar',
-                views: [[false, 'list'], [false, 'form']],
-                domain: [['date_order', '<=', date], ['date_order', '>=', yesterday]],
-                target: 'current',
-            }, { on_reverse_breadcrumb: self.on_reverse_breadcrumb });
+        this.actionService.doAction({
+            name: _t("Today Order"), type: 'ir.actions.act_window', res_model: 'pos.order',
+            views: [[false, 'list'], [false, 'form']],
+            domain: [['date_order', '<=', date], ['date_order', '>=', yesterday]], target: 'current',
         });
     }
 
     pos_refund_orders(e) {
-        const self = this;
         e.stopPropagation(); e.preventDefault();
-        this.user.hasGroup('hr.group_hr_user').then(function (has_group) {
-            if (!has_group) return;
-            self.actionService.doAction({
-                name: _t("Refund Orders"),
-                type: 'ir.actions.act_window',
-                res_model: 'pos.order',
-                view_mode: 'tree,form,calendar',
-                views: [[false, 'list'], [false, 'form']],
-                domain: [['amount_total', '<', 0.0]],
-                target: 'current',
-            }, { on_reverse_breadcrumb: self.on_reverse_breadcrumb });
+        this.actionService.doAction({
+            name: _t("Refund Orders"), type: 'ir.actions.act_window', res_model: 'pos.order',
+            views: [[false, 'list'], [false, 'form']],
+            domain: [['amount_total', '<', 0.0]], target: 'current',
         });
     }
 
     pos_refund_today_orders(e) {
-        const self = this;
         const date = new Date();
         const yesterday = new Date(date.getTime());
         yesterday.setDate(date.getDate() - 1);
         e.stopPropagation(); e.preventDefault();
-        this.user.hasGroup('hr.group_hr_user').then(function (has_group) {
-            if (!has_group) return;
-            self.actionService.doAction({
-                name: _t("Refund Orders"),
-                type: 'ir.actions.act_window',
-                res_model: 'pos.order',
-                view_mode: 'tree,form,calendar',
-                views: [[false, 'list'], [false, 'form']],
-                domain: [['amount_total', '<', 0.0],
-                         ['date_order', '<=', date], ['date_order', '>=', yesterday]],
-                target: 'current',
-            }, { on_reverse_breadcrumb: self.on_reverse_breadcrumb });
+        this.actionService.doAction({
+            name: _t("Refund Orders"), type: 'ir.actions.act_window', res_model: 'pos.order',
+            views: [[false, 'list'], [false, 'form']],
+            domain: [['amount_total', '<', 0.0], ['date_order', '<=', date], ['date_order', '>=', yesterday]], target: 'current',
         });
     }
 
     pos_order(e) {
-        const self = this;
         e.stopPropagation(); e.preventDefault();
-        this.user.hasGroup('hr.group_hr_user').then(function (has_group) {
-            if (!has_group) return;
-            self.actionService.doAction({
-                name: _t("Total Order"),
-                type: 'ir.actions.act_window',
-                res_model: 'pos.order',
-                view_mode: 'tree,form,calendar',
-                views: [[false, 'list'], [false, 'form']],
-                target: 'current',
-            }, { on_reverse_breadcrumb: self.on_reverse_breadcrumb });
+        this.actionService.doAction({
+            name: _t("Total Order"), type: 'ir.actions.act_window', res_model: 'pos.order',
+            views: [[false, 'list'], [false, 'form']], target: 'current',
         });
     }
 
     pos_session(e) {
-        const self = this;
         e.stopPropagation(); e.preventDefault();
-        this.user.hasGroup('hr.group_hr_user').then(function (has_group) {
-            if (!has_group) return;
-            self.actionService.doAction({
-                name: _t("sessions"),
-                type: 'ir.actions.act_window',
-                res_model: 'pos.session',
-                view_mode: 'tree,form,calendar',
-                views: [[false, 'list'], [false, 'form']],
-                target: 'current',
-            }, { on_reverse_breadcrumb: self.on_reverse_breadcrumb });
+        this.actionService.doAction({
+            name: _t("sessions"), type: 'ir.actions.act_window', res_model: 'pos.session',
+            views: [[false, 'list'], [false, 'form']], target: 'current',
         });
     }
 }

@@ -64,15 +64,6 @@
                                 </t>
                             </select>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-4">
-                            <label class="form-label">Product Type</label>
-                            <select class="form-select" t-model="state.product_type" t-on-change="onchange_filter">
-                                <option value="">All Types</option>
-                                <t t-foreach="state.product_types" t-as="ptype" t-key="ptype.value">
-                                    <option t-att-value="ptype.value" t-esc="ptype.name"/>
-                                </t>
-                            </select>
-                        </div>
                     </div>
                     
                     <!-- Row 2: Buttons -->
