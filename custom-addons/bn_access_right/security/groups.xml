@@ -33,5 +33,11 @@
         <field name="name">Accounting Menu</field>
         <field name="category_id" ref="base.module_category_administration_administration"/>
     </record>
+    
+    <!-- Expense -->
+    <record id="custom_expense_menu_group" model="res.groups">
+        <field name="name">Expense Menu</field>
+        <field name="category_id" ref="base.module_category_administration_administration"/>
+    </record>
 
 </odoo>

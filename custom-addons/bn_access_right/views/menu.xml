@@ -38,11 +38,20 @@
         ]"/>
     </record>
     
-    <!-- Dashboard -->
+    <!-- Accounting -->
     <record id="account.menu_finance" model="ir.ui.menu">
         <field name="groups_id" eval="[
             (6, 0, [
                 ref('bn_access_right.custom_accounting_menu_group'),
+            ])
+        ]"/>
+    </record>
+    
+    <!-- Expense -->
+    <record id="hr_expense.menu_hr_expense_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[
+            (6, 0, [
+                ref('bn_access_right.custom_expense_menu_group'),
             ])
         ]"/>
     </record>

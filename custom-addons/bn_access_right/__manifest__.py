@@ -9,6 +9,7 @@
         'hr_attendance',
         'spreadsheet_dashboard',
         'account',
+        'hr_expense',
     ],
     'data': [
         'data/ir_module_category.xml',
