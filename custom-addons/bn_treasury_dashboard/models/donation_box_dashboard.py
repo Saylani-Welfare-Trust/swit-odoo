@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
 
-class DonationBoxDashboard(models.TransientModel):
+class DonationBoxDashboard(models.AbstractModel):
     _name = 'donation.box.dashboard'
     _description = 'Donation Box Dashboard'
 
@@ -64,18 +64,28 @@ class DonationBoxDashboard(models.TransientModel):
         not_recovered = Complain.search_count(comp_domain + [('status', '=', 'not_recovered')])
 
         # --- Collections (Rider & Visit) ---
+        # Adjust these domains to match your actual Rider Shift / Visit models
         collection_domain = []
         if date_from:
             collection_domain.append(('date_order', '>=', date_from + ' 00:00:00'))
         if date_to:
             collection_domain.append(('date_order', '<=', date_to + ' 23:59:59'))
             
+        # Placeholder logic: Assuming POS orders represent collections.
+        # You can change 'pos.order' to your custom collection model (e.g. 'rider.collection')
         all_orders = self.env['pos.order'].search(collection_domain)
         
+        # Total Collection
         total_collection = sum(all_orders.mapped('amount_total'))
+        
+        # Rider Collection (Example: Orders where the salesperson is a Rider)
+        # Replace with your actual domain, e.g., [('rider_id', '!=', False)]
         rider_orders = all_orders.filtered(lambda o: o.user_id.employee_id) 
         rider_collection = sum(rider_orders.mapped('amount_total'))
-        visit_orders = all_orders 
+        
+        # Visit Collection (Example: Orders that are linked to a specific visit type)
+        # Replace with your actual domain, e.g., [('visit_type', '=', 'shop_visit')]
+        visit_orders = all_orders # Fallback to all for demonstration
         visit_collection = sum(visit_orders.mapped('amount_total'))
 
         # --- Charts ---
@@ -136,4 +146,13 @@ class DonationBoxDashboard(models.TransientModel):
             },
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
+        }
+        
+    @api.model
+    def get_monthly_summary(self):
+        # Kept for compatibility with your JS, though unused in the template now
+        return {
+            'cash_bags': 0, 'nil_boxes': 0, 'compliant_boxes': 0, 'pending_shops': 0,
+            'visited_shops': 0, 'unvisited_shops': 0, 'donation': 0.0, 'comp_last_month': 0.0,
+            'diff_last_month': 0.0, 'new_shops': 0,
         }
