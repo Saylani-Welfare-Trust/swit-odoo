@@ -15,7 +15,7 @@
             'bn_treasury_dashboard/static/src/js/dashboard.js',
             'bn_treasury_dashboard/static/src/xml/dashboard.xml',
             'bn_treasury_dashboard/static/src/js/donation_box_dashboard.js',
-            'bn_treasury_dashboard/static/src/js/donation_box_dashboard.xml',
+            'bn_treasury_dashboard/static/src/xml/donation_box_dashboard.xml',
             
         ],
     },
