@@ -332,6 +332,35 @@ class PosOrder(models.Model):
             [r.get('product_name') for r in docs]
         ]
 
+    def _build_domain(self, config_id=None, date_from=None, date_to=None,
+                    province_id=None, city_id=None, segment_id=None,
+                    category_id=None, amount_min=None, amount_max=None):
+        domain = []
+
+        if config_id:
+            domain.append(('config_id', '=', config_id))
+        if date_from:
+            domain.append(('date_order', '>=', date_from + ' 00:00:00'))
+        if date_to:
+            domain.append(('date_order', '<=', date_to + ' 23:59:59'))
+        if province_id:
+            domain.append(('config_id.x_province_id', '=', province_id))
+        if city_id:
+            domain.append(('config_id.x_city_id', '=', city_id))
+        if segment_id:
+            domain.append(('config_id.x_segment_id', '=', segment_id))
+
+        # NEW: product category (match orders containing any line in this category tree)
+        if category_id:
+            domain.append(('lines.product_id.categ_id', 'child_of', category_id))
+
+        # NEW: amount range
+        if amount_min is not None:
+            domain.append(('amount_total', '>=', amount_min))
+        if amount_max is not None:
+            domain.append(('amount_total', '<=', amount_max))
+
+        return domain
     @api.model
     def get_the_top_categories(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None):
         company_id = self.env.company.id

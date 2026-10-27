@@ -10,11 +10,12 @@ export class PosDashboard extends Component {
         this.orm = useService('orm');
         this.user = useService("user");
         this.actionService = useService("action");
-        
+
         // FLAG to check if the DOM is fully loaded
         this.is_mounted = false;
 
         this.state = useState({
+            // shop / location / segment
             config_id: null,
             shops: [],
             province_id: null,
@@ -23,9 +24,17 @@ export class PosDashboard extends Component {
             provinces: [],
             cities: [],
             segments: [],
+            // product category
+            category_id: null,
+            categories: [],
+            // amount range
+            amount_min: null,
+            amount_max: null,
+            // date
             date_from: '',
             date_to: '',
             sales_period: 'pos_hourly_sales',
+            // data buckets
             payment_details: [],
             top_salesperson: [],
             selling_product: [],
@@ -60,6 +69,14 @@ export class PosDashboard extends Component {
         this.state.provinces = hierarchy.provinces || [];
         this.state.cities = hierarchy.cities || [];
         this.state.segments = hierarchy.segments || [];
+
+        // Load product categories
+        this.state.categories = await this.orm.searchRead(
+            'product.category',
+            [],
+            ['id', 'name'],
+            { order: 'complete_name asc', limit: 1000 }
+        );
     }
 
     get filteredCities() {
@@ -78,7 +95,7 @@ export class PosDashboard extends Component {
     async fetch_data() {
         const args = this._filter_args();
         const result = await this.orm.call('pos.order', 'get_refund_details', args);
-        
+
         this.state.total_sale         = result['total_sale'];
         this.state.total_order_count  = (result['total_order_count'] || 0).toLocaleString('en-US');
         this.state.total_refund_count = (result['total_refund_count'] || 0).toLocaleString('en-US');
@@ -92,8 +109,8 @@ export class PosDashboard extends Component {
         this.state.selling_product = data['selling_product'];
 
         const treasury = await this.orm.call('pos.order', 'get_treasury_stats', args);
-        this.state.cheque_count = (treasury.cheque_count || 0).toLocaleString('en-US');
-        this.state.deposit_count = (treasury.deposit_count || 0).toLocaleString('en-US');
+        this.state.cheque_count   = (treasury.cheque_count   || 0).toLocaleString('en-US');
+        this.state.deposit_count  = (treasury.deposit_count  || 0).toLocaleString('en-US');
         this.state.transfer_count = (treasury.transfer_count || 0).toLocaleString('en-US');
     }
 
@@ -108,12 +125,15 @@ export class PosDashboard extends Component {
     }
 
     async clear_filter() {
-        this.state.config_id = null;
+        this.state.config_id   = null;
         this.state.province_id = null;
-        this.state.city_id = null;
-        this.state.segment_id = null;
-        this.state.date_from = '';
-        this.state.date_to   = '';
+        this.state.city_id     = null;
+        this.state.segment_id  = null;
+        this.state.category_id = null;
+        this.state.amount_min  = null;
+        this.state.amount_max  = null;
+        this.state.date_from   = '';
+        this.state.date_to     = '';
         await this.refresh();
     }
 
@@ -147,13 +167,17 @@ export class PosDashboard extends Component {
     }
 
     _filter_args() {
+        const num = (v) => (v === null || v === undefined || v === '') ? null : parseFloat(v);
         return [
-            this.state.config_id ? parseInt(this.state.config_id, 10) : null,
-            this.state.date_from || null,
-            this.state.date_to   || null,
+            this.state.config_id   ? parseInt(this.state.config_id, 10)   : null,
+            this.state.date_from   || null,
+            this.state.date_to     || null,
             this.state.province_id ? parseInt(this.state.province_id, 10) : null,
-            this.state.city_id ? parseInt(this.state.city_id, 10) : null,
-            this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
+            this.state.city_id     ? parseInt(this.state.city_id, 10)     : null,
+            this.state.segment_id  ? parseInt(this.state.segment_id, 10)  : null,
+            this.state.category_id ? parseInt(this.state.category_id, 10) : null,
+            num(this.state.amount_min),
+            num(this.state.amount_max),
         ];
     }
 
@@ -162,7 +186,7 @@ export class PosDashboard extends Component {
         const self = this;
         const ctx = $("#canvas_1");
         if (!ctx.length) return; // Safety check
-        
+
         const args = this._filter_args();
 
         return this.orm.call('pos.order', 'get_department', [option, ...args])
@@ -207,7 +231,7 @@ export class PosDashboard extends Component {
         const self = this;
         const ctx = $(".top_customer");
         if (!ctx.length) return;
-        
+
         return this.orm.call('pos.order', 'get_the_top_customer', this._filter_args())
             .then(function (arrays) {
                 const data = {
@@ -236,7 +260,7 @@ export class PosDashboard extends Component {
         const self = this;
         const ctx = $(".top_selling_product");
         if (!ctx.length) return;
-        
+
         return this.orm.call('pos.order', 'get_the_top_products', this._filter_args())
             .then(function (arrays) {
                 const data = {
@@ -260,7 +284,7 @@ export class PosDashboard extends Component {
         const self = this;
         const ctx = $(".top_product_categories");
         if (!ctx.length) return;
-        
+
         return this.orm.call('pos.order', 'get_the_top_categories', this._filter_args())
             .then(function (arrays) {
                 const data = {
