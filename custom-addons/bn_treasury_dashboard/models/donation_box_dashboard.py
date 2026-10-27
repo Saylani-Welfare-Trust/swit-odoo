@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
 
-class DonationBoxDashboard(models.AbstractModel):
+class DonationBoxDashboard(models.TransientModel): # Changed from AbstractModel to TransientModel
     _name = 'donation.box.dashboard'
     _description = 'Donation Box Dashboard'
 
@@ -25,44 +25,69 @@ class DonationBoxDashboard(models.AbstractModel):
                            province_id=None, city_id=None, zone_id=None, branch_id=None):
         reg_domain = []
         comp_domain = []
+        col_domain = []
         
+        # Date Filters
         if date_from:
             reg_domain.append(('installation_date', '>=', date_from))
             comp_domain.append(('date', '>=', date_from))
+            col_domain.append(('date', '>=', date_from))
         if date_to:
             reg_domain.append(('installation_date', '<=', date_to))
             comp_domain.append(('date', '<=', date_to))
+            col_domain.append(('date', '<=', date_to))
             
         # Location Filters
         if province_id:
             reg_domain.append(('city_id.parent_id', '=', int(province_id)))
             comp_domain.append(('city_id.parent_id', '=', int(province_id)))
+            col_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
         if city_id:
             reg_domain.append(('city_id', '=', int(city_id)))
             comp_domain.append(('city_id', '=', int(city_id)))
+            col_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
         if zone_id:
             reg_domain.append(('zone_id', '=', int(zone_id)))
             comp_domain.append(('zone_id', '=', int(zone_id)))
+            col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
         if branch_id:
-            # Assuming the branch is linked via analytic_account_id
-            if 'analytic_account_id' in self.env['donation.box.registration.installation']._fields:
-                reg_domain.append(('analytic_account_id', '=', int(branch_id)))
-                comp_domain.append(('analytic_account_id', '=', int(branch_id)))
-            elif 'sub_zone_id' in self.env['donation.box.registration.installation']._fields:
+            if 'sub_zone_id' in self.env['donation.box.registration.installation']._fields:
                 reg_domain.append(('sub_zone_id', '=', int(branch_id)))
                 comp_domain.append(('sub_zone_id', '=', int(branch_id)))
+                col_domain.append(('donation_box_registration_installation_id.sub_zone_id', '=', int(branch_id)))
 
         Registration = self.env['donation.box.registration.installation']
         Complain = self.env['donation.box.complain.center']
+        Collection = self.env['rider.collection']
 
-        # --- KPIs ---
+        # --- Box KPIs ---
         available = Registration.search_count(reg_domain + [('status', '=', 'available')])
         installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
         closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
         
+        # --- Complaint KPIs ---
         active_complaints = Complain.search_count(comp_domain + [('status', 'in', ['draft', 'process'])])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
         not_recovered = Complain.search_count(comp_domain + [('status', '=', 'not_recovered')])
+
+        # --- Collection KPIs ---
+        collections = Collection.search(col_domain)
+        total_collection = 0.0
+        rider_collection = 0.0
+        visit_collection = 0.0
+        
+        for col in collections:
+            # Total Collection: All valid submissions
+            if col.state in ['donation_submit', 'pending', 'paid']:
+                total_collection += col.amount or 0.0
+            
+            # Rider Collection: Standard Cash (excluding FCB/CFB)
+            if col.remarks not in ['FCB', 'CFB']:
+                rider_collection += col.amount or 0.0
+                
+            # Visit Collection: Fully Paid collections
+            if col.state == 'paid':
+                visit_collection += col.amount or 0.0
 
         # --- Charts ---
         comp_by_box_status = {}
@@ -108,6 +133,9 @@ class DonationBoxDashboard(models.AbstractModel):
                 'active_complaints': active_complaints,
                 'resolved_complaints': resolved_complaints,
                 'not_recovered': not_recovered,
+                'total_collection': "{:,.2f}".format(total_collection),
+                'rider_collection': "{:,.2f}".format(rider_collection),
+                'visit_collection': "{:,.2f}".format(visit_collection),
             },
             'chart_comp_status': {
                 'labels': list(comp_by_box_status.keys()),
@@ -119,24 +147,4 @@ class DonationBoxDashboard(models.AbstractModel):
             },
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
-        }
-        
-        
-    @api.model
-    def get_monthly_summary(self):
-        # Here you can query your actual models to fill in these numbers.
-        # For example: 
-        # cash_bags = self.env['pos.order'].search_count([('state', '=', 'paid')])
-        
-        return {
-            'cash_bags': 0,
-            'nil_boxes': 0,
-            'compliant_boxes': self.env['donation.box.complain.center'].search_count([]),
-            'pending_shops': 0,
-            'visited_shops': 0,
-            'unvisited_shops': 0,
-            'donation': 0.0, # Format as needed
-            'comp_last_month': 0.0,
-            'diff_last_month': 0.0,
-            'new_shops': self.env['donation.box.registration.installation'].search_count([]),
         }

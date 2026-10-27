@@ -14,19 +14,17 @@ export class DonationBoxDashboard extends Component {
             province_id: null,
             city_id: null,
             zone_id: null,
-            branch_id: null, // NEW: Branch filter
+            branch_id: null,
             provinces: [],
             cities: [],
             zones: [],
             branches: [],
             kpi: {
                 available: 0, installed: 0, closed: 0,
-                active_complaints: 0, resolved_complaints: 0, not_recovered: 0
-            },
-            monthly_summary: {
-                cash_bags: 0, nil_boxes: 0, compliant_boxes: 0, pending_shops: 0,
-                visited_shops: 0, unvisited_shops: 0, donation: 0, comp_last_month: 0,
-                diff_last_month: 0, new_shops: 0
+                active_complaints: 0, resolved_complaints: 0, not_recovered: 0,
+                total_collection: '0.00',
+                rider_collection: '0.00',
+                visit_collection: '0.00',
             },
             chart_comp_status: { labels: [], data: [] },
             chart_installs: { labels: [], data: [] },
@@ -75,22 +73,24 @@ export class DonationBoxDashboard extends Component {
     }
 
     async fetch_data() {
-        const data = await this.orm.call('donation.box.dashboard', 'get_dashboard_data', [
-            this.state.date_from || null,
-            this.state.date_to || null,
-            this.state.province_id ? parseInt(this.state.province_id, 10) : null,
-            this.state.city_id ? parseInt(this.state.city_id, 10) : null,
-            this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
-            this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
-        ]);
-        const summary = await this.orm.call('donation.box.dashboard', 'get_monthly_summary', []);
-        this.state.monthly_summary = summary;
-        
-        this.state.kpi = data.kpi;
-        this.state.chart_comp_status = data.chart_comp_status;
-        this.state.chart_installs = data.chart_installs;
-        this.state.recent_complaints = data.recent_complaints;
-        this.state.recent_registrations = data.recent_registrations;
+        try {
+            const data = await this.orm.call('donation.box.dashboard', 'get_dashboard_data', [
+                this.state.date_from || null,
+                this.state.date_to || null,
+                this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+                this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+            ]);
+            
+            this.state.kpi = data.kpi;
+            this.state.chart_comp_status = data.chart_comp_status;
+            this.state.chart_installs = data.chart_installs;
+            this.state.recent_complaints = data.recent_complaints;
+            this.state.recent_registrations = data.recent_registrations;
+        } catch (error) {
+            console.error("Dashboard Fetch Error:", error);
+        }
 
         if (this.is_mounted) {
             this.render_charts();
