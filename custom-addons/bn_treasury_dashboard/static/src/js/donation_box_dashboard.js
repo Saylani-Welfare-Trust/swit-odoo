@@ -11,6 +11,21 @@ export class DonationBoxDashboard extends Component {
         this.state = useState({
             date_from: '',
             date_to: '',
+            province_id: null,
+            city_id: null,
+            zone_id: null,
+            segment_l1: null,
+            segment_l2: null,
+            segment_l3: null,
+            segment_l4: null,
+            segment_type: '',
+            provinces: [],
+            cities: [],
+            zones: [],
+            segments_l1: [],
+            segments_l2: [],
+            segments_l3: [],
+            segments_l4: [],
             kpi: {
                 available: 0, installed: 0, closed: 0,
                 active_complaints: 0, resolved_complaints: 0, not_recovered: 0
@@ -25,6 +40,7 @@ export class DonationBoxDashboard extends Component {
         this.is_mounted = false;
 
         onWillStart(async () => {
+            await this.fetch_dropdowns();
             await this.fetch_data();
         });
 
@@ -34,10 +50,59 @@ export class DonationBoxDashboard extends Component {
         });
     }
 
+    async fetch_dropdowns() {
+        const hierarchy = await this.orm.call('donation.box.dashboard', 'get_location_hierarchy', []);
+        this.state.provinces = hierarchy.provinces || [];
+        this.state.cities = hierarchy.cities || [];
+        this.state.zones = hierarchy.zones || [];
+        this.state.segments_l1 = hierarchy.segments_l1 || [];
+        this.state.segments_l2 = hierarchy.segments_l2 || [];
+        this.state.segments_l3 = hierarchy.segments_l3 || [];
+        this.state.segments_l4 = hierarchy.segments_l4 || [];
+    }
+
+    get filteredCities() {
+        if (!this.state.province_id) return this.state.cities;
+        const pId = parseInt(this.state.province_id, 10);
+        return this.state.cities.filter(c => c.province_id === pId);
+    }
+
+    get filteredZones() {
+        if (!this.state.city_id) return this.state.zones;
+        const cId = parseInt(this.state.city_id, 10);
+        return this.state.zones.filter(z => z.city_id === cId);
+    }
+
+    get filteredSegmentsL2() {
+        if (!this.state.segment_l1) return [];
+        const pId = parseInt(this.state.segment_l1, 10);
+        return this.state.segments_l2.filter(s => s.parent_id === pId);
+    }
+    
+    get filteredSegmentsL3() {
+        if (!this.state.segment_l2) return [];
+        const pId = parseInt(this.state.segment_l2, 10);
+        return this.state.segments_l3.filter(s => s.parent_id === pId);
+    }
+    
+    get filteredSegmentsL4() {
+        if (!this.state.segment_l3) return [];
+        const pId = parseInt(this.state.segment_l3, 10);
+        return this.state.segments_l4.filter(s => s.parent_id === pId);
+    }
+
     async fetch_data() {
         const data = await this.orm.call('donation.box.dashboard', 'get_dashboard_data', [
             this.state.date_from || null,
-            this.state.date_to || null
+            this.state.date_to || null,
+            this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+            this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+            this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+            this.state.segment_l1 ? parseInt(this.state.segment_l1, 10) : null,
+            this.state.segment_l2 ? parseInt(this.state.segment_l2, 10) : null,
+            this.state.segment_l3 ? parseInt(this.state.segment_l3, 10) : null,
+            this.state.segment_l4 ? parseInt(this.state.segment_l4, 10) : null,
+            this.state.segment_type || null
         ]);
         
         this.state.kpi = data.kpi;
@@ -55,9 +120,46 @@ export class DonationBoxDashboard extends Component {
         await this.fetch_data();
     }
 
+    async onchange_province() {
+        this.state.city_id = null;
+        this.state.zone_id = null;
+        await this.applyFilter();
+    }
+
+    async onchange_city() {
+        this.state.zone_id = null;
+        await this.applyFilter();
+    }
+
+    async onchange_segment_l1() {
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.applyFilter();
+    }
+    
+    async onchange_segment_l2() {
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.applyFilter();
+    }
+    
+    async onchange_segment_l3() {
+        this.state.segment_l4 = null;
+        await this.applyFilter();
+    }
+
     clearFilter() {
         this.state.date_from = '';
         this.state.date_to = '';
+        this.state.province_id = null;
+        this.state.city_id = null;
+        this.state.zone_id = null;
+        this.state.segment_l1 = null;
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        this.state.segment_type = '';
         this.applyFilter();
     }
 
@@ -87,7 +189,6 @@ export class DonationBoxDashboard extends Component {
     }
 
     render_charts() {
-        // 1. Complaints Pie Chart
         const ctx1 = $("#db_chart_complaints");
         if (ctx1.length) {
             if (this._charts.comp_status) this._charts.comp_status.destroy();
@@ -104,7 +205,6 @@ export class DonationBoxDashboard extends Component {
             });
         }
 
-        // 2. Installations Bar Chart
         const ctx2 = $("#db_chart_installs");
         if (ctx2.length) {
             if (this._charts.installs) this._charts.installs.destroy();
