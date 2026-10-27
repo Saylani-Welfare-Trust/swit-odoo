@@ -9,33 +9,29 @@ class DonationBoxDashboard(models.TransientModel):
     def get_location_hierarchy(self):
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
-        branches = self.env['account.analytic.account'].search([('parent_id', 'in', zones.ids)])
         
-        # Build branch data with their parent City and Province IDs
-        branch_data = []
-        for b in branches:
-            zone = b.parent_id
-            city = zone.parent_id
-            province = city.parent_id
-            branch_data.append({
-                'id': b.id, 
-                'name': b.name, 
-                'zone_id': zone.id if zone else False, 
-                'city_id': city.id if city else False, 
-                'province_id': province.id if province else False
-            })
+        subzones = self.env['sub.zone'].search([])
+        
+        subzone_data = []
+        for s in subzones:
+            # Assuming sub.zone has a city_id or we find it via zone
+            city_id = False
+            if hasattr(s, 'city_id') and s.city_id:
+                city_id = s.city_id.id
+            elif hasattr(s, 'zone_id') and s.zone_id and s.zone_id.parent_id:
+                city_id = s.zone_id.parent_id.id
+                
+            subzone_data.append({'id': s.id, 'name': s.name, 'city_id': city_id})
         
         return {
             'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
             'cities': [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
-            'zones': [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
-            'branches': branch_data, # Updated to include city and province mapping
+            'subzones': subzone_data,
         }
 
     @api.model
     def get_dashboard_data(self, date_from=None, date_to=None, 
-                           province_id=None, city_id=None, zone_id=None, branch_id=None):
+                           province_id=None, city_id=None, subzone_id=None):
         reg_domain = []
         comp_domain = []
         col_domain = []
@@ -59,15 +55,10 @@ class DonationBoxDashboard(models.TransientModel):
             reg_domain.append(('city_id', '=', int(city_id)))
             comp_domain.append(('city_id', '=', int(city_id)))
             col_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
-        if zone_id:
-            reg_domain.append(('zone_id', '=', int(zone_id)))
-            comp_domain.append(('zone_id', '=', int(zone_id)))
-            col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
-        if branch_id:
-            if 'sub_zone_id' in self.env['donation.box.registration.installation']._fields:
-                reg_domain.append(('sub_zone_id', '=', int(branch_id)))
-                comp_domain.append(('sub_zone_id', '=', int(branch_id)))
-                col_domain.append(('donation_box_registration_installation_id.sub_zone_id', '=', int(branch_id)))
+        if subzone_id:
+            reg_domain.append(('sub_zone_id', '=', int(subzone_id)))
+            comp_domain.append(('sub_zone_id', '=', int(subzone_id)))
+            col_domain.append(('donation_box_registration_installation_id.sub_zone_id', '=', int(subzone_id)))
 
         Registration = self.env['donation.box.registration.installation']
         Complain = self.env['donation.box.complain.center']

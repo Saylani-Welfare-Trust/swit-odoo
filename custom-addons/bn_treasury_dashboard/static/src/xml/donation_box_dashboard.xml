@@ -43,20 +43,11 @@
                             </select>
                         </div>
                         <div class="col-xl-2 col-lg-2 col-md-4">
-                            <label class="form-label">Zone</label>
-                            <select class="form-select" t-model="state.zone_id" t-on-change="onchange_zone">
-                                <option value="">All Zones</option>
-                                <t t-foreach="filteredZones" t-as="zone" t-key="zone.id">
-                                    <option t-att-value="zone.id" t-esc="zone.name"/>
-                                </t>
-                            </select>
-                        </div>
-                        <div class="col-xl-2 col-lg-2 col-md-4">
-                            <label class="form-label">Branch</label>
-                            <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
-                                <option value="">All Branches</option>
-                                <t t-foreach="filteredBranches" t-as="branch" t-key="branch.id">
-                                    <option t-att-value="branch.id" t-esc="branch.name"/>
+                            <label class="form-label">Subzone</label>
+                            <select class="form-select" t-model="state.subzone_id" t-on-change="applyFilter">
+                                <option value="">All Subzones</option>
+                                <t t-foreach="filteredSubzones" t-as="subzone" t-key="subzone.id">
+                                    <option t-att-value="subzone.id" t-esc="subzone.name"/>
                                 </t>
                             </select>
                         </div>
@@ -69,7 +60,6 @@
                                 <button class="btn btn-sm btn-outline-secondary" t-on-click="clearFilter">
                                     <i class="fa fa-times me-1"/>Clear Filters
                                 </button>
-                                <!-- REFRESH BUTTON -->
                                 <button class="btn btn-sm btn-primary" t-on-click="applyFilter">
                                     <i class="fa fa-refresh me-1"/>Refresh
                                 </button>

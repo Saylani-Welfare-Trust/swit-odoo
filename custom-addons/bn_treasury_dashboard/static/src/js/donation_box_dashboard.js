@@ -13,12 +13,10 @@ export class DonationBoxDashboard extends Component {
             date_to: '',
             province_id: null,
             city_id: null,
-            zone_id: null,
-            branch_id: null,
+            subzone_id: null,
             provinces: [],
             cities: [],
-            zones: [],
-            branches: [],
+            subzones: [],
             kpi: {
                 draft_boxes: 0,
                 available: 0, installed: 0, closed: 0,
@@ -53,8 +51,7 @@ export class DonationBoxDashboard extends Component {
         const hierarchy = await this.orm.call('donation.box.dashboard', 'get_location_hierarchy', []);
         this.state.provinces = hierarchy.provinces || [];
         this.state.cities = hierarchy.cities || [];
-        this.state.zones = hierarchy.zones || [];
-        this.state.branches = hierarchy.branches || [];
+        this.state.subzones = hierarchy.subzones || [];
     }
 
     get filteredCities() {
@@ -63,30 +60,10 @@ export class DonationBoxDashboard extends Component {
         return this.state.cities.filter(c => c.province_id === pId);
     }
 
-    get filteredZones() {
-        if (!this.state.city_id) return this.state.zones;
+    get filteredSubzones() {
+        if (!this.state.city_id) return this.state.subzones;
         const cId = parseInt(this.state.city_id, 10);
-        return this.state.zones.filter(z => z.city_id === cId);
-    }
-
-    get filteredBranches() {
-        // 1. If Zone is selected, filter by Zone
-        if (this.state.zone_id) {
-            const zId = parseInt(this.state.zone_id, 10);
-            return this.state.branches.filter(b => b.zone_id === zId);
-        }
-        // 2. If City is selected, filter by City
-        if (this.state.city_id) {
-            const cId = parseInt(this.state.city_id, 10);
-            return this.state.branches.filter(b => b.city_id === cId);
-        }
-        // 3. If Province is selected, filter by Province
-        if (this.state.province_id) {
-            const pId = parseInt(this.state.province_id, 10);
-            return this.state.branches.filter(b => b.province_id === pId);
-        }
-        // 4. Otherwise, show all branches
-        return this.state.branches;
+        return this.state.subzones.filter(s => s.city_id === cId);
     }
 
     async fetch_data() {
@@ -96,8 +73,7 @@ export class DonationBoxDashboard extends Component {
                 this.state.date_to || null,
                 this.state.province_id ? parseInt(this.state.province_id, 10) : null,
                 this.state.city_id ? parseInt(this.state.city_id, 10) : null,
-                this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
-                this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+                this.state.subzone_id ? parseInt(this.state.subzone_id, 10) : null,
             ]);
             
             this.state.kpi = data.kpi;
@@ -121,19 +97,12 @@ export class DonationBoxDashboard extends Component {
 
     async onchange_province() {
         this.state.city_id = null;
-        this.state.zone_id = null;
-        this.state.branch_id = null;
+        this.state.subzone_id = null;
         await this.applyFilter();
     }
 
     async onchange_city() {
-        this.state.zone_id = null;
-        this.state.branch_id = null;
-        await this.applyFilter();
-    }
-    
-    async onchange_zone() {
-        this.state.branch_id = null;
+        this.state.subzone_id = null;
         await this.applyFilter();
     }
 
@@ -142,8 +111,7 @@ export class DonationBoxDashboard extends Component {
         this.state.date_to = '';
         this.state.province_id = null;
         this.state.city_id = null;
-        this.state.zone_id = null;
-        this.state.branch_id = null;
+        this.state.subzone_id = null;
         this.applyFilter();
     }
 
