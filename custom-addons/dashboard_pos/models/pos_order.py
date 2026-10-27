@@ -168,6 +168,16 @@ class PosOrder(models.Model):
             label,
         ]
 
+
+    def _apply_dashboard_filters(self, domain, category_id=None, amount_min=None, amount_max=None):
+        """Append the new category + amount-range filters to an existing domain."""
+        if category_id:
+            domain.append(('lines.product_id.categ_id', 'child_of', category_id))
+        if amount_min is not None:
+            domain.append(('amount_total', '>=', amount_min))
+        if amount_max is not None:
+            domain.append(('amount_total', '<=', amount_max))
+        return domain
     # ------------------------------------------------------------------
     # tiles + tables
     # ------------------------------------------------------------------
