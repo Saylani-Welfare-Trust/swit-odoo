@@ -3,6 +3,7 @@
     <data noupdate="1">
         <record model="res.groups" id="group_account_dashboard">
             <field name="name">Access to Accounting Dashboard</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
         </record>
         <record id="account_asset_category_multi_company_rule" model="ir.rule">
             <field name="name">Account Asset Category multi-company</field>
