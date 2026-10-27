@@ -47,7 +47,6 @@ class RiderCollection(models.Model):
     lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string="Box No.", store=True)
     key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
     sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
-    donation_box_request_id = fields.Many2one(related='donation_box_registration_installation_id.donation_box_request_id', string="Donation Box Request", store=True)
 
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
@@ -63,6 +62,10 @@ class RiderCollection(models.Model):
     counterfeit_notes = fields.Float('Counterfeit Notes')
 
     remarks = fields.Text('Remarks')
+
+    # Set when the POS order that paid this collection reaches the server (pos_order.py).
+    pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, readonly=True)
+    dn_number = fields.Char('DN Number', copy=False, readonly=True)
     foreign_currency_line_ids = fields.Many2many(
         'foreign.currency',
         'rider_collection_foreign_currency_rel',
