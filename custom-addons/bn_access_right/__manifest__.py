@@ -10,6 +10,7 @@
         'spreadsheet_dashboard',
         'account',
         'hr_expense',
+        'stock',
     ],
     'data': [
         'data/ir_module_category.xml',
