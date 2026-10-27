@@ -7,6 +7,7 @@ class DonationBoxDashboard(models.AbstractModel):
 
     @api.model
     def get_location_hierarchy(self):
+        # Location Hierarchy: Province -> City -> Zone -> Branch
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
@@ -32,6 +33,7 @@ class DonationBoxDashboard(models.AbstractModel):
             reg_domain.append(('installation_date', '<=', date_to))
             comp_domain.append(('date', '<=', date_to))
             
+        # Location Filters
         if province_id:
             reg_domain.append(('city_id.parent_id', '=', int(province_id)))
             comp_domain.append(('city_id.parent_id', '=', int(province_id)))
@@ -42,6 +44,7 @@ class DonationBoxDashboard(models.AbstractModel):
             reg_domain.append(('zone_id', '=', int(zone_id)))
             comp_domain.append(('zone_id', '=', int(zone_id)))
         if branch_id:
+            # Assuming the branch is linked via analytic_account_id
             if 'analytic_account_id' in self.env['donation.box.registration.installation']._fields:
                 reg_domain.append(('analytic_account_id', '=', int(branch_id)))
                 comp_domain.append(('analytic_account_id', '=', int(branch_id)))
@@ -60,22 +63,6 @@ class DonationBoxDashboard(models.AbstractModel):
         active_complaints = Complain.search_count(comp_domain + [('status', 'in', ['draft', 'process'])])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
         not_recovered = Complain.search_count(comp_domain + [('status', '=', 'not_recovered')])
-
-        # --- Collection Amount ---
-        # Placeholder: Assuming collections come from POS orders linked to donation boxes.
-        # Adjust the domain to match your actual collection model if different.
-        collection_domain = []
-        if date_from:
-            collection_domain.append(('date_order', '>=', date_from + ' 00:00:00'))
-        if date_to:
-            collection_domain.append(('date_order', '<=', date_to + ' 23:59:59'))
-        
-        # If you have a specific product or analytic account for donations, add it here:
-        # collection_domain.append(('config_id.analytic_account_id', 'child_of', int(branch_id) if branch_id else ...))
-        
-        orders = self.env['pos.order'].search(collection_domain)
-        total_collection = sum(orders.mapped('amount_total'))
-        formatted_collection = "{:,.2f}".format(total_collection)
 
         # --- Charts ---
         comp_by_box_status = {}
@@ -121,7 +108,6 @@ class DonationBoxDashboard(models.AbstractModel):
                 'active_complaints': active_complaints,
                 'resolved_complaints': resolved_complaints,
                 'not_recovered': not_recovered,
-                'total_collection': formatted_collection, # Added Collection
             },
             'chart_comp_status': {
                 'labels': list(comp_by_box_status.keys()),
@@ -133,4 +119,24 @@ class DonationBoxDashboard(models.AbstractModel):
             },
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
+        }
+        
+        
+    @api.model
+    def get_monthly_summary(self):
+        # Here you can query your actual models to fill in these numbers.
+        # For example: 
+        # cash_bags = self.env['pos.order'].search_count([('state', '=', 'paid')])
+        
+        return {
+            'cash_bags': 0,
+            'nil_boxes': 0,
+            'compliant_boxes': self.env['donation.box.complain.center'].search_count([]),
+            'pending_shops': 0,
+            'visited_shops': 0,
+            'unvisited_shops': 0,
+            'donation': 0.0, # Format as needed
+            'comp_last_month': 0.0,
+            'diff_last_month': 0.0,
+            'new_shops': self.env['donation.box.registration.installation'].search_count([]),
         }

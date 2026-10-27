@@ -2,6 +2,60 @@
 <templates xml:space="preserve">
     <t t-name="DonationBoxDashboard">
         <div class="pos-dash-v2">
+            <!-- ==================== MONTHLY REPORT SUMMARY ==================== -->
+            <div class="mb-4">
+                <div class="text-center mb-3">
+                    <h2 class="fw-bold mb-0" style="color: #6c5ce7;">Saylani Welfare International Trust</h2>
+                    <h3 class="mb-1 text-dark">Donation Box Department</h3>
+                    <h5 class="text-muted">Monthly Report</h5>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm text-center align-middle bg-white shadow-sm" style="font-size: 0.85rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Cash Bags</th>
+                                <th>Nil Boxes</th>
+                                <th>Compliant Boxes</th>
+                                <th>Pending Shops</th>
+                                <th>Visit Shops in a Month</th>
+                                <th>Un-Visit Shops</th>
+                                <th>Donation</th>
+                                <th>Comparison Last Month</th>
+                                <th>Difference Last Month</th>
+                                <th>New Registration Shops</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-muted" style="font-size: 0.75rem;">Donation (-) Comparison Last Month</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr class="fw-bold bg-light">
+                                <td>Total</td>
+                                <td><t t-esc="state.monthly_summary.nil_boxes"/></td>
+                                <td><t t-esc="state.monthly_summary.compliant_boxes"/></td>
+                                <td><t t-esc="state.monthly_summary.pending_shops"/></td>
+                                <td><t t-esc="state.monthly_summary.visited_shops"/></td>
+                                <td><t t-esc="state.monthly_summary.unvisited_shops"/></td>
+                                <td class="text-success"><t t-esc="state.monthly_summary.donation"/></td>
+                                <td><t t-esc="state.monthly_summary.comp_last_month"/></td>
+                                <td class="text-danger"><t t-esc="state.monthly_summary.diff_last_month"/></td>
+                                <td><t t-esc="state.monthly_summary.new_shops"/></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- ==================== HEADER ==================== -->
             <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
                 <div>
@@ -80,51 +134,42 @@
 
             <!-- KPI Tiles -->
             <div class="row g-3 mb-4">
-                <!-- Total Collection (NEW) -->
-                <div class="col-md-4 col-lg-3">
-                    <div class="oh-kpi-card oh-kpi-green">
-                        <i class="fa fa-money oh-kpi-icon"/>
-                        <div class="oh-kpi-label">Total Collection</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.total_collection"/></div>
-                    </div>
-                </div>
-                <!-- Existing KPIs -->
-                <div class="col-md-4 col-lg-3">
-                    <div class="oh-kpi-card oh-kpi-blue" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'available']])">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-green" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'available']])">
                         <i class="fa fa-check-circle oh-kpi-icon"/>
                         <div class="oh-kpi-label">Available Boxes</div>
                         <div class="oh-kpi-value"><t t-esc="state.kpi.available"/></div>
                     </div>
                 </div>
-                <div class="col-md-4 col-lg-3">
-                    <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'installed']])">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-blue" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'installed']])">
                         <i class="fa fa-building oh-kpi-icon"/>
                         <div class="oh-kpi-label">Installed</div>
                         <div class="oh-kpi-value"><t t-esc="state.kpi.installed"/></div>
                     </div>
                 </div>
-                <div class="col-md-4 col-lg-3">
-                    <div class="oh-kpi-card oh-kpi-teal" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'close']])">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'close']])">
                         <i class="fa fa-archive oh-kpi-icon"/>
                         <div class="oh-kpi-label">Closed</div>
                         <div class="oh-kpi-value"><t t-esc="state.kpi.closed"/></div>
                     </div>
                 </div>
-                <div class="col-md-4 col-lg-4">
+                <div class="col-md-4 col-lg-2">
                     <div class="oh-kpi-card oh-kpi-orange" t-on-click="() => this.openView('donation.box.complain.center', [['status', 'in', ['draft', 'process']]])">
                         <i class="fa fa-exclamation-triangle oh-kpi-icon"/>
                         <div class="oh-kpi-label">Active Complaints</div>
                         <div class="oh-kpi-value"><t t-esc="state.kpi.active_complaints"/></div>
                     </div>
                 </div>
-                <div class="col-md-4 col-lg-4">
-                    <div class="oh-kpi-card oh-kpi-light-green" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'resolved']])">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-teal" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'resolved']])">
                         <i class="fa fa-check oh-kpi-icon"/>
                         <div class="oh-kpi-label">Resolved</div>
                         <div class="oh-kpi-value"><t t-esc="state.kpi.resolved_complaints"/></div>
                     </div>
                 </div>
-                <div class="col-md-4 col-lg-4">
+                <div class="col-md-4 col-lg-2">
                     <div class="oh-kpi-card oh-kpi-red" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'not_recovered']])">
                         <i class="fa fa-times-circle oh-kpi-icon"/>
                         <div class="oh-kpi-label">Not Recovered</div>
