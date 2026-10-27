@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- HR Attendance -->
+    <!-- HR -->
     <record id="hr_attendance.group_hr_attendance_officer" model="res.groups">
         <field name="category_id" ref="base.module_category_human_resources_attendances"/>
     </record>
@@ -9,9 +9,16 @@
     <record id="hr_attendance.group_hr_attendance_own_reader" model="res.groups">
         <field name="category_id" ref="base.module_category_human_resources_attendances"/>
     </record>
-
+    
+    <!-- Apps -->
     <record id="custom_app_menu_group" model="res.groups">
         <field name="name">Apps</field>
+        <field name="category_id" ref="base.module_category_administration_administration"/>
+    </record>
+    
+    <!-- Contacts -->
+    <record id="custom_contacts_menu_group" model="res.groups">
+        <field name="name">Contacts</field>
         <field name="category_id" ref="base.module_category_administration_administration"/>
     </record>
 

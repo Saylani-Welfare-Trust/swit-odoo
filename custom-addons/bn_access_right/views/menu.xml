@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- HR -->
     <record id="hr.menu_hr_root" model="ir.ui.menu">
         <field name="groups_id" eval="[
             (6, 0, [
@@ -10,7 +11,17 @@
         ]"/>
     </record>
     
+    <!-- App -->
     <record id="base.menu_management" model="ir.ui.menu">
+        <field name="groups_id" eval="[
+            (6, 0, [
+                ref('bn_access_right.custom_app_menu_group'),
+            ])
+        ]"/>
+    </record>
+    
+    <!-- Contacts -->
+    <record id="contacts.menu_contacts" model="ir.ui.menu">
         <field name="groups_id" eval="[
             (6, 0, [
                 ref('bn_access_right.custom_app_menu_group'),
