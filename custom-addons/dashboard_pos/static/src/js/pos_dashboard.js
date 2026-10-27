@@ -94,6 +94,23 @@ export class PosDashboard extends Component {
         return this.state.zones.filter(z => z.city_id === cId);
     }
 
+    get filteredShops() {
+        let shops = this.state.shops;
+        if (this.state.province_id) {
+            const pId = parseInt(this.state.province_id, 10);
+            shops = shops.filter(s => s.province_id === pId);
+        }
+        if (this.state.city_id) {
+            const cId = parseInt(this.state.city_id, 10);
+            shops = shops.filter(s => s.city_id === cId);
+        }
+        if (this.state.zone_id) {
+            const zId = parseInt(this.state.zone_id, 10);
+            shops = shops.filter(s => s.zone_id === zId);
+        }
+        return shops;
+    }
+
     get filteredSegmentsL2() {
         if (!this.state.segment_l1) return [];
         const pId = parseInt(this.state.segment_l1, 10);
@@ -144,11 +161,18 @@ export class PosDashboard extends Component {
     async onchange_province() {
         this.state.city_id = null;
         this.state.zone_id = null;
+        this.state.config_id = null; // Reset shop
         await this.refresh();
     }
 
     async onchange_city() {
         this.state.zone_id = null;
+        this.state.config_id = null; // Reset shop
+        await this.refresh();
+    }
+
+    async onchange_zone() {
+        this.state.config_id = null; // Reset shop
         await this.refresh();
     }
 

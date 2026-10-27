@@ -14,7 +14,32 @@ class PosOrder(models.Model):
     @api.model
     def get_shops(self):
         configs = self.env['pos.config'].search([])
-        return [{'id': c.id, 'name': c.name} for c in configs]
+        shops = []
+        for c in configs:
+            province_id = False
+            city_id = False
+            zone_id = False
+            
+            # Assuming pos.config has an 'analytic_account_id' field linked to the Branch
+            if 'analytic_account_id' in c._fields and c.analytic_account_id:
+                p = c.analytic_account_id.parent_id
+                if p:
+                    zone_id = p.id
+                    p2 = p.parent_id
+                    if p2:
+                        city_id = p2.id
+                        p3 = p2.parent_id
+                        if p3:
+                            province_id = p3.id
+            
+            shops.append({
+                'id': c.id, 
+                'name': c.name,
+                'province_id': province_id,
+                'city_id': city_id,
+                'zone_id': zone_id,
+            })
+        return shops
 
     @api.model
     def get_location_hierarchy(self):
