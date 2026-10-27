@@ -83,6 +83,8 @@ class RiderScheduleLine(models.TransientModel):
         key_issuance.action_pending()
     
     def mark_as_submit(self):
+        if self.amount == 0:
+            raise ValidationError('Collection amount cannot be zero.')
         if self.amount < 0:
             raise ValidationError('Please first enter the valid collected amount.')
         if self.counterfeit_notes < 0:
