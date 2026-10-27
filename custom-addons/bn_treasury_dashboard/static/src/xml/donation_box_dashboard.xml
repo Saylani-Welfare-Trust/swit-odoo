@@ -43,11 +43,11 @@
                             </select>
                         </div>
                         <div class="col-xl-2 col-lg-2 col-md-4">
-                            <label class="form-label">Subzone</label>
-                            <select class="form-select" t-model="state.subzone_id" t-on-change="onchange_subzone">
-                                <option value="">All Subzones</option>
-                                <t t-foreach="filteredSubzones" t-as="subzone" t-key="subzone.id">
-                                    <option t-att-value="subzone.id" t-esc="subzone.name"/>
+                            <label class="form-label">Zone / Subzone</label>
+                            <select class="form-select" t-model="state.zone_id" t-on-change="onchange_zone">
+                                <option value="">All Zones</option>
+                                <t t-foreach="filteredZones" t-as="zone" t-key="zone.id">
+                                    <option t-att-value="zone.id" t-esc="zone.name"/>
                                 </t>
                             </select>
                         </div>
