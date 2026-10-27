@@ -28,6 +28,7 @@ export class DonationBoxDashboard extends Component {
             chart_installs: { labels: [], data: [] },
             recent_complaints: [],
             recent_registrations: [],
+            recent_collections: [], // <-- NEW
         });
 
         this._charts = {};
@@ -86,6 +87,7 @@ export class DonationBoxDashboard extends Component {
             this.state.chart_installs = data.chart_installs;
             this.state.recent_complaints = data.recent_complaints;
             this.state.recent_registrations = data.recent_registrations;
+            this.state.recent_collections = data.recent_collections; // <-- NEW
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
@@ -195,9 +197,9 @@ export class DonationBoxDashboard extends Component {
     getStateColor(stateName) {
         if (!stateName) return 'bg-secondary';
         const s = stateName.toLowerCase();
-        if (['available', 'resolved', 'repaired'].includes(s)) return 'bg-success';
-        if (['installed', 'process'].includes(s)) return 'bg-info';
-        if (['missing', 'robbery', 'not_recovered', 'broken'].includes(s)) return 'bg-danger';
+        if (['available', 'resolved', 'repaired', 'paid'].includes(s)) return 'bg-success';
+        if (['installed', 'process', 'donation_submit', 'payment_received', 'converted'].includes(s)) return 'bg-info';
+        if (['missing', 'robbery', 'not_recovered', 'broken', 'reject'].includes(s)) return 'bg-danger';
         return 'bg-warning text-dark';
     }
     

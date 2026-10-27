@@ -6,7 +6,9 @@
             <!-- ==================== HEADER ==================== -->
             <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h2 class="mb-1"><i class="fa fa-inbox me-2 text-primary"/>Donation Box Dashboard</h2>
+                    <h2 class="mb-1">
+                        <i class="fa fa-inbox me-2 text-primary"/>
+Donation Box Dashboard</h2>
                     <p>Overview of Boxes, Installations and Complaints</p>
                 </div>
             </div>
@@ -14,7 +16,7 @@
             <!-- Filters -->
             <div class="card oh-filter-card mb-4">
                 <div class="card-body p-3">
-                    
+
                     <!-- Row 1: Dates & Location -->
                     <div class="row g-3 align-items-end mb-3">
                         <div class="col-xl-2 col-lg-2 col-md-4">
@@ -67,7 +69,8 @@
                     <div class="row g-3 align-items-end">
                         <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <button class="btn btn-sm btn-outline-secondary" t-on-click="clearFilter">
-                                <i class="fa fa-times me-1"/>Clear Filters
+                                <i class="fa fa-times me-1"/>
+Clear Filters
                             </button>
                             <div class="d-flex gap-1">
                                 <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('this_month')">This Month</button>
@@ -86,30 +89,38 @@
                     <div class="oh-kpi-card oh-kpi-green">
                         <i class="fa fa-money oh-kpi-icon"/>
                         <div class="oh-kpi-label">Total Collection</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.total_collection"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.total_collection"/>
+                        </div>
                     </div>
                 </div>
-                
+
                 <!-- 2. Box Status -->
                 <div class="col-md-6 col-lg-3">
                     <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'available']])">
                         <i class="fa fa-check-circle oh-kpi-icon"/>
                         <div class="oh-kpi-label">Available Boxes</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.available"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.available"/>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
                     <div class="oh-kpi-card oh-kpi-orange" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'installed']])">
                         <i class="fa fa-building oh-kpi-icon"/>
                         <div class="oh-kpi-label">Installed</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.installed"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.installed"/>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
                     <div class="oh-kpi-card oh-kpi-red" t-on-click="() => this.openView('donation.box.registration.installation', [['status', '=', 'close']])">
                         <i class="fa fa-archive oh-kpi-icon"/>
                         <div class="oh-kpi-label">Closed</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.closed"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.closed"/>
+                        </div>
                     </div>
                 </div>
 
@@ -118,21 +129,27 @@
                     <div class="oh-kpi-card oh-kpi-blue" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'draft']])">
                         <i class="fa fa-edit oh-kpi-icon"/>
                         <div class="oh-kpi-label">Draft Complaints</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.draft_complaints"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.draft_complaints"/>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-amber" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'process']])">
                         <i class="fa fa-spinner oh-kpi-icon"/>
                         <div class="oh-kpi-label">Process Complaints</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.process_complaints"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.process_complaints"/>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-4">
                     <div class="oh-kpi-card oh-kpi-teal" t-on-click="() => this.openView('donation.box.complain.center', [['status', '=', 'resolved']])">
                         <i class="fa fa-check oh-kpi-icon"/>
                         <div class="oh-kpi-label">Resolved Complaints</div>
-                        <div class="oh-kpi-value"><t t-esc="state.kpi.resolved_complaints"/></div>
+                        <div class="oh-kpi-value">
+                            <t t-esc="state.kpi.resolved_complaints"/>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,7 +159,9 @@
                 <div class="col-lg-6">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-pie-chart me-2 text-primary"/>Complaints by Box Status</h4>
+                            <h4>
+                                <i class="fa fa-pie-chart me-2 text-primary"/>
+Complaints by Box Status</h4>
                         </div>
                         <div class="oh-card-body">
                             <div class="oh-chart-wrap" style="height: 300px;">
@@ -154,7 +173,9 @@
                 <div class="col-lg-6">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-bar-chart me-2 text-primary"/>Installations by Month</h4>
+                            <h4>
+                                <i class="fa fa-bar-chart me-2 text-primary"/>
+Installations by Month</h4>
                         </div>
                         <div class="oh-card-body">
                             <div class="oh-chart-wrap" style="height: 300px;">
@@ -171,7 +192,9 @@
                 <div class="col-lg-6">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-list me-2 text-primary"/>Recent Registrations</h4>
+                            <h4>
+                                <i class="fa fa-list me-2 text-primary"/>
+Recent Registrations</h4>
                         </div>
                         <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
                             <table class="table oh-table mb-0">
@@ -186,14 +209,24 @@
                                 <tbody>
                                     <t t-foreach="state.recent_registrations" t-as="reg" t-key="reg.id">
                                         <tr>
-                                            <td><t t-esc="reg.shop_name"/></td>
-                                            <td><t t-esc="reg.lot_name"/></td>
-                                            <td><t t-esc="reg.city_name"/></td>
-                                            <td class="text-end"><t t-esc="reg.installation_date"/></td>
+                                            <td>
+                                                <t t-esc="reg.shop_name"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="reg.lot_name"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="reg.city_name"/>
+                                            </td>
+                                            <td class="text-end">
+                                                <t t-esc="reg.installation_date"/>
+                                            </td>
                                         </tr>
                                     </t>
                                     <t t-if="!state.recent_registrations.length">
-                                        <tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3">No records found</td>
+                                        </tr>
                                     </t>
                                 </tbody>
                             </table>
@@ -205,7 +238,9 @@
                 <div class="col-lg-6">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-wrench me-2 text-primary"/>Recent Complaints</h4>
+                            <h4>
+                                <i class="fa fa-wrench me-2 text-primary"/>
+Recent Complaints</h4>
                         </div>
                         <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
                             <table class="table oh-table mb-0">
@@ -220,9 +255,15 @@
                                 <tbody>
                                     <t t-foreach="state.recent_complaints" t-as="comp" t-key="comp.id">
                                         <tr>
-                                            <td><t t-esc="comp.shop_name"/></td>
-                                            <td><t t-esc="comp.lot_name"/></td>
-                                            <td><t t-esc="formatStateName(comp.box_status)"/></td>
+                                            <td>
+                                                <t t-esc="comp.shop_name"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="comp.lot_name"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="formatStateName(comp.box_status)"/>
+                                            </td>
                                             <td class="text-end">
                                                 <span t-attf-class="badge {{ getStateColor(comp.status) }}">
                                                     <t t-esc="formatStateName(comp.status)"/>
@@ -231,10 +272,164 @@
                                         </tr>
                                     </t>
                                     <t t-if="!state.recent_complaints.length">
-                                        <tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3">No records found</td>
+                                        </tr>
                                     </t>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tables -->
+                <div class="row g-3">
+                    <!-- Recent Registrations -->
+                    <div class="col-lg-6">
+                        <div class="card oh-section-card">
+                            <div class="oh-card-header">
+                                <h4>
+                                    <i class="fa fa-list me-2 text-primary"/>
+Recent Registrations</h4>
+                            </div>
+                            <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
+                                <table class="table oh-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Shop Name</th>
+                                            <th>Box / Lot</th>
+                                            <th>City</th>
+                                            <th class="text-end">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.recent_registrations" t-as="reg" t-key="reg.id">
+                                            <tr>
+                                                <td>
+                                                    <t t-esc="reg.shop_name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="reg.lot_name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="reg.city_name"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <t t-esc="reg.installation_date"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.recent_registrations.length">
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">No records found</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Complaints -->
+                    <div class="col-lg-6">
+                        <div class="card oh-section-card">
+                            <div class="oh-card-header">
+                                <h4>
+                                    <i class="fa fa-wrench me-2 text-primary"/>
+Recent Complaints</h4>
+                            </div>
+                            <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
+                                <table class="table oh-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Shop Name</th>
+                                            <th>Box / Lot</th>
+                                            <th>Box Status</th>
+                                            <th class="text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.recent_complaints" t-as="comp" t-key="comp.id">
+                                            <tr>
+                                                <td>
+                                                    <t t-esc="comp.shop_name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="comp.lot_name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="formatStateName(comp.box_status)"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-attf-class="badge {{ getStateColor(comp.status) }}">
+                                                        <t t-esc="formatStateName(comp.status)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.recent_complaints.length">
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-3">No records found</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Recent Collections -->
+                    <div class="col-lg-12 mt-3">
+                        <div class="card oh-section-card">
+                            <div class="oh-card-header">
+                                <h4>
+                                    <i class="fa fa-money me-2 text-primary"/>
+Recent Collections</h4>
+                            </div>
+                            <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
+                                <table class="table oh-table mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Shop Name</th>
+                                            <th>Rider</th>
+                                            <th>Box / Lot</th>
+                                            <th class="text-end">Amount</th>
+                                            <th class="text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.recent_collections" t-as="col" t-key="col.id">
+                                            <tr>
+                                                <td>
+                                                    <t t-esc="col.date"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="col.shop_name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="col.rider_name"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="col.lot_name"/>
+                                                </td>
+                                                <td class="text-end fw-semibold">
+                                                    <t t-esc="(col.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span t-attf-class="badge {{ getStateColor(col.state) }}">
+                                                        <t t-esc="formatStateName(col.state)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.recent_collections.length">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-3">No records found</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

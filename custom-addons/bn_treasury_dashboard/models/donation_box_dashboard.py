@@ -65,7 +65,7 @@ class DonationBoxDashboard(models.TransientModel):
         installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
         closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
         
-        # --- Complaint KPIs (Draft, Process, Resolved) ---
+        # --- Complaint KPIs ---
         draft_complaints = Complain.search_count(comp_domain + [('status', '=', 'draft')])
         process_complaints = Complain.search_count(comp_domain + [('status', '=', 'process')])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
@@ -107,12 +107,22 @@ class DonationBoxDashboard(models.TransientModel):
             ['shop_name', 'lot_id', 'city_id', 'installation_date', 'status'], 
             limit=10, order='id desc'
         )
+        
+        # NEW: Recent Collections
+        recent_collections = Collection.search_read(
+            col_domain,
+            ['date', 'shop_name', 'rider_id', 'lot_id', 'amount', 'state'],
+            limit=10, order='id desc'
+        )
 
         for c in recent_complaints:
             c['lot_name'] = c['lot_id'][1] if c['lot_id'] else ''
         for r in recent_registrations:
             r['lot_name'] = r['lot_id'][1] if r['lot_id'] else ''
             r['city_name'] = r['city_id'][1] if r['city_id'] else ''
+        for col in recent_collections:
+            col['rider_name'] = col['rider_id'][1] if col['rider_id'] else ''
+            col['lot_name'] = col['lot_id'][1] if col['lot_id'] else ''
 
         return {
             'kpi': {
@@ -134,4 +144,5 @@ class DonationBoxDashboard(models.TransientModel):
             },
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
+            'recent_collections': recent_collections, # Added to return
         }
