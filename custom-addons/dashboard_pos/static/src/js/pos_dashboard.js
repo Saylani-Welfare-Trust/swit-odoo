@@ -10,6 +10,9 @@ export class PosDashboard extends Component {
         this.orm = useService('orm');
         this.user = useService("user");
         this.actionService = useService("action");
+        
+        // FLAG to check if the DOM is fully loaded
+        this.is_mounted = false;
 
         this.state = useState({
             config_id: null,
@@ -41,10 +44,11 @@ export class PosDashboard extends Component {
 
         onWillStart(async () => {
             await this.fetch_dropdowns();
-            await this.refresh();
+            await this.fetch_data(); // Only fetch data here, do NOT render charts yet
         });
 
         onMounted(async () => {
+            this.is_mounted = true; // DOM is now ready
             await this.render_all_charts();
         });
     }
@@ -66,7 +70,9 @@ export class PosDashboard extends Component {
 
     async refresh() {
         await this.fetch_data();
-        await this.render_all_charts();
+        if (this.is_mounted) {
+            await this.render_all_charts();
+        }
     }
 
     async fetch_data() {
@@ -155,6 +161,8 @@ export class PosDashboard extends Component {
     load_sales_chart(option) {
         const self = this;
         const ctx = $("#canvas_1");
+        if (!ctx.length) return; // Safety check
+        
         const args = this._filter_args();
 
         return this.orm.call('pos.order', 'get_department', [option, ...args])
@@ -176,8 +184,8 @@ export class PosDashboard extends Component {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: true, position: "bottom" } },
                 };
-                if (window.myCharts != undefined) window.myCharts.destroy();
-                window.myCharts = new Chart(ctx, { type: "bar", data, options });
+                if (self._charts.sales_chart) self._charts.sales_chart.destroy();
+                self._charts.sales_chart = new Chart(ctx, { type: "bar", data, options });
             });
     }
 
@@ -198,6 +206,8 @@ export class PosDashboard extends Component {
     render_top_customer_graph() {
         const self = this;
         const ctx = $(".top_customer");
+        if (!ctx.length) return;
+        
         return this.orm.call('pos.order', 'get_the_top_customer', this._filter_args())
             .then(function (arrays) {
                 const data = {
@@ -225,6 +235,8 @@ export class PosDashboard extends Component {
     render_top_product_graph() {
         const self = this;
         const ctx = $(".top_selling_product");
+        if (!ctx.length) return;
+        
         return this.orm.call('pos.order', 'get_the_top_products', this._filter_args())
             .then(function (arrays) {
                 const data = {
@@ -247,6 +259,8 @@ export class PosDashboard extends Component {
     render_product_category_graph() {
         const self = this;
         const ctx = $(".top_product_categories");
+        if (!ctx.length) return;
+        
         return this.orm.call('pos.order', 'get_the_top_categories', this._filter_args())
             .then(function (arrays) {
                 const data = {
