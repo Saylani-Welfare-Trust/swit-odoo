@@ -10,4 +10,9 @@
         <field name="category_id" ref="base.module_category_human_resources_attendances"/>
     </record>
 
+    <record id="base.menu_management" model="res.groups">
+        <field name="name">Apps</field>
+        <field name="category_id" ref="base.module_category_administration_administration"/>
+    </record>
+
 </odoo>
