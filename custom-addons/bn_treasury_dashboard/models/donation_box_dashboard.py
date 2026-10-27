@@ -44,6 +44,7 @@ class DonationBoxDashboard(models.AbstractModel):
             reg_domain.append(('zone_id', '=', int(zone_id)))
             comp_domain.append(('zone_id', '=', int(zone_id)))
         if branch_id:
+            # Assuming the branch is linked via analytic_account_id
             if 'analytic_account_id' in self.env['donation.box.registration.installation']._fields:
                 reg_domain.append(('analytic_account_id', '=', int(branch_id)))
                 comp_domain.append(('analytic_account_id', '=', int(branch_id)))
@@ -62,31 +63,6 @@ class DonationBoxDashboard(models.AbstractModel):
         active_complaints = Complain.search_count(comp_domain + [('status', 'in', ['draft', 'process'])])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
         not_recovered = Complain.search_count(comp_domain + [('status', '=', 'not_recovered')])
-
-        # --- Collections (Rider & Visit) ---
-        # Adjust these domains to match your actual Rider Shift / Visit models
-        collection_domain = []
-        if date_from:
-            collection_domain.append(('date_order', '>=', date_from + ' 00:00:00'))
-        if date_to:
-            collection_domain.append(('date_order', '<=', date_to + ' 23:59:59'))
-            
-        # Placeholder logic: Assuming POS orders represent collections.
-        # You can change 'pos.order' to your custom collection model (e.g. 'rider.collection')
-        all_orders = self.env['pos.order'].search(collection_domain)
-        
-        # Total Collection
-        total_collection = sum(all_orders.mapped('amount_total'))
-        
-        # Rider Collection (Example: Orders where the salesperson is a Rider)
-        # Replace with your actual domain, e.g., [('rider_id', '!=', False)]
-        rider_orders = all_orders.filtered(lambda o: o.user_id.employee_id) 
-        rider_collection = sum(rider_orders.mapped('amount_total'))
-        
-        # Visit Collection (Example: Orders that are linked to a specific visit type)
-        # Replace with your actual domain, e.g., [('visit_type', '=', 'shop_visit')]
-        visit_orders = all_orders # Fallback to all for demonstration
-        visit_collection = sum(visit_orders.mapped('amount_total'))
 
         # --- Charts ---
         comp_by_box_status = {}
@@ -132,9 +108,6 @@ class DonationBoxDashboard(models.AbstractModel):
                 'active_complaints': active_complaints,
                 'resolved_complaints': resolved_complaints,
                 'not_recovered': not_recovered,
-                'total_collection': "{:,.2f}".format(total_collection),
-                'rider_collection': "{:,.2f}".format(rider_collection),
-                'visit_collection': "{:,.2f}".format(visit_collection),
             },
             'chart_comp_status': {
                 'labels': list(comp_by_box_status.keys()),
@@ -148,11 +121,22 @@ class DonationBoxDashboard(models.AbstractModel):
             'recent_registrations': recent_registrations,
         }
         
+        
     @api.model
     def get_monthly_summary(self):
-        # Kept for compatibility with your JS, though unused in the template now
+        # Here you can query your actual models to fill in these numbers.
+        # For example: 
+        # cash_bags = self.env['pos.order'].search_count([('state', '=', 'paid')])
+        
         return {
-            'cash_bags': 0, 'nil_boxes': 0, 'compliant_boxes': 0, 'pending_shops': 0,
-            'visited_shops': 0, 'unvisited_shops': 0, 'donation': 0.0, 'comp_last_month': 0.0,
-            'diff_last_month': 0.0, 'new_shops': 0,
+            'cash_bags': 0,
+            'nil_boxes': 0,
+            'compliant_boxes': self.env['donation.box.complain.center'].search_count([]),
+            'pending_shops': 0,
+            'visited_shops': 0,
+            'unvisited_shops': 0,
+            'donation': 0.0, # Format as needed
+            'comp_last_month': 0.0,
+            'diff_last_month': 0.0,
+            'new_shops': self.env['donation.box.registration.installation'].search_count([]),
         }

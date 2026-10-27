@@ -21,10 +21,7 @@ export class DonationBoxDashboard extends Component {
             branches: [],
             kpi: {
                 available: 0, installed: 0, closed: 0,
-                active_complaints: 0, resolved_complaints: 0, not_recovered: 0,
-                total_collection: '0.00',
-                rider_collection: '0.00', // <-- NEW
-                visit_collection: '0.00', // <-- NEW
+                active_complaints: 0, resolved_complaints: 0, not_recovered: 0
             },
             monthly_summary: {
                 cash_bags: 0, nil_boxes: 0, compliant_boxes: 0, pending_shops: 0,
