@@ -1,0 +1,86 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <!-- Expense -->
+    <record id="hr_expense.access_product_template_hr_expense_user" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Point Of Sale -->
+    <record id="point_of_sale.access_product_template_pos_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="point_of_sale.access_product_template_attribute_exclusion_pos_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="point_of_sale.access_product_template_attribute_line_pos_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="point_of_sale.access_product_product_attribute_pos_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Purchase -->
+    <record id="purchase.access_product_template_purchase_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Sales -->
+    <record id="sale.access_product_template_sale_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="sale.access_product_template_attribute_exclusion_sale_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="sale.access_product_template_attribute_line_sale_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <record id="sale.access_product_product_attribute_sale_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Accounting -->
+    <record id="account.access_product_template_account_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+</odoo>
