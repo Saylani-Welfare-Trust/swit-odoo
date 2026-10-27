@@ -14,9 +14,11 @@ export class DonationBoxDashboard extends Component {
             province_id: null,
             city_id: null,
             subzone_id: null,
+            bunch_id: null,
             provinces: [],
             cities: [],
             subzones: [],
+            bunches: [],
             kpi: {
                 draft_boxes: 0,
                 available: 0, installed: 0, closed: 0,
@@ -52,6 +54,7 @@ export class DonationBoxDashboard extends Component {
         this.state.provinces = hierarchy.provinces || [];
         this.state.cities = hierarchy.cities || [];
         this.state.subzones = hierarchy.subzones || [];
+        this.state.bunches = hierarchy.bunches || [];
     }
 
     get filteredCities() {
@@ -66,6 +69,12 @@ export class DonationBoxDashboard extends Component {
         return this.state.subzones.filter(s => s.city_id === cId);
     }
 
+    get filteredBunches() {
+        if (!this.state.subzone_id) return this.state.bunches;
+        const sId = parseInt(this.state.subzone_id, 10);
+        return this.state.bunches.filter(b => b.subzone_id === sId);
+    }
+
     async fetch_data() {
         try {
             const data = await this.orm.call('donation.box.dashboard', 'get_dashboard_data', [
@@ -74,6 +83,7 @@ export class DonationBoxDashboard extends Component {
                 this.state.province_id ? parseInt(this.state.province_id, 10) : null,
                 this.state.city_id ? parseInt(this.state.city_id, 10) : null,
                 this.state.subzone_id ? parseInt(this.state.subzone_id, 10) : null,
+                this.state.bunch_id ? parseInt(this.state.bunch_id, 10) : null,
             ]);
             
             this.state.kpi = data.kpi;
@@ -98,11 +108,18 @@ export class DonationBoxDashboard extends Component {
     async onchange_province() {
         this.state.city_id = null;
         this.state.subzone_id = null;
+        this.state.bunch_id = null;
         await this.applyFilter();
     }
 
     async onchange_city() {
         this.state.subzone_id = null;
+        this.state.bunch_id = null;
+        await this.applyFilter();
+    }
+    
+    async onchange_subzone() {
+        this.state.bunch_id = null;
         await this.applyFilter();
     }
 
@@ -112,6 +129,7 @@ export class DonationBoxDashboard extends Component {
         this.state.province_id = null;
         this.state.city_id = null;
         this.state.subzone_id = null;
+        this.state.bunch_id = null;
         this.applyFilter();
     }
 

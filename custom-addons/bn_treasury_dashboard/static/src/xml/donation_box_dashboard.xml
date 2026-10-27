@@ -44,10 +44,19 @@
                         </div>
                         <div class="col-xl-2 col-lg-2 col-md-4">
                             <label class="form-label">Subzone</label>
-                            <select class="form-select" t-model="state.subzone_id" t-on-change="applyFilter">
+                            <select class="form-select" t-model="state.subzone_id" t-on-change="onchange_subzone">
                                 <option value="">All Subzones</option>
                                 <t t-foreach="filteredSubzones" t-as="subzone" t-key="subzone.id">
                                     <option t-att-value="subzone.id" t-esc="subzone.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-xl-2 col-lg-2 col-md-4">
+                            <label class="form-label">Bunch</label>
+                            <select class="form-select" t-model="state.bunch_id" t-on-change="applyFilter">
+                                <option value="">All Bunches</option>
+                                <t t-foreach="filteredBunches" t-as="bunch" t-key="bunch.id">
+                                    <option t-att-value="bunch.id" t-esc="bunch.name"/>
                                 </t>
                             </select>
                         </div>
