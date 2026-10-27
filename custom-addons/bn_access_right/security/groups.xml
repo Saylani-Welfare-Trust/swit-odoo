@@ -5,5 +5,9 @@
     <record id="hr_attendance.group_hr_attendance_officer" model="res.groups">
         <field name="category_id" ref="base.module_category_human_resources_attendances"/>
     </record>
+    
+    <record id="hr_attendance.group_hr_attendance_own_reader" model="res.groups">
+        <field name="category_id" ref="base.module_category_human_resources_attendances"/>
+    </record>
 
 </odoo>
