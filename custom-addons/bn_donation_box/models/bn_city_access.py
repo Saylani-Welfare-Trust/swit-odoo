@@ -6,7 +6,6 @@ from odoo.exceptions import UserError
 # bn_donation_box, bn_key_management and bn_rider_shift. Everyone else only sees
 # the city of the analytic account on their employee.
 ALL_CITIES_GROUPS = (
-    'base.group_system',
     'bn_donation_box.donation_box_manager_group',
     'bn_donation_box.donation_box_audit_group',
     'bn_key_management.key_management_manager_group',
