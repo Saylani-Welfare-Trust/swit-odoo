@@ -47,7 +47,8 @@ class RiderCollection(models.Model):
     lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string="Box No.", store=True)
     key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
     sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
-    
+    donation_box_request_id = fields.Many2one(related='donation_box_registration_installation_id.donation_box_request_id', string="Donation Box Request", store=True)
+
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
     state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
 

@@ -17,6 +17,7 @@
                     <group>
                         <group name="rider_collection_col_1">
                             <field name="donation_box_registration_installation_id" options="{'no_create': True, 'no_edit': True}" />
+                            <field name="donation_box_request_id" string="Request No." options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="state != 'paid'" />
                             <field name="date" />
                             <field name="submission_time" />
                             <!-- Readonly for users NOT in group_edit_rider_collection -->
@@ -52,6 +53,7 @@
                 <field name="date" readonly="1" />
                 <field name="shop_name" readonly="1" />
                 <field name="lot_id" string="Box No." readonly="1" />
+                <field name="donation_box_request_id" string="Request No." readonly="1" invisible="state != 'paid'" />
                 <field name="sub_zone_id" string="Sub Zone" readonly="1" />
                 <field name="contact_person" string="Contact Person" readonly="1" />
                 <field name="contact_number" string="Contact Number" readonly="1" />
