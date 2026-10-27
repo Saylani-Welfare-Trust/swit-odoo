@@ -9,39 +9,15 @@ class TreasuryDashboardController(http.Controller):
     # ------------------------------------------------------------------
     # Helpers for Hierarchy
     # ------------------------------------------------------------------
-    def _get_hierarchical_name(self, account):
-        if not account:
-            return ''
-        depth = 0
-        p = account.parent_id
-        while p:
-            depth += 1
-            p = p.parent_id
-        
-        prefixes = {
-            0: 'Main',
-            1: 'Sub Main',
-            2: 'Sub Sub Main',
-            3: 'Sub Sub Sub Main',
-            4: 'Sub Sub Sub Sub Main'
-        }
-        prefix = prefixes.get(depth, f"{'Sub ' * depth}Main")
-        return f"{prefix} {account.name}"
-
     def _get_location_hierarchy(self):
-        # Top level accounts (Provinces) have no parent
         provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        
-        # Level 2 accounts (Cities) have a parent (Province)
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        
-        # Fetch Segments (Assuming they belong to a plan named 'Segment')
         segments = request.env['account.analytic.account'].search([('plan_id.name', 'ilike', 'Segment')])
         
         return (
-            [{'id': p.id, 'name': self._get_hierarchical_name(p)} for p in provinces],
-            [{'id': c.id, 'name': self._get_hierarchical_name(c), 'province_id': c.parent_id.id} for c in cities],
-            [{'id': s.id, 'name': self._get_hierarchical_name(s)} for s in segments]
+            [{'id': p.id, 'name': p.name} for p in provinces],
+            [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
+            [{'id': s.id, 'name': s.display_name} for s in segments]
         )
 
     def _get_analytic_accounts(self):
@@ -56,13 +32,29 @@ class TreasuryDashboardController(http.Controller):
                     )
         if not ids:
             return []
-        accounts = request.env['account.analytic.account'].browse(list(ids))
         
-        # Apply hierarchical name to branches as well!
-        return [
-            {'id': a.id, 'name': self._get_hierarchical_name(a)}
-            for a in sorted(accounts, key=lambda a: (a.display_name or '').lower())
-        ]
+        accounts = request.env['account.analytic.account'].browse(list(ids))
+        res = []
+        for a in accounts:
+            province_id = False
+            city_id = False
+            parent = a.parent_id
+            # Walk up the tree to find the City and Province
+            while parent:
+                if not parent.parent_id:
+                    province_id = parent.id
+                elif not parent.parent_id.parent_id:
+                    city_id = parent.id
+                parent = parent.parent_id
+            
+            res.append({
+                'id': a.id, 
+                'name': a.name, 
+                'province_id': province_id,
+                'city_id': city_id
+            })
+            
+        return sorted(res, key=lambda a: (a['name'] or '').lower())
 
     # ------------------------------------------------------------------
     # Custom Model Stats
@@ -96,28 +88,24 @@ class TreasuryDashboardController(http.Controller):
             if date_to:
                 base_domain.append((date_field, '<=', date_to))
 
-        # ---- Branch filter (Exact match) ----
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except (ValueError, TypeError):
                 pass
 
-        # ---- Province filter (Includes all child cities/zones/branches) ----
         if province_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', 'child_of', int(province_id)))
             except (ValueError, TypeError):
                 pass
 
-        # ---- City filter (Includes all child zones/branches) ----
         if city_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', 'child_of', int(city_id)))
             except (ValueError, TypeError):
                 pass
                 
-        # ---- Segment filter (Includes all child segments) ----
         if segment_id and 'analytic_account_id' in Model._fields:
             try:
                 base_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
@@ -126,7 +114,6 @@ class TreasuryDashboardController(http.Controller):
 
         has_amount = amount_field in Model._fields
 
-        # ---- Amount Min / Max filters ----
         if has_amount:
             if amount_min is not None:
                 base_domain.append((amount_field, '>=', float(amount_min)))

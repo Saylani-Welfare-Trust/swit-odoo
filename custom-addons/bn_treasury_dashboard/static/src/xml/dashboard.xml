@@ -25,15 +25,6 @@
                             <input type="date" class="form-control" t-model="state.date_to" t-on-change="applyFilter"/>
                         </div>
                         <div class="col-lg-2 col-md-4">
-                            <label class="form-label">Branch</label>
-                            <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
-                                <option value="">All Branches</option>
-                                <t t-foreach="state.analytic_accounts" t-as="branch" t-key="branch.id">
-                                    <option t-att-value="branch.id" t-esc="branch.name"/>
-                                </t>
-                            </select>
-                        </div>
-                        <div class="col-lg-2 col-md-4">
                             <label class="form-label">Province</label>
                             <select class="form-select" t-model="state.province_id" t-on-change="onchange_province">
                                 <option value="">All Provinces</option>
@@ -44,10 +35,19 @@
                         </div>
                         <div class="col-lg-2 col-md-4">
                             <label class="form-label">City</label>
-                            <select class="form-select" t-model="state.city_id" t-on-change="applyFilter">
+                            <select class="form-select" t-model="state.city_id" t-on-change="onchange_city">
                                 <option value="">All Cities</option>
                                 <t t-foreach="filteredCities" t-as="city" t-key="city.id">
                                     <option t-att-value="city.id" t-esc="city.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" t-model="state.branch_id" t-on-change="applyFilter">
+                                <option value="">All Branches</option>
+                                <t t-foreach="filteredBranches" t-as="branch" t-key="branch.id">
+                                    <option t-att-value="branch.id" t-esc="branch.name"/>
                                 </t>
                             </select>
                         </div>
@@ -62,7 +62,7 @@
                         </div>
                     </div>
 
-                    <!-- Row 1b: Amount Range (NEW) -->
+                    <!-- Row 1b: Amount Range -->
                     <div class="row g-3 align-items-end mb-3">
                         <div class="col-xl-3 col-lg-3 col-md-6">
                             <label class="form-label">Min Amount</label>

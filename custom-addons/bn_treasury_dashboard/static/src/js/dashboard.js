@@ -17,8 +17,8 @@ export class TreasuryDashboard extends Component {
             province_id: '',
             city_id: '',
             segment_id: '',
-            amount_min: '',   // <-- NEW
-            amount_max: '',   // <-- NEW
+            amount_min: '',
+            amount_max: '',
             analytic_accounts: [],
             provinces: [],
             cities: [],
@@ -32,11 +32,22 @@ export class TreasuryDashboard extends Component {
         onWillStart(async () => { await this.fetchData(); });
     }
 
-    // Helper to filter cities based on selected province
     get filteredCities() {
         if (!this.state.province_id) return this.state.cities;
         const pId = parseInt(this.state.province_id, 10);
         return this.state.cities.filter(c => c.province_id === pId);
+    }
+
+    get filteredBranches() {
+        if (this.state.city_id) {
+            const cId = parseInt(this.state.city_id, 10);
+            return this.state.analytic_accounts.filter(b => b.city_id === cId);
+        }
+        if (this.state.province_id) {
+            const pId = parseInt(this.state.province_id, 10);
+            return this.state.analytic_accounts.filter(b => b.province_id === pId);
+        }
+        return this.state.analytic_accounts;
     }
 
     async fetchData() {
@@ -48,8 +59,8 @@ export class TreasuryDashboard extends Component {
                 province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
                 city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
                 segment_id: this.state.segment_id ? parseInt(this.state.segment_id, 10) : null,
-                amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null, // <-- NEW
-                amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null, // <-- NEW
+                amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
+                amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
             });
             this.state.analytic_accounts = data.analytic_accounts || [];
             this.state.provinces = data.provinces || [];
@@ -66,6 +77,12 @@ export class TreasuryDashboard extends Component {
 
     async onchange_province() {
         this.state.city_id = '';
+        this.state.branch_id = ''; // Reset branch when province changes
+        await this.applyFilter();
+    }
+
+    async onchange_city() {
+        this.state.branch_id = ''; // Reset branch when city changes
         await this.applyFilter();
     }
 
@@ -80,8 +97,8 @@ export class TreasuryDashboard extends Component {
         this.state.province_id = '';
         this.state.city_id = '';
         this.state.segment_id = '';
-        this.state.amount_min = ''; // <-- NEW
-        this.state.amount_max = ''; // <-- NEW
+        this.state.amount_min = '';
+        this.state.amount_max = '';
         this.applyFilter();
     }
 
