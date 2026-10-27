@@ -21,7 +21,6 @@ export class PosDashboard extends Component {
             provinces: [],
             cities: [],
             segments: [],
-            // Add your product template boolean fields here
             product_types: [
                 { value: 'is_course', name: 'Is Course' },
                 { value: 'is_medical_equipment', name: 'Is Medical Equipment' },
@@ -284,7 +283,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(67, 233, 123, 0.85)',
                             borderColor: 'rgba(67, 233, 123, 1)',
                             borderWidth: 1,
-                            minBarLength: 4, // Forces a minimum visible width
+                            minBarLength: 4, 
                         },
                         {
                             label: 'Refunds',
@@ -292,7 +291,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(255, 106, 136, 0.85)',
                             borderColor: 'rgba(255, 106, 136, 1)',
                             borderWidth: 1,
-                            minBarLength: 4, // Forces a minimum visible width
+                            minBarLength: 4, 
                         },
                     ],
                 };
@@ -337,7 +336,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(67, 233, 123, 0.85)',
                             borderColor: 'rgba(67, 233, 123, 1)',
                             borderWidth: 1,
-                            minBarLength: 4, // Forces a minimum visible width
+                            minBarLength: 4, 
                         },
                         {
                             label: 'Refunds',
@@ -345,7 +344,7 @@ export class PosDashboard extends Component {
                             backgroundColor: 'rgba(255, 106, 136, 0.85)',
                             borderColor: 'rgba(255, 106, 136, 1)',
                             borderWidth: 1,
-                            minBarLength: 4, // Forces a minimum visible width
+                            minBarLength: 4, 
                         },
                     ],
                 };
@@ -396,7 +395,23 @@ export class PosDashboard extends Component {
         });
     }
 
-    // ---------------- tile click actions (unchanged) ----------------
+    // ---------------- treasury wizard ----------------
+    open_treasury_wizard() {
+        this.actionService.doAction({
+            name: 'Treasury Analysis',
+            type: 'ir.actions.act_window',
+            res_model: 'pos.treasury.wizard',
+            views: [[false, 'form']],
+            target: 'new',
+            context: {
+                default_date_from: this.state.date_from || false,
+                default_date_to: this.state.date_to || false,
+                default_config_id: this.state.config_id ? parseInt(this.state.config_id, 10) : false,
+            }
+        });
+    }
+
+    // ---------------- tile click actions ----------------
     pos_order_today(e) {
         const self = this;
         const date = new Date();

@@ -78,9 +78,15 @@
                     <!-- Row 2: Buttons -->
                     <div class="row">
                         <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <button class="btn btn-sm btn-outline-secondary" t-on-click="clear_filter">
-                                <i class="fa fa-times me-1"/>Clear Filters
-                            </button>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" t-on-click="clear_filter">
+                                    <i class="fa fa-times me-1"/>Clear Filters
+                                </button>
+                                <!-- TREASURY WIZARD BUTTON -->
+                                <button class="btn btn-sm btn-primary" t-on-click="open_treasury_wizard">
+                                    <i class="fa fa-magic me-1"/> Treasury Analysis
+                                </button>
+                            </div>
                             <div class="d-flex gap-1">
                                 <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('today')">Today</button>
                                 <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('this_month')">This Month</button>
