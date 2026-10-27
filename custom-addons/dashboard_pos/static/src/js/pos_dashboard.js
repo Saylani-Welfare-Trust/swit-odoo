@@ -78,9 +78,8 @@ export class PosDashboard extends Component {
         this.state.segments_l3 = hierarchy.segments_l3 || [];
         this.state.segments_l4 = hierarchy.segments_l4 || [];
 
-        this.state.categories = await this.orm.searchRead(
-            'product.category', [], ['id', 'name'], { order: 'complete_name asc', limit: 1000 }
-        );
+        // REPLACE the searchRead with this line:
+        this.state.categories = await this.orm.call('pos.order', 'get_pos_categories', []);
     }
 
     get filteredCities() {

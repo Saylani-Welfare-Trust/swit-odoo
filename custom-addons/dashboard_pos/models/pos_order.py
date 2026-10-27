@@ -581,3 +581,21 @@ class PosOrder(models.Model):
                 'amount': formatted_amount
             })
         return result
+    
+    
+    @api.model
+    def get_pos_categories(self):
+        # Find all product templates that are available in POS
+        templates = self.env['product.template'].search([('available_in_pos', '=', True)])
+        # Get the categories assigned to those templates
+        categs = templates.mapped('categ_id')
+        
+        # Include parent categories so the hierarchy makes sense
+        parent_categs = self.env['product.category']
+        for c in categs:
+            if c.parent_id:
+                parent_categs |= c.parent_id
+                
+        all_categs = (categs | parent_categs).sorted('complete_name')
+        
+        return [{'id': c.id, 'name': c.complete_name} for c in all_categs]
