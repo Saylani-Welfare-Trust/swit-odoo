@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
 
-class DonationBoxDashboard(models.TransientModel): # Changed from AbstractModel to TransientModel
+class DonationBoxDashboard(models.TransientModel):
     _name = 'donation.box.dashboard'
     _description = 'Donation Box Dashboard'
 
@@ -65,29 +65,18 @@ class DonationBoxDashboard(models.TransientModel): # Changed from AbstractModel 
         installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
         closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
         
-        # --- Complaint KPIs ---
-        active_complaints = Complain.search_count(comp_domain + [('status', 'in', ['draft', 'process'])])
+        # --- Complaint KPIs (Draft, Process, Resolved) ---
+        draft_complaints = Complain.search_count(comp_domain + [('status', '=', 'draft')])
+        process_complaints = Complain.search_count(comp_domain + [('status', '=', 'process')])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
-        not_recovered = Complain.search_count(comp_domain + [('status', '=', 'not_recovered')])
 
-        # --- Collection KPIs ---
+        # --- Collection KPI (Total Only) ---
         collections = Collection.search(col_domain)
         total_collection = 0.0
-        rider_collection = 0.0
-        visit_collection = 0.0
         
         for col in collections:
-            # Total Collection: All valid submissions
             if col.state in ['donation_submit', 'pending', 'paid']:
                 total_collection += col.amount or 0.0
-            
-            # Rider Collection: Standard Cash (excluding FCB/CFB)
-            if col.remarks not in ['FCB', 'CFB']:
-                rider_collection += col.amount or 0.0
-                
-            # Visit Collection: Fully Paid collections
-            if col.state == 'paid':
-                visit_collection += col.amount or 0.0
 
         # --- Charts ---
         comp_by_box_status = {}
@@ -130,12 +119,10 @@ class DonationBoxDashboard(models.TransientModel): # Changed from AbstractModel 
                 'available': available,
                 'installed': installed,
                 'closed': closed,
-                'active_complaints': active_complaints,
+                'draft_complaints': draft_complaints,
+                'process_complaints': process_complaints,
                 'resolved_complaints': resolved_complaints,
-                'not_recovered': not_recovered,
                 'total_collection': "{:,.2f}".format(total_collection),
-                'rider_collection': "{:,.2f}".format(rider_collection),
-                'visit_collection': "{:,.2f}".format(visit_collection),
             },
             'chart_comp_status': {
                 'labels': list(comp_by_box_status.keys()),
