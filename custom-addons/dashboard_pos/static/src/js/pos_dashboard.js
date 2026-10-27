@@ -11,33 +11,36 @@ export class PosDashboard extends Component {
         this.user = useService("user");
         this.actionService = useService("action");
 
-        // FLAG to check if the DOM is fully loaded
         this.is_mounted = false;
 
         this.state = useState({
-            // shop / location / segment
             config_id: null,
             shops: [],
             province_id: null,
             city_id: null,
-            segment_id: null,
+            zone_id: null,
+            segment_l1: null,
+            segment_l2: null,
+            segment_l3: null,
+            segment_l4: null,
             provinces: [],
             cities: [],
-            segments: [],
-            // product category
+            zones: [],
+            segments_l1: [],
+            segments_l2: [],
+            segments_l3: [],
+            segments_l4: [],
             category_id: null,
             categories: [],
-            // amount range
             amount_min: null,
             amount_max: null,
-            // date
             date_from: '',
             date_to: '',
             sales_period: 'pos_hourly_sales',
-            // data buckets
             payment_details: [],
             top_salesperson: [],
             selling_product: [],
+            top_products_amount: [],
             total_sale: [],
             total_order_count: [],
             total_refund_count: [],
@@ -53,29 +56,29 @@ export class PosDashboard extends Component {
 
         onWillStart(async () => {
             await this.fetch_dropdowns();
-            await this.fetch_data(); // Only fetch data here, do NOT render charts yet
+            await this.fetch_data();
         });
 
         onMounted(async () => {
-            this.is_mounted = true; // DOM is now ready
+            this.is_mounted = true;
             await this.render_all_charts();
         });
     }
 
-    // ---------------- loaders ----------------
     async fetch_dropdowns() {
         this.state.shops = await this.orm.call('pos.order', 'get_shops', []);
         const hierarchy = await this.orm.call('pos.order', 'get_location_hierarchy', []);
+        
         this.state.provinces = hierarchy.provinces || [];
         this.state.cities = hierarchy.cities || [];
-        this.state.segments = hierarchy.segments || [];
+        this.state.zones = hierarchy.zones || [];
+        this.state.segments_l1 = hierarchy.segments_l1 || [];
+        this.state.segments_l2 = hierarchy.segments_l2 || [];
+        this.state.segments_l3 = hierarchy.segments_l3 || [];
+        this.state.segments_l4 = hierarchy.segments_l4 || [];
 
-        // Load product categories
         this.state.categories = await this.orm.searchRead(
-            'product.category',
-            [],
-            ['id', 'name'],
-            { order: 'complete_name asc', limit: 1000 }
+            'product.category', [], ['id', 'name'], { order: 'complete_name asc', limit: 1000 }
         );
     }
 
@@ -83,6 +86,28 @@ export class PosDashboard extends Component {
         if (!this.state.province_id) return this.state.cities;
         const pId = parseInt(this.state.province_id, 10);
         return this.state.cities.filter(c => c.province_id === pId);
+    }
+
+    get filteredZones() {
+        if (!this.state.city_id) return this.state.zones;
+        const cId = parseInt(this.state.city_id, 10);
+        return this.state.zones.filter(z => z.city_id === cId);
+    }
+
+    get filteredSegmentsL2() {
+        if (!this.state.segment_l1) return [];
+        const pId = parseInt(this.state.segment_l1, 10);
+        return this.state.segments_l2.filter(s => s.parent_id === pId);
+    }
+    get filteredSegmentsL3() {
+        if (!this.state.segment_l2) return [];
+        const pId = parseInt(this.state.segment_l2, 10);
+        return this.state.segments_l3.filter(s => s.parent_id === pId);
+    }
+    get filteredSegmentsL4() {
+        if (!this.state.segment_l3) return [];
+        const pId = parseInt(this.state.segment_l3, 10);
+        return this.state.segments_l4.filter(s => s.parent_id === pId);
     }
 
     async refresh() {
@@ -116,9 +141,30 @@ export class PosDashboard extends Component {
         this.state.transfer_count = (treasury.transfer_count || 0).toLocaleString('en-US');
     }
 
-    // ---------------- filter handlers ----------------
     async onchange_province() {
         this.state.city_id = null;
+        this.state.zone_id = null;
+        await this.refresh();
+    }
+
+    async onchange_city() {
+        this.state.zone_id = null;
+        await this.refresh();
+    }
+
+    async onchange_segment_l1() {
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.refresh();
+    }
+    async onchange_segment_l2() {
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.refresh();
+    }
+    async onchange_segment_l3() {
+        this.state.segment_l4 = null;
         await this.refresh();
     }
 
@@ -130,7 +176,11 @@ export class PosDashboard extends Component {
         this.state.config_id   = null;
         this.state.province_id = null;
         this.state.city_id     = null;
-        this.state.segment_id  = null;
+        this.state.zone_id     = null;
+        this.state.segment_l1  = null;
+        this.state.segment_l2  = null;
+        this.state.segment_l3  = null;
+        this.state.segment_l4  = null;
         this.state.category_id = null;
         this.state.amount_min  = null;
         this.state.amount_max  = null;
@@ -170,13 +220,21 @@ export class PosDashboard extends Component {
 
     _filter_args() {
         const num = (v) => (v === null || v === undefined || v === '') ? null : parseFloat(v);
+        
+        let effective_segment_id = null;
+        if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
+
         return [
             this.state.config_id   ? parseInt(this.state.config_id, 10)   : null,
             this.state.date_from   || null,
             this.state.date_to     || null,
             this.state.province_id ? parseInt(this.state.province_id, 10) : null,
             this.state.city_id     ? parseInt(this.state.city_id, 10)     : null,
-            this.state.segment_id  ? parseInt(this.state.segment_id, 10)  : null,
+            this.state.zone_id     ? parseInt(this.state.zone_id, 10)     : null,
+            effective_segment_id,
             this.state.category_id ? parseInt(this.state.category_id, 10) : null,
             num(this.state.amount_min),
             num(this.state.amount_max),
@@ -187,7 +245,7 @@ export class PosDashboard extends Component {
     load_sales_chart(option) {
         const self = this;
         const ctx = $("#canvas_1");
-        if (!ctx.length) return; // Safety check
+        if (!ctx.length) return;
 
         const args = this._filter_args();
 
