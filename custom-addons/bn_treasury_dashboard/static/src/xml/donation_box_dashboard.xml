@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <!-- Added owl="1" to ensure the web client parses it correctly -->
-    <t t-name="DonationBoxDashboard" owl="1">
+    <t t-name="DonationBoxDashboard">
         <div class="pos-dash-v2">
             <!-- Header -->
             <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
