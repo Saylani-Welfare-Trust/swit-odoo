@@ -53,10 +53,9 @@ class PosOrder(models.Model):
         return domain
 
     def _get_treasury_date_domain(self, model, date_from, date_to):
-        """Helper to safely apply date filters to different treasury models"""
         domain = []
         if date_from or date_to:
-            date_field = 'create_date' # Default fallback
+            date_field = 'create_date'
             is_datetime = True
             
             for f in ['date', 'transfer_date', 'deposit_date', 'create_date']:
@@ -79,7 +78,6 @@ class PosOrder(models.Model):
 
         if province_id or city_id or segment_id:
             analytic_domain = []
-            # FIX: Changed 'analytic_account_id' to 'id' when searching the analytic account model itself
             if province_id:
                 analytic_domain.append(('id', 'child_of', int(province_id)))
             if city_id:
@@ -91,18 +89,33 @@ class PosOrder(models.Model):
             if not accounts:
                 domain.append(('id', '=', 0))
             else:
-                # Fallback logic to find the correct analytic field on pos.order
+                analytic_filters = []
+                # 1. Check if the Order, Session, Config, or User has the Analytic Account
                 if 'analytic_account_id' in self._fields:
-                    domain.append(('analytic_account_id', 'in', accounts.ids))
-                elif 'session_id' in self._fields:
-                    domain.append(('session_id.analytic_account_id', 'in', accounts.ids))
-                elif 'config_id' in self._fields:
-                    domain.append(('config_id.analytic_account_id', 'in', accounts.ids))
-                elif 'user_id' in self._fields:
-                    domain.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
+                    analytic_filters.append(('analytic_account_id', 'in', accounts.ids))
+                if 'session_id' in self._fields:
+                    analytic_filters.append(('session_id.analytic_account_id', 'in', accounts.ids))
+                if 'config_id' in self._fields:
+                    analytic_filters.append(('config_id.analytic_account_id', 'in', accounts.ids))
+                if 'user_id' in self._fields:
+                    analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
+                
+                # 2. Check if the Products on the Order Lines are tagged with the Analytic Account
+                if 'analytic_account_id' in self.env['product.template']._fields:
+                    analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
+                elif 'analytic_account_ids' in self.env['product.template']._fields:
+                    analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
+
+                # Combine all filters with OR so ANY match returns the order
+                if analytic_filters:
+                    combined_filter = []
+                    for i, f in enumerate(analytic_filters):
+                        if i > 0:
+                            combined_filter.append('|')
+                        combined_filter.append(f)
+                    domain.extend(combined_filter)
                 else:
-                    # If you tag products on the analytic account, filter by those products
-                    domain.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
+                    domain.append(('id', '=', 0))
         return domain
 
     def _get_order_ids_sql(self, domain):
@@ -250,10 +263,15 @@ class PosOrder(models.Model):
             mag_total /= 1000.0
         val = '%.2f%s' % (mag_total, ['', 'K', 'M', 'G', 'T', 'P'][magnitude])
 
+        # FIXED: Only count sessions within the date range
+        session_domain = []
         if config_id:
-            total_session = 1 if self.env['pos.config'].search_count([('id', '=', config_id)]) else 0
-        else:
-            total_session = self.env['pos.session'].search_count([])
+            session_domain.append(('config_id', '=', int(config_id)))
+        if date_from:
+            session_domain.append(('start_at', '>=', date_from + ' 00:00:00'))
+        if date_to:
+            session_domain.append(('start_at', '<=', date_to + ' 23:59:59'))
+        total_session = self.env['pos.session'].search_count(session_domain)
 
         return {
             'total_sale':         val,
