@@ -8,6 +8,7 @@
     'depends': [
         'hr_attendance',
         'spreadsheet_dashboard',
+        'account',
     ],
     'data': [
         'data/ir_module_category.xml',
