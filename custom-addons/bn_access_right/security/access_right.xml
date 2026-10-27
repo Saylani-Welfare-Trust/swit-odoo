@@ -208,6 +208,28 @@
         <field name="perm_unlink" eval="False"/>
     </record>
     
+    <!-- Product Variant -->
+    <record id="custom_product_product_access" model="ir.model.access">
+        <field name="name">custom.product.product.access</field>
+        <field name="model_id" ref="product.model_product_product"/>
+        <field name="group_id" ref="bn_access_right.custom_inventory_product_group"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Product Category -->
+    <record id="custom_product_category_access" model="ir.model.access">
+        <field name="name">custom.product.category.access</field>
+        <field name="model_id" ref="product.model_product_category"/>
+        <field name="group_id" ref="bn_access_right.custom_inventory_product_group"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
     <!-- Product Template Attribute Exclusion -->
     <record id="custom_product_template_attribute_exclusion_access" model="ir.model.access">
         <field name="name">custom.product.template.attribute.exclusion.access</field>
