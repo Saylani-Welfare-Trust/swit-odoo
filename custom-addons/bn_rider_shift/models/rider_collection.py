@@ -100,7 +100,9 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
-        collection_ids = self.sudo().search([('state', '=', 'donation_submit')])
+        # Only the collections of the cashier's city (record rules), read as sudo
+        # for the rider / box details.
+        collection_ids = self.sudo().browse(self.search([('state', '=', 'donation_submit')]).ids)
 
         if not collection_ids:
             return {

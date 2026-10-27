@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- City access, see bn_donation_box/security/record_rule.xml. Key Management
+         Managers / Audit (Admin through both) see every city as well. -->
+
+    <record id="bn_donation_box.donation_box_registration_all_cities_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+    </record>
+
+    <record id="bn_donation_box.donation_box_complain_center_all_cities_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+    </record>
+
+    <!-- Key: city of its registration -->
+    <record id="key_own_city_rule" model="ir.rule">
+        <field name="name">Key: Own City</field>
+        <field name="model_id" ref="bn_key_management.model_key"/>
+        <field name="domain_force">[('donation_box_registration_installation_id.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="key_all_cities_rule" model="ir.rule">
+        <field name="name">Key: All Cities</field>
+        <field name="model_id" ref="bn_key_management.model_key"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Key Bunch -->
+    <record id="key_bunch_own_city_rule" model="ir.rule">
+        <field name="name">Key Bunch: Own City</field>
+        <field name="model_id" ref="bn_key_management.model_key_bunch"/>
+        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="key_bunch_all_cities_rule" model="ir.rule">
+        <field name="name">Key Bunch: All Cities</field>
+        <field name="model_id" ref="bn_key_management.model_key_bunch"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Key Issuance -->
+    <record id="key_issuance_own_city_rule" model="ir.rule">
+        <field name="name">Key Issuance: Own City</field>
+        <field name="model_id" ref="bn_key_management.model_key_issuance"/>
+        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="key_issuance_all_cities_rule" model="ir.rule">
+        <field name="name">Key Issuance: All Cities</field>
+        <field name="model_id" ref="bn_key_management.model_key_issuance"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system')), (4, ref('bn_donation_box.donation_box_manager_group')), (4, ref('bn_donation_box.donation_box_audit_group')), (4, ref('bn_key_management.key_management_manager_group')), (4, ref('bn_key_management.key_management_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

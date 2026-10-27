@@ -4,6 +4,7 @@ from odoo import fields, models, api
 class RiderScheduleDay(models.Model):
     _name = 'rider.schedule.day'
     _description = 'Rider Schedule Day'
+    _inherit = ['bn.city.access.mixin']
 
 
     rider_shift_id = fields.Many2one('rider.shift', string="Rider Shift")
@@ -19,6 +20,16 @@ class RiderScheduleDay(models.Model):
 
     name = fields.Char('Name', compute="_set_name")
 
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._bn_check_city(vals.get('city_id'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._bn_check_city(vals.get('city_id'))
+        return super().write(vals)
 
     @api.depends('rider_shift_id', 'rider_shift_id.name', 'city_id', 'zone_id', 'key_bunch_id', 'sub_zone_id')
     def _set_name(self):

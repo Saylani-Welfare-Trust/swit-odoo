@@ -11,6 +11,7 @@
     'data': [
         'security/ir.model.access.csv',
         'security/groups.xml',
+        'security/record_rule.xml',
         
         'data/ir_module_category.xml',
         'data/schedule_action.xml',
