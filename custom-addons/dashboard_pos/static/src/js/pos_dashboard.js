@@ -108,6 +108,8 @@ export class PosDashboard extends Component {
         this.state.top_salesperson = data['salesperson'];
         this.state.selling_product = data['selling_product'];
 
+        this.state.top_products_amount = await this.orm.call('pos.order', 'get_top_products_by_amount', args);
+
         const treasury = await this.orm.call('pos.order', 'get_treasury_stats', args);
         this.state.cheque_count   = (treasury.cheque_count   || 0).toLocaleString('en-US');
         this.state.deposit_count  = (treasury.deposit_count  || 0).toLocaleString('en-US');

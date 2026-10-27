@@ -497,3 +497,50 @@ class PosOrder(models.Model):
                 'domain': domain,
                 'target': 'current',
             }
+            
+            
+    @api.model
+    def get_top_products_by_amount(self, config_id=None, date_from=None, date_to=None,
+                                   province_id=None, city_id=None, segment_id=None,
+                                   category_id=None, amount_min=None, amount_max=None,
+                                   *extra, **kwargs):
+        company_id = self.env.company.id
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id)
+        domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
+        order_sql = self._get_order_ids_sql(domain)
+
+        if "1=0" in order_sql:
+            return []
+
+        self._cr.execute("""
+            select (product_template.name)->>'en_US' as product_name,
+                   sum(pos_order_line.price_subtotal_incl) as total_amount
+            from pos_order_line
+            inner join pos_order on pos_order.id = pos_order_line.order_id
+            inner join product_product on product_product.id = pos_order_line.product_id
+            inner join product_template on product_product.product_tmpl_id = product_template.id
+            where pos_order_line.company_id = %d %s
+            group by product_template.id, product_template.name
+            order by total_amount DESC
+            limit 10
+        """ % (company_id, order_sql))
+        
+        docs = self._cr.dictfetchall()
+        currency = self.env.company.currency_id
+        result = []
+        
+        for r in docs:
+            amount_val = r.get('total_amount') or 0.0
+            try:
+                val = "{:,.2f}".format(float(amount_val))
+            except (ValueError, TypeError):
+                val = "0.00"
+            # Format with currency symbol
+            formatted_amount = ("%s %s" % (val, currency.symbol) if currency.position == 'after' 
+                                else "%s %s" % (currency.symbol, val))
+            
+            result.append({
+                'name': r.get('product_name') or 'Unknown',
+                'amount': formatted_amount
+            })
+        return result
