@@ -329,6 +329,26 @@ class PosOrder(models.Model):
             [r.get('product_category') for r in docs]
         ]
         
+    def _get_treasury_date_domain(self, model, date_from, date_to):
+        """Helper to safely apply date filters to different treasury models"""
+        domain = []
+        if date_from or date_to:
+            date_field = 'create_date' # Default fallback
+            is_datetime = True
+            
+            # Check if the model has a specific date field
+            for f in ['date', 'transfer_date', 'deposit_date', 'create_date']:
+                if f in model._fields:
+                    date_field = f
+                    is_datetime = model._fields[date_field].type == 'datetime'
+                    break
+            
+            if date_from:
+                domain.append((date_field, '>=', date_from + ' 00:00:00' if is_datetime else date_from))
+            if date_to:
+                domain.append((date_field, '<=', date_to + ' 23:59:59' if is_datetime else date_to))
+        return domain
+
     @api.model
     def get_treasury_stats(self, config_id=None, date_from=None, date_to=None, province_id=None, city_id=None, segment_id=None, product_type=None):
         # 1. Cheques (linked to pos.order via pos_cheque_id)
@@ -342,30 +362,22 @@ class PosOrder(models.Model):
         if segment_id: analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
         
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
-
-        # 2. Direct Deposits (Query model directly)
-        dd_domain = []
-        if date_from: dd_domain.append(('date', '>=', date_from))
-        if date_to: dd_domain.append(('date', '<=', date_to))
+        analytic_filter = []
         if analytic_domain:
             if accounts:
-                dd_domain.append(('analytic_account_id', 'in', accounts.ids))
+                analytic_filter.append(('analytic_account_id', 'in', accounts.ids))
             else:
-                dd_domain.append(('id', '=', 0))
-                
-        deposit_count = self.env['direct.deposit'].search_count(dd_domain)
+                analytic_filter.append(('id', '=', 0))
 
-        # 3. Journal Transfers (Query model directly)
-        jt_domain = []
-        if date_from: jt_domain.append(('date', '>=', date_from))
-        if date_to: jt_domain.append(('date', '<=', date_to))
-        if analytic_domain:
-            if accounts:
-                jt_domain.append(('analytic_account_id', 'in', accounts.ids))
-            else:
-                jt_domain.append(('id', '=', 0))
-                
-        transfer_count = self.env['journal.transfer'].search_count(jt_domain)
+        # 2. Direct Deposits
+        DD = self.env['direct.deposit']
+        dd_domain = self._get_treasury_date_domain(DD, date_from, date_to) + analytic_filter
+        deposit_count = DD.search_count(dd_domain)
+
+        # 3. Journal Transfers
+        JT = self.env['journal.transfer']
+        jt_domain = self._get_treasury_date_domain(JT, date_from, date_to) + analytic_filter
+        transfer_count = JT.search_count(jt_domain)
 
         return {
             'cheque_count': cheque_count,
@@ -381,6 +393,12 @@ class PosOrder(models.Model):
         if segment_id: analytic_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
         
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
+        analytic_filter = []
+        if analytic_domain:
+            if accounts:
+                analytic_filter.append(('analytic_account_id', 'in', accounts.ids))
+            else:
+                analytic_filter.append(('id', '=', 0))
 
         if ttype == 'cheque':
             order_domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, segment_id, product_type)
@@ -395,12 +413,8 @@ class PosOrder(models.Model):
             }
 
         elif ttype == 'deposit':
-            domain = []
-            if date_from: domain.append(('date', '>=', date_from))
-            if date_to: domain.append(('date', '<=', date_to))
-            if analytic_domain:
-                if accounts: domain.append(('analytic_account_id', 'in', accounts.ids))
-                else: domain.append(('id', '=', 0))
+            DD = self.env['direct.deposit']
+            domain = self._get_treasury_date_domain(DD, date_from, date_to) + analytic_filter
             return {
                 'name': 'Direct Deposits',
                 'type': 'ir.actions.act_window',
@@ -411,12 +425,8 @@ class PosOrder(models.Model):
             }
 
         elif ttype == 'transfer':
-            domain = []
-            if date_from: domain.append(('date', '>=', date_from))
-            if date_to: domain.append(('date', '<=', date_to))
-            if analytic_domain:
-                if accounts: domain.append(('analytic_account_id', 'in', accounts.ids))
-                else: domain.append(('id', '=', 0))
+            JT = self.env['journal.transfer']
+            domain = self._get_treasury_date_domain(JT, date_from, date_to) + analytic_filter
             return {
                 'name': 'Journal Transfers',
                 'type': 'ir.actions.act_window',
