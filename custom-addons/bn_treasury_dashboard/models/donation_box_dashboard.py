@@ -78,6 +78,7 @@ class DonationBoxDashboard(models.TransientModel):
                 total_collection += col.amount or 0.0
 
         not_collected_count = Collection.search_count(col_domain + [('state', '=', 'donation_not_collected')])
+        pending_count = Collection.search_count(col_domain + [('state', '=', 'pending')])
         paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
 
         # --- Charts ---
@@ -135,6 +136,7 @@ class DonationBoxDashboard(models.TransientModel):
                 'resolved_complaints': resolved_complaints,
                 'total_collection': "{:,.2f}".format(total_collection),
                 'not_collected_count': not_collected_count,
+                'pending_count': pending_count,
                 'paid_count': paid_count,
             },
             'chart_comp_status': {

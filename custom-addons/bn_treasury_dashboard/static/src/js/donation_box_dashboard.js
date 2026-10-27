@@ -24,6 +24,7 @@ export class DonationBoxDashboard extends Component {
                 draft_complaints: 0, process_complaints: 0, resolved_complaints: 0,
                 total_collection: '0.00',
                 not_collected_count: 0,
+                pending_count: 0,
                 paid_count: 0,
             },
             chart_comp_status: { labels: [], data: [] },
@@ -202,7 +203,8 @@ export class DonationBoxDashboard extends Component {
         if (['available', 'resolved', 'repaired', 'paid'].includes(s)) return 'bg-success';
         if (['installed', 'process', 'donation_submit', 'payment_received', 'converted'].includes(s)) return 'bg-info';
         if (['missing', 'robbery', 'not_recovered', 'broken', 'reject', 'donation_not_collected'].includes(s)) return 'bg-danger';
-        return 'bg-warning text-dark';
+        if (['pending'].includes(s)) return 'bg-warning text-dark';
+        return 'bg-secondary text-white';
     }
     
     openView(model, domain = []) {
