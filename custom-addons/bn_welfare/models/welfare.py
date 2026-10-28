@@ -448,15 +448,15 @@ class Welfare(models.Model):
         help="Does he own the house or live in a rented house?"
     )
 
-    num_of_children = fields.Char(
+    num_of_children = fields.Integer(
         string="Number of Children"
     )
 
-    num_of_sons = fields.Char(
+    num_of_sons = fields.Integer(
         string="Number of Sons"
     )
 
-    num_of_daughters = fields.Char(
+    num_of_daughters = fields.Integer(
         string="Number of Daughters"
     )
 
