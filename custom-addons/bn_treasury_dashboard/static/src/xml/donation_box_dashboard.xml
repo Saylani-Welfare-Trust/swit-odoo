@@ -93,6 +93,19 @@
                         <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.total_collection"/></div>
                     </div>
                 </div>
+                
+                <!-- NEW 3-Month Comparison Card -->
+                <div class="col-md-6 col-lg-3 col-xl-2">
+                    <div class="oh-kpi-card bg-dark text-white p-3 rounded shadow-sm h-100" style="cursor: pointer;">
+                        <i class="fa fa-line-chart mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">3-Month Collection</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.collection_3m"/></div>
+                        <div t-attf-class="small fw-bold {{ state.kpi.is_positive ? 'text-success' : 'text-danger' }}">
+                            <t t-esc="state.kpi.collection_3m_diff"/> vs Prev 3M
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-md-6 col-lg-3 col-xl-2">
                     <div class="oh-kpi-card bg-danger text-white p-3 rounded shadow-sm h-100" style="cursor: pointer;" t-on-click="() => this.openView('rider.collection', [['state', '=', 'donation_not_collected']])">
                         <i class="fa fa-exclamation-circle mb-2 fs-4"/>

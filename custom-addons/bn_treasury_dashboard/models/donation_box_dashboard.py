@@ -34,33 +34,33 @@ class DonationBoxDashboard(models.TransientModel):
         comp_domain = []
         col_domain = []
         
-        # Date Filters
+        # Base Location filters (Used for 3-Month comparison too)
+        base_col_domain = []
+        if province_id:
+            base_col_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
+        if city_id:
+            base_col_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
+        if zone_id:
+            base_col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
+        if bunch_id:
+            base_col_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
+        
+        # Global Date Filters
         if date_from:
             reg_domain.append(('installation_date', '>=', date_from))
             comp_domain.append(('date', '>=', date_from))
-            col_domain.append(('date', '>=', date_from))
         if date_to:
             reg_domain.append(('installation_date', '<=', date_to))
             comp_domain.append(('date', '<=', date_to))
-            col_domain.append(('date', '<=', date_to))
             
-        # Location Filters
-        if province_id:
-            reg_domain.append(('city_id.parent_id', '=', int(province_id)))
-            comp_domain.append(('city_id.parent_id', '=', int(province_id)))
-            col_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
-        if city_id:
-            reg_domain.append(('city_id', '=', int(city_id)))
-            comp_domain.append(('city_id', '=', int(city_id)))
-            col_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
-        if zone_id:
-            reg_domain.append(('zone_id', '=', int(zone_id)))
-            comp_domain.append(('zone_id', '=', int(zone_id)))
-            col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
-        if bunch_id:
-            reg_domain.append(('key_bunch_id', '=', int(bunch_id)))
-            comp_domain.append(('key_bunch_id', '=', int(bunch_id)))
-            col_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
+        # Apply location filters to standard domains
+        reg_domain.extend([d for d in base_col_domain if 'city_id' in d[0] or 'zone_id' in d[0]])
+        comp_domain.extend([d for d in base_col_domain if 'city_id' in d[0] or 'zone_id' in d[0]])
+            
+        # Standard Collection Domain (with global dates)
+        col_domain = list(base_col_domain)
+        if date_from: col_domain.append(('date', '>=', date_from))
+        if date_to: col_domain.append(('date', '<=', date_to))
 
         Registration = self.env['donation.box.registration.installation']
         Complain = self.env['donation.box.complain.center']
@@ -79,39 +79,58 @@ class DonationBoxDashboard(models.TransientModel):
 
         # --- Collection KPIs ---
         collections = Collection.search(col_domain)
-        total_collection = 0.0
-        for col in collections:
-            if col.state in ['donation_submit', 'pending', 'paid']:
-                total_collection += col.amount or 0.0
-
+        total_collection = sum([c.amount for c in collections if c.state in ['donation_submit', 'pending', 'paid']])
         not_collected_count = Collection.search_count(col_domain + [('state', '=', 'donation_not_collected')])
         pending_count = Collection.search_count(col_domain + [('state', '=', 'pending')])
         paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
 
-        # --- Charts (6-Month Comparison) ---
-        # We generate the last 6 months dynamically
+        # --- 3-Month Comparison Card ---
         today = date.today()
+        start_3m = (today - relativedelta(months=2)).replace(day=1)
+        end_3m = today
+        
+        start_prev_3m = (start_3m - relativedelta(months=3)).replace(day=1)
+        end_prev_3m = start_3m - relativedelta(days=1)
+
+        # Calculate Current 3M
+        current_3m_cols = Collection.search(base_col_domain + [
+            ('date', '>=', start_3m.strftime('%Y-%m-%d')),
+            ('date', '<=', end_3m.strftime('%Y-%m-%d')),
+            ('state', 'in', ['donation_submit', 'pending', 'paid'])
+        ])
+        current_3m_sum = sum(current_3m_cols.mapped('amount'))
+
+        # Calculate Previous 3M
+        prev_3m_cols = Collection.search(base_col_domain + [
+            ('date', '>=', start_prev_3m.strftime('%Y-%m-%d')),
+            ('date', '<=', end_prev_3m.strftime('%Y-%m-%d')),
+            ('state', 'in', ['donation_submit', 'pending', 'paid'])
+        ])
+        prev_3m_sum = sum(prev_3m_cols.mapped('amount'))
+
+        # Calculate Percentage
+        diff_pct = 0
+        if prev_3m_sum > 0:
+            diff_pct = ((current_3m_sum - prev_3m_sum) / prev_3m_sum) * 100
+        elif current_3m_sum > 0:
+            diff_pct = 100
+
+        # --- Charts ---
+        today_chart = date.today()
         months = []
         counts = []
-        
         for i in range(5, -1, -1):
-            d = today - relativedelta(months=i)
+            d = today_chart - relativedelta(months=i)
             month_start = d.replace(day=1)
             month_end = d.replace(day=calendar.monthrange(d.year, d.month)[1])
-            
-            months.append(d.strftime('%b %Y')) # e.g., "May 2024"
-            
-            # Count installations strictly in this month
+            months.append(d.strftime('%b %Y'))
             count = Registration.search_count(reg_domain + [
                 ('installation_date', '>=', month_start.strftime('%Y-%m-%d')),
                 ('installation_date', '<=', month_end.strftime('%Y-%m-%d'))
             ])
             counts.append(count)
 
-        installs_by_month = {
-            'labels': months,
-            'data': counts
-        }
+        installs_by_month = {'labels': months, 'data': counts}
 
         comp_by_box_status = {}
         comps = Complain.read_group(comp_domain, ['box_status'], ['box_status'])
@@ -120,34 +139,17 @@ class DonationBoxDashboard(models.TransientModel):
                 comp_by_box_status[c['box_status']] = c['box_status_count']
 
         # --- Tables ---
-        recent_complaints = Complain.search_read(
-            comp_domain, 
-            ['lot_id', 'shop_name', 'box_status', 'status', 'date'], 
-            limit=10, order='id desc'
-        )
-        
-        recent_registrations = Registration.search_read(
-            reg_domain, 
-            ['shop_name', 'lot_id', 'city_id', 'installation_date', 'status'], 
-            limit=10, order='id desc'
-        )
-        
-        recent_collections = Collection.search_read(
-            col_domain,
-            ['date', 'shop_name', 'rider_id', 'lot_id', 'amount', 'state'],
-            limit=10, order='id desc'
-        )
+        recent_complaints = Complain.search_read(comp_domain, ['lot_id', 'shop_name', 'box_status', 'status', 'date'], limit=10, order='id desc')
+        recent_registrations = Registration.search_read(reg_domain, ['shop_name', 'lot_id', 'city_id', 'installation_date', 'status'], limit=10, order='id desc')
+        recent_collections = Collection.search_read(col_domain, ['date', 'shop_name', 'rider_id', 'lot_id', 'amount', 'state'], limit=10, order='id desc')
 
-        # Formatting data safely
         for c in recent_complaints:
             c['lot_name'] = c['lot_id'][1] if c['lot_id'] else '-'
             c['shop_name'] = c['shop_name'] or '-'
-            
         for r in recent_registrations:
             r['lot_name'] = r['lot_id'][1] if r['lot_id'] else '-'
             r['city_name'] = r['city_id'][1] if r['city_id'] else '-'
-            r['shop_name'] = r['shop_name'] or '-' # Fixes the "false" issue
-            
+            r['shop_name'] = r['shop_name'] or '-'
         for col in recent_collections:
             col['rider_name'] = col['rider_id'][1] if col['rider_id'] else '-'
             col['lot_name'] = col['lot_id'][1] if col['lot_id'] else '-'
@@ -166,11 +168,11 @@ class DonationBoxDashboard(models.TransientModel):
                 'not_collected_count': not_collected_count,
                 'pending_count': pending_count,
                 'paid_count': paid_count,
+                'collection_3m': "{:,.2f}".format(current_3m_sum),
+                'collection_3m_diff': "{:+.1f}%".format(diff_pct),
+                'is_positive': diff_pct >= 0,
             },
-            'chart_comp_status': {
-                'labels': list(comp_by_box_status.keys()),
-                'data': list(comp_by_box_status.values()),
-            },
+            'chart_comp_status': {'labels': list(comp_by_box_status.keys()), 'data': list(comp_by_box_status.values())},
             'chart_installs': installs_by_month,
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
