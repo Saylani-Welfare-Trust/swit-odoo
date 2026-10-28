@@ -16,6 +16,7 @@
         
         'data/ir_module_category.xml',
         'data/sequence.xml',
+        'data/server_action.xml',
         
         'views/rider_shift.xml',
         'views/rider_collection.xml',

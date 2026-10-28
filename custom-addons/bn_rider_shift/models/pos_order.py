@@ -23,6 +23,9 @@ class PosOrder(models.Model):
     def _bn_dn_number(self):
         """DN # as printed on the POS receipt: <branch code>-C<counter>-<year>-<POS order seq>."""
         self.ensure_one()
+        # bn_livestock_slaugther, when installed, already stores it on every order when paid
+        if 'dn_number' in self._fields and self.dn_number:
+            return self.dn_number
         year = fields.Datetime.context_timestamp(self, self.date_order).year
         return '%s-C%s-%s-%s' % (
             self.user_id.branch_code or 'UNK',
