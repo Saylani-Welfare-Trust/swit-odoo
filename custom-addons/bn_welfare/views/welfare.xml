@@ -691,7 +691,9 @@
 
     <!-- No app action: Odoo opens the first submenu the user can see, so users only get
          Individual or Institution Disbursement by default as their groups allow.
-         menuitem never clears an action already in the database, hence this record. -->
+         menuitem never clears an action already in the database, hence these records.
+         Folder menus are cleared too: old databases still point them at deleted actions
+         (e.g. welfare_action), which the app would open instead ("No action with id"). -->
     <record id="welfare_menu" model="ir.ui.menu">
         <field name="action" eval="False"/>
     </record>
@@ -701,6 +703,10 @@
         name="Disbursement Request"
         parent="welfare_menu"
         sequence="1"/>
+
+    <record id="disbursement_request_menu" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
 
     <menuitem
         id="disbursement_request_menu_individual"
@@ -723,7 +729,10 @@
         groups="bn_welfare.group_fetch_institution"
         parent="welfare_menu"
         sequence="100"/>
-    <menuitem    
+    <record id="menu_fetch_institution_applications" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
+    <menuitem
         id="fetch_institution_applications"
         name="Fetch"
         parent="menu_fetch_institution_applications"

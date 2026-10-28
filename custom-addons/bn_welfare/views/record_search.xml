@@ -29,6 +29,11 @@
         parent="welfare_menu"
         sequence="2"/>
 
+    <!-- Folder menu: clear any old action, see welfare_menu in welfare.xml -->
+    <record id="welfare_profile_management_menu" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
+
     <menuitem
         id="record_search_menu"
         name="Record Search"
