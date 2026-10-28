@@ -20,8 +20,13 @@ export class ProfileManagementDashboard extends Component {
             chart_cats: { labels: [], data: [] },
             recent_registrations: [],
             recent_drafts: [],
-            recent_pos_orders: [],
-            recent_boxes: [],
+            // Tab data
+            pos_orders: [],
+            boxes: [],
+            home_services: [],
+            imports: [],
+            online: [],
+            in_kind: [],
         });
 
         this._charts = {};
@@ -49,8 +54,12 @@ export class ProfileManagementDashboard extends Component {
             this.state.chart_cats = data.chart_cats;
             this.state.recent_registrations = data.recent_registrations;
             this.state.recent_drafts = data.recent_drafts;
-            this.state.recent_pos_orders = data.recent_pos_orders;
-            this.state.recent_boxes = data.recent_boxes;
+            this.state.pos_orders = data.pos_orders;
+            this.state.boxes = data.boxes;
+            this.state.home_services = data.home_services;
+            this.state.imports = data.imports;
+            this.state.online = data.online;
+            this.state.in_kind = data.in_kind;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }

@@ -121,37 +121,46 @@
                         
                         <!-- Tabs Header -->
                         <div class="card-header bg-white border-bottom p-0">
-                            <ul class="nav nav-tabs border-0">
+                            <ul class="nav nav-tabs border-0 flex-nowrap overflow-auto" style="white-space: nowrap;">
                                 <li class="nav-item">
                                     <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'pos' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('pos')">POS Details</button>
                                 </li>
                                 <li class="nav-item">
                                     <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'boxes' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('boxes')">Box Details</button>
                                 </li>
-                                <!-- Add other tabs here easily -->
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'home' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('home')">Home Service Details</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'import' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('import')">Import Details</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'online' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('online')">Online Details</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'in_kind' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('in_kind')">Donation In Kind</button>
+                                </li>
                             </ul>
                         </div>
 
                         <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                             
-                            <!-- POS Details Tab -->
+                            <!-- 1. POS Details Tab -->
                             <t t-if="state.active_tab === 'pos'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Order Ref</th>
                                             <th>Date</th>
-                                            <th>Cashier</th>
                                             <th class="text-end">Total</th>
                                             <th class="text-end">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.recent_pos_orders" t-as="order" t-key="order.id">
+                                        <t t-foreach="state.pos_orders" t-as="order" t-key="order.id">
                                             <tr>
                                                 <td><t t-esc="order.name"/></td>
                                                 <td><t t-esc="new Date(order.date_order).toLocaleDateString()"/></td>
-                                                <td>-</td>
                                                 <td class="text-end fw-semibold"><t t-esc="order.amount_total.toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                                 <td class="text-end">
                                                     <span t-attf-class="badge {{ getStateColor(order.state) }}">
@@ -160,14 +169,14 @@
                                                 </td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.recent_pos_orders.length">
-                                            <tr><td colspan="5" class="text-center text-muted py-4">No POS orders found</td></tr>
+                                        <t t-if="!state.pos_orders.length">
+                                            <tr><td colspan="4" class="text-center text-muted py-4">No POS orders found</td></tr>
                                         </t>
                                     </tbody>
                                 </table>
                             </t>
 
-                            <!-- Box Details Tab -->
+                            <!-- 2. Box Details Tab -->
                             <t t-if="state.active_tab === 'boxes'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
@@ -179,7 +188,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.recent_boxes" t-as="box" t-key="box.id">
+                                        <t t-foreach="state.boxes" t-as="box" t-key="box.id">
                                             <tr>
                                                 <td><t t-esc="box.name"/></td>
                                                 <td><t t-esc="box.lot_id ? box.lot_id[1] : '-'"/></td>
@@ -191,8 +200,132 @@
                                                 </td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.recent_boxes.length">
+                                        <t t-if="!state.boxes.length">
                                             <tr><td colspan="4" class="text-center text-muted py-4">No boxes found</td></tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- 3. Home Service Details Tab -->
+                            <t t-if="state.active_tab === 'home'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Reference</th>
+                                            <th>Date</th>
+                                            <th class="text-end">Amount</th>
+                                            <th class="text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.home_services" t-as="hs" t-key="hs.id">
+                                            <tr>
+                                                <td><t t-esc="hs.name"/></td>
+                                                <td><t t-esc="hs.date ? new Date(hs.date).toLocaleDateString() : '-'"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="hs.amount ? hs.amount.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'"/></td>
+                                                <td class="text-end">
+                                                    <span t-attf-class="badge {{ getStateColor(hs.state) }}">
+                                                        <t t-esc="formatStateName(hs.state)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.home_services.length">
+                                            <tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- 4. Import Details Tab -->
+                            <t t-if="state.active_tab === 'import'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Reference</th>
+                                            <th>Date</th>
+                                            <th class="text-end">Amount</th>
+                                            <th class="text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.imports" t-as="imp" t-key="imp.id">
+                                            <tr>
+                                                <td><t t-esc="imp.name"/></td>
+                                                <td><t t-esc="imp.date ? new Date(imp.date).toLocaleDateString() : '-'"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="imp.amount ? imp.amount.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'"/></td>
+                                                <td class="text-end">
+                                                    <span t-attf-class="badge {{ getStateColor(imp.state) }}">
+                                                        <t t-esc="formatStateName(imp.state)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.imports.length">
+                                            <tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- 5. Online Details Tab -->
+                            <t t-if="state.active_tab === 'online'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Reference</th>
+                                            <th>Date</th>
+                                            <th class="text-end">Amount</th>
+                                            <th class="text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.online" t-as="on" t-key="on.id">
+                                            <tr>
+                                                <td><t t-esc="on.name"/></td>
+                                                <td><t t-esc="on.date ? new Date(on.date).toLocaleDateString() : '-'"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="on.amount ? on.amount.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'"/></td>
+                                                <td class="text-end">
+                                                    <span t-attf-class="badge {{ getStateColor(on.state) }}">
+                                                        <t t-esc="formatStateName(on.state)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.online.length">
+                                            <tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- 6. Donation In Kind Tab -->
+                            <t t-if="state.active_tab === 'in_kind'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Reference</th>
+                                            <th>Date</th>
+                                            <th>Product</th>
+                                            <th class="text-end">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.in_kind" t-as="ik" t-key="ik.id">
+                                            <tr>
+                                                <td><t t-esc="ik.name"/></td>
+                                                <td><t t-esc="ik.date ? new Date(ik.date).toLocaleDateString() : '-'"/></td>
+                                                <td><t t-esc="ik.product_id ? ik.product_id[1] : '-'"/></td>
+                                                <td class="text-end">
+                                                    <span t-attf-class="badge {{ getStateColor(ik.state) }}">
+                                                        <t t-esc="formatStateName(ik.state)"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.in_kind.length">
+                                            <tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>
                                         </t>
                                     </tbody>
                                 </table>
