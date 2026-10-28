@@ -615,16 +615,57 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return []
 
-        # Respect whether analytic account name is translated (jsonb) or plain char
+        # Determine how to join the product's analytic account
+        if 'analytic_account_id' in self.env['product.template']._fields:
+            pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
+        elif 'analytic_account_ids' in self.env['product.template']._fields:
+            pt_acc_join = """
+                LEFT JOIN LATERAL (
+                    SELECT acc.id, acc.name, acc.parent_id
+                    FROM account_analytic_account acc
+                    INNER JOIN product_template_account_analytic_account_rel rel ON rel.account_analytic_account_id = acc.id
+                    WHERE rel.product_template_id = product_template.id
+                    LIMIT 1
+                ) pt_acc ON true
+            """
+        else:
+            pt_acc_join = ""
+
+        # Get city name from config's analytic account
         name_field = self.env['account.analytic.account']._fields['name']
         city_name_expr = ("COALESCE((city_acc.name)->>'en_US', 'No City')"
                         if name_field.translate else
                         "COALESCE(city_acc.name, 'No City')")
+        
+        # Subquery to find city from the product's analytic account hierarchy
+        if pt_acc_join:
+            pt_city_join = """
+                LEFT JOIN LATERAL (
+                    SELECT 
+                        COALESCE(
+                            CASE WHEN c.name::text LIKE '{%' THEN (c.name::jsonb)->>'en_US' ELSE c.name::text END,
+                            'No City'
+                        ) AS name
+                    FROM account_analytic_account c
+                    WHERE c.id IN (
+                        pt_acc.id,
+                        pt_acc.parent_id,
+                        pt_acc.parent_id.parent_id,
+                        pt_acc.parent_id.parent_id.parent_id
+                    )
+                    AND c.parent_id IS NOT NULL
+                    AND c.parent_id.parent_id IS NULL
+                    LIMIT 1
+                ) pt_city ON true
+            """
+        else:
+            pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
+        # Note: COALESCE tries the product's city first, then the POS config's city
         query = """
             SELECT
                 pc.complete_name                              AS category_name,
-                %s                                            AS city_name,
+                COALESCE(pt_city.name, %s)                    AS city_name,
                 (product_template.name)->>'en_US'             AS product_name,
                 product_template.id                           AS product_id,
                 COALESCE(AVG(pos_order_line.price_unit), 0)   AS unit_price,
@@ -642,11 +683,13 @@ class PosOrder(models.Model):
             INNER JOIN product_product    ON product_product.id = pos_order_line.product_id
             INNER JOIN product_template   ON product_product.product_tmpl_id = product_template.id
             INNER JOIN product_category   AS pc ON pc.id = product_template.categ_id
+            %s
+            %s
             WHERE pos_order_line.company_id = %d %s
-            GROUP BY pc.complete_name, city_acc.id, city_acc.name,
+            GROUP BY pc.complete_name, COALESCE(pt_city.name, %s),
                     product_template.id, product_template.name
-            ORDER BY pc.complete_name, city_acc.name NULLS LAST, total_amount DESC
-        """ % (city_name_expr, company_id, order_sql)
+            ORDER BY pc.complete_name, COALESCE(pt_city.name, %s) NULLS LAST, total_amount DESC
+        """ % (city_name_expr, pt_acc_join, pt_city_join, company_id, order_sql, city_name_expr, city_name_expr)
 
         self._cr.execute(query)
         docs = self._cr.dictfetchall()
