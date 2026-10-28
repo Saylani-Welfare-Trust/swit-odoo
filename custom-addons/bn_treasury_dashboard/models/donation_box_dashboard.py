@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
+from datetime import date
+from dateutil.relativedelta import relativedelta
+import calendar
 
 class DonationBoxDashboard(models.TransientModel):
     _name = 'donation.box.dashboard'
@@ -7,15 +10,11 @@ class DonationBoxDashboard(models.TransientModel):
 
     @api.model
     def get_location_hierarchy(self):
-        # Location Hierarchy: Province -> City -> Zone (Area) -> Bunch
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
         
-        # Fetch all bunches
         bunches = self.env['key.bunch'].search([])
-        
-        # Map bunches to zones using rider.schedule.day
         schedule_days = self.env['rider.schedule.day'].search([('zone_id', '!=', False), ('key_bunch_id', '!=', False)])
         bunch_zone_map = {sd.key_bunch_id.id: sd.zone_id.id for sd in schedule_days}
         
@@ -60,7 +59,7 @@ class DonationBoxDashboard(models.TransientModel):
             col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
         if bunch_id:
             reg_domain.append(('key_bunch_id', '=', int(bunch_id)))
-            comp_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
+            comp_domain.append(('key_bunch_id', '=', int(bunch_id)))
             col_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
 
         Registration = self.env['donation.box.registration.installation']
@@ -81,7 +80,6 @@ class DonationBoxDashboard(models.TransientModel):
         # --- Collection KPIs ---
         collections = Collection.search(col_domain)
         total_collection = 0.0
-        
         for col in collections:
             if col.state in ['donation_submit', 'pending', 'paid']:
                 total_collection += col.amount or 0.0
@@ -90,22 +88,36 @@ class DonationBoxDashboard(models.TransientModel):
         pending_count = Collection.search_count(col_domain + [('state', '=', 'pending')])
         paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
 
-        # --- Charts ---
+        # --- Charts (6-Month Comparison) ---
+        # We generate the last 6 months dynamically
+        today = date.today()
+        months = []
+        counts = []
+        
+        for i in range(5, -1, -1):
+            d = today - relativedelta(months=i)
+            month_start = d.replace(day=1)
+            month_end = d.replace(day=calendar.monthrange(d.year, d.month)[1])
+            
+            months.append(d.strftime('%b %Y')) # e.g., "May 2024"
+            
+            # Count installations strictly in this month
+            count = Registration.search_count(reg_domain + [
+                ('installation_date', '>=', month_start.strftime('%Y-%m-%d')),
+                ('installation_date', '<=', month_end.strftime('%Y-%m-%d'))
+            ])
+            counts.append(count)
+
+        installs_by_month = {
+            'labels': months,
+            'data': counts
+        }
+
         comp_by_box_status = {}
         comps = Complain.read_group(comp_domain, ['box_status'], ['box_status'])
         for c in comps:
             if c['box_status']:
                 comp_by_box_status[c['box_status']] = c['box_status_count']
-
-        installs_by_month = {}
-        regs = Registration.read_group(
-            reg_domain + [('installation_date', '!=', False)], 
-            ['installation_date'], 
-            ['installation_date:month']
-        )
-        for r in regs:
-            if r['installation_date:month']:
-                installs_by_month[r['installation_date:month']] = r['installation_date_count']
 
         # --- Tables ---
         recent_complaints = Complain.search_read(
@@ -126,14 +138,20 @@ class DonationBoxDashboard(models.TransientModel):
             limit=10, order='id desc'
         )
 
+        # Formatting data safely
         for c in recent_complaints:
-            c['lot_name'] = c['lot_id'][1] if c['lot_id'] else ''
+            c['lot_name'] = c['lot_id'][1] if c['lot_id'] else '-'
+            c['shop_name'] = c['shop_name'] or '-'
+            
         for r in recent_registrations:
-            r['lot_name'] = r['lot_id'][1] if r['lot_id'] else ''
-            r['city_name'] = r['city_id'][1] if r['city_id'] else ''
+            r['lot_name'] = r['lot_id'][1] if r['lot_id'] else '-'
+            r['city_name'] = r['city_id'][1] if r['city_id'] else '-'
+            r['shop_name'] = r['shop_name'] or '-' # Fixes the "false" issue
+            
         for col in recent_collections:
-            col['rider_name'] = col['rider_id'][1] if col['rider_id'] else ''
-            col['lot_name'] = col['lot_id'][1] if col['lot_id'] else ''
+            col['rider_name'] = col['rider_id'][1] if col['rider_id'] else '-'
+            col['lot_name'] = col['lot_id'][1] if col['lot_id'] else '-'
+            col['shop_name'] = col['shop_name'] or '-'
 
         return {
             'kpi': {
@@ -153,10 +171,7 @@ class DonationBoxDashboard(models.TransientModel):
                 'labels': list(comp_by_box_status.keys()),
                 'data': list(comp_by_box_status.values()),
             },
-            'chart_installs': {
-                'labels': list(installs_by_month.keys()),
-                'data': list(installs_by_month.values()),
-            },
+            'chart_installs': installs_by_month,
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
             'recent_collections': recent_collections,

@@ -186,7 +186,7 @@
                 <div class="col-lg-6">
                     <div class="card oh-section-card shadow-sm bg-white">
                         <div class="oh-card-header border-bottom pb-2 mb-3">
-                            <h4 class="mb-0"><i class="fa fa-bar-chart me-2 text-primary"/>Installations by Month</h4>
+                            <h4 class="mb-0"><i class="fa fa-bar-chart me-2 text-primary"/>Installations (Last 6 Months)</h4>
                         </div>
                         <div class="oh-card-body">
                             <div class="oh-chart-wrap" style="height: 300px;">
@@ -218,7 +218,7 @@
                                 <tbody>
                                     <t t-foreach="state.recent_registrations" t-as="reg" t-key="reg.id">
                                         <tr>
-                                            <td><t t-esc="reg.shop_name"/></td>
+                                            <td><t t-esc="reg.shop_name || '-'"/></td>
                                             <td><t t-esc="reg.lot_name"/></td>
                                             <td><t t-esc="reg.city_name"/></td>
                                             <td class="text-end"><t t-esc="reg.installation_date"/></td>
@@ -252,7 +252,7 @@
                                 <tbody>
                                     <t t-foreach="state.recent_complaints" t-as="comp" t-key="comp.id">
                                         <tr>
-                                            <td><t t-esc="comp.shop_name"/></td>
+                                            <td><t t-esc="comp.shop_name || '-'"/></td>
                                             <td><t t-esc="comp.lot_name"/></td>
                                             <td><t t-esc="formatStateName(comp.box_status)"/></td>
                                             <td class="text-end">
@@ -293,7 +293,7 @@
                                     <t t-foreach="state.recent_collections" t-as="col" t-key="col.id">
                                         <tr>
                                             <td><t t-esc="col.date"/></td>
-                                            <td><t t-esc="col.shop_name"/></td>
+                                            <td><t t-esc="col.shop_name || '-'"/></td>
                                             <td><t t-esc="col.rider_name"/></td>
                                             <td><t t-esc="col.lot_name"/></td>
                                             <td class="text-end fw-semibold">
