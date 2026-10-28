@@ -8,6 +8,9 @@ export class DonationBoxDashboard extends Component {
         this.orm = useService('orm');
         this.actionService = useService("action");
 
+        const today = new Date();
+        const fmt_month = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
         this.state = useState({
             date_from: '',
             date_to: '',
@@ -19,23 +22,22 @@ export class DonationBoxDashboard extends Component {
             cities: [],
             zones: [],
             bunches: [],
+            active_tab: 'pos',
+            // Comparison State
+            comp_month_1: fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)), // Last month
+            comp_month_2: fmt_month(today), // This month
+            comparison_result: { m1_sum: '0.00', m2_sum: '0.00', diff: '0.00', pct: '0.0%', is_positive: true },
+
             kpi: {
-                draft_boxes: 0,
-                available: 0, installed: 0, closed: 0,
+                draft_boxes: 0, available: 0, installed: 0, closed: 0,
                 draft_complaints: 0, process_complaints: 0, resolved_complaints: 0,
-                total_collection: '0.00',
-                not_collected_count: 0,
-                pending_count: 0,
-                paid_count: 0,
-                collection_3m: '0.00',
-                collection_3m_diff: '0.0%',
-                is_positive: true,
+                total_collection: '0.00', not_collected_count: 0, pending_count: 0, paid_count: 0,
+                collection_3m: '0.00', collection_3m_diff: '0.0%', is_positive: true,
             },
             chart_comp_status: { labels: [], data: [] },
             chart_installs: { labels: [], data: [] },
-            recent_complaints: [],
-            recent_registrations: [],
-            recent_collections: [],
+            pos_orders: [], boxes: [], home_services: [], imports: [], online: [], in_kind: [],
+            recent_complaints: [], recent_registrations: [], recent_collections: [],
         });
 
         this._charts = {};
@@ -44,6 +46,7 @@ export class DonationBoxDashboard extends Component {
         onWillStart(async () => {
             await this.fetch_dropdowns();
             await this.fetch_data();
+            await this.fetch_comparison();
         });
 
         onMounted(() => {
@@ -62,20 +65,17 @@ export class DonationBoxDashboard extends Component {
 
     get filteredCities() {
         if (!this.state.province_id) return this.state.cities;
-        const pId = parseInt(this.state.province_id, 10);
-        return this.state.cities.filter(c => c.province_id === pId);
+        return this.state.cities.filter(c => c.province_id === parseInt(this.state.province_id, 10));
     }
 
     get filteredZones() {
         if (!this.state.city_id) return this.state.zones;
-        const cId = parseInt(this.state.city_id, 10);
-        return this.state.zones.filter(z => z.city_id === cId);
+        return this.state.zones.filter(z => z.city_id === parseInt(this.state.city_id, 10));
     }
 
     get filteredBunches() {
         if (!this.state.zone_id) return this.state.bunches;
-        const zId = parseInt(this.state.zone_id, 10);
-        return this.state.bunches.filter(b => b.zone_id === zId);
+        return this.state.bunches.filter(b => b.zone_id === parseInt(this.state.zone_id, 10));
     }
 
     async fetch_data() {
@@ -88,7 +88,6 @@ export class DonationBoxDashboard extends Component {
                 this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
                 this.state.bunch_id ? parseInt(this.state.bunch_id, 10) : null,
             ]);
-            
             this.state.kpi = data.kpi;
             this.state.chart_comp_status = data.chart_comp_status;
             this.state.chart_installs = data.chart_installs;
@@ -98,26 +97,37 @@ export class DonationBoxDashboard extends Component {
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
+        if (this.is_mounted) this.render_charts();
+    }
 
-        if (this.is_mounted) {
-            this.render_charts();
+    async fetch_comparison() {
+        try {
+            const data = await this.orm.call('donation.box.dashboard', 'get_comparison_data', [
+                this.state.comp_month_1,
+                this.state.comp_month_2,
+                this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+                this.state.bunch_id ? parseInt(this.state.bunch_id, 10) : null,
+            ]);
+            this.state.comparison_result = data;
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
         }
     }
 
     async applyFilter() {
         await this.fetch_data();
+        await this.fetch_comparison(); // Refresh comparison on filter change
     }
 
     async onchange_province() {
-        this.state.city_id = null;
-        this.state.zone_id = null;
-        this.state.bunch_id = null;
+        this.state.city_id = null; this.state.zone_id = null; this.state.bunch_id = null;
         await this.applyFilter();
     }
 
     async onchange_city() {
-        this.state.zone_id = null;
-        this.state.bunch_id = null;
+        this.state.zone_id = null; this.state.bunch_id = null;
         await this.applyFilter();
     }
     
@@ -127,12 +137,8 @@ export class DonationBoxDashboard extends Component {
     }
 
     clearFilter() {
-        this.state.date_from = '';
-        this.state.date_to = '';
-        this.state.province_id = null;
-        this.state.city_id = null;
-        this.state.zone_id = null;
-        this.state.bunch_id = null;
+        this.state.date_from = ''; this.state.date_to = '';
+        this.state.province_id = null; this.state.city_id = null; this.state.zone_id = null; this.state.bunch_id = null;
         this.applyFilter();
     }
 
@@ -140,13 +146,7 @@ export class DonationBoxDashboard extends Component {
         const today = new Date();
         const yyyy = today.getFullYear();
         const month = today.getMonth();
-
-        const fmt = (d) => {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${dd}`;
-        };
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
         if (type === 'this_month') {
             this.state.date_from = fmt(new Date(yyyy, month, 1));
@@ -155,11 +155,12 @@ export class DonationBoxDashboard extends Component {
             this.state.date_from = fmt(new Date(yyyy, month - 1, 1));
             this.state.date_to = fmt(new Date(yyyy, month, 0));
         } else if (type === 'this_year') {
-            this.state.date_from = `${yyyy}-01-01`;
-            this.state.date_to = `${yyyy}-12-31`;
+            this.state.date_from = `${yyyy}-01-01`; this.state.date_to = `${yyyy}-12-31`;
         }
         this.applyFilter();
     }
+
+    setTab(tab) { this.state.active_tab = tab; }
 
     render_charts() {
         const ctx1 = $("#db_chart_complaints");
@@ -167,60 +168,34 @@ export class DonationBoxDashboard extends Component {
             if (this._charts.comp_status) this._charts.comp_status.destroy();
             this._charts.comp_status = new Chart(ctx1, {
                 type: 'doughnut',
-                data: {
-                    labels: this.state.chart_comp_status.labels,
-                    datasets: [{
-                        data: this.state.chart_comp_status.data,
-                        backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56", "#4bc0c0"],
-                    }]
-                },
+                data: { labels: this.state.chart_comp_status.labels, datasets: [{ data: this.state.chart_comp_status.data, backgroundColor: ["#ff6384", "#36a2eb", "#cc65fe", "#ffce56", "#4bc0c0"] }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
             });
         }
-
         const ctx2 = $("#db_chart_installs");
         if (ctx2.length) {
             if (this._charts.installs) this._charts.installs.destroy();
             this._charts.installs = new Chart(ctx2, {
                 type: 'bar',
-                data: {
-                    labels: this.state.chart_installs.labels,
-                    datasets: [{
-                        label: 'Installations',
-                        data: this.state.chart_installs.data,
-                        backgroundColor: "rgba(75, 192, 192, 0.8)",
-                    }]
-                },
+                data: { labels: this.state.chart_installs.labels, datasets: [{ label: 'Installations', data: this.state.chart_installs.data, backgroundColor: "rgba(75, 192, 192, 0.8)" }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
     }
 
-    formatStateName(stateName) {
-        if (!stateName) return '';
-        return stateName.charAt(0).toUpperCase() + stateName.slice(1).replace(/_/g, ' ');
-    }
-
-    getStateColor(stateName) {
-        if (!stateName) return 'bg-secondary';
-        const s = stateName.toLowerCase();
+    formatStateName(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ') : ''; }
+    getStateColor(s) {
+        if (!s) return 'bg-secondary';
+        s = s.toLowerCase();
         if (['available', 'resolved', 'repaired', 'paid'].includes(s)) return 'bg-success';
         if (['installed', 'process', 'donation_submit', 'payment_received', 'converted'].includes(s)) return 'bg-info';
         if (['missing', 'robbery', 'not_recovered', 'broken', 'reject', 'donation_not_collected'].includes(s)) return 'bg-danger';
         if (['pending'].includes(s)) return 'bg-warning text-dark';
         return 'bg-secondary text-white';
     }
-    
     openView(model, domain = []) {
-        this.actionService.doAction({
-            type: 'ir.actions.act_window',
-            res_model: model,
-            views: [[false, 'list'], [false, 'form']],
-            domain: domain,
-            target: 'current'
-        });
+        this.actionService.doAction({ type: 'ir.actions.act_window', res_model: model, views: [[false, 'list'], [false, 'form']], domain: domain, target: 'current' });
     }
 }
-
 DonationBoxDashboard.template = 'DonationBoxDashboard';
 registry.category("actions").add("donation_box_dashboard", DonationBoxDashboard);

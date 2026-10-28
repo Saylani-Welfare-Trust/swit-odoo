@@ -34,7 +34,6 @@ class DonationBoxDashboard(models.TransientModel):
         comp_domain = []
         col_domain = []
         
-        # Base Location filters (Used for 3-Month comparison too)
         base_col_domain = []
         if province_id:
             base_col_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
@@ -45,7 +44,6 @@ class DonationBoxDashboard(models.TransientModel):
         if bunch_id:
             base_col_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
         
-        # Global Date Filters
         if date_from:
             reg_domain.append(('installation_date', '>=', date_from))
             comp_domain.append(('date', '>=', date_from))
@@ -53,11 +51,9 @@ class DonationBoxDashboard(models.TransientModel):
             reg_domain.append(('installation_date', '<=', date_to))
             comp_domain.append(('date', '<=', date_to))
             
-        # Apply location filters to standard domains
         reg_domain.extend([d for d in base_col_domain if 'city_id' in d[0] or 'zone_id' in d[0]])
         comp_domain.extend([d for d in base_col_domain if 'city_id' in d[0] or 'zone_id' in d[0]])
             
-        # Standard Collection Domain (with global dates)
         col_domain = list(base_col_domain)
         if date_from: col_domain.append(('date', '>=', date_from))
         if date_to: col_domain.append(('date', '<=', date_to))
@@ -66,25 +62,21 @@ class DonationBoxDashboard(models.TransientModel):
         Complain = self.env['donation.box.complain.center']
         Collection = self.env['rider.collection']
 
-        # --- Box KPIs ---
         draft_boxes = Registration.search_count(reg_domain + [('status', '=', 'draft')])
         available = Registration.search_count(reg_domain + [('status', '=', 'available')])
         installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
         closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
         
-        # --- Complaint KPIs ---
         draft_complaints = Complain.search_count(comp_domain + [('status', '=', 'draft')])
         process_complaints = Complain.search_count(comp_domain + [('status', '=', 'process')])
         resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
 
-        # --- Collection KPIs ---
         collections = Collection.search(col_domain)
         total_collection = sum([c.amount for c in collections if c.state in ['donation_submit', 'pending', 'paid']])
         not_collected_count = Collection.search_count(col_domain + [('state', '=', 'donation_not_collected')])
         pending_count = Collection.search_count(col_domain + [('state', '=', 'pending')])
         paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
 
-        # --- 3-Month Comparison Card ---
         today = date.today()
         start_3m = (today - relativedelta(months=2)).replace(day=1)
         end_3m = today
@@ -92,7 +84,6 @@ class DonationBoxDashboard(models.TransientModel):
         start_prev_3m = (start_3m - relativedelta(months=3)).replace(day=1)
         end_prev_3m = start_3m - relativedelta(days=1)
 
-        # Calculate Current 3M
         current_3m_cols = Collection.search(base_col_domain + [
             ('date', '>=', start_3m.strftime('%Y-%m-%d')),
             ('date', '<=', end_3m.strftime('%Y-%m-%d')),
@@ -100,7 +91,6 @@ class DonationBoxDashboard(models.TransientModel):
         ])
         current_3m_sum = sum(current_3m_cols.mapped('amount'))
 
-        # Calculate Previous 3M
         prev_3m_cols = Collection.search(base_col_domain + [
             ('date', '>=', start_prev_3m.strftime('%Y-%m-%d')),
             ('date', '<=', end_prev_3m.strftime('%Y-%m-%d')),
@@ -108,14 +98,12 @@ class DonationBoxDashboard(models.TransientModel):
         ])
         prev_3m_sum = sum(prev_3m_cols.mapped('amount'))
 
-        # Calculate Percentage
         diff_pct = 0
         if prev_3m_sum > 0:
             diff_pct = ((current_3m_sum - prev_3m_sum) / prev_3m_sum) * 100
         elif current_3m_sum > 0:
             diff_pct = 100
 
-        # --- Charts ---
         today_chart = date.today()
         months = []
         counts = []
@@ -138,7 +126,6 @@ class DonationBoxDashboard(models.TransientModel):
             if c['box_status']:
                 comp_by_box_status[c['box_status']] = c['box_status_count']
 
-        # --- Tables ---
         recent_complaints = Complain.search_read(comp_domain, ['lot_id', 'shop_name', 'box_status', 'status', 'date'], limit=10, order='id desc')
         recent_registrations = Registration.search_read(reg_domain, ['shop_name', 'lot_id', 'city_id', 'installation_date', 'status'], limit=10, order='id desc')
         recent_collections = Collection.search_read(col_domain, ['date', 'shop_name', 'rider_id', 'lot_id', 'amount', 'state'], limit=10, order='id desc')
@@ -157,17 +144,10 @@ class DonationBoxDashboard(models.TransientModel):
 
         return {
             'kpi': {
-                'draft_boxes': draft_boxes,
-                'available': available,
-                'installed': installed,
-                'closed': closed,
-                'draft_complaints': draft_complaints,
-                'process_complaints': process_complaints,
-                'resolved_complaints': resolved_complaints,
+                'draft_boxes': draft_boxes, 'available': available, 'installed': installed, 'closed': closed,
+                'draft_complaints': draft_complaints, 'process_complaints': process_complaints, 'resolved_complaints': resolved_complaints,
                 'total_collection': "{:,.2f}".format(total_collection),
-                'not_collected_count': not_collected_count,
-                'pending_count': pending_count,
-                'paid_count': paid_count,
+                'not_collected_count': not_collected_count, 'pending_count': pending_count, 'paid_count': paid_count,
                 'collection_3m': "{:,.2f}".format(current_3m_sum),
                 'collection_3m_diff': "{:+.1f}%".format(diff_pct),
                 'is_positive': diff_pct >= 0,
@@ -177,4 +157,63 @@ class DonationBoxDashboard(models.TransientModel):
             'recent_complaints': recent_complaints,
             'recent_registrations': recent_registrations,
             'recent_collections': recent_collections,
+        }
+
+    @api.model
+    def get_comparison_data(self, month_1, month_2, province_id=None, city_id=None, zone_id=None, bunch_id=None):
+        # Validate inputs (format YYYY-MM)
+        if not month_1 or not month_2:
+            return {'m1_sum': 0, 'm2_sum': 0, 'diff': 0, 'pct': 0, 'is_positive': True}
+
+        base_col_domain = []
+        if province_id:
+            base_col_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
+        if city_id:
+            base_col_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
+        if zone_id:
+            base_col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
+        if bunch_id:
+            base_col_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
+
+        def get_month_dates(ym_str):
+            year, month = map(int, ym_str.split('-'))
+            start = date(year, month, 1)
+            end = date(year, month, calendar.monthrange(year, month)[1])
+            return start, end
+
+        start1, end1 = get_month_dates(month_1)
+        start2, end2 = get_month_dates(month_2)
+
+        Collection = self.env['rider.collection']
+
+        # Month 1
+        m1_cols = Collection.search(base_col_domain + [
+            ('date', '>=', start1.strftime('%Y-%m-%d')),
+            ('date', '<=', end1.strftime('%Y-%m-%d')),
+            ('state', 'in', ['donation_submit', 'pending', 'paid'])
+        ])
+        m1_sum = sum(m1_cols.mapped('amount'))
+
+        # Month 2
+        m2_cols = Collection.search(base_col_domain + [
+            ('date', '>=', start2.strftime('%Y-%m-%d')),
+            ('date', '<=', end2.strftime('%Y-%m-%d')),
+            ('state', 'in', ['donation_submit', 'pending', 'paid'])
+        ])
+        m2_sum = sum(m2_cols.mapped('amount'))
+
+        # Diff
+        diff = m2_sum - m1_sum
+        pct = 0
+        if m1_sum > 0:
+            pct = (diff / m1_sum) * 100
+        elif m2_sum > 0:
+            pct = 100
+
+        return {
+            'm1_sum': "{:,.2f}".format(m1_sum),
+            'm2_sum': "{:,.2f}".format(m2_sum),
+            'diff': "{:+,.2f}".format(diff),
+            'pct': "{:+.1f}%".format(pct),
+            'is_positive': diff >= 0,
         }
