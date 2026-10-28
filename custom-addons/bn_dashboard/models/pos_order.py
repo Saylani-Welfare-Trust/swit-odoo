@@ -656,7 +656,8 @@ class PosOrder(models.Model):
             fobj = self.env['pos.config']._fields[pos_city_field]
             if fobj.type == 'char':
                 pos_city_join = ""
-                pos_city_name_expr = f"NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 2)), '')"
+                # Improved split: tries after slash first (e.g. SDC/Quetta -> Quetta), then falls back to the whole text
+                pos_city_name_expr = f"COALESCE(NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 2)), ''), NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 1)), ''))"
             elif fobj.type == 'many2one':
                 comodel = fobj.comodel_name
                 if comodel == 'account.analytic.account':
@@ -735,7 +736,6 @@ class PosOrder(models.Model):
                 (product_template.name)->>'en_US'             AS product_name,
                 product_template.id                           AS product_id,
                 COALESCE(AVG(pos_order_line.price_unit), 0)   AS unit_price,
-                COALESCE(SUM(pos_order_line.qty), 0)          AS sale_qty,
                 COALESCE(SUM(pos_order_line.price_subtotal_incl), 0) AS total_amount
             FROM pos_order_line
             INNER JOIN pos_order          ON pos_order.id = pos_order_line.order_id
@@ -774,7 +774,11 @@ class PosOrder(models.Model):
 
         for r in docs:
             city = r.get('city_name') or 'No City'
-            all_cities.add(city)
+            
+            # Ignore "No City" from becoming a column header
+            if city != 'No City':
+                all_cities.add(city)
+                
             grp = self._categorize_category(r.get('category_name'))
             prod_id = r.get('product_id')
 
@@ -784,13 +788,13 @@ class PosOrder(models.Model):
                     'product_name': r.get('product_name') or 'Unknown',
                     'unit_price': float(r.get('unit_price') or 0.0),
                     'total_amount': 0.0,
-                    'city_amount': {}  # Changed from city_qty
+                    'city_amount': {}
                 }
 
             amt = float(r.get('total_amount') or 0.0)
             
+            # The total amount will still include the "No City" amounts
             grouped_products[prod_id]['total_amount'] += amt
-            # Accumulate amount instead of qty
             grouped_products[prod_id]['city_amount'][city] = grouped_products[prod_id]['city_amount'].get(city, 0.0) + amt
 
         sorted_cities = sorted(list(all_cities))
@@ -814,7 +818,6 @@ class PosOrder(models.Model):
             for p in prods:
                 p['unit_price_fmt'] = _fmt(p['unit_price'])
                 p['total_amount_fmt'] = _fmt(p['total_amount'])
-                # Format the city amounts
                 p['city_amount'] = {c: _fmt(a) for c, a in p['city_amount'].items()}
 
             result_groups.append({
