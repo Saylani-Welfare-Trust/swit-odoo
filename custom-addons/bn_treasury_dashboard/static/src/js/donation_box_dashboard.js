@@ -22,7 +22,7 @@ export class DonationBoxDashboard extends Component {
             cities: [],
             zones: [],
             bunches: [],
-            active_tab: 'pos',
+            
             // Comparison State
             comp_month_1: fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)), // Last month
             comp_month_2: fmt_month(today), // This month
@@ -36,8 +36,11 @@ export class DonationBoxDashboard extends Component {
             },
             chart_comp_status: { labels: [], data: [] },
             chart_installs: { labels: [], data: [] },
-            pos_orders: [], boxes: [], home_services: [], imports: [], online: [], in_kind: [],
-            recent_complaints: [], recent_registrations: [], recent_collections: [],
+            
+            // Tables Data
+            recent_complaints: [], 
+            recent_registrations: [], 
+            recent_collections: [],
         });
 
         this._charts = {};
@@ -118,7 +121,7 @@ export class DonationBoxDashboard extends Component {
 
     async applyFilter() {
         await this.fetch_data();
-        await this.fetch_comparison(); // Refresh comparison on filter change
+        await this.fetch_comparison(); 
     }
 
     async onchange_province() {
@@ -159,8 +162,6 @@ export class DonationBoxDashboard extends Component {
         }
         this.applyFilter();
     }
-
-    setTab(tab) { this.state.active_tab = tab; }
 
     render_charts() {
         const ctx1 = $("#db_chart_complaints");
