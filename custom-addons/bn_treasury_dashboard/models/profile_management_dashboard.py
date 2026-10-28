@@ -21,30 +21,19 @@ class ProfileManagementDashboard(models.TransientModel):
         draft = Partner.search_count(domain + [('state', '=', 'draft')])
         rejected = Partner.search_count(domain + [('state', '=', 'reject')])
         
-        # Count by Category
         donors = Partner.search_count(domain + [('category_id.name', 'ilike', 'Donor')])
         donees = Partner.search_count(domain + [('category_id.name', 'ilike', 'Donee')])
         individuals = Partner.search_count(domain + [('category_id.name', 'ilike', 'Individual')])
 
         # --- Charts ---
-        # 1. Registrations by Month
         regs_by_month = {}
-        regs = Partner.read_group(
-            domain, 
-            ['create_date'], 
-            ['create_date:month']
-        )
+        regs = Partner.read_group(domain, ['create_date'], ['create_date:month'])
         for r in regs:
             if r['create_date:month']:
                 regs_by_month[r['create_date:month']] = r['create_date_count']
 
-        # 2. Partners by Category
         cat_dist = {}
-        cats = Partner.read_group(
-            domain, 
-            ['category_id'], 
-            ['category_id']
-        )
+        cats = Partner.read_group(domain, ['category_id'], ['category_id'])
         for c in cats:
             if c['category_id']:
                 cat_dist[c['category_id'][1]] = c['category_id_count']
@@ -61,6 +50,36 @@ class ProfileManagementDashboard(models.TransientModel):
             ['name', 'mobile', 'cnic_no', 'category_id', 'create_date'],
             limit=10, order='create_date desc'
         )
+
+        # --- Partner Details (Tabs) ---
+        partners = Partner.search(domain)
+        partner_ids = partners.ids
+        
+        recent_pos_orders = []
+        recent_boxes = []
+        
+        if partner_ids:
+            # POS Details
+            pos_domain = [('partner_id', 'in', partner_ids)]
+            if date_from: pos_domain.append(('date_order', '>=', date_from + ' 00:00:00'))
+            if date_to: pos_domain.append(('date_order', '<=', date_to + ' 23:59:59'))
+            
+            recent_pos_orders = self.env['pos.order'].search_read(
+                pos_domain,
+                ['name', 'date_order', 'amount_total', 'state'],
+                limit=10, order='date_order desc'
+            )
+
+            # Box Details
+            box_domain = [('donor_id', 'in', partner_ids)]
+            if date_from: box_domain.append(('installation_date', '>=', date_from))
+            if date_to: box_domain.append(('installation_date', '<=', date_to))
+
+            recent_boxes = self.env['donation.box.registration.installation'].search_read(
+                box_domain,
+                ['name', 'lot_id', 'status', 'installation_date'],
+                limit=10, order='installation_date desc'
+            )
 
         return {
             'kpi': {
@@ -81,4 +100,6 @@ class ProfileManagementDashboard(models.TransientModel):
             },
             'recent_registrations': recent_registrations,
             'recent_drafts': recent_drafts,
+            'recent_pos_orders': recent_pos_orders,
+            'recent_boxes': recent_boxes,
         }

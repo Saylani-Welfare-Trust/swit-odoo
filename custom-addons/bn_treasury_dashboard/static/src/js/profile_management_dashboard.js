@@ -11,6 +11,7 @@ export class ProfileManagementDashboard extends Component {
         this.state = useState({
             date_from: '',
             date_to: '',
+            active_tab: 'pos', // Default tab
             kpi: {
                 registered: 0, draft: 0, rejected: 0,
                 donors: 0, donees: 0, individuals: 0,
@@ -19,6 +20,8 @@ export class ProfileManagementDashboard extends Component {
             chart_cats: { labels: [], data: [] },
             recent_registrations: [],
             recent_drafts: [],
+            recent_pos_orders: [],
+            recent_boxes: [],
         });
 
         this._charts = {};
@@ -46,6 +49,8 @@ export class ProfileManagementDashboard extends Component {
             this.state.chart_cats = data.chart_cats;
             this.state.recent_registrations = data.recent_registrations;
             this.state.recent_drafts = data.recent_drafts;
+            this.state.recent_pos_orders = data.recent_pos_orders;
+            this.state.recent_boxes = data.recent_boxes;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
@@ -57,6 +62,10 @@ export class ProfileManagementDashboard extends Component {
 
     async applyFilter() {
         await this.fetch_data();
+    }
+
+    setTab(tab) {
+        this.state.active_tab = tab;
     }
 
     clearFilter() {
@@ -91,7 +100,6 @@ export class ProfileManagementDashboard extends Component {
     }
 
     render_charts() {
-        // 1. Registrations Line/Bar Chart
         const ctx1 = $("#pm_chart_regs");
         if (ctx1.length) {
             if (this._charts.regs) this._charts.regs.destroy();
@@ -109,7 +117,6 @@ export class ProfileManagementDashboard extends Component {
             });
         }
 
-        // 2. Categories Doughnut Chart
         const ctx2 = $("#pm_chart_cats");
         if (ctx2.length) {
             if (this._charts.cats) this._charts.cats.destroy();
@@ -135,10 +142,10 @@ export class ProfileManagementDashboard extends Component {
     getStateColor(stateName) {
         if (!stateName) return 'bg-secondary';
         const s = stateName.toLowerCase();
-        if (['register', 'available'].includes(s)) return 'bg-success';
-        if (['draft'].includes(s)) return 'bg-warning text-dark';
-        if (['reject', 'rejected'].includes(s)) return 'bg-danger';
-        return 'bg-secondary text-white';
+        if (['register', 'available', 'paid', 'done'].includes(s)) return 'bg-success';
+        if (['draft', 'pending'].includes(s)) return 'bg-warning text-dark';
+        if (['reject', 'rejected', 'cancel'].includes(s)) return 'bg-danger';
+        return 'bg-info text-white';
     }
     
     openView(model, domain = []) {
