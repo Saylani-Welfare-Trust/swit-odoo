@@ -122,7 +122,7 @@ class WelfareLine(models.Model):
     )
 
     advance_donation_amount = fields.Float(
-        'Advance Donation Amount',
+        'Donor Acc',
         store=True,
         default=0.0
     )
