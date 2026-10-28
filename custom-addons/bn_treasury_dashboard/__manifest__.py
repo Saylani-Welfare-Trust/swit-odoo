@@ -10,6 +10,7 @@
         'views/treasury_dashboard_views.xml',
         'views/donation_box_dashboard_views.xml',
         'views/profile_management_dashboard_views.xml',
+        'views/pos_order_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
