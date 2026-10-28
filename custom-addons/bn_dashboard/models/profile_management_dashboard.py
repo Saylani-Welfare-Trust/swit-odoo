@@ -198,15 +198,56 @@ class ProfileManagementDashboard(models.TransientModel):
         # =========================================================================
         # DONEES TOP 10
         # =========================================================================
-        # Using aggressive dynamic detection for Welfare
-        welfare_top_donees = get_top_orm('welfare', ['donee_id', 'partner_id'], ['total_amount', 'amount', 'welfare_amount'])
+        
+        # 1. Welfare (Manual aggregation from lines)
+        welfare_top_donees = []
+        if 'welfare.line' in self.env:
+            wl_dom = []
+            if date_from: wl_dom.append(('collection_date', '>=', date_from))
+            if date_to: wl_dom.append(('collection_date', '<=', date_to))
+            
+            lines = self.env['welfare.line'].search(wl_dom)
+            agg = {}
+            for line in lines:
+                if not line.welfare_id or not line.welfare_id.donee_id: continue
+                donee = line.welfare_id.donee_id
+                amt = line.total_amount or 0.0
+                if donee.id not in agg:
+                    agg[donee.id] = {'name': donee.name, 'amount': 0.0, 'count': 0}
+                agg[donee.id]['amount'] += amt
+                agg[donee.id]['count'] += 1
+                
+            if 'welfare.recurring.line' in self.env:
+                wrl_dom = []
+                if date_from: wrl_dom.append(('collection_date', '>=', date_from))
+                if date_to: wrl_dom.append(('collection_date', '<=', date_to))
+                rlines = self.env['welfare.recurring.line'].search(wrl_dom)
+                for line in rlines:
+                    if not line.welfare_id or not line.welfare_id.donee_id: continue
+                    donee = line.welfare_id.donee_id
+                    amt = line.amount or 0.0
+                    if donee.id not in agg:
+                        agg[donee.id] = {'name': donee.name, 'amount': 0.0, 'count': 0}
+                    agg[donee.id]['amount'] += amt
+                    agg[donee.id]['count'] += 1
 
-        # Using aggressive dynamic detection for Microfinance
-        microfinance_top_donees = get_top_orm('microfinance.application', ['donee_id', 'partner_id'], ['total_amount', 'loan_amount', 'amount', 'requested_amount'])
+            welfare_top_donees = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
-        # Medical
-        med_model = 'medical.equipment' if 'medical.equipment' in self.env else ('medical.equipment.request' if 'medical.equipment.request' in self.env else '')
-        medical_top_donees = get_top_orm(med_model, ['donee_id', 'partner_id'], ['total_amount', 'amount', 'requested_amount']) if med_model else []
+        # 2. Microfinance (Dynamic Model Finder)
+        microfinance_top_donees = []
+        micro_models = ['microfinance.application', 'microfinance.loan', 'microfinance.request', 'microfinance']
+        for m in micro_models:
+            if m in self.env:
+                microfinance_top_donees = get_top_orm(m, ['donee_id', 'partner_id'], ['total_amount', 'loan_amount', 'amount', 'requested_amount'])
+                if microfinance_top_donees: break
+
+        # 3. Medical (Dynamic Model Finder)
+        medical_top_donees = []
+        med_models = ['medical.equipment', 'medical.equipment.request', 'medical.equipment.issue']
+        for m in med_models:
+            if m in self.env:
+                medical_top_donees = get_top_orm(m, ['donee_id', 'partner_id'], ['total_amount', 'amount'])
+                if medical_top_donees: break
 
         return {
             'kpi': {
