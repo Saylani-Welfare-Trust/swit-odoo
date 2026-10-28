@@ -76,21 +76,23 @@ class WelfareRecurringLine(models.Model):
     @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
-        lines = self.search([('collection_date', '=', today), 
+        # Recurring lines exist once "Create Recurring Orders" moved the application to Recurring;
+        # <= today so a month whose date passed is still delivered
+        lines = self.search([('collection_date', '<=', today),
                              ('state', '=', 'draft'),
-                             ('disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id),
-                            ('welfare_id.state', '=', 'approve'),
-                            ('collection_point', '=', 'branch'),
-                            ('welfare_id.order_type', 'in', ['one_time'])
+                             ('disbursement_category_id.name', '=', 'In Kind'),
+                            ('welfare_id.state', '=', 'recurring'),
+                            # empty: In Kind lines whose branch was never filled in (read-only for In Kind)
+                            ('collection_point', 'in', ['branch', False]),
+                            ('welfare_id.order_type', '=', 'recurring')
                             ])
         # _logger.info(f"rec_line: {lines.read()}")
         for line in lines:
-            if line.welfare_id.order_type == 'recurring':
-                try:
+            try:
+                with self.env.cr.savepoint():
                     line.action_delivered()
-                except Exception as e:
-                    # Optionally log error
-                    pass
+            except Exception:
+                _logger.exception("Could not create delivery for welfare %s recurring line %s", line.welfare_id.name, line.id)
     
     @api.model
     def _auto_create_bills_for_cash_bank(self):
@@ -223,8 +225,8 @@ class WelfareRecurringLine(models.Model):
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
-        if in_kind_category and self.disbursement_category_id.id == in_kind_category.id:
+        # By name: older databases have two "In Kind" categories (master setup and welfare data)
+        if self.disbursement_category_id.name == 'In Kind':
             self.collection_point = 'branch'
     
     @api.depends('disbursement_category_id', 'state')
@@ -242,8 +244,7 @@ class WelfareRecurringLine(models.Model):
                     rec.show_deliver_button = False
 
     def action_delivered(self):
-            in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
-            if self.disbursement_category_id == in_kind_category:        
+            if self.disbursement_category_id.name == 'In Kind':
                 StockPicking = self.env['stock.picking']
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']

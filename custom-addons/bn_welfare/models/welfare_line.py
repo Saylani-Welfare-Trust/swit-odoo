@@ -293,9 +293,8 @@ class WelfareLine(models.Model):
 
     @api.model
     def create(self, vals):
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
-        
-        if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
+        # By name: older databases have two "In Kind" categories (master setup and welfare data)
+        if self.env['disbursement.category'].browse(vals.get('disbursement_category_id')).name == 'In Kind':
             vals['collection_point'] = 'branch'
         
         return super().create(vals)
@@ -308,22 +307,24 @@ class WelfareLine(models.Model):
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
         _logger.info(f"Running scheduled action to auto-mark welfare lines as delivered for today: {today}")
-        lines = self.search([('collection_date', '=', today), 
+        # <= today: lines approved after their collection date are still delivered
+        lines = self.search([('collection_date', '<=', today),
                                     ('state', '=', 'draft'),
-                                    ('disbursement_category_id', '=', self.env.ref('bn_master_setup.disbursement_category_in_kind').id),
+                                    ('disbursement_category_id.name', '=', 'In Kind'),
                                     ('welfare_id.state', '=', 'approve'),
-                                    ('collection_point', '=', 'branch'),
+                                    # empty: In Kind lines whose branch was never filled in (read-only for In Kind)
+                                    ('collection_point', 'in', ['branch', False]),
                                     ('welfare_id.order_type', 'in', ['one_time'])
                                     ])
-        _logger.info(f"Auto-marking {len(lines)} welfare lines as delivered for today")        
+        _logger.info(f"Auto-marking {len(lines)} welfare lines as delivered for today")
         for line in lines:
             if line.welfare_id.order_type == 'one_time' :
                 try:
                     _logger.info(f"Auto-marking Welfare  {line.welfare_id.name} as delivered")
-                    line.action_delivered()
-                except Exception as e:
-                    # Optionally log error
-                    pass
+                    with self.env.cr.savepoint():
+                        line.action_delivered()
+                except Exception:
+                    _logger.exception("Could not create delivery for welfare %s line %s", line.welfare_id.name, line.id)
     
     @api.model
     def _auto_create_bills_for_cash_bank(self):
@@ -456,9 +457,8 @@ class WelfareLine(models.Model):
         # The compute method already handles manual_total correctly
         
         # Handle in_kind category auto-selection
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
         if 'disbursement_category_id' in vals:
-            if in_kind_category and vals.get('disbursement_category_id') == in_kind_category.id:
+            if self.env['disbursement.category'].browse(vals['disbursement_category_id']).name == 'In Kind':
                 vals['collection_point'] = 'branch'
         
         # Call super to actually save to database
@@ -517,8 +517,7 @@ class WelfareLine(models.Model):
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
-        if in_kind_category and self.disbursement_category_id.id == in_kind_category.id:
+        if self.disbursement_category_id.name == 'In Kind':
             self.collection_point = 'branch'
         # Quantity is read-only for Cash, so don't leave a quantity from another category
         if self.disbursement_category_id.name == "Cash":
@@ -586,8 +585,7 @@ class WelfareLine(models.Model):
 
     def action_delivered(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
-            in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind')
-            if self.disbursement_category_id == in_kind_category:        
+            if self.disbursement_category_id.name == 'In Kind':
                 StockPicking = self.env['stock.picking']
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
