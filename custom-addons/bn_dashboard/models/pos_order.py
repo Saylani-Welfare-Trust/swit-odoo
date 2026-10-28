@@ -641,7 +641,6 @@ class PosOrder(models.Model):
             return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
 
         # 2. Dynamically check if a custom 'City' field exists on pos.config
-        # (Adjust the list if your custom field has a different technical name)
         pos_city_field = next((f for f in ['city_id', 'pos_city_id', 'city_analytic_id', 'analytic_city_id'] if f in self.env['pos.config']._fields), None)
         
         if pos_city_field:
@@ -693,20 +692,7 @@ class PosOrder(models.Model):
         # Final City Expression: Try Product City -> POS Config Custom City -> POS Config Parents -> 'No City'
         city_name_expr = f"COALESCE(pt_city.name, {pos_city_name_expr}, pos_fb_city.name, 'No City')"
 
-        # 5. Filtering Logic
-        having_clause = ""
-        if city_id:
-            city_rec = self.env['account.analytic.account'].browse(int(city_id))
-            c_name = (city_rec.name.get('en_US') if isinstance(city_rec.name, dict) else city_rec.name) or ''
-            if c_name:
-                safe_c_name = c_name.replace("'", "''")
-                having_clause = f"HAVING {city_name_expr} = '{safe_c_name}'"
-        else:
-            # FORCE ONLY QUETTA: Uncomment the line below to always restrict to Quetta if no city is selected
-            # having_clause = f"HAVING {city_name_expr} = 'Quetta'"
-            pass
-        
-        # Hardcoded Quetta filter for your specific request
+        # 5. Hardcoded Quetta filter for your specific request
         having_clause = f"HAVING {city_name_expr} = 'Quetta'"
 
         query = f"""
@@ -724,7 +710,7 @@ class PosOrder(models.Model):
             {pos_city_join}
             {pos_fb_city_join}
             INNER JOIN product_product    ON product_product.id = pos_order_line.product_id
-            INNER JOIN product_template   ON product_template.product_tmpl_id = product_template.id
+            INNER JOIN product_template   ON product_product.product_tmpl_id = product_template.id
             INNER JOIN product_category   AS pc ON pc.id = product_template.categ_id
             {pt_acc_join}
             {pt_city_join}
