@@ -133,7 +133,10 @@ class WelfareFieldsWizard(models.TransientModel):
     gas_bill_name = fields.Char('Gas Bill Name')
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
-    
+
+    # Documents uploaded in the Documents tab or fetched from the portal
+    document_image_ids = fields.One2many(related='welfare_id.document_image_ids', string='Documents', readonly=True)
+
     # HTML Display fields for One2many data
     welfare_lines_html = fields.Html(string='Disbursement Items', readonly=True)
     education_lines_html = fields.Html(string='Education Information', readonly=True)

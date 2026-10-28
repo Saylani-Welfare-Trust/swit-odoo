@@ -158,15 +158,23 @@
                         
                         <!-- Attachments Section -->
                         <separator string="Attachments" class="text-uppercase"/>
+                        <field name="document_image_ids" nolabel="1" mode="tree">
+                            <tree>
+                                <field name="document_type" string="Document Type"/>
+                                <field name="image_filename" string="File Name"/>
+                                <field name="display_image" string="Preview" widget="html"/>
+                            </tree>
+                        </field>
+                        <!-- Old single-file fields: only shown on records that still have them -->
                         <group>
                             <group>
-                                <field name="application_form" filename="application_form_name" widget="binary"/>
-                                <field name="frc" filename="frc_name" widget="binary"/>
+                                <field name="application_form" filename="application_form_name" widget="binary" invisible="not application_form"/>
+                                <field name="frc" filename="frc_name" widget="binary" invisible="not frc"/>
                             </group>
                             <group>
-                                <field name="electricity_bill_file" filename="electricity_bill_name" widget="binary"/>
-                                <field name="gas_bill_file" filename="gas_bill_name" widget="binary"/>
-                                <field name="family_cnic" filename="family_cnic_name" widget="binary"/>
+                                <field name="electricity_bill_file" filename="electricity_bill_name" widget="binary" invisible="not electricity_bill_file"/>
+                                <field name="gas_bill_file" filename="gas_bill_name" widget="binary" invisible="not gas_bill_file"/>
+                                <field name="family_cnic" filename="family_cnic_name" widget="binary" invisible="not family_cnic"/>
                             </group>
                         </group>
                         
