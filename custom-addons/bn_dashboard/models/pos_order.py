@@ -615,32 +615,44 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return []
 
-        self._cr.execute("""
+        # Respect whether analytic account name is translated (jsonb) or plain char
+        name_field = self.env['account.analytic.account']._fields['name']
+        city_name_expr = ("COALESCE((city_acc.name)->>'en_US', 'No City')"
+                        if name_field.translate else
+                        "COALESCE(city_acc.name, 'No City')")
+
+        query = """
             SELECT
-                pc.complete_name                            AS category_name,
-                (product_template.name)->>'en_US'           AS product_name,
-                product_template.id                         AS product_id,
-                COALESCE(AVG(pos_order_line.price_unit), 0) AS unit_price,
-                COALESCE(SUM(pos_order_line.qty), 0)        AS sale_qty,
+                pc.complete_name                              AS category_name,
+                %s                                            AS city_name,
+                (product_template.name)->>'en_US'             AS product_name,
+                product_template.id                           AS product_id,
+                COALESCE(AVG(pos_order_line.price_unit), 0)   AS unit_price,
+                COALESCE(SUM(pos_order_line.qty), 0)          AS sale_qty,
                 COALESCE(SUM(pos_order_line.price_subtotal_incl), 0) AS total_amount
             FROM pos_order_line
-            INNER JOIN pos_order        ON pos_order.id = pos_order_line.order_id
-            INNER JOIN product_product  ON product_product.id = pos_order_line.product_id
-            INNER JOIN product_template ON product_product.product_tmpl_id = product_template.id
-            INNER JOIN product_category pc ON pc.id = product_template.categ_id
+            INNER JOIN pos_order          ON pos_order.id = pos_order_line.order_id
+            LEFT  JOIN pos_config         ON pos_config.id = pos_order.config_id
+            LEFT  JOIN account_analytic_account shop_acc
+                        ON shop_acc.id = pos_config.analytic_account_id
+            LEFT  JOIN account_analytic_account zone_acc
+                        ON zone_acc.id = shop_acc.parent_id
+            LEFT  JOIN account_analytic_account city_acc
+                        ON city_acc.id = zone_acc.parent_id
+            INNER JOIN product_product    ON product_product.id = pos_order_line.product_id
+            INNER JOIN product_template   ON product_product.product_tmpl_id = product_template.id
+            INNER JOIN product_category   AS pc ON pc.id = product_template.categ_id
             WHERE pos_order_line.company_id = %d %s
-            GROUP BY pc.complete_name, product_template.id, product_template.name
-            ORDER BY pc.complete_name, total_amount DESC
-        """ % (company_id, order_sql))
+            GROUP BY pc.complete_name, city_acc.id, city_acc.name,
+                    product_template.id, product_template.name
+            ORDER BY pc.complete_name, city_acc.name NULLS LAST, total_amount DESC
+        """ % (city_name_expr, company_id, order_sql)
 
+        self._cr.execute(query)
         docs = self._cr.dictfetchall()
 
         group_order = ['Nafla', 'Wajiba', 'Non-Donation', 'PoS',
                     'Donation In Kind', 'Donation Box', 'Other']
-        grouped = {k: [] for k in group_order}
-
-        for r in docs:
-            grouped[self._categorize_category(r.get('category_name'))].append(r)
 
         currency = self.env.company.currency_id
 
@@ -652,19 +664,30 @@ class PosOrder(models.Model):
             return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
                     else "%s %s" % (currency.symbol, val))
 
+        # Bucket: {group_name: {city_name: [products]}}
+        tree = {g: {} for g in group_order}
+
+        for r in docs:
+            grp  = self._categorize_category(r.get('category_name'))
+            city = r.get('city_name') or 'No City'
+            tree[grp].setdefault(city, []).append({
+                'product_name': r.get('product_name') or 'Unknown',
+                'unit_price'  : _fmt(r.get('unit_price')),
+                'sale_qty'    : int(r.get('sale_qty') or 0),
+                'total_amount': _fmt(r.get('total_amount')),
+            })
+
         result = []
         for group_name in group_order:
-            products = grouped.get(group_name, [])
-            if not products:
+            cities = tree.get(group_name) or {}
+            if not cities:
                 continue
             result.append({
                 'group_name': group_name,
-                'products': [{
-                    'product_name': p.get('product_name') or 'Unknown',
-                    'unit_price'  : _fmt(p.get('unit_price')),
-                    'sale_qty'    : int(p.get('sale_qty') or 0),
-                    'total_amount': _fmt(p.get('total_amount')),
-                } for p in products],
+                'cities': [
+                    {'city_name': city, 'products': products}
+                    for city, products in sorted(cities.items())
+                ],
             })
         return result
 

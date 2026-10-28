@@ -307,7 +307,7 @@
                         <div class="oh-card-header">
                             <h4><i class="fa fa-th-list me-2 text-primary"/>Products by Category Group</h4>
                         </div>
-                        <div class="oh-card-body p-0" style="max-height: 500px; overflow-y: auto;">
+                        <div class="oh-card-body p-0" style="max-height: 520px; overflow-y: auto;">
                             <table class="table oh-table mb-0">
                                 <thead>
                                     <tr>
@@ -319,21 +319,29 @@
                                 </thead>
                                 <tbody>
                                     <t t-foreach="state.products_by_category" t-as="group" t-key="group_index">
-                                        <!-- Group header -->
+                                        <!-- Category header -->
                                         <tr>
-                                            <td colspan="4" class="fw-bold" style="background-color:#f8f9fa;">
+                                            <td colspan="4" class="fw-bold" style="background-color:#e9ecef;">
                                                 <i class="fa fa-folder-open me-2 text-primary"/>
                                                 <t t-esc="group['group_name']"/>
                                             </td>
                                         </tr>
-                                        <!-- Products inside group -->
-                                        <t t-foreach="group['products']" t-as="prod" t-key="prod_index">
+                                        <!-- City sub-header + products -->
+                                        <t t-foreach="group['cities']" t-as="city" t-key="city_index">
                                             <tr>
-                                                <td class="ps-4"><t t-esc="prod['product_name']"/></td>
-                                                <td class="text-end"><t t-esc="prod['unit_price']"/></td>
-                                                <td class="text-center"><t t-esc="prod['sale_qty']"/></td>
-                                                <td class="text-end fw-semibold"><t t-esc="prod['total_amount']"/></td>
+                                                <td colspan="4" class="fw-semibold ps-3" style="background-color:#f4f6f9;">
+                                                    <i class="fa fa-map-marker me-2 text-secondary"/>
+                                                    <t t-esc="city['city_name']"/>
+                                                </td>
                                             </tr>
+                                            <t t-foreach="city['products']" t-as="prod" t-key="prod_index">
+                                                <tr>
+                                                    <td class="ps-5"><t t-esc="prod['product_name']"/></td>
+                                                    <td class="text-end"><t t-esc="prod['unit_price']"/></td>
+                                                    <td class="text-center"><t t-esc="prod['sale_qty']"/></td>
+                                                    <td class="text-end fw-semibold"><t t-esc="prod['total_amount']"/></td>
+                                                </tr>
+                                            </t>
                                         </t>
                                     </t>
                                     <t t-if="!state.products_by_category.length">
