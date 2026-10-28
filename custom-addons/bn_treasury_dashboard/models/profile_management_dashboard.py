@@ -10,6 +10,21 @@ class ProfileManagementDashboard(models.TransientModel):
 
     @api.model
     def get_dashboard_data(self, date_from=None, date_to=None):
+        try:
+            return self._get_dashboard_data(date_from, date_to)
+        except Exception as e:
+            _logger.error(f"Dashboard Critical Error: {e}", exc_info=True)
+            # Return safe empty structure if everything fails
+            return {
+                'kpi': {'registered': 0, 'draft': 0, 'rejected': 0, 'donors': 0, 'donees': 0, 'individuals': 0},
+                'chart_regs': {'labels': [], 'data': []},
+                'chart_cats': {'labels': [], 'data': []},
+                'recent_registrations': [],
+                'recent_drafts': [],
+                'pos_orders': [], 'boxes': [], 'home_services': [], 'imports': [], 'online': [], 'in_kind': []
+            }
+
+    def _get_dashboard_data(self, date_from, date_to):
         domain = []
         
         if date_from:
@@ -28,7 +43,11 @@ class ProfileManagementDashboard(models.TransientModel):
 
         def safe_search_read(model, dom, fields, limit=10, order='id desc'):
             try:
-                return model.search_read(dom, fields, limit=limit, order=order)
+                # Filter fields to only those that actually exist on the model
+                valid_fields = [f for f in fields if f in model._fields]
+                if not valid_fields:
+                    return []
+                return model.search_read(dom, valid_fields, limit=limit, order=order)
             except Exception as e:
                 _logger.error(f"Dashboard Error on {model._name}: {e}")
                 return []
@@ -75,7 +94,6 @@ class ProfileManagementDashboard(models.TransientModel):
         # --- Details Tabs ---
         pos_orders, boxes, home_services, imports, online, in_kind = [], [], [], [], [], []
         
-        # Get all partner IDs (up to a safe limit to prevent crashes)
         partners = Partner.search(domain, limit=5000)
         partner_ids = partners.ids
 
@@ -98,9 +116,8 @@ class ProfileManagementDashboard(models.TransientModel):
                     self.env['donation.box.registration.installation'], box_domain, ['name', 'lot_id', 'status', 'installation_date'], order='installation_date desc'
                 )
 
-            # =========================================================================
-            # 3. Home Service Details (⚠️ CHANGE 'home.service' TO YOUR ACTUAL MODEL)
-            # =========================================================================
+            # 3. Home Service Details
+            # ⚠️ REPLACE 'home.service' WITH YOUR ACTUAL MODEL NAME
             if 'home.service' in self.env:
                 hs_domain = [('partner_id', 'in', partner_ids)]
                 if date_from: hs_domain.append(('date', '>=', date_from))
@@ -109,11 +126,8 @@ class ProfileManagementDashboard(models.TransientModel):
                     self.env['home.service'], hs_domain, ['name', 'date', 'amount', 'state'], order='date desc'
                 )
 
-            # =========================================================================
             # 4. Import Details
-            # =========================================================================
             if 'donation' in self.env:
-                # We filter the 'donation' model where an import_donation_id exists
                 imp_domain = [('donor_id', 'in', partner_ids), ('import_donation_id', '!=', False)]
                 if date_from: imp_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
                 if date_to: imp_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
@@ -123,11 +137,11 @@ class ProfileManagementDashboard(models.TransientModel):
                 )
                 # Map fields to match UI
                 for imp in imports:
-                    imp['date'] = imp['create_date'].split(' ')[0] if imp.get('create_date') else '-'
+                    date_val = imp.get('create_date')
+                    imp['date'] = str(date_val).split(' ')[0] if date_val else '-'
+                    imp['state'] = imp.get('state', 'draft')
 
-            # =========================================================================
             # 5. Online Details
-            # =========================================================================
             if 'api.donation' in self.env:
                 on_domain = [('donor_id', 'in', partner_ids)]
                 if date_from: on_domain.append(('created_at', '>=', date_from + ' 00:00:00'))
@@ -136,13 +150,17 @@ class ProfileManagementDashboard(models.TransientModel):
                 online = safe_search_read(
                     self.env['api.donation'], on_domain, ['name', 'created_at', 'total_amount', 'partner_creation_status'], order='created_at desc'
                 )
-                # Map fields to match UI
+                # Map fields to match UI safely
                 for on in online:
-                    on['date'] = on['created_at'].split(' ')[0] if on.get('created_at') else '-'
-                    on['state'] = on['partner_creation_status']
+                    date_val = on.get('created_at')
+                    on['date'] = str(date_val).split(' ')[0] if date_val else '-'
+                    on['state'] = on.get('partner_creation_status', 'pending')
+                    
+                    # Clean up string amount (e.g. "1,500.00")
+                    amt_str = str(on.get('total_amount', '0')).replace(',', '')
                     try:
-                        on['amount'] = float(on['total_amount'] or 0.0)
-                    except (ValueError, TypeError):
+                        on['amount'] = float(amt_str)
+                    except ValueError:
                         on['amount'] = 0.0
 
             # 6. Donation In Kind
