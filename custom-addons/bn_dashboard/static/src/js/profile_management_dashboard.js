@@ -20,12 +20,9 @@ export class ProfileManagementDashboard extends Component {
         this.state = useState({
             date_from: savedFilters.date_from || '',
             date_to: savedFilters.date_to || '',
-            active_tab: savedFilters.active_tab || 'pos',
             kpi: { registered: 0, draft: 0, rejected: 0, donors: 0, donees: 0, individuals: 0 },
             chart_regs: { labels: [], data: [] },
             chart_cats: { labels: [], data: [] },
-            recent_registrations: [],
-            recent_drafts: [],
             
             // Donors
             pos_top_donors: [],
@@ -55,7 +52,6 @@ export class ProfileManagementDashboard extends Component {
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
             date_from: this.state.date_from,
             date_to: this.state.date_to,
-            active_tab: this.state.active_tab,
         }));
     }
 
@@ -69,8 +65,6 @@ export class ProfileManagementDashboard extends Component {
             this.state.kpi = data.kpi;
             this.state.chart_regs = data.chart_regs;
             this.state.chart_cats = data.chart_cats;
-            this.state.recent_registrations = data.recent_registrations;
-            this.state.recent_drafts = data.recent_drafts;
             
             this.state.pos_top_donors = data.pos_top_donors;
             this.state.box_top_donors = data.box_top_donors;
@@ -92,11 +86,6 @@ export class ProfileManagementDashboard extends Component {
     async applyFilter() {
         this.save_filters();
         await this.fetch_data();
-    }
-
-    setTab(tab) {
-        this.state.active_tab = tab;
-        this.save_filters();
     }
 
     clearFilter() {

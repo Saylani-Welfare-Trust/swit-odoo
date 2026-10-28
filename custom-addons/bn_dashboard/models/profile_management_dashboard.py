@@ -18,8 +18,6 @@ class ProfileManagementDashboard(models.TransientModel):
                 'kpi': {'registered': 0, 'draft': 0, 'rejected': 0, 'donors': 0, 'donees': 0, 'individuals': 0},
                 'chart_regs': {'labels': [], 'data': []},
                 'chart_cats': {'labels': [], 'data': []},
-                'recent_registrations': [],
-                'recent_drafts': [],
                 'pos_top_donors': [], 'box_top_donors': [], 'home_top_donors': [], 
                 'import_top_donors': [], 'online_top_donors': [], 'in_kind_top_donors': [],
                 'welfare_top_donees': [], 'microfinance_top_donees': [], 'medical_top_donees': []
@@ -59,26 +57,38 @@ class ProfileManagementDashboard(models.TransientModel):
                 if c['category_id']: cat_dist[c['category_id'][1]] = c['category_id_count']
         except: pass
 
-        # --- Tables (Recent Top 2) ---
-        recent_registrations = Partner.search_read(domain + [('state', '=', 'register')], ['name', 'mobile', 'cnic_no', 'category_id', 'create_date'], limit=10, order='create_date desc')
-        recent_drafts = Partner.search_read(domain + [('state', '=', 'draft')], ['name', 'mobile', 'cnic_no', 'category_id', 'create_date'], limit=10, order='create_date desc')
-
         # =========================================================================
-        # HELPER: Dynamic Top 10 Aggregation (with safe manual fallback)
+        # HELPER: Dynamic Top 10 Aggregation (Scans fields automatically)
         # =========================================================================
-        def get_top_orm(model_name, date_field, partner_fields, amount_fields):
+        def get_top_orm(model_name, partner_fields, amount_fields, date_fields=['create_date', 'date', 'application_date']):
             if model_name not in self.env: return []
             Model = self.env[model_name]
             
+            # Find Partner Field
             partner_field = next((f for f in partner_fields if f in Model._fields), None)
-            amount_field = next((f for f in amount_fields if f in Model._fields), None)
-            
+            if not partner_field:
+                for f_name, f in Model._fields.items():
+                    if f.type == 'many2one' and f.comodel_name == 'res.partner':
+                        partner_field = f_name
+                        break
             if not partner_field: return []
             
+            # Find Amount Field
+            amount_field = next((f for f in amount_fields if f in Model._fields), None)
+            if not amount_field:
+                for f_name, f in Model._fields.items():
+                    if f.type in ['float', 'monetary'] and ('amount' in f_name or 'total' in f_name):
+                        amount_field = f_name
+                        break
+                        
+            # Find Date Field
+            date_field = next((f for f in date_fields if f in Model._fields), None)
+            
+            # Build Domain
             dom = []
-            if date_field in Model._fields:
-                if date_from: dom.append((date_field, '>=', date_from + ' 00:00:00'))
-                if date_to: dom.append((date_field, '<=', date_to + ' 23:59:59'))
+            if date_field:
+                if date_from: dom.append((date_field, '>=', date_from + ' 00:00:00' if 'datetime' in Model._fields[date_field].type else date_from))
+                if date_to: dom.append((date_field, '<=', date_to + ' 23:59:59' if 'datetime' in Model._fields[date_field].type else date_to))
                 
             # Try fast read_group first
             if amount_field:
@@ -119,28 +129,23 @@ class ProfileManagementDashboard(models.TransientModel):
         # =========================================================================
         # DONORS TOP 10
         # =========================================================================
-        # 1. POS
-        pos_top_donors = get_top_orm('pos.order', 'date_order', ['partner_id'], ['amount_total'])
+        pos_top_donors = get_top_orm('pos.order', ['partner_id'], ['amount_total'], ['date_order'])
         
-        # 2. Box Details
         box_top_donors = []
         if 'rider.collection' in self.env:
             box_dom = [('state', 'in', ['donation_submit', 'pending', 'paid'])]
             if date_from: box_dom.append(('date', '>=', date_from))
             if date_to: box_dom.append(('date', '<=', date_to))
-            
             collections = self.env['rider.collection'].search(box_dom)
             agg = {}
             for col in collections:
-                if not col.donation_box_registration_installation_id or not col.donation_box_registration_installation_id.donor_id:
-                    continue
+                if not col.donation_box_registration_installation_id or not col.donation_box_registration_installation_id.donor_id: continue
                 donor = col.donation_box_registration_installation_id.donor_id
                 if donor.id not in agg: agg[donor.id] = {'name': donor.name, 'amount': 0.0, 'count': 0}
                 agg[donor.id]['amount'] += col.amount or 0.0
                 agg[donor.id]['count'] += 1
             box_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
-        # 3. Home Service
         home_top_donors = []
         if 'donation.home.service' in self.env:
             hs_dom = []
@@ -156,10 +161,8 @@ class ProfileManagementDashboard(models.TransientModel):
                 agg[rec.donor_id.id]['count'] += 1
             home_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
-        # 4. Import Details
-        import_top_donors = get_top_orm('donation', 'create_date', ['donor_id'], ['amount'])
+        import_top_donors = get_top_orm('donation', ['donor_id', 'partner_id'], ['amount', 'total_amount'])
 
-        # 5. Online Details
         online_top_donors = []
         if 'api.donation' in self.env:
             on_dom = []
@@ -177,7 +180,6 @@ class ProfileManagementDashboard(models.TransientModel):
                 agg[rec.donor_id.id]['count'] += 1
             online_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
-        # 6. Donation In Kind
         in_kind_top_donors = []
         if 'donation.in.kind' in self.env:
             ik_dom = []
@@ -196,17 +198,15 @@ class ProfileManagementDashboard(models.TransientModel):
         # =========================================================================
         # DONEES TOP 10
         # =========================================================================
-        # 1. Welfare
-        welfare_top_donees = get_top_orm('welfare', 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'amount'])
+        # Using aggressive dynamic detection for Welfare
+        welfare_top_donees = get_top_orm('welfare', ['donee_id', 'partner_id'], ['total_amount', 'amount', 'welfare_amount'])
 
-        # 2. Microfinance (using 'microfinance.application' as seen in your screenshot)
-        microfinance_top_donees = get_top_orm('microfinance.application', 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'loan_amount', 'amount'])
+        # Using aggressive dynamic detection for Microfinance
+        microfinance_top_donees = get_top_orm('microfinance.application', ['donee_id', 'partner_id'], ['total_amount', 'loan_amount', 'amount', 'requested_amount'])
 
-        # 3. Medical Equipment
+        # Medical
         med_model = 'medical.equipment' if 'medical.equipment' in self.env else ('medical.equipment.request' if 'medical.equipment.request' in self.env else '')
-        medical_top_donees = []
-        if med_model:
-            medical_top_donees = get_top_orm(med_model, 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'amount'])
+        medical_top_donees = get_top_orm(med_model, ['donee_id', 'partner_id'], ['total_amount', 'amount', 'requested_amount']) if med_model else []
 
         return {
             'kpi': {
@@ -215,8 +215,6 @@ class ProfileManagementDashboard(models.TransientModel):
             },
             'chart_regs': {'labels': list(regs_by_month.keys()), 'data': list(regs_by_month.values())},
             'chart_cats': {'labels': list(cat_dist.keys()), 'data': list(cat_dist.values())},
-            'recent_registrations': recent_registrations,
-            'recent_drafts': recent_drafts,
             'pos_top_donors': pos_top_donors,
             'box_top_donors': box_top_donors,
             'home_top_donors': home_top_donors,
