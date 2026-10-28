@@ -62,6 +62,11 @@ export class ProfileManagementDashboard extends Component {
             this.state.in_kind = data.in_kind;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
+            // Show alert if RPC fails so you know why
+            this.env.services.notification.add(
+                "Failed to load dashboard data. Check console for details.",
+                { type: "danger" }
+            );
         }
 
         if (this.is_mounted) {
