@@ -75,89 +75,102 @@ class ProfileManagementDashboard(models.TransientModel):
         # --- Details Tabs ---
         pos_orders, boxes, home_services, imports, online, in_kind = [], [], [], [], [], []
         
-        # 1. POS Details
-        if 'pos.order' in self.env:
-            pos_domain = []
-            if date_from: pos_domain.append(('date_order', '>=', date_from + ' 00:00:00'))
-            if date_to: pos_domain.append(('date_order', '<=', date_to + ' 23:59:59'))
-            pos_orders = safe_search_read(
-                self.env['pos.order'], pos_domain, ['name', 'date_order', 'amount_total', 'state'], order='date_order desc'
-            )
+        # Get all partner IDs (up to a safe limit to prevent crashes)
+        partners = Partner.search(domain, limit=5000)
+        partner_ids = partners.ids
 
-        # 2. Box Details
-        if 'donation.box.registration.installation' in self.env:
-            box_domain = []
-            if date_from: box_domain.append(('installation_date', '>=', date_from))
-            if date_to: box_domain.append(('installation_date', '<=', date_to))
-            boxes = safe_search_read(
-                self.env['donation.box.registration.installation'], box_domain, ['name', 'lot_id', 'status', 'installation_date'], order='installation_date desc'
-            )
-
-        # =========================================================================
-        # ⚠️ CHANGE THESE MODEL NAMES TO YOUR ACTUAL MODEL NAMES
-        # =========================================================================
-
-        # 3. Home Service Details
-        # Change 'home.service.detail' to your actual model name
-        if 'home.service.detail' in self.env: 
-            hs_domain = []
-            if date_from: hs_domain.append(('date', '>=', date_from))
-            if date_to: hs_domain.append(('date', '<=', date_to))
-            # You may also need to change ['name', 'date', 'amount', 'state'] to your actual fields
-            home_services = safe_search_read(
-                self.env['home.service.detail'], hs_domain, ['name', 'date', 'amount', 'state'], order='date desc'
-            )
-
-        # 4. Import Details
-        # Change 'import.detail' to your actual model name
-        if 'import.detail' in self.env:
-            imp_domain = []
-            if date_from: imp_domain.append(('date', '>=', date_from))
-            if date_to: imp_domain.append(('date', '<=', date_to))
-            # You may also need to change ['name', 'date', 'amount', 'state'] to your actual fields
-            imports = safe_search_read(
-                self.env['import.detail'], imp_domain, ['name', 'date', 'amount', 'state'], order='date desc'
-            )
-
-        # 5. Online Details
-        # Change 'online.detail' to your actual model name
-        if 'online.detail' in self.env:
-            on_domain = []
-            if date_from: on_domain.append(('date', '>=', date_from))
-            if date_to: on_domain.append(('date', '<=', date_to))
-            # You may also need to change ['name', 'date', 'amount', 'state'] to your actual fields
-            online = safe_search_read(
-                self.env['online.detail'], on_domain, ['name', 'date', 'amount', 'state'], order='date desc'
-            )
-
-        # =========================================================================
-
-        # 6. Donation In Kind (Works perfectly)
-        if 'donation.in.kind' in self.env:
-            ik_domain = []
-            if date_from: ik_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
-            if date_to: ik_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
-            
-            ik_records = safe_search_read(
-                self.env['donation.in.kind'], ik_domain, 
-                ['name', 'donor_id', 'state', 'donation_in_kind_line_ids'], 
-                limit=50, order='create_date desc'
-            )
-            
-            for rec in ik_records:
-                lines = self.env['donation.in.kind.line'].search_read(
-                    [('donation_in_kind_id', '=', rec['id'])],
-                    ['product_id', 'location_id', 'quantity']
+        if partner_ids:
+            # 1. POS Details
+            if 'pos.order' in self.env:
+                pos_domain = [('partner_id', 'in', partner_ids)]
+                if date_from: pos_domain.append(('date_order', '>=', date_from + ' 00:00:00'))
+                if date_to: pos_domain.append(('date_order', '<=', date_to + ' 23:59:59'))
+                pos_orders = safe_search_read(
+                    self.env['pos.order'], pos_domain, ['name', 'date_order', 'amount_total', 'state'], order='date_order desc'
                 )
-                for line in lines:
-                    in_kind.append({
-                        'reference': rec['name'],
-                        'donor': rec['donor_id'][1] if rec['donor_id'] else '-',
-                        'product': line['product_id'][1] if line['product_id'] else '-',
-                        'location': line['location_id'][1] if line['location_id'] else '-',
-                        'quantity': line['quantity'],
-                        'state': rec['state']
-                    })
+
+            # 2. Box Details
+            if 'donation.box.registration.installation' in self.env:
+                box_domain = [('donor_id', 'in', partner_ids)]
+                if date_from: box_domain.append(('installation_date', '>=', date_from))
+                if date_to: box_domain.append(('installation_date', '<=', date_to))
+                boxes = safe_search_read(
+                    self.env['donation.box.registration.installation'], box_domain, ['name', 'lot_id', 'status', 'installation_date'], order='installation_date desc'
+                )
+
+            # =========================================================================
+            # 3. Home Service Details (⚠️ CHANGE 'home.service' TO YOUR ACTUAL MODEL)
+            # =========================================================================
+            if 'home.service' in self.env:
+                hs_domain = [('partner_id', 'in', partner_ids)]
+                if date_from: hs_domain.append(('date', '>=', date_from))
+                if date_to: hs_domain.append(('date', '<=', date_to))
+                home_services = safe_search_read(
+                    self.env['home.service'], hs_domain, ['name', 'date', 'amount', 'state'], order='date desc'
+                )
+
+            # =========================================================================
+            # 4. Import Details
+            # =========================================================================
+            if 'donation' in self.env:
+                # We filter the 'donation' model where an import_donation_id exists
+                imp_domain = [('donor_id', 'in', partner_ids), ('import_donation_id', '!=', False)]
+                if date_from: imp_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
+                if date_to: imp_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
+                
+                imports = safe_search_read(
+                    self.env['donation'], imp_domain, ['name', 'create_date', 'amount', 'state'], order='create_date desc'
+                )
+                # Map fields to match UI
+                for imp in imports:
+                    imp['date'] = imp['create_date'].split(' ')[0] if imp.get('create_date') else '-'
+
+            # =========================================================================
+            # 5. Online Details
+            # =========================================================================
+            if 'api.donation' in self.env:
+                on_domain = [('donor_id', 'in', partner_ids)]
+                if date_from: on_domain.append(('created_at', '>=', date_from + ' 00:00:00'))
+                if date_to: on_domain.append(('created_at', '<=', date_to + ' 23:59:59'))
+                
+                online = safe_search_read(
+                    self.env['api.donation'], on_domain, ['name', 'created_at', 'total_amount', 'partner_creation_status'], order='created_at desc'
+                )
+                # Map fields to match UI
+                for on in online:
+                    on['date'] = on['created_at'].split(' ')[0] if on.get('created_at') else '-'
+                    on['state'] = on['partner_creation_status']
+                    try:
+                        on['amount'] = float(on['total_amount'] or 0.0)
+                    except (ValueError, TypeError):
+                        on['amount'] = 0.0
+
+            # 6. Donation In Kind
+            if 'donation.in.kind' in self.env:
+                ik_domain = [('donor_id', 'in', partner_ids)]
+                if date_from: ik_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
+                if date_to: ik_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
+                
+                ik_records = safe_search_read(
+                    self.env['donation.in.kind'], ik_domain, 
+                    ['name', 'donor_id', 'state', 'donation_in_kind_line_ids'], 
+                    limit=50, order='create_date desc'
+                )
+                
+                for rec in ik_records:
+                    lines = self.env['donation.in.kind.line'].search_read(
+                        [('donation_in_kind_id', '=', rec['id'])],
+                        ['product_id', 'location_id', 'quantity']
+                    )
+                    for line in lines:
+                        in_kind.append({
+                            'reference': rec['name'],
+                            'donor': rec['donor_id'][1] if rec['donor_id'] else '-',
+                            'product': line['product_id'][1] if line['product_id'] else '-',
+                            'location': line['location_id'][1] if line['location_id'] else '-',
+                            'quantity': line['quantity'],
+                            'state': rec['state']
+                        })
 
         return {
             'kpi': {
