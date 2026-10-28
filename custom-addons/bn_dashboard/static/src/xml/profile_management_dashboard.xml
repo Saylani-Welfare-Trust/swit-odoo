@@ -122,6 +122,7 @@
                         <!-- Tabs Header -->
                         <div class="card-header bg-white border-bottom p-0">
                             <ul class="nav nav-tabs border-0 flex-nowrap overflow-auto" style="white-space: nowrap;">
+                                <!-- DONOR TABS -->
                                 <li class="nav-item">
                                     <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'pos' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('pos')">POS Details</button>
                                 </li>
@@ -140,11 +141,24 @@
                                 <li class="nav-item">
                                     <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'in_kind' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('in_kind')">Donation In Kind</button>
                                 </li>
+                                
+                                <!-- DONEe TABS -->
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'welfare' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('welfare')">Welfare</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'microfinance' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('microfinance')">Microfinance</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'medical' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('medical')">Medical Equipment</button>
+                                </li>
                             </ul>
                         </div>
 
                         <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                             
+                            <!-- ==================== DONOR TABS ==================== -->
+
                             <!-- 1. POS Details Tab -->
                             <t t-if="state.active_tab === 'pos'">
                                 <table class="table table-hover oh-table mb-0">
@@ -261,6 +275,68 @@
                                             </tr>
                                         </t>
                                         <t t-if="!state.in_kind_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- ==================== DONEE TABS ==================== -->
+
+                            <!-- 7. Welfare Tab -->
+                            <t t-if="state.active_tab === 'welfare'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr><th style="width: 50px;">#</th><th>Donee</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.welfare_top_donees" t-as="donee" t-key="donee_index">
+                                            <tr>
+                                                <td class="text-muted"><t t-esc="donee_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donee.name"/></td>
+                                                <td class="text-end"><t t-esc="donee.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donee.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.welfare_top_donees.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- 8. Microfinance Tab -->
+                            <t t-if="state.active_tab === 'microfinance'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr><th style="width: 50px;">#</th><th>Donee</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.microfinance_top_donees" t-as="donee" t-key="donee_index">
+                                            <tr>
+                                                <td class="text-muted"><t t-esc="donee_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donee.name"/></td>
+                                                <td class="text-end"><t t-esc="donee.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donee.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.microfinance_top_donees.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
+                                    </tbody>
+                                </table>
+                            </t>
+
+                            <!-- 9. Medical Equipment Tab -->
+                            <t t-if="state.active_tab === 'medical'">
+                                <table class="table table-hover oh-table mb-0">
+                                    <thead class="table-light">
+                                        <tr><th style="width: 50px;">#</th><th>Donee</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="state.medical_top_donees" t-as="donee" t-key="donee_index">
+                                            <tr>
+                                                <td class="text-muted"><t t-esc="donee_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donee.name"/></td>
+                                                <td class="text-end"><t t-esc="donee.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donee.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!state.medical_top_donees.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>

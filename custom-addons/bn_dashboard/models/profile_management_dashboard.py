@@ -21,7 +21,8 @@ class ProfileManagementDashboard(models.TransientModel):
                 'recent_registrations': [],
                 'recent_drafts': [],
                 'pos_top_donors': [], 'box_top_donors': [], 'home_top_donors': [], 
-                'import_top_donors': [], 'online_top_donors': [], 'in_kind_top_donors': []
+                'import_top_donors': [], 'online_top_donors': [], 'in_kind_top_donors': [],
+                'welfare_top_donees': [], 'microfinance_top_donees': [], 'medical_top_donees': []
             }
 
     def _get_dashboard_data(self, date_from, date_to):
@@ -63,36 +64,41 @@ class ProfileManagementDashboard(models.TransientModel):
         recent_drafts = Partner.search_read(domain + [('state', '=', 'draft')], ['name', 'mobile', 'cnic_no', 'category_id', 'create_date'], limit=10, order='create_date desc')
 
         # =========================================================================
-        # TOP 10 DONORS BY AMOUNT (Aggregated)
+        # HELPER: Dynamic Top 10 Aggregation
         # =========================================================================
-        
-        def get_top_orm(model_name, date_field, partner_field, amount_field):
+        def get_top_orm(model_name, date_field, partner_fields, amount_fields):
             if model_name not in self.env: return []
-            dom = []
-            if date_from: dom.append((date_field, '>=', date_from + ' 00:00:00'))
-            if date_to: dom.append((date_field, '<=', date_to + ' 23:59:59'))
+            Model = self.env[model_name]
             
-            try:
-                groups = self.env[model_name].read_group(dom, [partner_field, f'{amount_field}:sum'], [partner_field], limit=10, orderby=f'{amount_field} desc')
-                res = []
-                for g in groups:
-                    if g[partner_field]:
-                        val = g.get(amount_field)
-                        if val is None: val = g.get(f'{amount_field}:sum', 0.0)
-                        res.append({
-                            'name': g[partner_field][1],
-                            'amount': val,
-                            'count': g.get('__count', 0)
-                        })
-                return res
-            except Exception as e:
-                _logger.error(f"Top 10 Error {model_name}: {e}")
-                return []
+            partner_field = next((f for f in partner_fields if f in Model._fields), None)
+            amount_field = next((f for f in amount_fields if f in Model._fields), None)
+            
+            if not partner_field: return []
+            
+            dom = []
+            if date_field in Model._fields:
+                if date_from: dom.append((date_field, '>=', date_from + ' 00:00:00'))
+                if date_to: dom.append((date_field, '<=', date_to + ' 23:59:59'))
+                
+            if amount_field:
+                try:
+                    groups = Model.read_group(dom, [partner_field, f'{amount_field}:sum'], [partner_field], limit=10, orderby=f'{amount_field} desc')
+                    res = []
+                    for g in groups:
+                        if g[partner_field]:
+                            val = g.get(amount_field) or g.get(f'{amount_field}:sum', 0.0)
+                            res.append({'name': g[partner_field][1], 'amount': val, 'count': g.get('__count', 0)})
+                    return res
+                except: pass
+            return []
 
+        # =========================================================================
+        # DONORS TOP 10
+        # =========================================================================
         # 1. POS
-        pos_top_donors = get_top_orm('pos.order', 'date_order', 'partner_id', 'amount_total')
+        pos_top_donors = get_top_orm('pos.order', 'date_order', ['partner_id'], ['amount_total'])
         
-        # 2. Box Details (Summing collections linked to the box's donor)
+        # 2. Box Details
         box_top_donors = []
         if 'rider.collection' in self.env:
             box_dom = [('state', 'in', ['donation_submit', 'pending', 'paid'])]
@@ -105,44 +111,31 @@ class ProfileManagementDashboard(models.TransientModel):
                 if not col.donation_box_registration_installation_id or not col.donation_box_registration_installation_id.donor_id:
                     continue
                 donor = col.donation_box_registration_installation_id.donor_id
-                if donor.id not in agg:
-                    agg[donor.id] = {'name': donor.name, 'amount': 0.0, 'count': 0}
+                if donor.id not in agg: agg[donor.id] = {'name': donor.name, 'amount': 0.0, 'count': 0}
                 agg[donor.id]['amount'] += col.amount or 0.0
                 agg[donor.id]['count'] += 1
             box_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
-        # 3. Home Service (Manual aggregation because total_amount may not be stored)
+        # 3. Home Service
         home_top_donors = []
         if 'donation.home.service' in self.env:
             hs_dom = []
             if date_from: hs_dom.append(('create_date', '>=', date_from + ' 00:00:00'))
             if date_to: hs_dom.append(('create_date', '<=', date_to + ' 23:59:59'))
-            
             records = self.env['donation.home.service'].search(hs_dom)
             agg = {}
             for rec in records:
                 if not rec.donor_id: continue
                 amt = rec.total_amount or rec.amount or 0.0
-                if rec.donor_id.id not in agg:
-                    agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
+                if rec.donor_id.id not in agg: agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
                 agg[rec.donor_id.id]['amount'] += amt
                 agg[rec.donor_id.id]['count'] += 1
             home_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
         # 4. Import Details
-        import_top_donors = []
-        if 'donation' in self.env:
-            imp_dom = [('import_donation_id', '!=', False)]
-            if date_from: imp_dom.append(('create_date', '>=', date_from + ' 00:00:00'))
-            if date_to: imp_dom.append(('create_date', '<=', date_to + ' 23:59:59'))
-            try:
-                groups = self.env['donation'].read_group(imp_dom, ['donor_id', 'amount:sum'], ['donor_id'], limit=10, orderby='amount desc')
-                for g in groups:
-                    if g['donor_id']:
-                        import_top_donors.append({'name': g['donor_id'][1], 'amount': g.get('amount', 0.0), 'count': g.get('__count', 0)})
-            except: pass
+        import_top_donors = get_top_orm('donation', 'create_date', ['donor_id'], ['amount'])
 
-        # 5. Online Details (Aggregating Char field manually)
+        # 5. Online Details
         online_top_donors = []
         if 'api.donation' in self.env:
             on_dom = []
@@ -155,14 +148,12 @@ class ProfileManagementDashboard(models.TransientModel):
                 amt_str = str(rec.total_amount or '0').replace(',', '')
                 try: amt = float(amt_str)
                 except: amt = 0.0
-                
-                if rec.donor_id.id not in agg:
-                    agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
+                if rec.donor_id.id not in agg: agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
                 agg[rec.donor_id.id]['amount'] += amt
                 agg[rec.donor_id.id]['count'] += 1
             online_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
 
-        # 6. Donation In Kind (Calculating from lines manually)
+        # 6. Donation In Kind
         in_kind_top_donors = []
         if 'donation.in.kind' in self.env:
             ik_dom = []
@@ -173,11 +164,25 @@ class ProfileManagementDashboard(models.TransientModel):
             for rec in records:
                 if not rec.donor_id: continue
                 total_amt = sum([(line.quantity * line.avg_price) for line in rec.donation_in_kind_line_ids])
-                if rec.donor_id.id not in agg:
-                    agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
+                if rec.donor_id.id not in agg: agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
                 agg[rec.donor_id.id]['amount'] += total_amt
                 agg[rec.donor_id.id]['count'] += 1
             in_kind_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+
+        # =========================================================================
+        # DONEES TOP 10
+        # =========================================================================
+        # 1. Welfare
+        welfare_top_donees = get_top_orm('welfare', 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'amount'])
+
+        # 2. Microfinance
+        microfinance_top_donees = get_top_orm('microfinance.application', 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'loan_amount', 'amount'])
+
+        # 3. Medical Equipment (assuming model 'medical.equipment' or 'medical.equipment.request')
+        med_model = 'medical.equipment' if 'medical.equipment' in self.env else ('medical.equipment.request' if 'medical.equipment.request' in self.env else '')
+        medical_top_donees = []
+        if med_model:
+            medical_top_donees = get_top_orm(med_model, 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'amount'])
 
         return {
             'kpi': {
@@ -194,4 +199,7 @@ class ProfileManagementDashboard(models.TransientModel):
             'import_top_donors': import_top_donors,
             'online_top_donors': online_top_donors,
             'in_kind_top_donors': in_kind_top_donors,
+            'welfare_top_donees': welfare_top_donees,
+            'microfinance_top_donees': microfinance_top_donees,
+            'medical_top_donees': medical_top_donees,
         }

@@ -27,13 +27,18 @@ export class ProfileManagementDashboard extends Component {
             recent_registrations: [],
             recent_drafts: [],
             
-            // Top Donors Data
+            // Donors
             pos_top_donors: [],
             box_top_donors: [],
             home_top_donors: [],
             import_top_donors: [],
             online_top_donors: [],
             in_kind_top_donors: [],
+            
+            // Donees
+            welfare_top_donees: [],
+            microfinance_top_donees: [],
+            medical_top_donees: [],
         });
 
         this._charts = {};
@@ -73,6 +78,10 @@ export class ProfileManagementDashboard extends Component {
             this.state.import_top_donors = data.import_top_donors;
             this.state.online_top_donors = data.online_top_donors;
             this.state.in_kind_top_donors = data.in_kind_top_donors;
+
+            this.state.welfare_top_donees = data.welfare_top_donees;
+            this.state.microfinance_top_donees = data.microfinance_top_donees;
+            this.state.medical_top_donees = data.medical_top_donees;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
             this.env.services.notification.add("Failed to load dashboard data.", { type: "danger" });
