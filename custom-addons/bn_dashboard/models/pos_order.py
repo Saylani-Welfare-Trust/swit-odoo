@@ -640,12 +640,22 @@ class PosOrder(models.Model):
         def _name_col(alias):
             return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
 
-        # 2. Dynamically check if a custom 'City' field exists on pos.config
+        # 2. Dynamically check the custom 'City' field on pos.config
         pos_city_field = next((f for f in ['city_id', 'pos_city_id', 'city_analytic_id', 'analytic_city_id'] if f in self.env['pos.config']._fields), None)
         
         if pos_city_field:
-            pos_city_join = f"LEFT JOIN account_analytic_account pos_city ON pos_city.id = pos_config.{pos_city_field}"
-            pos_city_name_expr = _name_col('pos_city')
+            field_type = self.env['pos.config']._fields[pos_city_field].type
+            # If it's a Many2one to Analytic Account
+            if field_type == 'many2one' and self.env['pos.config']._fields[pos_city_field].comodel_name == 'account.analytic.account':
+                pos_city_join = f"LEFT JOIN account_analytic_account pos_city ON pos_city.id = pos_config.{pos_city_field}"
+                pos_city_name_expr = _name_col('pos_city')
+            # If it's just a plain text Char field
+            elif field_type == 'char':
+                pos_city_join = ""
+                pos_city_name_expr = f"pos_config.{pos_city_field}"
+            else:
+                pos_city_join = ""
+                pos_city_name_expr = "NULL"
         else:
             pos_city_join = ""
             pos_city_name_expr = "NULL"
@@ -692,8 +702,17 @@ class PosOrder(models.Model):
         # Final City Expression: Try Product City -> POS Config Custom City -> POS Config Parents -> 'No City'
         city_name_expr = f"COALESCE(pt_city.name, {pos_city_name_expr}, pos_fb_city.name, 'No City')"
 
-        # 5. Hardcoded Quetta filter for your specific request
-        having_clause = f"HAVING {city_name_expr} = 'Quetta'"
+        # 5. Filtering Logic (Dynamic based on selected dropdown)
+        having_clause = ""
+        if city_id:
+            city_rec = self.env['account.analytic.account'].browse(int(city_id))
+            c_name = (city_rec.name.get('en_US') if isinstance(city_rec.name, dict) else city_rec.name) or ''
+            if c_name:
+                safe_c_name = c_name.replace("'", "''")
+                having_clause = f"HAVING {city_name_expr} = '{safe_c_name}'"
+        
+        # If you want to force ONLY Quetta regardless of what is selected, uncomment the line below:
+        # having_clause = f"HAVING {city_name_expr} = 'Quetta'"
 
         query = f"""
             SELECT
