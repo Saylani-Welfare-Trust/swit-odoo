@@ -149,18 +149,18 @@
                             <t t-if="state.active_tab === 'pos'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr><th>Order Ref</th><th>Date</th><th class="text-end">Total</th><th class="text-end">Status</th></tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.pos_orders" t-as="order" t-key="order.id">
+                                        <t t-foreach="state.pos_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
-                                                <td><t t-esc="order.name"/></td>
-                                                <td><t t-esc="new Date(order.date_order).toLocaleDateString()"/></td>
-                                                <td class="text-end fw-semibold"><t t-esc="order.amount_total.toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
-                                                <td class="text-end"><span t-attf-class="badge {{ getStateColor(order.state) }}"><t t-esc="formatStateName(order.state)"/></span></td>
+                                                <td class="text-muted"><t t-esc="donor_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donor.name"/></td>
+                                                <td class="text-end"><t t-esc="donor.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donor.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.pos_orders.length"><tr><td colspan="4" class="text-center text-muted py-4">No POS orders found</td></tr></t>
+                                        <t t-if="!state.pos_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>
@@ -169,18 +169,17 @@
                             <t t-if="state.active_tab === 'boxes'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr><th>Registration Name</th><th>Box / Lot</th><th>Installation Date</th><th class="text-end">Status</th></tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Boxes Installed</th></tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.boxes" t-as="box" t-key="box.id">
+                                        <t t-foreach="state.box_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
-                                                <td><t t-esc="box.name"/></td>
-                                                <td><t t-esc="box.lot_id ? box.lot_id[1] : '-'"/></td>
-                                                <td><t t-esc="box.installation_date ? new Date(box.installation_date).toLocaleDateString() : '-'"/></td>
-                                                <td class="text-end"><span t-attf-class="badge {{ getStateColor(box.status) }}"><t t-esc="formatStateName(box.status)"/></span></td>
+                                                <td class="text-muted"><t t-esc="donor_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donor.name"/></td>
+                                                <td class="text-end fw-bold text-primary"><t t-esc="donor.count"/> Box(es)</td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.boxes.length"><tr><td colspan="4" class="text-center text-muted py-4">No boxes found</td></tr></t>
+                                        <t t-if="!state.box_top_donors.length"><tr><td colspan="3" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>
@@ -189,18 +188,18 @@
                             <t t-if="state.active_tab === 'home'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr><th>Reference</th><th>Date</th><th class="text-end">Amount</th><th class="text-end">Status</th></tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.home_services" t-as="hs" t-key="hs.id">
+                                        <t t-foreach="state.home_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
-                                                <td><t t-esc="hs.name"/></td>
-                                                <td><t t-esc="hs.date ? new Date(hs.date).toLocaleDateString() : '-'"/></td>
-                                                <td class="text-end fw-semibold"><t t-esc="hs.amount ? hs.amount.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'"/></td>
-                                                <td class="text-end"><span t-attf-class="badge {{ getStateColor(hs.state) }}"><t t-esc="formatStateName(hs.state)"/></span></td>
+                                                <td class="text-muted"><t t-esc="donor_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donor.name"/></td>
+                                                <td class="text-end"><t t-esc="donor.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donor.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.home_services.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
+                                        <t t-if="!state.home_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>
@@ -209,18 +208,18 @@
                             <t t-if="state.active_tab === 'import'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr><th>Reference</th><th>Date</th><th class="text-end">Amount</th><th class="text-end">Status</th></tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.imports" t-as="imp" t-key="imp.id">
+                                        <t t-foreach="state.import_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
-                                                <td><t t-esc="imp.name"/></td>
-                                                <td><t t-esc="imp.date ? new Date(imp.date).toLocaleDateString() : '-'"/></td>
-                                                <td class="text-end fw-semibold"><t t-esc="imp.amount ? imp.amount.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'"/></td>
-                                                <td class="text-end"><span t-attf-class="badge {{ getStateColor(imp.state) }}"><t t-esc="formatStateName(imp.state)"/></span></td>
+                                                <td class="text-muted"><t t-esc="donor_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donor.name"/></td>
+                                                <td class="text-end"><t t-esc="donor.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donor.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.imports.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
+                                        <t t-if="!state.import_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>
@@ -229,53 +228,38 @@
                             <t t-if="state.active_tab === 'online'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr><th>Reference</th><th>Date</th><th class="text-end">Amount</th><th class="text-end">Status</th></tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.online" t-as="on" t-key="on.id">
+                                        <t t-foreach="state.online_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
-                                                <td><t t-esc="on.name"/></td>
-                                                <td><t t-esc="on.date ? new Date(on.date).toLocaleDateString() : '-'"/></td>
-                                                <td class="text-end fw-semibold"><t t-esc="on.amount ? on.amount.toLocaleString('en-US', {minimumFractionDigits: 2}) : '-'"/></td>
-                                                <td class="text-end"><span t-attf-class="badge {{ getStateColor(on.state) }}"><t t-esc="formatStateName(on.state)"/></span></td>
+                                                <td class="text-muted"><t t-esc="donor_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donor.name"/></td>
+                                                <td class="text-end"><t t-esc="donor.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donor.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.online.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
+                                        <t t-if="!state.online_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>
 
-                            <!-- 6. Donation In Kind Tab (FIXED to read from flattened child lines) -->
+                            <!-- 6. Donation In Kind Tab -->
                             <t t-if="state.active_tab === 'in_kind'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Donor</th>
-                                            <th>Product</th>
-                                            <th>Location</th>
-                                            <th class="text-end">Quantity</th>
-                                            <th class="text-end">Status</th>
-                                        </tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Transactions</th><th class="text-end">Total Estimated Value</th></tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.in_kind" t-as="ik" t-key="ik_index">
+                                        <t t-foreach="state.in_kind_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
-                                                <td><t t-esc="ik.reference"/></td>
-                                                <td><t t-esc="ik.donor"/></td>
-                                                <td><t t-esc="ik.product"/></td>
-                                                <td><t t-esc="ik.location"/></td>
-                                                <td class="text-end fw-semibold"><t t-esc="ik.quantity"/></td>
-                                                <td class="text-end">
-                                                    <span t-attf-class="badge {{ getStateColor(ik.state) }}">
-                                                        <t t-esc="formatStateName(ik.state)"/>
-                                                    </span>
-                                                </td>
+                                                <td class="text-muted"><t t-esc="donor_index + 1"/></td>
+                                                <td class="fw-bold"><t t-esc="donor.name"/></td>
+                                                <td class="text-end"><t t-esc="donor.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donor.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.in_kind.length">
-                                            <tr><td colspan="6" class="text-center text-muted py-4">No records found</td></tr>
-                                        </t>
+                                        <t t-if="!state.in_kind_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>

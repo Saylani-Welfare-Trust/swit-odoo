@@ -1,8 +1,9 @@
 {
-    'name': 'Treasury Dashboard',
+    'name': 'Dashboard',
     'version': '17.0.1.0.0',
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
+    'website': 'https://bytesnode.com/',
     'summary': 'A custom Dashboard for Odoo 17 Community',
     'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management','hr',],
     'data': [

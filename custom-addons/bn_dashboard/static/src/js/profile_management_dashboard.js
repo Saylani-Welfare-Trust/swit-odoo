@@ -1,6 +1,6 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
-import { browser } from "@web/core/browser/browser"; // <-- IMPORTED BROWSER
+import { browser } from "@web/core/browser/browser"; 
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
@@ -11,60 +11,47 @@ export class ProfileManagementDashboard extends Component {
         this.orm = useService('orm');
         this.actionService = useService("action");
 
-        // 1. Load saved filters from sessionStorage if they exist
         let savedFilters = {};
         const rawFilters = browser.sessionStorage.getItem(FILTER_STORAGE_KEY);
         if (rawFilters) {
-            try {
-                savedFilters = JSON.parse(rawFilters);
-            } catch (e) {
-                console.warn("Failed to parse saved filters");
-            }
+            try { savedFilters = JSON.parse(rawFilters); } catch (e) {}
         }
 
-        // 2. Initialize state with saved filters (or defaults)
         this.state = useState({
             date_from: savedFilters.date_from || '',
             date_to: savedFilters.date_to || '',
-            active_tab: savedFilters.active_tab || 'pos', // Remember the tab!
-            kpi: {
-                registered: 0, draft: 0, rejected: 0,
-                donors: 0, donees: 0, individuals: 0,
-            },
+            active_tab: savedFilters.active_tab || 'pos',
+            kpi: { registered: 0, draft: 0, rejected: 0, donors: 0, donees: 0, individuals: 0 },
             chart_regs: { labels: [], data: [] },
             chart_cats: { labels: [], data: [] },
             recent_registrations: [],
             recent_drafts: [],
-            // Tab data
-            pos_orders: [],
-            boxes: [],
-            home_services: [],
-            imports: [],
-            online: [],
-            in_kind: [],
+            
+            // Top Donors Data
+            pos_top_donors: [],
+            box_top_donors: [],
+            home_top_donors: [],
+            import_top_donors: [],
+            online_top_donors: [],
+            in_kind_top_donors: [],
         });
 
         this._charts = {};
         this.is_mounted = false;
 
-        onWillStart(async () => {
-            await this.fetch_data();
-        });
-
+        onWillStart(async () => { await this.fetch_data(); });
         onMounted(() => {
             this.is_mounted = true;
             this.render_charts();
         });
     }
 
-    // Helper to save current state to sessionStorage
     save_filters() {
-        const filters = {
+        browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
             date_from: this.state.date_from,
             date_to: this.state.date_to,
             active_tab: this.state.active_tab,
-        };
-        browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+        }));
     }
 
     async fetch_data() {
@@ -79,40 +66,34 @@ export class ProfileManagementDashboard extends Component {
             this.state.chart_cats = data.chart_cats;
             this.state.recent_registrations = data.recent_registrations;
             this.state.recent_drafts = data.recent_drafts;
-            this.state.pos_orders = data.pos_orders;
-            this.state.boxes = data.boxes;
-            this.state.home_services = data.home_services;
-            this.state.imports = data.imports;
-            this.state.online = data.online;
-            this.state.in_kind = data.in_kind;
+            
+            this.state.pos_top_donors = data.pos_top_donors;
+            this.state.box_top_donors = data.box_top_donors;
+            this.state.home_top_donors = data.home_top_donors;
+            this.state.import_top_donors = data.import_top_donors;
+            this.state.online_top_donors = data.online_top_donors;
+            this.state.in_kind_top_donors = data.in_kind_top_donors;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
-            this.env.services.notification.add(
-                "Failed to load dashboard data. Check console for details.",
-                { type: "danger" }
-            );
+            this.env.services.notification.add("Failed to load dashboard data.", { type: "danger" });
         }
-
-        if (this.is_mounted) {
-            this.render_charts();
-        }
+        if (this.is_mounted) this.render_charts();
     }
 
     async applyFilter() {
-        this.save_filters(); // <-- SAVE FILTERS
+        this.save_filters();
         await this.fetch_data();
     }
 
     setTab(tab) {
         this.state.active_tab = tab;
-        this.save_filters(); // <-- SAVE ACTIVE TAB
+        this.save_filters();
     }
 
     clearFilter() {
         this.state.date_from = '';
         this.state.date_to = '';
-        
-        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY); // <-- CLEAR STORAGE
+        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY);
         this.applyFilter();
     }
 
@@ -120,13 +101,7 @@ export class ProfileManagementDashboard extends Component {
         const today = new Date();
         const yyyy = today.getFullYear();
         const month = today.getMonth();
-
-        const fmt = (d) => {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${dd}`;
-        };
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
         if (type === 'this_month') {
             this.state.date_from = fmt(new Date(yyyy, month, 1));
@@ -147,57 +122,32 @@ export class ProfileManagementDashboard extends Component {
             if (this._charts.regs) this._charts.regs.destroy();
             this._charts.regs = new Chart(ctx1, {
                 type: 'bar',
-                data: {
-                    labels: this.state.chart_regs.labels,
-                    datasets: [{
-                        label: 'Registrations',
-                        data: this.state.chart_regs.data,
-                        backgroundColor: "rgba(75, 192, 192, 0.8)",
-                    }]
-                },
+                data: { labels: this.state.chart_regs.labels, datasets: [{ label: 'Registrations', data: this.state.chart_regs.data, backgroundColor: "rgba(75, 192, 192, 0.8)" }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
         }
-
         const ctx2 = $("#pm_chart_cats");
         if (ctx2.length) {
             if (this._charts.cats) this._charts.cats.destroy();
             this._charts.cats = new Chart(ctx2, {
                 type: 'doughnut',
-                data: {
-                    labels: this.state.chart_cats.labels,
-                    datasets: [{
-                        data: this.state.chart_cats.data,
-                        backgroundColor: ["#4bc0c0", "#36a2eb", "#ff6384", "#ffce56", "#cc65fe", "#ff9f40"],
-                    }]
-                },
+                data: { labels: this.state.chart_cats.labels, datasets: [{ data: this.state.chart_cats.data, backgroundColor: ["#4bc0c0", "#36a2eb", "#ff6384", "#ffce56", "#cc65fe", "#ff9f40"] }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
             });
         }
     }
 
-    formatStateName(stateName) {
-        if (!stateName) return '';
-        return stateName.charAt(0).toUpperCase() + stateName.slice(1).replace(/_/g, ' ');
-    }
-
-    getStateColor(stateName) {
-        if (!stateName) return 'bg-secondary';
-        const s = stateName.toLowerCase();
+    formatStateName(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ') : ''; }
+    getStateColor(s) {
+        if (!s) return 'bg-secondary';
+        s = s.toLowerCase();
         if (['register', 'available', 'paid', 'done'].includes(s)) return 'bg-success';
         if (['draft', 'pending'].includes(s)) return 'bg-warning text-dark';
         if (['reject', 'rejected', 'cancel'].includes(s)) return 'bg-danger';
         return 'bg-info text-white';
     }
-    
     openView(model, domain = []) {
-        this.actionService.doAction({
-            type: 'ir.actions.act_window',
-            res_model: model,
-            views: [[false, 'list'], [false, 'form']],
-            domain: domain,
-            target: 'current'
-        });
+        this.actionService.doAction({ type: 'ir.actions.act_window', res_model: model, views: [[false, 'list'], [false, 'form']], domain: domain, target: 'current' });
     }
 }
 
