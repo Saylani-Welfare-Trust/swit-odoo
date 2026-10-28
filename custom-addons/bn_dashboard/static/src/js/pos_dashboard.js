@@ -1,7 +1,7 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
 import { _t } from "@web/core/l10n/translation";
-import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
+import { Component, onWillStart, onMounted, useState, onWillDestroy } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
 export class PosDashboard extends Component {
@@ -54,6 +54,21 @@ export class PosDashboard extends Component {
             transfer_count: 0,
         });
 
+        // Restore filter state from sessionStorage if it exists
+        const savedStateStr = sessionStorage.getItem('pos_dashboard_filter_state');
+        if (savedStateStr) {
+            try {
+                const saved = JSON.parse(savedStateStr);
+                for (const key in saved) {
+                    if (this.state[key] !== undefined) {
+                        this.state[key] = saved[key];
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to parse saved dashboard state", e);
+            }
+        }
+
         this._charts = {};
 
         onWillStart(async () => {
@@ -64,6 +79,45 @@ export class PosDashboard extends Component {
         onMounted(async () => {
             this.is_mounted = true;
             await this.render_all_charts();
+            
+            // Restore scroll position
+            const savedScroll = sessionStorage.getItem('pos_dashboard_scroll');
+            if (savedScroll) {
+                // Odoo's main scrollable container is usually .o_content
+                const scrollable = document.querySelector('.o_content');
+                if (scrollable) {
+                    scrollable.scrollTop = parseInt(savedScroll, 10);
+                } else {
+                    window.scrollTo(0, parseInt(savedScroll, 10));
+                }
+            }
+        });
+
+        onWillDestroy(() => {
+            // Save filter state
+            const stateToSave = {
+                config_id: this.state.config_id,
+                province_id: this.state.province_id,
+                city_id: this.state.city_id,
+                zone_id: this.state.zone_id,
+                segment_l1: this.state.segment_l1,
+                segment_l2: this.state.segment_l2,
+                segment_l3: this.state.segment_l3,
+                segment_l4: this.state.segment_l4,
+                segment_type: this.state.segment_type,
+                category_id: this.state.category_id,
+                amount_min: this.state.amount_min,
+                amount_max: this.state.amount_max,
+                date_from: this.state.date_from,
+                date_to: this.state.date_to,
+                sales_period: this.state.sales_period,
+            };
+            sessionStorage.setItem('pos_dashboard_filter_state', JSON.stringify(stateToSave));
+
+            // Save scroll position
+            const scrollable = document.querySelector('.o_content');
+            const scrollTop = scrollable ? scrollable.scrollTop : window.scrollY;
+            sessionStorage.setItem('pos_dashboard_scroll', scrollTop);
         });
     }
 
@@ -79,7 +133,6 @@ export class PosDashboard extends Component {
         this.state.segments_l3 = hierarchy.segments_l3 || [];
         this.state.segments_l4 = hierarchy.segments_l4 || [];
 
-        // REPLACE the searchRead with this line:
         this.state.categories = await this.orm.call('pos.order', 'get_pos_categories', []);
     }
 
@@ -165,18 +218,18 @@ export class PosDashboard extends Component {
     async onchange_province() {
         this.state.city_id = null;
         this.state.zone_id = null;
-        this.state.config_id = null; // Reset shop
+        this.state.config_id = null;
         await this.refresh();
     }
 
     async onchange_city() {
         this.state.zone_id = null;
-        this.state.config_id = null; // Reset shop
+        this.state.config_id = null;
         await this.refresh();
     }
 
     async onchange_zone() {
-        this.state.config_id = null; // Reset shop
+        this.state.config_id = null;
         await this.refresh();
     }
 
@@ -209,12 +262,17 @@ export class PosDashboard extends Component {
         this.state.segment_l2  = null;
         this.state.segment_l3  = null;
         this.state.segment_l4  = null;
-        this.state.segment_type = ''; // <-- NEW
+        this.state.segment_type = '';
         this.state.category_id = null;
         this.state.amount_min  = null;
         this.state.amount_max  = null;
         this.state.date_from   = '';
         this.state.date_to     = '';
+        
+        // Clear saved state so it doesn't reload on next visit
+        sessionStorage.removeItem('pos_dashboard_filter_state');
+        sessionStorage.removeItem('pos_dashboard_scroll');
+        
         await this.refresh();
     }
 
@@ -264,7 +322,7 @@ export class PosDashboard extends Component {
             this.state.city_id     ? parseInt(this.state.city_id, 10)     : null,
             this.state.zone_id     ? parseInt(this.state.zone_id, 10)     : null,
             effective_segment_id,
-            this.state.segment_type || null, // <-- NEW
+            this.state.segment_type || null,
             this.state.category_id ? parseInt(this.state.category_id, 10) : null,
             num(this.state.amount_min),
             num(this.state.amount_max),
