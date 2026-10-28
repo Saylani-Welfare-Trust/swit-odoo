@@ -504,38 +504,29 @@ class Welfare(models.Model):
             else:
                 rec.previous_welfare_ids = False
 
+    def _get_previous_welfare(self):
+        """Most recent other application of the same donee that is past draft"""
+        self.ensure_one()
+        if not self.donee_id:
+            return self.browse()
+        domain = [('donee_id', '=', self.donee_id.id), ('state', '!=', 'draft')]
+        # _origin also excludes the saved record while the form is being edited
+        if self._origin.id:
+            domain.append(('id', '!=', self._origin.id))
+        return self.search(domain, order='date desc, id desc', limit=1)
+
     @api.depends('donee_id')
     def _compute_previous_disbursement_id(self):
         """Compute the most recent previous disbursement for the same donee"""
         for rec in self:
-            if rec.donee_id:
-                domain = [
-                    ('donee_id', '=', rec.donee_id.id),
-                    ('state', 'in', ['disbursed', 'recurring'])
-                ]
-                # Only exclude current record if it has a real integer ID (saved record)
-                if rec.id and isinstance(rec.id, int) and rec.id > 0:
-                    domain.append(('id', '!=', rec.id))
-                previous = self.search(domain, order='date desc', limit=1)
-                rec.previous_disbursement_id = previous[0] if previous else False
-            else:
-                rec.previous_disbursement_id = False
+            rec.previous_disbursement_id = rec._get_previous_welfare()
 
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
-        if not self.donee_id:
-            return
-
-        domain = [
-            ('donee_id', '=', self.donee_id.id),
-            ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
-        ]
-        
-        if self.id and isinstance(self.id, int) and self.id > 0:
-            domain.append(('id', '!=', self.id))
-        
-        previous_welfare = self.search(domain, order='date desc', limit=1)
+        previous_welfare = self._get_previous_welfare()
+        # Reset on every donee change so another donee's documents are never copied
+        self.previous_welfare_source_id = previous_welfare
 
         if previous_welfare:
             self.applicant_occupation = previous_welfare.applicant_occupation
@@ -583,17 +574,14 @@ class Welfare(models.Model):
             if previous_welfare.family_cnic_urls:
                 self.family_cnic_urls = previous_welfare.family_cnic_urls
 
-            # ✅ This is the only change — replaces the broken self.with_context() line
-            self.previous_welfare_source_id = previous_welfare.id
-
             return {
                 'warning': {
                     'title': 'Data Auto-Populated',
                     'message': (
                         f'Form has been automatically populated with data from previous application '
-                        f'dated {previous_welfare.date}.\n\n'
+                        f'{previous_welfare.name} dated {previous_welfare.date}.\n\n'
                         f'Document images will be copied when you save the record.\n\n'
-                        f'Previous Disbursements can be viewed in the "Previous Disbursements" tab.'
+                        f'Use "View Most Recent Disbursement" to open the previous application.'
                     )
                 }
             }
@@ -696,13 +684,24 @@ class Welfare(models.Model):
             vals['name'] = seq if seq else _('New')
 
         record = super().create(vals)
+        record._copy_previous_documents()
+        return record
 
-        # ✅ Read from the stored field, not from lost context
-        previous_welfare_id = record.previous_welfare_source_id.id
+    def write(self, vals):
+        res = super().write(vals)
+        # Donee changed on an already saved application
+        if vals.get('previous_welfare_source_id'):
+            self._copy_previous_documents()
+        return res
 
-        if previous_welfare_id:
-            previous_welfare = self.browse(previous_welfare_id)
-            for img in previous_welfare.document_image_ids:
+    def _copy_previous_documents(self):
+        """Copy the document images of previous_welfare_source_id (set by the donee onchange)"""
+        for record in self.filtered('previous_welfare_source_id'):
+            # Keep documents already uploaded on this application, only fill the missing types
+            existing_types = set(record.document_image_ids.mapped('document_type'))
+            for img in record.previous_welfare_source_id.document_image_ids:
+                if img.document_type in existing_types:
+                    continue
                 self.env['welfare.document.image'].sudo().create({
                     'welfare_id':     record.id,
                     'document_type':  img.document_type,
@@ -710,11 +709,9 @@ class Welfare(models.Model):
                     'image_filename': img.image_filename,
                     'source_url':     img.source_url,
                 })
-            
-            # ✅ Clear the helper field after copying so it doesn't linger
-            record.previous_welfare_source_id = False
 
-        return record
+            # Clear the helper field after copying so it doesn't linger
+            record.previous_welfare_source_id = False
     
     def clean_url(self, url) :
         return (
@@ -1419,15 +1416,15 @@ class Welfare(models.Model):
     def action_view_previous_disbursement(self):
         """Open the form view of the most recent previous disbursement"""
         self.ensure_one()
-        if self.previous_disbursement_id:
-            return {
-                'type': 'ir.actions.act_window',
-                'view_mode': 'form',
-                'res_model': 'welfare',
-                'res_id': self.previous_disbursement_id.id,
-                'target': 'current',
-            }
-        return {}
+        if not self.previous_disbursement_id:
+            raise UserError(_('No previous application found for this donee.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'welfare',
+            'res_id': self.previous_disbursement_id.id,
+            'target': 'current',
+        }
         
     def action_reverse_state(self):
         state_flow = [

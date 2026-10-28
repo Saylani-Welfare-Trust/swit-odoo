@@ -51,7 +51,7 @@
                     <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" groups = "bn_welfare.group_bn_welfare_user" />
                     <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
-                            invisible="state not in ['draft', 'hod_approve', 'mem_approve']"/>
+                            invisible="state not in ['draft', 'hod_approve', 'mem_approve'] or not previous_disbursement_id"/>
                     <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['committee_approval','hod_approve']" groups="bn_welfare.group_bn_welfare_committee, bn_welfare.group_welfare_hod"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" groups = "bn_welfare.group_bn_welfare_user" />
@@ -84,7 +84,7 @@
 
                     <group>
                         <group name="welfare_col_1">
-                            <field name="order_type" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
+                            <field name="order_type" required="1" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
                             <field name="employee_category_id" invisible="1" />
                             <field name="employee_category_id_officer" invisible="1" />
                             <field name="employee_domain" invisible="1"/>
@@ -143,7 +143,7 @@
                                     <field name="disbursement_category_id" optional="hide" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                                    <field name="is_hod" optional="show" />
+                                    <field name="is_hod" optional="hide" />
                                     <field name="payment_type" />
                                     <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
