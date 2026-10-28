@@ -72,7 +72,7 @@ class ProfileManagementDashboard(models.TransientModel):
             ['name', 'mobile', 'cnic_no', 'category_id', 'create_date']
         )
 
-        # --- Details Tabs (Fetching globally instead of limiting by partners) ---
+        # --- Details Tabs ---
         pos_orders, boxes, home_services, imports, online, in_kind = [], [], [], [], [], []
         
         # 1. POS Details
@@ -93,37 +93,46 @@ class ProfileManagementDashboard(models.TransientModel):
                 self.env['donation.box.registration.installation'], box_domain, ['name', 'lot_id', 'status', 'installation_date'], order='installation_date desc'
             )
 
+        # =========================================================================
+        # ⚠️ CHANGE THESE MODEL NAMES TO YOUR ACTUAL MODEL NAMES
+        # =========================================================================
+
         # 3. Home Service Details
-        # ⚠️ REPLACE 'home.service.detail' WITH YOUR ACTUAL MODEL NAME
-        if 'home.service.detail' in self.env:
+        # Change 'home.service.detail' to your actual model name
+        if 'home.service.detail' in self.env: 
             hs_domain = []
             if date_from: hs_domain.append(('date', '>=', date_from))
             if date_to: hs_domain.append(('date', '<=', date_to))
+            # You may also need to change ['name', 'date', 'amount', 'state'] to your actual fields
             home_services = safe_search_read(
                 self.env['home.service.detail'], hs_domain, ['name', 'date', 'amount', 'state'], order='date desc'
             )
 
         # 4. Import Details
-        # ⚠️ REPLACE 'import.detail' WITH YOUR ACTUAL MODEL NAME
+        # Change 'import.detail' to your actual model name
         if 'import.detail' in self.env:
             imp_domain = []
             if date_from: imp_domain.append(('date', '>=', date_from))
             if date_to: imp_domain.append(('date', '<=', date_to))
+            # You may also need to change ['name', 'date', 'amount', 'state'] to your actual fields
             imports = safe_search_read(
                 self.env['import.detail'], imp_domain, ['name', 'date', 'amount', 'state'], order='date desc'
             )
 
         # 5. Online Details
-        # ⚠️ REPLACE 'online.detail' WITH YOUR ACTUAL MODEL NAME
+        # Change 'online.detail' to your actual model name
         if 'online.detail' in self.env:
             on_domain = []
             if date_from: on_domain.append(('date', '>=', date_from))
             if date_to: on_domain.append(('date', '<=', date_to))
+            # You may also need to change ['name', 'date', 'amount', 'state'] to your actual fields
             online = safe_search_read(
                 self.env['online.detail'], on_domain, ['name', 'date', 'amount', 'state'], order='date desc'
             )
 
-        # 6. Donation In Kind (Matches your exact model)
+        # =========================================================================
+
+        # 6. Donation In Kind (Works perfectly)
         if 'donation.in.kind' in self.env:
             ik_domain = []
             if date_from: ik_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
@@ -135,7 +144,6 @@ class ProfileManagementDashboard(models.TransientModel):
                 limit=50, order='create_date desc'
             )
             
-            # Flatten the One2many lines for the table
             for rec in ik_records:
                 lines = self.env['donation.in.kind.line'].search_read(
                     [('donation_in_kind_id', '=', rec['id'])],
