@@ -615,7 +615,7 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return []
 
-        # Safely fetch "Location" plan IDs via ORM (handles translated name fields)
+        # Safely fetch "Location" plan IDs
         location_plans = self.env['account.analytic.plan'].search([('name', '=', 'Location')])
         plan_ids_sql = ",".join(map(str, location_plans.ids)) if location_plans else "0"
 
@@ -667,7 +667,19 @@ class PosOrder(models.Model):
         else:
             pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
-        # COALESCE: prefer product's own city, fall back to POS config's city
+        # --- STRICT CITY FILTER ---
+        # If the user selects a city in the dashboard, strictly filter the output to that city.
+        having_clause = ""
+        if city_id:
+            city_rec = self.env['account.analytic.account'].browse(int(city_id))
+            c_name = (city_rec.name.get('en_US') if isinstance(city_rec.name, dict) else city_rec.name) or ''
+            if c_name:
+                safe_c_name = c_name.replace("'", "''")
+                having_clause = f"HAVING COALESCE(pt_city.name, {city_name_expr}) = '{safe_c_name}'"
+        
+        # If you want it to ALWAYS show ONLY Quetta regardless of the filter, uncomment the line below:
+        # having_clause = "HAVING COALESCE(pt_city.name, " + city_name_expr + ") = 'Quetta'"
+
         query = f"""
             SELECT
                 pc.complete_name                              AS category_name,
@@ -694,6 +706,7 @@ class PosOrder(models.Model):
             WHERE pos_order_line.company_id = {company_id} {order_sql}
             GROUP BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}),
                     product_template.id, product_template.name
+            {having_clause}
             ORDER BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}) NULLS LAST,
                     total_amount DESC
         """
@@ -714,7 +727,6 @@ class PosOrder(models.Model):
             return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
                     else "%s %s" % (currency.symbol, val))
 
-        # Bucket: {group_name: {city_name: [products]}}
         tree = {g: {} for g in group_order}
 
         for r in docs:
