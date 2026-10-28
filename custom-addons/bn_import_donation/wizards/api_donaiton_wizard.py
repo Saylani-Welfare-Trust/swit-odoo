@@ -855,7 +855,7 @@ class APIDonationWizard(models.TransientModel):
     def _parse_iso_to_dt_fast(self, iso_str, history):
         """Fast ISO datetime parsing"""
         if not iso_str:
-            self.create_fetch_log(history.id, f"Missing datetime string: {iso_str}")
+            self.create_fetch_log(history.id, f"Missing datetime string: {iso_str}", "", "")
 
             return None
         try:
