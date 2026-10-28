@@ -312,11 +312,11 @@
                                 <thead>
                                     <tr>
                                         <th>Product</th>
-                                        <th class="text-end">Amount</th>
+                                        <th class="text-end">Unit Price</th>
                                         <!-- Dynamic City Columns -->
                                         <t t-foreach="state.products_by_category.cities" t-as="city" t-key="city_index">
                                             <th class="text-center">
-                                                <t t-esc="city"/> <span class="text-muted">(qty)</span>
+                                                <t t-esc="city"/> <span class="text-muted">(Amount)</span>
                                             </th>
                                         </t>
                                         <th class="text-end border-start">Total Amount</th>
@@ -336,12 +336,12 @@
                                             <tr>
                                                 <td class="ps-4"><t t-esc="prod['product_name']"/></td>
                                                 <td class="text-end"><t t-esc="prod['unit_price_fmt']"/></td>
-                                                <!-- Dynamic City Quantities -->
+                                                <!-- Dynamic City Amounts -->
                                                 <t t-foreach="state.products_by_category.cities" t-as="city" t-key="city_index">
                                                     <td class="text-center">
-                                                        <!-- FIX: Changed .get(city) to [city] -->
-                                                        <t t-if="prod['city_qty'][city]">
-                                                            <span class="badge bg-primary rounded-pill"><t t-esc="prod['city_qty'][city]"/></span>
+                                                        <!-- Changed to city_amount and removed the blue badge for cleaner currency display -->
+                                                        <t t-if="prod['city_amount'] and prod['city_amount'][city]">
+                                                            <span class="fw-semibold text-success"><t t-esc="prod['city_amount'][city]"/></span>
                                                         </t>
                                                         <t t-else="">
                                                             <span class="text-muted">-</span>

@@ -758,6 +758,16 @@ class PosOrder(models.Model):
         self._cr.execute(query)
         docs = self._cr.dictfetchall()
 
+        currency = self.env.company.currency_id
+
+        def _fmt(v):
+            try:
+                val = "{:,.2f}".format(float(v or 0.0))
+            except (ValueError, TypeError):
+                val = "0.00"
+            return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
+                    else "%s %s" % (currency.symbol, val))
+
         # --- PIVOTING LOGIC ---
         all_cities = set()
         grouped_products = {}
@@ -774,14 +784,14 @@ class PosOrder(models.Model):
                     'product_name': r.get('product_name') or 'Unknown',
                     'unit_price': float(r.get('unit_price') or 0.0),
                     'total_amount': 0.0,
-                    'city_qty': {}
+                    'city_amount': {}  # Changed from city_qty
                 }
 
-            qty = float(r.get('sale_qty') or 0)
             amt = float(r.get('total_amount') or 0.0)
             
             grouped_products[prod_id]['total_amount'] += amt
-            grouped_products[prod_id]['city_qty'][city] = grouped_products[prod_id]['city_qty'].get(city, 0) + qty
+            # Accumulate amount instead of qty
+            grouped_products[prod_id]['city_amount'][city] = grouped_products[prod_id]['city_amount'].get(city, 0.0) + amt
 
         sorted_cities = sorted(list(all_cities))
         
@@ -793,30 +803,19 @@ class PosOrder(models.Model):
             if pdata['group_name'] in groups_dict:
                 groups_dict[pdata['group_name']].append(pdata)
 
-        currency = self.env.company.currency_id
-
-        def _fmt(v):
-            try:
-                val = "{:,.2f}".format(float(v or 0.0))
-            except (ValueError, TypeError):
-                val = "0.00"
-            return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
-                    else "%s %s" % (currency.symbol, val))
-
         result_groups = []
         for group_name in group_order:
             prods = groups_dict[group_name]
             if not prods:
                 continue
                 
-            # Sort products by total_amount descending
             prods.sort(key=lambda x: x['total_amount'], reverse=True)
             
             for p in prods:
                 p['unit_price_fmt'] = _fmt(p['unit_price'])
                 p['total_amount_fmt'] = _fmt(p['total_amount'])
-                # Convert quantities to clean integers
-                p['city_qty'] = {c: int(q) for c, q in p['city_qty'].items()}
+                # Format the city amounts
+                p['city_amount'] = {c: _fmt(a) for c, a in p['city_amount'].items()}
 
             result_groups.append({
                 'group_name': group_name,
