@@ -599,7 +599,7 @@ class PosOrder(models.Model):
         all_categs = (categs | parent_categs).sorted('complete_name')
         
         return [{'id': c.id, 'name': c.complete_name} for c in all_categs]
-    
+  
     @api.model
     def get_products_by_category_group(self, config_id=None, date_from=None, date_to=None,
                                     province_id=None, city_id=None, zone_id=None,
@@ -617,19 +617,19 @@ class PosOrder(models.Model):
 
         self._cr.execute("""
             SELECT
-                pc.complete_name                         AS category_name,
-                (pt.name)->>'en_US'                      AS product_name,
-                pt.id                                    AS product_id,
-                COALESCE(AVG(pol.price_unit), 0)         AS unit_price,
-                COALESCE(SUM(pol.qty), 0)                AS sale_qty,
-                COALESCE(SUM(pol.price_subtotal_incl), 0) AS total_amount
-            FROM pos_order_line pol
-            INNER JOIN pos_order        po ON po.id = pol.order_id
-            INNER JOIN product_product  pp ON pp.id = pol.product_id
-            INNER JOIN product_template pt ON pp.product_tmpl_id = pt.id
-            INNER JOIN product_category pc ON pc.id = pt.categ_id
-            WHERE pol.company_id = %d %s
-            GROUP BY pc.complete_name, pt.id, pt.name
+                pc.complete_name                            AS category_name,
+                (product_template.name)->>'en_US'           AS product_name,
+                product_template.id                         AS product_id,
+                COALESCE(AVG(pos_order_line.price_unit), 0) AS unit_price,
+                COALESCE(SUM(pos_order_line.qty), 0)        AS sale_qty,
+                COALESCE(SUM(pos_order_line.price_subtotal_incl), 0) AS total_amount
+            FROM pos_order_line
+            INNER JOIN pos_order        ON pos_order.id = pos_order_line.order_id
+            INNER JOIN product_product  ON product_product.id = pos_order_line.product_id
+            INNER JOIN product_template ON product_product.product_tmpl_id = product_template.id
+            INNER JOIN product_category pc ON pc.id = product_template.categ_id
+            WHERE pos_order_line.company_id = %d %s
+            GROUP BY pc.complete_name, product_template.id, product_template.name
             ORDER BY pc.complete_name, total_amount DESC
         """ % (company_id, order_sql))
 
