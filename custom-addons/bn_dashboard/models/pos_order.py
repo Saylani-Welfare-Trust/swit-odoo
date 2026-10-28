@@ -599,3 +599,88 @@ class PosOrder(models.Model):
         all_categs = (categs | parent_categs).sorted('complete_name')
         
         return [{'id': c.id, 'name': c.complete_name} for c in all_categs]
+    
+    @api.model
+    def get_products_by_category_group(self, config_id=None, date_from=None, date_to=None,
+                                    province_id=None, city_id=None, zone_id=None,
+                                    segment_id=None, segment_type=None,
+                                    category_id=None, amount_min=None, amount_max=None,
+                                    *extra, **kwargs):
+        company_id = self.env.company.id
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id,
+                                        city_id, zone_id, segment_id, segment_type)
+        domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
+        order_sql = self._get_order_ids_sql(domain)
+
+        if "1=0" in order_sql:
+            return []
+
+        self._cr.execute("""
+            SELECT
+                pc.complete_name                         AS category_name,
+                (pt.name)->>'en_US'                      AS product_name,
+                pt.id                                    AS product_id,
+                COALESCE(AVG(pol.price_unit), 0)         AS unit_price,
+                COALESCE(SUM(pol.qty), 0)                AS sale_qty,
+                COALESCE(SUM(pol.price_subtotal_incl), 0) AS total_amount
+            FROM pos_order_line pol
+            INNER JOIN pos_order        po ON po.id = pol.order_id
+            INNER JOIN product_product  pp ON pp.id = pol.product_id
+            INNER JOIN product_template pt ON pp.product_tmpl_id = pt.id
+            INNER JOIN product_category pc ON pc.id = pt.categ_id
+            WHERE pol.company_id = %d %s
+            GROUP BY pc.complete_name, pt.id, pt.name
+            ORDER BY pc.complete_name, total_amount DESC
+        """ % (company_id, order_sql))
+
+        docs = self._cr.dictfetchall()
+
+        group_order = ['Nafla', 'Wajiba', 'Non-Donation', 'PoS',
+                    'Donation In Kind', 'Donation Box', 'Other']
+        grouped = {k: [] for k in group_order}
+
+        for r in docs:
+            grouped[self._categorize_category(r.get('category_name'))].append(r)
+
+        currency = self.env.company.currency_id
+
+        def _fmt(v):
+            try:
+                val = "{:,.2f}".format(float(v or 0.0))
+            except (ValueError, TypeError):
+                val = "0.00"
+            return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
+                    else "%s %s" % (currency.symbol, val))
+
+        result = []
+        for group_name in group_order:
+            products = grouped.get(group_name, [])
+            if not products:
+                continue
+            result.append({
+                'group_name': group_name,
+                'products': [{
+                    'product_name': p.get('product_name') or 'Unknown',
+                    'unit_price'  : _fmt(p.get('unit_price')),
+                    'sale_qty'    : int(p.get('sale_qty') or 0),
+                    'total_amount': _fmt(p.get('total_amount')),
+                } for p in products],
+            })
+        return result
+
+
+    def _categorize_category(self, complete_name):
+        name = complete_name or ''
+        if 'Saleable / Nafla' in name:
+            return 'Nafla'
+        if 'Saleable / Wajiba' in name:
+            return 'Wajiba'
+        if 'Saleable / Non-Donation' in name:
+            return 'Non-Donation'
+        if 'Saleable / PoS' in name:
+            return 'PoS'
+        if 'Donation In Kind' in name:
+            return 'Donation In Kind'
+        if 'Donation Box' in name:
+            return 'Donation Box'
+        return 'Other'

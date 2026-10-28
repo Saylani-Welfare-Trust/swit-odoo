@@ -23,7 +23,7 @@ export class PosDashboard extends Component {
             segment_l2: null,
             segment_l3: null,
             segment_l4: null,
-            segment_type: '', // <-- NEW
+            segment_type: '',
             provinces: [],
             cities: [],
             zones: [],
@@ -34,6 +34,7 @@ export class PosDashboard extends Component {
             category_id: null,
             categories: [],
             amount_min: null,
+            products_by_category: [],
             amount_max: null,
             date_from: '',
             date_to: '',
@@ -156,6 +157,9 @@ export class PosDashboard extends Component {
         this.state.cheque_count   = (treasury.cheque_count   || 0).toLocaleString('en-US');
         this.state.deposit_count  = (treasury.deposit_count  || 0).toLocaleString('en-US');
         this.state.transfer_count = (treasury.transfer_count || 0).toLocaleString('en-US');
+        
+        this.state.products_by_category =
+            await this.orm.call('pos.order', 'get_products_by_category_group', args);
     }
 
     async onchange_province() {
