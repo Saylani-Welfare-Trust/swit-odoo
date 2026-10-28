@@ -687,8 +687,14 @@
         name="Welfare"
         web_icon="bn_welfare,static/description/icon.png"
         groups="bn_welfare.welfare_group"
-        action="welfare_action_institution"
         sequence="6"/>
+
+    <!-- No app action: Odoo opens the first submenu the user can see, so users only get
+         Individual or Institution Disbursement by default as their groups allow.
+         menuitem never clears an action already in the database, hence this record. -->
+    <record id="welfare_menu" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
 
     <menuitem
         id="disbursement_request_menu"
