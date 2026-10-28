@@ -150,7 +150,8 @@
                                     <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
                                     <field name="collection_date" />
                                     <field name="marriage_date" optional="hide" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
-                                    <field name="quantity" />   
+                                    <field name="is_cash_category" column_invisible="1" />
+                                    <field name="quantity" readonly="is_cash_category" force_save="1" />
                                     <field name="amount" readonly="1" optional="hide" />
                                     <field name="fixed_amount_check" column_invisible="1" />
                                     <field name="total_amount" readonly="fixed_amount_check" />

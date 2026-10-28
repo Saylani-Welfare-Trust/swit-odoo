@@ -108,6 +108,7 @@ class WelfareLine(models.Model):
         required=True
     )
     fixed_amount_check = fields.Boolean('Fixed Amount Check', default=False, compute='_compute_fixed_amount_check')
+    is_cash_category = fields.Boolean('Is Cash Category', compute='_compute_is_cash_category')
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
     is_collection_point_readonly = fields.Boolean(string="Is Collection Point Readonly", compute='_compute_is_collection_point_readonly', store=False)
 
@@ -422,15 +423,21 @@ class WelfareLine(models.Model):
             rec.fixed_amount_check = rec.disbursement_category_id.name =="In Kind"
 
     @api.depends('disbursement_category_id')
+    def _compute_is_cash_category(self):
+        for rec in self:
+            rec.is_cash_category = rec.disbursement_category_id.name == "Cash"
+
+    @api.depends('disbursement_category_id')
     def _compute_is_collection_point_readonly(self):
         for rec in self:
             rec.is_collection_point_readonly = rec.disbursement_category_id.name == "In Kind"
 
 
-    @api.depends('quantity', 'amount', 'advance_donation_amount')
+    @api.depends('quantity', 'amount', 'advance_donation_amount', 'disbursement_category_id')
     def _compute_total_amount(self):
         for rec in self:
-            if not rec.manual_total:
+            # In Kind total is read-only, so it always follows quantity x price
+            if not rec.manual_total or rec.fixed_amount_check:
                 amount = rec.quantity * rec.amount
                 rec.total_amount = amount - rec.advance_donation_amount if (rec.advance_donation_amount > 0) else amount
 
@@ -513,6 +520,9 @@ class WelfareLine(models.Model):
         in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
         if in_kind_category and self.disbursement_category_id.id == in_kind_category.id:
             self.collection_point = 'branch'
+        # Quantity is read-only for Cash, so don't leave a quantity from another category
+        if self.disbursement_category_id.name == "Cash":
+            self.quantity = 1
     def can_disburse(self):
         """Check if line can be disbursed (not already collected/returned/disbursed)"""
         return self.state not in ['collected', 'return', 'disbursed']
