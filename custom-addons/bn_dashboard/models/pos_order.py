@@ -638,7 +638,10 @@ class PosOrder(models.Model):
         name_field = self.env['account.analytic.account']._fields['name']
         
         def _name_col(alias):
-            return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
+            # Added TRIM to ensure exact matches when comparing valid cities
+            if name_field.translate:
+                return f"TRIM(({alias}.name)->>'en_US')"
+            return f"TRIM({alias}.name)"
 
         # 2. Dynamically check the custom 'City' field on pos.config
         pos_city_field = None
@@ -656,7 +659,6 @@ class PosOrder(models.Model):
             fobj = self.env['pos.config']._fields[pos_city_field]
             if fobj.type == 'char':
                 pos_city_join = ""
-                # Improved split: tries after slash first (e.g. SDC/Quetta -> Quetta), then falls back to the whole text
                 pos_city_name_expr = f"COALESCE(NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 2)), ''), NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 1)), ''))"
             elif fobj.type == 'many2one':
                 comodel = fobj.comodel_name
@@ -726,7 +728,7 @@ class PosOrder(models.Model):
             city_rec = self.env['account.analytic.account'].browse(int(city_id))
             c_name = (city_rec.name.get('en_US') if isinstance(city_rec.name, dict) else city_rec.name) or ''
             if c_name:
-                safe_c_name = c_name.replace("'", "''")
+                safe_c_name = c_name.replace("'", "''").strip()
                 having_clause = f"HAVING {city_name_expr} = '{safe_c_name}'"
 
         query = f"""
@@ -758,6 +760,21 @@ class PosOrder(models.Model):
         self._cr.execute(query)
         docs = self._cr.dictfetchall()
 
+        # --- NEW: Get Valid Cities based on active filters ---
+        valid_cities = None
+        if city_id:
+            city_rec = self.env['account.analytic.account'].browse(int(city_id))
+            c_name = (city_rec.name.get('en_US') if isinstance(city_rec.name, dict) else city_rec.name) or ''
+            if c_name:
+                valid_cities = {c_name.strip()}
+        elif province_id:
+            cities = self.env['account.analytic.account'].search([('parent_id', '=', int(province_id))])
+            valid_cities = set()
+            for c in cities:
+                c_name = (c.name.get('en_US') if isinstance(c.name, dict) else c.name) or ''
+                if c_name:
+                    valid_cities.add(c_name.strip())
+
         currency = self.env.company.currency_id
 
         def _fmt(v):
@@ -773,11 +790,12 @@ class PosOrder(models.Model):
         grouped_products = {}
 
         for r in docs:
-            city = r.get('city_name') or 'No City'
+            city = (r.get('city_name') or 'No City').strip()
             
-            # Ignore "No City" from becoming a column header
+            # Ignore "No City" and only add cities that fall within the selected province/city
             if city != 'No City':
-                all_cities.add(city)
+                if valid_cities is None or city in valid_cities:
+                    all_cities.add(city)
                 
             grp = self._categorize_category(r.get('category_name'))
             prod_id = r.get('product_id')
