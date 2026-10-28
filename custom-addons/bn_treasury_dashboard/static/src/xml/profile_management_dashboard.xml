@@ -245,12 +245,13 @@
                                 </table>
                             </t>
 
-                            <!-- 6. Donation In Kind Tab (FIXED to match your screenshot) -->
+                            <!-- 6. Donation In Kind Tab (FIXED to read from flattened child lines) -->
                             <t t-if="state.active_tab === 'in_kind'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Reference</th>
+                                            <th>Name</th>
+                                            <th>Donor</th>
                                             <th>Product</th>
                                             <th>Location</th>
                                             <th class="text-end">Quantity</th>
@@ -258,25 +259,22 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <t t-foreach="state.in_kind" t-as="ik" t-key="ik.id">
+                                        <t t-foreach="state.in_kind" t-as="ik" t-key="ik_index">
                                             <tr>
-                                                <td><t t-esc="ik.name"/></td>
-                                                <td><t t-esc="ik.product_id ? ik.product_id[1] : '-'"/></td>
-                                                <td>
-                                                    <t t-if="ik.location_id"><t t-esc="ik.location_id[1]"/></t>
-                                                    <t t-elif="ik.location"><t t-esc="ik.location"/></t>
-                                                    <t t-else="-"/>
-                                                </td>
-                                                <td class="text-end fw-semibold"><t t-esc="ik.quantity || '-'"/></td>
+                                                <td><t t-esc="ik.reference"/></td>
+                                                <td><t t-esc="ik.donor"/></td>
+                                                <td><t t-esc="ik.product"/></td>
+                                                <td><t t-esc="ik.location"/></td>
+                                                <td class="text-end fw-semibold"><t t-esc="ik.quantity"/></td>
                                                 <td class="text-end">
-                                                    <span t-attf-class="badge {{ getStateColor(ik.status) }}">
-                                                        <t t-esc="formatStateName(ik.status)"/>
+                                                    <span t-attf-class="badge {{ getStateColor(ik.state) }}">
+                                                        <t t-esc="formatStateName(ik.state)"/>
                                                     </span>
                                                 </td>
                                             </tr>
                                         </t>
                                         <t t-if="!state.in_kind.length">
-                                            <tr><td colspan="5" class="text-center text-muted py-4">No records found</td></tr>
+                                            <tr><td colspan="6" class="text-center text-muted py-4">No records found</td></tr>
                                         </t>
                                     </tbody>
                                 </table>

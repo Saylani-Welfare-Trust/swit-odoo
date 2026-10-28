@@ -61,7 +61,7 @@ class ProfileManagementDashboard(models.TransientModel):
         except Exception:
             pass
 
-        # --- Tables ---
+        # --- Tables (Top 2) ---
         recent_registrations = safe_search_read(
             Partner, domain + [('state', '=', 'register')],
             ['name', 'mobile', 'cnic_no', 'category_id', 'create_date']
@@ -124,33 +124,33 @@ class ProfileManagementDashboard(models.TransientModel):
                     self.env['online.detail'], on_domain, ['name', 'date', 'amount', 'state'], order='date desc'
                 )
 
-            # 6. Donation In Kind (FIXED to match your screenshot)
+            # 6. Donation In Kind (FIXED to read from the child lines)
             if 'donation.in.kind' in self.env:
-                ik_model = self.env['donation.in.kind']
-                ik_domain = []
+                ik_domain = [('donor_id', 'in', partner_ids)]
+                if date_from: ik_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
+                if date_to: ik_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
                 
-                # Your model uses 'donor_id' instead of 'partner_id'
-                if 'donor_id' in ik_model._fields:
-                    ik_domain.append(('donor_id', 'in', partner_ids))
-                elif 'partner_id' in ik_model._fields:
-                    ik_domain.append(('partner_id', 'in', partner_ids))
-
-                # Apply date filters safely if the field exists
-                if 'date' in ik_model._fields:
-                    if date_from: ik_domain.append(('date', '>=', date_from))
-                    if date_to: ik_domain.append(('date', '<=', date_to))
-                elif 'create_date' in ik_model._fields:
-                    if date_from: ik_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
-                    if date_to: ik_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
-
-                # Fetch exact fields from your screenshot
-                ik_fields = ['name', 'status']
-                if 'product_id' in ik_model._fields: ik_fields.append('product_id')
-                if 'location' in ik_model._fields: ik_fields.append('location')
-                if 'location_id' in ik_model._fields: ik_fields.append('location_id')
-                if 'quantity' in ik_model._fields: ik_fields.append('quantity')
+                ik_records = safe_search_read(
+                    self.env['donation.in.kind'], ik_domain, 
+                    ['name', 'donor_id', 'state', 'donation_in_kind_line_ids'], 
+                    limit=50, order='create_date desc'
+                )
                 
-                in_kind = safe_search_read(ik_model, ik_domain, ik_fields, order='id desc')
+                # Flatten the One2many lines into a flat list for the table
+                for rec in ik_records:
+                    lines = self.env['donation.in.kind.line'].search_read(
+                        [('donation_in_kind_id', '=', rec['id'])],
+                        ['product_id', 'location_id', 'quantity']
+                    )
+                    for line in lines:
+                        in_kind.append({
+                            'reference': rec['name'],
+                            'donor': rec['donor_id'][1] if rec['donor_id'] else '-',
+                            'product': line['product_id'][1] if line['product_id'] else '-',
+                            'location': line['location_id'][1] if line['location_id'] else '-',
+                            'quantity': line['quantity'],
+                            'state': rec['state']
+                        })
 
         return {
             'kpi': {
