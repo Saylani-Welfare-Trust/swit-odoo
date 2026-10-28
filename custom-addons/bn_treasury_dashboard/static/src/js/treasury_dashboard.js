@@ -2,7 +2,10 @@
 
 import { Component, onWillStart, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
+import { browser } from "@web/core/browser/browser"; // <-- IMPORTED BROWSER
 import { useService } from "@web/core/utils/hooks";
+
+const FILTER_STORAGE_KEY = 'treasury_dashboard_filters';
 
 export class TreasuryDashboard extends Component {
     static template = "treasury_dashboard.Dashboard";
@@ -10,19 +13,32 @@ export class TreasuryDashboard extends Component {
     setup() {
         this.actionService = useService("action");
 
+        // 1. Load saved filters from sessionStorage if they exist
+        let savedFilters = {};
+        const rawFilters = browser.sessionStorage.getItem(FILTER_STORAGE_KEY);
+        if (rawFilters) {
+            try {
+                savedFilters = JSON.parse(rawFilters);
+            } catch (e) {
+                console.warn("Failed to parse saved filters");
+            }
+        }
+
+        // 2. Initialize state with saved filters (or defaults)
         this.state = useState({
-            date_from: '',
-            date_to: '',
-            branch_id: '',
-            province_id: '',
-            city_id: '',
-            zone_id: '',
-            segment_l1: '',
-            segment_l2: '',
-            segment_l3: '',
-            segment_l4: '',
-            amount_min: '',
-            amount_max: '',
+            date_from: savedFilters.date_from || '',
+            date_to: savedFilters.date_to || '',
+            branch_id: savedFilters.branch_id || '',
+            province_id: savedFilters.province_id || '',
+            city_id: savedFilters.city_id || '',
+            zone_id: savedFilters.zone_id || '',
+            segment_l1: savedFilters.segment_l1 || '',
+            segment_l2: savedFilters.segment_l2 || '',
+            segment_l3: savedFilters.segment_l3 || '',
+            segment_l4: savedFilters.segment_l4 || '',
+            amount_min: savedFilters.amount_min || '',
+            amount_max: savedFilters.amount_max || '',
+            
             analytic_accounts: [],
             provinces: [],
             cities: [],
@@ -38,6 +54,25 @@ export class TreasuryDashboard extends Component {
         });
 
         onWillStart(async () => { await this.fetchData(); });
+    }
+
+    // Helper to save current filters to sessionStorage
+    save_filters() {
+        const filters = {
+            date_from: this.state.date_from,
+            date_to: this.state.date_to,
+            branch_id: this.state.branch_id,
+            province_id: this.state.province_id,
+            city_id: this.state.city_id,
+            zone_id: this.state.zone_id,
+            segment_l1: this.state.segment_l1,
+            segment_l2: this.state.segment_l2,
+            segment_l3: this.state.segment_l3,
+            segment_l4: this.state.segment_l4,
+            amount_min: this.state.amount_min,
+            amount_max: this.state.amount_max,
+        };
+        browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
     }
 
     // Location Cascades
@@ -158,6 +193,7 @@ export class TreasuryDashboard extends Component {
     }
 
     async applyFilter() {
+        this.save_filters(); // <-- SAVE FILTERS
         await this.fetchData();
     }
 
@@ -174,6 +210,8 @@ export class TreasuryDashboard extends Component {
         this.state.segment_l4 = '';
         this.state.amount_min = '';
         this.state.amount_max = '';
+        
+        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY); // <-- CLEAR STORAGE
         this.applyFilter();
     }
 

@@ -1,17 +1,32 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
+import { browser } from "@web/core/browser/browser"; // <-- IMPORTED BROWSER
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+
+const FILTER_STORAGE_KEY = 'profile_management_dashboard_filters';
 
 export class ProfileManagementDashboard extends Component {
     setup() {
         this.orm = useService('orm');
         this.actionService = useService("action");
 
+        // 1. Load saved filters from sessionStorage if they exist
+        let savedFilters = {};
+        const rawFilters = browser.sessionStorage.getItem(FILTER_STORAGE_KEY);
+        if (rawFilters) {
+            try {
+                savedFilters = JSON.parse(rawFilters);
+            } catch (e) {
+                console.warn("Failed to parse saved filters");
+            }
+        }
+
+        // 2. Initialize state with saved filters (or defaults)
         this.state = useState({
-            date_from: '',
-            date_to: '',
-            active_tab: 'pos', // Default tab
+            date_from: savedFilters.date_from || '',
+            date_to: savedFilters.date_to || '',
+            active_tab: savedFilters.active_tab || 'pos', // Remember the tab!
             kpi: {
                 registered: 0, draft: 0, rejected: 0,
                 donors: 0, donees: 0, individuals: 0,
@@ -42,6 +57,16 @@ export class ProfileManagementDashboard extends Component {
         });
     }
 
+    // Helper to save current state to sessionStorage
+    save_filters() {
+        const filters = {
+            date_from: this.state.date_from,
+            date_to: this.state.date_to,
+            active_tab: this.state.active_tab,
+        };
+        browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    }
+
     async fetch_data() {
         try {
             const data = await this.orm.call('profile.management.dashboard', 'get_dashboard_data', [
@@ -62,7 +87,6 @@ export class ProfileManagementDashboard extends Component {
             this.state.in_kind = data.in_kind;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
-            // Show alert if RPC fails so you know why
             this.env.services.notification.add(
                 "Failed to load dashboard data. Check console for details.",
                 { type: "danger" }
@@ -75,16 +99,20 @@ export class ProfileManagementDashboard extends Component {
     }
 
     async applyFilter() {
+        this.save_filters(); // <-- SAVE FILTERS
         await this.fetch_data();
     }
 
     setTab(tab) {
         this.state.active_tab = tab;
+        this.save_filters(); // <-- SAVE ACTIVE TAB
     }
 
     clearFilter() {
         this.state.date_from = '';
         this.state.date_to = '';
+        
+        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY); // <-- CLEAR STORAGE
         this.applyFilter();
     }
 
