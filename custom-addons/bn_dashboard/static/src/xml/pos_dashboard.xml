@@ -339,7 +339,8 @@
                                                 <!-- Dynamic City Quantities -->
                                                 <t t-foreach="state.products_by_category.cities" t-as="city" t-key="city_index">
                                                     <td class="text-center">
-                                                        <t t-if="prod['city_qty'].get(city)">
+                                                        <!-- FIX: Changed .get(city) to [city] -->
+                                                        <t t-if="prod['city_qty'][city]">
                                                             <span class="badge bg-primary rounded-pill"><t t-esc="prod['city_qty'][city]"/></span>
                                                         </t>
                                                         <t t-else="">
