@@ -615,11 +615,10 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return []
 
-        # Safely fetch "Location" plan IDs
         location_plans = self.env['account.analytic.plan'].search([('name', '=', 'Location')])
         plan_ids_sql = ",".join(map(str, location_plans.ids)) if location_plans else "0"
 
-        # Determine how to join the product's analytic account
+        # 1. Join Product's Analytic Account
         if 'analytic_account_id' in self.env['product.template']._fields:
             pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
         elif 'analytic_account_ids' in self.env['product.template']._fields:
@@ -636,16 +635,23 @@ class PosOrder(models.Model):
         else:
             pt_acc_join = ""
 
-        # Handle translated names for account.analytic.account
         name_field = self.env['account.analytic.account']._fields['name']
-        city_name_expr = ("COALESCE((city_acc.name)->>'en_US', 'No City')"
-                        if name_field.translate else
-                        "COALESCE(city_acc.name, 'No City')")
-
+        
         def _name_col(alias):
             return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
 
-        # Traverse product's analytic account hierarchy to find the City node
+        # 2. Dynamically check if a custom 'City' field exists on pos.config
+        # (Adjust the list if your custom field has a different technical name)
+        pos_city_field = next((f for f in ['city_id', 'pos_city_id', 'city_analytic_id', 'analytic_city_id'] if f in self.env['pos.config']._fields), None)
+        
+        if pos_city_field:
+            pos_city_join = f"LEFT JOIN account_analytic_account pos_city ON pos_city.id = pos_config.{pos_city_field}"
+            pos_city_name_expr = _name_col('pos_city')
+        else:
+            pos_city_join = ""
+            pos_city_name_expr = "NULL"
+
+        # 3. Join Product's Analytic hierarchy to find City
         if pt_acc_join:
             pt_city_join = f"""
                 LEFT JOIN LATERAL (
@@ -667,23 +673,46 @@ class PosOrder(models.Model):
         else:
             pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
-        # --- STRICT CITY FILTER ---
-        # If the user selects a city in the dashboard, strictly filter the output to that city.
+        # 4. Join POS Config's Branch Analytic hierarchy (fallback)
+        pos_fb_city_join = f"""
+            LEFT JOIN LATERAL (
+                SELECT
+                    CASE
+                        WHEN c2.id IS NOT NULL AND c3.id IS NULL THEN {_name_col('c1')}
+                        WHEN c3.id IS NOT NULL AND c4.id IS NULL THEN {_name_col('c2')}
+                        WHEN c4.id IS NOT NULL THEN {_name_col('c3')}
+                    END AS name
+                FROM account_analytic_account c1
+                LEFT JOIN account_analytic_account c2 ON c2.id = c1.parent_id
+                LEFT JOIN account_analytic_account c3 ON c3.id = c2.parent_id
+                LEFT JOIN account_analytic_account c4 ON c4.id = c3.parent_id
+                WHERE c1.id = pos_config.analytic_account_id
+            ) pos_fb_city ON true
+        """
+
+        # Final City Expression: Try Product City -> POS Config Custom City -> POS Config Parents -> 'No City'
+        city_name_expr = f"COALESCE(pt_city.name, {pos_city_name_expr}, pos_fb_city.name, 'No City')"
+
+        # 5. Filtering Logic
         having_clause = ""
         if city_id:
             city_rec = self.env['account.analytic.account'].browse(int(city_id))
             c_name = (city_rec.name.get('en_US') if isinstance(city_rec.name, dict) else city_rec.name) or ''
             if c_name:
                 safe_c_name = c_name.replace("'", "''")
-                having_clause = f"HAVING COALESCE(pt_city.name, {city_name_expr}) = '{safe_c_name}'"
+                having_clause = f"HAVING {city_name_expr} = '{safe_c_name}'"
+        else:
+            # FORCE ONLY QUETTA: Uncomment the line below to always restrict to Quetta if no city is selected
+            # having_clause = f"HAVING {city_name_expr} = 'Quetta'"
+            pass
         
-        # If you want it to ALWAYS show ONLY Quetta regardless of the filter, uncomment the line below:
-        # having_clause = "HAVING COALESCE(pt_city.name, " + city_name_expr + ") = 'Quetta'"
+        # Hardcoded Quetta filter for your specific request
+        having_clause = f"HAVING {city_name_expr} = 'Quetta'"
 
         query = f"""
             SELECT
                 pc.complete_name                              AS category_name,
-                COALESCE(pt_city.name, {city_name_expr})      AS city_name,
+                {city_name_expr}                              AS city_name,
                 (product_template.name)->>'en_US'             AS product_name,
                 product_template.id                           AS product_id,
                 COALESCE(AVG(pos_order_line.price_unit), 0)   AS unit_price,
@@ -692,22 +721,18 @@ class PosOrder(models.Model):
             FROM pos_order_line
             INNER JOIN pos_order          ON pos_order.id = pos_order_line.order_id
             LEFT  JOIN pos_config         ON pos_config.id = pos_order.config_id
-            LEFT  JOIN account_analytic_account shop_acc
-                        ON shop_acc.id = pos_config.analytic_account_id
-            LEFT  JOIN account_analytic_account zone_acc
-                        ON zone_acc.id = shop_acc.parent_id
-            LEFT  JOIN account_analytic_account city_acc
-                        ON city_acc.id = zone_acc.parent_id
+            {pos_city_join}
+            {pos_fb_city_join}
             INNER JOIN product_product    ON product_product.id = pos_order_line.product_id
-            INNER JOIN product_template   ON product_product.product_tmpl_id = product_template.id
+            INNER JOIN product_template   ON product_template.product_tmpl_id = product_template.id
             INNER JOIN product_category   AS pc ON pc.id = product_template.categ_id
             {pt_acc_join}
             {pt_city_join}
             WHERE pos_order_line.company_id = {company_id} {order_sql}
-            GROUP BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}),
+            GROUP BY pc.complete_name, {city_name_expr},
                     product_template.id, product_template.name
             {having_clause}
-            ORDER BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}) NULLS LAST,
+            ORDER BY pc.complete_name, {city_name_expr} NULLS LAST,
                     total_amount DESC
         """
 
