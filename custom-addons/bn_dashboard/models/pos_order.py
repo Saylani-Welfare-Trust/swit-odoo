@@ -615,6 +615,10 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return []
 
+        # Safely fetch "Location" plan IDs via ORM (handles translated name fields)
+        location_plans = self.env['account.analytic.plan'].search([('name', '=', 'Location')])
+        plan_ids_sql = ",".join(map(str, location_plans.ids)) if location_plans else "0"
+
         # Determine how to join the product's analytic account
         if 'analytic_account_id' in self.env['product.template']._fields:
             pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
@@ -623,7 +627,8 @@ class PosOrder(models.Model):
                 LEFT JOIN LATERAL (
                     SELECT acc.id, acc.name, acc.parent_id
                     FROM account_analytic_account acc
-                    INNER JOIN product_template_account_analytic_account_rel rel ON rel.account_analytic_account_id = acc.id
+                    INNER JOIN product_template_account_analytic_account_rel rel
+                        ON rel.account_analytic_account_id = acc.id
                     WHERE rel.product_template_id = product_template.id
                     LIMIT 1
                 ) pt_acc ON true
@@ -631,38 +636,38 @@ class PosOrder(models.Model):
         else:
             pt_acc_join = ""
 
-        # Handle translated names for Account Analytic
+        # Handle translated names for account.analytic.account
         name_field = self.env['account.analytic.account']._fields['name']
         city_name_expr = ("COALESCE((city_acc.name)->>'en_US', 'No City')"
                         if name_field.translate else
                         "COALESCE(city_acc.name, 'No City')")
-        
+
         def _name_col(alias):
             return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
 
-        # Subquery to find the city from the product's analytic account hierarchy
-        # We join up to 4 levels (Branch -> Zone -> City -> Province)
+        # Traverse product's analytic account hierarchy to find the City node
         if pt_acc_join:
             pt_city_join = f"""
                 LEFT JOIN LATERAL (
-                    SELECT 
-                        CASE 
+                    SELECT
+                        CASE
                             WHEN c2.id IS NOT NULL AND c3.id IS NULL THEN {_name_col('c1')}
                             WHEN c3.id IS NOT NULL AND c4.id IS NULL THEN {_name_col('c2')}
                             WHEN c4.id IS NOT NULL THEN {_name_col('c3')}
+                            WHEN c2.id IS NULL THEN {_name_col('c1')}
                         END AS name
                     FROM account_analytic_account c1
                     LEFT JOIN account_analytic_account c2 ON c2.id = c1.parent_id
                     LEFT JOIN account_analytic_account c3 ON c3.id = c2.parent_id
                     LEFT JOIN account_analytic_account c4 ON c4.id = c3.parent_id
                     WHERE c1.id = pt_acc.id
-                    AND c1.plan_id IN (SELECT id FROM account_analytic_plan WHERE name = 'Location')
+                      AND c1.plan_id IN ({plan_ids_sql})
                 ) pt_city ON true
             """
         else:
             pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
-        # COALESCE tries the product's city first, then falls back to the POS config's city
+        # COALESCE: prefer product's own city, fall back to POS config's city
         query = f"""
             SELECT
                 pc.complete_name                              AS category_name,
@@ -689,7 +694,8 @@ class PosOrder(models.Model):
             WHERE pos_order_line.company_id = {company_id} {order_sql}
             GROUP BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}),
                     product_template.id, product_template.name
-            ORDER BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}) NULLS LAST, total_amount DESC
+            ORDER BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}) NULLS LAST,
+                    total_amount DESC
         """
 
         self._cr.execute(query)
