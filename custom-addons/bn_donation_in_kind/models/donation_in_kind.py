@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 from markupsafe import Markup
 import base64
@@ -51,6 +51,8 @@ class DonationInKind(models.Model):
     account_move_id = fields.Many2one('account.move', string='Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
     reversal_picking_id = fields.Many2one('stock.picking', string='Reversal Picking', domain="[('picking_type_id', '=', picking_type_id)]")
+    box_return_picking_id = fields.Many2one('stock.picking', string='Box Return', readonly=True, copy=False,
+                                            help='The box product sent back out once the box is itemised.')
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     name = fields.Char('Name', default="New")
@@ -417,6 +419,8 @@ May Allah bless you!
 
     def action_approval(self):
         self._check_din_state(('valuation_committee',), _('Approval'))
+        if not self.env.user.has_group('bn_donation_in_kind.donation_in_kind_valuation_committee_group'):
+            raise AccessError(_('Only the Valuation Committee can approve the valuation.'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -431,7 +435,8 @@ May Allah bless you!
                     raise ValidationError("The average price is missing. Please ensure all valuation have a price.")
                     break
             for valuation_lines in record.valuation_committee_line_ids:
-                valuation_lines.product_id.write({
+                # the committee sets the price, it need not manage products
+                valuation_lines.product_id.sudo().write({
                     'lst_price': valuation_lines.avg_price
                 })
                 
@@ -443,6 +448,50 @@ May Allah bless you!
                     })
             
             record.state = 'approval'
+
+    def _settle_box_stock(self, vendor_location_id):
+        self.ensure_one()
+        net = {}
+        for line in self.donation_in_kind_line_ids:
+            net[line.product_id] = net.get(line.product_id, 0.0) + line.quantity
+        if self.picking_id.state == 'done':
+            for move in self.picking_id.move_ids.filtered(lambda m: m.state == 'done'):
+                net[move.product_id] = net.get(move.product_id, 0.0) - move.quantity
+        incoming = [(product, qty) for product, qty in net.items() if qty > 0]
+        outgoing = [(product, -qty) for product, qty in net.items() if qty < 0]
+        if incoming:
+            self.reversal_picking_id = self._create_din_picking(
+                self.picking_type_id, vendor_location_id, self.location_id.id, incoming)
+        if outgoing:
+            self.box_return_picking_id = self._create_din_picking(
+                self.picking_type_id.return_picking_type_id or self.picking_type_id,
+                self.location_id.id, vendor_location_id, outgoing)
+
+    def _create_din_picking(self, picking_type, location_id, location_dest_id, products):
+        self.ensure_one()
+        picking = self.env['stock.picking'].sudo().create({
+            'partner_id': self.donor_id.id,
+            'picking_type_id': picking_type.id,
+            'location_id': location_id,
+            'location_dest_id': location_dest_id,
+            'scheduled_date': fields.Datetime.now(),
+            'origin': self.name,
+            'move_ids_without_package': [(0, 0, {
+                'product_id': product.id,
+                'name': product.name,
+                'description_picking': product.name,
+                'product_uom_qty': qty,
+                'product_uom': product.uom_id.id,
+                'location_id': location_id,
+                'location_dest_id': location_dest_id,
+            }) for product, qty in products],
+        })
+        picking.action_confirm()
+        for move in picking.move_ids:
+            move.quantity = move.product_uom_qty
+            move.picked = True
+        picking.button_validate()
+        return picking
 
     def action_box_validate(self):
         for record in self:
@@ -464,38 +513,12 @@ May Allah bless you!
             if not vendor_location_id:
                 raise ValidationError('Please Select Vendor Location')
             
-            move_ids = []
-            stock_picking = self.env['stock.picking'].sudo().search([('id', '=', record.reversal_picking_id.id), ('picking_type_id', '=', record.picking_type_id.id)])
-            
-            if not stock_picking:
-                for lines in record.donation_in_kind_line_ids:
-                    move_ids.append((0, 0, {
-                        'product_id': lines.product_id.id,
-                        'description_picking': lines.product_id.name,
-                        'name': lines.product_id.name,
-                        'product_uom_qty': lines.quantity,
-                        'location_dest_id': record.location_id.id,
-                        'location_id': vendor_location_id,
-                    }))
-                
-                move_vals = {
-                    'partner_id': record.donor_id.id,
-                    'picking_type_id': record.picking_type_id.id,
-                    'location_dest_id': record.location_id.id,
-                    'location_id': vendor_location_id,
-                    'scheduled_date': fields.Datetime.today(),
-                    'origin': record.name,
-                    'move_ids_without_package': move_ids,
-                }
-                
-                picking_id = self.env['stock.picking'].sudo().create(move_vals)
-                
-                if picking_id:
-                    record.write({
-                        'reversal_picking_id': picking_id.id,
-                    })
-                    picking_id.button_validate()
-            
+            # The box itself came into stock at Validate; now that it is
+            # opened, stock is corrected to its itemised contents: only the
+            # difference moves (nothing at all when the contents are the box).
+            if not record.reversal_picking_id and not record.box_return_picking_id:
+                record._settle_box_stock(vendor_location_id)
+
             if not record.journal_id:
                 raise ValidationError('Please Select Journal')
             
@@ -559,6 +582,16 @@ May Allah bless you!
                 'type': 'ir.actions.act_window',
                 'res_id': record.reversal_picking_id.id,
             }
+
+    def action_box_return_picking(self):
+        self.ensure_one()
+        return {
+            'name': _('Box Return'),
+            'view_mode': 'form',
+            'res_model': 'stock.picking',
+            'type': 'ir.actions.act_window',
+            'res_id': self.box_return_picking_id.id,
+        }
 
     def action_journal_entries(self):
         for record in self:

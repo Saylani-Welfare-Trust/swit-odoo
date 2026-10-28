@@ -53,6 +53,8 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         }
 
     def action_mark_pending(self):
+        if self.line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Pending."))
         self.line_id.write({
             'media_ids': [(6, 0, self.media_ids.ids)],
             'state': 'pending',
@@ -136,6 +138,8 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
         return self._reopen_wizard_action()
 
     def action_mark_pending(self):
+        if self.recurring_line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Pending."))
         self.recurring_line_id.write({
             'media_ids': [(6, 0, self.media_ids.ids)],
             'state': 'pending',

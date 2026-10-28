@@ -87,8 +87,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             this.state.source_request_no = wfRequestNo;
             this.state.source_welfare_line_ids = wf.welfare_line_ids || [];
             this.state.source_welfare_recurring_line_ids = wf.recurring_line_ids || [];
-        }else {
-            console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
         }
     }
 
@@ -402,11 +400,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                 'source_welfare_recurring_line_ids': this.state.source_welfare_recurring_line_ids || [],
             }
     
-            console.log("DD popup - payload sent:", payload); // TEMP DEBUG
-
             const data = await this.orm.call('direct.deposit', "create_dd_record", [payload]);
-
-            console.log("DD popup - response received:", data); // TEMP DEBUG
 
             if (data.status === 'error') {
                 this.popup.add(ErrorPopup, {

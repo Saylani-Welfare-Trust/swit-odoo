@@ -93,6 +93,8 @@ class RiderCollection(models.Model):
     def action_mark_cfb_paid(self):
         """Mark all linked counterfeit notes as paid"""
         for collection in self:
+            if collection.state not in ('donation_submit', 'pending'):
+                raise UserError("Only a submitted collection can be marked as paid.")
             if collection.remarks == 'CFB' and collection.counterfeit_note_ids:
                 collection.counterfeit_note_ids.write({'state': 'payment_received'})
                 collection.state = 'paid'

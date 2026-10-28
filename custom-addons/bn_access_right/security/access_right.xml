@@ -252,18 +252,7 @@
         <field name="perm_unlink" eval="False"/>
     </record>
     
-    <!-- Product Template Attribute Line -->
-    <record id="custom_product_template_attribute_line_access" model="ir.model.access">
-        <field name="name">custom.product.template.attribute.line.access</field>
-        <field name="model_id" ref="product.model_product_template_attribute_line"/>
-        <field name="group_id" ref="bn_access_right.custom_inventory_product_group"/>
-        <field name="perm_read" eval="True"/>
-        <field name="perm_write" eval="True"/>
-        <field name="perm_create" eval="True"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-    
-    <!-- Product Template Attribute Line -->
+    <!-- Product Template Attribute Value -->
     <record id="custom_product_template_attribute_value_access" model="ir.model.access">
         <field name="name">custom.product.template.attribute.value.access</field>
         <field name="model_id" ref="product.model_product_template_attribute_value"/>

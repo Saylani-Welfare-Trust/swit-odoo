@@ -53,6 +53,9 @@
                         <button name="action_reversal_operations_type_receipts" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="reversal_picking_id == False">
                             <field name="reversal_picking_id" widget="statinfo"/>
                         </button>
+                        <button name="action_box_return_picking" type="object" class="oe_stat_button" icon="fa-undo" invisible="not box_return_picking_id">
+                            <field name="box_return_picking_id" widget="statinfo"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">

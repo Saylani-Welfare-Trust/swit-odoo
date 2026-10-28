@@ -1,5 +1,5 @@
 from odoo import models, fields,_,api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -269,6 +269,8 @@ class WelfareLine(models.Model):
 
     def action_mark_pending(self):
         """Mark the current line as pending."""
+        if any(line.state not in ('collected', 'pending') for line in self):
+            raise UserError(_("Only lines collected by the officer can be marked as Pending."))
         self.write({'state': 'pending'})
         return {
             'type': 'ir.actions.client',
