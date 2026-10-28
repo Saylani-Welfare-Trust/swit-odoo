@@ -641,18 +641,35 @@ class PosOrder(models.Model):
             return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
 
         # 2. Dynamically check the custom 'City' field on pos.config
-        pos_city_field = next((f for f in ['city_id', 'pos_city_id', 'city_analytic_id', 'analytic_city_id'] if f in self.env['pos.config']._fields), None)
+        pos_city_field = None
+        for fname, fobj in self.env['pos.config']._fields.items():
+            if fname in ['city_id', 'pos_city_id', 'city', 'x_city'] or 'city' in fname.lower():
+                if fobj.type in ('char', 'many2one'):
+                    pos_city_field = fname
+                    break
+            if fobj.string and isinstance(fobj.string, str) and 'city' in fobj.string.lower():
+                if fobj.type in ('char', 'many2one'):
+                    pos_city_field = fname
+                    break
         
         if pos_city_field:
-            field_type = self.env['pos.config']._fields[pos_city_field].type
-            # If it's a Many2one to Analytic Account
-            if field_type == 'many2one' and self.env['pos.config']._fields[pos_city_field].comodel_name == 'account.analytic.account':
-                pos_city_join = f"LEFT JOIN account_analytic_account pos_city ON pos_city.id = pos_config.{pos_city_field}"
-                pos_city_name_expr = _name_col('pos_city')
-            # If it's just a plain text Char field
-            elif field_type == 'char':
+            fobj = self.env['pos.config']._fields[pos_city_field]
+            if fobj.type == 'char':
                 pos_city_join = ""
-                pos_city_name_expr = f"pos_config.{pos_city_field}"
+                # Extract the part after the slash, e.g., 'SDC/Karachi' -> 'Karachi'
+                pos_city_name_expr = f"NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 2)), '')"
+            elif fobj.type == 'many2one':
+                comodel = fobj.comodel_name
+                if comodel == 'account.analytic.account':
+                    pos_city_join = f"LEFT JOIN account_analytic_account pos_city ON pos_city.id = pos_config.{pos_city_field}"
+                    pos_city_name_expr = _name_col('pos_city')
+                elif comodel == 'res.city':
+                    pos_city_join = f"LEFT JOIN res_city pos_city ON pos_city.id = pos_config.{pos_city_field}"
+                    pos_city_name_expr = "pos_city.name"
+                else:
+                    table_name = comodel.replace('.', '_')
+                    pos_city_join = f"LEFT JOIN {table_name} pos_city ON pos_city.id = pos_config.{pos_city_field}"
+                    pos_city_name_expr = "pos_city.name"
             else:
                 pos_city_join = ""
                 pos_city_name_expr = "NULL"
@@ -690,12 +707,14 @@ class PosOrder(models.Model):
                         WHEN c2.id IS NOT NULL AND c3.id IS NULL THEN {_name_col('c1')}
                         WHEN c3.id IS NOT NULL AND c4.id IS NULL THEN {_name_col('c2')}
                         WHEN c4.id IS NOT NULL THEN {_name_col('c3')}
+                        WHEN c2.id IS NULL THEN NULL
                     END AS name
                 FROM account_analytic_account c1
                 LEFT JOIN account_analytic_account c2 ON c2.id = c1.parent_id
                 LEFT JOIN account_analytic_account c3 ON c3.id = c2.parent_id
                 LEFT JOIN account_analytic_account c4 ON c4.id = c3.parent_id
                 WHERE c1.id = pos_config.analytic_account_id
+                  AND c1.plan_id IN ({plan_ids_sql})
             ) pos_fb_city ON true
         """
 
@@ -710,9 +729,6 @@ class PosOrder(models.Model):
             if c_name:
                 safe_c_name = c_name.replace("'", "''")
                 having_clause = f"HAVING {city_name_expr} = '{safe_c_name}'"
-        
-        # If you want to force ONLY Quetta regardless of what is selected, uncomment the line below:
-        # having_clause = f"HAVING {city_name_expr} = 'Quetta'"
 
         query = f"""
             SELECT
