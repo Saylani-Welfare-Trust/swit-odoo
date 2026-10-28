@@ -161,6 +161,7 @@
                 <field name="user_id"/>
                 <field name="source_location_id"/>
                 <field name="dest_location_id"/>
+                <field name="product_id"/>
                 <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="HOD Approval" name="filter_hod" domain="[('state', '=', 'hod_approval')]"/>
                 <filter string="Committee Approval" name="filter_committee" domain="[('state', '=', 'committee_approval')]"/>

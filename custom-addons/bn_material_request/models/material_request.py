@@ -22,6 +22,8 @@ class MemberApproval(models.Model):
         'purchase.requisition', 'material_request_id', string='Purchase Requests', readonly=True)
     purchase_requisition_count = fields.Integer(
         string='Purchase Requests', compute='_compute_purchase_requisition_count')
+    
+    product_id = fields.Many2one(related='line_ids.product_id', string="Product")
    
     employee_location_id = fields.Many2one(
         'account.analytic.account',

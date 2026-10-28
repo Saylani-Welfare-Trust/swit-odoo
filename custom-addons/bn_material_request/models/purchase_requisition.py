@@ -191,6 +191,45 @@ class PurchaseRequisition(models.Model):
             }) for product, quantity in self._get_request_shortfall().items()],
         }).sudo(False)
 
+    deleted_line_count = fields.Integer(
+        string='Deleted Lines', compute='_compute_deleted_line_count',
+        help='How many of this Purchase Request\'s lines were deleted, and by whom - see the deletion log.')
+
+    def _compute_deleted_line_count(self):
+        # sudo: the deletion log is a log, not something the requester's own
+        # access rights on purchase.requisition.line should gate.
+        groups = self.env['purchase.requisition.line.deletion.log'].sudo().read_group(
+            [('requisition_id', 'in', self.ids)], ['requisition_id'], ['requisition_id'])
+        count_by_requisition = {
+            group['requisition_id'][0]: group['requisition_id_count']
+            for group in groups if group['requisition_id']
+        }
+        for requisition in self:
+            requisition.deleted_line_count = count_by_requisition.get(requisition.id, 0)
+
+    def action_view_deleted_lines(self):
+        """View the deletion log entries for this Purchase Request's lines"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Deleted Lines of %s', self.name),
+            'res_model': 'purchase.requisition.line.deletion.log',
+            'view_mode': 'tree,form',
+            'domain': [('requisition_id', '=', self.id)],
+            'context': {'create': False},
+            'target': 'current',
+        }
+
+    def _close_if_fully_locked(self):
+        """Move a requisition to 'done' (Closed) once every one of its lines
+        has been fully locked by the consolidated-RFQ process. Called after
+        VendorSelectionWizard.action_create_rfqs locks whatever it consumed."""
+        for requisition in self:
+            if requisition.state in ('done', 'cancel'):
+                continue
+            if requisition.line_ids and all(line.is_locked for line in requisition.line_ids):
+                requisition.state = 'done'
+
     def _get_pending_rfq_line_quantities(self):
         """{requisition line: quantity still to send out for quotation, in the
         line's unit}: what the line asks for, less what the confirmed Purchase
@@ -225,3 +264,62 @@ class PurchaseRequisition(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+
+class PurchaseRequisitionLine(models.Model):
+    _inherit = 'purchase.requisition.line'
+
+    # Set by VendorSelectionWizard.action_create_rfqs once a quantity of this
+    # line has gone out on a consolidated RFQ. A line can be locked a little
+    # at a time across several runs (locked_qty keeps the running total); once
+    # locked_qty reaches product_qty the line itself is marked is_locked and
+    # can never be picked again, while whatever quantity was not yet consumed
+    # stays free for a future run.
+    locked_qty = fields.Float(
+        string='Locked Quantity', default=0.0, copy=False,
+        help='Quantity of this line already sent out on a consolidated RFQ. '
+             'Grows every time the Vendor Selection Wizard consumes part of this line.')
+    is_locked = fields.Boolean(
+        string='Fully Locked', default=False, copy=False,
+        help='True once the full quantity of this line has been sent out on a '
+             'consolidated RFQ. A fully locked line cannot be selected again.')
+    remaining_qty = fields.Float(
+        string='Remaining Qty', compute='_compute_remaining_qty',
+        help='product_qty minus what has already been locked for a consolidated RFQ. '
+             'What is still available for a future Vendor Selection Wizard run.')
+
+    @api.depends('product_qty', 'locked_qty')
+    def _compute_remaining_qty(self):
+        for line in self:
+            line.remaining_qty = max(line.product_qty - line.locked_qty, 0.0)
+
+    def _lock_quantity(self, qty):
+        """Consume ``qty`` of this line's remaining quantity for a
+        consolidated RFQ, and lock the line once nothing is left on it."""
+        self.ensure_one()
+        uom = self.product_id.uom_id
+        self.locked_qty += qty
+        if float_compare(self.locked_qty, self.product_qty, precision_rounding=uom.rounding or 0.01) >= 0:
+            self.locked_qty = self.product_qty
+            self.is_locked = True
+
+    def unlink(self):
+        """Log who deleted this line, and what it was, before it is gone for
+        good - a deleted purchase.requisition.line leaves nothing else behind
+        to say who removed it or when."""
+        log_vals = [{
+            'requisition_id': line.requisition_id.id,
+            'requisition_name': line.requisition_id.name,
+            'product_id': line.product_id.id,
+            'product_uom_id': line.product_uom_id.id,
+            'quantity': line.product_qty,
+            'locked_qty': line.locked_qty,
+            'description': line.product_description_variants,
+            'deleted_by': self.env.uid,
+            'deleted_date': fields.Datetime.now(),
+        } for line in self]
+        result = super().unlink()
+        if log_vals:
+            # sudo: whoever may delete a PR line need not have access to the log model.
+            self.env['purchase.requisition.line.deletion.log'].sudo().create(log_vals)
+        return result

@@ -27,7 +27,7 @@
 
             <xpath expr="//header" position="inside">
                 <button string="Procurement Approve" name="action_procurement_approve" type="object"
-                        class="oe_highlight" invisible="state != 'draft'"
+                        class="oe_highlight" invisible="state != 'confirm'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Defer" name="action_open_defer_wizard" type="object"
                         invisible="state != 'draft'"
