@@ -19,7 +19,6 @@ class ProfileManagementDashboard(models.TransientModel):
 
         Partner = self.env['res.partner']
         
-        # Safe counting helper
         def safe_count(model, dom):
             try:
                 return model.search_count(dom)
@@ -62,7 +61,7 @@ class ProfileManagementDashboard(models.TransientModel):
         except Exception:
             pass
 
-        # --- Tables (Top 2) ---
+        # --- Tables ---
         recent_registrations = safe_search_read(
             Partner, domain + [('state', '=', 'register')],
             ['name', 'mobile', 'cnic_no', 'category_id', 'create_date']
@@ -125,14 +124,33 @@ class ProfileManagementDashboard(models.TransientModel):
                     self.env['online.detail'], on_domain, ['name', 'date', 'amount', 'state'], order='date desc'
                 )
 
-            # 6. Donation In Kind
+            # 6. Donation In Kind (FIXED to match your screenshot)
             if 'donation.in.kind' in self.env:
-                ik_domain = [('partner_id', 'in', partner_ids)]
-                if date_from: ik_domain.append(('date', '>=', date_from))
-                if date_to: ik_domain.append(('date', '<=', date_to))
-                in_kind = safe_search_read(
-                    self.env['donation.in.kind'], ik_domain, ['name', 'date', 'product_id', 'state'], order='date desc'
-                )
+                ik_model = self.env['donation.in.kind']
+                ik_domain = []
+                
+                # Your model uses 'donor_id' instead of 'partner_id'
+                if 'donor_id' in ik_model._fields:
+                    ik_domain.append(('donor_id', 'in', partner_ids))
+                elif 'partner_id' in ik_model._fields:
+                    ik_domain.append(('partner_id', 'in', partner_ids))
+
+                # Apply date filters safely if the field exists
+                if 'date' in ik_model._fields:
+                    if date_from: ik_domain.append(('date', '>=', date_from))
+                    if date_to: ik_domain.append(('date', '<=', date_to))
+                elif 'create_date' in ik_model._fields:
+                    if date_from: ik_domain.append(('create_date', '>=', date_from + ' 00:00:00'))
+                    if date_to: ik_domain.append(('create_date', '<=', date_to + ' 23:59:59'))
+
+                # Fetch exact fields from your screenshot
+                ik_fields = ['name', 'status']
+                if 'product_id' in ik_model._fields: ik_fields.append('product_id')
+                if 'location' in ik_model._fields: ik_fields.append('location')
+                if 'location_id' in ik_model._fields: ik_fields.append('location_id')
+                if 'quantity' in ik_model._fields: ik_fields.append('quantity')
+                
+                in_kind = safe_search_read(ik_model, ik_domain, ik_fields, order='id desc')
 
         return {
             'kpi': {
