@@ -631,41 +631,42 @@ class PosOrder(models.Model):
         else:
             pt_acc_join = ""
 
-        # Get city name from config's analytic account
+        # Handle translated names for Account Analytic
         name_field = self.env['account.analytic.account']._fields['name']
         city_name_expr = ("COALESCE((city_acc.name)->>'en_US', 'No City')"
                         if name_field.translate else
                         "COALESCE(city_acc.name, 'No City')")
         
-        # Subquery to find city from the product's analytic account hierarchy
+        def _name_col(alias):
+            return f"({alias}.name)->>'en_US'" if name_field.translate else f"{alias}.name"
+
+        # Subquery to find the city from the product's analytic account hierarchy
+        # We join up to 4 levels (Branch -> Zone -> City -> Province)
         if pt_acc_join:
-            pt_city_join = """
+            pt_city_join = f"""
                 LEFT JOIN LATERAL (
                     SELECT 
-                        COALESCE(
-                            CASE WHEN c.name::text LIKE '{%' THEN (c.name::jsonb)->>'en_US' ELSE c.name::text END,
-                            'No City'
-                        ) AS name
-                    FROM account_analytic_account c
-                    WHERE c.id IN (
-                        pt_acc.id,
-                        pt_acc.parent_id,
-                        pt_acc.parent_id.parent_id,
-                        pt_acc.parent_id.parent_id.parent_id
-                    )
-                    AND c.parent_id IS NOT NULL
-                    AND c.parent_id.parent_id IS NULL
-                    LIMIT 1
+                        CASE 
+                            WHEN c2.id IS NOT NULL AND c3.id IS NULL THEN {_name_col('c1')}
+                            WHEN c3.id IS NOT NULL AND c4.id IS NULL THEN {_name_col('c2')}
+                            WHEN c4.id IS NOT NULL THEN {_name_col('c3')}
+                        END AS name
+                    FROM account_analytic_account c1
+                    LEFT JOIN account_analytic_account c2 ON c2.id = c1.parent_id
+                    LEFT JOIN account_analytic_account c3 ON c3.id = c2.parent_id
+                    LEFT JOIN account_analytic_account c4 ON c4.id = c3.parent_id
+                    WHERE c1.id = pt_acc.id
+                    AND c1.plan_id IN (SELECT id FROM account_analytic_plan WHERE name = 'Location')
                 ) pt_city ON true
             """
         else:
             pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
-        # Note: COALESCE tries the product's city first, then the POS config's city
-        query = """
+        # COALESCE tries the product's city first, then falls back to the POS config's city
+        query = f"""
             SELECT
                 pc.complete_name                              AS category_name,
-                COALESCE(pt_city.name, %s)                    AS city_name,
+                COALESCE(pt_city.name, {city_name_expr})      AS city_name,
                 (product_template.name)->>'en_US'             AS product_name,
                 product_template.id                           AS product_id,
                 COALESCE(AVG(pos_order_line.price_unit), 0)   AS unit_price,
@@ -683,13 +684,13 @@ class PosOrder(models.Model):
             INNER JOIN product_product    ON product_product.id = pos_order_line.product_id
             INNER JOIN product_template   ON product_product.product_tmpl_id = product_template.id
             INNER JOIN product_category   AS pc ON pc.id = product_template.categ_id
-            %s
-            %s
-            WHERE pos_order_line.company_id = %d %s
-            GROUP BY pc.complete_name, COALESCE(pt_city.name, %s),
+            {pt_acc_join}
+            {pt_city_join}
+            WHERE pos_order_line.company_id = {company_id} {order_sql}
+            GROUP BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}),
                     product_template.id, product_template.name
-            ORDER BY pc.complete_name, COALESCE(pt_city.name, %s) NULLS LAST, total_amount DESC
-        """ % (city_name_expr, pt_acc_join, pt_city_join, company_id, order_sql, city_name_expr, city_name_expr)
+            ORDER BY pc.complete_name, COALESCE(pt_city.name, {city_name_expr}) NULLS LAST, total_amount DESC
+        """
 
         self._cr.execute(query)
         docs = self._cr.dictfetchall()
