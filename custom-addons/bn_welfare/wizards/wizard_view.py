@@ -158,7 +158,7 @@ class WelfareFieldsWizard(models.TransientModel):
             for field_name in fields_list:
                 if field_name not in ['welfare_id', 'welfare_lines_html', 'education_lines_html', 
                                        'family_lines_html', 'guarantor_lines_html', 'recurring_lines_html',
-                                       'committee_members_html']:
+                                       'committee_members_html', 'document_image_ids']:
                     if hasattr(welfare, field_name):
                         res[field_name] = getattr(welfare, field_name)
             

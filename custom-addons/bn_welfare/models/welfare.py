@@ -1456,7 +1456,7 @@ class Welfare(models.Model):
         self.ensure_one()
         
         # Only allow in committee_approval and hod_approve states
-        if self.state not in ['inquiry', 'committee_approval']:
+        if self.state not in ['committee_approval', 'hod_approve']:
             raise ValidationError(_('This option is only available in Committee Approval and HOD Approval states.'))
         
         return {
