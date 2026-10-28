@@ -613,7 +613,7 @@ class PosOrder(models.Model):
         order_sql = self._get_order_ids_sql(domain)
 
         if "1=0" in order_sql:
-            return []
+            return {'cities': [], 'groups': []}
 
         location_plans = self.env['account.analytic.plan'].search([('name', '=', 'Location')])
         plan_ids_sql = ",".join(map(str, location_plans.ids)) if location_plans else "0"
@@ -656,7 +656,6 @@ class PosOrder(models.Model):
             fobj = self.env['pos.config']._fields[pos_city_field]
             if fobj.type == 'char':
                 pos_city_join = ""
-                # Extract the part after the slash, e.g., 'SDC/Karachi' -> 'Karachi'
                 pos_city_name_expr = f"NULLIF(TRIM(SPLIT_PART(pos_config.{pos_city_field}, '/', 2)), '')"
             elif fobj.type == 'many2one':
                 comodel = fobj.comodel_name
@@ -718,10 +717,9 @@ class PosOrder(models.Model):
             ) pos_fb_city ON true
         """
 
-        # Final City Expression: Try Product City -> POS Config Custom City -> POS Config Parents -> 'No City'
         city_name_expr = f"COALESCE(pt_city.name, {pos_city_name_expr}, pos_fb_city.name, 'No City')"
 
-        # 5. Filtering Logic (Dynamic based on selected dropdown)
+        # 5. Filtering Logic
         having_clause = ""
         if city_id:
             city_rec = self.env['account.analytic.account'].browse(int(city_id))
@@ -760,8 +758,40 @@ class PosOrder(models.Model):
         self._cr.execute(query)
         docs = self._cr.dictfetchall()
 
+        # --- PIVOTING LOGIC ---
+        all_cities = set()
+        grouped_products = {}
+
+        for r in docs:
+            city = r.get('city_name') or 'No City'
+            all_cities.add(city)
+            grp = self._categorize_category(r.get('category_name'))
+            prod_id = r.get('product_id')
+
+            if prod_id not in grouped_products:
+                grouped_products[prod_id] = {
+                    'group_name': grp,
+                    'product_name': r.get('product_name') or 'Unknown',
+                    'unit_price': float(r.get('unit_price') or 0.0),
+                    'total_amount': 0.0,
+                    'city_qty': {}
+                }
+
+            qty = float(r.get('sale_qty') or 0)
+            amt = float(r.get('total_amount') or 0.0)
+            
+            grouped_products[prod_id]['total_amount'] += amt
+            grouped_products[prod_id]['city_qty'][city] = grouped_products[prod_id]['city_qty'].get(city, 0) + qty
+
+        sorted_cities = sorted(list(all_cities))
+        
         group_order = ['Nafla', 'Wajiba', 'Non-Donation', 'PoS',
                     'Donation In Kind', 'Donation Box', 'Other']
+        
+        groups_dict = {g: [] for g in group_order}
+        for prod_id, pdata in grouped_products.items():
+            if pdata['group_name'] in groups_dict:
+                groups_dict[pdata['group_name']].append(pdata)
 
         currency = self.env.company.currency_id
 
@@ -773,31 +803,30 @@ class PosOrder(models.Model):
             return ("%s %s" % (val, currency.symbol) if currency.position == 'after'
                     else "%s %s" % (currency.symbol, val))
 
-        tree = {g: {} for g in group_order}
-
-        for r in docs:
-            grp  = self._categorize_category(r.get('category_name'))
-            city = r.get('city_name') or 'No City'
-            tree[grp].setdefault(city, []).append({
-                'product_name': r.get('product_name') or 'Unknown',
-                'unit_price'  : _fmt(r.get('unit_price')),
-                'sale_qty'    : int(r.get('sale_qty') or 0),
-                'total_amount': _fmt(r.get('total_amount')),
-            })
-
-        result = []
+        result_groups = []
         for group_name in group_order:
-            cities = tree.get(group_name) or {}
-            if not cities:
+            prods = groups_dict[group_name]
+            if not prods:
                 continue
-            result.append({
+                
+            # Sort products by total_amount descending
+            prods.sort(key=lambda x: x['total_amount'], reverse=True)
+            
+            for p in prods:
+                p['unit_price_fmt'] = _fmt(p['unit_price'])
+                p['total_amount_fmt'] = _fmt(p['total_amount'])
+                # Convert quantities to clean integers
+                p['city_qty'] = {c: int(q) for c, q in p['city_qty'].items()}
+
+            result_groups.append({
                 'group_name': group_name,
-                'cities': [
-                    {'city_name': city, 'products': products}
-                    for city, products in sorted(cities.items())
-                ],
+                'products': prods
             })
-        return result
+
+        return {
+            'cities': sorted_cities,
+            'groups': result_groups
+        }
 
 
     def _categorize_category(self, complete_name):

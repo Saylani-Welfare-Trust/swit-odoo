@@ -34,7 +34,7 @@ export class PosDashboard extends Component {
             category_id: null,
             categories: [],
             amount_min: null,
-            products_by_category: [],
+            products_by_category: { cities: [], groups: [] },
             amount_max: null,
             date_from: '',
             date_to: '',

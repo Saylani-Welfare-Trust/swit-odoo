@@ -305,48 +305,55 @@
                 <div class="col-lg-12">
                     <div class="card oh-section-card">
                         <div class="oh-card-header">
-                            <h4><i class="fa fa-th-list me-2 text-primary"/>Products by Category Group</h4>
+                            <h4><i class="fa fa-th-list me-2 text-primary"/>Products by Category Group (City Breakdown)</h4>
                         </div>
-                        <div class="oh-card-body p-0" style="max-height: 520px; overflow-y: auto;">
-                            <table class="table oh-table mb-0">
+                        <div class="oh-card-body p-0" style="max-height: 520px; overflow-y: auto; overflow-x: auto;">
+                            <table class="table oh-table mb-0 text-nowrap">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
                                         <th class="text-end">Amount</th>
-                                        <th class="text-center">Sale</th>
-                                        <th class="text-end">Total Amount</th>
+                                        <!-- Dynamic City Columns -->
+                                        <t t-foreach="state.products_by_category.cities" t-as="city" t-key="city_index">
+                                            <th class="text-center">
+                                                <t t-esc="city"/> <span class="text-muted">(qty)</span>
+                                            </th>
+                                        </t>
+                                        <th class="text-end border-start">Total Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="state.products_by_category" t-as="group" t-key="group_index">
+                                    <t t-foreach="state.products_by_category.groups" t-as="group" t-key="group_index">
                                         <!-- Category header -->
                                         <tr>
-                                            <td colspan="4" class="fw-bold" style="background-color:#e9ecef;">
+                                            <td t-attf-colspan="#{3 + (state.products_by_category.cities ? state.products_by_category.cities.length : 0)}" class="fw-bold" style="background-color:#e9ecef;">
                                                 <i class="fa fa-folder-open me-2 text-primary"/>
                                                 <t t-esc="group['group_name']"/>
                                             </td>
                                         </tr>
-                                        <!-- City sub-header + products -->
-                                        <t t-foreach="group['cities']" t-as="city" t-key="city_index">
+                                        <!-- Products inside the category -->
+                                        <t t-foreach="group['products']" t-as="prod" t-key="prod_index">
                                             <tr>
-                                                <td colspan="4" class="fw-semibold ps-3" style="background-color:#f4f6f9;">
-                                                    <i class="fa fa-map-marker me-2 text-secondary"/>
-                                                    <t t-esc="city['city_name']"/>
-                                                </td>
+                                                <td class="ps-4"><t t-esc="prod['product_name']"/></td>
+                                                <td class="text-end"><t t-esc="prod['unit_price_fmt']"/></td>
+                                                <!-- Dynamic City Quantities -->
+                                                <t t-foreach="state.products_by_category.cities" t-as="city" t-key="city_index">
+                                                    <td class="text-center">
+                                                        <t t-if="prod['city_qty'].get(city)">
+                                                            <span class="badge bg-primary rounded-pill"><t t-esc="prod['city_qty'][city]"/></span>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span class="text-muted">-</span>
+                                                        </t>
+                                                    </td>
+                                                </t>
+                                                <td class="text-end fw-semibold border-start"><t t-esc="prod['total_amount_fmt']"/></td>
                                             </tr>
-                                            <t t-foreach="city['products']" t-as="prod" t-key="prod_index">
-                                                <tr>
-                                                    <td class="ps-5"><t t-esc="prod['product_name']"/></td>
-                                                    <td class="text-end"><t t-esc="prod['unit_price']"/></td>
-                                                    <td class="text-center"><t t-esc="prod['sale_qty']"/></td>
-                                                    <td class="text-end fw-semibold"><t t-esc="prod['total_amount']"/></td>
-                                                </tr>
-                                            </t>
                                         </t>
                                     </t>
-                                    <t t-if="!state.products_by_category.length">
+                                    <t t-if="!state.products_by_category.groups.length">
                                         <tr>
-                                            <td colspan="4" class="oh-empty">
+                                            <td t-attf-colspan="#{3 + (state.products_by_category.cities ? state.products_by_category.cities.length : 0)}" class="oh-empty">
                                                 <i class="fa fa-th-list"/>
                                                 No product data
                                             </td>
