@@ -1,23 +1,39 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
+import { browser } from "@web/core/browser/browser"; // <-- IMPORTED BROWSER
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+
+const FILTER_STORAGE_KEY = 'donation_box_dashboard_filters';
 
 export class DonationBoxDashboard extends Component {
     setup() {
         this.orm = useService('orm');
         this.actionService = useService("action");
 
+        // 1. Load saved filters from sessionStorage if they exist
+        let savedFilters = {};
+        const rawFilters = browser.sessionStorage.getItem(FILTER_STORAGE_KEY);
+        if (rawFilters) {
+            try {
+                savedFilters = JSON.parse(rawFilters);
+            } catch (e) {
+                console.warn("Failed to parse saved filters");
+            }
+        }
+
         const today = new Date();
         const fmt_month = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 
+        // 2. Initialize state with saved filters (or defaults)
         this.state = useState({
-            date_from: '',
-            date_to: '',
-            province_id: null,
-            city_id: null,
-            zone_id: null,
-            bunch_id: null,
+            date_from: savedFilters.date_from || '',
+            date_to: savedFilters.date_to || '',
+            province_id: savedFilters.province_id || null,
+            city_id: savedFilters.city_id || null,
+            zone_id: savedFilters.zone_id || null,
+            bunch_id: savedFilters.bunch_id || null,
+            
             provinces: [],
             cities: [],
             zones: [],
@@ -54,6 +70,19 @@ export class DonationBoxDashboard extends Component {
             this.is_mounted = true;
             this.render_charts();
         });
+    }
+
+    // Helper to save current filters to sessionStorage
+    save_filters() {
+        const filters = {
+            date_from: this.state.date_from,
+            date_to: this.state.date_to,
+            province_id: this.state.province_id,
+            city_id: this.state.city_id,
+            zone_id: this.state.zone_id,
+            bunch_id: this.state.bunch_id,
+        };
+        browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
     }
 
     async fetch_dropdowns() {
@@ -118,6 +147,7 @@ export class DonationBoxDashboard extends Component {
     }
 
     async applyFilter() {
+        this.save_filters(); // <-- SAVE FILTERS
         await this.fetch_data();
         await this.fetch_comparison(); 
     }
@@ -138,8 +168,14 @@ export class DonationBoxDashboard extends Component {
     }
 
     clearFilter() {
-        this.state.date_from = ''; this.state.date_to = '';
-        this.state.province_id = null; this.state.city_id = null; this.state.zone_id = null; this.state.bunch_id = null;
+        this.state.date_from = ''; 
+        this.state.date_to = '';
+        this.state.province_id = null; 
+        this.state.city_id = null; 
+        this.state.zone_id = null; 
+        this.state.bunch_id = null;
+        
+        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY); // <-- CLEAR STORAGE
         this.applyFilter();
     }
 
