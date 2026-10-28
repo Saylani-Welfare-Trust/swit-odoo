@@ -213,6 +213,12 @@ class WelfareRecurringLine(models.Model):
                 analytic_account_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
                 rec.analytic_account_domain = str([('id', 'in', analytic_account_ids)])
     
+    @api.onchange('disbursement_application_type_id')
+    def _onchange_disbursement_application_type_id(self):
+        """Take the category set on the application type in master setup"""
+        if self.disbursement_application_type_id.disbursement_category_id:
+            self.disbursement_category_id = self.disbursement_application_type_id.disbursement_category_id
+
     @api.onchange('disbursement_category_id')
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
