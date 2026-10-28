@@ -169,17 +169,18 @@
                             <t t-if="state.active_tab === 'boxes'">
                                 <table class="table table-hover oh-table mb-0">
                                     <thead class="table-light">
-                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Boxes Installed</th></tr>
+                                        <tr><th style="width: 50px;">#</th><th>Donor</th><th class="text-end">Transactions</th><th class="text-end">Total Amount</th></tr>
                                     </thead>
                                     <tbody>
                                         <t t-foreach="state.box_top_donors" t-as="donor" t-key="donor_index">
                                             <tr>
                                                 <td class="text-muted"><t t-esc="donor_index + 1"/></td>
                                                 <td class="fw-bold"><t t-esc="donor.name"/></td>
-                                                <td class="text-end fw-bold text-primary"><t t-esc="donor.count"/> Box(es)</td>
+                                                <td class="text-end"><t t-esc="donor.count"/></td>
+                                                <td class="text-end fw-bold text-success"><t t-esc="(donor.amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
                                             </tr>
                                         </t>
-                                        <t t-if="!state.box_top_donors.length"><tr><td colspan="3" class="text-center text-muted py-4">No records found</td></tr></t>
+                                        <t t-if="!state.box_top_donors.length"><tr><td colspan="4" class="text-center text-muted py-4">No records found</td></tr></t>
                                     </tbody>
                                 </table>
                             </t>
