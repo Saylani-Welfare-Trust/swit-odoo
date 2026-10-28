@@ -64,7 +64,7 @@ class ProfileManagementDashboard(models.TransientModel):
         recent_drafts = Partner.search_read(domain + [('state', '=', 'draft')], ['name', 'mobile', 'cnic_no', 'category_id', 'create_date'], limit=10, order='create_date desc')
 
         # =========================================================================
-        # HELPER: Dynamic Top 10 Aggregation
+        # HELPER: Dynamic Top 10 Aggregation (with safe manual fallback)
         # =========================================================================
         def get_top_orm(model_name, date_field, partner_fields, amount_fields):
             if model_name not in self.env: return []
@@ -80,6 +80,7 @@ class ProfileManagementDashboard(models.TransientModel):
                 if date_from: dom.append((date_field, '>=', date_from + ' 00:00:00'))
                 if date_to: dom.append((date_field, '<=', date_to + ' 23:59:59'))
                 
+            # Try fast read_group first
             if amount_field:
                 try:
                     groups = Model.read_group(dom, [partner_field, f'{amount_field}:sum'], [partner_field], limit=10, orderby=f'{amount_field} desc')
@@ -88,9 +89,32 @@ class ProfileManagementDashboard(models.TransientModel):
                         if g[partner_field]:
                             val = g.get(amount_field) or g.get(f'{amount_field}:sum', 0.0)
                             res.append({'name': g[partner_field][1], 'amount': val, 'count': g.get('__count', 0)})
-                    return res
-                except: pass
-            return []
+                    if res:
+                        return res
+                except Exception:
+                    pass
+            
+            # Fallback to manual Python aggregation
+            try:
+                records = Model.search(dom, limit=5000)
+                agg = {}
+                for rec in records:
+                    partner = getattr(rec, partner_field)
+                    if not partner: continue
+                    
+                    val = 0.0
+                    if amount_field:
+                        try: val = float(getattr(rec, amount_field) or 0.0)
+                        except: val = 0.0
+                        
+                    if partner.id not in agg:
+                        agg[partner.id] = {'name': partner.name, 'amount': 0.0, 'count': 0}
+                    agg[partner.id]['amount'] += val
+                    agg[partner.id]['count'] += 1
+                return sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+            except Exception as e:
+                _logger.error(f"Manual Top 10 Error {model_name}: {e}")
+                return []
 
         # =========================================================================
         # DONORS TOP 10
@@ -175,10 +199,10 @@ class ProfileManagementDashboard(models.TransientModel):
         # 1. Welfare
         welfare_top_donees = get_top_orm('welfare', 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'amount'])
 
-        # 2. Microfinance
+        # 2. Microfinance (using 'microfinance.application' as seen in your screenshot)
         microfinance_top_donees = get_top_orm('microfinance.application', 'create_date', ['donee_id', 'partner_id'], ['total_amount', 'loan_amount', 'amount'])
 
-        # 3. Medical Equipment (assuming model 'medical.equipment' or 'medical.equipment.request')
+        # 3. Medical Equipment
         med_model = 'medical.equipment' if 'medical.equipment' in self.env else ('medical.equipment.request' if 'medical.equipment.request' in self.env else '')
         medical_top_donees = []
         if med_model:

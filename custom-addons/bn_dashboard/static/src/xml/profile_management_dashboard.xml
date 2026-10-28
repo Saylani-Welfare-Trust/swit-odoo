@@ -114,15 +114,15 @@
                 </div>
             </div>
 
-            <!-- ==================== PARTNER DETAILS TABS ==================== -->
+            <!-- ==================== DONOR DETAILS TABS ==================== -->
             <div class="row g-3 mt-2">
                 <div class="col-lg-12">
-                    <div class="card oh-section-card shadow-sm bg-white">
-                        
-                        <!-- Tabs Header -->
+                    <div class="card oh-section-card shadow-sm bg-white border-top border-4 border-primary">
+                        <div class="card-header bg-light border-bottom p-2">
+                            <h5 class="mb-0 text-primary fw-bold"><i class="fa fa-heart me-2"/>Donor Details</h5>
+                        </div>
                         <div class="card-header bg-white border-bottom p-0">
                             <ul class="nav nav-tabs border-0 flex-nowrap overflow-auto" style="white-space: nowrap;">
-                                <!-- DONOR TABS -->
                                 <li class="nav-item">
                                     <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'pos' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('pos')">POS Details</button>
                                 </li>
@@ -141,24 +141,10 @@
                                 <li class="nav-item">
                                     <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'in_kind' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('in_kind')">Donation In Kind</button>
                                 </li>
-                                
-                                <!-- DONEe TABS -->
-                                <li class="nav-item">
-                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'welfare' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('welfare')">Welfare</button>
-                                </li>
-                                <li class="nav-item">
-                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'microfinance' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('microfinance')">Microfinance</button>
-                                </li>
-                                <li class="nav-item">
-                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'medical' ? 'active border-bottom border-primary border-3 text-primary' : 'text-muted' }}" t-on-click="() => this.setTab('medical')">Medical Equipment</button>
-                                </li>
                             </ul>
                         </div>
 
                         <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
-                            
-                            <!-- ==================== DONOR TABS ==================== -->
-
                             <!-- 1. POS Details Tab -->
                             <t t-if="state.active_tab === 'pos'">
                                 <table class="table table-hover oh-table mb-0">
@@ -278,9 +264,33 @@
                                     </tbody>
                                 </table>
                             </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <!-- ==================== DONEE TABS ==================== -->
+            <!-- ==================== DONEE DETAILS TABS ==================== -->
+            <div class="row g-3 mt-3">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card shadow-sm bg-white border-top border-4 border-info">
+                        <div class="card-header bg-light border-bottom p-2">
+                            <h5 class="mb-0 text-info fw-bold"><i class="fa fa-hands-helping me-2"/>Donee Details</h5>
+                        </div>
+                        <div class="card-header bg-white border-bottom p-0">
+                            <ul class="nav nav-tabs border-0 flex-nowrap overflow-auto" style="white-space: nowrap;">
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'welfare' ? 'active border-bottom border-info border-3 text-info' : 'text-muted' }}" t-on-click="() => this.setTab('welfare')">Welfare</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'microfinance' ? 'active border-bottom border-info border-3 text-info' : 'text-muted' }}" t-on-click="() => this.setTab('microfinance')">Microfinance</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link py-3 px-4 fw-bold" t-attf-class="nav-link py-3 px-4 fw-bold {{ state.active_tab === 'medical' ? 'active border-bottom border-info border-3 text-info' : 'text-muted' }}" t-on-click="() => this.setTab('medical')">Medical Equipment</button>
+                                </li>
+                            </ul>
+                        </div>
 
+                        <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                             <!-- 7. Welfare Tab -->
                             <t t-if="state.active_tab === 'welfare'">
                                 <table class="table table-hover oh-table mb-0">
@@ -340,7 +350,6 @@
                                     </tbody>
                                 </table>
                             </t>
-
                         </div>
                     </div>
                 </div>
