@@ -43,5 +43,8 @@
         'point_of_sale._assets_pos': [
             'bn_welfare/static/src/app/**/*',
         ],
+        'web.assets_backend': [
+            'bn_welfare/static/src/fields/**/*',
+        ],
     }
 } # type: ignore

@@ -217,18 +217,18 @@
                                         string="Residential Status" 
                                         required="state in ['inquiry']"
                                         placeholder="e.g., Own House, Rented House, Living with relatives"/>
-                                    <field name="num_of_children" 
+                                    <field name="num_of_children" widget="welfare_count"
                                         string="Total Children" 
                                         required="state in ['inquiry']"
 
                                         placeholder="Enter total number"/>
-                                    <field name="num_of_sons" 
+                                    <field name="num_of_sons" widget="welfare_count"
                                         string="Sons" 
                                         required="state in ['inquiry']"
                                         placeholder="Enter number of sons"/>
                                 </group>
                                 <group name="inquiry_col_2">
-                                    <field name="num_of_daughters" 
+                                    <field name="num_of_daughters" widget="welfare_count"
                                         string="Daughters" 
                                         required="state in ['inquiry']"                                        
                                         placeholder="Enter number of daughters"/>

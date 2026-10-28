@@ -677,8 +677,20 @@ class Welfare(models.Model):
 
 
 
+    def _check_count_values(self, vals):
+        """Readable error instead of a crash when text reaches the numeric count fields
+        (e.g. from a browser tab opened while they were still text fields)"""
+        for fname in ('num_of_children', 'num_of_sons', 'num_of_daughters'):
+            value = vals.get(fname)
+            if isinstance(value, str) and value.strip() and not value.strip().isdigit():
+                raise ValidationError(_(
+                    "%s: only numbers are allowed, you can't use alphabets.",
+                    self._fields[fname].string,
+                ))
+
     @api.model
     def create(self, vals):
+        self._check_count_values(vals)
         if not vals.get('name') or vals.get('name') == 'New':
             seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
             vals['name'] = seq if seq else _('New')
@@ -688,6 +700,7 @@ class Welfare(models.Model):
         return record
 
     def write(self, vals):
+        self._check_count_values(vals)
         res = super().write(vals)
         # Donee changed on an already saved application
         if vals.get('previous_welfare_source_id'):
