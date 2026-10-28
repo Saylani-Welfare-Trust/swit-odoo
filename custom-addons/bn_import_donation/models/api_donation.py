@@ -75,7 +75,8 @@ class APIDonation(models.Model):
     def action_create_partners_for_selected(self):
         """Link the selected donations to their donor: the existing contact of
         the person (CNIC, mobile + phone code, else email) or a new Draft profile.
-        Donations without mobile and email get the gateway's Default Donor."""
+        Donations without a donor number (no mobile and no CNIC) get the default
+        donor (the gateway's Default Donor, else 2025-9999998-9)."""
         if not self:
             raise ValidationError(_("No records selected!"))
 
@@ -86,7 +87,7 @@ class APIDonation(models.Model):
             self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False),
         ) if tag]
         default_partner = self.env['gateway.config'].search(
-            [('type', '=', 'api'), ('default_partner_id', '!=', False)], limit=1).default_partner_id
+            [('type', '=', 'api'), ('default_partner_id', '!=', False)], limit=1)._get_default_donor()
 
         counts = {'created': 0, 'skipped': 0, 'failed': 0}
         partner_cache = {}
@@ -100,14 +101,14 @@ class APIDonation(models.Model):
             cnic = Partner._import_normalize_cnic(record.cnic)
             email = (record.email or '').strip()
 
-            if not mobile and not email:
+            if not mobile and not cnic:
                 if default_partner:
                     record.write({'donor_id': default_partner.id, 'partner_creation_status': 'skipped',
                                   'error_message': False})
                     counts['skipped'] += 1
                 else:
                     record.write({'partner_creation_status': 'failed', 'error_message': _(
-                        'No mobile or email, and no Default Donor on the API gateway configuration.')})
+                        'No donor number (mobile / CNIC) and no default donor 2025-9999998-9.')})
                     counts['failed'] += 1
                 continue
 

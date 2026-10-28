@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 import logging
 import re
 import json
@@ -541,7 +541,7 @@ class QurbaniOrder(models.Model):
     def _book_qurbani(self, data):
         """create_qurbani_record for a direct deposit / home service: raises
         (rolling back the deposit) instead of returning an error."""
-        res = self.create_qurbani_record(data)
+        res = self.sudo()._create_qurbani_record(data)
         if not res:
             return self.browse()
         if res.get('status') != 'success':
@@ -578,6 +578,15 @@ class QurbaniOrder(models.Model):
 
     @api.model
     def create_qurbani_record(self, data):
+        """POS booking. A donor can book a slot in any city, while the
+        schedules and demands are scoped to the planners' locations: the
+        booking runs as superuser once the cashier is checked."""
+        if not self.env.user.has_group('point_of_sale.group_pos_user'):
+            raise AccessError(_('Only Point of Sale users can book a Qurbani.'))
+        return self.sudo()._create_qurbani_record(data)
+
+    @api.model
+    def _create_qurbani_record(self, data):
 
         schedule_usage = {}
         demand_cache = {}

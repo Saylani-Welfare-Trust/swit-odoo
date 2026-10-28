@@ -380,14 +380,7 @@ class DonationBoxComplain(models.Model):
         if not stock_location:
             raise ValidationError(_("Cannot determine the warehouse stock location for this box."))
 
-        PickingType = self.env['stock.picking.type'].sudo()
-        picking_type = PickingType.search([
-            ('code', '=', 'internal'), ('warehouse_id', '=', warehouse.id)], limit=1)
-        if not picking_type:
-            picking_type = PickingType.search([
-                ('code', '=', 'internal'), ('company_id', '=', scrap.company_id.id)], limit=1)
-        if not picking_type:
-            raise ValidationError(_("No internal transfer picking type found."))
+        picking_type = warehouse._bn_program_type('donation_box_repair')
 
         origin = _('Repair - %s') % (self.name or self.lot_id.name)
         picking = self.env['stock.picking'].sudo().create({

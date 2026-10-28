@@ -1,6 +1,6 @@
 {
     'name': 'Donation Box',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.6.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -20,6 +20,7 @@
         'data/ir_module_category.xml',
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'security/stock_scope_rule.xml',
         'data/server_action.xml',
         'views/donation_box_request.xml',
         'views/donation_box_registration_intallation.xml',
@@ -33,6 +34,7 @@
         'views/res_company.xml',
         'views/stock_warehouse.xml',
         'data/upgrade_hooks.xml',
+        'data/bn_program_types.xml',
     ],
     'post_init_hook': 'post_init_hook',
     'auto_install': False,

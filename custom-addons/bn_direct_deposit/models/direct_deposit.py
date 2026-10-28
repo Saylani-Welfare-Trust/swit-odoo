@@ -441,7 +441,8 @@ May Allah bless you!
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
 
-        picking_type = self.env.ref('stock.picking_type_out')
+        # the Direct Deposit Delivery operation type of the creator's warehouse
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('direct_deposit', user=self.user_id)
         destination_location = self.env.ref('stock.stock_location_customers')
 
         product_lines = self._get_non_donor_lines().filtered(

@@ -6,6 +6,8 @@ from io import BytesIO
 import openpyxl
 import xlrd
 
+from .gateway_config import LEGACY_DEFAULT_DONOR_REGISTRATION
+
 
 state_selection = [
     ('draft', 'Draft'),
@@ -54,7 +56,8 @@ class ImportDonation(models.Model):
         domain="[('company_id', '=', company_id)]")
     picking_type_id = fields.Many2one(
         'stock.picking.type', string="Operation Type",
-        domain="['|', ('warehouse_id', '=', warehouse_id), ('warehouse_id', '=', False)]",
+        default=lambda self: self._default_picking_type_id(),
+        domain="[('warehouse_id', '=', warehouse_id), ('bn_program', '=', 'online_donation')]",
         help="Operation type used for the receipt of stockable donated products. "
              "Only needed when a line's product is a storable product.")
     source_location_id = fields.Many2one(
@@ -80,9 +83,17 @@ class ImportDonation(models.Model):
 
     @api.model
     def _default_warehouse_id(self):
-        warehouse = self.env['stock.warehouse'].search(
-            [('company_id', '=', self.env.company.id)], limit=1)
-        return warehouse.id
+        # the user's warehouse
+        return self.env['stock.warehouse']._bn_warehouse_for().id
+
+    @api.model
+    def _default_picking_type_id(self):
+        return self.env['stock.warehouse']._bn_get_program_type('online_donation').id
+
+    @api.onchange('warehouse_id')
+    def _onchange_warehouse_id_program_type(self):
+        if self.warehouse_id:
+            self.picking_type_id = self.warehouse_id._bn_program_type('online_donation')
 
     @api.depends('picking_type_id', 'picking_type_id.default_location_src_id',
                  'picking_type_id.default_location_dest_id')
@@ -287,8 +298,8 @@ class ImportDonation(models.Model):
 
         for key in ('donor_student_name', 'email', 'date', 'reference'):
             vals[key] = self._norm_text(vals.get(key))
-        if not (vals['donor_student_name'] or vals['mobile'] or vals['cnic_no'] or vals['email']):
-            return _('No donor name, mobile, CNIC or email.')
+        if not (vals['mobile'] or vals['cnic_no']) and not self.gateway_config_id._get_default_donor():
+            return _('No donor number (mobile / CNIC) and no default donor %s.') % LEGACY_DEFAULT_DONOR_REGISTRATION
         return ''
 
     # =========================================================
@@ -393,6 +404,7 @@ class ImportDonation(models.Model):
         partner_cache = {}
         donation_vals = []
         failed = []
+        default_donor = self.gateway_config_id._get_default_donor()
 
         for line in lines:
             # Another batch may have uploaded the same transaction since validation.
@@ -402,13 +414,16 @@ class ImportDonation(models.Model):
                 failed.append((line, _('Already imported (%s).') % existing.display_name))
                 continue
 
-            key = (line.cnic_no, line.mobile, (line.email or '').lower(), line.is_student,
-                   '' if (line.cnic_no or line.mobile or line.email) else line.donor_student_name)
-            if key not in partner_cache:
-                partner_cache[key] = Partner._import_find_or_create_partner(
-                    line.donor_student_name, mobile=line.mobile, cnic=line.cnic_no, email=line.email,
-                    tag_ids=self._partner_tag_ids(line.is_student))
-            partner, error = partner_cache[key]
+            if not (line.mobile or line.cnic_no):
+                # no donor number: the default donor
+                partner, error = default_donor, _('No donor number and no default donor.')
+            else:
+                key = (line.cnic_no, line.mobile, (line.email or '').lower(), line.is_student)
+                if key not in partner_cache:
+                    partner_cache[key] = Partner._import_find_or_create_partner(
+                        line.donor_student_name, mobile=line.mobile, cnic=line.cnic_no, email=line.email,
+                        tag_ids=self._partner_tag_ids(line.is_student))
+                partner, error = partner_cache[key]
             if not partner:
                 failed.append((line, _('Donor: %s') % error))
                 continue
@@ -450,9 +465,12 @@ class ImportDonation(models.Model):
             line = lines.get(donation.transaction_id)
             if not line:
                 continue
-            partner, error = Partner._import_find_or_create_partner(
-                line.donor_student_name, mobile=line.mobile, cnic=line.cnic_no, email=line.email,
-                tag_ids=self._partner_tag_ids(line.is_student))
+            if not (line.mobile or line.cnic_no):
+                partner = self.gateway_config_id._get_default_donor()
+            else:
+                partner, error = Partner._import_find_or_create_partner(
+                    line.donor_student_name, mobile=line.mobile, cnic=line.cnic_no, email=line.email,
+                    tag_ids=self._partner_tag_ids(line.is_student))
             if partner and partner != donation.donor_id:
                 donation.donor_id = partner
                 relinked += 1

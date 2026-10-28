@@ -347,13 +347,9 @@ class MemberApproval(models.Model):
         if not self.dest_location_id:
             raise ValidationError(_('Please specify a Destination Location.'))
 
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
-
-        if not picking_type:
-            raise ValidationError(_('No internal transfer picking type found.'))
+        # the Material Request operation type of the source warehouse
+        picking_type = self.env['stock.warehouse']._bn_get_program_type(
+            'material_request', self.source_location_id)
 
         move_vals = []
         shortage_move_vals = []

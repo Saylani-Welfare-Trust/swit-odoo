@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="stock_view_warehouse_inherit_bn_stock_location" model="ir.ui.view">
+        <field name="name">stock.view.warehouse.inherit.bn.stock.location</field>
+        <field name="model">stock.warehouse</field>
+        <field name="inherit_id" ref="stock.view_warehouse"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="bn_program_types" string="Program Operation Types" groups="stock.group_stock_manager">
+                    <field name="bn_program_picking_type_ids" context="{'active_test': False}">
+                        <tree create="0" delete="0">
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="sequence_code"/>
+                            <field name="default_location_src_id"/>
+                            <field name="default_location_dest_id"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

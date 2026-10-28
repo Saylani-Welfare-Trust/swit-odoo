@@ -8,6 +8,11 @@
         <field name="arch" type="xml">
             <xpath expr="//page[@name='access_rights']" position="after">
                 <page name="inventory" string="Inventory">
+                    <div class="text-muted mb-2">
+                        The user only sees and uses these warehouses, locations (with their sub-locations) and
+                        product categories (with their sub-categories), in every application; nothing set = no access.
+                        Settings administrators and "Stock Location / Unrestricted Access" (Access Rights tab) see everything.
+                    </div>
                     <group>
                         <group name="inventory_col_1">
                           <field name="allowed_warehouse_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />  

@@ -40,9 +40,7 @@ class APIDonationWizard(models.TransientModel):
     CRON_DAYS_BACK = 3
 
     def _default_picking_type_id(self):
-        picking_type = self.env.ref('bn_import_donation.online_donation_stock_picking_type',
-                                    raise_if_not_found=False)
-        return picking_type.id if picking_type else False
+        return self.env['stock.warehouse']._bn_get_program_type('online_donation').id
 
     # =========================================================
     # LOG HELPER

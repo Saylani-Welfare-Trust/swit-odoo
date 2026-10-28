@@ -60,10 +60,9 @@ class POSSession(models.Model):
         # ------------------------------------------------
         # DHS PICKINGS (SEPARATE)
         # ------------------------------------------------
-        dhs_picking_type = self.env.ref(
-            'bn_donation_home_service.donation_home_service_pos_stock_picking_type',
-            raise_if_not_found=False
-        )
+        # the DHS POS operation type of the shop's warehouse
+        dhs_picking_type = self.config_id.warehouse_id._bn_program_type('dhs_pos') \
+            if self.config_id.warehouse_id else self.env['stock.warehouse']._bn_get_program_type('dhs_pos')
 
         for location_dest_id, lines in dhs_orders_by_document.items():
             pickings = self.env['stock.picking']._create_picking_from_pos_order_lines(

@@ -89,6 +89,8 @@ class BranchKitchenRequest(models.Model):
                     'product_qty': line.quantity,
                     'product_uom_id': line.product_id.uom_id.id,
                     'bom_id': bom.id,
+                    # the Kitchen Production operation type of the stock's warehouse
+                    'picking_type_id': self.env['stock.warehouse']._bn_get_program_type('kitchen', warehouse_loc).id,
                     'location_src_id': warehouse_loc.id,
                     'location_dest_id': kitchen_loc.id,
                     'origin': f"Kitchen Request {self.id}",

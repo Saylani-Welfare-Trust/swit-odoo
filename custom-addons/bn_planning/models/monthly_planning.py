@@ -158,13 +158,10 @@ class MonthlyPlanning(models.Model):
 
     @api.model
     def _default_source_location(self):
-        picking_type = self.env.ref(
-            'stock.picking_type_internal', raise_if_not_found=False
-        )
-        if picking_type and picking_type.default_location_src_id:
-            return picking_type.default_location_src_id.id
-        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
-        return fallback.id if fallback else False
+        # the stock of the user's warehouse
+        warehouse = self.env['stock.warehouse'].sudo().search([], limit=1) and \
+            self.env['stock.warehouse']._bn_warehouse_for()
+        return warehouse.lot_stock_id.id if warehouse else False
     
     # ─── Internal transfer generation ─────────────────────
     def _create_internal_transfer_for_lines(self, line_list, dest_location):
@@ -185,9 +182,9 @@ class MonthlyPlanning(models.Model):
         if not line_list:
             return StockPicking
 
-        picking_type = self.env.ref(
-            'stock.picking_type_internal', raise_if_not_found=False
-        )
+        # the Monthly Planning operation type of the source warehouse
+        picking_type = self.env['stock.warehouse']._bn_get_program_type(
+            'planning', self.source_location_id or None)
         if not picking_type:
             _logger.warning(
                 "Cron: 'stock.picking_type_internal' not found. "

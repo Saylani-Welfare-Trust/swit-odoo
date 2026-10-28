@@ -6,7 +6,8 @@ type_selection = [
     ('api', 'API')
 ]
 
-# Default Donor of the "Web API" gateway before it was configurable.
+# Donor of the donations received without a donor number (mobile / CNIC),
+# unless the gateway configuration names another one.
 LEGACY_DEFAULT_DONOR_REGISTRATION = '2025-9999998-9'
 
 
@@ -27,7 +28,8 @@ class GatewayConfig(models.Model):
              "the gateway account receives the amount after charges.")
     default_partner_id = fields.Many2one(
         'res.partner', string="Default Donor", tracking=True,
-        help="Donor used for API donations without a mobile number or email.")
+        help="Donor of the donations received without a donor number (no mobile and no CNIC). "
+             "Empty: the donor with Primary Registration ID %s." % LEGACY_DEFAULT_DONOR_REGISTRATION)
 
     is_fee = fields.Boolean(
         'Student Fees', tracking=True,
@@ -53,6 +55,16 @@ class GatewayConfig(models.Model):
                 return line
         return self.env['gateway.config.line']
 
+    def _get_default_donor(self):
+        """Donor of a donation received without a donor number: the gateway's
+        Default Donor, else the donor with Primary Registration ID
+        2025-9999998-9."""
+        partner = self[:1].default_partner_id
+        if not partner:
+            partner = self.env['res.partner'].sudo().with_context(active_test=False).search(
+                [('primary_registration_id', '=', LEGACY_DEFAULT_DONOR_REGISTRATION)], limit=1)
+        return partner.sudo(False)
+
     @api.model
     def _bn_setup_gateway_config(self):
         """Data hook (idempotent): settings that used to be hard-coded."""
@@ -60,5 +72,5 @@ class GatewayConfig(models.Model):
         default_donor = self.env['res.partner'].search(
             [('primary_registration_id', '=', LEGACY_DEFAULT_DONOR_REGISTRATION)], limit=1)
         if default_donor:
-            self.search([('type', '=', 'api'), ('default_partner_id', '=', False)]).write(
+            self.search([('default_partner_id', '=', False)]).write(
                 {'default_partner_id': default_donor.id})

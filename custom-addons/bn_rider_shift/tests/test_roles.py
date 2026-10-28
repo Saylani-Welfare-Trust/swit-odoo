@@ -9,6 +9,19 @@ from odoo.tests import tagged
 from .test_closed_box import BoxFlowCase
 
 
+
+def _with_stock_scope(user):
+    """Like a configured user (bn_stock_location scope): every warehouse,
+    internal location and product category of the test database."""
+    if 'allowed_warehouse_ids' in user._fields:
+        env = user.env
+        user.write({
+            'allowed_warehouse_ids': [(6, 0, env['stock.warehouse'].search([]).ids)],
+            'allowed_location_ids': [(6, 0, env['stock.location'].search([('usage', '=', 'internal')]).ids)],
+            'allowed_product_category_ids': [(6, 0, env['product.category'].search([]).ids)],
+        })
+    return user
+
 @tagged('post_install', '-at_install')
 class TestRoles(BoxFlowCase):
 
@@ -17,8 +30,8 @@ class TestRoles(BoxFlowCase):
         super().setUpClass()
 
         def user(login, *groups):
-            return cls.env['res.users'].create({'name': login, 'login': login, 'groups_id': [
-                (6, 0, [cls.env.ref('base.group_user').id] + [cls.env.ref(g).id for g in groups])]})
+            return _with_stock_scope(cls.env['res.users'].create({'name': login, 'login': login, 'groups_id': [
+                (6, 0, [cls.env.ref('base.group_user').id] + [cls.env.ref(g).id for g in groups])]}))
         cls.db_user = user('role_db_user', 'bn_donation_box.donation_box_user_group')
         cls.db_manager = user('role_db_manager', 'bn_donation_box.donation_box_manager_group')
         cls.key_user = user('role_key_user', 'bn_key_management.key_management_user_group')

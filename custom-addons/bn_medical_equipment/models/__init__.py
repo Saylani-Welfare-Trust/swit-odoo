@@ -11,3 +11,4 @@ from . import stock_picking
 from . import pos_cheque
 from . import pos_order
 from . import direct_deposit
+from . import bn_program_types

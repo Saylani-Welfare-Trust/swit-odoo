@@ -120,7 +120,7 @@ class DistributionCenter(models.Model):
         picking = self.env['stock.picking'].create({
             'origin': self.name,
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env.ref('stock.picking_type_out').id,
+            'picking_type_id': self.env['stock.warehouse']._bn_get_program_type('livestock_distribution', warehouse_loc).id,
             'location_id': warehouse_loc.id,
             'location_dest_id': self.donee_id.property_stock_customer.id,
             'move_ids': [

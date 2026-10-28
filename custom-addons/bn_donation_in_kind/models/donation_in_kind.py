@@ -33,10 +33,12 @@ class DonationInKind(models.Model):
     
     def default_set_value(self, name):
         product_stock_move_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)
+        if name == 'picking_type_id':
+            # the Donation In Kind operation type of the configured location's warehouse
+            return self._din_picking_type(product_stock_move_config.location_id).id
         if product_stock_move_config:
             field_map = {
                 'location_id': product_stock_move_config.location_id.id,
-                'picking_type_id': product_stock_move_config.picking_type_id.id,
                 'journal_id': product_stock_move_config.journal_id.id
             }
             return field_map.get(name, False)
@@ -235,9 +237,16 @@ May Allah bless you!
                 raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
                     'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
 
+    @api.model
+    def _din_picking_type(self, location):
+        return self.env['stock.warehouse']._bn_get_program_type('donation_in_kind', location or None)
+
     def action_validate(self):
         self._check_din_state(('delivered',), _('Validate'))
         for record in self:
+            # the goods arrived where the truck took them: that warehouse's type
+            if record.location_id and record.picking_type_id.warehouse_id != record.location_id.warehouse_id:
+                record.picking_type_id = record._din_picking_type(record.location_id)
             if not record.picking_type_id:
                 raise ValidationError('Please Select Stock Picking Type')
             if record.picking_type_id.default_location_src_id:
@@ -681,7 +690,7 @@ May Allah bless you!
                 if product_stock_move_config:
                     record.write({
                         'location_id': product_stock_move_config.location_id.id,
-                        'picking_type_id': product_stock_move_config.picking_type_id.id,
+                        'picking_type_id': self._din_picking_type(product_stock_move_config.location_id).id,
                         'journal_id': product_stock_move_config.journal_id.id
                     })
                 

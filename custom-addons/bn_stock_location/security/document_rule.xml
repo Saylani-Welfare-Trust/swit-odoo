@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Same scope as bn_stock_location (security/record_rule.xml): only the warehouses / locations set on the user; a document without one yet stays visible. -->
+
+    <record id="scope_purchase_order_rule" model="ir.rule">
+        <field name="name">Purchase Order: allowed warehouses / locations</field>
+        <field name="model_id" ref="purchase.model_purchase_order"/>
+        <field name="domain_force">['|', ('picking_type_id', '=', False), ('picking_type_id.warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_purchase_order_unrestricted_rule" model="ir.rule">
+        <field name="name">Purchase Order: unrestricted</field>
+        <field name="model_id" ref="purchase.model_purchase_order"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_purchase_requisition_rule" model="ir.rule">
+        <field name="name">Purchase Agreement: allowed warehouses / locations</field>
+        <field name="model_id" ref="purchase_requisition.model_purchase_requisition"/>
+        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_purchase_requisition_unrestricted_rule" model="ir.rule">
+        <field name="name">Purchase Agreement: unrestricted</field>
+        <field name="model_id" ref="purchase_requisition.model_purchase_requisition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sale_order_rule" model="ir.rule">
+        <field name="name">Sales Order: allowed warehouses / locations</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sale_order_unrestricted_rule" model="ir.rule">
+        <field name="name">Sales Order: unrestricted</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_mrp_production_rule" model="ir.rule">
+        <field name="name">Manufacturing Order: allowed warehouses / locations</field>
+        <field name="model_id" ref="mrp.model_mrp_production"/>
+        <field name="domain_force">['|', ('location_dest_id', 'child_of', user.allowed_location_ids.ids), ('location_src_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_mrp_production_unrestricted_rule" model="ir.rule">
+        <field name="name">Manufacturing Order: unrestricted</field>
+        <field name="model_id" ref="mrp.model_mrp_production"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_mrp_bom_rule" model="ir.rule">
+        <field name="name">Bill of Materials: allowed warehouses / locations</field>
+        <field name="model_id" ref="mrp.model_mrp_bom"/>
+        <field name="domain_force">['|', ('picking_type_id', '=', False), ('picking_type_id.warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_mrp_bom_unrestricted_rule" model="ir.rule">
+        <field name="name">Bill of Materials: unrestricted</field>
+        <field name="model_id" ref="mrp.model_mrp_bom"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_pos_config_rule" model="ir.rule">
+        <field name="name">Point of Sale: allowed warehouses / locations</field>
+        <field name="model_id" ref="point_of_sale.model_pos_config"/>
+        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_pos_config_unrestricted_rule" model="ir.rule">
+        <field name="name">Point of Sale: unrestricted</field>
+        <field name="model_id" ref="point_of_sale.model_pos_config"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_pos_session_rule" model="ir.rule">
+        <field name="name">POS Session: allowed warehouses / locations</field>
+        <field name="model_id" ref="point_of_sale.model_pos_session"/>
+        <field name="domain_force">['|', ('config_id.warehouse_id', '=', False), ('config_id.warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_pos_session_unrestricted_rule" model="ir.rule">
+        <field name="name">POS Session: unrestricted</field>
+        <field name="model_id" ref="point_of_sale.model_pos_session"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_pos_order_rule" model="ir.rule">
+        <field name="name">POS Order: allowed warehouses / locations</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="domain_force">['|', ('session_id.config_id.warehouse_id', '=', False), ('session_id.config_id.warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_pos_order_unrestricted_rule" model="ir.rule">
+        <field name="name">POS Order: unrestricted</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+</odoo>

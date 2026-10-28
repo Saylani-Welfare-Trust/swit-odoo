@@ -139,9 +139,10 @@ class DonationHomeService(models.Model):
         """Confirm donation and create stock picking if stockable product lines exist."""
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
-        StockLocation = self.env.ref('stock.stock_location_stock')
+        # the DHS Gate Out operation type of the user's warehouse: from its stock
+        PickingType = self.env['stock.warehouse']._bn_get_program_type('dhs_gate_out')
+        StockLocation = PickingType.default_location_src_id
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
-        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
 
         self._check_dhs_state(('draft',), _('Gate Out'))
         for record in self:
@@ -218,7 +219,7 @@ class DonationHomeService(models.Model):
         StockMove = self.env['stock.move']
         StockLocation = self.env.ref('bn_donation_home_service.gate_out_location')
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_in_location')
-        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_in_stock_picking_type')
+        PickingType = self.env['stock.warehouse']._bn_get_program_type('dhs_gate_in')
 
         self._check_dhs_state(('gate_out',), _('Gate In'))
         for record in self:

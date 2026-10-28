@@ -113,10 +113,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Slaughter Stock, Meat or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
-        ], limit=1)
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock')
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
@@ -168,10 +165,7 @@ class LivestockSlaughter(models.Model):
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
-        ], limit=1)
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock')
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 

@@ -866,7 +866,8 @@ class Microfinance(models.Model):
         # Create picking
         picking = self.env['stock.picking'].create({
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env.ref('stock.picking_type_out').id,
+            'picking_type_id': self.env['stock.warehouse']._bn_get_program_type(
+                'microfinance_delivery', self.env['stock.location'].browse(location_id)).id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
             'origin': self.name
         })

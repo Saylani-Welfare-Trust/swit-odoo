@@ -572,11 +572,10 @@ class WelfareLine(models.Model):
         return True
 
     def _get_delivery_locations(self):
-        """Delivery operation type of the company warehouse, with its own
-        source and customer locations."""
-        warehouse = self.env['stock.warehouse'].search([('company_id', '=', self.env.company.id)], limit=1)
-        picking_type = warehouse.out_type_id or self.env.ref('stock.picking_type_out')
-        location_src = picking_type.default_location_src_id or warehouse.lot_stock_id
+        """The Welfare Delivery operation type of the user's warehouse, with
+        its source and customer locations."""
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('welfare')
+        location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
         location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
         return picking_type, location_src, location_dest
 

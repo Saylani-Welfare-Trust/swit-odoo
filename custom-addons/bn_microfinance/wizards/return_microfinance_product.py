@@ -33,7 +33,8 @@ class ReturnMicrofinanceProduct(models.TransientModel):
 
         picking = self.env['stock.picking'].sudo().create({
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env.ref('stock.picking_type_in').id,
+            'picking_type_id': self.env['stock.warehouse']._bn_get_program_type(
+                'microfinance_recovery', self.destination_location_id).id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
             'origin': self.source_document,
             'location_id': self.env.ref('stock.stock_location_customers').id,

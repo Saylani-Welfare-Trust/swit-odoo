@@ -6,16 +6,19 @@
         <field name="sequence">50</field>
     </record>
 
-    <!-- Not a CRUD-granting tier - stock CRUD itself comes from Odoo's own
-         Inventory groups (stock.group_stock_user / stock.group_stock_manager).
-         This group only SCOPES which warehouses/locations a person who
-         already has Inventory access can see, via the record rules below,
-         and gates visibility of the Locations menu to people who have that
-         scope configured. -->
+    <!-- Shows the Inventory > Configuration > Locations menu. The warehouse /
+         location / category scope itself applies to every internal user
+         (security/record_rule.xml), it does not depend on this group. -->
     <record id="stock_location_user_group" model="res.groups">
-        <field name="name">Stock Location / Restricted Access</field>
+        <field name="name">Stock Location / Locations Menu</field>
         <field name="category_id" ref="module_stock_location"/>
-        <field name="comment">Row-level restriction: this user only sees their allowed warehouses/locations. Not a CRUD tier - it scopes which records base Inventory access already grants.</field>
+        <field name="comment">Shows the Locations menu.</field>
+    </record>
+
+    <record id="stock_scope_unrestricted_group" model="res.groups">
+        <field name="name">Stock Location / Unrestricted Access</field>
+        <field name="category_id" ref="module_stock_location"/>
+        <field name="comment">Sees every warehouse, location, operation type and product category, whatever is set on the user (e.g. central inventory or finance). Settings administrators are always unrestricted.</field>
     </record>
 
 </odoo>

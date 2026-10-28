@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Material Request',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.3.0',
     'category': 'BytesNode/Material Request',
     'summary': 'Internal Transfer Request with Budget Check and Multi-level Approval',
     'description': """
@@ -25,12 +25,14 @@
         'security/groups.xml',
         'security/record_rule.xml',
         'security/ir.model.access.csv',
+        'security/stock_scope_rule.xml',
         'data/sequence.xml',
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',
         'views/wizard_views.xml',
         'views/purchase_order.xml',
         'views/stock_picking_views.xml',
+        'data/bn_program_types.xml',
     ],
     'installable': True,
     'application': True,

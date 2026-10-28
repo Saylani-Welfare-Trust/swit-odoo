@@ -13,3 +13,4 @@ from . import stock_move
 from . import installation_category
 from . import res_company
 from . import pos_session
+from . import bn_program_types

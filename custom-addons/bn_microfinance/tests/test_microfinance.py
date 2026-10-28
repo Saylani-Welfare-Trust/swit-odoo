@@ -4,6 +4,19 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 
+
+def _with_stock_scope(user):
+    """Like a configured user (bn_stock_location scope): every warehouse,
+    internal location and product category of the test database."""
+    if 'allowed_warehouse_ids' in user._fields:
+        env = user.env
+        user.write({
+            'allowed_warehouse_ids': [(6, 0, env['stock.warehouse'].search([]).ids)],
+            'allowed_location_ids': [(6, 0, env['stock.location'].search([('usage', '=', 'internal')]).ids)],
+            'allowed_product_category_ids': [(6, 0, env['product.category'].search([]).ids)],
+        })
+    return user
+
 @tagged('post_install', '-at_install')
 class TestMicrofinance(TransactionCase):
 
@@ -39,8 +52,8 @@ class TestMicrofinance(TransactionCase):
                                                'category_id': [(6, 0, tags)]})
 
         def user(login, *groups):
-            return env['res.users'].create({'name': login, 'login': login, 'groups_id': [
-                (6, 0, [ref('base.group_user').id] + [ref(g).id for g in groups])]})
+            return _with_stock_scope(env['res.users'].create({'name': login, 'login': login, 'groups_id': [
+                (6, 0, [ref('base.group_user').id] + [ref(g).id for g in groups])]}))
         group = 'bn_microfinance.microfinance_%s_group'
         cls.user = user('mf_t_user', group % 'user')
         cls.hod = user('mf_t_hod', group % 'hod')

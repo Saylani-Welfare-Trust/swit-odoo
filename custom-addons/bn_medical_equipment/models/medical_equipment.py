@@ -644,7 +644,7 @@ class MedicalEquipment(models.Model):
         if self.picking_id:
             raise UserError(_('%s is already validated.') % self.name)
 
-        operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
+        operation_type = self.env['stock.warehouse']._bn_get_program_type('medical_equipment')
         
         # Prepare stock picking values
         picking_vals = {

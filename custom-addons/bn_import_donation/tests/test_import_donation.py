@@ -13,6 +13,19 @@ from odoo.addons.bn_import_donation.wizards.api_donaiton_wizard import APIDonati
 HEADERS = ['Transaction ID', 'Name', 'Cell Number', 'CNIC No.', 'Email', 'Date', 'Amount', 'Product', 'Reference']
 
 
+
+def _with_stock_scope(user):
+    """Like a configured user (bn_stock_location scope): every warehouse,
+    internal location and product category of the test database."""
+    if 'allowed_warehouse_ids' in user._fields:
+        env = user.env
+        user.write({
+            'allowed_warehouse_ids': [(6, 0, env['stock.warehouse'].search([]).ids)],
+            'allowed_location_ids': [(6, 0, env['stock.location'].search([('usage', '=', 'internal')]).ids)],
+            'allowed_product_category_ids': [(6, 0, env['product.category'].search([]).ids)],
+        })
+    return user
+
 @tagged('post_install', '-at_install')
 class TestImportDonation(TransactionCase):
 
@@ -44,8 +57,8 @@ class TestImportDonation(TransactionCase):
         cls.existing = env['res.partner'].create({'name': 'Existing Ali', 'mobile': '3001112222'})
 
         def user(login, group):
-            return env['res.users'].create({'name': login, 'login': login, 'groups_id': [
-                (6, 0, [env.ref('base.group_user').id, env.ref('bn_import_donation.%s' % group).id])]})
+            return _with_stock_scope(env['res.users'].create({'name': login, 'login': login, 'groups_id': [
+                (6, 0, [env.ref('base.group_user').id, env.ref('bn_import_donation.%s' % group).id])]}))
         cls.user = user('import_user_t', 'import_donation_user_group')
         cls.manager = user('import_manager_t', 'import_donation_manager_group')
 
@@ -88,6 +101,23 @@ class TestImportDonation(TransactionCase):
         self.assertIn('not mapped', invalid['70004Unmapped'])
         self.assertIn('10 digit', invalid['70005Bad Mobile'])
         self.assertIn('Income Account', invalid['70008No Income'])
+
+    def test_no_donor_number_goes_to_default_donor(self):
+        rows = [(70101, 'Name Only', None, None, None, '2026-10-01', 10, 'Zakat', ''),
+                (70102, None, None, None, None, '2026-10-01', 20, 'Zakat', ''),
+                (70103, 'Email Only', None, None, 'donor@example.com', '2026-10-01', 30, 'Zakat', ''),
+                (70104, 'Has Mobile', '3006660000', None, None, '2026-10-01', 40, 'Zakat', '')]
+        batch = self._batch(rows)
+        batch.action_validate_excel_file()
+        self.assertEqual(len(batch.invalid_import_donation_ids), 3, 'no default donor yet')
+
+        default = self.env['res.partner'].create({'name': 'Default Donor T', 'primary_registration_id': '2025-9999998-9'})
+        batch = self._batch(rows, 'Batch 2')
+        batch.action_validate_excel_file()
+        batch.action_upload()
+        donors = {d.transaction_id: d.donor_id for d in batch.donation_ids}
+        self.assertEqual({donors['70101'], donors['70102'], donors['70103']}, {default})
+        self.assertNotEqual(donors['70104'], default, 'a donor number finds / creates its own donor')
 
     def test_upload_matches_donors_without_names(self):
         batch = self._batch(self.ROWS)

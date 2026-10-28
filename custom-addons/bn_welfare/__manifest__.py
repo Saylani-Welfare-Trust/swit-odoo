@@ -1,6 +1,6 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.5.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -41,6 +41,7 @@
         
         'wizards/check_marfat_shift.xml',
         'wizards/wizard_view.xml',
+        'data/bn_program_types.xml',
     ],
     'auto_install': False,
     'application': True,

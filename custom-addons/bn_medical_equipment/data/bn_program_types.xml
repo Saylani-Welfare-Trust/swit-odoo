@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- every warehouse gets this module's operation types (install / upgrade) -->
+    <function model="stock.warehouse" name="_bn_setup_program_types"/>
+    <!-- the global type it replaces -->
+    <function model="stock.warehouse" name="_bn_archive_legacy_types">
+        <value eval="['bn_medical_equipment.medical_equipment_stock_picking_type']"/>
+    </function>
+</odoo>
