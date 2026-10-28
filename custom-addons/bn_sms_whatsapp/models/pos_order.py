@@ -127,14 +127,15 @@ class PosOrder(models.Model):
         filename = f"Donation Receipt.pdf"
 
         # Delete old
-        old = self.env['ir.attachment'].search([
+        old = self.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'pos.order'),
             ('res_id', '=', order.id),
             ('name', '=', filename)
         ])
         old.unlink()
 
-        # Create new
+        # Create new. Not public: the link below carries an access token, a
+        # public attachment could be downloaded by anyone guessing its id.
         attachment = self.env['ir.attachment'].sudo().create({
             'name': filename,
             'type': 'binary',
@@ -142,7 +143,6 @@ class PosOrder(models.Model):
             'res_model': 'pos.order',
             'res_id': order.id,
             'mimetype': 'application/pdf',
-            'public': True,
         })
 
         # Generate access token

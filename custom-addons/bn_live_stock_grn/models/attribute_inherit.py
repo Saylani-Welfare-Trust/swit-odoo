@@ -1,5 +1,9 @@
 from odoo import models, fields
 
+import logging
+_logger = logging.getLogger(__name__)
+
+
 class ProductAttributeValue(models.Model):
     _inherit = 'product.attribute.value'
 
@@ -24,14 +28,14 @@ class StockPicking(models.Model):
         #     })
 
         self.ensure_one()
-        print(">>> Opening wizard for picking:", self.name, "id:", self.id)
+        _logger.debug("%s", (">>> Opening wizard for picking:", self.name, "id:", self.id,))
 
         Wizard = self.env['receive.by.weight.wizard']
         lines = []
         s_no = 1
         for move in self.move_ids:
             qty = int(move.product_uom_qty or 0)
-            print(">>> Move:", move.product_id.display_name, "Qty:", qty)
+            _logger.debug("%s", (">>> Move:", move.product_id.display_name, "Qty:", qty,))
             for _ in range(qty):
                 lines.append((0, 0, {
                     's_no': s_no,
@@ -44,7 +48,7 @@ class StockPicking(models.Model):
             'picking_id': self.id,
             'line_ids': lines,
         })
-        print(">>> Wizard created with ID:", wizard.id, "and lines:", wizard.line_ids)
+        _logger.debug("%s", (">>> Wizard created with ID:", wizard.id, "and lines:", wizard.line_ids,))
 
         return {
             'name': 'Receive by Weight',

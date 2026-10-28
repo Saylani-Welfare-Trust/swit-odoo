@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 import logging
 import re
 import json
@@ -538,12 +538,59 @@ class QurbaniOrder(models.Model):
         }
 
     @api.model
+    def _book_qurbani(self, data):
+        """create_qurbani_record for a direct deposit / home service: raises
+        (rolling back the deposit) instead of returning an error."""
+        res = self.create_qurbani_record(data)
+        if not res:
+            return self.browse()
+        if res.get('status') != 'success':
+            raise UserError(res.get('body') or _('The Qurbani could not be booked.'))
+        return self.browse(res['id'])
+
+    def _release_booked_hissa(self):
+        """Give back the hissa booked by these orders (unpaid deposit,
+        cancelled home service) and drop their lines."""
+        for line in self.sudo().qurbani_order_line_ids:
+            distribution_schedule = self.env['distribution.schedule'].sudo().search([
+                ('day_id', '=', line.day_id.id),
+                ('hijri_id', '=', line.hijri_id.id),
+                ('pos_product_ids', 'in', [line.product_id.id]),
+                ('start_time', '=', line.start_time),
+                ('end_time', '=', line.end_time),
+                ('location_id', '=', line.distribution_id.id)
+            ], limit=1)
+
+            if distribution_schedule:
+                slaughter_slot_demand = self.env['qurbani.slaughter.slot.demand'].sudo().search([
+                    ('day_id', '=', line.day_id.id),
+                    ('hijri_id', '=', line.hijri_id.id),
+                    ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id),
+                    ('end_time', '=', distribution_schedule.slaughter_schedule_id.end_time),
+                    ('slaughter_location_id', '=', distribution_schedule.slaughter_location_id.id)
+                ], limit=1)
+
+                if slaughter_slot_demand:
+                    slaughter_slot_demand.booked_hissa -= line.quantity
+                    slaughter_slot_demand.current_hissa -= line.quantity
+                    slaughter_slot_demand.remaining_hissa += line.quantity
+            line.unlink()
+
+    @api.model
     def create_qurbani_record(self, data):
 
         schedule_usage = {}
         demand_cache = {}
 
-        Hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
+        # nothing to book when no qurbani product was sold (an ordinary
+        # direct deposit / home service)
+        if not any(
+            'qurbani' in (self.env['product.product'].browse(line['product_id']).categ_id.name or '').lower()
+            for line in data.get('order_lines', [])
+        ):
+            return False
+
+        Hijri =self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
         if not Hijri:
             return {"status": "error", "body": "No Hijri found"}
 
@@ -788,10 +835,8 @@ class QurbaniOrder(models.Model):
                         break
 
                 if not qurbani_cow_slaughter:
-                    return {
-                        "status": "error",
-                        "body": "No empty cow slaughter slot available."
-                    }
+                    # the hissa are already booked above: roll everything back
+                    raise UserError(_("No empty cow slaughter slot available."))
 
                 # APPEND LINE
                 qurbani_cow_slaughter.write({

@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import _, models, fields
+from odoo.exceptions import UserError
 
 
 month_selection = [
@@ -9,9 +10,9 @@ month_selection = [
     ('may', 'May'),
     ('jun', 'June'),
     ('jul', 'July'),
-    ('aug', 'Auguest'),
     ('aug', 'August'),
     ('sep', 'September'),
+    ('oct', 'October'),
     ('nov', 'November'),
     ('dec', 'December'),
 ]
@@ -36,39 +37,49 @@ class KitchenMenu(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
+    bom_id = fields.Many2one('mrp.bom', string="Bill of Materials", readonly=True, copy=False)
+
     kitchen_menu_line_ids = fields.One2many('kitchen.menu.line', 'kitchen_menu_id', string="Kitchen Menu Lines")
 
 
     def _generate_bom(self):
-        existing = self.env['mrp.bom'].search([
+        """Kit BOM of the menu product from the menu lines (the product's
+        existing BOM is updated instead of adding another one)."""
+        self.ensure_one()
+        lines = [(5, 0, 0)] + [(0, 0, {
+            'product_id': line.product_id.id,
+            'product_qty': line.quantity,
+            'product_uom_id': line.product_id.uom_id.id,
+        }) for line in self.kitchen_menu_line_ids]
+        bom = self.bom_id or self.env['mrp.bom'].search([
             ('product_tmpl_id', '=', self.product_tmpl_id.id)
         ], limit=1)
-        
-        if existing:
-            self.bom_id = existing.id
+        if bom:
+            bom.write({'bom_line_ids': lines})
+        else:
+            bom = self.env['mrp.bom'].create({
+                'product_tmpl_id': self.product_tmpl_id.id,
+                'type': 'phantom',
+                'product_qty': 1.0,
+                'code': self.product_tmpl_id.default_code or self.product_tmpl_id.name,
+                'bom_line_ids': lines[1:],
+            })
+        self.bom_id = bom
 
-        # create new BOM
-        bom_vals = {
-            'product_tmpl_id': self.product_tmpl_id.id,
-            'type': 'phantom',
-            'product_qty': 1.0,
-            'code': self.product_tmpl_id.default_code or self.product_tmpl_id.name,
-        }
-        bom = self.env['mrp.bom'].create(bom_vals)
-
-        self.bom_id = bom.id
-        
-        for line in self.kitchen_menu_line_ids:
-            bom.write({'bom_line_ids': [(0, 0, {
-                'product_id': line.product_id.id,
-                'product_qty': line.quantity,
-                'product_uom_id': line.product_id.uom_id.id,
-            })]})
+    def _check_menu_state(self, allowed, action):
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%s" is not possible for menu %s in its current status.') % (action, rec.name))
 
     def action_submit(self):
+        self._check_menu_state(('draft',), _('Submit'))
+        for rec in self:
+            if not rec.kitchen_menu_line_ids:
+                raise UserError(_('Add the items of menu %s first.') % rec.name)
         self.state = 'to_be_approved'
 
     def action_approve(self):
+        self._check_menu_state(('to_be_approved',), _('Approve'))
+        for rec in self:
+            rec._generate_bom()
         self.state = 'approved'
-        
-        self._generate_bom()

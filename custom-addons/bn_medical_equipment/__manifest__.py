@@ -1,6 +1,6 @@
 {
     'name': 'Medical Equipment',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -9,6 +9,7 @@
         'bn_profile_management',
         'bn_pos_custom_action',
         'bn_pos_cheque',
+        'bn_direct_deposit',
         'bn_donation_box',
         'bn_master_setup',
         'bn_res_company',

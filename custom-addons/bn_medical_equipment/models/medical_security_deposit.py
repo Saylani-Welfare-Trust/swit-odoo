@@ -40,12 +40,12 @@ class MedicalSecurityDeposit(models.Model):
     cheque_date = fields.Date('Cheque Date')
 
 
-    @api.model
-    def create(self, vals):
-        # Fix the condition - the original has a bug
-        if vals.get('name', 'NEW') == 'NEW':  # Fixed: removed _('NEW')
-            vals['name'] = self.env['ir.sequence'].next_by_code('installment_slip') or 'New'
-        return super(MedicalSecurityDeposit, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'NEW') == 'NEW':
+                vals['name'] = self.env['ir.sequence'].sudo().next_by_code('installment_slip') or 'New'
+        return super().create(vals_list)
     
     @api.constrains('cnic_no')
     def _check_cnic_format(self):
@@ -73,59 +73,10 @@ class MedicalSecurityDeposit(models.Model):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
     
     @api.model
-    def set_security_depsoit_values(self, data):
-        medical_equipment_id = self.env['medical.equipment'].search(
-            [('name', '=', data['medical_equipment_request_no'])],
-            limit=1
-        )
-
-        if not medical_equipment_id:
-            raise ValidationError("No medical equipment found with the given request number.")
-
-        security_deposit = self.search(
-            [('medical_equipment_id', '=', medical_equipment_id.id)],
-            order='id desc', limit=1
-        )
-
-        if not security_deposit:
-            donee = medical_equipment_id.donee_id
-            security_deposit = self.create({
-                'medical_equipment_id': medical_equipment_id.id,
-                'donee_id': donee.id if donee else data.get('donee_id'),
-                'cnic_no': donee.cnic_no if donee else '',
-                'amount': medical_equipment_id.total_amount,
-                'date': fields.Date.today(),
-                'payment_method': data.get('payment_method', 'cash'),
-                'bank_name': data.get('bank_name'),
-                'cheque_no': data.get('cheque_no'),
-                'cheque_date': data.get('cheque_date'),
-                'state': data.get('state', 'draft'),
-            })
-            medical_equipment_id.sd_slip_id = security_deposit.id
-            medical_equipment_id.state = 'sd_received'
-
-        # Always run the reach-back link, whether the SD was just created or already existed —
-        # a pending cheque/DD created after an existing SD still needs to be linked.
-        if security_deposit:
-            pending_cheque = self.env['pos.cheque'].sudo().search([
-                ('source_model', '=', 'medical_equipment'),
-                ('source_record_id', '=', medical_equipment_id.id),
-                ('medical_security_deposit_id', '=', False),
-            ], order='id desc', limit=1)
-            if pending_cheque:
-                pending_cheque.write({'medical_security_deposit_id': security_deposit.id})
-
-            pending_dd = self.env['direct.deposit'].search([
-                ('source_model', '=', 'medical_equipment'),
-                ('source_record_id', '=', medical_equipment_id.id),
-                ('medical_security_deposit_id', '=', False),
-            ], order='id desc', limit=1)
-            if pending_dd:
-                pending_dd.write({'medical_security_deposit_id': security_deposit.id})
-
-        return security_deposit
-    @api.model
     def get_medical_equipment_security_deposit(self, data):
+        """POS 'me' provisional popup: the security deposit to collect for a
+        request. The deposit itself is recorded when the order is saved
+        (pos.order._apply_medical_equipment_payment)."""
         medical_equipment_request = self.env['medical.equipment'].search(
             [('name', '=', data['medical_equipment_request_no'])],
             limit=1
@@ -134,49 +85,27 @@ class MedicalSecurityDeposit(models.Model):
         if not medical_equipment_request:
             return {
                 'status': "error",
-                'body': "No request found against entered number."
+                'body': _("No request found against entered number."),
             }
 
-        # Calculate total security deposit from lines
-        total_security_deposit = sum(
-            line.security_deposit
-            for line in medical_equipment_request.medical_equipment_line_ids
-        )
-        
-        quantity = sum(
-            line.quantity
-            for line in medical_equipment_request.medical_equipment_line_ids
-        )
+        security_deposit = medical_equipment_request._get_security_deposit()
+        if security_deposit.state == 'paid':
+            return {'status': "error", 'body': _("The security deposit of %s is already paid.") % medical_equipment_request.name}
+        if security_deposit.state == 'pending':
+            return {'status': "error", 'body': _("The security deposit of %s waits for its cheque to clear.") % medical_equipment_request.name}
 
-        # Check if security deposit already exists
-        security_deposit = self.search(
-            [('medical_equipment_id', '=', medical_equipment_request.id)],
-            limit=1
-        )
-
-        if security_deposit:
-            return {
-                'status': "success",
-                'id': medical_equipment_request.id,
-                'donee_id': medical_equipment_request.donee_id.id if medical_equipment_request.donee_id else False,
-                'donee_name': medical_equipment_request.donee_id.name if medical_equipment_request.donee_id else '',
-                'cnic_no': medical_equipment_request.donee_id.cnic_no if medical_equipment_request.donee_id else '',
-                'deposit_id': security_deposit.id,
-                'amount': self.medical_equipment_id.total_amount,
-                'state': security_deposit.state,
-                'deposit_exists': True,
-                'date': security_deposit.date or fields.Date.today(),
-            }
-
-        # Return data for new deposit creation
+        donee = medical_equipment_request.donee_id
         return {
             'status': "success",
             'id': medical_equipment_request.id,
-            'donee_id': medical_equipment_request.donee_id.id if medical_equipment_request.donee_id else False,
-            'donee_name': medical_equipment_request.donee_id.name if medical_equipment_request.donee_id else '',
-            'cnic_no': medical_equipment_request.donee_id.cnic_no if medical_equipment_request.donee_id else '',
+            'donee_id': donee.id,
+            'donee_name': donee.name or '',
+            'cnic_no': donee.cnic_no or '',
+            'deposit_id': security_deposit.id,
+            # a draft / bounced deposit is collected again
             'deposit_exists': False,
-            'amount': total_security_deposit,
-            'quantity': quantity,
+            # one line for the whole deposit of the request
+            'amount': medical_equipment_request.total_amount,
+            'quantity': 1,
             'date': fields.Date.today(),
         }

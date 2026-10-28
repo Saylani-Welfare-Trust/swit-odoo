@@ -670,6 +670,7 @@ class BankReconciliationTransaction(models.Model):
             
             reconciled.write({
                 'matched_move_id': move.id,
+                'created_move': True,
                 'is_posted': True,
             })
             
@@ -738,14 +739,10 @@ class BankReconciliationTransaction(models.Model):
             ('transaction_id', '=', self.id)
         ], limit=1)
         if reconciled:
-            if reconciled.matched_move_id:
-                try:
-                    if reconciled.matched_move_id.state == 'posted':
-                        reconciled.matched_move_id.button_cancel()
-                    reconciled.matched_move_id.unlink()
-                except Exception as e:
-                    _logger.warning("Could not delete journal entry: %s", str(e))
-            reconciled.unlink()
+            if reconciled.master_id.state == 'completed':
+                raise UserError(_('Cannot unreconcile from a completed reconciliation.'))
+            reconciled._remove_own_move()
+            reconciled.with_context(bn_unreconcile=True).unlink()
         
         self.write({
             'state': 'matched',

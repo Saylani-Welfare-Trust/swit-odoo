@@ -1,5 +1,3 @@
-from unittest import result
-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 
@@ -305,7 +303,15 @@ class MedicalEquipment(models.Model):
     #                     raise ValidationError(
     #                         f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
     #                     )
+    def _check_me_state(self, allowed, action):
+        labels = dict(status_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
     def action_reject(self):
+        self._check_me_state(('draft', 'completed', 'inquiry', 'send_for_inquiry', 'ceo_approval', 'cfo_approval'), _('Reject'))
         self.state = 'closed'
 
     @api.depends('date_of_birth')
@@ -587,13 +593,14 @@ class MedicalEquipment(models.Model):
         Automatically create return picking and update state
         """
         self.ensure_one()
-        
+        self._check_me_state(('validate',), _('Return'))
+
         if not self.picking_id:
             raise ValidationError('No stock picking found to return. Please validate the equipment first.')
-        
+
         if self.picking_id.state != 'done':
             raise ValidationError('Stock picking must be validated before returning.')
-        
+
         # Create return wizard and generate return picking
         return_wizard = self.env['stock.return.picking'].with_context(
             active_id=self.picking_id.id,
@@ -632,7 +639,11 @@ class MedicalEquipment(models.Model):
         """
         # Ensure we're working with a single record
         self.ensure_one()
-        
+        # paid at the POS (payment_received) or no payment due (sd_received)
+        self._check_me_state(('sd_received', 'payment_received'), _('Validate'))
+        if self.picking_id:
+            raise UserError(_('%s is already validated.') % self.name)
+
         operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
         
         # Prepare stock picking values
@@ -942,6 +953,47 @@ class MedicalEquipment(models.Model):
             'target': 'current',
         }
     
+    # ---------- SECURITY DEPOSIT (POS, cheque, direct deposit) ----------
+    def _get_security_deposit(self):
+        self.ensure_one()
+        return self.sd_slip_id or self.env['medical.security.deposit'].search(
+            [('medical_equipment_id', '=', self.id)], order='id desc', limit=1)
+
+    def _receive_security_deposit(self, state, vals=None):
+        """Record the security deposit of an approved request. 'paid' moves
+        the request to Security Received; 'pending' waits for its cheque."""
+        self.ensure_one()
+        if self.state in ('draft', 'completed', 'send_for_inquiry', 'inquiry', 'ceo_approval', 'closed'):
+            raise UserError(_('The security deposit of %s cannot be received in status "%s".') % (
+                self.name, dict(status_selection).get(self.state, self.state)))
+        deposit = self._get_security_deposit()
+        vals = dict(vals or {}, state=state)
+        if deposit:
+            deposit.write(vals)
+        else:
+            deposit = self.env['medical.security.deposit'].create(dict({
+                'medical_equipment_id': self.id,
+                'donee_id': self.donee_id.id,
+                'cnic_no': self.donee_id.cnic_no or '',
+                'amount': self.total_amount,
+                'date': fields.Date.today(),
+            }, **vals))
+        if self.sd_slip_id != deposit:
+            self.sd_slip_id = deposit
+        if state == 'paid' and self.state in ('cfo_approval', 'approved'):
+            self.state = 'sd_received'
+        return deposit
+
+    def _bounce_security_deposit(self, deposit=None):
+        """The cheque of the security deposit bounced: the request waits for
+        a new deposit again."""
+        self.ensure_one()
+        deposit = deposit or self._get_security_deposit()
+        if deposit:
+            deposit.state = 'bounced'
+        if self.state == 'sd_received':
+            self.state = 'cfo_approval'
+
     def action_show_move(self):
         return {
             'type': 'ir.actions.act_window',
@@ -1038,7 +1090,8 @@ class MedicalEquipment(models.Model):
         Automatically create recovery picking and update state
         """
         self.ensure_one()
-        
+        self._check_me_state(('validate',), _('Recovery'))
+
         if not self.picking_id:
             raise ValidationError('No stock picking found to return. Please validate the equipment first.')
         if self.return_picking_id:
@@ -1079,9 +1132,11 @@ class MedicalEquipment(models.Model):
         raise ValidationError('Failed to create recovery picking.')
     
     def action_refund(self):
+        self._check_me_state(('return',), _('Refund'))
         self.state = 'refund'
-    
+
     def action_donate(self):
+        self._check_me_state(('return',), _('Donate'))
         return {
             'type': 'ir.actions.act_window',
             'name': 'Product Wizard',
@@ -1109,6 +1164,8 @@ class MedicalEquipment(models.Model):
         return None            
     
     def action_complete(self):
+        self.ensure_one()
+        self._check_me_state(('draft',), _('Complete'))
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
         

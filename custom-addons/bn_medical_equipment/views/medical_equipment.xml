@@ -33,7 +33,7 @@
                     <button string="Sync to Portal" name="action_send_for_inquiry" type="object" invisible="case_type != 'below_50_percent' or state != 'completed' or state == 'closed'" />
                     <button string="Portal Acknowledgment " name="action_check_portal_status" type="object" invisible="state !='send_for_inquiry' or state == 'closed'" />
                     
-                    <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'sd_received' or state == 'closed'" />
+                    <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state not in ('sd_received', 'payment_received')" />
                     <button string="Recovery" name="action_recovery" type="object" class="oe_highlight" invisible="state != 'validate' or state == 'closed'" />
                     <button string="Return" name="action_return" type="object" invisible="state != 'validate' or state == 'closed'" />
                     <button string="Refund" name="action_refund" type="object" invisible="state != 'return' or state == 'closed'" />

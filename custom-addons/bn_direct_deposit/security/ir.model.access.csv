@@ -1,4 +1,9 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_direct_deposit,direct.deposit,bn_direct_deposit.model_direct_deposit,,1,1,1,1
-access_direct_deposit_line,direct.deposit.line,bn_direct_deposit.model_direct_deposit_line,,1,1,1,1
-access_direct_deposit_account_setup,access.direct.deposit.account.setup,bn_direct_deposit.model_direct_deposit_account_setup,,1,1,1,1
+access_direct_deposit,direct.deposit,bn_direct_deposit.model_direct_deposit,base.group_user,1,0,0,0
+access_direct_deposit_treasury,direct.deposit treasury,bn_direct_deposit.model_direct_deposit,bn_pos_cheque.pos_cheque_menu_group,1,1,1,0
+access_direct_deposit_system,direct.deposit system,bn_direct_deposit.model_direct_deposit,base.group_system,1,1,1,1
+access_direct_deposit_line,direct.deposit.line,bn_direct_deposit.model_direct_deposit_line,base.group_user,1,0,0,0
+access_direct_deposit_line_treasury,direct.deposit.line treasury,bn_direct_deposit.model_direct_deposit_line,bn_pos_cheque.pos_cheque_menu_group,1,1,1,0
+access_direct_deposit_line_system,direct.deposit.line system,bn_direct_deposit.model_direct_deposit_line,base.group_system,1,1,1,1
+access_direct_deposit_account_setup,access.direct.deposit.account.setup,bn_direct_deposit.model_direct_deposit_account_setup,base.group_user,1,0,0,0
+access_direct_deposit_account_setup_system,access.direct.deposit.account.setup system,bn_direct_deposit.model_direct_deposit_account_setup,base.group_system,1,1,1,1

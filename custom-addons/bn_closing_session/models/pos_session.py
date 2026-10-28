@@ -19,7 +19,9 @@ class PosSession(models.Model):
     # OVERRIDE _get_closed_orders
     # ------------------------------------------------------------
     def _get_closed_orders(self):
-        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
+        # Every order whose money was taken: like Odoo, minus the refunds
+        # still waiting for CFO approval or rejected (bn_pos_order).
+        return self.order_ids.filtered(lambda o: o.state not in ('draft', 'cancel', 'cfo_approval', 'reject'))
 
     # ------------------------------------------------------------
     # DATA COMPUTATION FOR THE CLOSING POPUP
@@ -50,19 +52,6 @@ class PosSession(models.Model):
                 breakdown[pm_id]['unrestricted'] += payment.amount * ratios[1]
                 breakdown[pm_id]['neutral'] += payment.amount * ratios[2]
         return breakdown
-
-    def _compute_payment_breakdown_from_slips(self):
-        slips = self.env['pos.session.slip'].search([('session_id', '=', self.id)])
-        result = {}
-        for slip in slips:
-            pm_id = slip.pos_payment_method_id.id
-            result.setdefault(pm_id, {'restricted': [], 'unrestricted': [], 'neutral': []})
-            result[pm_id][slip.type].append({
-                'amount': slip.amount,
-                'ref': slip.ref,
-                'bank_id': slip.bank_id.id if slip.bank_id else False,
-            })
-        return result
 
     def _is_restricted_product(self, product):
         if not product.categ_id:

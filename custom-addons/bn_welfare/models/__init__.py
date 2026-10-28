@@ -24,3 +24,4 @@ from . import disbursement_application_type
 from . import advance_donation_disbursement
 from . import res_partner
 from . import pos_cheque
+from . import direct_deposit

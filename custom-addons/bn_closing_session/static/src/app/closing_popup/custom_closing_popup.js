@@ -220,8 +220,9 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
 
             const difference = this.getDifference(pm.id);
 
-            // ONLY VALIDATE IF DIFFERENCE IS NOT ZERO
-            if (difference !== 0) {
+            // ONLY VALIDATE IF DIFFERENCE IS NOT ZERO (in currency precision:
+            // sums of floats are never exactly 0)
+            if (!this.env.utils.floatIsZero(difference)) {
 
                 const lines = this.state.lines[pm.id] || {};
 

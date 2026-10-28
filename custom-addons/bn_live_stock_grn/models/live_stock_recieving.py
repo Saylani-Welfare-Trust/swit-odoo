@@ -2,6 +2,10 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError
 
+import logging
+_logger = logging.getLogger(__name__)
+
+
 class ReceiveByWeightLinee(models.Model):
     _name = 'receive.by.weight.line.livestock'
     _description = 'Receive by Weight Line Livestock'
@@ -25,7 +29,7 @@ class ReceiveByWeightLinee(models.Model):
     def _compute_allowed_product_ids(self):
         for line in self:
             picking = line.wizard_id.picking_id
-            print('picking', picking)
+            _logger.debug("%s", ('picking', picking,))
             if picking:
                 product_ids = picking.move_ids.mapped('product_id').ids
                 line.allowed_product_ids = [(6, 0, product_ids)]
@@ -84,16 +88,16 @@ class ReceiveByWeightWizardd(models.Model):
     @api.model
     def default_get(self, fields):
         res = super().default_get(fields)
-        print(">>> default_get called, context:", self.env.context)
+        _logger.debug("%s", (">>> default_get called, context:", self.env.context,))
         picking_id = self.env.context.get('default_picking_id')
 
         if picking_id:
             picking = self.env['stock.picking'].browse(picking_id)
-            print(">>> Found picking:", picking.name, "with moves:", picking.move_ids)
+            _logger.debug("%s", (">>> Found picking:", picking.name, "with moves:", picking.move_ids,))
             lines = []
             s_no = 1
             for move in picking.move_ids:
-                print(">>> Processing move:", move.product_id.display_name, "qty:", move.product_uom_qty)
+                _logger.debug("%s", (">>> Processing move:", move.product_id.display_name, "qty:", move.product_uom_qty,))
                 for i in range(int(move.product_uom_qty)):
                     lines.append((0, 0, {
                         's_no': s_no,
@@ -102,9 +106,9 @@ class ReceiveByWeightWizardd(models.Model):
                     }))
                     s_no += 1
             res['line_ids'] = lines
-            print(">>> Built lines:", lines)
+            _logger.debug("%s", (">>> Built lines:", lines,))
         else:
-            print(">>> No picking_id found in context")
+            _logger.debug("%s", (">>> No picking_id found in context",))
         return res
 
     @api.onchange('line_ids')
@@ -331,14 +335,14 @@ class StockPicking(models.Model):
 
     def open_receive_by_weight_wizarddd(self):
         self.ensure_one()
-        print(">>> Opening wizard for picking:", self.name, "id:", self.id)
+        _logger.debug("%s", (">>> Opening wizard for picking:", self.name, "id:", self.id,))
 
         Wizard = self.env['receive.by.weight.wizard']
         lines = []
         s_no = 1
         for move in self.move_ids:
             qty = int(move.product_uom_qty or 0)
-            print(">>> Move:", move.product_id.display_name, "Qty:", qty)
+            _logger.debug("%s", (">>> Move:", move.product_id.display_name, "Qty:", qty,))
             for _ in range(qty):
                 lines.append((0, 0, {
                     's_no': s_no,
@@ -351,7 +355,7 @@ class StockPicking(models.Model):
             'picking_id': self.id,
             'line_ids': lines,
         })
-        print(">>> Wizard created with ID:", wizard.id, "and lines:", wizard.line_ids)
+        _logger.debug("%s", (">>> Wizard created with ID:", wizard.id, "and lines:", wizard.line_ids,))
 
         return {
             'name': 'Receive by Weight',

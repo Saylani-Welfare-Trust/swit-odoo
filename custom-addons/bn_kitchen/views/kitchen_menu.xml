@@ -20,7 +20,7 @@
             <form>
                 <header>
                     <button string="Submit" name="action_submit" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="Approved" name="action_approve" type="object" class="oe_highlight" invisible="state != 'approved'" />
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'to_be_approved'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, to_be_approved, approved"/>
                 </header>

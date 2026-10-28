@@ -45,22 +45,20 @@ class POSCheque(models.Model):
     def _clear_medical_equipment(self):
         self.ensure_one()
         security_deposit = self._ensure_security_deposit_link()
-        if security_deposit:
+        if security_deposit and security_deposit.medical_equipment_id:
+            security_deposit.medical_equipment_id._receive_security_deposit('paid')
+        elif security_deposit:
             security_deposit.write({'state': 'paid'})
-            equipment = security_deposit.medical_equipment_id
-            if equipment and equipment.state == 'approved':
-                equipment.write({'state': 'sd_received'})
         else:
             _logger.warning("No security deposit found for cheque %s", self.name)
 
     def _bounce_medical_equipment(self):
         self.ensure_one()
         security_deposit = self._ensure_security_deposit_link()
-        if security_deposit:
+        if security_deposit and security_deposit.medical_equipment_id:
+            security_deposit.medical_equipment_id._bounce_security_deposit(security_deposit)
+        elif security_deposit:
             security_deposit.write({'state': 'bounced'})
-            equipment = security_deposit.medical_equipment_id
-            if equipment and equipment.state == 'sd_received':
-                equipment.write({'state': 'approved'})
         else:
             _logger.warning("No security deposit found for cheque %s", self.name)
 

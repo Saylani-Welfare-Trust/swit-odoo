@@ -111,6 +111,11 @@ class BankReconciliationReconciled(models.Model):
         ('transfer', 'Bank Transfer')
     ], string='Adjustment Type')
     
+    created_move = fields.Boolean(
+        string='Entry Created by Reconciliation', readonly=True, copy=False,
+        help='The matched entry was created by this reconciliation (not an '
+             'existing entry of the books): only such an entry is removed '
+             'when the line is unreconciled.')
     is_posted = fields.Boolean(
         string='Is Posted',
         default=False,
@@ -182,18 +187,36 @@ class BankReconciliationReconciled(models.Model):
             'target': 'current'
         }
 
+    def _is_own_move(self):
+        """The matched entry was created by the reconciliation (flag, or the
+        narration given to such entries before the flag existed)."""
+        self.ensure_one()
+        move = self.matched_move_id
+        return bool(move) and (self.created_move or 'Bank Reconciliation:' in str(move.narration or ''))
+
+    def _remove_own_move(self):
+        """Delete the entry the reconciliation created. An existing entry of
+        the books that was only matched (a payment, a session entry ...) is
+        never touched."""
+        for rec in self:
+            if not rec._is_own_move():
+                continue
+            move = rec.matched_move_id
+            try:
+                if move.state == 'posted':
+                    move.button_cancel()
+                move.unlink()
+            except Exception as e:
+                raise UserError(_('Error removing journal entry: %s') % str(e))
+            if rec.transaction_id.matched_move_id == move:
+                rec.transaction_id.matched_move_id = False
+
     def action_unreconcile(self):
         self.ensure_one()
         if self.master_id.state == 'completed':
             raise UserError(_('Cannot unreconcile from a completed reconciliation.'))
         
-        if self.matched_move_id:
-            if self.matched_move_id.state == 'posted':
-                try:
-                    self.matched_move_id.button_cancel()
-                except Exception as e:
-                    raise UserError(_('Error cancelling journal entry: %s') % str(e))
-            self.matched_move_id.unlink()
+        self._remove_own_move()
         
         if self.matched_move_line_id:
             self.matched_move_line_id.write({
@@ -210,7 +233,7 @@ class BankReconciliationReconciled(models.Model):
                 'reconciled_by': False,
             })
         
-        self.unlink()
+        self.with_context(bn_unreconcile=True).unlink()
         return True
 
     @api.model
@@ -264,7 +287,10 @@ class BankReconciliationReconciled(models.Model):
         return super(BankReconciliationReconciled, self).write(vals)
 
     def unlink(self):
-        raise UserError(_('You cannot delete a reconciled transaction.'))
+        # only removed by Unreconcile / Cancel Reconciliation
+        if not self.env.context.get('bn_unreconcile'):
+            raise UserError(_('You cannot delete a reconciled transaction.'))
+        return super().unlink()
         # for record in self:
         #     if record.is_posted:
         #         raise UserError(_('Cannot delete a posted reconciled transaction.'))

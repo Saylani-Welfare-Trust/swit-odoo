@@ -2,6 +2,10 @@ from odoo import models, fields, api
 from odoo.exceptions import UserError
 
 
+import logging
+_logger = logging.getLogger(__name__)
+
+
 class ReceiveByWeight(models.TransientModel):
     _name = 'receive.by.weight'
     _description = "Receive By Weight"
@@ -53,7 +57,7 @@ class ReceiveByWeight(models.TransientModel):
     @api.model
     def default_get(self, fields):
         res = super().default_get(fields)
-        print(">>> default_get called, context:", self.env.context)
+        _logger.debug("%s", (">>> default_get called, context:", self.env.context,))
         picking_id = self.env.context.get('default_picking_id')
 
         if picking_id:
@@ -62,7 +66,7 @@ class ReceiveByWeight(models.TransientModel):
             s_no = 1
             for move in picking.move_ids:
                 qty = int(move.product_uom_qty or 0)
-                print(">>> Processing move:", move.product_id.display_name, "qty:", qty)
+                _logger.debug("%s", (">>> Processing move:", move.product_id.display_name, "qty:", qty,))
                 for _ in range(qty):
                     lines.append((0, 0, {
                         's_no': s_no,
@@ -72,7 +76,7 @@ class ReceiveByWeight(models.TransientModel):
                     s_no += 1
             res['line_ids'] = lines
         else:
-            print(">>> No picking_id in context")
+            _logger.debug("%s", (">>> No picking_id in context",))
         return res
 
     @api.onchange('line_ids')

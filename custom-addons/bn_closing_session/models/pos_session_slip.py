@@ -30,6 +30,18 @@ class POSSessionSlip(models.Model):
             raise UserError('The deposit slip amount cannot be changed after the journal entry is posted.')
         return super().write(vals)
 
+    @api.ondelete(at_uninstall=False)
+    def _unlink_only_open_session(self):
+        if any(slip.session_id.state == 'closed' for slip in self):
+            raise UserError('Deposit slips of a closed session cannot be deleted.')
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        sessions = self.env['pos.session'].browse([v.get('session_id') for v in vals_list if v.get('session_id')])
+        if any(session.state == 'closed' for session in sessions):
+            raise UserError('Deposit slips cannot be added to a closed session.')
+        return super().create(vals_list)
+
 
     @api.model
     def create_session_slip(self, session_id, data):

@@ -1,6 +1,6 @@
 import pprint
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 import re
 
@@ -117,14 +117,23 @@ class DonationHomeService(models.Model):
 
             return_picking.button_validate()
 
-        for picking in [self.picking_id, self.second_picking_id]:
-            if picking:
-                if picking.state == 'done':
-                    _create_return_for_picking(picking)
-                elif picking.state not in ['cancel', 'done']:
-                    picking.action_cancel()
+        self._check_dhs_state(('draft', 'gate_out', 'gate_in'), _('Cancel'))
+        for record in self:
+            for picking in [record.picking_id, record.second_picking_id]:
+                if picking:
+                    if picking.state == 'done':
+                        _create_return_for_picking(picking)
+                    elif picking.state not in ['cancel', 'done']:
+                        picking.action_cancel()
 
         self.state = 'cancel'
+
+    def _check_dhs_state(self, allowed, action):
+        labels = dict(status_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
 
     def action_gate_out(self):
         """Confirm donation and create stock picking if stockable product lines exist."""
@@ -134,6 +143,7 @@ class DonationHomeService(models.Model):
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
         PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
 
+        self._check_dhs_state(('draft',), _('Gate Out'))
         for record in self:
 
             # tag number is mandatory
@@ -210,10 +220,12 @@ class DonationHomeService(models.Model):
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_in_location')
         PickingType = self.env.ref('bn_donation_home_service.donation_home_service_in_stock_picking_type')
 
+        self._check_dhs_state(('gate_out',), _('Gate In'))
         for record in self:
 
             # Skip if picking already exists
             if record.second_picking_id:
+                record.state = 'gate_in'
                 continue
 
             # Only NON-service product lines
@@ -223,7 +235,7 @@ class DonationHomeService(models.Model):
 
             # If NO stockable products → do NOT create picking
             if not stockable_lines:
-                record.state = 'gate_out'   # or 'paid' if you prefer
+                record.state = 'gate_in'
                 continue
 
             # -----------------------------------------

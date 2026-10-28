@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_journal_transfer,access.journal.transfer,bn_journal_transfer.model_journal_transfer,,1,1,1,1
+access_journal_transfer,access.journal.transfer,bn_journal_transfer.model_journal_transfer,base.group_user,1,0,0,0
+access_journal_transfer_treasury,journal.transfer treasury,bn_journal_transfer.model_journal_transfer,bn_journal_transfer.journal_transfer_group,1,1,1,0
+access_journal_transfer_admin,journal.transfer admin,bn_journal_transfer.model_journal_transfer,base.group_system,1,1,1,1

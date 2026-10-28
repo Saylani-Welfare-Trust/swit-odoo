@@ -99,7 +99,7 @@ May Allah bless you!
         safe_name = self.name.replace('/', '_')
         filename = f"Receipt_{safe_name}.pdf"
 
-        old = self.env['ir.attachment'].search([
+        old = self.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'donation.in.kind'),
             ('res_id', '=', self.id),
             ('name', '=', filename)
@@ -113,7 +113,6 @@ May Allah bless you!
             'res_model': 'donation.in.kind',
             'res_id': self.id,
             'mimetype': 'application/pdf',
-            'public': True,
         })
         attachment.generate_access_token()
 
@@ -227,7 +226,15 @@ May Allah bless you!
             result.append((record.id, name))
         return result
 
+    def _check_din_state(self, allowed, action):
+        labels = dict(status_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
     def action_validate(self):
+        self._check_din_state(('delivered',), _('Validate'))
         for record in self:
             if not record.picking_type_id:
                 raise ValidationError('Please Select Stock Picking Type')
@@ -270,6 +277,8 @@ May Allah bless you!
             
             record.state = 'validate'
     def action_cancel(self):
+        # "Not Delivered": the truck never brought it
+        self._check_din_state(('delivered',), _('Not Delivered'))
         for record in self:
             previous_location = record.previous_location_id or False
             record.state = 'draft'
@@ -278,6 +287,7 @@ May Allah bless you!
             record.previous_location_id = False
 
     def action_box_open(self):
+        self._check_din_state(('validate',), _('Open Box'))
         for record in self:
             record.state = 'box_open'
 
@@ -291,6 +301,7 @@ May Allah bless you!
                     raise ValidationError('Quantity is missing or invalid.')
 
     def action_check(self):
+        self._check_din_state(('box_open',), _('Check Item'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -363,6 +374,7 @@ May Allah bless you!
             )
 
     def action_valuation_committee(self):
+        self._check_din_state(('box_open',), _('Valuation Committee'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -404,6 +416,7 @@ May Allah bless you!
             record.state = 'valuation_committee'
 
     def action_approval(self):
+        self._check_din_state(('valuation_committee',), _('Approval'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -433,6 +446,9 @@ May Allah bless you!
 
     def action_box_validate(self):
         for record in self:
+            # priced items skip the valuation committee
+            if not (record.state == 'approval' or (record.state == 'box_open' and record.check_bool == 'no')):
+                record._check_din_state(('approval',), _('Box Validate'))
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
             if not record.journal_id:
@@ -448,15 +464,11 @@ May Allah bless you!
             if not vendor_location_id:
                 raise ValidationError('Please Select Vendor Location')
             
-            quantity_list = []
-            avg_price_list = []
             move_ids = []
             stock_picking = self.env['stock.picking'].sudo().search([('id', '=', record.reversal_picking_id.id), ('picking_type_id', '=', record.picking_type_id.id)])
             
             if not stock_picking:
                 for lines in record.donation_in_kind_line_ids:
-                    quantity_list.append(lines.quantity)
-                    avg_price_list.append(lines.avg_price)
                     move_ids.append((0, 0, {
                         'product_id': lines.product_id.id,
                         'description_picking': lines.product_id.name,
@@ -487,9 +499,10 @@ May Allah bless you!
             if not record.journal_id:
                 raise ValidationError('Please Select Journal')
             
-            quantity = sum(quantity_list)
-            avg_price = sum(avg_price_list)
-            amount = (quantity * avg_price)
+            # value of the box: each item at its own price
+            amount = sum(line.quantity * line.avg_price for line in record.donation_in_kind_line_ids)
+            if not amount:
+                raise ValidationError(_('The items of %s have no value.') % record.name)
             box_lines = [
                 {
                     'account_id': record.product_id.categ_id.property_stock_valuation_account_id.id,
@@ -588,7 +601,7 @@ May Allah bless you!
         din = None
         dins = self.browse()
         
-        if not data:
+        if not data or not data.get('order_lines'):
             return {
                 "status": "error",
                 "body": "No data receive."
@@ -602,8 +615,9 @@ May Allah bless you!
                 'donation_in_kind_line_ids': [(0, 0, {
                     'product_id': line['product_id'],
                     'quantity': line['quantity'],
-                    'avg_price': line['quantity'],
-                    'remarks': line['remarks'],
+                    # valued by the valuation committee when it has no cost
+                    'avg_price': self.env['product.product'].browse(line['product_id']).standard_price,
+                    'remarks': line.get('remarks') or '',
                 })]
             })
             din.set_remarks()
@@ -626,7 +640,7 @@ May Allah bless you!
                 record.donation_in_kind_line_ids = [(0, 0, {
                     'product_id': record.product_id.id,
                     'quantity': record.quantity,
-                    'avg_price': record.quantity,
+                    'avg_price': record.product_id.standard_price,
                 })]
 
                 product_stock_move_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)

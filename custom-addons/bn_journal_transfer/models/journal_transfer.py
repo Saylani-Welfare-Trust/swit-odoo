@@ -48,8 +48,10 @@ class JournalTransfer(models.Model):
 
     def action_transfer(self):
         for rec in self:
-            if rec.state == 'posted':
-                raise UserError('Entry is already transfered')
+            if rec.state != 'draft':
+                raise UserError(_('Only draft transfers can be posted (%s).') % rec.name)
+            if not rec.source_journal_id.default_account_id or not rec.dest_journal_id.default_account_id:
+                raise UserError(_('Both journals of %s need a default account.') % rec.name)
 
             move_line_vals = [
                 {
@@ -77,15 +79,19 @@ class JournalTransfer(models.Model):
 
             move = rec.env['account.move'].create(move_vals)
             rec.move_id = move.id
-            move.post()
+            move.action_post()
 
             rec.state = 'posted'
 
     def action_cancel(self):
-        if self.state == 'cancel':
-            raise UserError('Entry is already cancelled')
-        
-        self.state = 'cancel'
+        for rec in self:
+            if rec.state == 'cancel':
+                raise UserError(_('Entry is already cancelled'))
+            # a posted transfer takes its journal entry with it
+            if rec.move_id and rec.move_id.state == 'posted':
+                rec.move_id.button_draft()
+                rec.move_id.button_cancel()
+            rec.state = 'cancel'
 
     @api.model
     def create(self, vals):

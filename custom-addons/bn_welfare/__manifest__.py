@@ -1,6 +1,6 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.3.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -8,6 +8,7 @@
     'depends': [
         'bn_microfinance',
         'bn_pos_cheque',
+        'bn_direct_deposit',
         'bn_profile_management',
         'bn_analytic_account_customization',
         'bn_master_setup',

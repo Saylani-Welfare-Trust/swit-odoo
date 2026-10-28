@@ -491,7 +491,8 @@ class BankReconciliationMaster(models.Model):
             except Exception as e:
                 raise UserError(_('Error removing journal entry: %s') % str(e))
         
-        self.reconciled_ids.unlink()
+        self.reconciled_ids._remove_own_move()
+        self.reconciled_ids.with_context(bn_unreconcile=True).unlink()
         
         self.transaction_ids.write({
             'state': 'draft',
