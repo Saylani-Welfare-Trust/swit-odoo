@@ -202,36 +202,66 @@
 
             <!-- ==================== TABLES SECTION ==================== -->
             
-            <!-- Row 1: Registrations & Complaints -->
+            <!-- FULL WIDTH: Recent Registrations -->
             <div class="row g-3 mb-3">
-                <div class="col-lg-6">
-                    <div class="card oh-section-card shadow-sm bg-white h-100">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card shadow-sm bg-white">
                         <div class="oh-card-header border-bottom pb-2 mb-0">
                             <h4 class="mb-0"><i class="fa fa-list me-2 text-primary"/>Recent Registrations</h4>
                         </div>
-                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y: auto;">
-                            <table class="table table-hover oh-table mb-0">
+                        <div class="oh-card-body p-0" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                            <table class="table table-hover oh-table mb-0" style="font-size: 0.85rem; white-space: nowrap;">
                                 <thead class="table-light">
-                                    <tr><th>Shop Name</th><th>Box / Lot</th><th>City</th><th class="text-end">Date</th></tr>
+                                    <tr>
+                                        <th>Donor</th>
+                                        <th>Installer</th>
+                                        <th>Registration No.</th>
+                                        <th>Requested Location</th>
+                                        <th>Contact Person</th>
+                                        <th>Contact No.</th>
+                                        <th>Box No.</th>
+                                        <th>Lock No.</th>
+                                        <th>Box Status</th>
+                                        <th>Installation Date</th>
+                                        <th class="text-end">Status</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="state.recent_registrations" t-as="reg" t-key="reg.id">
                                         <tr>
-                                            <td><t t-esc="reg.shop_name || '-'"/></td>
+                                            <td><t t-esc="reg.donor_name"/></td>
+                                            <td><t t-esc="reg.installer_name"/></td>
+                                            <td><t t-esc="reg.reg_name"/></td>
+                                            <td><t t-esc="reg.location"/></td>
+                                            <td><t t-esc="reg.contact_person"/></td>
+                                            <td><t t-esc="reg.contact_no"/></td>
                                             <td><t t-esc="reg.lot_name"/></td>
-                                            <td><t t-esc="reg.city_name"/></td>
-                                            <td class="text-end"><t t-esc="reg.installation_date"/></td>
+                                            <td><t t-esc="reg.lock_no"/></td>
+                                            <td>
+                                                <span t-attf-class="badge {{ getStateColor(reg.box_status) }}">
+                                                    <t t-esc="formatStateName(reg.box_status)"/>
+                                                </span>
+                                            </td>
+                                            <td><t t-esc="reg.installation_date"/></td>
+                                            <td class="text-end">
+                                                <span t-attf-class="badge {{ getStateColor(reg.status) }}">
+                                                    <t t-esc="formatStateName(reg.status)"/>
+                                                </span>
+                                            </td>
                                         </tr>
                                     </t>
                                     <t t-if="!state.recent_registrations.length">
-                                        <tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>
+                                        <tr><td colspan="11" class="text-center text-muted py-3">No records found</td></tr>
                                     </t>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+            </div>
 
+            <!-- HALF WIDTH: Complaints & Collections -->
+            <div class="row g-3 mb-3">
                 <div class="col-lg-6">
                     <div class="card oh-section-card shadow-sm bg-white h-100">
                         <div class="oh-card-header border-bottom pb-2 mb-0">
@@ -263,12 +293,9 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Row 2: Collections -->
-            <div class="row g-3 mb-3">
-                <div class="col-lg-12">
-                    <div class="card oh-section-card shadow-sm bg-white">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card shadow-sm bg-white h-100">
                         <div class="oh-card-header border-bottom pb-2 mb-0">
                             <h4 class="mb-0"><i class="fa fa-money me-2 text-primary"/>Recent Collections</h4>
                         </div>
@@ -302,7 +329,7 @@
                 </div>
             </div>
 
-            <!-- Row 3: Manual Comparison -->
+            <!-- FULL WIDTH: Manual Comparison -->
             <div class="row g-3">
                 <div class="col-lg-12">
                     <div class="card oh-section-card shadow-sm bg-white">

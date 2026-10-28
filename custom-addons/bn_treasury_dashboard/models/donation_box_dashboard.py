@@ -126,17 +126,35 @@ class DonationBoxDashboard(models.TransientModel):
             if c['box_status']:
                 comp_by_box_status[c['box_status']] = c['box_status_count']
 
+        # --- Tables ---
         recent_complaints = Complain.search_read(comp_domain, ['lot_id', 'shop_name', 'box_status', 'status', 'date'], limit=10, order='id desc')
-        recent_registrations = Registration.search_read(reg_domain, ['shop_name', 'lot_id', 'city_id', 'installation_date', 'status'], limit=10, order='id desc')
+        
+        # EXPANDED REGISTRATIONS QUERY (11 Columns)
+        recent_registrations = Registration.search_read(
+            reg_domain, 
+            ['name', 'donor_id', 'installer_id', 'location', 'contact_person', 'contact_no', 'lot_id', 'lock_no', 'box_status', 'installation_date', 'status'], 
+            limit=10, order='id desc'
+        )
+        
         recent_collections = Collection.search_read(col_domain, ['date', 'shop_name', 'rider_id', 'lot_id', 'amount', 'state'], limit=10, order='id desc')
 
         for c in recent_complaints:
             c['lot_name'] = c['lot_id'][1] if c['lot_id'] else '-'
             c['shop_name'] = c['shop_name'] or '-'
+            
         for r in recent_registrations:
-            r['lot_name'] = r['lot_id'][1] if r['lot_id'] else '-'
-            r['city_name'] = r['city_id'][1] if r['city_id'] else '-'
-            r['shop_name'] = r['shop_name'] or '-'
+            r['donor_name'] = r['donor_id'][1] if r.get('donor_id') else '-'
+            r['installer_name'] = r['installer_id'][1] if r.get('installer_id') else '-'
+            r['lot_name'] = r['lot_id'][1] if r.get('lot_id') else '-'
+            r['reg_name'] = r.get('name') or '-'
+            r['location'] = r.get('location') or '-'
+            r['contact_person'] = r.get('contact_person') or '-'
+            r['contact_no'] = r.get('contact_no') or '-'
+            r['lock_no'] = r.get('lock_no') or '-'
+            r['box_status'] = r.get('box_status') or '-'
+            r['installation_date'] = r.get('installation_date') or '-'
+            r['status'] = r.get('status') or '-'
+
         for col in recent_collections:
             col['rider_name'] = col['rider_id'][1] if col['rider_id'] else '-'
             col['lot_name'] = col['lot_id'][1] if col['lot_id'] else '-'
@@ -161,7 +179,6 @@ class DonationBoxDashboard(models.TransientModel):
 
     @api.model
     def get_comparison_data(self, month_1, month_2, province_id=None, city_id=None, zone_id=None, bunch_id=None):
-        # Validate inputs (format YYYY-MM)
         if not month_1 or not month_2:
             return {'m1_sum': 0, 'm2_sum': 0, 'diff': 0, 'pct': 0, 'is_positive': True}
 
@@ -186,7 +203,6 @@ class DonationBoxDashboard(models.TransientModel):
 
         Collection = self.env['rider.collection']
 
-        # Month 1
         m1_cols = Collection.search(base_col_domain + [
             ('date', '>=', start1.strftime('%Y-%m-%d')),
             ('date', '<=', end1.strftime('%Y-%m-%d')),
@@ -194,7 +210,6 @@ class DonationBoxDashboard(models.TransientModel):
         ])
         m1_sum = sum(m1_cols.mapped('amount'))
 
-        # Month 2
         m2_cols = Collection.search(base_col_domain + [
             ('date', '>=', start2.strftime('%Y-%m-%d')),
             ('date', '<=', end2.strftime('%Y-%m-%d')),
@@ -202,7 +217,6 @@ class DonationBoxDashboard(models.TransientModel):
         ])
         m2_sum = sum(m2_cols.mapped('amount'))
 
-        # Diff
         diff = m2_sum - m1_sum
         pct = 0
         if m1_sum > 0:

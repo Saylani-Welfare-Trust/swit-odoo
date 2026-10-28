@@ -23,9 +23,8 @@ export class DonationBoxDashboard extends Component {
             zones: [],
             bunches: [],
             
-            // Comparison State
-            comp_month_1: fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)), // Last month
-            comp_month_2: fmt_month(today), // This month
+            comp_month_1: fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
+            comp_month_2: fmt_month(today),
             comparison_result: { m1_sum: '0.00', m2_sum: '0.00', diff: '0.00', pct: '0.0%', is_positive: true },
 
             kpi: {
@@ -37,7 +36,6 @@ export class DonationBoxDashboard extends Component {
             chart_comp_status: { labels: [], data: [] },
             chart_installs: { labels: [], data: [] },
             
-            // Tables Data
             recent_complaints: [], 
             recent_registrations: [], 
             recent_collections: [],
@@ -185,15 +183,17 @@ export class DonationBoxDashboard extends Component {
     }
 
     formatStateName(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1).replace(/_/g, ' ') : ''; }
+    
     getStateColor(s) {
         if (!s) return 'bg-secondary';
         s = s.toLowerCase();
-        if (['available', 'resolved', 'repaired', 'paid'].includes(s)) return 'bg-success';
-        if (['installed', 'process', 'donation_submit', 'payment_received', 'converted'].includes(s)) return 'bg-info';
-        if (['missing', 'robbery', 'not_recovered', 'broken', 'reject', 'donation_not_collected'].includes(s)) return 'bg-danger';
-        if (['pending'].includes(s)) return 'bg-warning text-dark';
+        if (['available', 'resolved', 'repaired', 'paid', 'installed'].includes(s)) return 'bg-success text-white';
+        if (['not_installed', 'process', 'donation_submit', 'payment_received', 'converted'].includes(s)) return 'bg-info text-white';
+        if (['missing', 'robbery', 'not_recovered', 'broken', 'reject', 'donation_not_collected'].includes(s)) return 'bg-danger text-white';
+        if (['draft', 'pending'].includes(s)) return 'bg-warning text-dark';
         return 'bg-secondary text-white';
     }
+    
     openView(model, domain = []) {
         this.actionService.doAction({ type: 'ir.actions.act_window', res_model: model, views: [[false, 'list'], [false, 'form']], domain: domain, target: 'current' });
     }
