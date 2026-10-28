@@ -4,7 +4,7 @@
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
     'summary': 'A custom Treasury Dashboard for Odoo 17 Community',
-    'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management'],
+    'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management','hr',],
     'data': [
         'security/ir.model.access.csv',
         'views/treasury_dashboard_views.xml',
@@ -19,8 +19,16 @@
             'bn_treasury_dashboard/static/src/xml/donation_box_dashboard.xml',
             'bn_treasury_dashboard/static/src/js/profile_management_dashboard.js',
             'bn_treasury_dashboard/static/src/xml/profile_management_dashboard.xml',
+            'bn_treasury_dashboard/static/src/xml/pos_dashboard.xml',
+            'bn_treasury_dashboard/static/src/js/pos_dashboard.js',
+            'bn_treasury_dashboard/static/src/css/pos_dashboard.css',
+            'bn_treasury_dashboard/static/src/css/pos_dashboard_v2.scss',
+            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
         ],
     },
+    'external_dependencies': {
+            'python': ['pandas'],
+        },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
