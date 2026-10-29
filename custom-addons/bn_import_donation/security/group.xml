@@ -16,7 +16,6 @@
     <record id="import_donation_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_import_donation"/>
-        <field name="implied_ids" eval="[(4, ref('import_donation_root_group'))]"/>
         <field name="comment">Day-to-day staff: run imports and API syncs, view results. Cannot approve invalid rows, confirm batches, or touch configuration.</field>
     </record>
 
