@@ -237,6 +237,35 @@ class VendorSelectionWizardLineMixin(models.AbstractModel):
     qty_to_order = fields.Float(string='Qty to Order', help='Quantity of this line to include in the consolidated RFQ(s).')
     selected = fields.Boolean(string='Select', default=False)
 
+    def _qty_to_order_exceeds_requested(self):
+        uom = self.product_uom_id or self.product_id.uom_id
+        return float_compare(self.qty_to_order, self.requested_qty,
+                             precision_rounding=uom.rounding or 0.01) > 0
+
+    @api.onchange('qty_to_order')
+    def _onchange_qty_to_order(self):
+        # Immediate feedback while editing the row; _check_qty_to_order below
+        # is what actually enforces the rule on save.
+        for entry in self:
+            if entry._qty_to_order_exceeds_requested():
+                entered_qty = entry.qty_to_order
+                entry.qty_to_order = entry.requested_qty
+                return {'warning': {
+                    'title': _('Quantity Too High'),
+                    'message': _(
+                        'Qty to Order (%s) cannot be greater than the Requested Qty (%s) '
+                        'for "%s". It has been reset to the Requested Qty.'
+                    ) % (entered_qty, entry.requested_qty, entry.product_id.display_name),
+                }}
+
+    @api.constrains('qty_to_order')
+    def _check_qty_to_order(self):
+        for entry in self:
+            if entry._qty_to_order_exceeds_requested():
+                raise ValidationError(_(
+                    'Qty to Order (%s) cannot be greater than the Requested Qty (%s) for "%s".'
+                ) % (entry.qty_to_order, entry.requested_qty, entry.product_id.display_name))
+
 
 class VendorSelectionWizardSourceLine(models.TransientModel):
     _name = 'vendor.selection.wizard.source.line'
