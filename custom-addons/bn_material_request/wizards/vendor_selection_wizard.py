@@ -43,13 +43,14 @@ class VendorSelectionWizard(models.TransientModel):
         for wizard in self:
             wizard.vendor_count = len(wizard.vendor_ids)
 
-    @api.depends('source_line_ids.selected', 'procurement_line_ids.selected', 'other_line_ids.selected')
+    @api.depends('source_line_ids.selected', 'procurement_line_ids.selected')
     def _compute_has_selected_lines(self):
+        # "Other Purchase Requests" is informational only (see action_create_rfqs) -
+        # it never contributes to whether the Create RFQ's button is enabled.
         for wizard in self:
             wizard.has_selected_lines = bool(
                 wizard.source_line_ids.filtered('selected')
                 or wizard.procurement_line_ids.filtered('selected')
-                or wizard.other_line_ids.filtered('selected')
             )
 
     @api.model
@@ -92,12 +93,14 @@ class VendorSelectionWizard(models.TransientModel):
                 'selected': False,
             }) for line in procurement_lines]
 
+            # Informational only (not selectable - see action_create_rfqs): other
+            # open Purchase Requests for the same product(s), excluding whichever
+            # ones are already shown, selectable, on the Procurement Manager
+            # Approval page above, and excluding finished ones.
             other_state_lines = other_lines.filtered(
                 lambda l: l.requisition_id.state not in _OTHER_PAGE_EXCLUDED_STATES)
             res['other_line_ids'] = [(0, 0, {
                 'requisition_line_id': line.id,
-                'qty_to_order': line.remaining_qty,
-                'selected': False,
             }) for line in other_state_lines]
 
         return res
@@ -115,10 +118,11 @@ class VendorSelectionWizard(models.TransientModel):
         if not self.vendor_ids:
             raise ValidationError(_('Please select at least one vendor.'))
 
+        # "Other Purchase Requests" is informational only - it is never part of
+        # the consolidated RFQ, by design (see its page in the view).
         selected = (
             self.source_line_ids.filtered('selected')
             | self.procurement_line_ids.filtered('selected')
-            | self.other_line_ids.filtered('selected')
         )
         selected = selected.filtered(lambda l: not float_is_zero(l.qty_to_order, precision_digits=4))
 
@@ -213,7 +217,15 @@ class VendorSelectionWizardLineMixin(models.AbstractModel):
     _name = 'vendor.selection.wizard.line.mixin'
     _description = 'Vendor Selection Wizard Line (shared fields)'
 
-    requisition_line_id = fields.Many2one('purchase.requisition.line', string='PR Line', required=True, readonly=True)
+    # ondelete='cascade': this is only a reference the wizard builds for its own
+    # lifetime. Without an explicit ondelete, Odoo defaults a required Many2one
+    # to 'restrict' - which, since a transient row can outlive the wizard screen
+    # until the next cleanup sweep, was blocking deletion of the real PR line
+    # (and, by extension, of the Purchase Request itself) with "another model
+    # requires the record being deleted". A stale wizard row has no reason to
+    # survive the line it points to.
+    requisition_line_id = fields.Many2one('purchase.requisition.line', string='PR Line',
+                                           required=True, readonly=True, ondelete='cascade')
     requisition_id = fields.Many2one(related='requisition_line_id.requisition_id', string='Purchase Request', readonly=True, store=False)
     requisition_state = fields.Selection(related='requisition_line_id.requisition_id.state', string='PR Status', readonly=True, store=False)
     product_id = fields.Many2one(related='requisition_line_id.product_id', string='Product', readonly=True, store=False)
