@@ -610,3 +610,94 @@ class MemberApproval(models.Model):
     #         raise ValidationError(_('This request is not in HOD Approval state.'))
         
     #     self.state = 'committee_approval'
+
+
+    def _get_default_source_location(self, user):
+        """Get the stock location from the user's allowed warehouses."""
+        warehouse_ids = user.allowed_warehouse_ids.ids
+        if warehouse_ids:
+            loc = self.env['stock.location'].search([
+                ('warehouse_id', 'in', warehouse_ids),
+                ('complete_name', 'ilike', 'Stock'),
+            ], limit=1)
+            if loc:
+                return loc
+        
+        # Fallback to internal picking type default
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+        return picking_type.default_location_src_id if picking_type else False
+
+    def _get_default_dest_location(self, user):
+        """Get the stock location matching the employee's branch name."""
+        employee = user.employee_id
+        if employee and employee.analytic_account_id:
+            # Try matching by a custom analytic_account_id field if it exists on stock.location
+            if 'analytic_account_id' in self.env['stock.location']._fields:
+                loc = self.env['stock.location'].search([
+                    ('analytic_account_id', '=', employee.analytic_account_id.id),
+                    ('usage', '=', 'internal'),
+                ], limit=1)
+                if loc:
+                    return loc
+            
+            # Fallback to matching by branch name
+            loc = self.env['stock.location'].search([
+                ('usage', '=', 'internal'),
+                ('name', 'ilike', employee.analytic_account_id.name),
+            ], limit=1)
+            if loc:
+                return loc
+
+        # Fallback to internal picking type default
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('company_id', '=', self.env.company.id),
+        ], limit=1)
+        return picking_type.default_location_dest_id if picking_type else False
+
+    @api.onchange('user_id')
+    def _onchange_user_id_location_defaults(self):
+        """Auto-populate locations when the requester changes."""
+        for rec in self:
+            user = rec.user_id or self.env.user
+            rec.source_location_id = rec._get_default_source_location(user)
+            rec.dest_location_id = rec._get_default_dest_location(user)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            user = self.env['res.users'].browse(vals.get('user_id') or self.env.uid)
+            
+            # Auto-fill source location
+            if not vals.get('source_location_id'):
+                src_loc = self._get_default_source_location(user)
+                if src_loc:
+                    vals['source_location_id'] = src_loc.id
+
+            # Auto-fill destination location
+            if not vals.get('dest_location_id'):
+                dest_loc = self._get_default_dest_location(user)
+                if dest_loc:
+                    vals['dest_location_id'] = dest_loc.id
+
+            # Generate Reference Number
+            if vals.get('name', 'New') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
+                
+        return super().create(vals_list)
+    
+    @api.depends('user_id.allowed_warehouse_ids')
+    def _compute_source_location_domain(self):
+        for rec in self:
+            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+            
+            if warehouse_ids:
+                rec.source_location_domain = str([
+                    ('warehouse_id', 'in', warehouse_ids),
+                    ('complete_name', 'ilike', 'Stock'),
+                ])
+            else:
+                rec.source_location_domain = "[]"
