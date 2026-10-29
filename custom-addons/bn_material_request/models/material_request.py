@@ -613,16 +613,13 @@ class MemberApproval(models.Model):
 
 
     def _get_default_source_location(self, user):
-        """Get the stock location from the user's allowed warehouses."""
-        warehouse_ids = user.allowed_warehouse_ids.ids
-        if warehouse_ids:
-            loc = self.env['stock.location'].search([
-                ('warehouse_id', 'in', warehouse_ids),
-                ('complete_name', 'ilike', 'Stock'),
-            ], limit=1)
-            if loc:
-                return loc
-        
+        """Get the Stock location from the user's allowed warehouses."""
+        if user.allowed_warehouse_ids:
+            # Take the first allowed warehouse and get its internal stock location
+            warehouse = user.allowed_warehouse_ids[0]
+            if warehouse.lot_stock_id:
+                return warehouse.lot_stock_id
+                
         # Fallback to internal picking type default
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
@@ -630,27 +627,13 @@ class MemberApproval(models.Model):
         ], limit=1)
         return picking_type.default_location_src_id if picking_type else False
 
-    def _get_default_dest_location(self, user):
-        """Get the stock location matching the employee's branch name."""
-        employee = user.employee_id
-        if employee and employee.analytic_account_id:
-            # Try matching by a custom analytic_account_id field if it exists on stock.location
-            if 'analytic_account_id' in self.env['stock.location']._fields:
-                loc = self.env['stock.location'].search([
-                    ('analytic_account_id', '=', employee.analytic_account_id.id),
-                    ('usage', '=', 'internal'),
-                ], limit=1)
-                if loc:
-                    return loc
-            
-            # Fallback to matching by branch name
-            loc = self.env['stock.location'].search([
-                ('usage', '=', 'internal'),
-                ('name', 'ilike', employee.analytic_account_id.name),
-            ], limit=1)
-            if loc:
-                return loc
 
+    def _get_default_dest_location(self, user):
+        """Get the user's explicitly Allowed Location."""
+        # Check if the user has the allowed_location_ids field populated (from your screenshot)
+        if hasattr(user, 'allowed_location_ids') and user.allowed_location_ids:
+            return user.allowed_location_ids[0]
+            
         # Fallback to internal picking type default
         picking_type = self.env['stock.picking.type'].search([
             ('code', '=', 'internal'),
@@ -658,9 +641,27 @@ class MemberApproval(models.Model):
         ], limit=1)
         return picking_type.default_location_dest_id if picking_type else False
 
+    @api.model
+    def default_get(self, fields_list):
+        """Auto-populate locations when a new request is opened in the UI."""
+        res = super().default_get(fields_list)
+        user = self.env.user
+        
+        if 'source_location_id' in fields_list and not res.get('source_location_id'):
+            src_loc = self._get_default_source_location(user)
+            if src_loc:
+                res['source_location_id'] = src_loc.id
+
+        if 'dest_location_id' in fields_list and not res.get('dest_location_id'):
+            dest_loc = self._get_default_dest_location(user)
+            if dest_loc:
+                res['dest_location_id'] = dest_loc.id
+                
+        return res
+
     @api.onchange('user_id')
     def _onchange_user_id_location_defaults(self):
-        """Auto-populate locations when the requester changes."""
+        """Auto-populate locations when the requester changes in the UI."""
         for rec in self:
             user = rec.user_id or self.env.user
             rec.source_location_id = rec._get_default_source_location(user)
@@ -668,6 +669,7 @@ class MemberApproval(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Auto-populate locations when created via code or API."""
         for vals in vals_list:
             user = self.env['res.users'].browse(vals.get('user_id') or self.env.uid)
             
@@ -688,16 +690,3 @@ class MemberApproval(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
                 
         return super().create(vals_list)
-    
-    @api.depends('user_id.allowed_warehouse_ids')
-    def _compute_source_location_domain(self):
-        for rec in self:
-            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
-            
-            if warehouse_ids:
-                rec.source_location_domain = str([
-                    ('warehouse_id', 'in', warehouse_ids),
-                    ('complete_name', 'ilike', 'Stock'),
-                ])
-            else:
-                rec.source_location_domain = "[]"
