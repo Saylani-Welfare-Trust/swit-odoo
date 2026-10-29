@@ -257,6 +257,15 @@ class PurchaseRequisition(models.Model):
         self.ensure_one()
         if not self._is_selecting_rfqs():
             raise ValidationError(_('This request is not in RFQ Sent state.'))
+        if not winning_po.is_selected_quote:
+            winning_po.write({
+                'is_selected_quote': True,
+                'selected_quote_by': self.env.user.id,
+                'selected_quote_date': fields.Datetime.now(),
+            })
+            # Held back until now: the approver can only act once it is selected.
+            if winning_po.designated_cxo_approver_id:
+                winning_po._send_cxo_approval_email()
         if not self.selected_rfq_id:
             self.write({
                 'selected_rfq_id': winning_po.id,

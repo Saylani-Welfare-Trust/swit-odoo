@@ -27,6 +27,15 @@ class PurchaseOrder(models.Model):
         compute='_compute_is_cxo_approver_allowed',
         help='Whether the current user may CXO-approve this RFQ.')
 
+    # Set when the RFQ is selected as a winning quote ("Confirm Selected
+    # Lines" in Bulk Price Entry); CXO approval waits for it.
+    is_selected_quote = fields.Boolean(string='Selected Quote', copy=False, readonly=True, tracking=True)
+    selected_quote_by = fields.Many2one('res.users', string='Selected By', readonly=True, copy=False)
+    selected_quote_date = fields.Datetime(string='Selected On', readonly=True, copy=False)
+    awaiting_quote_selection = fields.Boolean(
+        compute='_compute_awaiting_quote_selection',
+        help='Whether this RFQ must first be selected in Bulk Price Entry before CXO approval.')
+
     # The RFQ's state is left untouched while on hold
     shariah_hold = fields.Boolean(string='Shariah Hold', copy=False, readonly=True, tracking=True)
     shariah_hold_reason = fields.Text(string='Shariah Hold Reason', copy=False, readonly=True)
@@ -81,13 +90,15 @@ class PurchaseOrder(models.Model):
         })
 
     # ------------------------------------------------------------------
-    # Trigger the email whenever the approver is (re)assigned
+    # Trigger the email whenever the approver is (re)assigned - or, for an
+    # RFQ still to be selected in Bulk Price Entry, once it is selected
+    # (purchase.requisition.action_select_winning_rfq)
     # ------------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
         orders = super().create(vals_list)
         for order in orders:
-            if order.designated_cxo_approver_id:
+            if order.designated_cxo_approver_id and not order.awaiting_quote_selection:
                 order._send_cxo_approval_email()
         return orders
 
@@ -101,7 +112,8 @@ class PurchaseOrder(models.Model):
         if 'designated_cxo_approver_id' in vals:
             for order in self:
                 new_approver = order.designated_cxo_approver_id
-                if new_approver and new_approver != old_approvers.get(order.id):
+                if new_approver and new_approver != old_approvers.get(order.id) \
+                        and not order.awaiting_quote_selection:
                     order._send_cxo_approval_email()
         return res
 
@@ -110,6 +122,11 @@ class PurchaseOrder(models.Model):
         for order in self:
             if not order.designated_cxo_approver_id:
                 raise UserError(_('No CXO approver is assigned to %s.') % order.display_name)
+            if order.awaiting_quote_selection:
+                raise UserError(_(
+                    'RFQ %s has not been selected yet: the approval email is sent once it is '
+                    'selected with "Confirm Selected Lines" in Bulk Price Entry.'
+                ) % order.display_name)
             order._send_cxo_approval_email()
         return {
             'type': 'ir.actions.client',
@@ -133,6 +150,25 @@ class PurchaseOrder(models.Model):
                 # Fallback to the original HOD rule
                 hod_user = order.material_request_id.sudo().hod_approved_by
                 order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
+
+    @api.depends('is_selected_quote', 'requisition_id.state', 'requisition_id.selected_rfq_id')
+    def _compute_awaiting_quote_selection(self):
+        """Only while its Purchase Request is still choosing winning quotes -
+        when Bulk Price Entry would select the RFQ rather than confirm it."""
+        for order in self:
+            # sudo: whoever opens the RFQ need not be able to read the requisition.
+            requisition = order.requisition_id.sudo()
+            order.awaiting_quote_selection = bool(
+                requisition and requisition._is_selecting_rfqs() and not order.is_selected_quote)
+
+    @api.model
+    def _backfill_selected_quote(self):
+        """Mark as selected the RFQs selected before is_selected_quote existed:
+        the selected RFQ of each requisition (who and when are not known)."""
+        # sudo: run at module update.
+        requisitions = self.env['purchase.requisition'].sudo().search([('selected_rfq_id', '!=', False)])
+        requisitions.selected_rfq_id.filtered(lambda order: not order.is_selected_quote).with_context(
+            tracking_disable=True).write({'is_selected_quote': True})
 
     # ------------------------------------------------------------------
     # CFO budget approval (Unchanged)
@@ -358,6 +394,11 @@ class PurchaseOrder(models.Model):
     def action_cxo_approve_po(self):
         """CXO approval on this RFQ."""
         for order in self:
+            if order.awaiting_quote_selection:
+                raise UserError(_(
+                    'RFQ %s has not been selected yet: select it with "Confirm Selected Lines" '
+                    'in Bulk Price Entry before CXO approval.'
+                ) % order.display_name)
             # 1. Check the new designated approver first
             if order.designated_cxo_approver_id:
                 if order.designated_cxo_approver_id.user_id != self.env.user:
@@ -379,12 +420,7 @@ class PurchaseOrder(models.Model):
             requisition = order.requisition_id
             if not requisition or not requisition.material_request_id:
                 continue
-            if requisition.state == 'rfq_sent' and not requisition.selected_rfq_id:
-                requisition.write({'selected_rfq_id': order.id, 'state': 'cxo_approved'})
-                requisition.message_post(body=_(
-                    'RFQ %s approved by CXO and claimed as the selected quote.'
-                ) % order.name)
-            elif requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
+            if requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
                 requisition.write({'state': 'cxo_approved'})
                 requisition.message_post(body=_('CXO approved the selected RFQ %s.') % order.name)
         return res

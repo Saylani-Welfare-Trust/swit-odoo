@@ -21,6 +21,7 @@
         'security/ir.model.access.csv',
         
         'data/mail_template_data.xml',
+        'data/backfill.xml',
         
         'views/procurement_defer_wizard_views.xml',
         'views/arrange_budget_wizard_views.xml',

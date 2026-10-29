@@ -6,9 +6,11 @@
         <field name="inherit_id" ref="bn_purchase_customization.purchase_purchase_order_form_inherit_bn_purchase_customization"/>
         <field name="arch" type="xml">
             <!-- Only the HOD approver of the source Material Request may CXO-approve;
-                 nothing can be approved or confirmed while waiting for the CFO's budget decision. -->
+                 nothing can be approved or confirmed while waiting for the CFO's budget decision.
+                 An RFQ of a Purchase Request is CXO-approved only once it has been selected
+                 with "Confirm Selected Lines" in Bulk Price Entry. -->
             <xpath expr="//button[@name='action_cxo_approve_po']" position="attributes">
-                <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed or not designated_cxo_approver_id</attribute>
+                <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed or not designated_cxo_approver_id or awaiting_quote_selection</attribute>
             </xpath>
             <xpath expr="//field[@name='cxo_approved_date']" position="after">
                 <field name="designated_cxo_approver_id" readonly="cxo_approved" options="{'no_create': True}"/>
@@ -16,7 +18,7 @@
                     type="object"
                     string="Send Approval Email"
                     icon="fa-envelope"
-                    invisible="not designated_cxo_approver_id"/>
+                    invisible="not designated_cxo_approver_id or awaiting_quote_selection"/>
             </xpath>
             <xpath expr="//button[@name='action_hod_approve_po']" position="attributes">
                 <attribute name="invisible">not cxo_approved or hod_approved or state not in ('draft', 'sent') or shariah_hold</attribute>
@@ -33,6 +35,7 @@
                         invisible="not cxo_approved or not hod_approved or cfo_approved or state not in ('draft', 'sent') or shariah_hold"
                         groups="bn_material_request.menu_group_material_request_cfo"/>
                 <field name="is_cxo_approver_allowed" invisible="1"/>
+                <field name="awaiting_quote_selection" invisible="1"/>
                 <field name="shariah_hold" invisible="1"/>
                 <button string="CFO Approval" name="action_shariah_hold_approve" type="object"
                         class="oe_highlight" invisible="not shariah_hold"
@@ -45,6 +48,16 @@
                         groups="bn_material_request.menu_group_material_request_cfo"/>
             </xpath>
 
+            <!-- First column of "Approval Status", for an RFQ of a Purchase Request:
+                 selected with "Confirm Selected Lines" in Bulk Price Entry -->
+            <xpath expr="//field[@name='cxo_approved_date']/parent::group" position="before">
+                <group invisible="not requisition_id">
+                    <field name="is_selected_quote" widget="boolean_toggle" readonly="1"/>
+                    <field name="selected_quote_by" readonly="1"/>
+                    <field name="selected_quote_date" readonly="1"/>
+                </group>
+            </xpath>
+
             <!-- Third column next to the CXO and HOD groups of "Approval Status" -->
             <xpath expr="//field[@name='hod_approved_date']/parent::group" position="after">
                 <group>
@@ -55,10 +68,27 @@
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="before">
+                <div class="alert alert-info" role="alert"
+                     invisible="not awaiting_quote_selection or state not in ('draft', 'sent')">
+                    <strong>Waiting for quote selection</strong> - select this RFQ with "Confirm Selected Lines"
+                    in Bulk Price Entry before it can be CXO approved.
+                </div>
                 <div class="alert alert-warning" role="alert" invisible="not shariah_hold">
                     <strong>Waiting for CFO</strong> - the budget is exceeded. Only the CFO can approve it, arrange the budget, or reject it.
                     <field name="shariah_hold_reason" readonly="1" nolabel="1"/>
                 </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- RFQ list: which RFQs have been selected with "Confirm Selected Lines" -->
+    <record id="purchase_order_kpis_tree_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.order.kpis.tree.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_kpis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="before">
+                <field name="is_selected_quote" optional="show"/>
             </xpath>
         </field>
     </record>

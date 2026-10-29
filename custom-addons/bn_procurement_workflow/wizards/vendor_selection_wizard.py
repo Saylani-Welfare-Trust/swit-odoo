@@ -26,13 +26,15 @@ class VendorSelectionWizard(models.TransientModel):
             rfqs = self.env['purchase.order'].browse(result['res_id'])
         else:
             rfqs = result
-        rfqs.write({'designated_cxo_approver_id': self.designated_cxo_approver_id.id})
 
         # super() closes a Purchase Request once all its lines are on RFQs, but
         # here its RFQs still go through winner selection, CXO approval and the
         # funds check: it closes once their Purchase Orders are confirmed.
         if requisition:
             requisition.state = 'rfq_sent' if state_before == 'procurement_approval' else state_before
+        # After the state: in RFQ Sent the new RFQs await selection, so the
+        # approver's email is held back until then.
+        rfqs.write({'designated_cxo_approver_id': self.designated_cxo_approver_id.id})
         return {
             'type': 'ir.actions.act_window',
             'name': _('RFQs Created'),
