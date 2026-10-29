@@ -39,7 +39,7 @@
         'views/purchase_order.xml',
         'views/stock_picking_views.xml',
         
-        'wizard/material_request_revert_wizard_views.xml',
+        'wizards/material_request_revert_wizard_views.xml',
     ],
     'installable': True,
     'application': True,
