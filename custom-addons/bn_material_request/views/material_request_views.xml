@@ -148,6 +148,8 @@
                                     readonly="state == 'done'" 
                                     required="state == 'rejected'" 
                                     placeholder="Enter rejection reason..."/>
+                                <field name="revert_reason" readonly="1" attrs="{'invisible': [('revert_reason', '=', False)]}" style="color: red; font-weight: bold;"/>
+
                             </group>
                         </page>
                     </notebook>
