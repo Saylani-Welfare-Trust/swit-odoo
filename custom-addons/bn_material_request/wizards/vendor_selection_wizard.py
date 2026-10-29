@@ -120,11 +120,18 @@ class VendorSelectionWizard(models.TransientModel):
 
         # "Other Purchase Requests" is informational only - it is never part of
         # the consolidated RFQ, by design (see its page in the view).
-        selected = (
-            self.source_line_ids.filtered('selected')
-            | self.procurement_line_ids.filtered('selected')
-        )
-        selected = selected.filtered(lambda l: not float_is_zero(l.qty_to_order, precision_digits=4))
+        #
+        # source_line_ids and procurement_line_ids are DIFFERENT models
+        # (vendor.selection.wizard.source.line vs .procurement.line), so they
+        # cannot be combined with recordset "|" (Odoo's union() requires both
+        # sides to share the same model and raises "inconsistent models"
+        # otherwise). A plain Python list holds both kinds of record just
+        # fine, since every subsequent use below is per-item.
+        selected = [
+            entry for entry in list(self.source_line_ids.filtered('selected'))
+            + list(self.procurement_line_ids.filtered('selected'))
+            if not float_is_zero(entry.qty_to_order, precision_digits=4)
+        ]
 
         if not selected:
             raise ValidationError(_('Please select at least one Purchase Request line to order, with a quantity greater than zero.'))
@@ -151,7 +158,9 @@ class VendorSelectionWizard(models.TransientModel):
             product_qty_map[entry.product_id.id] += entry.qty_to_order
             product_uom_map[entry.product_id.id] = entry.product_uom_id.id or entry.product_id.uom_id.id
 
-        contributing_requisitions = selected.mapped('requisition_line_id.requisition_id')
+        contributing_requisitions = self.env['purchase.requisition']
+        for entry in selected:
+            contributing_requisitions |= entry.requisition_line_id.requisition_id
 
         created_rfqs = self.env['purchase.order']
         for vendor in self.vendor_ids:
