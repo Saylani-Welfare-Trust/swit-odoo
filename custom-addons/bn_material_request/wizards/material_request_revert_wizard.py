@@ -14,5 +14,6 @@ class MaterialRequestRevertWizard(models.TransientModel):
         if not self.reason:
             raise ValidationError(_('You must provide a reason to revert this request.'))
         
+        # Call the method on the main material.request record
         self.request_id.action_process_revert(self.reason)
         return {'type': 'ir.actions.act_window_close'}

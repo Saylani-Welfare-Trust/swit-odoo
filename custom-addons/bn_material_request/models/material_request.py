@@ -714,9 +714,12 @@ class MemberApproval(models.Model):
         """Process the revert action based on the current state."""
         self.ensure_one()
         self.write({'revert_reason': reason})
+        
+        # Log it in the chatter for full traceability
+        self.message_post(body=_("Request reverted by %s. Reason: %s") % (self.env.user.name, reason))
 
         if self.state == 'hod_approval':
-            # Revert to Draft for the requester to fix
+            # HOD Revert: Goes back to Draft so the requester can fix it
             self.write({
                 'state': 'draft',
                 'hod_approved_by': False,
@@ -725,12 +728,11 @@ class MemberApproval(models.Model):
                 'budget_amount': 0.0,
             })
         elif self.state == 'committee_approval':
-            # Revert to Committee Review: both CFO and COO must review again
+            # CFO/COO Revert: Stays in Committee Approval, but wipes BOTH approvals
             self.write({
                 'cfo_approved': False,
                 'coo_approved': False,
                 'cfo_remarks': False,
                 'coo_remarks': False,
-                # State remains 'committee_approval'
             })
         return True
