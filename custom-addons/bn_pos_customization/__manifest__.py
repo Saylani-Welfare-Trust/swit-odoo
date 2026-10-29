@@ -11,7 +11,6 @@
         'contacts',
     ],
     'data': [
-        'data/ir_module_category.xml',
         'security/group.xml',
         'security/record_rule.xml',
         'views/pos_assets_index.xml',
