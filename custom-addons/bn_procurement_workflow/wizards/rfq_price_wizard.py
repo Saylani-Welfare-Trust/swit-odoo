@@ -20,9 +20,10 @@ class RFQPriceWizard(models.TransientModel):
         """RFQs linked to a requisition under the Procurement workflow are not
         confirmed immediately - the winning one is marked as selected and
         waits for CXO + HOD approval directly on that RFQ, then Funds Check,
-        before it can ever be confirmed."""
+        before it can ever be confirmed. Each product of the requisition gets
+        its own winning RFQ."""
         requisition = rfq.requisition_id
-        if requisition and requisition.state == 'rfq_sent':
+        if requisition and requisition._is_selecting_rfqs():
             requisition.action_select_winning_rfq(rfq)
         else:
             super()._confirm_rfq(rfq)

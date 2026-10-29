@@ -432,6 +432,14 @@ class PurchaseOrder(models.Model):
             other_rfqs = requisition._cancel_other_rfqs(order, _(
                 'Cancelled - %(order)s was confirmed for Purchase Request %(request)s.'
             ) % {'order': order.display_name, 'request': requisition.display_name})
+            # Quotes for its other products are still open: the requisition
+            # closes with the Purchase Order of the last of them.
+            if requisition.purchase_ids.filtered(lambda rfq: rfq.state in ('draft', 'sent', 'to approve')):
+                requisition.message_post(body=_(
+                    'Purchase Order %(order)s confirmed. %(count)s other RFQ(s) for the same '
+                    'product(s) cancelled; RFQs for the other products are still open.'
+                ) % {'order': order.display_name, 'count': len(other_rfqs)})
+                continue
             requisition.action_done()
             requisition.message_post(body=_(
                 'Closed - Purchase Order %(order)s confirmed. %(count)s other RFQ(s) cancelled.'
