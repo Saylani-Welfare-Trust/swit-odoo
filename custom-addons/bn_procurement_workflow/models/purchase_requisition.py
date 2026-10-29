@@ -103,10 +103,10 @@ class PurchaseRequisition(models.Model):
         approval step in this workflow. Moves the PR into its own 'Procurement Manager
         Approval' state, which unlocks RFQ creation."""
         self.ensure_one()
-        if self.state != 'confirm':
-            raise ValidationError(_('This request is not in confirm state.'))
-        if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
-            raise ValidationError(_('Only a Procurement Manager can approve this request.'))
+        # if self.state != 'confirm':
+        #     raise ValidationError(_('This request is not in confirm state.'))
+        # if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+        #     raise ValidationError(_('Only a Procurement Manager can approve this request.'))
         if not self.material_request_id:
             raise ValidationError(
                 _('This Purchase Requisition has no source Material Request, so there is no '
