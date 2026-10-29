@@ -35,7 +35,7 @@
                                 <field name="requested_qty" readonly="1"/>
                                 <field name="remaining_qty" readonly="1"/>
                                 <field name="qty_to_order"/>
-                                <field name="selected" widget="boolean_toggle"/>
+                                <field name="selected" widget="boolean_toggle" options="{'autosave': False}"/>
                             </tree>
                         </field>
                     </page>
@@ -49,7 +49,7 @@
                                 <field name="requested_qty" readonly="1"/>
                                 <field name="remaining_qty" readonly="1"/>
                                 <field name="qty_to_order"/>
-                                <field name="selected" widget="boolean_toggle"/>
+                                <field name="selected" widget="boolean_toggle" options="{'autosave': False}"/>
                             </tree>
                         </field>
                     </page>
