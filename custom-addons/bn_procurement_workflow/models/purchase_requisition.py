@@ -53,6 +53,11 @@ class PurchaseRequisition(models.Model):
         help='Whether the Material Request asks for products or quantities that '
              'are not on an RFQ yet, and no more recent Purchase Request has been '
              'created for them.')
+    # Lines (or part of their quantity) not yet sent out on an RFQ: more RFQs
+    # are created for them on this same requisition, until it is closed.
+    has_lines_to_rfq = fields.Boolean(
+        compute='_compute_has_lines_to_rfq',
+        help='Whether some of its lines have not been sent out on an RFQ yet.')
 
     # Automatic Shariah Law balance check for the Funds Availability gate
     funds_shariah_balance = fields.Monetary(
@@ -182,16 +187,31 @@ class PurchaseRequisition(models.Model):
                 and not requisition._has_newer_request()
                 and requisition._get_request_shortfall())
 
+    @api.depends('line_ids.is_locked')
+    def _compute_has_lines_to_rfq(self):
+        for requisition in self:
+            requisition.has_lines_to_rfq = bool(requisition._get_lines_to_rfq())
+
+    def _get_lines_to_rfq(self):
+        """Lines not yet fully sent out on an RFQ. A requisition whose RFQs were
+        all created before lines were locked has no line locked at all, and is
+        treated as having none left."""
+        self.ensure_one()
+        if not any(line.locked_qty for line in self.line_ids):
+            return self.line_ids.browse()
+        return self.line_ids.filtered(lambda line: not line.is_locked)
+
     def action_create_remaining_request(self):
         """A closed request whose Purchase Order covers only part of its Material
-        Request, or a request whose RFQs cover only part of it: create a new
-        Purchase Request for the products and quantities that are not on an
-        RFQ yet. This one is left as it is. The new one starts in Procurement
-        Manager Approval, ready for RFQs: the Procurement Manager creating it
-        is the one who would approve it."""
+        Request: create a new Purchase Request for the products and quantities
+        that are not on an RFQ yet. This one is left as it is. While a request
+        is open, its remaining products get their RFQs on it instead. The new
+        one starts in Procurement Manager Approval, ready for RFQs: the
+        Procurement Manager creating it is the one who would approve it."""
         self.ensure_one()
-        if self.state not in ('done', 'rfq_sent'):
-            raise ValidationError(_('This request is neither Closed nor in RFQ Sent state.'))
+        if self.state != 'done':
+            raise ValidationError(_(
+                'This request is still open: create the RFQs for its remaining products on it instead.'))
         if not self.material_request_id:
             raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
         if self._has_newer_request():

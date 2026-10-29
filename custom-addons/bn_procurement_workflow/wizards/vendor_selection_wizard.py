@@ -15,9 +15,9 @@ class VendorSelectionWizard(models.TransientModel):
     def action_create_rfqs(self):
         requisition = self.source_requisition_id
         # RFQs can be created on the same Purchase Request more than once (a
-        # batch at a time), so it is either still in Procurement Manager
-        # Approval (first batch) or already in RFQ Sent (a later batch).
-        in_rfq_stage = requisition.state in ('procurement_approval', 'rfq_sent')
+        # batch at a time): the first batch in Procurement Manager Approval,
+        # later ones in RFQ Sent or further along.
+        state_before = requisition.state
         result = super().action_create_rfqs()
 
         # super() returns the RFQ's form action when it created exactly one
@@ -28,11 +28,11 @@ class VendorSelectionWizard(models.TransientModel):
             rfqs = result
         rfqs.write({'designated_cxo_approver_id': self.designated_cxo_approver_id.id})
 
-        # super() closes a Purchase Request once all its lines are ordered, but
+        # super() closes a Purchase Request once all its lines are on RFQs, but
         # here its RFQs still go through winner selection, CXO approval and the
-        # funds check, which all need it in RFQ Sent.
-        if requisition and in_rfq_stage:
-            requisition.state = 'rfq_sent'
+        # funds check: it closes once their Purchase Orders are confirmed.
+        if requisition:
+            requisition.state = 'rfq_sent' if state_before == 'procurement_approval' else state_before
         return {
             'type': 'ir.actions.act_window',
             'name': _('RFQs Created'),
