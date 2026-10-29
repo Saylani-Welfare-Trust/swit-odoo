@@ -7,7 +7,7 @@ class PosConfig(models.Model):
     
     
     def write(self, vals):
-            if vals.get('active') is False:
+            if vals.get('active'):
                 if not self.env.user.has_group(
                     'bn_pos_order.pos_config_archive_group'
                 ):

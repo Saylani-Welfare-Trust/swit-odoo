@@ -6,7 +6,7 @@
     </record>
 
     <record id="pos_config_archive_group" model="res.groups">
-        <field name="name">POS / Archive</field>
+        <field name="name">POS / Archive and Unarchived</field>
     </record>
 
 </odoo>
