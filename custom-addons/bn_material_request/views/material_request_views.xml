@@ -49,6 +49,7 @@
                             invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
                             invisible="state not in ['rejected']"/>
+                    <button name="action_open_revert_wizard" string="Revert" type="object" states="hod_approval,committee_approval" class="btn-secondary" confirm="Are you sure you want to revert this request?"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,hod_approval,committee_approval,pending,done"/>
                 </header>
                 <sheet>

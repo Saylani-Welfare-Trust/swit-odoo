@@ -690,3 +690,47 @@ class MemberApproval(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
                 
         return super().create(vals_list)
+
+    # Add this field with the other remarks fields
+    revert_reason = fields.Text('Revert Reason', readonly=True, tracking=True)
+
+    # Add these methods anywhere in the MemberApproval class
+    def action_open_revert_wizard(self):
+        """Open the wizard to enter the revert reason."""
+        self.ensure_one()
+        return {
+            'name': _('Revert Request'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'material.request.revert.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_request_id': self.id,
+                'default_current_state': self.state,
+            }
+        }
+
+    def action_process_revert(self, reason):
+        """Process the revert action based on the current state."""
+        self.ensure_one()
+        self.write({'revert_reason': reason})
+
+        if self.state == 'hod_approval':
+            # Revert to Draft for the requester to fix
+            self.write({
+                'state': 'draft',
+                'hod_approved_by': False,
+                'hod_approved_date': False,
+                'is_in_budget': False,
+                'budget_amount': 0.0,
+            })
+        elif self.state == 'committee_approval':
+            # Revert to Committee Review: both CFO and COO must review again
+            self.write({
+                'cfo_approved': False,
+                'coo_approved': False,
+                'cfo_remarks': False,
+                'coo_remarks': False,
+                # State remains 'committee_approval'
+            })
+        return True
