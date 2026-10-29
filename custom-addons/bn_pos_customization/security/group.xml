@@ -6,7 +6,7 @@
          to a cashier's own shop, orders, sessions and payments only. -->
     <record id="pos_customization_user_group" model="res.groups">
         <field name="name">Own Shop Only</field>
-        <field name="category_id" ref="module_pos_customization"/>
+        <field name="category_id" ref="base.module_category_sales_point_of_sale"/>
         <field name="comment">Row-level restriction: this user only sees their own POS shop, orders, sessions and payments. Not a CRUD tier.</field>
     </record>
 
