@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, _
-from odoo.exceptions import ValidationError
 
 
 class VendorSelectionWizard(models.TransientModel):
@@ -15,22 +14,30 @@ class VendorSelectionWizard(models.TransientModel):
 
     def action_create_rfqs(self):
         requisition = self.source_requisition_id
-        # if requisition and (requisition.state != 'procurement_approval' or not requisition.procurement_manager_id):
-        #     raise ValidationError(
-        #         _('RFQs can only be created once the Procurement Manager has approved this '
-        #           'Purchase Requisition for RFQ.'))
-        results = super().action_create_rfqs()
-        
-        for result in results:
-            result.designated_cxo_approver_id = self.designated_cxo_approver_id.id
-        
-        if requisition:
-            requisition.action_mark_rfq_sent()
+        # RFQs can be created on the same Purchase Request more than once (a
+        # batch at a time), so it is either still in Procurement Manager
+        # Approval (first batch) or already in RFQ Sent (a later batch).
+        in_rfq_stage = requisition.state in ('procurement_approval', 'rfq_sent')
+        result = super().action_create_rfqs()
+
+        # super() returns the RFQ's form action when it created exactly one
+        # RFQ, and the RFQs themselves otherwise.
+        if isinstance(result, dict):
+            rfqs = self.env['purchase.order'].browse(result['res_id'])
+        else:
+            rfqs = result
+        rfqs.write({'designated_cxo_approver_id': self.designated_cxo_approver_id.id})
+
+        # super() closes a Purchase Request once all its lines are ordered, but
+        # here its RFQs still go through winner selection, CXO approval and the
+        # funds check, which all need it in RFQ Sent.
+        if requisition and in_rfq_stage:
+            requisition.state = 'rfq_sent'
         return {
             'type': 'ir.actions.act_window',
             'name': _('RFQs Created'),
             'res_model': 'purchase.order',
             'view_mode': 'tree,form',
-            'domain': [('id', 'in', results.ids)],
+            'domain': [('id', 'in', rfqs.ids)],
             'target': 'current',
         }
