@@ -91,7 +91,7 @@ their issuance is closed directly.
 | *User* | Keys, Issuance (Bulk / Manual Assign / Return, History), Bunch | **Issued**, **Return**, **Overdue**, bulk and manual issue / return |
 | *Manager* | Same | + delete empty key bunches |
 | *Audit* | Keys, History, Bunch (read-only; no assign / return screens) | None |
-| *Admin* | Same | Everything |
+| *Administrator* | Same | Everything |
 
 Issue / Return / Overdue are checked on the server too. Issuing a key
 creates the rider's collection without needing Rider Shift rights. Key

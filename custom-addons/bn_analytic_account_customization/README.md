@@ -63,7 +63,7 @@ payable, bank and tax lines are exempt. Each entry is checked on its own.
 | *User* | Read Location Options and Sub Zones |
 | *Manager* | User + create / edit them |
 | *Audit* | Read-only |
-| *Admin* | Everything, including delete |
+| *Administrator* | Everything, including delete |
 
 Every internal user can **read** Location Options and Sub Zones (they are
 picked on donation box, key bunch and rider screens). The menu is

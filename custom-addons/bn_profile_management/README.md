@@ -184,7 +184,7 @@ Profile information sheet, microfinance application, user profile report
 | *User* | Create, edit, register, reject and raise change requests on profiles |
 | *Manager* | User + configure profile types and Areas (*Master Setup > Profile Management*; the group gives access to the Master Setup menu) |
 | *Audit* | Read-only, including the configuration under Master Setup |
-| *Admin* | Everything, including delete |
+| *Administrator* | Everything, including delete |
 
 ## What changed in 17.0.1.2.0 - 17.0.1.6.0
 

@@ -100,7 +100,7 @@ disbursement lines.
 | *User* | Create applications, send them to the HOD, SD slips and receipts, Proceed / Move to Treasury / Move to Done, Send for Recovery |
 | *Manager* | User + configuration under *Master Setup > Microfinance* |
 | *Audit* | Read-only, everything |
-| *Admin* | Everything, delete |
+| *Administrator* | Everything, delete |
 
 Roles (category *Microfinance Roles*, added on top of a tier; each implies
 *User*): **HOD** (move to Member, reject, revert), **Member** (approve,

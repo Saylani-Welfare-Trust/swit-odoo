@@ -43,7 +43,7 @@
     </record>
 
     <record id="microfinance_admin_group" model="res.groups">
-        <field name="name">Admin</field>
+        <field name="name">Administrator</field>
         <field name="category_id" ref="module_microfinance"/>
         <field name="implied_ids" eval="[(4, ref('microfinance_manager_group')), (4, ref('microfinance_audit_group'))]"/>
         <field name="comment">Everything, including delete.</field>

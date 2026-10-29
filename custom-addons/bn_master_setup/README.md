@@ -43,7 +43,7 @@ ones: `product.master`, `qurbani.hijri` and `sms.template`.
 | *User* | Read City, Bank and Area |
 | *Manager* | Create and edit City, Bank and Area |
 | *Audit* | Read-only |
-| *Admin* | Everything, including delete |
+| *Administrator* | Everything, including delete |
 | *Menu (legacy)* | Former single group; gives the menu only |
 
 Every internal user can read City, Bank and Area, so the forms of other

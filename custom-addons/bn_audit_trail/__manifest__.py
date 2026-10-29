@@ -21,7 +21,7 @@ Key features
   exclusion is logged.
 * Deleting log entries always leaves a purge entry.
 * Groups: Access Root Menu, User (own activity), Audit (all, read-only),
-  Manager (+ Excluded Models), Admin (+ purge).
+  Manager (+ Excluded Models), Administrator (+ purge).
 """,
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',

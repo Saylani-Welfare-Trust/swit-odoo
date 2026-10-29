@@ -103,7 +103,7 @@ bunches scheduled for the day.
 | *Foreign Currency Collection* | - | Change the amount of a foreign currency entry |
 | *Manager* | Same as User | User + both edit groups above + report any rider's collection |
 | *Audit* | All except Schedule, read-only | None |
-| *Admin* | Same | Everything |
+| *Administrator* | Same | Everything |
 
 **Riders report their own collections** in *Schedule*: the amount they
 enter is written to the collection although they cannot edit a collection's

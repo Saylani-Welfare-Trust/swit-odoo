@@ -125,7 +125,7 @@ Donor**. New donors are Draft profiles.
 4. For stockable products, set the warehouse / operation type on the
    import batch.
 5. API access: *Settings > Companies > (company) > Donation API*: URL,
-   Client ID and Client Secret. Only Import Donation *Admin* and Settings
+   Client ID and Client Secret. Only Import Donation *Administrator* and Settings
    administrators can see or change them.
 6. Gateways that import student fees (SMIT, PIAIC): tick **Student Fees**
    (the Course column is used as the product). Set on upgrade for gateways
@@ -141,7 +141,7 @@ Donor**. New donors are Draft profiles.
 | *User* | Create batches, Validate, Upload, Sync Donor, Reset to Draft |
 | *Manager* | User + approve invalid rows, Confirm, fetch from the API, create donors from API donations |
 | *Audit* | Read-only, everything |
-| *Admin* | Everything, configuration, API credentials |
+| *Administrator* | Everything, configuration, API credentials |
 
 Confirm creates the stock transfer and the Draft journal entry as superuser,
 so a Manager needs no Inventory or Accounting rights.
@@ -151,7 +151,7 @@ so a Manager needs no Inventory or Accounting rights.
 | Problem in 17.0.1.1.0 | Fix |
 | --- | --- |
 | The daily API fetch crashed every day (called on an empty record) | Runs |
-| The API fetch read company fields no module defined | URL / Client ID / Secret on the company, Admin only |
+| The API fetch read company fields no module defined | URL / Client ID / Secret on the company, Administrator only |
 | The fetch wizard could not open on a new database (operation type data not loaded) | Loaded |
 | **Approve** of an invalid row always crashed; invalid rows kept only the error, no data | Rows keep their data, can be corrected and approved, also after upload |
 | Zero amounts, missing products and duplicates were dropped silently; one bad mobile aborted the whole validation | Every rejected row is listed with its reason |

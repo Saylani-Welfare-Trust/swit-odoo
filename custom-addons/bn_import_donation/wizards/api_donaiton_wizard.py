@@ -76,7 +76,7 @@ class APIDonationWizard(models.TransientModel):
         if start_date and end_date and start_date > end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
-        # The credentials are readable by the Import Donation Admin only.
+        # The credentials are readable by the Import Donation Administrator only.
         company = self.env.company.sudo()
         if not (company.url and company.client_id and company.client_secret):
             raise ValidationError(_(

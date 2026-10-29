@@ -110,12 +110,12 @@ flowchart LR
 | *User* | Read **his/her own** activity only |
 | *Audit* | Read **everybody's** activity and the Excluded Models |
 | *Manager* | Audit + add / change / remove Excluded Models (removals are logged) |
-| *Admin* | Manager + delete (purge) log entries (every purge leaves a permanent entry). The seed Administrator is added automatically |
+| *Administrator* | Manager + delete (purge) log entries (every purge leaves a permanent entry). The seed Administrator is added automatically |
 
 Assign them in *Settings > Users > Access Rights*, category *Audit Trail*.
 On upgrade, members of the former *Viewer* group become *Audit* and the
 former *Manager* group stays *Manager*; deleting log entries now needs
-*Admin*.
+*Administrator*.
 
 **The Audit Trail's own screens are not logged**, except deletions:
 viewing the log, and creating or changing an exclusion, leave no entry;

@@ -25,7 +25,7 @@
         <field name="category_id" ref="module_rider_shift"/>
     </record>
 
-    <!-- CRUD tiers for this module's own models, matching the User/Admin
+    <!-- CRUD tiers for this module's own models, matching the User/Administrator
          convention used everywhere else. -->
     <record id="rider_shift_user_group" model="res.groups">
         <field name="name">User</field>
@@ -52,7 +52,7 @@
     </record>
 
     <record id="rider_shift_admin_group" model="res.groups">
-        <field name="name">Admin</field>
+        <field name="name">Administrator</field>
         <field name="category_id" ref="module_rider_shift"/>
         <field name="comment">Full control, including delete.</field>
         <field name="implied_ids" eval="[(4, ref('rider_shift_manager_group')), (4, ref('rider_shift_audit_group'))]"/>

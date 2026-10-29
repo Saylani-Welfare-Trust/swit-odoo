@@ -156,7 +156,7 @@ Tests covering the whole chain are in `bn_rider_shift/tests/test_closed_box.py`.
 | *User* | Request, Registration / Installation, Complain Center | Create requests, **Install**, **Process Complain**, *Bulk Install* |
 | *Manager* | + Donation Products Inventory | + **Approve** / **Reject** request, line **Return**, **Approved**, **Change Request**, **Complain Resolved**, **Box Return**, **Repair**, *Bulk Approved*, *Populate Lock No* |
 | *Audit* | All of the above, read-only | None |
-| *Admin* | + *Master Setup > Installation Category* | Everything, delete |
+| *Administrator* | + *Master Setup > Installation Category* | Everything, delete |
 
 Buttons are shown only to the groups that may use them, and each action
 checks the group on the server as well. *Bulk Install*, *Bulk Approved* and
