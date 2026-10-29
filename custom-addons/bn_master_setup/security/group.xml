@@ -37,11 +37,4 @@
         <field name="comment">Full control: everything Manager can do, plus deleting City / Bank / Area entries.</field>
     </record>
 
-    <!-- Former single "Menu" group, kept so the users who have it keep the menu. -->
-    <record id="master_setup_group" model="res.groups">
-        <field name="name">Menu (legacy)</field>
-        <field name="category_id" ref="module_master_setup"/>
-        <field name="implied_ids" eval="[(4, ref('master_setup_root_group'))]"/>
-    </record>
-
 </odoo>
