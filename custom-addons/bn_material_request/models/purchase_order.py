@@ -41,3 +41,14 @@ class PurchaseOrder(models.Model):
             'context': {'create': False},
             'target': 'current',
         }
+
+
+class PurchaseOrderLine(models.Model):
+    _name = 'purchase.order.line'
+    _inherit = ['purchase.order.line', 'line.change.log.mixin']
+    _line_log_parent = 'order_id'
+    _line_log_fields = ['product_id', 'name', 'product_qty', 'product_uom', 'price_unit', 'discount', 'taxes_id']
+
+    def _line_log_ignored(self, field_name):
+        # Odoo itself already logs a quantity change on a confirmed Purchase Order.
+        return field_name == 'product_qty' and self.order_id.state == 'purchase'

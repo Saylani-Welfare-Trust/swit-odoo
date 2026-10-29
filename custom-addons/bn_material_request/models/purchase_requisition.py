@@ -267,7 +267,10 @@ class PurchaseRequisition(models.Model):
 
 
 class PurchaseRequisitionLine(models.Model):
-    _inherit = 'purchase.requisition.line'
+    _name = 'purchase.requisition.line'
+    _inherit = ['purchase.requisition.line', 'line.change.log.mixin']
+    _line_log_parent = 'requisition_id'
+    _line_log_fields = ['product_id', 'product_qty', 'product_uom_id', 'product_description_variants']
 
     # Set by VendorSelectionWizard.action_create_rfqs once a quantity of this
     # line has gone out on a consolidated RFQ. A line can be locked a little

@@ -3,7 +3,10 @@ from odoo import models, fields, api, _
 
 class MemberApprovalLine(models.Model):
     _name = 'material.request.line'
+    _inherit = ['line.change.log.mixin']
     _description = 'Member Approval Line'
+    _line_log_parent = 'approval_id'
+    _line_log_fields = ['product_id', 'quantity', 'description', 'analytic_account_id', 'budget_id']
 
     budget_id = fields.Many2one(
         'budget.budget',
