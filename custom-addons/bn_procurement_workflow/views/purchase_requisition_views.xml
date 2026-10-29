@@ -39,7 +39,7 @@
                 <!-- A closed request whose Purchase Order covers only part of its Material Request,
                      or a request whose RFQs cover only part of it: a new Purchase Request is
                      created for what is not on an RFQ yet -->
-                <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
+                <button string="Create PR for Remaining Products" name="action_create_multi_vendor_rfqs" type="object"
                         class="oe_highlight" invisible="state not in ('done', 'rfq_sent') or not has_pending_rfq_products"
                         confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not on an RFQ yet. Continue?"/>
 
