@@ -6,7 +6,7 @@
         <field name="model">vendor.selection.wizard</field>
         <field name="inherit_id" ref="bn_material_request.rfq_price_wizard_view_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='selected_rfq_name']" position="after">
+            <xpath expr="//field[@name='vendor_ids']" position="after">
                 <field name="designated_cxo_approver_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </xpath>
         </field>
