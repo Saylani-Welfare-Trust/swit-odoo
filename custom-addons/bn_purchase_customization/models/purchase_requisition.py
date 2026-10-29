@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError
 
 PURCHASE_REQUISITION_STATES = [
     ('draft', 'Draft'),
+    ('confirm', 'Confirm'),
     ('ongoing', 'Ongoing'),
     ('hod_approval', 'HOD Approval'),
     ('mem_approval', 'Member Approval'),
@@ -49,6 +50,9 @@ class PurchaseRequisition(models.Model):
 
     def action_mem_approval(self):
         self.state = 'mem_approval'
+
+    def action_confirm(self):
+        self.state = 'confirm'
         
 class PurchaseRequisitionLine(models.Model):
     _inherit = 'purchase.requisition.line'

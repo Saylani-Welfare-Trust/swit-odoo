@@ -34,11 +34,25 @@
                         invisible="material_request_requisition_count &lt; 2">
                     <field name="material_request_requisition_count" widget="statinfo" string="PRs on this MR"/>
                 </button>
+                <!-- Who deleted which of this PR's lines, and when -->
+                <button name="action_view_deleted_lines" type="object"
+                        class="oe_stat_button" icon="fa-trash"
+                        invisible="deleted_line_count == 0">
+                    <field name="deleted_line_count" widget="statinfo" string="Deleted Lines"/>
+                </button>
             </xpath>
 
             <!-- Vendors are picked from the existing ones, never created from here -->
             <xpath expr="//field[@name='vendor_id']" position="attributes">
                 <attribute name="options">{'no_create': True}</attribute>
+            </xpath>
+
+            <!-- Show how much of each line the consolidated-RFQ process has already
+                 locked, and how much is still free for a future Vendor Selection
+                 Wizard run. -->
+            <xpath expr="//field[@name='line_ids']//field[@name='product_qty']" position="after">
+                <field name="remaining_qty" readonly="1"/>
+                <field name="is_locked" readonly="1" widget="boolean_toggle"/>
             </xpath>
         </field>
     </record>
