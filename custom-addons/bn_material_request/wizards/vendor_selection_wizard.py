@@ -6,11 +6,9 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare, float_is_zero
 
-# A requisition in one of these states is excluded from the "Other Purchase
-# Requests" page, because it already has its own page ('procurement_approval',
-# shown separately) or it is finished and has nothing left to offer
-# ('done', 'cancel').
-_OTHER_PAGE_EXCLUDED_STATES = ('procurement_approval', 'done', 'cancel')
+# A requisition in one of these states is finished: it has nothing left to
+# offer to the "Other Purchase Requests" page.
+_FINISHED_STATES = ('done', 'cancel')
 
 
 class VendorSelectionWizard(models.TransientModel):
@@ -27,14 +25,10 @@ class VendorSelectionWizard(models.TransientModel):
     # Page 1: the source Purchase Request's own lines.
     source_line_ids = fields.One2many(
         'vendor.selection.wizard.source.line', 'wizard_id', string='Source PR Lines')
-    # Page 2: lines of OTHER Purchase Requests holding one of the same
-    # products, currently in "Procurement Manager Approval".
+    # Page 2: lines of OTHER open Purchase Requests, in any state, holding one
+    # of the same products and not yet sent out on an RFQ.
     procurement_line_ids = fields.One2many(
-        'vendor.selection.wizard.procurement.line', 'wizard_id', string='Procurement Manager Approval')
-    # Page 3: lines of OTHER Purchase Requests holding one of the same
-    # products, in any state not already covered above and not finished.
-    other_line_ids = fields.One2many(
-        'vendor.selection.wizard.other.line', 'wizard_id', string='Other Purchase Requests')
+        'vendor.selection.wizard.procurement.line', 'wizard_id', string='Other Purchase Requests')
 
     has_selected_lines = fields.Boolean(compute='_compute_has_selected_lines')
 
@@ -45,8 +39,6 @@ class VendorSelectionWizard(models.TransientModel):
 
     @api.depends('source_line_ids.selected', 'procurement_line_ids.selected')
     def _compute_has_selected_lines(self):
-        # "Other Purchase Requests" is informational only (see action_create_rfqs) -
-        # it never contributes to whether the Create RFQ's button is enabled.
         for wizard in self:
             wizard.has_selected_lines = bool(
                 wizard.source_line_ids.filtered('selected')
@@ -55,10 +47,9 @@ class VendorSelectionWizard(models.TransientModel):
 
     @api.model
     def default_get(self, fields_list):
-        """Get source Purchase Requisition from context, and build the three
-        selectable pages: the source PR's own lines, other PRs for the same
-        product(s) waiting on Procurement Manager Approval, and other PRs for
-        the same product(s) in any other (non-final) state."""
+        """Get source Purchase Requisition from context, and build the two
+        selectable pages: the source PR's own lines, and the lines of other
+        open PRs for the same product(s) not yet sent out on an RFQ."""
         res = super().default_get(fields_list)
 
         active_id = self.env.context.get('active_id')
@@ -82,32 +73,25 @@ class VendorSelectionWizard(models.TransientModel):
             other_lines = self.env['purchase.requisition.line'].search([
                 ('product_id', 'in', product_ids),
                 ('requisition_id', '!=', requisition.id),
+                ('requisition_id.state', 'not in', _FINISHED_STATES),
                 ('is_locked', '=', False),
             ])
-
-            procurement_lines = other_lines.filtered(
-                lambda l: l.requisition_id.state == 'procurement_approval')
+            # A requisition whose RFQs were created before lines were locked has
+            # none locked, although its lines are already on those RFQs.
+            other_lines = other_lines.filtered(
+                lambda l: any(l.requisition_id.line_ids.mapped('locked_qty'))
+                or not l.requisition_id.purchase_ids.filtered(lambda rfq: rfq.state != 'cancel'))
             res['procurement_line_ids'] = [(0, 0, {
                 'requisition_line_id': line.id,
                 'qty_to_order': line.remaining_qty,
                 'selected': False,
-            }) for line in procurement_lines]
-
-            # Informational only (not selectable - see action_create_rfqs): other
-            # open Purchase Requests for the same product(s), excluding whichever
-            # ones are already shown, selectable, on the Procurement Manager
-            # Approval page above, and excluding finished ones.
-            other_state_lines = other_lines.filtered(
-                lambda l: l.requisition_id.state not in _OTHER_PAGE_EXCLUDED_STATES)
-            res['other_line_ids'] = [(0, 0, {
-                'requisition_line_id': line.id,
-            }) for line in other_state_lines]
+            }) for line in other_lines]
 
         return res
 
     def action_create_rfqs(self):
         """Create one consolidated RFQ (Purchase Order) per selected vendor
-        from every selected line across all three pages. Lines for the same
+        from every selected line across both pages. Lines for the same
         product are summed into a single RFQ line; the RFQ is tagged with
         every Purchase Request that contributed a line; every consumed line
         is locked for that quantity (and fully locked once nothing is left on
@@ -118,9 +102,6 @@ class VendorSelectionWizard(models.TransientModel):
         if not self.vendor_ids:
             raise ValidationError(_('Please select at least one vendor.'))
 
-        # "Other Purchase Requests" is informational only - it is never part of
-        # the consolidated RFQ, by design (see its page in the view).
-        #
         # source_line_ids and procurement_line_ids are DIFFERENT models
         # (vendor.selection.wizard.source.line vs .procurement.line), so they
         # cannot be combined with recordset "|" (Odoo's union() requires both
@@ -212,8 +193,8 @@ class VendorSelectionWizard(models.TransientModel):
 
 
 class VendorSelectionWizardLineMixin(models.AbstractModel):
-    """Shared fields for the three selectable-line pages of the wizard. Each
-    page is its own TransientModel (rather than one model shown three times)
+    """Shared fields for the two selectable-line pages of the wizard. Each
+    page is its own TransientModel (rather than one model shown twice)
     so each has its own inverse Many2one and its own tree view, filtered to
     its own domain from default_get."""
     _name = 'vendor.selection.wizard.line.mixin'
@@ -277,14 +258,6 @@ class VendorSelectionWizardSourceLine(models.TransientModel):
 
 class VendorSelectionWizardProcurementLine(models.TransientModel):
     _name = 'vendor.selection.wizard.procurement.line'
-    _inherit = 'vendor.selection.wizard.line.mixin'
-    _description = 'Vendor Selection Wizard - Procurement Manager Approval Line'
-
-    wizard_id = fields.Many2one('vendor.selection.wizard', string='Wizard', ondelete='cascade', required=True)
-
-
-class VendorSelectionWizardOtherLine(models.TransientModel):
-    _name = 'vendor.selection.wizard.other.line'
     _inherit = 'vendor.selection.wizard.line.mixin'
     _description = 'Vendor Selection Wizard - Other Purchase Request Line'
 
