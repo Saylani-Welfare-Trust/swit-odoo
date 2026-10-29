@@ -65,7 +65,7 @@
                         </button>
                         <button name="action_view_shortage_picking" type="object" class="oe_stat_button" icon="fa-truck"
                                 invisible="not shortage_picking_id">
-                            <field name="shortage_picking_id" widget="statinfo" string="Shortage Transfer"/>
+                            <field name="shortage_picking_id" widget="statinfo" string="Internal Transfer"/>
                         </button>
                         <button name="action_view_purchase_request" type="object" class="oe_stat_button" icon="fa-shopping-cart"
                                 invisible="not purchase_request_id">
