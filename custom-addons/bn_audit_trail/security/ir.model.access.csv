@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_audit_trail_log_user,audit.trail.log.user,model_audit_trail_log,group_audit_trail_user,1,0,0,0
+access_audit_trail_log_viewer,audit.trail.log.audit,model_audit_trail_log,group_audit_trail_viewer,1,0,0,0
+access_audit_trail_log_admin,audit.trail.log.admin,model_audit_trail_log,group_audit_trail_admin,1,0,0,1
+access_audit_trail_log_line_user,audit.trail.log.line.user,model_audit_trail_log_line,group_audit_trail_user,1,0,0,0
+access_audit_trail_log_line_viewer,audit.trail.log.line.audit,model_audit_trail_log_line,group_audit_trail_viewer,1,0,0,0
+access_audit_trail_log_line_admin,audit.trail.log.line.admin,model_audit_trail_log_line,group_audit_trail_admin,1,0,0,1
+access_audit_trail_exclusion_audit,audit.trail.exclusion.audit,model_audit_trail_exclusion,group_audit_trail_viewer,1,0,0,0
+access_audit_trail_exclusion_manager,audit.trail.exclusion.manager,model_audit_trail_exclusion,group_audit_trail_manager,1,1,1,1
+access_audit_trail_ir_model_root,ir.model.audit.trail,base.model_ir_model,group_audit_trail_root,1,0,0,0
