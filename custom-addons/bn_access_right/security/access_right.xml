@@ -112,6 +112,14 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
+
+    <!-- Manufacturing -->
+    <record id="mrp.access_product_template_mrp_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
     
     <!-- Product Variant -->
     <!-- Expense -->
@@ -156,6 +164,14 @@
     
     <!-- Inventory -->
     <record id="stock.access_product_product_stock_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Manufacturing -->
+    <record id="mrp.access_product_product_mrp_manager" model="ir.model.access">
         <field name="perm_read" eval="1"/>
         <field name="perm_write" eval="0"/>
         <field name="perm_create" eval="0"/>

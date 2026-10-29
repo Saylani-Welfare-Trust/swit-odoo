@@ -14,6 +14,7 @@
         'point_of_sale',
         'purchase',
         'sale',
+        'mrp',
     ],
     'data': [
         'data/ir_module_category.xml',
