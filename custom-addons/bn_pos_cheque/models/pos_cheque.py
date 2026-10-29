@@ -394,10 +394,16 @@ class POSCheque(models.Model):
         elif self.source_model == 'medical_equipment':
             self._clear_medical_equipment()
 
-        # 🟢 Call the entry generation method here
+        # Create the Bank Deposit Entry
         self._create_bank_deposit_entry()
 
         self.state = 'clear'
+
+        # 🟢 NEW: Trigger the Journal Transfer sync automatically when cleared
+        try:
+            self.env['journal.transfer']._pull_pos_entries()
+        except Exception as e:
+            _logger.error(f"Failed to run Journal Transfer pull for Cheque {self.name}: {str(e)}")
 
         self._send_clear_notification()
 

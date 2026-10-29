@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+import logging
 
+_logger = logging.getLogger(__name__)
 
 status_selection = [       
     ('draft', 'Draft'),
@@ -103,48 +105,46 @@ class JournalTransfer(models.Model):
             "res_id": self.move_id.id,
         }
     
-    def _cron_pull_pos_entries(self):
+    @api.model
+    def _pull_pos_entries(self, moves=None):
+        """Pulls POS entries. Can be called with specific moves (from Cheque Clear) 
+           or without arguments to act like a Cron job and pull all pending moves."""
         records = []
 
-        # 🔥 Fetch POS journal safely
-        pos_journal = self.env['account.journal'].search([
-            ('type', '=', 'general'),
-            ('code', '=', 'POS'),
-        ], limit=1)
+        if moves is None:
+            # Fallback: Acts exactly like your old cron job
+            pos_journal = self.env['account.journal'].search([
+                ('type', '=', 'general'),
+                ('code', '=', 'POS'),
+            ], limit=1)
 
-        if not pos_journal:
-            return
+            if not pos_journal:
+                return
 
-        # 🔥 Avoid duplicate DB calls
-        existing_move_ids = set(
-            self.search([]).mapped('pos_move_id').ids
-        )
+            existing_move_ids = set(self.search([]).mapped('pos_move_id').ids)
 
-        moves = self.env['account.move'].search([
-            ('journal_id', '=', pos_journal.id),
-            ('id', 'not in', list(existing_move_ids)),
-            ('state', '=', 'posted'),
-        ])
-
+            moves = self.env['account.move'].search([
+                ('journal_id', '=', pos_journal.id),
+                ('id', 'not in', list(existing_move_ids)),
+                ('state', '=', 'posted'),
+            ])
+        else:
+            # If specific moves are passed, filter out any that were already processed
+            existing_move_ids = set(self.search([('pos_move_id', 'in', moves.ids)]).mapped('pos_move_id').ids)
+            moves = moves.filtered(lambda m: m.id not in existing_move_ids and m.state == 'posted')
 
         for move in moves:
-            # raise UserError(str(move.name)+" "+str(move.line_ids))
-
             pos_session = self.env['pos.session'].search([('name', '=', move.ref)])
         
-            # 🔥 Pull only meaningful debit lines (receivable preferred)
             debit_lines = move.line_ids.filtered(
                 lambda l: l.debit > 0 and l.account_id.account_type in ['asset_receivable', 'asset_cash']
             )
 
-            # a deposit slip that went negative (cheque returns) is a credit
-            # line: pulled as a negative transfer, reversing that bank's deposit
             credit_lines = move.line_ids.filtered(
                 lambda l: l.credit > 0 and l.bank_journal_id and l.account_id.account_type in ['asset_receivable', 'asset_cash']
             )
 
             for line in debit_lines | credit_lines:
-                # Parse the line name to break it into 3 parts
                 line_name = line.name or move.ref or move.name or ''
                 parts = [part.strip() for part in line_name.split(' - ')]
                 
@@ -155,16 +155,16 @@ class JournalTransfer(models.Model):
                 records.append({
                     'pos_move_id': move.id,
                     'accounting_date': move.date,
-                    'descripiton': line_name, # Keeping original for reference
-                    'session': session_val,            # New field
-                    'category': category_val,          # New field
-                    'deposit_slip_no': deposit_slip_val, # New field
+                    'descripiton': line_name,
+                    'session': session_val,
+                    'category': category_val,
+                    'deposit_slip_no': deposit_slip_val,
                     'reference': line.name.rsplit(' - ', 1)[-1].strip() if line.name else '',                    
                     'source_journal_id': move.journal_id.id,
-                    'dest_journal_id': line.bank_journal_id.id,
+                    'dest_journal_id': line.bank_journal_id.id if line.bank_journal_id else move.journal_id.id,
                     'date': line.date,
                     'amount': line.debit - line.credit,
-                    'user_id': pos_session.user_id.id,
+                    'user_id': pos_session.user_id.id if pos_session else False,
                 })
         
         if records:
