@@ -208,14 +208,7 @@ class VendorSelectionWizard(models.TransientModel):
                 'view_mode': 'form',
                 'target': 'current',
             }
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('RFQs Created'),
-            'res_model': 'purchase.order',
-            'view_mode': 'tree,form',
-            'domain': [('id', 'in', created_rfqs.ids)],
-            'target': 'current',
-        }
+        return created_rfqs
 
 
 class VendorSelectionWizardLineMixin(models.AbstractModel):
