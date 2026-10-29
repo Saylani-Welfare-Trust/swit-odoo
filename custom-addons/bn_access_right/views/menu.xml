@@ -67,10 +67,19 @@
     
     <record id="stock.menu_warehouse_report" model="ir.ui.menu">
         <field name="groups_id" eval="[
+        (6, 0, [
+        ref('bn_access_right.custom_inventory_reporting_menu_group'),
+        ])
+        ]"/>
+    </record>
+    
+    <!-- Manufacturing -->
+    <record id="mrp.menu_mrp_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[
             (6, 0, [
-                ref('bn_access_right.custom_inventory_reporting_menu_group'),
+                ref('bn_access_right.custom_manufacturing_menu_group'),
             ])
         ]"/>
     </record>
-
+    
 </odoo>

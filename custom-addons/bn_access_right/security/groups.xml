@@ -55,5 +55,11 @@
         <field name="name">Inventory Product</field>
         <field name="category_id" ref="base.module_category_inventory_inventory"/>
     </record>
+    
+    <!-- Manufacturing -->
+    <record id="custom_manufacturing_menu_group" model="res.groups">
+        <field name="name">Manufacturing Menu</field>
+        <field name="category_id" ref="base.module_category_manufacturing_manufacturing"/>
+    </record>
 
 </odoo>
