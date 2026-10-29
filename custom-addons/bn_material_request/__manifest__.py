@@ -12,7 +12,7 @@
         - Automatic internal transfer creation upon final approval
     """,
     'author': 'Muhammad Abdullah',
-    'website': 'https://www.bytesnode.com',
+    'website': 'https://bytesnode.com',
     'depends': [
         'base',
         'stock',
