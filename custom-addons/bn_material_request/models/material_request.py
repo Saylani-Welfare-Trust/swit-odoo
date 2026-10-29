@@ -710,29 +710,51 @@ class MemberApproval(models.Model):
             }
         }
 
-    def action_process_revert(self, reason):
-        """Process the revert action based on the current state."""
+    def action_process_revert(self, reason, target_state):
+        """Process the revert action based on the selected target state."""
         self.ensure_one()
-        self.write({'revert_reason': reason})
+        
+        # Update state and reason
+        self.write({
+            'revert_reason': reason,
+            'state': target_state,
+        })
         
         # Log it in the chatter for full traceability
-        self.message_post(body=_("Request reverted by %s. Reason: %s") % (self.env.user.name, reason))
+        self.message_post(body=_("Request reverted to %s by %s. Reason: %s") % (target_state, self.env.user.name, reason))
 
-        if self.state == 'hod_approval':
-            # HOD Revert: Goes back to Draft so the requester can fix it
+        # Reset approvals based on where it was reverted to
+        if target_state == 'draft':
+            # Revert to Draft: Wipe everything so the requester can start fresh
             self.write({
-                'state': 'draft',
                 'hod_approved_by': False,
                 'hod_approved_date': False,
+                'cfo_approved': False,
+                'coo_approved': False,
+                'cfo_remarks': False,
+                'coo_remarks': False,
                 'is_in_budget': False,
                 'budget_amount': 0.0,
             })
-        elif self.state == 'committee_approval':
-            # CFO/COO Revert: Stays in Committee Approval, but wipes BOTH approvals
+            
+        elif target_state == 'hod_approval':
+            # Revert to HOD: Wipe HOD, CFO, and COO approvals
+            self.write({
+                'hod_approved_by': False,
+                'hod_approved_date': False,
+                'cfo_approved': False,
+                'coo_approved': False,
+                'cfo_remarks': False,
+                'coo_remarks': False,
+            })
+            
+        elif target_state == 'committee_approval':
+            # Revert to Committee: Keep HOD approved, but wipe CFO and COO approvals
             self.write({
                 'cfo_approved': False,
                 'coo_approved': False,
                 'cfo_remarks': False,
                 'coo_remarks': False,
             })
+            
         return True

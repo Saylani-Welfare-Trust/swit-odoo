@@ -8,6 +8,10 @@
                 <group>
                     <field name="request_id"/>
                     <field name="current_state" invisible="1"/>
+                    <!-- NEW: Target State Selection -->
+                    <field name="target_state" widget="radio" 
+                           invisible="current_state == 'hod_approval' and target_state != 'draft'"
+                           options="{'horizontal': true}"/>
                 </group>
                 <group>
                     <field name="reason" placeholder="Explain why this request is being reverted..." />
