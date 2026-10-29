@@ -2,7 +2,7 @@
     'name': 'POS Custom Button',
     'version': '17.0.1.4.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Custom Button',
     'depends': [

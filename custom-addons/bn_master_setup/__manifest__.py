@@ -2,7 +2,7 @@
     'name': 'Master Setup',
     'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Master Setup',
     'depends': [
