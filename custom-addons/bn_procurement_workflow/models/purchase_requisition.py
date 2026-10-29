@@ -15,6 +15,21 @@ class PurchaseRequisition(models.Model):
     procurement_review_date = fields.Datetime(readonly=True, copy=False)
     defer_reason = fields.Text(string='Deferral Reason')
 
+    # Who creates the RFQs: once someone is assigned, only they can select the
+    # vendors (Vendor Selection Wizard) for this request.
+    assigned_employee_id = fields.Many2one(
+        'hr.employee', string='Assigned To', tracking=True, copy=False,
+        domain=[('user_id', '!=', False)],
+        help='Employee who creates the RFQs of this request. Once set, only this '
+             'employee can select the vendors for its RFQs.')
+    # Stored, so that users without HR access can be matched against it.
+    assigned_user_id = fields.Many2one(
+        related='assigned_employee_id.user_id', string='Assigned User', store=True)
+    assigned_by_id = fields.Many2one('res.users', string='Assigned By', readonly=True, copy=False)
+    is_rfq_creator_allowed = fields.Boolean(
+        compute='_compute_is_rfq_creator_allowed',
+        help='Whether the current user may select the vendors for the RFQs of this request.')
+
     # Funds availability gate
     funds_available = fields.Boolean(string='Funds Available', copy=False, tracking=True)
     funds_transfer_remarks = fields.Text(string='CFO / Shariah Fund Transfer Remarks')
@@ -102,6 +117,36 @@ class PurchaseRequisition(models.Model):
         if balances:
             lowest_balance = min(balances)
         return not insufficient_accounts, lowest_balance, insufficient_accounts
+
+    @api.depends_context('uid')
+    @api.depends('assigned_employee_id', 'assigned_user_id')
+    def _compute_is_rfq_creator_allowed(self):
+        for requisition in self:
+            requisition.is_rfq_creator_allowed = (
+                not requisition.assigned_employee_id or requisition.assigned_user_id == self.env.user)
+
+    def _check_rfq_creator(self):
+        for requisition in self:
+            if not requisition.is_rfq_creator_allowed:
+                raise ValidationError(_(
+                    'Only %(employee)s, assigned to Purchase Request %(request)s, can select the vendors for its RFQs.',
+                    employee=requisition.sudo().assigned_employee_id.name, request=requisition.name))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('assigned_employee_id'):
+                vals['assigned_by_id'] = self.env.uid
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'assigned_employee_id' in vals:
+            vals = dict(vals, assigned_by_id=self.env.uid if vals['assigned_employee_id'] else False)
+        return super().write(vals)
+
+    def action_create_multi_vendor_rfqs(self):
+        self._check_rfq_creator()
+        return super().action_create_multi_vendor_rfqs()
 
     def action_procurement_approve(self):
         """Procurement Manager reviews and approves the draft PR directly - no HOD/Member

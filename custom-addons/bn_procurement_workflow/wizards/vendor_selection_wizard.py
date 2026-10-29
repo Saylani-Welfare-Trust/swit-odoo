@@ -14,6 +14,7 @@ class VendorSelectionWizard(models.TransientModel):
 
     def action_create_rfqs(self):
         requisition = self.source_requisition_id
+        requisition._check_rfq_creator()
         # RFQs can be created on the same Purchase Request more than once (a
         # batch at a time): the first batch in Procurement Manager Approval,
         # later ones in RFQ Sent or further along.
