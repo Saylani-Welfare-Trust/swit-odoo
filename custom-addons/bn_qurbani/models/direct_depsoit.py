@@ -48,9 +48,13 @@ class DirectDeposit(models.Model):
         if favor:
             dd.favor = favor
 
-        # Skip Qurbani processing entirely for medical equipment / welfare / microfinance DDs
+        params = self.env['ir.config_parameter'].sudo()
+        enable_qurbani = params.get_param('enable_qurbani', default=False)
+
+        # Skip Qurbani processing entirely for medical equipment / welfare / microfinance DDs,
+        # and for DHS payments (the DHS booked its Qurbani when it was created)
         source_request_type = data.get('source_request_type')
-        if source_request_type not in ('Medical Equipment', 'Welfare', 'Microfinance'):
+        if enable_qurbani and source_request_type not in ('Medical Equipment', 'Welfare', 'Microfinance', 'Donation Home Service'):
             qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
             if qurbani_details:
                 dd.qurbani_order_id = qurbani_details.get('id')
@@ -81,14 +85,6 @@ class DirectDeposit(models.Model):
 #         service_charges = data.get('service_charges')
 #         user_id = data.get('user_id') or self.env.user.id
 #         transaction_ref = data.get('transaction_ref')
-
-        params = self.env['ir.config_parameter'].sudo()
-        enable_qurbani = params.get_param('enable_qurbani', default=False)
-
-        if enable_qurbani:
-            qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
-
-            dd.qurbani_order_id = qurbani_details.get('id')
 
 #         # -------------------------
 #         # 3. Calculate prices & taxes for all lines

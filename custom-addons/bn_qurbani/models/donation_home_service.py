@@ -92,8 +92,12 @@ class DonationHomeService(models.Model):
         params = self.env['ir.config_parameter'].sudo()
         enable_qurbani = params.get_param('enable_qurbani', default=False)
 
-        if enable_qurbani:
+        # Book Qurbani here: when the DHS is paid later in POS, the booking is not repeated
+        if enable_qurbani and any(line.get('qurbani_schedule') for line in data.get('order_lines', [])):
             qurbani_details = self.env['qurbani.order'].create_qurbani_record(data)
+
+            if qurbani_details.get('status') == 'error':
+                raise ValidationError(qurbani_details.get('body'))
 
             dhs.qurbani_order_id = qurbani_details.get('id')
 

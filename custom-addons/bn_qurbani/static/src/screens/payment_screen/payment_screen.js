@@ -9,6 +9,11 @@ patch(PaymentScreen.prototype, {
     async validateOrder(isForceValidate) {
         const currentOrder = this.currentOrder;
 
+        // DHS payment: the Qurbani was booked when the DHS was created
+        if (currentOrder.extra_data?.dhs) {
+            return super.validateOrder(isForceValidate);
+        }
+
         let hasQurbaniProduct = false;
         let hasOtherCategoryProduct = false;
 
@@ -18,10 +23,7 @@ patch(PaymentScreen.prototype, {
         for (let line of currentOrder.get_orderlines()) {
             const product = line.product;
 
-            const isQurbaniLivestock =
-                product.is_livestock &&
-                product.detailed_type === "product" &&
-                product.categ?.name?.toLowerCase().includes("qurbani");
+            const isQurbaniLivestock = this.pos.isQurbaniProduct(product);
 
             // -----------------------------------
             // Detect qurbani product
