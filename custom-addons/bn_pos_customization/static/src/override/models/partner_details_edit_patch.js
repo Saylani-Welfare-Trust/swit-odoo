@@ -1,6 +1,6 @@
 /** @odoo-module **/
 import { patch } from "@web/core/utils/patch";
-import { PartnerDetailsEdit } from "@point_of_sale/app/screens/partner_list/partner_details_edit/partner_details_edit";
+import { PartnerDetailsEdit } from "@point_of_sale/app/screens/partner_list/partner_editor/partner_editor";
 import { _t } from "@web/core/l10n/translation";
 
 patch(PartnerDetailsEdit.prototype, {
