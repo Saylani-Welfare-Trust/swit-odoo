@@ -35,6 +35,8 @@ export class PosDashboard extends Component {
             categories: [],
             amount_min: null,
             products_by_category: { cities: [], groups: [] },
+            category_time_series: { columns: [], groups: [], 
+                                    grand_totals: {}, grand_total: '' },
             amount_max: null,
             date_from: '',
             date_to: '',
@@ -213,6 +215,8 @@ export class PosDashboard extends Component {
         
         this.state.products_by_category =
             await this.orm.call('pos.order', 'get_products_by_category_group', args);
+        this.state.category_time_series =
+            await this.orm.call('pos.order', 'get_category_group_time_series', args);
     }
 
     async onchange_province() {

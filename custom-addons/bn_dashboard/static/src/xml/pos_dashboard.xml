@@ -372,6 +372,79 @@
                 </div>
             </div>
 
+            <!-- ==================== CATEGORY GROUP TIME SERIES ==================== -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-calendar me-2 text-primary"/>Category Group Time Series</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="overflow-x: auto;">
+                            <table class="table oh-table mb-0 text-nowrap">
+                                <thead>
+                                    <tr style="background-color:#f8f9fa;">
+                                        <th style="min-width: 200px;">Category</th>
+                                        <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                            <th class="text-end"><t t-esc="col"/></th>
+                                        </t>
+                                        <th class="text-end border-start fw-bold">TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.category_time_series.groups" t-as="group" t-key="group_index">
+                                        <!-- Group Header Row -->
+                                        <tr>
+                                            <td t-attf-colspan="#{2 + (state.category_time_series.columns ? state.category_time_series.columns.length : 0)}" class="fw-bold" style="background-color:#e9ecef; padding-top: 12px; padding-bottom: 12px;">
+                                                <i class="fa fa-folder-open me-2 text-secondary"/>
+                                                <t t-esc="group['group_name']"/>
+                                            </td>
+                                        </tr>
+                                        <!-- Sub-category Rows -->
+                                        <t t-foreach="group['rows']" t-as="row" t-key="row_index">
+                                            <tr>
+                                                <td class="ps-4"><t t-esc="row['name']"/></td>
+                                                <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                                    <td class="text-end"><t t-esc="row['months'][col]"/></td>
+                                                </t>
+                                                <td class="text-end fw-semibold border-start"><t t-esc="row['total']"/></td>
+                                            </tr>
+                                        </t>
+                                        <!-- Group Total Row -->
+                                        <tr>
+                                            <td class="fw-bold text-end pe-3 text-primary">Subtotal</td>
+                                            <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                                <td class="text-end fw-bold text-primary"><t t-esc="group['totals'][col]"/></td>
+                                            </t>
+                                            <td class="text-end fw-bold text-primary border-start"><t t-esc="group['total']"/></td>
+                                        </tr>
+                                        <!-- Spacer row between groups -->
+                                        <tr><td t-attf-colspan="#{2 + (state.category_time_series.columns ? state.category_time_series.columns.length : 0)}" style="height:1px; padding:0; background-color:#fff; border:none;"></td></tr>
+                                    </t>
+                                    <t t-if="!state.category_time_series.groups.length">
+                                        <tr>
+                                            <td t-attf-colspan="#{2 + (state.category_time_series.columns ? state.category_time_series.columns.length : 0)}" class="oh-empty">
+                                                <i class="fa fa-calendar"/>
+                                                No time series data
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <!-- Grand Total -->
+                                    <t t-if="state.category_time_series.groups.length">
+                                        <tr style="background-color:#d1e7dd;">
+                                            <td class="fw-bold fs-5">GRAND TOTAL</td>
+                                            <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                                <td class="text-end fw-bold fs-5"><t t-esc="state.category_time_series.grand_totals[col]"/></td>
+                                            </t>
+                                            <td class="text-end fw-bold fs-5 border-start"><t t-esc="state.category_time_series.grand_total"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ==================== TABLES ==================== -->
             <div class="row g-3">
                 <!-- Sale by Salesperson -->

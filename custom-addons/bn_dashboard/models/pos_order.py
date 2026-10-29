@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytz
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from odoo import api, models
 
 
@@ -864,3 +864,126 @@ class PosOrder(models.Model):
         if 'Donation Box' in name:
             return 'Donation Box'
         return 'Other'
+    
+    @api.model
+    def get_category_group_time_series(self, config_id=None, date_from=None, date_to=None,
+                                       province_id=None, city_id=None, zone_id=None,
+                                       segment_id=None, segment_type=None,
+                                       category_id=None, amount_min=None, amount_max=None,
+                                       *extra, **kwargs):
+        company_id = self.env.company.id
+        
+        # Enforce 1 year default if no date filter is provided
+        if not date_from and not date_to:
+            today = datetime.today()
+            date_from = (today - timedelta(days=365)).strftime('%Y-%m-%d')
+            date_to = today.strftime('%Y-%m-%d')
+
+        domain = self._get_order_domain(config_id, date_from, date_to, province_id,
+                                        city_id, zone_id, segment_id, segment_type)
+        domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
+        order_sql = self._get_order_ids_sql(domain)
+
+        if "1=0" in order_sql:
+            return {'columns': [], 'groups': [], 'grand_totals': {}, 'grand_total': ''}
+
+        self._cr.execute(f"""
+            SELECT
+                DATE_TRUNC('month', pos_order.date_order) AS month_date,
+                TO_CHAR(pos_order.date_order, 'MON YY') AS month_label,
+                pc.complete_name AS category_name,
+                SUM(pos_order_line.price_subtotal_incl) AS amount
+            FROM pos_order_line
+            INNER JOIN pos_order ON pos_order.id = pos_order_line.order_id
+            INNER JOIN product_product ON product_product.id = pos_order_line.product_id
+            INNER JOIN product_template ON product_product.product_tmpl_id = product_template.id
+            INNER JOIN product_category AS pc ON pc.id = product_template.categ_id
+            WHERE pos_order_line.company_id = {company_id} {order_sql}
+            GROUP BY month_date, month_label, pc.complete_name
+            ORDER BY month_date, pc.complete_name
+        """)
+        docs = self._cr.dictfetchall()
+
+        columns_set = set()
+        # tree: { group_name: { sub_category_name: { 'months': { label: amt }, 'total': 0 } } }
+        tree = {}
+        
+        for r in docs:
+            month_label = r.get('month_label')
+            category_name = r.get('category_name') or ''
+            amt = float(r.get('amount') or 0.0)
+            
+            if not month_label: continue
+            columns_set.add((r.get('month_date'), month_label)) 
+            
+            group_name = self._categorize_category(category_name)
+            # Extract the leaf category name (e.g. "Saleable / Nafla / Aqiqa" -> "Aqiqa")
+            sub_category = category_name.split(' / ')[-1].strip()
+            
+            if group_name not in tree:
+                tree[group_name] = {}
+            if sub_category not in tree[group_name]:
+                tree[group_name][sub_category] = {'months': {}, 'total': 0.0}
+                
+            tree[group_name][sub_category]['months'][month_label] = tree[group_name][sub_category]['months'].get(month_label, 0.0) + amt
+            tree[group_name][sub_category]['total'] += amt
+
+        # Sort columns chronologically
+        sorted_columns = [c[1] for c in sorted(list(columns_set))]
+        
+        group_order = ['Nafla', 'Wajiba', 'Non-Donation', 'PoS', 'Donation In Kind', 'Donation Box', 'Other']
+        
+        # Clean number formatter without currency symbol to fit the layout neatly
+        def _fmt(v):
+            if not v:
+                return "0"
+            try:
+                return "{:,.0f}".format(float(v))
+            except (ValueError, TypeError):
+                return "0"
+
+        result_groups = []
+        grand_totals = {'months': {}, 'total': 0.0}
+        
+        for group_name in group_order:
+            if group_name not in tree:
+                continue
+            
+            sub_rows = []
+            group_months = {}
+            group_total = 0.0
+            
+            for sub_name, data in tree[group_name].items():
+                row_months = {}
+                for col in sorted_columns:
+                    amt = data['months'].get(col, 0.0)
+                    row_months[col] = _fmt(amt)
+                    group_months[col] = group_months.get(col, 0.0) + amt
+                    grand_totals['months'][col] = grand_totals['months'].get(col, 0.0) + amt
+                
+                group_total += data['total']
+                grand_totals['total'] += data['total']
+                
+                sub_rows.append({
+                    'name': sub_name,
+                    'months': row_months,
+                    'total': _fmt(data['total'])
+                })
+            
+            group_totals_fmt = {col: _fmt(group_months.get(col, 0.0)) for col in sorted_columns}
+            
+            result_groups.append({
+                'group_name': group_name,
+                'rows': sub_rows,
+                'totals': group_totals_fmt,
+                'total': _fmt(group_total)
+            })
+
+        grand_totals_fmt = {col: _fmt(grand_totals['months'].get(col, 0.0)) for col in sorted_columns}
+
+        return {
+            'columns': sorted_columns,
+            'groups': result_groups,
+            'grand_totals': grand_totals_fmt,
+            'grand_total': _fmt(grand_totals['total'])
+        }
