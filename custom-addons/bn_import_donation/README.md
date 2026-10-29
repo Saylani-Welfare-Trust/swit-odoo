@@ -137,7 +137,7 @@ Donor**. New donors are Draft profiles.
 
 | Group | Can |
 | --- | --- |
-| *Access Root Menu* | See the app (implied by every group below) |
+| *Menu* | See the app (implied by every group below) |
 | *User* | Create batches, Validate, Upload, Sync Donor, Reset to Draft |
 | *Manager* | User + approve invalid rows, Confirm, fetch from the API, create donors from API donations |
 | *Audit* | Read-only, everything |

@@ -106,7 +106,7 @@ flowchart LR
 
 | Group | Can |
 | --- | --- |
-| *Access Root Menu* | See the Audit Trail app menu (implied by every group below; not assigned alone) |
+| *Menu* | See the Audit Trail app menu (implied by every group below; not assigned alone) |
 | *User* | Read **his/her own** activity only |
 | *Audit* | Read **everybody's** activity and the Excluded Models |
 | *Manager* | Audit + add / change / remove Excluded Models (removals are logged) |

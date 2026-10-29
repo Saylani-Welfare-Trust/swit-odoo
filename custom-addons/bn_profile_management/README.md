@@ -180,7 +180,7 @@ Profile information sheet, microfinance application, user profile report
 
 | Group | Can |
 | --- | --- |
-| *Access Root Menu* | See the Profile Management app (implied by every group below) |
+| *Menu* | See the Profile Management app (implied by every group below) |
 | *User* | Create, edit, register, reject and raise change requests on profiles |
 | *Manager* | User + configure profile types and Areas (*Master Setup > Profile Management*; the group gives access to the Master Setup menu) |
 | *Audit* | Read-only, including the configuration under Master Setup |

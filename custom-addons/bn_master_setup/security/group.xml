@@ -5,7 +5,7 @@
          in ANY tier is enough to see the app; the tiers then decide what you
          can actually do once inside. Not meant to be assigned on its own. -->
     <record id="master_setup_root_group" model="res.groups">
-        <field name="name">Access Root Menu</field>
+        <field name="name">Menu</field>
         <field name="category_id" ref="module_master_setup"/>
         <field name="comment">Grants visibility of the Master Setup app menu. Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
     </record>

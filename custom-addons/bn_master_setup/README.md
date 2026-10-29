@@ -39,7 +39,7 @@ ones: `product.master`, `qurbani.hijri` and `sms.template`.
 
 | Group | Can |
 | --- | --- |
-| *Access Root Menu* | See the Master Setup menu (implied by every group below, and by the managers / auditors of the feature modules) |
+| *Menu* | See the Master Setup menu (implied by every group below, and by the managers / auditors of the feature modules) |
 | *User* | Read City, Bank and Area |
 | *Manager* | Create and edit City, Bank and Area |
 | *Audit* | Read-only |

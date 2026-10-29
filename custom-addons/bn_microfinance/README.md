@@ -96,7 +96,7 @@ disbursement lines.
 
 | Group | Can |
 | --- | --- |
-| *Access Root Menu* | See the app (implied by every tier) |
+| *Menu* | See the app (implied by every tier) |
 | *User* | Create applications, send them to the HOD, SD slips and receipts, Proceed / Move to Treasury / Move to Done, Send for Recovery |
 | *Manager* | User + configuration under *Master Setup > Microfinance* |
 | *Audit* | Read-only, everything |

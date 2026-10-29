@@ -7,7 +7,7 @@
 
     <!-- Sole gate on the root app menu. Every tier below implies it. -->
     <record id="group_audit_trail_root" model="res.groups">
-        <field name="name">Access Root Menu</field>
+        <field name="name">Menu</field>
         <field name="category_id" ref="module_audit_trail"/>
         <field name="comment">Shows the Audit Trail app menu. Implied by every group below; no need to assign it directly.</field>
     </record>

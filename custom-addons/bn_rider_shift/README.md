@@ -97,7 +97,7 @@ bunches scheduled for the day.
 
 | Group | Menus | Buttons / actions |
 | --- | --- | --- |
-| *Access Root Menu* | Rider (implied by every group) | - |
+| *Menu* | Rider (implied by every group) | - |
 | *User* | Shift, Collection, **Schedule**, Counterfeit Notes, Foreign Currency | Report own collection (Done / Pending / Submit, Complain Center), **Move to Done**, **Convert** / **Reject** / **Create POS Order** (FCB), **Create CFB** |
 | *Rider Collection / Edit Amount / Notes* | - | Change the amount / counterfeit notes of a collection afterwards |
 | *Foreign Currency Collection* | - | Change the amount of a foreign currency entry |

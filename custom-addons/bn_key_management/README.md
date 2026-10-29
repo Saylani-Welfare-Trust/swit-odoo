@@ -87,7 +87,7 @@ their issuance is closed directly.
 
 | Group | Menus | Buttons / actions |
 | --- | --- | --- |
-| *Access Root Menu* | Key Management (implied by every group) | - |
+| *Menu* | Key Management (implied by every group) | - |
 | *User* | Keys, Issuance (Bulk / Manual Assign / Return, History), Bunch | **Issued**, **Return**, **Overdue**, bulk and manual issue / return |
 | *Manager* | Same | + delete empty key bunches |
 | *Audit* | Keys, History, Bunch (read-only; no assign / return screens) | None |

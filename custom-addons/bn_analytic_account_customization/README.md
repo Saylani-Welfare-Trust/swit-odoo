@@ -59,7 +59,7 @@ payable, bank and tax lines are exempt. Each entry is checked on its own.
 
 | Group | Can |
 | --- | --- |
-| *Access Root Menu* | See the *Master Setup > Analytical Accounting* menu (implied by every group below) |
+| *Menu* | See the *Master Setup > Analytical Accounting* menu (implied by every group below) |
 | *User* | Read Location Options and Sub Zones |
 | *Manager* | User + create / edit them |
 | *Audit* | Read-only |
@@ -91,7 +91,7 @@ twice.
 | Posting several entries at once checked them as one | Each entry on its own |
 | Employees' CNIC readable by every user on the employee directory | HR only; removed from the directory |
 | Re-entering an employee's own CNIC was refused; a real duplicate was accepted | Fixed |
-| No menu group; Sub Zone / Location Option not readable outside this module's groups | Access Root Menu group; read for all internal users |
+| No menu group; Sub Zone / Location Option not readable outside this module's groups | Menu group; read for all internal users |
 | Unused, unloaded `analytical.product.line` model file | Removed |
 
 ## Tests

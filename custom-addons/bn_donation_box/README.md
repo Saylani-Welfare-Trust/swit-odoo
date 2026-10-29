@@ -152,7 +152,7 @@ Tests covering the whole chain are in `bn_rider_shift/tests/test_closed_box.py`.
 
 | Group | Menus | Buttons / actions |
 | --- | --- | --- |
-| *Access Root Menu* | The app icon (implied by every group, also by Key Management and Rider Shift access) | - |
+| *Menu* | The app icon (implied by every group, also by Key Management and Rider Shift access) | - |
 | *User* | Request, Registration / Installation, Complain Center | Create requests, **Install**, **Process Complain**, *Bulk Install* |
 | *Manager* | + Donation Products Inventory | + **Approve** / **Reject** request, line **Return**, **Approved**, **Change Request**, **Complain Resolved**, **Box Return**, **Repair**, *Bulk Approved*, *Populate Lock No* |
 | *Audit* | All of the above, read-only | None |
