@@ -23,7 +23,8 @@
                     <field name="is_donee_register" invisible="1" />
                     <field name="Portal_acknowledgment" invisible="1" />
                     <button string="Complete" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft' or state == 'closed'" />
-                    <button string="Reject" name="action_reject" type="object" class="oe_highlight" invisible="state not in ['draft', 'completed','inquiry','send_for_inquiry','ceo_approval','cfo_approval'] or state == 'closed'" />
+                    <button string="Reject" name="action_reject" type="object" class="oe_highlight" 
+                            invisible="state not in ['draft', 'completed','inquiry','send_for_inquiry','ceo_approval','cfo_approval','refund_ceo_approval','refund_cfo_approval'] or state == 'closed'" />
                     
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id or state == 'closed'" />
                     
@@ -36,10 +37,22 @@
                     <button string="Validate" name="action_validate" type="object" class="oe_highlight" invisible="state != 'sd_received' or state == 'closed'" />
                     <button string="Recovery" name="action_recovery" type="object" class="oe_highlight" invisible="state != 'validate' or state == 'closed'" />
                     <button string="Return" name="action_return" type="object" invisible="state != 'validate' or state == 'closed'" />
-                    <button string="Refund" name="action_refund" type="object" invisible="state != 'return' or state == 'closed'" />
+                    <!-- Refund request -->
+                    <button string="Request Refund" name="action_request_refund" type="object" 
+                            invisible="state != 'return' or state == 'closed'" />
+
+                    <!-- Refund Approval (1) - CEO -->
+                    <button string="Refund Approval (1)" name="action_refund_approve" type="object" class="oe_highlight"
+                            groups="bn_medical_equipment.medical_equipment_ceo_approval_group"
+                            invisible="state != 'refund_ceo_approval' or state == 'closed'" />
+
+                    <!-- Refund Approval (2) - CFO -->
+                    <button string="Refund Approval (2)" name="action_refund_approve" type="object" class="oe_highlight"
+                            groups="bn_medical_equipment.medical_equipment_cfo_approval_group"
+                            invisible="state != 'refund_cfo_approval' or state == 'closed'" />
                     <button string="Donate" name="action_donate" type="object" invisible="state != 'return' or state == 'closed'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, payment_return, send_for_inquiry, inquiry" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, refund_ceo_approval, refund_cfo_approval, refund, payment_return, send_for_inquiry, inquiry" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -118,6 +131,21 @@
                             <field name="portal_review_notes" readonly="1" />
                             <field name="inquiry_media" widget="html" readonly="state == 'closed'"/>
 
+                        </group>
+                        <!-- ======= REFUND APPROVAL SECTION ======= -->
+                        <group string="Refund Approval" 
+                            invisible="state not in ['return', 'refund_ceo_approval', 'refund_cfo_approval', 'refund']">
+                            <field name="refund_remarks_approval1"
+                                required="state == 'refund_ceo_approval' and case_type in ['50_percent', 'below_50_percent']"
+                                readonly="state != 'refund_ceo_approval'" />
+                            <field name="refund_approved_by_1" readonly="1" />
+                            <field name="refund_approved_date_1" readonly="1" />
+
+                            <field name="refund_remarks_approval2"
+                                required="state == 'refund_cfo_approval' and case_type in ['50_percent', 'below_50_percent']"
+                                readonly="state != 'refund_cfo_approval'" />
+                            <field name="refund_approved_by_2" readonly="1" />
+                            <field name="refund_approved_date_2" readonly="1" />
                         </group>
                     </group>
 
