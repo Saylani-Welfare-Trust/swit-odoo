@@ -40,13 +40,13 @@
                      them on this same request (Vendor Selection Wizard) -->
                 <button string="Create RFQs for Remaining Products" name="action_create_multi_vendor_rfqs" type="object"
                         class="oe_highlight" icon="fa-clone"
-                        invisible="state not in ('rfq_sent', 'vendor_selected', 'cxo_approved', 'funds_check', 'in_progress') or not has_lines_to_rfq"/>
+                        invisible="state not in ('rfq_sent', 'vendor_selected', 'cxo_approved', 'funds_check', 'in_progress','done') or not has_lines_to_rfq"/>
 
                 <!-- A closed request whose Purchase Order covers only part of its Material Request:
                      a new Purchase Request is created for what is not on an RFQ yet -->
-                <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
+                <!-- <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
                         class="oe_highlight" invisible="state != 'done' or not has_pending_rfq_products"
-                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not on an RFQ yet. Continue?"/>
+                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not on an RFQ yet. Continue?"/> -->
 
                 <button string="Funds Available" name="action_funds_available" type="object"
                         class="oe_highlight" invisible="state != 'funds_check'"
