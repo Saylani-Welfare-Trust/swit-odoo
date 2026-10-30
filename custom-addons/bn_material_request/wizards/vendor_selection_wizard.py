@@ -28,7 +28,7 @@ class VendorSelectionWizard(models.TransientModel):
     source_line_ids = fields.One2many(
         'vendor.selection.wizard.source.line', 'wizard_id', string='Source PR Lines')
     # Page 2: lines of OTHER Purchase Requests holding a product of the same
-    # parent category, currently in "Procurement Manager Approval".
+    # main category, currently in "Procurement Manager Approval".
     procurement_line_ids = fields.One2many(
         'vendor.selection.wizard.procurement.line', 'wizard_id', string='Procurement Manager Approval')
     # Page 3: lines of OTHER Purchase Requests holding one of the same
@@ -57,7 +57,7 @@ class VendorSelectionWizard(models.TransientModel):
     def default_get(self, fields_list):
         """Get source Purchase Requisition from context, and build the three
         selectable pages: the source PR's own lines, other PRs for products of
-        the same parent category waiting on Procurement Manager Approval, and
+        the same main category waiting on Procurement Manager Approval, and
         other PRs for the same product(s) in any other (non-final) state."""
         res = super().default_get(fields_list)
 
@@ -85,11 +85,12 @@ class VendorSelectionWizard(models.TransientModel):
                 ('is_locked', '=', False),
             ])
 
-            # Any product under the same parent category as one of the source
-            # PR's products (a top-level category stands as its own parent).
-            parent_categories = products.categ_id.mapped(lambda categ: categ.parent_id or categ)
+            # Any product under the same main category - the one right below
+            # the root, e.g. "Food" for "All / Food / Food Items / Rice" - as
+            # one of the source PR's products.
+            main_categories = products.categ_id.mapped(self._get_main_category)
             procurement_lines = self.env['purchase.requisition.line'].search([
-                ('product_id.categ_id', 'child_of', parent_categories.ids),
+                ('product_id.categ_id', 'child_of', main_categories.ids),
                 ('requisition_id', '!=', requisition.id),
                 ('requisition_id.state', '=', 'procurement_approval'),
                 ('is_locked', '=', False),
@@ -111,6 +112,14 @@ class VendorSelectionWizard(models.TransientModel):
             }) for line in other_state_lines]
 
         return res
+
+    @api.model
+    def _get_main_category(self, categ):
+        """The ancestor of ``categ`` right below the root category ("All"), or
+        ``categ`` itself when it is the root or right below it."""
+        while categ.parent_id.parent_id:
+            categ = categ.parent_id
+        return categ
 
     def action_create_rfqs(self):
         """Create one consolidated RFQ (Purchase Order) per selected vendor
