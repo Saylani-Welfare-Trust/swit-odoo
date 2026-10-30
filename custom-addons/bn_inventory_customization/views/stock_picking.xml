@@ -44,7 +44,7 @@
                 <field name="show_create_bill" invisible="1"/>
                 <button name="action_create_bill"
                         type="object"
-                        string="Create Bill"
+                        string="Confirm to Bill"
                         class="oe_highlight"
                         invisible="not show_create_bill"/>
             </xpath>
