@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Client Action -->
+    <record id="action_profile_management_dashboard" model="ir.actions.client">
+        <field name="name">Profile Management Dashboard</field>
+        <field name="tag">profile_management_dashboard</field>
+    </record>
+
+    <!-- 2. Sub menu under the existing Dashboard root -->
+    <menuitem id="menu_profile_management_dashboard"
+              name="Profile Management Dashboard"
+              parent="menu_dashboard_root"
+              action="action_profile_management_dashboard"
+              groups="bn_dashboard.group_bn_dashboard_user" 
+              sequence="3"/>
+</odoo>

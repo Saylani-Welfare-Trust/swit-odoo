@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Client Action -->
+    <record id="action_treasury_dashboard" model="ir.actions.client">
+        <field name="name">Treasury Dashboard</field>
+        <field name="tag">treasury_dashboard</field>
+    </record>
+
+    <!-- 2. Root menu: Dashboard (top-level app bar item) -->
+    <menuitem id="menu_dashboard_root"
+              name="Dashboard"
+              
+              sequence="10"/>
+
+    <!-- 3. Sub menu: Treasury Dashboard under Dashboard -->
+    <menuitem id="menu_treasury_dashboard"
+              name="Treasury Dashboard"
+              parent="menu_dashboard_root"
+              action="action_treasury_dashboard"
+              groups="bn_dashboard.group_bn_dashboard_user" 
+              sequence="1"/>
+</odoo>
