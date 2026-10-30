@@ -14,9 +14,7 @@
                  reviews and approves the draft PR directly. Hide those two buttons only for
                  requisitions that came from a Material Request (this workflow); other
                  purchase requisitions/blanket orders keep the original behaviour. -->
-            <xpath expr="//button[@name='action_hod_approval']" position="attributes">
-                <attribute name="invisible">state != 'draft' or material_request_id</attribute>
-            </xpath>
+
             <xpath expr="//button[@name='action_mem_approval']" position="attributes">
                 <attribute name="invisible">state != 'hod_approval' or material_request_id</attribute>
             </xpath>
