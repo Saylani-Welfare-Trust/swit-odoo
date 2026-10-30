@@ -6,7 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Purchase Customization',
     'depends': [
-        'purchase_requisition',
+        'purchase_requisition','purchase_stock',
     ],
     'data': [
         'security/group.xml',
