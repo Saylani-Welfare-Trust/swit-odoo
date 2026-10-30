@@ -11,5 +11,6 @@
               name="Donation Box Dashboard"
               parent="menu_dashboard_root"
               action="action_donation_box_dashboard"
+              groups="bn_dashboard.group_bn_dashboard_user" 
               sequence="2"/>
 </odoo>

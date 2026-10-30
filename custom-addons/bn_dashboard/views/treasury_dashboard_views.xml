@@ -16,5 +16,6 @@
               name="Treasury Dashboard"
               parent="menu_dashboard_root"
               action="action_treasury_dashboard"
+              groups="bn_dashboard.group_bn_dashboard_user" 
               sequence="1"/>
 </odoo>

@@ -8,6 +8,7 @@
     'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management','hr',],
     'data': [
         'security/ir.model.access.csv',
+        'security/dashboard_security.xml',  
         'views/treasury_dashboard_views.xml',
         'views/donation_box_dashboard_views.xml',
         'views/profile_management_dashboard_views.xml',

@@ -11,5 +11,6 @@
               name="Profile Management Dashboard"
               parent="menu_dashboard_root"
               action="action_profile_management_dashboard"
+              groups="bn_dashboard.group_bn_dashboard_user" 
               sequence="3"/>
 </odoo>
