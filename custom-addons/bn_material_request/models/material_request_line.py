@@ -18,7 +18,7 @@ class MemberApprovalLine(models.Model):
     )
     product_id = fields.Many2one('product.product', string='Product', required=True)
     product_uom_id = fields.Many2one(
-        'uom.uom', string='Unit of Measure',
+        'uom.uom', string='UOM',
         related='product_id.uom_id', readonly=True
     )
     quantity = fields.Float('Quantity', default=1.0, required=True)
@@ -131,7 +131,7 @@ class MemberApprovalLine(models.Model):
 
     product_packaging_id = fields.Many2one(
         'product.packaging',
-        string='Packaging',
+        string='Pack Size/UOM',
         domain="[('product_id', '=', product_id)]",
         help="Select the packaging for this product."
     )
