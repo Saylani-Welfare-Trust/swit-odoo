@@ -8,12 +8,12 @@
             <!-- Only the HOD approver of the source Material Request may CXO-approve;
                  nothing can be approved or confirmed while waiting for the CFO's budget decision.
                  An RFQ of a Purchase Request is CXO-approved only once it has been selected
-                 with "Confirm Selected Lines" in Bulk Price Entry. -->
+                 with "Confirm Selected Lines" in Bulk Price Entry, which also assigns its CXO approver. -->
             <xpath expr="//button[@name='action_cxo_approve_po']" position="attributes">
                 <attribute name="invisible">cxo_approved or state not in ('draft', 'sent') or shariah_hold or not is_cxo_approver_allowed or not designated_cxo_approver_id or awaiting_quote_selection</attribute>
             </xpath>
             <xpath expr="//field[@name='cxo_approved_date']" position="after">
-                <field name="designated_cxo_approver_id" readonly="cxo_approved" options="{'no_create': True}"/>
+                <field name="designated_cxo_approver_id" readonly="1"/>
                 <button name="action_resend_cxo_approval_email"
                     type="object"
                     string="Send Approval Email"
