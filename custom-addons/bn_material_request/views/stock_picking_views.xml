@@ -13,9 +13,6 @@
             <xpath expr="//field[@name='move_ids_without_package']/tree/field[@name='description_picking']" position="attributes">
                 <attribute name="optional">show</attribute>
             </xpath>
-            <xpath expr="//button[@name='action_create_invoice']" position="attributes">
-                <attribute name="string">Confirm to Bill</attribute>
-            </xpath>
         </field>
     </record>
 

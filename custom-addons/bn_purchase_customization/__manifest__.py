@@ -16,6 +16,7 @@
         'views/purchase_requisition.xml',
         'views/purchase_requisition_type.xml',
         'views/purchase_order.xml',
+        'views/stock_move.xml',
     ],
     'auto_install': False,
     'application': False,
