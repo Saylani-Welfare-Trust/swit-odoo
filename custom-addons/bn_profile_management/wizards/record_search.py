@@ -88,6 +88,8 @@ class RecordSearch(models.TransientModel):
                 'default_donee_registration_type': self.donee_registration_type,
                 'default_microfinance_scheme_id': self.microfinance_scheme_id.id,
                 'default_category': self.category,
+                # carried on to the profile popup, see action_change_request
+                'from_record_search': True,
             },
             'target': 'new',
         }

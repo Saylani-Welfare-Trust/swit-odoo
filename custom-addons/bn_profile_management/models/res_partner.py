@@ -437,6 +437,18 @@ class ResPartner(models.Model):
         self.is_change_request = True
         self.state = 'change_request'
 
+        # Opened as a popup from Record Search: a button returning nothing closes
+        # the popup, so reopen the profile instead
+        if self.env.context.get('from_record_search'):
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'res.partner',
+                'view_mode': 'form',
+                'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
+                'res_id': self.id,
+                'target': 'new',
+            }
+
     def action_reject(self):
         self.state = 'reject'
 
