@@ -9,7 +9,7 @@
     <!-- 2. Root menu: Dashboard (top-level app bar item) -->
     <menuitem id="menu_dashboard_root"
               name="Dashboard"
-              groups="bn_dashboard.group_bn_dashboard_user" 
+              
               sequence="10"/>
 
     <!-- 3. Sub menu: Treasury Dashboard under Dashboard -->
