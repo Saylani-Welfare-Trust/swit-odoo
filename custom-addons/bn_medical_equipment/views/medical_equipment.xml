@@ -28,8 +28,8 @@
                     
                     <button string="Register Donee" name="action_register_donee" type="object" class="oe_highlight" invisible="is_donee_register or not donee_id or state == 'closed'" />
                     
-                    <button string="Approval (1)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_ceo_approval_group" invisible="not approval_button_check or state == 'closed'"/>
-                    <button string="Approval (2)" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_cfo_approval_group" invisible="case_type == False or state != 'ceo_approval' or state == 'closed'" />
+                    <button string="CEO Approval" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_ceo_approval_group" invisible="not approval_button_check or state == 'closed'"/>
+                    <button string="CFO Approval" name="action_approval" type="object" class="oe_highlight" groups="bn_medical_equipment.medical_equipment_cfo_approval_group" invisible="case_type == False or state != 'ceo_approval' or state == 'closed'" />
                     
                     <button string="Sync to Portal" name="action_send_for_inquiry" type="object" invisible="case_type != 'below_50_percent' or state != 'completed' or state == 'closed'" />
                     <button string="Portal Acknowledgment " name="action_check_portal_status" type="object" invisible="state !='send_for_inquiry' or state == 'closed'" />
