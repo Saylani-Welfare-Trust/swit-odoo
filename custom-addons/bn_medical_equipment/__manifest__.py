@@ -30,6 +30,7 @@
         'views/medical_security_deposit.xml',
         'views/res_partner.xml',
         'views/medical_equipment_category.xml',
+        'views/medical_record_search_views.xml',
         
         'wizards/medical_equipment_donation.xml',
     ],
