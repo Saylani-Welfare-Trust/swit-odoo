@@ -7,8 +7,8 @@
     'summary': 'A custom Dashboard for Odoo 17 Community',
     'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management','hr',],
     'data': [
-        'security/ir.model.access.csv',
         'security/dashboard_security.xml',  
+        'security/ir.model.access.csv',
         'views/treasury_dashboard_views.xml',
         'views/donation_box_dashboard_views.xml',
         'views/profile_management_dashboard_views.xml',
