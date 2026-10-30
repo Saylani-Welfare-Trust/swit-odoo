@@ -24,13 +24,13 @@
                         <group name="record_search_col_1">
                             <field name="is_welfare" invisible="1" />
                             <field name="is_microfinance" invisible="1" />
+                            <field name="is_medical" invisible="1" />
 
                             <field name="registration_type" readonly="is_microfinance or is_welfare or is_medical" />
                         </group>
                         <group name="record_search_col_2">
                             <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" readonly="is_microfinance or is_welfare or is_medical" />
-                            <field name='category' string='Category' invisible="registration_type != 'donee' or is_microfinance"/>
-                            <!-- <field name="microfinance_scheme_id" invisible="not is_microfinance" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="is_microfinance" /> -->
+                            <field name='category' string='Category' invisible="registration_type != 'donee' or is_microfinance or is_medical"/>
                         </group>
                     </group>
                 </sheet>
