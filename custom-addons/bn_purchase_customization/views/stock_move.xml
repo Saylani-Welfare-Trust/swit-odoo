@@ -4,7 +4,7 @@
         <field name="name">stock.picking.form.inherit.on.hand.qty</field>
         <field name="model">stock.picking</field>
         <!-- Change the inherit_id here -->
-        <field name="inherit_id" ref="purchase_stock.view_picking_form_inherit_purchase"/>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
         <field name="arch" type="xml">
             <xpath expr="//button[@name='action_create_invoice']" position="attributes">
                 <attribute name="string">Confirm to Bill</attribute>
