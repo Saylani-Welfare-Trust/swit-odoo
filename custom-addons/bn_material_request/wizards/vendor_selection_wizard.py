@@ -27,8 +27,8 @@ class VendorSelectionWizard(models.TransientModel):
     # Page 1: the source Purchase Request's own lines.
     source_line_ids = fields.One2many(
         'vendor.selection.wizard.source.line', 'wizard_id', string='Source PR Lines')
-    # Page 2: lines of OTHER Purchase Requests holding one of the same
-    # products, currently in "Procurement Manager Approval".
+    # Page 2: lines of OTHER Purchase Requests holding a product of the same
+    # parent category, currently in "Procurement Manager Approval".
     procurement_line_ids = fields.One2many(
         'vendor.selection.wizard.procurement.line', 'wizard_id', string='Procurement Manager Approval')
     # Page 3: lines of OTHER Purchase Requests holding one of the same
@@ -56,9 +56,9 @@ class VendorSelectionWizard(models.TransientModel):
     @api.model
     def default_get(self, fields_list):
         """Get source Purchase Requisition from context, and build the three
-        selectable pages: the source PR's own lines, other PRs for the same
-        product(s) waiting on Procurement Manager Approval, and other PRs for
-        the same product(s) in any other (non-final) state."""
+        selectable pages: the source PR's own lines, other PRs for products of
+        the same parent category waiting on Procurement Manager Approval, and
+        other PRs for the same product(s) in any other (non-final) state."""
         res = super().default_get(fields_list)
 
         active_id = self.env.context.get('active_id')
@@ -77,16 +77,23 @@ class VendorSelectionWizard(models.TransientModel):
             'selected': True,
         }) for line in source_lines]
 
-        product_ids = requisition.line_ids.mapped('product_id').ids
-        if product_ids:
+        products = requisition.line_ids.mapped('product_id')
+        if products:
             other_lines = self.env['purchase.requisition.line'].search([
-                ('product_id', 'in', product_ids),
+                ('product_id', 'in', products.ids),
                 ('requisition_id', '!=', requisition.id),
                 ('is_locked', '=', False),
             ])
 
-            procurement_lines = other_lines.filtered(
-                lambda l: l.requisition_id.state == 'procurement_approval')
+            # Any product under the same parent category as one of the source
+            # PR's products (a top-level category stands as its own parent).
+            parent_categories = products.categ_id.mapped(lambda categ: categ.parent_id or categ)
+            procurement_lines = self.env['purchase.requisition.line'].search([
+                ('product_id.categ_id', 'child_of', parent_categories.ids),
+                ('requisition_id', '!=', requisition.id),
+                ('requisition_id.state', '=', 'procurement_approval'),
+                ('is_locked', '=', False),
+            ])
             res['procurement_line_ids'] = [(0, 0, {
                 'requisition_line_id': line.id,
                 'qty_to_order': line.remaining_qty,
@@ -231,6 +238,7 @@ class VendorSelectionWizardLineMixin(models.AbstractModel):
     requisition_id = fields.Many2one(related='requisition_line_id.requisition_id', string='Purchase Request', readonly=True, store=False)
     requisition_state = fields.Selection(related='requisition_line_id.requisition_id.state', string='PR Status', readonly=True, store=False)
     product_id = fields.Many2one(related='requisition_line_id.product_id', string='Product', readonly=True, store=False)
+    product_categ_id = fields.Many2one(related='requisition_line_id.product_id.categ_id', string='Product Category', readonly=True, store=False)
     product_uom_id = fields.Many2one(related='requisition_line_id.product_uom_id', string='UoM', readonly=True, store=False)
     requested_qty = fields.Float(related='requisition_line_id.product_qty', string='Requested Qty', readonly=True, store=False)
     remaining_qty = fields.Float(related='requisition_line_id.remaining_qty', string='Remaining Qty', readonly=True, store=False)

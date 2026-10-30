@@ -45,6 +45,7 @@
                                 <field name="requisition_line_id" column_invisible="1" force_save="1"/>
                                 <field name="requisition_id" readonly="1" force_save="1"/>
                                 <field name="product_id" readonly="1" force_save="1"/>
+                                <field name="product_categ_id" readonly="1"/>
                                 <field name="product_uom_id" readonly="1" force_save="1"/>
                                 <field name="requested_qty" readonly="1"/>
                                 <field name="remaining_qty" readonly="1"/>
