@@ -40,6 +40,14 @@ class AccountPayment(models.Model):
     po_review_required = fields.Boolean(string='Needs Finance Review', readonly=True, copy=False, tracking=True)
     po_review_reason = fields.Text(string='Review Reason', readonly=True, copy=False)
 
+    # The amount entered is tax included: the tax is kept back on the account of the tax and
+    # only the rest leaves the bank. That rest stays the amount of the payment.
+    payment_tax_id = fields.Many2one(
+        'account.tax', string='Tax', check_company=True, domain="[('type_tax_use', '=', 'purchase')]",
+        help='Tax deducted from the tax-included amount.')
+    amount_tax_included = fields.Monetary(string='Amount (Tax Included)')
+    payment_tax_amount = fields.Monetary(string='Tax Amount', compute='_compute_payment_tax_amount', store=True)
+
     @api.depends('journal_id')
     def _compute_currency_id(self):
         # Picking another journal resets a payment to that journal's currency; an
@@ -48,6 +56,88 @@ class AccountPayment(models.Model):
         for payment in advances:
             payment.currency_id = payment.currency_id
         super(AccountPayment, self - advances)._compute_currency_id()
+
+    # ------------------------------------------------------------------
+    # Tax deducted from the payment
+    # ------------------------------------------------------------------
+    @api.depends('payment_tax_id', 'amount_tax_included', 'currency_id')
+    def _compute_payment_tax_amount(self):
+        for payment in self:
+            payment.payment_tax_amount = sum(abs(tax['amount']) for tax in payment._get_payment_tax_values())
+
+    @api.onchange('payment_tax_id', 'amount_tax_included')
+    def _onchange_payment_tax(self):
+        if self.payment_tax_id:
+            if not self.amount_tax_included:
+                # The amount typed before the tax was chosen is the tax-included one.
+                self.amount_tax_included = self.amount
+            self.amount = self.amount_tax_included - self.payment_tax_amount
+        elif self.amount_tax_included:
+            # Tax removed: the whole amount is paid again.
+            self.amount = self.amount_tax_included
+            self.amount_tax_included = 0.0
+
+    def _get_payment_tax_values(self):
+        """The taxes of ``payment_tax_id`` on the tax-included amount, as ``compute_all`` gives them."""
+        self.ensure_one()
+        if not self.payment_tax_id or not self.currency_id:
+            return []
+        taxes = self.payment_tax_id.compute_all(
+            self.amount_tax_included, currency=self.currency_id, partner=self.partner_id)['taxes']
+        for tax in taxes:
+            tax['amount'] = self.currency_id.round(tax['amount'])
+        return [tax for tax in taxes if not self.currency_id.is_zero(tax['amount'])]
+
+    def _prepare_payment_tax_line_vals(self):
+        """Journal items of the deducted tax, on the side of the bank line: the vendor is
+        debited with the tax-included amount, the bank and the tax are credited."""
+        self.ensure_one()
+        sign = -1 if self.payment_type == 'outbound' else 1
+        line_vals = []
+        for tax in self._get_payment_tax_values():
+            account = self.env['account.tax.repartition.line'].browse(tax['tax_repartition_line_id']).account_id
+            if not account:
+                raise UserError(_('Set an account on the tax %s before using it on a payment.', tax['name']))
+            if account.account_type in ('asset_receivable', 'liability_payable'):
+                raise UserError(_(
+                    'The account %(account)s of the tax %(tax)s is a receivable/payable account and cannot '
+                    'take the tax deducted on a payment.', account=account.display_name, tax=tax['name']))
+            amount_currency = sign * abs(tax['amount'])
+            line_vals.append({
+                'name': tax['name'],
+                'account_id': account.id,
+                'partner_id': self.partner_id.id,
+                'currency_id': self.currency_id.id,
+                'amount_currency': amount_currency,
+                'balance': self.currency_id._convert(
+                    amount_currency, self.company_id.currency_id, self.company_id, self.date),
+                'is_payment_tax_line': True,
+            })
+        return line_vals
+
+    def _prepare_move_line_default_vals(self, write_off_line_vals=None, force_balance=None):
+        self.ensure_one()
+        tax_lines = self.move_id.line_ids.filtered('is_payment_tax_line')
+        if tax_lines and write_off_line_vals:
+            # Entry synced again: its tax lines came in as the write-off. Only a real
+            # write-off is kept, the tax lines are built again from the tax below.
+            other_lines = self._seek_for_lines()[2] - tax_lines
+            write_off_line_vals = [{
+                'name': other_lines[0].name,
+                'account_id': other_lines[0].account_id.id,
+                'partner_id': other_lines[0].partner_id.id,
+                'currency_id': other_lines[0].currency_id.id,
+                'amount_currency': sum(other_lines.mapped('amount_currency')),
+                'balance': sum(other_lines.mapped('balance')),
+            }] if other_lines else []
+        if self.payment_tax_id:
+            write_off_line_vals = list(write_off_line_vals or []) + self._prepare_payment_tax_line_vals()
+        return super()._prepare_move_line_default_vals(
+            write_off_line_vals=write_off_line_vals, force_balance=force_balance)
+
+    @api.model
+    def _get_trigger_fields_to_synchronize(self):
+        return super()._get_trigger_fields_to_synchronize() + ('payment_tax_id', 'amount_tax_included')
 
     # ------------------------------------------------------------------
     # Payment controls
@@ -154,3 +244,9 @@ class AccountPayment(models.Model):
                     payment=payment._get_html_link(), order=order._get_html_link(),
                     amount=format_amount(self.env, deducted, bill.currency_id),
                     residual=format_amount(self.env, bill.amount_residual, bill.currency_id)))
+
+
+class AccountMoveLine(models.Model):
+    _inherit = 'account.move.line'
+
+    is_payment_tax_line = fields.Boolean(readonly=True, help='Tax deducted on a payment.')

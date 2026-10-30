@@ -33,7 +33,25 @@
                 <attribute name="readonly">state != 'draft' or purchase_order_id</attribute>
             </xpath>
             <xpath expr="//div[@name='amount_div']/field[@name='amount']" position="attributes">
-                <attribute name="readonly">move_id.state == 'posted'</attribute>
+                <attribute name="readonly">move_id.state == 'posted' or payment_tax_id</attribute>
+                <attribute name="force_save">1</attribute>
+            </xpath>
+
+            <!-- With a tax, the tax-included amount is entered and the amount is what is left after the tax -->
+            <xpath expr="//label[@for='amount']" position="attributes">
+                <attribute name="invisible">payment_tax_id</attribute>
+            </xpath>
+            <xpath expr="//label[@for='amount']" position="before">
+                <field name="amount_tax_included"
+                       invisible="not payment_tax_id" required="payment_tax_id"
+                       readonly="move_id.state == 'posted'"/>
+                <label for="amount" string="Net Amount" invisible="not payment_tax_id"/>
+            </xpath>
+            <xpath expr="//div[@name='amount_div']" position="after">
+                <field name="payment_tax_id" options="{'no_create': True}"
+                       invisible="partner_type != 'supplier' or is_internal_transfer"
+                       readonly="move_id.state == 'posted'"/>
+                <field name="payment_tax_amount" invisible="not payment_tax_id"/>
             </xpath>
             <xpath expr="//sheet" position="inside">
                 <field name="move_id" invisible="1"/>
