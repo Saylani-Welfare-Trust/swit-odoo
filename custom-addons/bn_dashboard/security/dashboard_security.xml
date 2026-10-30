@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- 1. Create a Category (This creates the Header/Title for the section) -->
+    <record id="module_category_bn_dashboard" model="ir.module.category">
+        <field name="name">Dashboard</field>
+        <field name="description">Access to the Dashboards</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <!-- 2. Create the Group and assign it to the Category -->
     <record id="group_bn_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / User</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
-        <!-- Note: The 'category_id' is optional, it just groups it under a nice heading in the user settings -->
+        <field name="name">Dashboard User</field>
+        <!-- This connects the group to the category above -->
+        <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 </odoo>
