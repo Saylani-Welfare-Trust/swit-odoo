@@ -1,5 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_donation_box_dashboard,access.donation.box.dashboard,model_donation_box_dashboard,base.group_user,1,0,0,0
-
-access_bn_dashboard_setting_user,bn.dashboard.setting.user,model_bn_dashboard_setting,group_bn_dashboard_user,1,1,1,0
-access_bn_dashboard_setting_manager,bn.dashboard.setting.manager,model_bn_dashboard_setting,base.group_system,1,1,1,1
