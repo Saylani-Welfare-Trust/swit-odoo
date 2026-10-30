@@ -42,6 +42,7 @@ class RecordSearch(models.TransientModel):
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
 
     is_welfare = fields.Boolean('Is Welfare')
+    is_medical = fields.Boolean('Is Medical')
     is_microfinance = fields.Boolean('Is Microfinance')
     category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
 
@@ -90,6 +91,9 @@ class RecordSearch(models.TransientModel):
                 'default_category': self.category,
                 # carried on to the profile popup, see action_change_request
                 'from_record_search': True,
+                'is_welfare': self.is_welfare,
+                'is_microfinance': self.is_microfinance,
+                
             },
             'target': 'new',
         }

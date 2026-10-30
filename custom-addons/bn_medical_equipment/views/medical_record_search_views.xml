@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 1. Action to open Record Search with Medical Context -->
+    <record id="record_search_medical_action" model="ir.actions.act_window">
+        <field name="name">Record Search</field>
+        <field name="res_model">record.search</field>
+        <field name="view_mode">form</field>
+        <field name="context">{
+            'default_registration_type': 'donee',
+            'default_donee_registration_type': 'medical',
+            'default_is_medical': True,
+        }</field>
+        <field name="target">new</field>
+    </record>
+
+    <!-- 2. Add the Menu Item under your Medical Equipment root menu -->
+    <menuitem id="record_search_medical_menu"
+              name="Record Search"
+              action="record_search_medical_action"
+              parent="medical_equipment_menu"
+              sequence="0"/>
+</odoo>
