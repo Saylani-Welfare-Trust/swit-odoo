@@ -6,7 +6,7 @@
     </record>
 
     <menuitem id="menu_donation_dashboard"
-              name="Donation Dashboard"
+              name="Donation In Kind  Dashboard"
               parent="menu_dashboard_root"
               action="action_donation_dashboard"
               groups="bn_dashboard.group_bn_dashboard_user"
