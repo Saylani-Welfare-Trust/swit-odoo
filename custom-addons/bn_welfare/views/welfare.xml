@@ -91,6 +91,7 @@
                             <field name="donee_id" 
                                 domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('state', '=', 'register'),
                                 ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]"
+                                options="{'no_create': True}"
                                 readonly="state in ['recurring', 'disbursed']" required="1" />
                             <field name="previous_disbursement_id" invisible="1" />
                             <field name="previous_welfare_source_id" invisible="1"/>
