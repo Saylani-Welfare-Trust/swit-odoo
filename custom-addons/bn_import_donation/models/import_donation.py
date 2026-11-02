@@ -227,7 +227,7 @@ class ImportDonation(models.Model):
                     partner = Partner.search([('email', '=', line.email)], limit=1)
                 if not partner and line.donor_student_name:
                     partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
-                if not partner:
+                if not partner and line.mobile:
                     partner = Partner.create({
                         'name': line.donor_student_name or f"Undefined {line.mobile}",
                         'mobile': line.mobile,
@@ -238,6 +238,9 @@ class ImportDonation(models.Model):
                             cats['individual'],
                         ])],
                     })
+                if not line.mobile:
+                    partner = Partner.search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
+                    
                 partner_cache[partner_key] = partner
 
             donation_vals.append({
@@ -291,7 +294,7 @@ class ImportDonation(models.Model):
                 if not partner and line.donor_student_name:
                     partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
 
-                if not partner:
+                if not partner and line.mobile:
                     vals = {
                         'name': line.donor_student_name or f"Undefined {line.mobile}",
                         'mobile': line.mobile,
@@ -305,6 +308,8 @@ class ImportDonation(models.Model):
                     ])]
 
                     partner = Partner.create(vals)
+                if not line.mobile:
+                    partner = Partner.search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
 
                 partner_cache[key] = partner
 
