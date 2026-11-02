@@ -30,8 +30,6 @@
                                 <field name="cnic_expiration_date"/>
                             </group>
                             <group>
-                                <field name="institution_category"/>
-                                <field name="subcategory"/>
                                 <field name="loan_request_amount"/>
                                 <field name="loan_tenure_expected"/>
                                 <field name="security_offered"/>
@@ -151,10 +149,6 @@
                         <!-- Recurring Welfare Lines Section -->
                         <separator string="Recurring Welfare Lines" class="text-uppercase"/>
                         <field name="recurring_lines_html" nolabel="1" widget="html"/>
-                        
-                        <!-- Committee Members Section -->
-                        <separator string="Committee Members" class="text-uppercase"/>
-                        <field name="committee_members_html" nolabel="1" widget="html"/>
 
                         
                         <!-- Attachments Section -->

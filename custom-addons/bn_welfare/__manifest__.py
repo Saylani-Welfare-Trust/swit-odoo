@@ -1,6 +1,6 @@
 {
     'name': 'Welfare',
-    'version': '1.1',
+    'version': '1.2',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -17,14 +17,12 @@
         
         'data/sequence.xml',
         'data/hr_employee_category.xml',
-        'data/server_action_fetch_welfare.xml',
         'data/ir_cron_auto_deliver.xml',
         'data/disbursement_category.xml',
         
         'reports/report_welfare_collection_document.xml',
         
         'views/welfare.xml',
-        'views/welfare_institution_fetch_log.xml',
         'views/product_product.xml',
         'views/product_template.xml',
         'views/record_search.xml',

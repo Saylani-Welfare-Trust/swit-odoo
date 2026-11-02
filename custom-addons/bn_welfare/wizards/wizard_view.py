@@ -112,14 +112,9 @@ class WelfareFieldsWizard(models.TransientModel):
     # Family Detail
     dependent_person = fields.Integer('No. of Dependents')
     household_member = fields.Integer('Household members')
-    
-    # Institution Details
-    institution_category = fields.Selection([
-        ('masjid', 'Masjid'),
-        ('madrasa', 'Madrasa'),
-    ], string='Institution Category')
-    subcategory = fields.Char(string='Subcategory')
-    
+
+    # Institution Details: see bn_sadqa_e_jariya
+
     currency_id = fields.Many2one('res.currency', 'Currency')
     
     # Binary Fields (Attachments)
@@ -143,7 +138,6 @@ class WelfareFieldsWizard(models.TransientModel):
     family_lines_html = fields.Html(string='Family Details', readonly=True)
     guarantor_lines_html = fields.Html(string='Guarantor Information', readonly=True)
     recurring_lines_html = fields.Html(string='Recurring Welfare Lines', readonly=True)
-    committee_members_html = fields.Html(string='Committee Members', readonly=True)
 
     
     @api.model
@@ -158,7 +152,7 @@ class WelfareFieldsWizard(models.TransientModel):
             for field_name in fields_list:
                 if field_name not in ['welfare_id', 'welfare_lines_html', 'education_lines_html', 
                                        'family_lines_html', 'guarantor_lines_html', 'recurring_lines_html',
-                                       'committee_members_html', 'document_image_ids']:
+                                       'document_image_ids']:
                     if hasattr(welfare, field_name):
                         res[field_name] = getattr(welfare, field_name)
             
@@ -268,26 +262,9 @@ class WelfareFieldsWizard(models.TransientModel):
                 res['recurring_lines_html'] = html
             else:
                 res['recurring_lines_html'] = '<p>No recurring lines</p>'
-            
-            # Committee Members
-            if welfare.committee_member_ids:
-                html = '<table class="table" style="width:100%; border-collapse: collapse;">'
-                html += '<thead><tr style="background-color: #f0f0f0;">'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Member</th>'
-                html += '<th style="border: 1px solid #ddd; padding: 8px;">Role</th>'
-                html += '</tr></thead><tbody>'
-                for member in welfare.committee_member_ids:
-                    html += '<tr>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;">{member.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += '</tr>'
-                html += '</tbody></table>'
-                res['committee_members_html'] = html
-            else:
-                res['committee_members_html'] = '<p>No committee members</p>'
-            
-            
-        
+
+
+
         return res
     
     def action_approve(self):
@@ -308,7 +285,7 @@ class WelfareFieldsWizard(models.TransientModel):
             'aid_from_other_organization', 'have_applied_swit', 'details_1', 'details_2',
             'driving_license', 'loan_request_amount', 'loan_tenure_expected',
             'security_offered', 'dependent_person', 'household_member',
-            'institution_category', 'subcategory', 'currency_id', 'order_type', 'is_individual',
+            'currency_id', 'order_type', 'is_individual',
             'portal_application_id', 'portal_donee_id', 'last_sync_date', 'is_synced',
             'portal_sync_status', 'portal_last_sync_message', 'portal_review_notes', 'inquiry_media',
             'application_form', 'application_form_name', 'frc', 'frc_name',
@@ -367,7 +344,7 @@ class WelfareFieldsWizard(models.TransientModel):
             'aid_from_other_organization', 'have_applied_swit', 'details_1', 'details_2',
             'driving_license', 'loan_request_amount', 'loan_tenure_expected',
             'security_offered', 'dependent_person', 'household_member',
-            'institution_category', 'subcategory', 'currency_id', 'order_type', 'is_individual',
+            'currency_id', 'order_type', 'is_individual',
             'portal_application_id', 'portal_donee_id', 'last_sync_date', 'is_synced',
             'portal_sync_status', 'portal_last_sync_message', 'portal_review_notes', 'inquiry_media',
             'application_form', 'application_form_name', 'frc', 'frc_name',
