@@ -10,6 +10,7 @@
                 <group>
                     <group name="sadqa_e_jariya_portal" string="Sadqa e Jariya Portal">
                         <field name="institution_portal_login_url" />
+                        <field name="institution_portal_email_domain" placeholder="e.g. saylani.org" />
                         <field name="create_institution_account_endpoint" />
                         <field name="institution_application_status_endpoint" />
                         <field name="assign_institution_inquiry_endpoint" />
@@ -19,7 +20,7 @@
                         <field name="institution_login_whatsapp_namespace" />
                         <field name="institution_login_whatsapp_language" />
                         <div colspan="2" class="text-muted">
-                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} email, {{4}} password.
+                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} login email, {{4}} password.
                         </div>
                     </group>
                 </group>

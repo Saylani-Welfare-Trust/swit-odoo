@@ -26,11 +26,13 @@ class ResCompany(models.Model):
     # Institution portal: Send Form / Check Portal Status / Send for Inquiry
     # (endpoints are appended to welfare_instituiton_url)
     institution_portal_login_url = portal_setting('institution_portal_login_url', 'Institution Portal Login URL')
+    # Donee logins are <donee name>.<form number>@<this domain>
+    institution_portal_email_domain = portal_setting('institution_portal_email_domain', 'Portal Login Email Domain')
     create_institution_account_endpoint = portal_setting('create_institution_account_endpoint', 'Create Institution Account Endpoint')
     institution_application_status_endpoint = portal_setting('institution_application_status_endpoint', 'Institution Application Status Endpoint')
     assign_institution_inquiry_endpoint = portal_setting('assign_institution_inquiry_endpoint', 'Assign Institution Inquiry Officer Endpoint')
 
-    # Approved WhatsApp template, body: {{1}} donee name, {{2}} portal link, {{3}} email, {{4}} password
+    # Approved WhatsApp template, body: {{1}} donee name, {{2}} portal link, {{3}} login email, {{4}} password
     institution_login_whatsapp_template = portal_setting('institution_login_whatsapp_template', 'Portal Login WhatsApp Template')
     institution_login_whatsapp_namespace = portal_setting('institution_login_whatsapp_namespace', 'Portal Login WhatsApp Namespace')
     institution_login_whatsapp_language = portal_setting('institution_login_whatsapp_language', 'Portal Login WhatsApp Language', default='en')

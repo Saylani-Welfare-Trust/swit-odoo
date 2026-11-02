@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 import secrets
 import string
 
@@ -51,28 +52,37 @@ class Welfare(models.Model):
         alphabet = string.ascii_letters + string.digits
         return ''.join(secrets.choice(alphabet) for _ in range(10))
 
+    def _portal_login_email(self, domain):
+        """Login made from the donee name and form number, e.g. masjidnoor.ins-2026-0001@<domain>"""
+        self.ensure_one()
+        name = re.sub(r'[^a-z0-9]', '', (self.donee_id.name or '').lower())[:30] or 'donee'
+        number = re.sub(r'[^a-z0-9]+', '-', (self.name or str(self.id)).lower()).strip('-')
+        return f"{name}.{number}@{domain}"
+
     def action_send_institution_form(self):
-        """Create the donee's institution portal login and send it on WhatsApp"""
+        """Create the donee's institution portal login (random password) and send it on WhatsApp"""
         company = self.env.company
         if not company.institution_login_whatsapp_template or not company.institution_login_whatsapp_namespace:
             raise UserError(_("Set the Portal Login WhatsApp Template and Namespace in the Company settings first."))
+        domain = (company.institution_portal_email_domain or '').strip().lstrip('@')
+        if not domain:
+            raise UserError(_("Set the Portal Login Email Domain in the Company settings first."))
 
         for rec in self:
             if rec.is_individual or rec.state != 'completed':
                 raise UserError(_("[%s] Only completed institution disbursements can be sent the form.") % rec.display_name)
             donee = rec.donee_id
-            if not donee.email:
-                raise UserError(_("[%s] Donee %s has no email, the portal login needs one.") % (rec.display_name, donee.name))
             if not donee.mobile:
                 raise UserError(_("[%s] Donee %s has no WhatsApp / mobile number.") % (rec.display_name, donee.name))
 
+            login = rec._portal_login_email(domain)
             password = rec._generate_portal_password()
             # Creates the account, or resets its password when the form is sent again
             rec._make_institution_api_call(company.create_institution_account_endpoint, {
                 "odooId": rec.id,
                 "doneeOdooId": donee.id,
                 "name": donee.name,
-                "email": donee.email,
+                "email": login,
                 "password": password,
                 "cnic": donee.cnic_no.replace("-", "") if donee.cnic_no else "",
                 "whatsapp": donee.mobile,
@@ -82,14 +92,14 @@ class Welfare(models.Model):
                     donee.mobile,
                     company.institution_login_whatsapp_template,
                     company.institution_login_whatsapp_namespace,
-                    [donee.name, company.institution_portal_login_url, donee.email, password],
+                    [donee.name, company.institution_portal_login_url, login, password],
                     language=company.institution_login_whatsapp_language,
                 )
             except Exception as e:
                 raise UserError(_("[%s] Portal login created but WhatsApp failed, send the form again: %s") % (rec.display_name, e))
 
             rec.state = 'form_sent'
-            rec.message_post(body=_("📨 Portal login (%s) sent on WhatsApp to %s.") % (donee.email, donee.mobile))
+            rec.message_post(body=_("📨 Portal login %s sent on WhatsApp to %s.") % (login, donee.mobile))
 
         return self._show_notification(_('Send Form'), _('Portal login sent to the donee on WhatsApp.'), 'success')
 
