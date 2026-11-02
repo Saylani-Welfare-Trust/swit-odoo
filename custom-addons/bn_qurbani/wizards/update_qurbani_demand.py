@@ -13,8 +13,6 @@ class UpdateQurbaniDemand(models.TransientModel):
 
     def update_demand(self):
         for wizard in self:
-            if not wizard.slaughter_slot_demand_id:
-                raise ValidationError('Open this from a Slaughter Slot Demand.')
             wizard.slaughter_slot_demand_id.demand = wizard.demand
 
             wizard.slaughter_slot_demand_id._update_demand()
