@@ -51,8 +51,35 @@ class DonationBoxDashboard(models.TransientModel):
             reg_domain.append(('installation_date', '<=', date_to))
             comp_domain.append(('date', '<=', date_to))
             
-        reg_domain.extend([d for d in base_col_domain if 'city_id' in d[0] or 'zone_id' in d[0]])
-        comp_domain.extend([d for d in base_col_domain if 'city_id' in d[0] or 'zone_id' in d[0]])
+        # --- Registration domain (direct fields) ---
+        reg_location_domain = []
+        if province_id:
+            reg_location_domain.append(('city_id.parent_id', '=', int(province_id)))
+        if city_id:
+            reg_location_domain.append(('city_id', '=', int(city_id)))
+        if zone_id:
+            reg_location_domain.append(('zone_id', '=', int(zone_id)))
+        if bunch_id:
+            reg_location_domain.append(('key_bunch_id', '=', int(bunch_id)))
+
+        # --- Collection domain (through registration) ---
+        col_location_domain = []
+        if province_id:
+            col_location_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
+        if city_id:
+            col_location_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
+        if zone_id:
+            col_location_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
+        if bunch_id:
+            col_location_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
+
+        # --- Complaint domain (through registration) ---
+        comp_location_domain = list(col_location_domain)
+
+        # Apply
+        reg_domain.extend(reg_location_domain)
+        comp_domain.extend(comp_location_domain)
+        col_domain.extend(col_location_domain)
             
         col_domain = list(base_col_domain)
         if date_from: col_domain.append(('date', '>=', date_from))

@@ -273,12 +273,58 @@ export class TreasuryDashboard extends Component {
         });
     }
 
-    openCustomModel(modelName) {
+    // ------------------------------------------------------------------
+    // Build the domain that mirrors the dashboard's current filters
+    // ------------------------------------------------------------------
+    getFilterDomain(model) {
+        const domain = [];
+        const bid = this.state.branch_id   ? parseInt(this.state.branch_id, 10)   : null;
+        const pid = this.state.province_id ? parseInt(this.state.province_id, 10) : null;
+        const cid = this.state.city_id     ? parseInt(this.state.city_id, 10)     : null;
+        const zid = this.state.zone_id     ? parseInt(this.state.zone_id, 10)     : null;
+
+        // Effective segment (deepest non-empty level)
+        let seg_id = null;
+        if (this.state.segment_l4)      seg_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) seg_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) seg_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) seg_id = parseInt(this.state.segment_l1, 10);
+
+        // Analytic account filter (mirrors backend _get_custom_model_stats)
+        if (bid) {
+            domain.push(['analytic_account_id', '=', bid]);
+        } else if (pid) {
+            domain.push(['analytic_account_id', 'child_of', pid]);
+        } else if (cid) {
+            domain.push(['analytic_account_id', 'child_of', cid]);
+        } else if (zid) {
+            domain.push(['analytic_account_id', 'child_of', zid]);
+        } else if (seg_id) {
+            domain.push(['analytic_account_id', 'child_of', seg_id]);
+        }
+
+        // Date filter — all three treasury models expose a `date` field
+        if (this.state.date_from) domain.push(['date', '>=', this.state.date_from]);
+        if (this.state.date_to)   domain.push(['date', '<=', this.state.date_to]);
+
+        // Amount filter
+        if (this.state.amount_min) domain.push(['amount', '>=', parseFloat(this.state.amount_min)]);
+        if (this.state.amount_max) domain.push(['amount', '<=', parseFloat(this.state.amount_max)]);
+
+        return domain;
+    }
+
+    // ------------------------------------------------------------------
+    // Open a list view with the dashboard filters automatically applied
+    // ------------------------------------------------------------------
+    openCustomModel(modelName, extraDomain = []) {
+        const fullDomain = [...extraDomain, ...this.getFilterDomain(modelName)];
         this.actionService.doAction({
             type: 'ir.actions.act_window',
             res_model: modelName,
             views: [[false, 'list'], [false, 'form']],
-            target: 'current'
+            domain: fullDomain,
+            target: 'current',
         });
     }
 
