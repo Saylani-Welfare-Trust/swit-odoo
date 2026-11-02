@@ -1096,53 +1096,31 @@ class MedicalEquipment(models.Model):
         self.write({'state': 'refund_ceo_approval'})
 
     def action_refund_approve(self):
-        """Handle refund approval based on case type.
-        - 100% case: single CEO approval → Refund
-        - 50% / Below 50% / 0% (Reference): CEO → CFO → Refund
-        """
+        """Handle refund approval. Only one approval is required now."""
         self.ensure_one()
+
+        if self.state != 'refund_ceo_approval':
+            raise ValidationError('This record is not in a refund approval state.')
 
         case_type = self.case_type
         is_zero_percent = self.medical_equipment_reference_id and self.actual_deposit_percentage == 0.0
-        requires_two_approvals = case_type in ['50_percent', 'below_50_percent'] or is_zero_percent
-        requires_remarks_ceo = case_type in ['50_percent', 'below_50_percent'] or is_zero_percent
-        requires_remarks_cfo = case_type in ['50_percent', 'below_50_percent'] or is_zero_percent
+        
+        # Determine if remarks are required (keeping the same logic as before for the first approval)
+        requires_remarks = case_type in ['50_percent', 'below_50_percent'] or is_zero_percent
 
-        # --- First approval (CEO) ---
-        if self.state == 'refund_ceo_approval':
-            if requires_remarks_ceo and not self.refund_remarks_approval1:
-                raise ValidationError('Refund Approval (1) remarks are required for this case type.')
+        if requires_remarks and not self.refund_remarks_approval1:
+            raise ValidationError('Refund Approval remarks are required for this case type.')
 
-            self.write({
-                'refund_approved_by_1': self.env.user.id,
-                'refund_approved_date_1': fields.Datetime.now(),
-                'refund_approval_count': self.refund_approval_count + 1,
-            })
-
-            if requires_two_approvals:
-                self.write({'state': 'refund_cfo_approval'})
-            else:
-                # 100% case - single approval completes the refund
-                self.write({
-                    'state': 'refund',
-                    'refund_approved_by_2': self.env.user.id,
-                    'refund_approved_date_2': fields.Datetime.now(),
-                })
-
-        # --- Second approval (CFO) ---
-        elif self.state == 'refund_cfo_approval':
-            if requires_remarks_cfo and not self.refund_remarks_approval2:
-                raise ValidationError('Refund Approval (2) remarks are required for this case type.')
-
-            self.write({
-                'state': 'refund',
-                'refund_approved_by_2': self.env.user.id,
-                'refund_approved_date_2': fields.Datetime.now(),
-                'refund_approval_count': self.refund_approval_count + 1,
-            })
-
-        else:
-            raise ValidationError('This record is not in a refund approval state.')
+        # Single approval: Move directly to 'refund' state
+        self.write({
+            'state': 'refund',
+            'refund_approved_by_1': self.env.user.id,
+            'refund_approved_date_1': fields.Datetime.now(),
+            'refund_approval_count': self.refund_approval_count + 1,
+            # Optional: Fill the second approval fields with the same user for record keeping
+            'refund_approved_by_2': self.env.user.id,
+            'refund_approved_date_2': fields.Datetime.now(),
+        })
 
         return True
     

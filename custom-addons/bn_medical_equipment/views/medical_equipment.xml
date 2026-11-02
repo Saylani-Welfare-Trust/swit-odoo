@@ -46,13 +46,9 @@
                             groups="bn_medical_equipment.medical_equipment_ceo_approval_group"
                             invisible="state != 'refund_ceo_approval' or state == 'closed'" />
 
-                    <!-- Refund Approval (2) - CFO -->
-                    <button string="Refund Approval (2)" name="action_refund_approve" type="object" class="oe_highlight"
-                            groups="bn_medical_equipment.medical_equipment_cfo_approval_group"
-                            invisible="state != 'refund_cfo_approval' or state == 'closed'" />
                     <button string="Donate" name="action_donate" type="object" invisible="state != 'return' or state == 'closed'" />
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, refund_ceo_approval, refund_cfo_approval, refund, payment_return, send_for_inquiry, inquiry" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft, ceo_approval, cfo_approval, approved, sd_received, validate, return, refund_ceo_approval, refund, payment_return, send_for_inquiry, inquiry" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -134,18 +130,15 @@
                         </group>
                         <!-- ======= REFUND APPROVAL SECTION ======= -->
                         <group string="Refund Approval" 
-                            invisible="state not in ['return', 'refund_ceo_approval', 'refund_cfo_approval', 'refund']">
+                            invisible="state not in ['return', 'refund_ceo_approval', 'refund']">
+                            
                             <field name="refund_remarks_approval1"
-                                required="state == 'refund_ceo_approval' and case_type in ['50_percent', 'below_50_percent']"
+                                required="state == 'refund_ceo_approval' and (case_type in ['50_percent', 'below_50_percent'] or medical_equipment_reference_id != False)"
                                 readonly="state != 'refund_ceo_approval'" />
+                            
                             <field name="refund_approved_by_1" readonly="1" />
                             <field name="refund_approved_date_1" readonly="1" />
 
-                            <field name="refund_remarks_approval2"
-                                required="state == 'refund_cfo_approval' and case_type in ['50_percent', 'below_50_percent']"
-                                readonly="state != 'refund_cfo_approval'" />
-                            <field name="refund_approved_by_2" readonly="1" />
-                            <field name="refund_approved_date_2" readonly="1" />
                         </group>
                     </group>
 
