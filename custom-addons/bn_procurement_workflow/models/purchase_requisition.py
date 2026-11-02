@@ -162,6 +162,7 @@ class PurchaseRequisition(models.Model):
         #         _('This Purchase Requisition has no source Material Request, so there is no '
         #           'requesting department to run Technical Evaluation against. It cannot enter '
         #           'the Procurement workflow.'))
+        
         # The request gets its number here, so that the RFQs sent out next carry it.
         self._assign_reference_number()
         self.write({
