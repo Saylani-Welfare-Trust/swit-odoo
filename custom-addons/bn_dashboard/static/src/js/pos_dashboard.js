@@ -472,25 +472,93 @@ export class PosDashboard extends Component {
             .then(action => { this.actionService.doAction(action); });
     }
 
+    // ------------------------------------------------------------------
+    // Build the domain that mirrors the dashboard's current filters
+    // ------------------------------------------------------------------
+    getFilterDomain(model) {
+        const domain = [];
+        if (this.state.config_id) domain.push(['config_id', '=', parseInt(this.state.config_id, 10)]);
+
+        const isSession = model === 'pos.session';
+        const dateField = isSession ? 'start_at' : 'date_order';
+
+        // Date filter
+        if (this.state.date_from) domain.push([dateField, '>=', this.state.date_from + ' 00:00:00']);
+        if (this.state.date_to)   domain.push([dateField, '<=', this.state.date_to + ' 23:59:59']);
+
+        // Amount and Category filters (only apply to pos.order)
+        if (!isSession) {
+            if (this.state.category_id) {
+                domain.push(['lines.product_id.categ_id', 'child_of', parseInt(this.state.category_id, 10)]);
+            }
+            if (this.state.amount_min) {
+                domain.push(['amount_total', '>=', parseFloat(this.state.amount_min)]);
+            }
+            if (this.state.amount_max) {
+                domain.push(['amount_total', '<=', parseFloat(this.state.amount_max)]);
+            }
+        }
+
+        // Analytic filters (Province, City, Zone, Segment)
+        let seg_id = null;
+        if (this.state.segment_l4) seg_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) seg_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) seg_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) seg_id = parseInt(this.state.segment_l1, 10);
+
+        let active_analytic_ids = [];
+        if (this.state.province_id) active_analytic_ids.push(parseInt(this.state.province_id, 10));
+        if (this.state.city_id) active_analytic_ids.push(parseInt(this.state.city_id, 10));
+        if (this.state.zone_id) active_analytic_ids.push(parseInt(this.state.zone_id, 10));
+        if (seg_id) active_analytic_ids.push(seg_id);
+
+        if (active_analytic_ids.length > 0) {
+            let or_domains = [];
+            for (let id of active_analytic_ids) {
+                // Build the OR domains to match the backend's _get_order_domain logic
+                or_domains.push(['config_id.analytic_account_id', 'child_of', id]);
+                if (!isSession) {
+                    or_domains.push(['session_id.analytic_account_id', 'child_of', id]);
+                    or_domains.push(['analytic_account_id', 'child_of', id]);
+                }
+                or_domains.push(['user_id.employee_id.analytic_account_id', 'child_of', id]);
+            }
+            let op_count = or_domains.length - 1;
+            if (op_count > 0) {
+                let ops = new Array(op_count).fill('|');
+                domain.push(...ops, ...or_domains);
+            } else {
+                domain.push(...or_domains);
+            }
+        }
+        return domain;
+    }
+
     // ---------------- tile click actions ----------------
     pos_order_today(e) {
         const date = new Date();
         const yesterday = new Date(date.getTime());
         yesterday.setDate(date.getDate() - 1);
         e.stopPropagation(); e.preventDefault();
+        
+        // Add filter domain so list view matches the KPI count
+        const filterDomain = this.getFilterDomain('pos.order');
         this.actionService.doAction({
             name: _t("Today Order"), type: 'ir.actions.act_window', res_model: 'pos.order',
             views: [[false, 'list'], [false, 'form']],
-            domain: [['date_order', '<=', date], ['date_order', '>=', yesterday]], target: 'current',
+            domain: [['date_order', '<=', date], ['date_order', '>=', yesterday], ...filterDomain], 
+            target: 'current',
         });
     }
 
     pos_refund_orders(e) {
         e.stopPropagation(); e.preventDefault();
+        const filterDomain = this.getFilterDomain('pos.order');
         this.actionService.doAction({
             name: _t("Refund Orders"), type: 'ir.actions.act_window', res_model: 'pos.order',
             views: [[false, 'list'], [false, 'form']],
-            domain: [['amount_total', '<', 0.0]], target: 'current',
+            domain: [['amount_total', '<', 0.0], ...filterDomain], 
+            target: 'current',
         });
     }
 
@@ -499,26 +567,34 @@ export class PosDashboard extends Component {
         const yesterday = new Date(date.getTime());
         yesterday.setDate(date.getDate() - 1);
         e.stopPropagation(); e.preventDefault();
+        const filterDomain = this.getFilterDomain('pos.order');
         this.actionService.doAction({
             name: _t("Refund Orders"), type: 'ir.actions.act_window', res_model: 'pos.order',
             views: [[false, 'list'], [false, 'form']],
-            domain: [['amount_total', '<', 0.0], ['date_order', '<=', date], ['date_order', '>=', yesterday]], target: 'current',
+            domain: [['amount_total', '<', 0.0], ['date_order', '<=', date], ['date_order', '>=', yesterday], ...filterDomain], 
+            target: 'current',
         });
     }
 
     pos_order(e) {
         e.stopPropagation(); e.preventDefault();
+        const filterDomain = this.getFilterDomain('pos.order');
         this.actionService.doAction({
             name: _t("Total Order"), type: 'ir.actions.act_window', res_model: 'pos.order',
-            views: [[false, 'list'], [false, 'form']], target: 'current',
+            views: [[false, 'list'], [false, 'form']],
+            domain: [...filterDomain], 
+            target: 'current',
         });
     }
 
     pos_session(e) {
         e.stopPropagation(); e.preventDefault();
+        const filterDomain = this.getFilterDomain('pos.session');
         this.actionService.doAction({
             name: _t("sessions"), type: 'ir.actions.act_window', res_model: 'pos.session',
-            views: [[false, 'list'], [false, 'form']], target: 'current',
+            views: [[false, 'list'], [false, 'form']],
+            domain: [...filterDomain], 
+            target: 'current',
         });
     }
 }
