@@ -1001,22 +1001,23 @@ class MedicalEquipment(models.Model):
             "id": me.id
         }
     
-    @api.model
+        @api.model
     def get_me_record(self, data):
         """Fetch ME record by name and return product information"""
         # Search for the ME record
-        me = self.sudo().search([('name', '=', data['name']), ('state', '!=', 'paid')], limit=1)
+        me = self.sudo().search([('name', '=', data['name'])], limit=1)
         
         if not me:
             return {
                 "status": "error",
-                "body": f"Donation Home Service record with reference {data['name']} not found."
+                "body": f"Medical Equipment record with reference {data['name']} not found."
             }
         
-        if me.state not in ['gate_pass', 'gate_in']:
+        # Block settlement only if the record is already closed or cancelled
+        if me.state in ['closed', 'cancel', 'refund']:
             return {
                 "status": "error",
-                "body": f"Current status of {data['name']} is in a {me.state.capitalize()}."
+                "body": f"Current status of {data['name']} is in a {me.state.replace('_', ' ').capitalize()}. It cannot be settled."
             }
         
         # Prepare product data for POS
