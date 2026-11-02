@@ -13,12 +13,10 @@
                 <field name="amount_locked" invisible="1"/>
             </xpath>
             <xpath expr="//field[@name='amount']" position="after">
-                <field name="amount_tax_included" 
-                       invisible="not payment_tax_id and not amount_tax_included"/>
+                <field name="amount_tax_included" />
                 <field name="payment_tax_id" 
                        options="{'no_create': True}"/>
-                <field name="payment_tax_amount" 
-                       invisible="not payment_tax_id"/>
+                <field name="payment_tax_amount"/>
             </xpath>
         </field>
     </record>
