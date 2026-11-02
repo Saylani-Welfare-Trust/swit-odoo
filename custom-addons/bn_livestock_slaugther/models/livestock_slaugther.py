@@ -109,6 +109,8 @@ class LivestockSlaughter(models.Model):
             location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
         elif self.is_goat_depart:
             location = self.env['stock.location'].search([('name', '=', 'Goat')], limit=1)
+        elif self.is_chicken_depart:
+            location = self.env['stock.location'].search([('name', '=', 'Chicken')], limit=1)
         else:
             location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
         
