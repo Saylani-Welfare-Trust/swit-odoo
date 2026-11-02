@@ -23,8 +23,8 @@
                             help="Top up: create a PR only for the difference between current demand and what has already been ordered via prior PRs."/>
                 </header>
                 <field name="monthly_planning_id"/>
-                <field name="from_date" optional="hide"/>
-                <field name="to_date" optional="hide"/>
+                <field name="from_date"/>
+                <field name="to_date"/>
                 <field name="tab"/>
                 <field name="date"/>
                 <field name="product_id"/>
