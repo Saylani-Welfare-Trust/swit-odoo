@@ -9,6 +9,7 @@
         'bn_welfare',
         'bn_profile_management',
         'bn_res_company',
+        'bn_sms_whatsapp',
     ],
     'data': [
         'security/group.xml',
@@ -19,6 +20,7 @@
 
         'views/welfare.xml',
         'views/welfare_institution_fetch_log.xml',
+        'views/res_company.xml',
         'views/menu.xml',
 
         'wizards/wizard_view.xml',

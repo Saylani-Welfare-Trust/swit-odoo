@@ -68,5 +68,60 @@ class WelfareMasjid(models.Model):
     account_title = fields.Char(string='Account Title')
     account_number = fields.Char(string='Account Number')
     account_type = fields.Char(string='Account Type')
-    
+
     subcategory = fields.Char(string='Subcategory')
+
+    # Masjid Inquiry Form (مساجد انکوائری فارم), fields not covered above
+    date = fields.Date(string='Date')
+    imam_name = fields.Char(string='Imam Name')
+    imam_contact = fields.Char(string='Imam Contact No.')
+    mutawalli_name = fields.Char(string='Mutawalli Name')
+    mutawalli_contact = fields.Char(string='Mutawalli Contact No.')
+    masjid_area = fields.Char(string='Masjid Area')
+    constructed_area = fields.Char(string='Constructed Area')
+    current_support = fields.Char(string='Current Support')
+    dars_schedule = fields.Char(string='Dars Schedule')
+    book_name = fields.Char(string='Book Name')
+    participants_count = fields.Integer(string='Dars Participants')
+    students_nazra = fields.Integer(string='Nazra Students')
+    students_hifz = fields.Integer(string='Hifz Students')
+    students_adults = fields.Integer(string='Adult Students')
+    students_total = fields.Integer(string='Total Students')
+    imam_other_engagements = fields.Text(string="Imam's Other Engagements")
+    other_income_sources = fields.Text(string='Government / Other Income Sources')
+    monthly_masjid_support = fields.Float(string='Monthly Support by Masjid')
+    officer_remarks = fields.Text(string='Inquiry Officer Remarks')
+
+    # Masjid Inquiry Form key sent by the portal -> field
+    _portal_form_fields = {
+        'date': 'date',
+        'masjid_name': 'masjid_name',
+        'address': 'address',
+        'imam_name': 'imam_name',
+        'imam_contact': 'imam_contact',
+        'mutawalli_name': 'mutawalli_name',
+        'mutawalli_contact': 'mutawalli_contact',
+        'account_title': 'account_title',
+        'account_number': 'account_number',
+        'cnic_number': 'account_cnic',
+        'masjid_area': 'masjid_area',
+        'constructed_area': 'constructed_area',
+        'current_support': 'current_support',
+        'worshippers_fajr': 'people_in_jamat_fajr',
+        'worshippers_dhuhr': 'people_in_jamat_zuhr',
+        'worshippers_asr': 'people_in_jamat_asr',
+        'worshippers_maghrib': 'people_in_jamat_maghrib',
+        'worshippers_isha': 'people_in_jamat_isha',
+        'worshippers_jumuah': 'people_in_jamat_jumma',
+        'dars_schedule': 'dars_schedule',
+        'book_name': 'book_name',
+        'participants_count': 'participants_count',
+        'students_nazra': 'students_nazra',
+        'students_hifz': 'students_hifz',
+        'students_adults': 'students_adults',
+        'students_total': 'students_total',
+        'imam_other_engagements': 'imam_other_engagements',
+        'other_income_sources': 'other_income_sources',
+        'monthly_masjid_support': 'monthly_masjid_support',
+        'officer_remarks': 'officer_remarks',
+    }
