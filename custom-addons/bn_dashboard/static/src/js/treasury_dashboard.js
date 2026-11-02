@@ -276,7 +276,7 @@ export class TreasuryDashboard extends Component {
     // ------------------------------------------------------------------
     // Build the domain that mirrors the dashboard's current filters
     // ------------------------------------------------------------------
-        getFilterDomain(model) {
+    getFilterDomain(model) {
         const domain = [];
         const bid = this.state.branch_id   ? parseInt(this.state.branch_id, 10)   : null;
         const pid = this.state.province_id ? parseInt(this.state.province_id, 10) : null;
