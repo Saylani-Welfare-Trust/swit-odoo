@@ -55,6 +55,8 @@ class POSOrder(models.Model):
             return {'is_goat_depart': True}
         if 'cow' in product_markers:
             return {'is_meat_depart': True}
+        if 'chicken' in product_markers:
+            return {'is_chicken_depart': True}
         return {}
 
     def _create_livestock_slaughter_records(self):

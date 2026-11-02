@@ -56,6 +56,7 @@ class LivestockSlaughter(models.Model):
 
     is_meat_depart = fields.Boolean('Is Meat Department')
     is_goat_depart = fields.Boolean('Is Goat Department')
+    is_chicken_depart = fields.Boolean('Is Chicken Department')
     confirm_hide = fields.Boolean('Confirm Hide')
     cutting_hide = fields.Boolean('Cutting Hide')
     transfer_bool = fields.Boolean('Cutting Hide')
@@ -88,6 +89,8 @@ class LivestockSlaughter(models.Model):
         if vals.get('name', _('New') == _('New')):
             if vals.get('is_meat_depart'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('meat_department') or ('New')
+            elif vals.get('is_chicken_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('chicken_department') or ('New')
             elif vals.get('is_goat_depart'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
             else:

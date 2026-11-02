@@ -10,6 +10,7 @@
                     <button string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
                 </header>
                 <field name="is_meat_depart" column_invisible="1" />
+                <field name="is_chicken_depart" column_invisible="1" />
                 <field name="is_goat_depart" column_invisible="1" />
                 <field name="confirm_hide" column_invisible="1" />
                 <field name="cutting_hide" column_invisible="1" />
@@ -42,6 +43,7 @@
         <field name="arch" type="xml">
             <form>
                 <field name="is_meat_depart" invisible="1" />
+                <field name="is_chicken_depart" invisible="1" />
                 <field name="is_goat_depart" invisible="1" />
                 <field name="confirm_hide" invisible="1" />
                 <field name="cutting_hide" invisible="1" />
@@ -159,6 +161,22 @@
         </field>
     </record>
 
+    <record id="chicken_department_action" model="ir.actions.act_window">
+        <field name="name">Chicken Department</field>
+        <field name="res_model">livestock.slaugther</field>
+        <field name="view_mode">tree</field>
+        <!-- <field name="view_mode">tree,form</field> -->
+        <field name="domain">[('is_chicken_depart', '=', True)]</field>
+        <field name="context">{
+            'default_is_chicken_depart': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new chicken department...
+            </p>
+        </field>
+    </record>
+
     <menuitem
         id="livestock_menu"
         name="Livestock"
@@ -184,6 +202,13 @@
         name="Goat Department"
         action="goat_department_action"
         parent="livestock_menu"
-        sequence="5"/>
+        sequence="3"/>
+
+    <menuitem
+        id="chicken_department_menu"
+        name="Chicken Department"
+        action="chicken_department_action"
+        parent="livestock_menu"
+        sequence="4"/>
 
 </odoo>

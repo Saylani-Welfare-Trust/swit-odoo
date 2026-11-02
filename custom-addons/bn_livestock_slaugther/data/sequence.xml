@@ -38,6 +38,13 @@
             <field name="padding">5</field>
         </record>
     
+        <record id="chicken_department_sequence" model="ir.sequence">
+            <field name="name">Chicken Department</field>
+            <field name="code">chicken_department</field>
+            <field name="prefix">CD/%(year)s/</field>
+            <field name="padding">5</field>
+        </record>
+    
     </data>
     
 
