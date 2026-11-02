@@ -113,9 +113,15 @@
                     <!-- Row 3: Buttons -->
                     <div class="row">
                         <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <button class="btn btn-sm btn-outline-secondary" t-on-click="clearFilter">
-                                <i class="fa fa-times me-1"/>Clear Filters
-                            </button>
+                            <div class="d-flex gap-2">
+                                <!-- NEW: Refresh Button -->
+                                <button class="btn btn-sm btn-primary" t-on-click="refresh">
+                                    <i class="fa fa-refresh me-1"/>Refresh
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" t-on-click="clearFilter">
+                                    <i class="fa fa-times me-1"/>Clear Filters
+                                </button>
+                            </div>
                             <div class="d-flex gap-1">
                                 <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('this_month')">This Month</button>
                                 <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickFilter('last_month')">Last Month</button>

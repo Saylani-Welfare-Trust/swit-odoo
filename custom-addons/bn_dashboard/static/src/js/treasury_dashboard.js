@@ -314,6 +314,11 @@ export class TreasuryDashboard extends Component {
         return domain;
     }
 
+    async refresh() {
+        await this.fetchData();
+    }
+
+
     // ------------------------------------------------------------------
     // Open a list view with the dashboard filters automatically applied
     // ------------------------------------------------------------------
