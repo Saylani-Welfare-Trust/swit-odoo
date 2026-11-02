@@ -51,6 +51,24 @@
         </field>
     </record>
 
+    <!-- Cancelling a Purchase Order's receipt asks for the reason first -->
+    <record id="view_picking_form_inherit_receipt_cancel_reason" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.receipt.cancel.reason</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_cancel']" position="attributes">
+                <attribute name="invisible">state not in ('assigned', 'confirmed', 'draft', 'waiting') or (picking_type_code == 'incoming' and purchase_id)</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_cancel']" position="after">
+                <field name="purchase_id" invisible="1"/>
+                <button name="action_open_receipt_cancel_reason" type="object" string="Cancel"
+                        groups="base.group_user"
+                        invisible="state not in ('assigned', 'confirmed', 'draft', 'waiting') or not (picking_type_code == 'incoming' and purchase_id)"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Add Receive by Weight button to stock picking form -->
     <record id="stock_view_picking_form_inherit_bn_inventory_customization" model="ir.ui.view">
         <field name="name">stock.view.picking.form.inherit.bn.inventory.customization</field>
