@@ -19,6 +19,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.popup = useService("popup");
         this.report = useService("report");    this.fetchCaseNumber();
         this.notification = useService("notification");
+        // Own the numpad buffer while open, so stray keystrokes can't edit the order line underneath
+        useService("number_buffer").use();
         this.fetchCaseNumber();
         this.title = this.props.title || "Provisional Order Details";
         

@@ -18,7 +18,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         this.popup = useService("popup");
         this.report = useService("report");
         this.notification = useService("notification");
-        
+        // Own the numpad buffer while open, so stray keystrokes can't edit the order line underneath
+        useService("number_buffer").use();
+
         // Set component properties
         this.title = this.props.title || "Receive Order Details";
         this.action_type = this.props.action_type;
