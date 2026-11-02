@@ -16,11 +16,11 @@ export class DonationDashboard extends Component {
 
         this.state = useState({
             province_id: null, city_id: null, zone_id: null, branch_id: null,
-            category_id: null, state_filter: '',
+            state_filter: '',
             amount_min: null, amount_max: null,
             date_from: '', date_to: '',
 
-            provinces: [], cities: [], zones: [], branches: [], categories: [],
+            provinces: [], cities: [], zones: [], branches: [],
 
             kpi: { total_records: 0, total_quantity: '0', total_value: '0',
                    unique_donors: 0, state_counts: {}, state_labels: {},
@@ -69,7 +69,6 @@ export class DonationDashboard extends Component {
                 city_id: this.state.city_id,
                 zone_id: this.state.zone_id,
                 branch_id: this.state.branch_id,
-                category_id: this.state.category_id,
                 state_filter: this.state.state_filter,
                 amount_min: this.state.amount_min,
                 amount_max: this.state.amount_max,
@@ -88,7 +87,6 @@ export class DonationDashboard extends Component {
         this.state.cities = h.cities || [];
         this.state.zones = h.zones || [];
         this.state.branches = h.branches || [];
-        this.state.categories = await this.orm.call('donation.in.kind', 'get_din_categories', []);
     }
 
     get filteredCities() {
@@ -126,7 +124,6 @@ export class DonationDashboard extends Component {
             this.state.city_id ? parseInt(this.state.city_id, 10) : null,
             this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
             this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
-            this.state.category_id ? parseInt(this.state.category_id, 10) : null,
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -178,7 +175,6 @@ export class DonationDashboard extends Component {
         this.state.city_id = null;
         this.state.zone_id = null;
         this.state.branch_id = null;
-        this.state.category_id = null;
         this.state.state_filter = '';
         this.state.amount_min = null;
         this.state.amount_max = null;
@@ -210,7 +206,6 @@ export class DonationDashboard extends Component {
         await this.refresh();
     }
 
-    // --------- Charts ---------
     async render_all_charts() {
         const ctx1 = $("#din_chart_monthly");
         if (ctx1.length) {
@@ -290,7 +285,6 @@ export class DonationDashboard extends Component {
         }
     }
 
-    // --------- Comparison ---------
     _init_comparison_periods() {
         const today = new Date();
         const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -319,7 +313,6 @@ export class DonationDashboard extends Component {
             this.state.city_id ? parseInt(this.state.city_id, 10) : null,
             this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
             this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
-            this.state.category_id ? parseInt(this.state.category_id, 10) : null,
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -327,7 +320,6 @@ export class DonationDashboard extends Component {
         this.state.comparison_result = await this.orm.call('donation.in.kind', 'get_din_comparison', args);
     }
 
-    // --------- Row click ---------
     open_donation(id) {
         this.actionService.doAction({
             type: 'ir.actions.act_window',
@@ -338,7 +330,6 @@ export class DonationDashboard extends Component {
         });
     }
 
-    // --------- Tile click → open filtered list ---------
     open_donation_list(state_filter = null) {
         const domain = [];
         if (this.state.date_from) domain.push(['create_date', '>=', this.state.date_from + ' 00:00:00']);
@@ -347,7 +338,6 @@ export class DonationDashboard extends Component {
         if (this.state.province_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.province_id, 10)]);
         if (this.state.city_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.city_id, 10)]);
         if (this.state.zone_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.zone_id, 10)]);
-        if (this.state.category_id) domain.push(['donation_in_kind_line_ids.product_id.categ_id', 'child_of', parseInt(this.state.category_id, 10)]);
         if (state_filter) domain.push(['state', '=', state_filter]);
 
         this.actionService.doAction({

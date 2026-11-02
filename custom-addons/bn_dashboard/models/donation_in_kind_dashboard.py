@@ -43,18 +43,13 @@ class DonationInKindDashboard(models.Model):
             'branches': sorted(branch_data, key=lambda x: (x['name'] or '').lower()),
         }
 
-    @api.model
-    def get_din_categories(self):
-        cats = self.env['product.category'].search([])
-        return [{'id': c.id, 'name': c.complete_name} for c in cats]
-
     # ------------------------------------------------------------------
     # Domain helper
     # ------------------------------------------------------------------
     @api.model
     def _get_din_domain(self, date_from=None, date_to=None,
                         province_id=None, city_id=None, zone_id=None,
-                        analytic_id=None, category_id=None, state=None):
+                        analytic_id=None, state=None):
         domain = []
         if date_from:
             domain.append(('create_date', '>=', date_from + ' 00:00:00'))
@@ -70,9 +65,6 @@ class DonationInKindDashboard(models.Model):
         if zone_id:
             domain.append(('analytical_account_id', 'child_of', int(zone_id)))
 
-        if category_id:
-            domain.append(('donation_in_kind_line_ids.product_id.categ_id',
-                           'child_of', int(category_id)))
         if state:
             domain.append(('state', '=', state))
         return domain
@@ -83,13 +75,13 @@ class DonationInKindDashboard(models.Model):
     @api.model
     def get_din_dashboard_data(self, date_from=None, date_to=None,
                                province_id=None, city_id=None, zone_id=None,
-                               analytic_id=None, category_id=None, state=None,
+                               analytic_id=None, state=None,
                                amount_min=None, amount_max=None):
         domain = self._get_din_domain(date_from, date_to, province_id, city_id,
-                                      zone_id, analytic_id, category_id, state)
+                                      zone_id, analytic_id, state)
         donations = self.search(domain, order='id desc')
 
-        # Amount range filter (computed value)
+        # Amount range filter
         if amount_min is not None or amount_max is not None:
             filtered = self.browse()
             amin = float(amount_min) if amount_min is not None else None
@@ -103,7 +95,6 @@ class DonationInKindDashboard(models.Model):
                 filtered |= d
             donations = filtered
 
-        # KPIs
         total_qty = 0.0
         total_value = 0.0
         for d in donations:
@@ -118,7 +109,6 @@ class DonationInKindDashboard(models.Model):
         for d in donations:
             state_counts[d.state] = state_counts.get(d.state, 0) + 1
 
-        # Top donors
         donor_agg = {}
         for d in donations:
             if not d.donor_id:
@@ -135,7 +125,6 @@ class DonationInKindDashboard(models.Model):
         top_donors = sorted(donor_agg.values(),
                             key=lambda x: x['value'], reverse=True)[:10]
 
-        # Top products
         prod_agg = {}
         for d in donations:
             for l in d.donation_in_kind_line_ids:
@@ -149,7 +138,6 @@ class DonationInKindDashboard(models.Model):
         top_products = sorted(prod_agg.values(),
                               key=lambda x: x['value'], reverse=True)[:10]
 
-        # Top categories
         cat_agg = {}
         for d in donations:
             for l in d.donation_in_kind_line_ids:
@@ -163,7 +151,6 @@ class DonationInKindDashboard(models.Model):
         top_categories = sorted(cat_agg.values(),
                                 key=lambda x: x['value'], reverse=True)[:10]
 
-        # Monthly trend (last 12 months)
         today = datetime.today()
         monthly_labels, monthly_counts, monthly_values = [], [], []
         for i in range(11, -1, -1):
@@ -177,7 +164,6 @@ class DonationInKindDashboard(models.Model):
                             for l in d.donation_in_kind_line_ids) for d in m_dons)
             monthly_values.append(m_val)
 
-        # Recent
         recent = []
         for d in donations[:20]:
             qty = sum(l.quantity for l in d.donation_in_kind_line_ids)
@@ -229,12 +215,12 @@ class DonationInKindDashboard(models.Model):
         }
 
     # ------------------------------------------------------------------
-    # Category Group Time Series (Months × Categories)
+    # Category Group Time Series (display-only, not a filter)
     # ------------------------------------------------------------------
     @api.model
     def get_din_category_time_series(self, date_from=None, date_to=None,
                                      province_id=None, city_id=None, zone_id=None,
-                                     analytic_id=None, category_id=None, state=None,
+                                     analytic_id=None, state=None,
                                      amount_min=None, amount_max=None, **kwargs):
         if not date_from and not date_to:
             today = datetime.today()
@@ -242,7 +228,7 @@ class DonationInKindDashboard(models.Model):
             date_to = today.strftime('%Y-%m-%d')
 
         domain = self._get_din_domain(date_from, date_to, province_id, city_id,
-                                      zone_id, analytic_id, category_id, state)
+                                      zone_id, analytic_id, state)
         donations = self.search(domain)
 
         tree = {}
@@ -301,7 +287,7 @@ class DonationInKindDashboard(models.Model):
     @api.model
     def get_din_comparison(self, mode='month', period1=None, period2=None,
                            province_id=None, city_id=None, zone_id=None,
-                           analytic_id=None, category_id=None, state=None,
+                           analytic_id=None, state=None,
                            amount_min=None, amount_max=None, **kwargs):
         def parse_period(p):
             if not p:
@@ -330,7 +316,7 @@ class DonationInKindDashboard(models.Model):
         def stats(start, end):
             domain = self._get_din_domain(
                 start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'),
-                province_id, city_id, zone_id, analytic_id, category_id, state)
+                province_id, city_id, zone_id, analytic_id, state)
             dons = self.search(domain)
             qty = sum(sum(l.quantity for l in d.donation_in_kind_line_ids) for d in dons)
             val = sum(sum(l.quantity * l.avg_price
