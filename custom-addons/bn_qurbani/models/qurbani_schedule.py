@@ -101,10 +101,9 @@ class QurbaniSchedule(models.Model):
             # -------------------------
             # Get Picking Type
             # -------------------------
-            picking_type = self.env['stock.picking.type'].search(
-                [('code', '=', 'outgoing')],
-                limit=1
-            )
+            # the Qurbani Distribution operation type of the record's warehouse
+            picking_type = self.env['stock.warehouse']._bn_get_program_type(
+                'qurbani', record.location_id)
 
             if not picking_type:
                 raise ValueError("No outgoing picking type found!")
