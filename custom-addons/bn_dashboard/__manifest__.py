@@ -29,7 +29,7 @@
             'bn_dashboard/static/src/xml/pos_dashboard.xml',
             'bn_dashboard/static/src/css/pos_dashboard.css',
             'bn_dashboard/static/src/css/pos_dashboard_v2.scss',
-            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js'
+            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
         ],
     },
     'external_dependencies': {
