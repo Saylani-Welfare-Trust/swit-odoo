@@ -112,19 +112,36 @@ class MonthlyPlanning(models.Model):
     # ─── Default destination ──────────────────────────────
     @api.model
     def _default_location_dest(self):
+        """Pick the destination location from the current user, in this order:
+        1. The user's explicitly allowed location (user.allowed_location_ids[0])
+        2. A stock.location whose analytic_account_id matches the user's employee branch
+        (only if stock.location actually has that field in your DB)
+        3. The standard stock location fallback
+        """
+        user = self.env.user
+
+        # 1. Explicitly allowed location on the user
+        if 'allowed_location_ids' in user._fields and user.allowed_location_ids:
+            return user.allowed_location_ids[0].id
+
+        # 2. Match by the employee's branch — safe only if the field exists
         employee = self.env['hr.employee'].search(
-            [('user_id', '=', self.env.uid)], limit=1
+            [('user_id', '=', user.id)], limit=1
         )
-        if employee and employee.analytic_account_id:
+        if (employee and employee.analytic_account_id
+                and 'analytic_account_id' in self.env['stock.location']._fields):
             location = self.env['stock.location'].search(
                 [
                     ('analytic_account_id', '=', employee.analytic_account_id.id),
                     ('usage', 'in', ['internal']),
                 ],
+                order='id',
                 limit=1,
             )
             if location:
                 return location.id
+
+        # 3. Fallback
         fallback = self.env.ref(
             'stock.stock_location_stock', raise_if_not_found=False
         )
@@ -421,7 +438,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         string="Date", required=True,
         default=lambda self: self._default_line_date(),
     )
-
 
     plan_from_date = fields.Date(
         related='monthly_planning_id.from_date',
