@@ -57,4 +57,38 @@
         </field>
     </record>
 
+    <!-- Purchase Requests are created from a Material Request only, never directly -->
+    <record id="view_purchase_requisition_form_no_create" model="ir.ui.view">
+        <field name="name">purchase.requisition.form.no.create</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="attributes">
+                <attribute name="create">0</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_purchase_requisition_list_no_create" model="ir.ui.view">
+        <field name="name">purchase.requisition.list.no.create</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="attributes">
+                <attribute name="create">0</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_purchase_requisition_kanban_no_create" model="ir.ui.view">
+        <field name="name">purchase.requisition.kanban.no.create</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//kanban" position="attributes">
+                <attribute name="create">0</attribute>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
