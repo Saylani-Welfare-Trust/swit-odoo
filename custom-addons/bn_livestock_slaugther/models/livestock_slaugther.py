@@ -115,7 +115,7 @@ class LivestockSlaughter(models.Model):
             location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
         
         if not location:
-            raise ValidationError("Slaughter Stock, Meat or Goat location not found. Please create it in Inventory > Configuration > Locations.")
+            raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
         picking_type = self.env['stock.picking.type'].search([
