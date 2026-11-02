@@ -20,7 +20,7 @@ class DonationInKindDashboard(models.Model):
             [('parent_id', 'in', cities.ids)])
 
         branches = self.env['account.analytic.account'].browse(
-            list(set(self.search([]).mapped('analytic_account_id').ids)))
+            list(set(self.search([]).mapped('analytical_account_id').ids)))
 
         branch_data = []
         for b in branches:
@@ -62,13 +62,13 @@ class DonationInKindDashboard(models.Model):
             domain.append(('create_date', '<=', date_to + ' 23:59:59'))
 
         if analytic_id:
-            domain.append(('analytic_account_id', '=', int(analytic_id)))
+            domain.append(('analytical_account_id', '=', int(analytic_id)))
         if province_id:
-            domain.append(('analytic_account_id', 'child_of', int(province_id)))
+            domain.append(('analytical_account_id', 'child_of', int(province_id)))
         if city_id:
-            domain.append(('analytic_account_id', 'child_of', int(city_id)))
+            domain.append(('analytical_account_id', 'child_of', int(city_id)))
         if zone_id:
-            domain.append(('analytic_account_id', 'child_of', int(zone_id)))
+            domain.append(('analytical_account_id', 'child_of', int(zone_id)))
 
         if category_id:
             domain.append(('donation_in_kind_line_ids.product_id.categ_id',

@@ -343,10 +343,10 @@ export class DonationDashboard extends Component {
         const domain = [];
         if (this.state.date_from) domain.push(['create_date', '>=', this.state.date_from + ' 00:00:00']);
         if (this.state.date_to) domain.push(['create_date', '<=', this.state.date_to + ' 23:59:59']);
-        if (this.state.branch_id) domain.push(['analytic_account_id', '=', parseInt(this.state.branch_id, 10)]);
-        if (this.state.province_id) domain.push(['analytic_account_id', 'child_of', parseInt(this.state.province_id, 10)]);
-        if (this.state.city_id) domain.push(['analytic_account_id', 'child_of', parseInt(this.state.city_id, 10)]);
-        if (this.state.zone_id) domain.push(['analytic_account_id', 'child_of', parseInt(this.state.zone_id, 10)]);
+        if (this.state.branch_id) domain.push(['analytical_account_id', '=', parseInt(this.state.branch_id, 10)]);
+        if (this.state.province_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.province_id, 10)]);
+        if (this.state.city_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.city_id, 10)]);
+        if (this.state.zone_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.zone_id, 10)]);
         if (this.state.category_id) domain.push(['donation_in_kind_line_ids.product_id.categ_id', 'child_of', parseInt(this.state.category_id, 10)]);
         if (state_filter) domain.push(['state', '=', state_filter]);
 
