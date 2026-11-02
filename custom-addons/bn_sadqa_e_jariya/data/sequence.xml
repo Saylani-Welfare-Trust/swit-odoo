@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+
+        <record id="welfare_institution_sequence" model="ir.sequence">
+            <field name="name">Sadqa e Jariya (Institution Disbursement)</field>
+            <field name="code">welfare_institution_sequence</field>
+            <field name="prefix">INS/%(year)s/</field>
+            <field name="padding">4</field>
+        </record>
+
+    </data>
+
+</odoo>

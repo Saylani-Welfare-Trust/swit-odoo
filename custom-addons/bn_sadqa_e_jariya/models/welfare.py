@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
 
 
 class Welfare(models.Model):
@@ -41,6 +41,16 @@ class Welfare(models.Model):
         'welfare_id',
         string='Madrasa Details'
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Institution disbursements are numbered INS/<year>/xxxx, bn_welfare numbers the rest WF/<year>/xxxxx
+        for vals in vals_list:
+            is_individual = vals.get('is_individual', self.env.context.get('default_is_individual', False))
+            if not is_individual and (not vals.get('name') or vals.get('name') == 'New'):
+                seq = self.env['ir.sequence'].sudo().next_by_code('welfare_institution_sequence')
+                vals['name'] = seq if seq else _('New')
+        return super().create(vals_list)
 
     def _parse_form_data(self, rec):
         """Parse form data based on category"""

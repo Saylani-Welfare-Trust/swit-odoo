@@ -14,6 +14,7 @@
         'security/group.xml',
         'security/ir.model.access.csv',
 
+        'data/sequence.xml',
         'data/server_action_fetch_welfare.xml',
 
         'views/welfare.xml',
