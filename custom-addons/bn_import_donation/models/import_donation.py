@@ -322,11 +322,7 @@ class ImportDonation(models.Model):
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
 
-        journal = self.env['account.journal'].search(
-            [('name', 'ilike', 'Bank')], limit=1
-        )
-
-        if not journal:
+        if not self.gateway_config_id.journal_id:
             raise ValidationError("Bank journal not found.")
 
         donations = Donation.search([
@@ -397,7 +393,7 @@ class ImportDonation(models.Model):
 
         move = self.env['account.move'].create({
             'move_type': 'entry',
-            'journal_id': journal.id,
+            'journal_id': self.gateway_config_id.journal_id.id,
             'ref': self.name,
             'line_ids': [debit] + credits,
         })

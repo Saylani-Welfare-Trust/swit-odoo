@@ -28,7 +28,8 @@
                             <field name="type" />
                         </group>
                         <group>
-                            <field name="account_id" string="Debit Account" invisible="type == 'api'" />
+                            <field name="journal_id" invisible="type == 'api'" />
+                            <field name="account_id" invisible="type == 'api'" />
                         </group>
                     </group>
                     <notebook>
