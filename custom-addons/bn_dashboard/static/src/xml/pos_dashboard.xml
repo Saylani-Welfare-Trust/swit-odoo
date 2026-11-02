@@ -366,6 +366,19 @@
                                         </tr>
                                     </t>
                                 </tbody>
+                                <tfoot>
+                                    <tr style="background-color:#f8f9fa; border-top: 2px solid #dee2e6;">
+                                        <td class="fw-bold fs-5" colspan="2">TOTAL</td>
+                                        <t t-foreach="state.products_by_category.cities" t-as="city" t-key="city_index">
+                                            <td class="text-center fw-bold fs-5">
+                                                <t t-esc="state.products_by_category.totals[city] or '0.00'"/>
+                                            </td>
+                                        </t>
+                                        <td class="text-end fw-bold fs-5 border-start text-primary">
+                                            <t t-esc="state.products_by_category.grand_total or '0.00'"/>
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

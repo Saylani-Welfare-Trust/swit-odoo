@@ -789,6 +789,10 @@ class PosOrder(models.Model):
         all_cities = set()
         grouped_products = {}
 
+        # Initialize totals
+        total_city_amounts = {c: 0.0 for c in sorted(list(all_cities))} # Will be re-initialized after cities are found
+        total_grand_amount = 0.0
+
         for r in docs:
             city = (r.get('city_name') or 'No City').strip()
             
@@ -817,6 +821,15 @@ class PosOrder(models.Model):
 
         sorted_cities = sorted(list(all_cities))
         
+        # Re-initialize totals with the final list of cities
+        total_city_amounts = {c: 0.0 for c in sorted_cities}
+        
+        # Calculate totals
+        for pdata in grouped_products.values():
+            total_grand_amount += pdata['total_amount']
+            for c in sorted_cities:
+                total_city_amounts[c] += pdata['city_amount'].get(c, 0.0)
+
         group_order = ['Nafla', 'Wajiba', 'Non-Donation', 'PoS',
                     'Donation In Kind', 'Donation Box', 'Other']
         
@@ -843,9 +856,15 @@ class PosOrder(models.Model):
                 'products': prods
             })
 
+        # Format the totals
+        city_totals_fmt = {c: _fmt(a) for c, a in total_city_amounts.items()}
+        grand_total_fmt = _fmt(total_grand_amount)
+
         return {
             'cities': sorted_cities,
-            'groups': result_groups
+            'groups': result_groups,
+            'totals': city_totals_fmt,       # <-- NEW
+            'grand_total': grand_total_fmt   # <-- NEW
         }
 
 
