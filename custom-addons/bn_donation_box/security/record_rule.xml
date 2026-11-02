@@ -67,7 +67,7 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <record id="complain_center_process_complain_group" model="ir.rule">
+    <record id="complain_center_process_complain_rule" model="ir.rule">
         <field name="name">Complain Center: Process</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
         <field name="domain_force">[(1, '=', 1)]</field>
@@ -78,7 +78,7 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <record id="complain_center_admin_group" model="ir.rule">
+    <record id="complain_center_admin_rule" model="ir.rule">
         <field name="name">Complain Center: Admin</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
         <field name="domain_force">[(1, '=', 1)]</field>
