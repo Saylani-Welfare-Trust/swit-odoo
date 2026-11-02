@@ -18,7 +18,7 @@
 
             <!-- 3. Place the tax fields on a new row below the Amount -->
             <xpath expr="//div[@name='amount_div']" position="after">
-                <field name="amount_tax_included" placeholder="Total (Tax Included)" />
+                <field name="amount_tax_included" placeholder="Total (Tax Included)" readonly="1"/>
                 <field name="payment_tax_id" options="{'no_create': True}"/>
                 <field name="payment_tax_amount" invisible="not payment_tax_id"/>
             </xpath>
