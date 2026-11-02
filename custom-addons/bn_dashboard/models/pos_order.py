@@ -1006,3 +1006,71 @@ class PosOrder(models.Model):
             'grand_totals': grand_totals_fmt,
             'grand_total': _fmt(grand_totals['total'])
         }
+        
+    @api.model
+    def get_comparison_data(self, mode='month', period1=None, period2=None,
+                            config_id=None, province_id=None, city_id=None,
+                            zone_id=None, segment_id=None, segment_type=None,
+                            category_id=None, amount_min=None, amount_max=None,
+                            *extra, **kwargs):
+        """Compare POS metrics between two periods (Month or Year)."""
+        def _parse_period(p_str):
+            if not p_str:
+                return None, None
+            try:
+                if mode == 'month':
+                    y, m = map(int, str(p_str).split('-'))
+                    start = datetime(y, m, 1).date()
+                    from calendar import monthrange
+                    end = datetime(y, m, monthrange(y, m)[1]).date()
+                else:
+                    y = int(p_str)
+                    start = datetime(y, 1, 1).date()
+                    end = datetime(y, 12, 31).date()
+            except (ValueError, TypeError):
+                return None, None
+            return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
+
+        p1_start, p1_end = _parse_period(period1)
+        p2_start, p2_end = _parse_period(period2)
+
+        empty = {'p1': {}, 'p2': {}, 'diffs': {},
+                 'mode': mode, 'period1': period1, 'period2': period2}
+        if not p1_start or not p2_start:
+            return empty
+
+        def _get_stats(start, end):
+            domain = self._get_order_domain(
+                config_id, start, end, province_id, city_id,
+                zone_id, segment_id, segment_type)
+            domain = self._apply_dashboard_filters(
+                domain, category_id, amount_min, amount_max)
+            orders = self.search(domain)
+
+            refunds = orders.filtered(lambda o: o.amount_total < 0)
+            return {
+                'total_sale':   sum(orders.mapped('amount_total')),
+                'order_count':  len(orders),
+                'refund_count': len(refunds),
+                'refund_amount': abs(sum(refunds.mapped('amount_total'))),
+            }
+
+        p1 = _get_stats(p1_start, p1_end)
+        p2 = _get_stats(p2_start, p2_end)
+
+        diffs = {}
+        for key in p1:
+            v1 = p1[key]
+            v2 = p2[key]
+            diff = v2 - v1
+            pct = 0.0
+            if v1 > 0:
+                pct = (diff / v1) * 100
+            elif v2 > 0:
+                pct = 100.0
+            diffs[key] = {'diff': diff, 'pct': pct, 'is_positive': diff >= 0}
+
+        return {
+            'p1': p1, 'p2': p2, 'diffs': diffs,
+            'mode': mode, 'period1': period1, 'period2': period2,
+        }

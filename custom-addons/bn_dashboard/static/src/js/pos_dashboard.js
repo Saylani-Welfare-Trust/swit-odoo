@@ -34,7 +34,11 @@ export class PosDashboard extends Component {
             category_id: null,
             categories: [],
             amount_min: null,
-                        products_by_category: { cities: [], groups: [], totals: {}, grand_total: '' },
+            products_by_category: { cities: [], groups: [], totals: {}, grand_total: '' },
+            comparison_mode: 'month',
+            comparison_period1: '',
+            comparison_period2: '',
+            comparison_result: { p1: {}, p2: {}, diffs: {} },
             category_time_series: { columns: [], groups: [], 
                                     grand_totals: {}, grand_total: '' },
             amount_max: null,
@@ -61,6 +65,11 @@ export class PosDashboard extends Component {
         if (savedStateStr) {
             try {
                 const saved = JSON.parse(savedStateStr);
+                // Default comparison periods if not saved
+                if (!this.state.comparison_period1 || !this.state.comparison_period2) {
+                    this._init_comparison_periods();
+                }
+
                 for (const key in saved) {
                     if (this.state[key] !== undefined) {
                         this.state[key] = saved[key];
@@ -75,7 +84,9 @@ export class PosDashboard extends Component {
 
         onWillStart(async () => {
             await this.fetch_dropdowns();
+            this._init_comparison_periods();
             await this.fetch_data();
+            await this.fetch_comparison();
         });
 
         onMounted(async () => {
@@ -97,7 +108,7 @@ export class PosDashboard extends Component {
 
         onWillDestroy(() => {
             // Save filter state
-            const stateToSave = {
+                const stateToSave = {
                 config_id: this.state.config_id,
                 province_id: this.state.province_id,
                 city_id: this.state.city_id,
@@ -113,6 +124,10 @@ export class PosDashboard extends Component {
                 date_from: this.state.date_from,
                 date_to: this.state.date_to,
                 sales_period: this.state.sales_period,
+                // Comparison
+                comparison_mode: this.state.comparison_mode,
+                comparison_period1: this.state.comparison_period1,
+                comparison_period2: this.state.comparison_period2,
             };
             sessionStorage.setItem('pos_dashboard_filter_state', JSON.stringify(stateToSave));
 
@@ -185,8 +200,65 @@ export class PosDashboard extends Component {
 
     async refresh() {
         await this.fetch_data();
+        await this.fetch_comparison();
         if (this.is_mounted) {
             await this.render_all_charts();
+        }
+    }
+
+    _init_comparison_periods() {
+        const today = new Date();
+        const fmt_m = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = String(today.getFullYear() - 1);
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = String(today.getFullYear());
+            }
+        } else {
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = fmt_m(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = fmt_m(today);
+            }
+        }
+    }
+
+    async onchange_comparison_mode() {
+        this.state.comparison_period1 = '';
+        this.state.comparison_period2 = '';
+        this._init_comparison_periods();
+        await this.fetch_comparison();
+    }
+
+    async fetch_comparison() {
+        try {
+            let seg_id = null;
+            if (this.state.segment_l4) seg_id = parseInt(this.state.segment_l4, 10);
+            else if (this.state.segment_l3) seg_id = parseInt(this.state.segment_l3, 10);
+            else if (this.state.segment_l2) seg_id = parseInt(this.state.segment_l2, 10);
+            else if (this.state.segment_l1) seg_id = parseInt(this.state.segment_l1, 10);
+
+            const data = await this.orm.call('pos.order', 'get_comparison_data', [
+                this.state.comparison_mode,
+                this.state.comparison_period1,
+                this.state.comparison_period2,
+                this.state.config_id   ? parseInt(this.state.config_id, 10)   : null,
+                this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                this.state.city_id     ? parseInt(this.state.city_id, 10)     : null,
+                this.state.zone_id     ? parseInt(this.state.zone_id, 10)     : null,
+                seg_id,
+                this.state.segment_type || null,
+                this.state.category_id ? parseInt(this.state.category_id, 10) : null,
+                this.state.amount_min  ? parseFloat(this.state.amount_min)    : null,
+                this.state.amount_max  ? parseFloat(this.state.amount_max)    : null,
+            ]);
+            this.state.comparison_result = data;
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
         }
     }
 
