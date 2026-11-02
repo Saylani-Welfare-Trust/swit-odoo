@@ -15,7 +15,7 @@
         <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Grants visibility of the Donation Box app menu. Assigned automatically by every tier below (and by Key Management / Rider Shift access) - there is normally no need to assign it directly.</field>
     </record>
-    
+
     <record id="donation_box_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_donation_box"/>
@@ -49,21 +49,6 @@
         <field name="implied_ids" eval="[
             (4, ref('donation_box_manager_group')),
             (4, ref('donation_box_audit_group'))]"/>
-    </record>
-    
-    <record id="complain_center_admin_group" model="res.groups">
-        <field name="name">Complain Center Admin</field>
-        <field name="category_id" ref="module_complain_center"/>
-    </record>
-    
-    <record id="complain_center_process_complain_group" model="res.groups">
-        <field name="name">Process Complain Center</field>
-        <field name="category_id" ref="module_complain_center"/>
-    </record>
-    
-    <record id="complain_center_resolve_complain_group" model="res.groups">
-        <field name="name">Resolve Complain Center</field>
-        <field name="category_id" ref="module_complain_center"/>
     </record>
 
 </odoo>

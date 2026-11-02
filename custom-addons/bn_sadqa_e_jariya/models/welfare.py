@@ -7,7 +7,6 @@ class Welfare(models.Model):
     institution_category = fields.Selection([
         ('masjid', 'Masjid'),
         ('madrasa', 'Madrasa'),
-        ('flood', 'Flood Affected'),
     ], string='Institution Category')
 
     subcategory = fields.Char(string='Subcategory')
@@ -41,12 +40,6 @@ class Welfare(models.Model):
         'welfare.madrasa',
         'welfare_id',
         string='Madrasa Details'
-    )
-
-    flood_id = fields.One2many(
-        'welfare.flood',
-        'welfare_id',
-        string='Flood Affected Details'
     )
 
     @api.model_create_multi

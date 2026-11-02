@@ -109,11 +109,6 @@ class WelfareInstitutionFetchLog(models.Model):
         all_synced = True
 
         for rec in data:
-            # Applications filled after "Send Form" already have their welfare record,
-            # it picks them up itself (Check Portal Status)
-            if self._get_linked_welfare(rec):
-                continue
-
             submitted = rec.get('submittedBy', {})
             raw_cnic = submitted.get('cnic')
             if raw_cnic and raw_cnic.isdigit() and len(raw_cnic) == 13:
@@ -172,22 +167,117 @@ class WelfareInstitutionFetchLog(models.Model):
                     }
                     inquiry_officer = Employee.create(emp_vals)
 
+            # Parse form data based on category
+            form_data = rec.get('form', {})
+            category = rec.get('category')
+            subcategory = rec.get('subCategory')
+            
+            # Get common data
+            applicant_info = form_data.get('applicantInformation', {})
+            fund_info = form_data.get('fundInfo', {})
+            account_details = form_data.get('accountDetails', {})
+            
             # Create welfare record
             vals = {
                 'donee_id': partner.id if partner else False,
                 'employee_id': inquiry_officer.id if inquiry_officer else False,
+                'old_system_id': rec.get('_id'),
+                'designation': applicant_info.get('designation'),
+                'institution_category': category,
+                'subcategory': subcategory,
+                'aid_from_other_organization': 'yes' if self._as_bool(fund_info.get('everReceivedFromSaylani', '')) else 'no',
+                'monthly_income': self._as_float(fund_info.get('amountReceivedFromSaylani', 0)),
+                'bank_account': 'yes' if account_details.get('accountType') else 'no',
+                'bank_name': account_details.get('accountTitle'),
+                'account_no': account_details.get('accountNumber'),
                 'state': 'inquiry',
+                'portal_application_id': rec.get('token'),
+                'hod_remarks': rec.get('hodReviews', [{}])[0].get('comments', ''),
             }
-            vals.update(self._prepare_application_vals(rec))
+            
+            # Set institute name and address based on category
+            if category == 'masjid':
+                masjid_info = form_data.get('masjidInfo', {})
+                vals.update({
+                    'institute_name': masjid_info.get('masjidName'),
+                    'company_address': masjid_info.get('address'),
+                })
+            elif category == 'madrasa':
+                madrasa_info = form_data.get('madrasaInfo', {})
+                vals.update({
+                    'institute_name': madrasa_info.get('madarsaName'),
+                    'company_address': madrasa_info.get('address'),
+                })
+            
             welfare = Welfare.create(vals)
-
-            self._create_application_details(welfare, rec)
-            self._create_inquiry_reports(welfare, inquiry_reports)
-
+            
+            # Create Committee Members
+            committee_members = form_data.get('committeeMembers', [])
+            for member in committee_members:
+                if member and member.get('committeeMemberName'):
+                    self.env['welfare.committee.member'].create({
+                        'welfare_id': welfare.id,
+                        'name': member.get('committeeMemberName'),
+                        'designation': member.get('designation'),
+                        'educational_qualification': member.get('educationalQualification'),
+                        'cnic': member.get('cnic'),
+                        'phone': member.get('phonenumber'),
+                    })
+            
+            # Create Teachers (for madrasa)
+            if category == 'madrasa':
+                teachers = form_data.get('teachers', [])
+                for teacher in teachers:
+                    if teacher and teacher.get('teacherName'):
+                        self.env['welfare.teacher'].create({
+                            'welfare_id': welfare.id,
+                            'name': teacher.get('teacherName'),
+                            'designation': teacher.get('designation'),
+                            'educational_qualification': teacher.get('educationalQualification'),
+                            'other_degree_name': teacher.get('otherDegreeName'),
+                            'cnic': teacher.get('cnic'),
+                            'phone': teacher.get('phonenumber'),
+                        })
+                
+                # Create Madrasa Details
+                self._create_madrasa_details(welfare, form_data, rec)
+            
+            elif category == 'masjid':
+                # Create Masjid Details
+                self._create_masjid_details(welfare, form_data, rec)
+            
+            # Create Inquiry Reports
+            for inquiry in inquiry_reports:
+                officer_data = inquiry.get('officerId', {})
+                self.env['welfare.inquiry.report'].create({
+                    'welfare_id': welfare.id,
+                    'status': inquiry.get('status'),
+                    'images': str(inquiry.get('images', [])),
+                    'verified': inquiry.get('verified', False),
+                    'officer_name': officer_data.get('fullname'),
+                    'officer_email': officer_data.get('email'),
+                    'content': inquiry.get('content', ''),
+                    'external_id': inquiry.get('_id'),
+                    'create_date': inquiry.get('createdAt'),
+                    'write_date': inquiry.get('updatedAt'),
+                })
+            
             created_ids.append(welfare.id)
-
+            
             # Send sync to portal
-            if not self._mark_application_synced(welfare):
+            sync_endpoint = f"{base_url}{company.mark_institution_application_endpoint}"
+            sync_applications = self.send_welfare_sync_to_portal(
+                welfare_record=welfare,
+                endpoint_url=sync_endpoint,
+                auth_key=company.odoo_auth_institution_key
+            )
+            
+            response_status = False
+            if sync_applications and isinstance(sync_applications, dict):
+                response_status = sync_applications.get("syncedToOdoo", False)
+            if response_status:
+                welfare.write({'is_synced': True})
+            else:
                 all_synced = False
 
         log = self.create({
@@ -197,197 +287,8 @@ class WelfareInstitutionFetchLog(models.Model):
         
         if all_synced and created_ids:
             log.sync = True
-
+            
         return log
-
-    def _get_linked_welfare(self, rec):
-        """Welfare record the portal application belongs to (odooId sent by Send Form), if any"""
-        try:
-            odoo_id = int(rec.get('odooId') or 0)
-        except (TypeError, ValueError):
-            return self.env['welfare']
-        return self.env['welfare'].browse(odoo_id).exists() if odoo_id else self.env['welfare']
-
-    def _prepare_application_vals(self, rec):
-        """Welfare values taken from a portal application"""
-        form_data = rec.get('form', {})
-        category = rec.get('category')
-
-        # Get common data
-        applicant_info = form_data.get('applicantInformation', {})
-        fund_info = form_data.get('fundInfo', {})
-        account_details = form_data.get('accountDetails', {})
-
-        vals = {
-            'old_system_id': rec.get('_id'),
-            'designation': applicant_info.get('designation'),
-            'institution_category': category,
-            'subcategory': rec.get('subCategory'),
-            'aid_from_other_organization': 'yes' if self._as_bool(fund_info.get('everReceivedFromSaylani', '')) else 'no',
-            'monthly_income': self._as_float(fund_info.get('amountReceivedFromSaylani', 0)),
-            'bank_account': 'yes' if account_details.get('accountType') else 'no',
-            'bank_name': account_details.get('accountTitle'),
-            'account_no': account_details.get('accountNumber'),
-            'portal_application_id': rec.get('token'),
-            # no HOD review yet on an application that was just filled
-            'hod_remarks': (rec.get('hodReviews') or [{}])[0].get('comments', ''),
-        }
-
-        # Set institute name and address based on category
-        if category == 'masjid':
-            masjid_info = form_data.get('masjidInfo', {})
-            vals.update({
-                'institute_name': masjid_info.get('masjidName'),
-                'company_address': masjid_info.get('address'),
-            })
-        elif category == 'madrasa':
-            madrasa_info = form_data.get('madrasaInfo', {})
-            vals.update({
-                'institute_name': madrasa_info.get('madarsaName'),
-                'company_address': madrasa_info.get('address'),
-            })
-
-        # Inquiry form keys (masjid / madaris / flood forms)
-        flat = self._flatten_form(form_data)
-        name_key, address_key = {
-            'masjid': ('masjid_name', 'address'),
-            'madrasa': ('jamia_name', 'full_address'),
-            'flood': ('institute_name', 'address'),
-        }.get(category, (None, None))
-        if name_key in flat:
-            vals['institute_name'] = flat[name_key]
-        if address_key in flat:
-            vals['company_address'] = flat[address_key]
-        if flat.get('account_number'):
-            vals.update({
-                'bank_account': 'yes',
-                'account_no': flat['account_number'],
-                'bank_name': flat.get('account_title') or vals.get('bank_name'),
-            })
-        return vals
-
-    def _as_date(self, value):
-        try:
-            return fields.Date.to_date(value) or False
-        except (TypeError, ValueError):
-            return False
-
-    def _flatten_form(self, form_data):
-        """Portal form keys, whether sent flat or grouped in sections"""
-        flat = {}
-        for key, value in (form_data or {}).items():
-            if isinstance(value, dict):
-                flat.update(value)
-            else:
-                flat[key] = value
-        return flat
-
-    def _portal_form_vals(self, model_name, form_data):
-        """Values of a detail model for the form keys it maps in _portal_form_fields, only the keys sent"""
-        Model = self.env[model_name]
-        flat = self._flatten_form(form_data)
-        vals = {}
-        for key, field_name in Model._portal_form_fields.items():
-            if key not in flat:
-                continue
-            value = flat[key]
-            field_type = Model._fields[field_name].type
-            if field_type == 'integer':
-                value = self._as_int(value)
-            elif field_type == 'float':
-                value = self._as_float(value)
-            elif field_type == 'boolean':
-                value = self._as_bool(value)
-            elif field_type == 'date':
-                value = self._as_date(value)
-            else:
-                value = str(value) if value not in (None, False) else False
-            vals[field_name] = value
-        return vals
-
-    def _create_application_details(self, welfare, rec):
-        """Committee members, teachers and masjid / madrasa details of a portal application"""
-        form_data = rec.get('form', {})
-        category = rec.get('category')
-
-        # Create Committee Members
-        committee_members = form_data.get('committeeMembers', [])
-        for member in committee_members:
-            if member and member.get('committeeMemberName'):
-                self.env['welfare.committee.member'].create({
-                    'welfare_id': welfare.id,
-                    'name': member.get('committeeMemberName'),
-                    'designation': member.get('designation'),
-                    'educational_qualification': member.get('educationalQualification'),
-                    'cnic': member.get('cnic'),
-                    'phone': member.get('phonenumber'),
-                })
-
-        # Create Teachers (for madrasa)
-        if category == 'madrasa':
-            teachers = form_data.get('teachers', [])
-            for teacher in teachers:
-                if teacher and teacher.get('teacherName'):
-                    self.env['welfare.teacher'].create({
-                        'welfare_id': welfare.id,
-                        'name': teacher.get('teacherName'),
-                        'designation': teacher.get('designation'),
-                        'educational_qualification': teacher.get('educationalQualification'),
-                        'other_degree_name': teacher.get('otherDegreeName'),
-                        'cnic': teacher.get('cnic'),
-                        'phone': teacher.get('phonenumber'),
-                    })
-
-            # Create Madrasa Details
-            self._create_madrasa_details(welfare, form_data, rec)
-
-        elif category == 'masjid':
-            # Create Masjid Details
-            self._create_masjid_details(welfare, form_data, rec)
-
-        elif category == 'flood':
-            self.env['welfare.flood'].create(
-                dict(self._portal_form_vals('welfare.flood', form_data), welfare_id=welfare.id)
-            )
-
-    def _create_inquiry_reports(self, welfare, inquiry_reports):
-        """Inquiry reports of a portal application, skipping the ones already in Odoo"""
-        existing = set(welfare.inquiry_report_ids.mapped('external_id'))
-        for inquiry in inquiry_reports:
-            if inquiry.get('_id') and inquiry.get('_id') in existing:
-                continue
-            officer_data = inquiry.get('officerId') or {}
-            if not isinstance(officer_data, dict):
-                officer_data = {}
-            self.env['welfare.inquiry.report'].create({
-                'welfare_id': welfare.id,
-                'status': inquiry.get('status'),
-                'images': str(inquiry.get('images', [])),
-                'verified': inquiry.get('verified', False),
-                'officer_name': officer_data.get('fullname'),
-                'officer_email': officer_data.get('email'),
-                'content': inquiry.get('content', ''),
-                'external_id': inquiry.get('_id'),
-                'create_date': inquiry.get('createdAt'),
-                'write_date': inquiry.get('updatedAt'),
-            })
-
-    def _mark_application_synced(self, welfare):
-        """Tell the portal the application is in Odoo, True when it confirms"""
-        company = self.env.company
-        sync_endpoint = f"{company.welfare_instituiton_url}{company.mark_institution_application_endpoint}"
-        sync_applications = self.send_welfare_sync_to_portal(
-            welfare_record=welfare,
-            endpoint_url=sync_endpoint,
-            auth_key=company.odoo_auth_institution_key
-        )
-
-        response_status = False
-        if sync_applications and isinstance(sync_applications, dict):
-            response_status = sync_applications.get("syncedToOdoo", False)
-        if response_status:
-            welfare.write({'is_synced': True})
-        return response_status
 
     def _create_masjid_details(self, welfare, form_data, rec):
         """Create masjid details record"""
@@ -466,9 +367,6 @@ class WelfareInstitutionFetchLog(models.Model):
             'account_type': str(account_details.get('accountType')),
         }
         
-        # Masjid Inquiry Form keys
-        masjid_vals.update(self._portal_form_vals('welfare.masjid', form_data))
-
         self.env['welfare.masjid'].create(masjid_vals)
 
     def _create_madrasa_details(self, welfare, form_data, rec):
@@ -571,7 +469,4 @@ class WelfareInstitutionFetchLog(models.Model):
             'account_type': str(account_details.get('accountType')),
         }
         
-        # Madaris Checking Form keys
-        madrasa_vals.update(self._portal_form_vals('welfare.madrasa', form_data))
-
         self.env['welfare.madrasa'].create(madrasa_vals)

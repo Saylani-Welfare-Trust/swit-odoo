@@ -8,7 +8,6 @@ class WelfareFieldsWizard(models.TransientModel):
     institution_category = fields.Selection([
         ('masjid', 'Masjid'),
         ('madrasa', 'Madrasa'),
-        ('flood', 'Flood Affected'),
     ], string='Institution Category')
     subcategory = fields.Char(string='Subcategory')
 
