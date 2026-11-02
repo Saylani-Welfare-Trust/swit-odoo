@@ -1001,7 +1001,7 @@ class MedicalEquipment(models.Model):
             "id": me.id
         }
     
-        @api.model
+    @api.model
     def get_me_record(self, data):
         """Fetch ME record by name and return product information"""
         # Search for the ME record
