@@ -144,8 +144,59 @@ export class ProfileManagementDashboard extends Component {
         if (['reject', 'rejected', 'cancel'].includes(s)) return 'bg-danger';
         return 'bg-info text-white';
     }
+    // ------------------------------------------------------------------
+    // Build the domain that mirrors the dashboard's current filters
+    // ------------------------------------------------------------------
+    getFilterDomain(model) {
+        const domain = [];
+        if (!this.state.date_from && !this.state.date_to) return domain;
+
+        // Date field per model — matches what the backend uses for each
+        const DATE_FIELD = {
+            'res.partner': 'create_date',
+            'pos.order': 'date_order',
+            'rider.collection': 'date',
+            'donation.home.service': 'create_date',
+            'donation': 'create_date',                 // adjust if your model uses 'date'
+            'api.donation': 'created_at',
+            'donation.in.kind': 'create_date',
+            'welfare.line': 'collection_date',
+            'welfare.recurring.line': 'collection_date',
+            'medical.equipment': 'create_date',
+            'microfinance.application': 'create_date', // adjust per your model
+            'microfinance.loan': 'create_date',
+            'microfinance.request': 'create_date',
+        }[model] || 'create_date';
+
+        // Match the backend: date fields on res.partner are Datetime → add time bounds
+        const isDatetime = ['res.partner', 'donation.home.service', 'donation.in.kind',
+                            'api.donation', 'medical.equipment',
+                            'microfinance.application', 'microfinance.loan',
+                            'microfinance.request'].includes(model);
+
+        if (this.state.date_from) {
+            const v = isDatetime ? `${this.state.date_from} 00:00:00` : this.state.date_from;
+            domain.push([DATE_FIELD, '>=', v]);
+        }
+        if (this.state.date_to) {
+            const v = isDatetime ? `${this.state.date_to} 23:59:59` : this.state.date_to;
+            domain.push([DATE_FIELD, '<=', v]);
+        }
+        return domain;
+    }
+
+    // ------------------------------------------------------------------
+    // Open a list view with the dashboard date filters automatically applied
+    // ------------------------------------------------------------------
     openView(model, domain = []) {
-        this.actionService.doAction({ type: 'ir.actions.act_window', res_model: model, views: [[false, 'list'], [false, 'form']], domain: domain, target: 'current' });
+        const fullDomain = [...domain, ...this.getFilterDomain(model)];
+        this.actionService.doAction({
+            type: 'ir.actions.act_window',
+            res_model: model,
+            views: [[false, 'list'], [false, 'form']],
+            domain: fullDomain,
+            target: 'current',
+        });
     }
 }
 
