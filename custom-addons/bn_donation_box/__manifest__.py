@@ -16,15 +16,15 @@
         'bn_master_setup',
     ],
     'data': [
-        'security/groups.xml',
-        'security/ir.model.access.csv',
-        'security/record_rule.xml',
-
         'data/ir_module_category.xml',
         'data/server_action.xml',
         'data/sequence.xml',
         'data/hr_employee_category.xml',
         
+        'security/groups.xml',
+        'security/ir.model.access.csv',
+        'security/record_rule.xml',
+
         'reports/donation_box_report.xml',
         
         'views/donation_box_request.xml',
