@@ -27,7 +27,7 @@
         <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
-                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_purchase_customization.purchase_request_confirm_group" />
                 <button string="CXO Approval" name="action_mem_approval" type="object" class="oe_highlight" invisible="state != 'hod_approval'" groups="bn_purchase_customization.purchase_cxo_group" />
             </xpath>
 
