@@ -1,6 +1,6 @@
 {
     'name': 'Qurbani',
-    'version': '17.0.1.6.0',
+    'version': '1.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -17,7 +17,6 @@
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
-        'security/stock_scope_rule.xml',
         
         'data/server_action.xml',
         'data/sequence.xml',
@@ -68,7 +67,6 @@
         'wizards/transfer_slaughter.xml',
         'wizards/sync_slaughter_and_distribution.xml',
         'wizards/update_qurbani_demand.xml',
-        'data/bn_program_types.xml',
     ],
     'auto_install': False,
     'application': True,
