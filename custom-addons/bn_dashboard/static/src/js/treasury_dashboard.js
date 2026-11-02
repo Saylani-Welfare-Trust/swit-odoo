@@ -276,7 +276,7 @@ export class TreasuryDashboard extends Component {
     // ------------------------------------------------------------------
     // Build the domain that mirrors the dashboard's current filters
     // ------------------------------------------------------------------
-    getFilterDomain(model) {
+        getFilterDomain(model) {
         const domain = [];
         const bid = this.state.branch_id   ? parseInt(this.state.branch_id, 10)   : null;
         const pid = this.state.province_id ? parseInt(this.state.province_id, 10) : null;
@@ -290,22 +290,22 @@ export class TreasuryDashboard extends Component {
         else if (this.state.segment_l2) seg_id = parseInt(this.state.segment_l2, 10);
         else if (this.state.segment_l1) seg_id = parseInt(this.state.segment_l1, 10);
 
-        // Analytic account filter (mirrors backend _get_custom_model_stats)
-        if (bid) {
-            domain.push(['analytic_account_id', '=', bid]);
-        } else if (pid) {
-            domain.push(['analytic_account_id', 'child_of', pid]);
-        } else if (cid) {
-            domain.push(['analytic_account_id', 'child_of', cid]);
-        } else if (zid) {
-            domain.push(['analytic_account_id', 'child_of', zid]);
-        } else if (seg_id) {
-            domain.push(['analytic_account_id', 'child_of', seg_id]);
-        }
+        // Analytic filter — apply ALL non-empty filters, mirroring the backend
+        if (bid)    domain.push(['analytic_account_id', '=', bid]);
+        if (pid)    domain.push(['analytic_account_id', 'child_of', pid]);
+        if (cid)    domain.push(['analytic_account_id', 'child_of', cid]);
+        if (zid)    domain.push(['analytic_account_id', 'child_of', zid]);
+        if (seg_id) domain.push(['analytic_account_id', 'child_of', seg_id]);
 
-        // Date filter — all three treasury models expose a `date` field
-        if (this.state.date_from) domain.push(['date', '>=', this.state.date_from]);
-        if (this.state.date_to)   domain.push(['date', '<=', this.state.date_to]);
+        // Date field per model — match what the backend actually uses
+        const DATE_FIELD = {
+            'pos.cheque': 'date',
+            'direct.deposit': 'date',          // ← change to 'deposit_date' if your model uses that
+            'journal.transfer': 'date',
+        }[model] || 'date';
+
+        if (this.state.date_from) domain.push([DATE_FIELD, '>=', this.state.date_from]);
+        if (this.state.date_to)   domain.push([DATE_FIELD, '<=', this.state.date_to]);
 
         // Amount filter
         if (this.state.amount_min) domain.push(['amount', '>=', parseFloat(this.state.amount_min)]);
