@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_company_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="bn_res_company.base_view_company_form_inherit_bn_res_company"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='welfare_api_auth_endpoints']" position="inside">
+                <group>
+                    <group name="sadqa_e_jariya_portal" string="Sadqa e Jariya Portal">
+                        <field name="institution_portal_login_url" />
+                        <field name="create_institution_account_endpoint" />
+                        <field name="institution_application_status_endpoint" />
+                        <field name="assign_institution_inquiry_endpoint" />
+                    </group>
+                    <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template">
+                        <field name="institution_login_whatsapp_template" />
+                        <field name="institution_login_whatsapp_namespace" />
+                        <field name="institution_login_whatsapp_language" />
+                        <div colspan="2" class="text-muted">
+                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} email, {{4}} password.
+                        </div>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
