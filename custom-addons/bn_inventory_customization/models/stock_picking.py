@@ -8,6 +8,9 @@ class StockPicking(models.Model):
     
     bill_amount = fields.Float("Bill Amount")
 
+    # Why this receipt was closed without a backorder, or cancelled
+    receipt_reason_ids = fields.One2many('purchase.receipt.reason', 'picking_id', string='Reasons')
+
     show_create_bill = fields.Boolean(
         string="Show Create Bill Button",
         compute="_compute_show_create_bill"
