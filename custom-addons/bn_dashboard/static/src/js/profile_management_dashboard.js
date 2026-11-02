@@ -20,6 +20,11 @@ export class ProfileManagementDashboard extends Component {
         this.state = useState({
             date_from: savedFilters.date_from || '',
             date_to: savedFilters.date_to || '',
+            comparison_mode: savedFilters.comparison_mode || 'month',
+            comparison_period1: savedFilters.comparison_period1 || '',
+            comparison_period2: savedFilters.comparison_period2 || '',
+            comparison_result: { p1: {}, p2: {}, diffs: {} },
+            
             kpi: { registered: 0, draft: 0, rejected: 0, donors: 0, donees: 0, individuals: 0 },
             chart_regs: { labels: [], data: [] },
             chart_cats: { labels: [], data: [] },
@@ -41,7 +46,11 @@ export class ProfileManagementDashboard extends Component {
         this._charts = {};
         this.is_mounted = false;
 
-        onWillStart(async () => { await this.fetch_data(); });
+        onWillStart(async () => {
+            this._init_comparison_periods();
+            await this.fetch_data();
+            await this.fetch_comparison();
+        });
         onMounted(() => {
             this.is_mounted = true;
             this.render_charts();
@@ -52,6 +61,9 @@ export class ProfileManagementDashboard extends Component {
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
             date_from: this.state.date_from,
             date_to: this.state.date_to,
+            comparison_mode: this.state.comparison_mode,
+            comparison_period1: this.state.comparison_period1,
+            comparison_period2: this.state.comparison_period2,
         }));
     }
 
@@ -86,6 +98,49 @@ export class ProfileManagementDashboard extends Component {
     async applyFilter() {
         this.save_filters();
         await this.fetch_data();
+        await this.fetch_comparison();
+    }
+
+    _init_comparison_periods() {
+        const today = new Date();
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = String(today.getFullYear() - 1);
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = String(today.getFullYear());
+            }
+        } else {
+            const fmt_m = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = fmt_m(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = fmt_m(today);
+            }
+        }
+    }
+
+    async onchange_comparison_mode() {
+        this.state.comparison_period1 = '';
+        this.state.comparison_period2 = '';
+        this._init_comparison_periods();
+        await this.fetch_comparison();
+    }
+
+    async fetch_comparison() {
+        try {
+            const data = await this.orm.call(
+                'profile.management.dashboard',
+                'get_comparison_data',
+                [this.state.comparison_mode,
+                 this.state.comparison_period1,
+                 this.state.comparison_period2]
+            );
+            this.state.comparison_result = data;
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
+        }
     }
 
     clearFilter() {
