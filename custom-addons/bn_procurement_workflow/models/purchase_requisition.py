@@ -157,11 +157,11 @@ class PurchaseRequisition(models.Model):
         #     raise ValidationError(_('This request is not in confirm state.'))
         # if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
         #     raise ValidationError(_('Only a Procurement Manager can approve this request.'))
-        if not self.material_request_id:
-            raise ValidationError(
-                _('This Purchase Requisition has no source Material Request, so there is no '
-                  'requesting department to run Technical Evaluation against. It cannot enter '
-                  'the Procurement workflow.'))
+        # if not self.material_request_id:
+        #     raise ValidationError(
+        #         _('This Purchase Requisition has no source Material Request, so there is no '
+        #           'requesting department to run Technical Evaluation against. It cannot enter '
+        #           'the Procurement workflow.'))
         # The request gets its number here, so that the RFQs sent out next carry it.
         self._assign_reference_number()
         self.write({
