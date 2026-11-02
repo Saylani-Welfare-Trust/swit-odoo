@@ -44,21 +44,22 @@ class DirectDeposit(models.Model):
                 if line.id in existing_line_ids:
                     continue
 
-                slaughter_vals = {
-                    'product_id': line.product_id.id,
-                    'donee_id': deposit.donor_id.id,
-                    'direct_deposit_line_id': line.id,
-                    'quantity': int(line.quantity),
-                    'price': line.amount,
-                    'ref': deposit.name,
-                }
-                slaughter_vals.update(deposit._get_livestock_department_vals(line.product_id))
+                for i in range(int(line.quantity)):
+                    slaughter_vals = {
+                        'product_id': line.product_id.id,
+                        'donee_id': deposit.donor_id.id,
+                        'direct_deposit_line_id': line.id,
+                        'quantity': 1,
+                        'price': line.amount,
+                        'ref': deposit.name,
+                    }
+                    slaughter_vals.update(deposit._get_livestock_department_vals(line.product_id))
 
-                try:
-                    with self.env.cr.savepoint():
-                        slaughter_obj.create(slaughter_vals)
-                except IntegrityError:
-                    continue
+                    try:
+                        with self.env.cr.savepoint():
+                            slaughter_obj.create(slaughter_vals)
+                    except IntegrityError:
+                        continue
 
     def action_clear(self):
         res = super().action_clear()

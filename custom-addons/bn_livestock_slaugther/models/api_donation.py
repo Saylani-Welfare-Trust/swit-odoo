@@ -48,22 +48,22 @@ class APIDonation(models.Model):
                 if slaughter_obj.search_count([('api_donation_item_id', '=', item.id)]):
                     continue
 
-                slaughter_vals = {
-                    'product_id': product.id,
-                    'donee_id': donation.donor_id.id,
-                    'api_donation_item_id': item.id,
-                    'quantity': int(item.qty or 1),
-                    'price': item.total,
-                    'ref': donation.name or donation.import_id,
-                }
-                slaughter_vals.update(donation._get_livestock_department_vals(product))
+                for i in range(int(item.qty or 1)):
+                    slaughter_vals = {
+                        'product_id': product.id,
+                        'donee_id': donation.donor_id.id,
+                        'api_donation_item_id': item.id,
+                        'quantity': 1,
+                        'price': item.total,
+                        'ref': donation.name or donation.import_id,
+                    }
+                    slaughter_vals.update(donation._get_livestock_department_vals(product))
 
-                try:
-                    with self.env.cr.savepoint():
-                        slaughter_obj.create(slaughter_vals)
-                except IntegrityError:
-                    continue
-
+                    try:
+                        with self.env.cr.savepoint():
+                            slaughter_obj.create(slaughter_vals)
+                    except IntegrityError:
+                        continue
 
 class APIDonationWizard(models.TransientModel):
     _inherit = 'api.donation.wizard'

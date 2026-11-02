@@ -98,22 +98,23 @@ class POSOrder(models.Model):
 
                 price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
 
-                slaughter_vals = {
-                    'product_id': line.product_id.id,
-                    'donee_id': order.partner_id.id,
-                    'pos_order_id': order.id,
-                    'pos_order_line_id': line.id,
-                    'quantity': int(line.qty),
-                    'price': price,
-                    'ref': reference,
-                }
-                slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
+                for i in range(int(line.qty)):
+                    slaughter_vals = {
+                        'product_id': line.product_id.id,
+                        'donee_id': order.partner_id.id,
+                        'pos_order_id': order.id,
+                        'pos_order_line_id': line.id,
+                        'quantity': 1,
+                        'price': price,
+                        'ref': reference,
+                    }
+                    slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
 
-                try:
-                    with self.env.cr.savepoint():
-                        slaughter_obj.create(slaughter_vals)
-                except IntegrityError:
-                    continue
+                    try:
+                        with self.env.cr.savepoint():
+                            slaughter_obj.create(slaughter_vals)
+                    except IntegrityError:
+                        continue
 
     @api.model_create_multi
     def create(self, vals_list):
