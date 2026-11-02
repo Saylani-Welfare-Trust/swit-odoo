@@ -166,10 +166,11 @@ class QurbaniSlaughterSlotDemand(models.Model):
             'name': 'Update Demand',
             'res_model': 'update.qurbani.demand',
             'view_mode': 'form',
-            'view_id': self.env.ref('bn_profile_management.microfinance_application_wizard_form').id,
+            'view_id': self.env.ref('bn_qurbani.update_qurbani_demand_view_form').id,
             'target': 'new',
             'context': {
-                'default_qurbani_slaughter_slot_demand_id': self.id,
+                'default_slaughter_slot_demand_id': self.id,
+                'default_demand': self.demand,
             }
         }
 
