@@ -422,6 +422,7 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         default=lambda self: self._default_line_date(),
     )
 
+
     plan_from_date = fields.Date(
         related='monthly_planning_id.from_date',
         string='Plan From Date', store=False,

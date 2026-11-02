@@ -27,6 +27,7 @@
                 <field name="to_date" optional="hide"/>
                 <field name="tab"/>
                 <field name="date"/>
+                <field name="created_by" optional="show"/>
                 <field name="product_id"/>
                 <field name="purchase_requisition_id"/>
                 <field name="on_hand_qty"/>
@@ -51,6 +52,7 @@
                 <field name="from_date"/>
                 <field name="to_date"/>
                 <field name="tab"/>
+                <field name="created_by"/>
 
                 <filter name="filter_linked_pr" string="Linked to PR"
                         domain="[('purchase_requisition_id','!=',False)]"/>
@@ -85,6 +87,8 @@
                             context="{'group_by':'to_date'}"/>
                     <filter name="group_pr" string="Purchase Requisition"
                             context="{'group_by':'purchase_requisition_id'}"/>
+                    <filter name="group_created_by" string="Created By"
+                        context="{'group_by':'created_by'}"/>
                         
                 </group>
             </search>
