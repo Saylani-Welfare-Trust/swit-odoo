@@ -42,6 +42,10 @@ export class DonationBoxDashboard extends Component {
             comp_month_1: fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
             comp_month_2: fmt_month(today),
             comparison_result: { m1_sum: '0.00', m2_sum: '0.00', diff: '0.00', pct: '0.0%', is_positive: true },
+            comparison_mode: savedFilters.comparison_mode || 'month',
+            comp_period1:    savedFilters.comp_period1 || fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
+            comp_period2:    savedFilters.comp_period2 || fmt_month(today),
+            comparison_result: { p1: {}, p2: {}, diffs: {} },
 
             kpi: {
                 draft_boxes: 0, available: 0, installed: 0, closed: 0,
@@ -63,6 +67,7 @@ export class DonationBoxDashboard extends Component {
         onWillStart(async () => {
             await this.fetch_dropdowns();
             await this.fetch_data();
+            this._init_comparison_periods();
             await this.fetch_comparison();
         });
 
@@ -81,8 +86,55 @@ export class DonationBoxDashboard extends Component {
             city_id: this.state.city_id,
             zone_id: this.state.zone_id,
             bunch_id: this.state.bunch_id,
+            comparison_mode: this.state.comparison_mode,
+            comp_period1: this.state.comp_period1,
+            comp_period2: this.state.comp_period2,
         };
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    }
+
+    _init_comparison_periods() {
+        const today = new Date();
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comp_period1) {
+                this.state.comp_period1 = String(today.getFullYear() - 1);
+            }
+            if (!this.state.comp_period2) {
+                this.state.comp_period2 = String(today.getFullYear());
+            }
+        } else {
+            const fmt_m = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!this.state.comp_period1) {
+                this.state.comp_period1 = fmt_m(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            }
+            if (!this.state.comp_period2) {
+                this.state.comp_period2 = fmt_m(today);
+            }
+        }
+    }
+
+    async onchange_comparison_mode() {
+        this.state.comp_period1 = '';
+        this.state.comp_period2 = '';
+        this._init_comparison_periods();
+        await this.fetch_comparison();
+    }
+
+    async fetch_comparison() {
+        try {
+            const data = await this.orm.call('donation.box.dashboard', 'get_comparison_data', [
+                this.state.comparison_mode,
+                this.state.comp_period1,
+                this.state.comp_period2,
+                this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+                this.state.bunch_id ? parseInt(this.state.bunch_id, 10) : null,
+            ]);
+            this.state.comparison_result = data;
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
+        }
     }
 
     async fetch_dropdowns() {

@@ -205,56 +205,111 @@ class DonationBoxDashboard(models.TransientModel):
         }
 
     @api.model
-    def get_comparison_data(self, month_1, month_2, province_id=None, city_id=None, zone_id=None, bunch_id=None):
-        if not month_1 or not month_2:
-            return {'m1_sum': 0, 'm2_sum': 0, 'diff': 0, 'pct': 0, 'is_positive': True}
+    def get_comparison_data(self, mode='month', period1=None, period2=None,
+                            province_id=None, city_id=None, zone_id=None, bunch_id=None):
+        """Return multiple metrics for two periods so the dashboard can compare them."""
+        empty = {
+            'p1': {}, 'p2': {}, 'diffs': {},
+            'mode': mode, 'period1': period1, 'period2': period2,
+        }
 
-        base_col_domain = []
+        def _parse(period_str):
+            if not period_str:
+                return None, None
+            try:
+                if mode == 'month':
+                    year, month = map(int, str(period_str).split('-'))
+                    start = date(year, month, 1)
+                    end = date(year, month, calendar.monthrange(year, month)[1])
+                else:
+                    year = int(period_str)
+                    start = date(year, 1, 1)
+                    end = date(year, 12, 31)
+            except (ValueError, TypeError):
+                return None, None
+            return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
+
+        p1_start, p1_end = _parse(period1)
+        p2_start, p2_end = _parse(period2)
+
+        if not p1_start or not p2_start:
+            return empty
+
+        # --- Base domains (per model, respecting filters) ---
+        col_base = []
         if province_id:
-            base_col_domain.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
+            col_base.append(('donation_box_registration_installation_id.city_id.parent_id', '=', int(province_id)))
         if city_id:
-            base_col_domain.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
+            col_base.append(('donation_box_registration_installation_id.city_id', '=', int(city_id)))
         if zone_id:
-            base_col_domain.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
+            col_base.append(('donation_box_registration_installation_id.zone_id', '=', int(zone_id)))
         if bunch_id:
-            base_col_domain.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
+            col_base.append(('donation_box_registration_installation_id.key_bunch_id', '=', int(bunch_id)))
 
-        def get_month_dates(ym_str):
-            year, month = map(int, ym_str.split('-'))
-            start = date(year, month, 1)
-            end = date(year, month, calendar.monthrange(year, month)[1])
-            return start, end
-
-        start1, end1 = get_month_dates(month_1)
-        start2, end2 = get_month_dates(month_2)
+        reg_base = []
+        if province_id:
+            reg_base.append(('city_id.parent_id', '=', int(province_id)))
+        if city_id:
+            reg_base.append(('city_id', '=', int(city_id)))
+        if zone_id:
+            reg_base.append(('zone_id', '=', int(zone_id)))
+        if bunch_id:
+            reg_base.append(('key_bunch_id', '=', int(bunch_id)))
 
         Collection = self.env['rider.collection']
+        Registration = self.env['donation.box.registration.installation']
+        Complaint = self.env['donation.box.complain.center']
 
-        m1_cols = Collection.search(base_col_domain + [
-            ('date', '>=', start1.strftime('%Y-%m-%d')),
-            ('date', '<=', end1.strftime('%Y-%m-%d')),
-            ('state', 'in', ['donation_submit', 'pending', 'paid'])
-        ])
-        m1_sum = sum(m1_cols.mapped('amount'))
+        def _collect(start, end):
+            cols = Collection.search(col_base + [
+                ('date', '>=', start), ('date', '<=', end),
+                ('state', 'in', ['donation_submit', 'pending', 'paid'])
+            ])
+            return {
+                'collection_amount': sum(cols.mapped('amount')),
+                'collection_count': len(cols),
+            }
 
-        m2_cols = Collection.search(base_col_domain + [
-            ('date', '>=', start2.strftime('%Y-%m-%d')),
-            ('date', '<=', end2.strftime('%Y-%m-%d')),
-            ('state', 'in', ['donation_submit', 'pending', 'paid'])
-        ])
-        m2_sum = sum(m2_cols.mapped('amount'))
+        def _registrations(start, end):
+            return Registration.search_count(reg_base + [
+                ('installation_date', '>=', start),
+                ('installation_date', '<=', end),
+            ])
 
-        diff = m2_sum - m1_sum
-        pct = 0
-        if m1_sum > 0:
-            pct = (diff / m1_sum) * 100
-        elif m2_sum > 0:
-            pct = 100
+        def _complaints(start, end):
+            return Complaint.search_count(col_base + [
+                ('date', '>=', start), ('date', '<=', end),
+            ])
+
+        p1_data = _collect(p1_start, p1_end)
+        p2_data = _collect(p2_start, p2_end)
+
+        p1 = {
+            'collection_amount': p1_data['collection_amount'],
+            'collection_count':  p1_data['collection_count'],
+            'installations':     _registrations(p1_start, p1_end),
+            'complaints':        _complaints(p1_start, p1_end),
+        }
+        p2 = {
+            'collection_amount': p2_data['collection_amount'],
+            'collection_count':  p2_data['collection_count'],
+            'installations':     _registrations(p2_start, p2_end),
+            'complaints':        _complaints(p2_start, p2_end),
+        }
+
+        diffs = {}
+        for key in p1:
+            v1 = p1[key]
+            v2 = p2[key]
+            diff = v2 - v1
+            pct = 0.0
+            if v1 > 0:
+                pct = (diff / v1) * 100
+            elif v2 > 0:
+                pct = 100.0
+            diffs[key] = {'diff': diff, 'pct': pct, 'is_positive': diff >= 0}
 
         return {
-            'm1_sum': "{:,.2f}".format(m1_sum),
-            'm2_sum': "{:,.2f}".format(m2_sum),
-            'diff': "{:+,.2f}".format(diff),
-            'pct': "{:+.1f}%".format(pct),
-            'is_positive': diff >= 0,
+            'p1': p1, 'p2': p2, 'diffs': diffs,
+            'mode': mode, 'period1': period1, 'period2': period2,
         }

@@ -329,51 +329,112 @@
                 </div>
             </div>
 
-            <!-- FULL WIDTH: Manual Comparison -->
-            <div class="row g-3">
+            <!-- FULL WIDTH: Comparison Analysis -->
+            <div class="row g-3 mt-3">
                 <div class="col-lg-12">
-                    <div class="card oh-section-card shadow-sm bg-white">
+                    <div class="card oh-section-card shadow-sm">
                         <div class="oh-card-header border-bottom pb-2 mb-0">
-                            <h4 class="mb-0"><i class="fa fa-balance-scale me-2 text-primary"/>Manual Collection Comparison</h4>
+                            <h4 class="mb-0"><i class="fa fa-balance-scale me-2 text-primary"/>Comparison Analysis</h4>
                         </div>
                         <div class="oh-card-body p-4 bg-light">
-                            <div class="row g-4 align-items-end mb-4">
-                                <div class="col-md-4">
-                                    <label class="form-label fw-bold">Month 1 (Base)</label>
-                                    <input type="month" class="form-control form-control-lg" t-model="state.comp_month_1" t-on-change="fetch_comparison"/>
+
+                            <!-- Controls -->
+                            <div class="row g-3 align-items-end mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold">Compare By</label>
+                                    <select class="form-select" t-model="state.comparison_mode" t-on-change="onchange_comparison_mode">
+                                        <option value="month">Month</option>
+                                        <option value="year">Year</option>
+                                    </select>
                                 </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-bold">Month 2 (Compare to)</label>
-                                    <input type="month" class="form-control form-control-lg" t-model="state.comp_month_2" t-on-change="fetch_comparison"/>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">
+                                        Period 1 <span class="text-muted fw-normal">(Base)</span>
+                                    </label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comp_period1" t-on-change="fetch_comparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comp_period1" t-on-change="fetch_comparison" placeholder="2024"/>
                                 </div>
-                                <div class="col-md-4">
-                                    <button class="btn btn-primary btn-lg w-100" t-on-click="fetch_comparison">
-                                        <i class="fa fa-refresh me-2"/> Compare
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">
+                                        Period 2 <span class="text-muted fw-normal">(Compare to)</span>
+                                    </label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comp_period2" t-on-change="fetch_comparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comp_period2" t-on-change="fetch_comparison" placeholder="2025"/>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" t-on-click="fetch_comparison">
+                                        <i class="fa fa-refresh me-1"/> Compare
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="row g-4 text-center">
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm border-0 bg-white p-4">
-                                        <div class="text-muted fw-bold text-uppercase mb-2">Month 1 Total</div>
-                                        <div class="fs-2 fw-bold text-primary"><t t-esc="state.comparison_result.m1_sum"/></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm border-0 bg-white p-4">
-                                        <div class="text-muted fw-bold text-uppercase mb-2">Month 2 Total</div>
-                                        <div class="fs-2 fw-bold text-primary"><t t-esc="state.comparison_result.m2_sum"/></div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card shadow-sm border-0" t-attf-class="card shadow-sm border-0 {{ state.comparison_result.is_positive ? 'bg-success text-white' : 'bg-danger text-white' }} p-4">
-                                        <div class="fw-bold text-uppercase mb-2 opacity-75">Difference</div>
-                                        <div class="fs-2 fw-bold"><t t-esc="state.comparison_result.diff"/></div>
-                                        <div class="fs-5 fw-bold mt-1"><t t-esc="state.comparison_result.pct"/></div>
-                                    </div>
-                                </div>
+                            <!-- Results table -->
+                            <div class="table-responsive">
+                                <table class="table oh-table mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th class="text-end">Period 1</th>
+                                            <th class="text-end">Period 2</th>
+                                            <th class="text-end">Difference</th>
+                                            <th class="text-end">% Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="cmp" t-value="state.comparison_result"/>
+                                        <t t-foreach="[
+                                            ['collection_amount', 'Collection Amount', 'fa-money text-success'],
+                                            ['collection_count', 'Collection Count', 'fa-list text-info'],
+                                            ['installations', 'Installations', 'fa-building text-primary'],
+                                            ['complaints', 'Complaints', 'fa-wrench text-warning']
+                                        ]" t-as="row" t-key="row_index">
+                                            <tr>
+                                                <td class="fw-bold">
+                                                    <i t-attf-class="fa {{ row[2] }} me-2"/>
+                                                    <t t-esc="row[1]"/>
+                                                </td>
+                                                <td class="text-end fs-5 fw-semibold">
+                                                    <t t-if="row[0] === 'collection_amount'">
+                                                        <t t-esc="(((cmp.p1 || {})[row[0]] || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="(cmp.p1 || {})[row[0]] || 0"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fs-5 fw-semibold">
+                                                    <t t-if="row[0] === 'collection_amount'">
+                                                        <t t-esc="(((cmp.p2 || {})[row[0]] || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="(cmp.p2 || {})[row[0]] || 0"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fw-bold"
+                                                    t-attf-class="text-end fw-bold {{ ((cmp.diffs || {})[row[0]] || {}).is_positive ? 'text-success' : 'text-danger' }}">
+                                                    <t t-if="row[0] === 'collection_amount'">
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff > 0 ? '+' : ''"/>
+                                                        <t t-esc="((((cmp.diffs || {})[row[0]] || {}).diff || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff > 0 ? '+' : ''"/>
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff || 0"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fw-bold"
+                                                    t-attf-class="text-end fw-bold {{ ((cmp.diffs || {})[row[0]] || {}).is_positive ? 'text-success' : 'text-danger' }}">
+                                                    <t t-esc="((cmp.diffs || {})[row[0]] || {}).pct > 0 ? '+' : ''"/>
+                                                    <t t-esc="(((cmp.diffs || {})[row[0]] || {}).pct || 0).toFixed(1)"/>%
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
                             </div>
+
                         </div>
                     </div>
                 </div>
