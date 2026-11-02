@@ -1004,20 +1004,23 @@ class MedicalEquipment(models.Model):
     @api.model
     def get_me_record(self, data):
         """Fetch ME record by name and return product information"""
+        # Strip spaces just in case the barcode scanner added some
+        me_name = str(data.get('name', '')).strip()
+        
         # Search for the ME record
-        me = self.sudo().search([('name', '=', data['name'])], limit=1)
+        me = self.sudo().search([('name', '=', me_name)], limit=1)
         
         if not me:
             return {
                 "status": "error",
-                "body": f"Medical Equipment record with reference {data['name']} not found."
+                "body": f"Medical Equipment record with reference {me_name} not found."
             }
         
-        # Block settlement only if the record is already closed or cancelled
+        # Block settlement only if the record is already closed, cancelled, or refunded
         if me.state in ['closed', 'cancel', 'refund']:
             return {
                 "status": "error",
-                "body": f"Current status of {data['name']} is in a {me.state.replace('_', ' ').capitalize()}. It cannot be settled."
+                "body": f"Current status of {me_name} is {me.state.capitalize()}. It cannot be settled."
             }
         
         # Prepare product data for POS
@@ -1025,6 +1028,10 @@ class MedicalEquipment(models.Model):
         
         # Add regular product lines
         for line in me.medical_equipment_line_ids:
+            # Skip lines that don't have a valid product linked
+            if not line.product_id:
+                continue
+                
             product = line.product_id
             products_data.append({
                 'product_id': product.id,
@@ -1034,6 +1041,13 @@ class MedicalEquipment(models.Model):
                 'default_code': product.default_code,
                 'category': product.categ_id.name if product.categ_id else ''
             })
+            
+        # If the list is still empty, return a very clear error message
+        if not products_data:
+            return {
+                "status": "error",
+                "body": f"No valid products found in {me_name}. Please open the record in the backend and ensure the 'Items' tab has products assigned."
+            }
         
         return {
             'id': me.id,
