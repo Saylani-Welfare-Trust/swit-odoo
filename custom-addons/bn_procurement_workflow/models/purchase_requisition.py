@@ -287,10 +287,12 @@ class PurchaseRequisition(models.Model):
 
     def _is_selecting_rfqs(self):
         """Whether a winning quote can be selected for this requisition. Each
-        product gets its own winner: the first is selected in RFQ Sent, and
-        the others any time after that until the requisition is closed."""
+        product gets its own winner: the first is selected in RFQ Sent - or
+        still in Procurement Manager Approval, while some products are not on
+        an RFQ yet - and the others any time after that until the requisition
+        is closed."""
         self.ensure_one()
-        return self.state == 'rfq_sent' or bool(
+        return self.state in ('procurement_approval', 'rfq_sent') or bool(
             self.selected_rfq_id and self.state not in ('done', 'cancel'))
 
     def action_select_winning_rfq(self, winning_po):
@@ -301,7 +303,7 @@ class PurchaseRequisition(models.Model):
         happen directly on winning_po itself."""
         self.ensure_one()
         if not self._is_selecting_rfqs():
-            raise ValidationError(_('This request is not in RFQ Sent state.'))
+            raise ValidationError(_('A winning quote cannot be selected for this request in its current state.'))
         if not winning_po.is_selected_quote:
             winning_po.write({
                 'is_selected_quote': True,
