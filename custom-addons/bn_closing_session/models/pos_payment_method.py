@@ -31,4 +31,7 @@ class PosPaymentMethod(models.Model):
         help="Account for neutral receivable amounts"
     )
 
+
+    def _is_write_forbidden(self, fields):
+        return False
     
