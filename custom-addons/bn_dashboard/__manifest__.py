@@ -13,7 +13,7 @@
         'views/donation_box_dashboard_views.xml',
         'views/profile_management_dashboard_views.xml',
         'views/pos_order_views.xml',
-        'views/donation_dashboard_views.xml',
+        'views/donation_in_kind_dashboard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
