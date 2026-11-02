@@ -43,6 +43,7 @@ class RiderCollection(models.Model):
     contact_person = fields.Char(related='donation_box_registration_installation_id.contact_person', string="Contact Person", store=True)
     contact_number = fields.Char(related='donation_box_registration_installation_id.contact_no', string="Contact Number", store=True)
     box_location = fields.Char(related='donation_box_registration_installation_id.location', string="Box Location", store=True)
+    pos_receipt_number = fields.Char('POS Receipt Number')
 
     lot_id = fields.Many2one(related='donation_box_registration_installation_id.lot_id', string="Box No.", store=True)
     key_bunch_id = fields.Many2one(related='donation_box_registration_installation_id.key_bunch_id', string="Key Bunch", store=True)
