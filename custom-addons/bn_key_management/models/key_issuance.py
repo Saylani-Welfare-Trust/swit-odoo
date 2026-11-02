@@ -238,6 +238,7 @@ class KeyIssuance(models.Model):
             return {"status": "error", "body": "Please first submit your Collection against %s" % data.get('box_no')}
 
         try:
+            collection.pos_receipt_number = data.get('receipt_number')
             amount = float(data.get('amount'))
         except (TypeError, ValueError):
             return {"status": "error", "body": "Invalid amount for %s" % data.get('box_no')}
