@@ -4,7 +4,6 @@ import re
 from datetime import datetime, timedelta
 from odoo import api, models
 
-
 class PosOrder(models.Model):
     _inherit = 'pos.order'
 
