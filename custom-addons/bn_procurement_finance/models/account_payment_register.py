@@ -80,3 +80,23 @@ class AccountPaymentRegister(models.TransientModel):
             'amount_tax_included': self.amount_tax_included,
         })
         return vals
+    
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        
+        # Auto-fill tax if we are paying a Vendor Bill
+        if self._context.get('active_model') == 'account.move':
+            invoice_ids = self._context.get('active_ids', [])
+            invoices = self.env['account.move'].browse(invoice_ids)
+            
+            if invoices:
+                # Find withholding taxes (usually negative percentages) on the bill lines
+                taxes = invoices.line_ids.tax_ids.filtered(lambda t: t.amount < 0)
+                if taxes:
+                    # Select the first found tax
+                    res['payment_tax_id'] = taxes[0].id
+                    # Set the tax-included amount to the total bill amount
+                    res['amount_tax_included'] = sum(invoices.mapped('amount_total'))
+                    
+        return res
