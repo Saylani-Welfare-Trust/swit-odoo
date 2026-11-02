@@ -51,9 +51,71 @@ export class TreasuryDashboard extends Component {
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             transfers: { count: 0, total_amount: 0, states: {}, state_amounts: {} },
+            comparison_mode: savedFilters.comparison_mode || 'month',
+            comparison_period1: savedFilters.comparison_period1 || '',
+            comparison_period2: savedFilters.comparison_period2 || '',
+            comparison_result: {},
         });
 
-        onWillStart(async () => { await this.fetchData(); });
+        onWillStart(async () => {
+            this._init_comparison_periods();
+            await this.fetchData();
+            await this.fetchComparison();
+        });
+    }
+
+    _init_comparison_periods() {
+        const today = new Date();
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = String(today.getFullYear() - 1);
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = String(today.getFullYear());
+            }
+        } else {
+            const fmt_m = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = fmt_m(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = fmt_m(today);
+            }
+        }
+    }
+
+    async onchange_comparison_mode() {
+        // Reset periods when the mode switches
+        this.state.comparison_period1 = '';
+        this.state.comparison_period2 = '';
+        this._init_comparison_periods();
+        await this.fetchComparison();
+    }
+
+    async fetchComparison() {
+        try {
+            let eff_seg = null;
+            if (this.state.segment_l4) eff_seg = parseInt(this.state.segment_l4, 10);
+            else if (this.state.segment_l3) eff_seg = parseInt(this.state.segment_l3, 10);
+            else if (this.state.segment_l2) eff_seg = parseInt(this.state.segment_l2, 10);
+            else if (this.state.segment_l1) eff_seg = parseInt(this.state.segment_l1, 10);
+
+            const data = await this.env.services.rpc("/treasury/dashboard/comparison", {
+                mode: this.state.comparison_mode,
+                period1: this.state.comparison_period1,
+                period2: this.state.comparison_period2,
+                analytic_account_id: this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+                province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                zone_id: this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+                segment_id: eff_seg,
+                amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
+                amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
+            });
+            this.state.comparison_result = data.models || {};
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
+        }
     }
 
     // Helper to save current filters to sessionStorage
@@ -71,6 +133,9 @@ export class TreasuryDashboard extends Component {
             segment_l4: this.state.segment_l4,
             amount_min: this.state.amount_min,
             amount_max: this.state.amount_max,
+            comparison_mode: this.state.comparison_mode,
+            comparison_period1: this.state.comparison_period1,
+            comparison_period2: this.state.comparison_period2,
         };
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
     }
@@ -193,8 +258,9 @@ export class TreasuryDashboard extends Component {
     }
 
     async applyFilter() {
-        this.save_filters(); // <-- SAVE FILTERS
+        this.save_filters();
         await this.fetchData();
+        await this.fetchComparison();
     }
 
     clearFilter() {

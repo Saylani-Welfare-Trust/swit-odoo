@@ -310,6 +310,149 @@
                 </div>
 
             </div>
+                        <!-- ==================== COMPARISON SECTION ==================== -->
+            <div class="row g-3 mt-3">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card shadow-sm">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-balance-scale me-2 text-primary"/>Comparison Analysis</h4>
+                        </div>
+                        <div class="oh-card-body p-4 bg-light">
+
+                            <!-- Controls -->
+                            <div class="row g-3 align-items-end mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold">Compare By</label>
+                                    <select class="form-select" t-model="state.comparison_mode" t-on-change="onchange_comparison_mode">
+                                        <option value="month">Month</option>
+                                        <option value="year">Year</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">
+                                        Period 1 <span class="text-muted fw-normal">(Base)</span>
+                                    </label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comparison_period1" t-on-change="fetchComparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comparison_period1" t-on-change="fetchComparison" placeholder="2024"/>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">
+                                        Period 2 <span class="text-muted fw-normal">(Compare to)</span>
+                                    </label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comparison_period2" t-on-change="fetchComparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comparison_period2" t-on-change="fetchComparison" placeholder="2025"/>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" t-on-click="fetchComparison">
+                                        <i class="fa fa-refresh me-1"/> Compare
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Results per model -->
+                            <div class="row g-4">
+                                <!-- Cheques -->
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center p-3">
+                                            <h5 class="mb-3"><i class="fa fa-money me-2 text-info"/>Cheques</h5>
+                                            <div class="d-flex justify-content-around mb-3">
+                                                <div>
+                                                    <div class="small text-muted fw-bold">PERIOD 1</div>
+                                                    <div class="fs-5 fw-bold text-primary">
+                                                        <t t-esc="formatCurrency((state.comparison_result.cheques || {}).p1_sum || 0)"/>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="small text-muted fw-bold">PERIOD 2</div>
+                                                    <div class="fs-5 fw-bold text-primary">
+                                                        <t t-esc="formatCurrency((state.comparison_result.cheques || {}).p2_sum || 0)"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div t-attf-class="p-2 rounded {{ (state.comparison_result.cheques || {}).is_positive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
+                                                <span class="fw-bold fs-6">
+                                                    <t t-esc="formatCurrency((state.comparison_result.cheques || {}).diff || 0)"/>
+                                                </span>
+                                                <span class="ms-2">
+                                                    (<t t-esc="((state.comparison_result.cheques || {}).pct || 0).toFixed(1)"/>%)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Deposits -->
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center p-3">
+                                            <h5 class="mb-3"><i class="fa fa-exchange me-2 text-warning"/>Deposits</h5>
+                                            <div class="d-flex justify-content-around mb-3">
+                                                <div>
+                                                    <div class="small text-muted fw-bold">PERIOD 1</div>
+                                                    <div class="fs-5 fw-bold text-primary">
+                                                        <t t-esc="formatCurrency((state.comparison_result.deposits || {}).p1_sum || 0)"/>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="small text-muted fw-bold">PERIOD 2</div>
+                                                    <div class="fs-5 fw-bold text-primary">
+                                                        <t t-esc="formatCurrency((state.comparison_result.deposits || {}).p2_sum || 0)"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div t-attf-class="p-2 rounded {{ (state.comparison_result.deposits || {}).is_positive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
+                                                <span class="fw-bold fs-6">
+                                                    <t t-esc="formatCurrency((state.comparison_result.deposits || {}).diff || 0)"/>
+                                                </span>
+                                                <span class="ms-2">
+                                                    (<t t-esc="((state.comparison_result.deposits || {}).pct || 0).toFixed(1)"/>%)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Transfers -->
+                                <div class="col-md-4">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center p-3">
+                                            <h5 class="mb-3"><i class="fa fa-random me-2 text-success"/>Transfers</h5>
+                                            <div class="d-flex justify-content-around mb-3">
+                                                <div>
+                                                    <div class="small text-muted fw-bold">PERIOD 1</div>
+                                                    <div class="fs-5 fw-bold text-primary">
+                                                        <t t-esc="formatCurrency((state.comparison_result.transfers || {}).p1_sum || 0)"/>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="small text-muted fw-bold">PERIOD 2</div>
+                                                    <div class="fs-5 fw-bold text-primary">
+                                                        <t t-esc="formatCurrency((state.comparison_result.transfers || {}).p2_sum || 0)"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div t-attf-class="p-2 rounded {{ (state.comparison_result.transfers || {}).is_positive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">
+                                                <span class="fw-bold fs-6">
+                                                    <t t-esc="formatCurrency((state.comparison_result.transfers || {}).diff || 0)"/>
+                                                </span>
+                                                <span class="ms-2">
+                                                    (<t t-esc="((state.comparison_result.transfers || {}).pct || 0).toFixed(1)"/>%)
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </t>
 </templates>

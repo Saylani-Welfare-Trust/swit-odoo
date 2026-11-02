@@ -208,3 +208,100 @@ class TreasuryDashboardController(http.Controller):
             'deposits':  self._get_custom_model_stats('direct.deposit',  'amount', 'state',  date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
             'transfers': self._get_custom_model_stats('journal.transfer','amount', 'status', date_from, date_to, analytic_account_id, province_id, city_id, zone_id, segment_id, amount_min, amount_max),
         }
+        
+    # ------------------------------------------------------------------
+    # Comparison route
+    # ------------------------------------------------------------------
+    @http.route('/treasury/dashboard/comparison', type='json', auth='user',
+                methods=['POST'], csrf=False)
+    def get_comparison_data(self, mode='month', period1=None, period2=None,
+                            analytic_account_id=None, province_id=None, city_id=None,
+                            zone_id=None, segment_id=None,
+                            amount_min=None, amount_max=None, **kwargs):
+        from datetime import date
+        import calendar
+
+        def _parse_period(period_str, mode):
+            if not period_str:
+                return None, None
+            try:
+                if mode == 'month':
+                    year, month = map(int, str(period_str).split('-'))
+                    start = date(year, month, 1)
+                    end = date(year, month, calendar.monthrange(year, month)[1])
+                else:  # year
+                    year = int(period_str)
+                    start = date(year, 1, 1)
+                    end = date(year, 12, 31)
+            except (ValueError, TypeError):
+                return None, None
+            return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
+
+        p1_start, p1_end = _parse_period(period1, mode)
+        p2_start, p2_end = _parse_period(period2, mode)
+
+        if not p1_start or not p2_start:
+            return {'models': {}, 'mode': mode, 'period1': period1, 'period2': period2}
+
+        def _sum_model(model_name, amount_field, start, end):
+            if model_name not in request.env:
+                return 0.0
+            Model = request.env[model_name]
+
+            date_field = None
+            for f in ['date', 'transfer_date', 'deposit_date', 'create_date']:
+                if f in Model._fields:
+                    date_field = f
+                    break
+            if not date_field:
+                return 0.0
+
+            domain = [(date_field, '>=', start), (date_field, '<=', end)]
+
+            if analytic_account_id and 'analytic_account_id' in Model._fields:
+                domain.append(('analytic_account_id', '=', int(analytic_account_id)))
+            if province_id and 'analytic_account_id' in Model._fields:
+                domain.append(('analytic_account_id', 'child_of', int(province_id)))
+            if city_id and 'analytic_account_id' in Model._fields:
+                domain.append(('analytic_account_id', 'child_of', int(city_id)))
+            if zone_id and 'analytic_account_id' in Model._fields:
+                domain.append(('analytic_account_id', 'child_of', int(zone_id)))
+            if segment_id and 'analytic_account_id' in Model._fields:
+                domain.append(('analytic_account_id', 'child_of', int(segment_id)))
+
+            if amount_field in Model._fields:
+                if amount_min is not None:
+                    domain.append((amount_field, '>=', float(amount_min)))
+                if amount_max is not None:
+                    domain.append((amount_field, '<=', float(amount_max)))
+
+            try:
+                return sum(Model.search(domain).mapped(amount_field))
+            except Exception:
+                return 0.0
+
+        result = {}
+        for key, model_name in [
+            ('cheques',   'pos.cheque'),
+            ('deposits',  'direct.deposit'),
+            ('transfers', 'journal.transfer'),
+        ]:
+            if model_name not in request.env:
+                continue
+            p1_sum = _sum_model(model_name, 'amount', p1_start, p1_end)
+            p2_sum = _sum_model(model_name, 'amount', p2_start, p2_end)
+            diff = p2_sum - p1_sum
+            pct = 0.0
+            if p1_sum > 0:
+                pct = (diff / p1_sum) * 100
+            elif p2_sum > 0:
+                pct = 100.0
+            result[key] = {
+                'p1_sum': p1_sum,
+                'p2_sum': p2_sum,
+                'diff': diff,
+                'pct': pct,
+                'is_positive': diff >= 0,
+            }
+
+        return {'models': result, 'mode': mode, 'period1': period1, 'period2': period2}
