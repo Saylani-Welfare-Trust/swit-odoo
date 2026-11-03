@@ -57,12 +57,8 @@ class DonationInKindDashboard(models.Model):
             domain.append(('create_date', '<=', date_to + ' 23:59:59'))
         # --- NEW: Location Restriction ---
         user = self.env.user
-        if not user.has_group('base.group_system'):
-            allowed_analytic_ids = user.get_allowed_analytic_ids()
-            if allowed_analytic_ids:
-                domain.append(('analytical_account_id', 'in', allowed_analytic_ids))
-            elif user.allowed_location_ids or user.allowed_warehouse_ids:
-                domain.append(('id', '=', 0))
+        if user.allowed_location_ids and not user.has_group('base.group_system'):
+            domain.append(('analytical_account_id', 'in', user.allowed_location_ids.ids))
 
         if analytic_id:
             domain.append(('analytical_account_id', '=', int(analytic_id)))

@@ -105,12 +105,8 @@ class TreasuryDashboardController(http.Controller):
 
         # --- NEW: Location Restriction ---
         user = request.env.user
-        if not user.has_group('base.group_system'):
-            allowed_analytic_ids = user.get_allowed_analytic_ids()
-            if allowed_analytic_ids:
-                base_domain.append(('analytic_account_id', 'in', allowed_analytic_ids))
-            elif user.allowed_location_ids or user.allowed_warehouse_ids:
-                base_domain.append(('id', '=', 0))
+        if user.allowed_location_ids and not user.has_group('base.group_system'):
+            base_domain.append(('analytic_account_id', 'in', user.allowed_location_ids.ids))
 
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try:
@@ -268,12 +264,8 @@ class TreasuryDashboardController(http.Controller):
             domain = [(date_field, '>=', start), (date_field, '<=', end)]
             
             user = request.env.user
-            if not user.has_group('base.group_system'):
-                allowed_analytic_ids = user.get_allowed_analytic_ids()
-                if allowed_analytic_ids:
-                    domain.append(('analytic_account_id', 'in', allowed_analytic_ids))
-                elif user.allowed_location_ids or user.allowed_warehouse_ids:
-                    domain.append(('id', '=', 0))
+            if user.allowed_location_ids and not user.has_group('base.group_system'):
+                domain.append(('analytic_account_id', 'in', user.allowed_location_ids.ids))
 
             if analytic_account_id and 'analytic_account_id' in Model._fields:
                 domain.append(('analytic_account_id', '=', int(analytic_account_id)))

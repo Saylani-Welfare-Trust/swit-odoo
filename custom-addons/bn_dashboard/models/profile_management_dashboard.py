@@ -1,14 +1,27 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
 import logging
-import calendar
-from datetime import date
 
 _logger = logging.getLogger(__name__)
 
 class ProfileManagementDashboard(models.TransientModel):
     _name = 'profile.management.dashboard'
     _description = 'Profile Management Dashboard'
+
+    @api.model
+    def get_dashboard_data(self, date_from=None, date_to=None):
+        try:
+            return self._get_dashboard_data(date_from, date_to)
+        except Exception as e:
+            _logger.error(f"Dashboard Critical Error: {e}", exc_info=True)
+            return {
+                'kpi': {'registered': 0, 'draft': 0, 'rejected': 0, 'donors': 0, 'donees': 0, 'individuals': 0},
+                'chart_regs': {'labels': [], 'data': []},
+                'chart_cats': {'labels': [], 'data': []},
+                'pos_top_donors': [], 'box_top_donors': [], 'home_top_donors': [], 
+                'import_top_donors': [], 'online_top_donors': [], 'in_kind_top_donors': [],
+                'welfare_top_donees': [], 'microfinance_top_donees': [], 'medical_top_donees': []
+            }
 
     def _get_dashboard_data(self, date_from, date_to):
         domain = []
@@ -20,12 +33,7 @@ class ProfileManagementDashboard(models.TransientModel):
         # Note: You can only restrict models that have an analytic_account_id or similar link
         # For Partners, it might be difficult. For transactions (pos.order, welfare.line), it's easier.
         user = self.env.user
-        if not user.has_group('base.group_system'):
-            allowed_locs = user.get_allowed_analytic_ids()
-            if not allowed_locs and (user.allowed_location_ids or user.allowed_warehouse_ids):
-                allowed_locs = [0] # Force empty results if locations exist but don't map to analytic accounts
-        else:
-            allowed_locs = []
+        allowed_locs = user.allowed_location_ids.ids if user.allowed_location_ids and not user.has_group('base.group_system') else []
         
         def safe_count(model, dom):
             try: return model.search_count(dom)
@@ -271,7 +279,8 @@ class ProfileManagementDashboard(models.TransientModel):
     @api.model
     def get_comparison_data(self, mode='month', period1=None, period2=None):
         """Return KPI counts for two periods so the dashboard can compare them."""
-        
+        import calendar
+        from datetime import date
 
         def _parse_period(period_str, mode):
             if not period_str:

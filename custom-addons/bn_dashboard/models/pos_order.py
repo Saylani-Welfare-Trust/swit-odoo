@@ -110,13 +110,9 @@ class PosOrder(models.Model):
 
         # --- NEW: Location Restriction ---
         user = self.env.user
-        if not user.has_group('base.group_system'):
-            allowed_analytic_ids = user.get_allowed_analytic_ids()
-            if allowed_analytic_ids:
-                domain.append(('config_id.analytic_account_id', 'in', allowed_analytic_ids))
-            elif user.allowed_location_ids or user.allowed_warehouse_ids:
-                # User has assigned locations, but none map to an analytic account -> show nothing
-                domain.append(('id', '=', 0))
+        # If user has assigned locations and is not a superuser, restrict data
+        if user.allowed_location_ids and not user.has_group('base.group_system'):
+            domain.append(('config_id.analytic_account_id', 'in', user.allowed_location_ids.ids))
         # ---------------------------------
 
         if province_id or city_id or zone_id or segment_id or segment_type:
