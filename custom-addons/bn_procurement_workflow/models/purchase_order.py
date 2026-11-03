@@ -102,7 +102,8 @@ class PurchaseOrder(models.Model):
         # Inbox, so the message shows in Discuss rather than going out as one more
         # email. sudo: whoever triggers it need not be allowed to edit other users.
         user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
-        self.message_notify(
+        # mail_notify_author: also sent when the approver is the one who selected the quote.
+        self.with_context(mail_notify_author=True).message_notify(
             body=_(
                 'RFQ %(rfq)s needs your CXO approval (amount: %(currency)s %(amount).2f).'
             ) % {'rfq': self.display_name, 'currency': self.currency_id.name, 'amount': self.amount_total},

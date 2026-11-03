@@ -156,16 +156,14 @@ class PurchaseRequisition(models.Model):
 
     def _notify_assigned_user(self):
         """A message in the assigned employee's Discuss inbox: the request now
-        waits for them to create its RFQs. Not sent to someone assigning
-        themselves."""
+        waits for them to create its RFQs. Also sent to someone assigning
+        themselves (mail_notify_author: Odoo leaves the author out otherwise)."""
         for requisition in self:
             user = requisition.assigned_user_id
-            if user == self.env.user:
-                continue
             # Inbox, so the message shows in Discuss rather than as an email.
             # sudo: whoever assigns need not be allowed to edit other users.
             user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
-            requisition.message_notify(
+            requisition.with_context(mail_notify_author=True).message_notify(
                 body=_('Purchase Request %(request)s has been assigned to you by %(user)s to create its RFQs.',
                        request=requisition.display_name, user=self.env.user.display_name),
                 partner_ids=user.partner_id.ids,
