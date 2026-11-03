@@ -151,16 +151,23 @@
                             <field name="microfinance_line_ids" readonly="1">
                                 <tree>
                                     <field name="installment_no" />
+                                    <!-- ADDED PRODUCT FIELD HERE -->
+                                    <field name="product_id" string="Product" />
+                                    
                                     <field name="payment_type" string = "Payment Type"/>
                                     <field name="due_date" />
-                                    <field name="amount" />
-                                    <field name="paid_amount" />
+                                    
+                                    <!-- ADDED sum= to create the footer TOTAL row -->
+                                    <field name="amount" sum="Total Amount" />
+                                    <field name="paid_amount" sum="Total Paid" />
                                     <field name="paid_date" />
-                                    <field name="remaining_amount" />
+                                    <field name="remaining_amount" sum="Total Remaining" />
+                                    
                                     <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
                                 </tree>
                             </field>
                         </page>
+
                         <page name="pdc" string="Post Dated Cheque" invisible="state not in ['done', 'reject'] or in_recovery">
                             <field name="microfinance_pdc_line_ids" edit="1" delete="1" create="1" readonly="0">
                                 <tree editable="top">
