@@ -11,6 +11,6 @@
               id="pos_order_menu"
               parent="menu_dashboard_root"
               sequence="5"
-              groups="bn_dashboard.group_bn_dashboard_user" 
+              groups="bn_dashboard.group_pos_order_dashboard_user" 
               action="pos_order_action"/>
 </odoo>
