@@ -39,17 +39,14 @@ class DonationBoxDashboard(models.TransientModel):
         
         # --- NEW: Location Restriction ---
         user = self.env.user
-        if user.allowed_location_ids and not user.has_group('base.group_system'):
-            allowed_ids = user.allowed_location_ids.ids
-            
-            # 1. Filter Collections (through registration)
-            base_col_domain.append(('donation_box_registration_installation_id.city_id', 'in', allowed_ids))
-            
-            # 2. Filter Registrations (directly on the model)
-            reg_location_domain.append(('city_id', 'in', allowed_ids))
-            
-            # 3. Filter Complaints (through registration)
-            # We will reuse base_col_domain for comp_domain
+        if not user.has_group('base.group_system'):
+            allowed_analytic_ids = user.get_allowed_analytic_ids()
+            if allowed_analytic_ids:
+                base_col_domain.append(('donation_box_registration_installation_id.city_id', 'in', allowed_analytic_ids))
+                reg_location_domain.append(('city_id', 'in', allowed_analytic_ids))
+            elif user.allowed_location_ids or user.allowed_warehouse_ids:
+                base_col_domain.append(('id', '=', 0))
+                reg_location_domain.append(('id', '=', 0))
         # ---------------------------------
 
         if province_id:
