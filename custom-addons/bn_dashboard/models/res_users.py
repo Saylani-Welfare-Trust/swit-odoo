@@ -14,9 +14,7 @@ class ResUsers(models.Model):
             model_name = self.allowed_location_ids._name
             if model_name == 'stock.location':
                 if 'analytic_account_id' in self.env['stock.location']._fields:
-                    # --- FIX: Use child_of to include all sub-branches ---
-                    locs = self.env['stock.location'].search([('id', 'child_of', self.allowed_location_ids.ids)])
-                    allowed_ids = locs.mapped('analytic_account_id').ids
+                    allowed_ids = self.allowed_location_ids.mapped('analytic_account_id').ids
             elif model_name == 'account.analytic.account':
                 allowed_ids = self.allowed_location_ids.ids
         
