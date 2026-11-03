@@ -22,12 +22,13 @@
             <xpath expr="//header/button[2]" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
-            <!-- New Quotation and Close are only offered on a draft request -->
+            <!-- Odoo's own New Quotation and Close are never offered: RFQs come from the
+                 Vendor Selection Wizard, and the request closes with its last Purchase Order -->
             <xpath expr="//header/button[1]" position="attributes">
-                <attribute name="invisible">state != 'draft'</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//header/button[@name='action_done']" position="attributes">
-                <attribute name="invisible">state != 'draft'</attribute>
+                <attribute name="invisible">1</attribute>
             </xpath>
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_material_request" type="object"
