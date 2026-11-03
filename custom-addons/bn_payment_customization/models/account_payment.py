@@ -16,19 +16,27 @@ class AccountPayment(models.Model):
 
     
     ibft_status = fields.Selection(selection=IBFT_STATUS, string="IBFT Status", default="pending", tracking=True)
-    
-    
-    def action_confirm_ibft(self):
-        self.ensure_one()
 
-        self.ibft_status = "success"
 
+    def action_ibft_success(self):
+
+        if not self:
+            return False
+
+        # Update all selected payment statuses
+        self.write({
+            'ibft_status': 'success'
+        })
+
+        # Generate Excel
         output = io.BytesIO()
 
-        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+        workbook = xlsxwriter.Workbook(output, {
+            'in_memory': True
+        })
+
         worksheet = workbook.add_worksheet('Payments')
 
-        # Excel Headers (same as your provided format)
         headers = [
             'Amount Signed',
             'Recipient Bank Account/Account Holder Name',
@@ -40,31 +48,34 @@ class AccountPayment(models.Model):
         header_format = workbook.add_format({
             'bold': True,
             'border': 1,
-            'text_wrap': True,
+            'align': 'center',
             'valign': 'vcenter',
+            'text_wrap': True,
         })
 
         for col, header in enumerate(headers):
             worksheet.write(0, col, header, header_format)
 
-        # Column widths
-        worksheet.set_column(0, 0, 18)
+        worksheet.set_column(0, 0, 20)
         worksheet.set_column(1, 1, 40)
         worksheet.set_column(2, 2, 35)
-        worksheet.set_column(3, 3, 35)
+        worksheet.set_column(3, 3, 30)
         worksheet.set_column(4, 4, 25)
 
-        # Populate selected payment records
+        # Populate all selected payments
         for row, payment in enumerate(self, start=1):
 
-            worksheet.write(row, 0, payment.amount_signed or 0)
+            worksheet.write_number(
+                row, 0,
+                payment.amount_signed or 0
+            )
 
             worksheet.write(
                 row, 1,
                 payment.partner_bank_id.acc_holder_name or ''
             )
 
-            worksheet.write(
+            worksheet.write_string(
                 row, 2,
                 payment.partner_bank_id.acc_number or ''
             )
@@ -82,18 +93,21 @@ class AccountPayment(models.Model):
         workbook.close()
         output.seek(0)
 
-        # Create downloadable Excel attachment
+        # Create Excel attachment
         attachment = self.env['ir.attachment'].create({
             'name': 'IBFT_Success_Payments.xlsx',
             'type': 'binary',
             'datas': base64.b64encode(output.read()),
-            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'mimetype': (
+                'application/vnd.openxmlformats-officedocument'
+                '.spreadsheetml.sheet'
+            ),
             'res_model': self._name,
-            'res_id': self.id,
+            'res_id': self[0].id,
         })
 
         return {
             'type': 'ir.actions.act_url',
-            'url': f'/web/content/{attachment.id}?download=true',
+            'url': '/web/content/%s?download=true' % attachment.id,
             'target': 'self',
         }
