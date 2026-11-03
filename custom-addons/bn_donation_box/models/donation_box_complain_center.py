@@ -28,7 +28,8 @@ RAISABLE_BOX_STATUS = ('missing', 'broken', 'robbery', 'return')
 class DonationBoxComplain(models.Model):
     _name = 'donation.box.complain.center'
     _description = 'Donation Box Complain Center'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    # _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
     _bn_guarded_fields = ('status',)
 
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
