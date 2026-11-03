@@ -5,24 +5,13 @@
         <field name="model">account.payment.register</field>
         <field name="inherit_id" ref="account.view_account_payment_register_form"/>
         <field name="arch" type="xml">
-            
-            <!-- 1. Lock the Amount field if it's an advance deduction -->
+            <!-- The bill of a Purchase Order is paid for what is still due on it, advance already deducted -->
             <xpath expr="//div[@name='amount_div']/field[@name='amount']" position="attributes">
                 <attribute name="readonly">amount_locked</attribute>
             </xpath>
-            
-            <!-- 2. Add the invisible lock flag to the div -->
             <xpath expr="//div[@name='amount_div']" position="inside">
                 <field name="amount_locked" invisible="1"/>
             </xpath>
-
-            <!-- 3. Place the tax fields on a new row below the Amount -->
-            <xpath expr="//div[@name='amount_div']" position="after">
-                <field name="amount_tax_included" placeholder="Total (Tax Excluded)" readonly="1"/>
-                <field name="payment_tax_id" options="{'no_create': True}"/>
-                <field name="payment_tax_amount" invisible="not payment_tax_id"/>
-            </xpath>
-
         </field>
     </record>
 </odoo>
