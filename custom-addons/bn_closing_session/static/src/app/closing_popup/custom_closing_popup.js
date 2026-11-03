@@ -169,6 +169,11 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         };
     }
 
+    getBankName(bankId) {
+        const bank = (this.props.bank_list || []).find((b) => String(b.id) === String(bankId));
+        return bank ? bank.name : "";
+    }
+
     _getTypeLabel(type) {
         if (type === "restricted") return this.pos.company.restricted_category;
         if (type === "unrestricted") return this.pos.company.unrestricted_category;

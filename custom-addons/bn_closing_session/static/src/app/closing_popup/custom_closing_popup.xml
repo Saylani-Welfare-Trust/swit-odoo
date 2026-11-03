@@ -115,7 +115,7 @@
                                             <t t-else="">
                                                 <td colspan="3">----</td>
                                             </t>
-                                            <td t-esc="line?.bank||''"/>
+                                            <td t-esc="getBankName(line?.bank)"/>
                                             <td t-esc="line?.ref||''"/>
                                             <t t-if="shouldShowSlipHeaders()">
                                                 <td t-if="shouldShowSlipInput(props.default_cash_details)" t-esc="formatCurrencyNeutral(line?.amount)"/>
@@ -215,7 +215,7 @@
                                             <t t-else="">
                                                 <td colspan="3">----</td>
                                             </t>
-                                            <td t-esc="line?.bank||''"/>
+                                            <td t-esc="getBankName(line?.bank)"/>
                                             <td t-esc="line?.ref||''"/>
                                             <t t-if="shouldShowSlipHeaders()">
                                                 <td t-if="shouldShowSlipInput(pm)" t-esc="formatCurrencyNeutral(line?.amount)"/>
