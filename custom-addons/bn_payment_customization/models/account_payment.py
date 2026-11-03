@@ -18,7 +18,7 @@ class AccountPayment(models.Model):
     ibft_status = fields.Selection(selection=IBFT_STATUS, string="IBFT Status", default="pending", tracking=True)
     
     
-    def action_ibft_success(self):
+    def action_confirm_ibft(self):
         self.ensure_one()
 
         self.ibft_status = "success"
