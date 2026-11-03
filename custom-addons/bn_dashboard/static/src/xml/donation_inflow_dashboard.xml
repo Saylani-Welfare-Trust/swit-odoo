@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="DonationInflowDashboard">
+        <div class="pos-dash-v2">
+
+            <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fa fa-download me-2 text-primary"/>Donation Inflows Dashboard</h2>
+                    <p>Overview of File Imports, Fee Collections, and API Donations</p>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="card oh-filter-card mb-4 shadow-sm bg-white">
+                <div class="card-body p-3">
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-xl-3 col-lg-3 col-md-4">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" t-model="state.date_from" t-on-change="applyFilter"/>
+                        </div>
+                        <div class="col-xl-3 col-lg-3 col-md-4">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" t-model="state.date_to" t-on-change="applyFilter"/>
+                        </div>
+                        <div class="col-xl-6 col-lg-6 col-md-4 d-flex justify-content-end gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" t-on-click="clearFilter">
+                                <i class="fa fa-times me-1"/>Clear
+                            </button>
+                            <button class="btn btn-sm btn-primary" t-on-click="applyFilter">
+                                <i class="fa fa-refresh me-1"/>Refresh
+                            </button>
+                            <div class="d-flex gap-1 ms-2">
+                                <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('today')">Today</button>
+                                <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('this_month')">This Month</button>
+                                <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('last_month')">Last Month</button>
+                                <button class="btn btn-sm btn-outline-primary" t-on-click="() => this.setQuickDate('this_year')">This Year</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI tiles -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card bg-primary text-white p-3 rounded shadow-sm h-100">
+                        <i class="fa fa-money mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">Total Amount</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.total_amount"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card bg-info text-white p-3 rounded shadow-sm h-100">
+                        <i class="fa fa-list mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">Total Records</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.total_records"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card bg-success text-white p-3 rounded shadow-sm h-100">
+                        <i class="fa fa-users mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">Unique Donors</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.unique_donors"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card bg-secondary text-white p-3 rounded shadow-sm h-100">
+                        <i class="fa fa-upload mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">File Donations</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.file_amount"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card bg-warning text-dark p-3 rounded shadow-sm h-100">
+                        <i class="fa fa-graduation-cap mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">Fee Collections</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.fee_amount"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card bg-dark text-white p-3 rounded shadow-sm h-100">
+                        <i class="fa fa-globe mb-2 fs-4"/>
+                        <div class="small text-uppercase fw-bold opacity-75">API Donations</div>
+                        <div class="fs-4 fw-bold mt-1"><t t-esc="state.kpi.api_amount"/></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card shadow-sm bg-white">
+                        <div class="oh-card-header border-bottom pb-2 mb-3">
+                            <h4 class="mb-0"><i class="fa fa-line-chart me-2 text-primary"/>Monthly Inflow Trend</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap" style="height: 300px;">
+                                <canvas id="di_chart_monthly"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card oh-section-card shadow-sm bg-white">
+                        <div class="oh-card-header border-bottom pb-2 mb-3">
+                            <h4 class="mb-0"><i class="fa fa-pie-chart me-2 text-primary"/>Inflow by Source</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap" style="height: 300px;">
+                                <canvas id="di_chart_source"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card shadow-sm bg-white">
+                        <div class="oh-card-header border-bottom pb-2 mb-0">
+                            <h4 class="mb-0"><i class="fa fa-history me-2 text-primary"/>Recent Inflows</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover oh-table mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Reference</th>
+                                        <th>Donor</th>
+                                        <th>Type</th>
+                                        <th class="text-end">Amount</th>
+                                        <th class="text-end">State</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.recent" t-as="r" t-key="r_index">
+                                        <tr>
+                                            <td><t t-esc="r.date"/></td>
+                                            <td class="fw-bold"><t t-esc="r.name"/></td>
+                                            <td><t t-esc="r.donor"/></td>
+                                            <td>
+                                                <span t-attf-class="badge {{ r.type === 'File Donation' ? 'bg-secondary' : (r.type === 'Fee Collection' ? 'bg-warning text-dark' : 'bg-dark') }}">
+                                                    <t t-esc="r.type"/>
+                                                </span>
+                                            </td>
+                                            <td class="text-end fw-semibold"><t t-esc="r.amount.toLocaleString('en-US', {minimumFractionDigits: 2})"/></td>
+                                            <td class="text-end">
+                                                <span t-attf-class="badge {{ r.state === 'posted' ? 'bg-success' : 'bg-info' }}">
+                                                    <t t-esc="r.state.toUpperCase()"/>
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.recent.length">
+                                        <tr><td colspan="6" class="text-center text-muted py-3">No records found</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison -->
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card shadow-sm">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-balance-scale me-2 text-primary"/>Comparison Analysis</h4>
+                        </div>
+                        <div class="oh-card-body p-4 bg-light">
+                            <div class="row g-3 align-items-end mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold">Compare By</label>
+                                    <select class="form-select" t-model="state.comparison_mode" t-on-change="onchange_comparison_mode">
+                                        <option value="month">Month</option>
+                                        <option value="year">Year</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Period 1 <span class="text-muted fw-normal">(Base)</span></label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comparison_period1" t-on-change="fetch_comparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comparison_period1" t-on-change="fetch_comparison" placeholder="2024"/>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Period 2 <span class="text-muted fw-normal">(Compare to)</span></label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comparison_period2" t-on-change="fetch_comparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comparison_period2" t-on-change="fetch_comparison" placeholder="2025"/>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" t-on-click="fetch_comparison">
+                                        <i class="fa fa-refresh me-1"/> Compare
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table oh-table mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th class="text-end">Period 1</th>
+                                            <th class="text-end">Period 2</th>
+                                            <th class="text-end">Difference</th>
+                                            <th class="text-end">% Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="cmp" t-value="state.comparison_result"/>
+                                        <t t-foreach="[
+                                            ['amount',  'Total Amount',  'fa-money text-primary',   'money'],
+                                            ['records', 'Total Records', 'fa-list text-info',      'count'],
+                                            ['donors',  'Unique Donors', 'fa-users text-success',   'count']
+                                        ]" t-as="row" t-key="row_index">
+                                            <tr>
+                                                <td class="fw-bold">
+                                                    <i t-attf-class="fa {{ row[2] }} me-2"/>
+                                                    <t t-esc="row[1]"/>
+                                                </td>
+                                                <td class="text-end fs-5 fw-semibold">
+                                                    <t t-if="row[3] === 'money'">
+                                                        <t t-esc="(((cmp.p1 || {})[row[0]] || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="(cmp.p1 || {})[row[0]] || 0"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fs-5 fw-semibold">
+                                                    <t t-if="row[3] === 'money'">
+                                                        <t t-esc="(((cmp.p2 || {})[row[0]] || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="(cmp.p2 || {})[row[0]] || 0"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fw-bold" t-attf-class="text-end fw-bold {{ ((cmp.diffs || {})[row[0]] || {}).is_positive ? 'text-success' : 'text-danger' }}">
+                                                    <t t-if="row[3] === 'money'">
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff > 0 ? '+' : ''"/>
+                                                        <t t-esc="((((cmp.diffs || {})[row[0]] || {}).diff || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff > 0 ? '+' : ''"/>
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff || 0"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fw-bold" t-attf-class="text-end fw-bold {{ ((cmp.diffs || {})[row[0]] || {}).is_positive ? 'text-success' : 'text-danger' }}">
+                                                    <t t-esc="((cmp.diffs || {})[row[0]] || {}).pct > 0 ? '+' : ''"/>
+                                                    <t t-esc="(((cmp.diffs || {})[row[0]] || {}).pct || 0).toFixed(1)"/>%
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </t>
+</templates>

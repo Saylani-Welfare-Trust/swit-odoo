@@ -36,4 +36,10 @@
         <field name="name">Dashboard / Donation In Kind</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
+
+    <!-- 6. Donation Inflows Dashboard Group -->
+    <record id="group_donation_inflow_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation Inflows</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
 </odoo>

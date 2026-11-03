@@ -14,6 +14,7 @@
         'views/profile_management_dashboard_views.xml',
         'views/pos_order_views.xml',
         'views/donation_in_kind_dashboard_views.xml',
+        'views/donation_inflow_dashboard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -25,6 +26,8 @@
             'bn_dashboard/static/src/xml/profile_management_dashboard.xml',
             'bn_dashboard/static/src/js/donation_in_kind_dashboard.js',
             'bn_dashboard/static/src/xml/donation_in_kind_dashboard.xml',
+            'bn_dashboard/static/src/js/donation_inflow_dashboard.js',
+            'bn_dashboard/static/src/xml/donation_inflow_dashboard.xml',
             'bn_dashboard/static/src/js/pos_dashboard.js',
             'bn_dashboard/static/src/xml/pos_dashboard.xml',
             'bn_dashboard/static/src/css/pos_dashboard.css',
