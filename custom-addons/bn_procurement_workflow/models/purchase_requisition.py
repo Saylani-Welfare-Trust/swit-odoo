@@ -137,12 +137,40 @@ class PurchaseRequisition(models.Model):
         for vals in vals_list:
             if vals.get('assigned_employee_id'):
                 vals['assigned_by_id'] = self.env.uid
-        return super().create(vals_list)
+        requisitions = super().create(vals_list)
+        requisitions.filtered('assigned_user_id')._notify_assigned_user()
+        return requisitions
 
     def write(self, vals):
+        old_users = {}
         if 'assigned_employee_id' in vals:
             vals = dict(vals, assigned_by_id=self.env.uid if vals['assigned_employee_id'] else False)
-        return super().write(vals)
+            old_users = {requisition.id: requisition.assigned_user_id for requisition in self}
+        res = super().write(vals)
+        if 'assigned_employee_id' in vals:
+            self.filtered(
+                lambda requisition: requisition.assigned_user_id
+                and requisition.assigned_user_id != old_users.get(requisition.id)
+            )._notify_assigned_user()
+        return res
+
+    def _notify_assigned_user(self):
+        """A message in the assigned employee's Discuss inbox: the request now
+        waits for them to create its RFQs. Not sent to someone assigning
+        themselves."""
+        for requisition in self:
+            user = requisition.assigned_user_id
+            if user == self.env.user:
+                continue
+            # Inbox, so the message shows in Discuss rather than as an email.
+            # sudo: whoever assigns need not be allowed to edit other users.
+            user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
+            requisition.message_notify(
+                body=_('Purchase Request %(request)s has been assigned to you by %(user)s to create its RFQs.',
+                       request=requisition.display_name, user=self.env.user.display_name),
+                partner_ids=user.partner_id.ids,
+                subject=_('Purchase Request Assigned'),
+            )
 
     def action_create_multi_vendor_rfqs(self):
         self._check_rfq_creator()

@@ -45,11 +45,13 @@ class PurchaseOrder(models.Model):
     # ------------------------------------------------------------------
     def _send_cxo_approval_email(self):
         """Send the 'please approve' email to the assigned approver's
-        work_email. Silently skips if no approver / no email."""
+        work_email, and a message in their Discuss inbox. Silently skips if
+        no approver / no email."""
         self.ensure_one()
         approver = self.designated_cxo_approver_id
         if not approver:
             return
+        self._notify_cxo_approver_in_discuss(approver)
         if not approver.work_email:
             self.message_post(body=_(
                 'No work email set for the assigned CXO approver (%s) - '
@@ -88,6 +90,25 @@ class PurchaseOrder(models.Model):
             'name': approver.employee_id.name or '',
             'email': approver.work_email,
         })
+
+    def _notify_cxo_approver_in_discuss(self, approver):
+        self.ensure_one()
+        user = approver.user_id
+        if not user:
+            self.message_post(body=_(
+                'No user linked to the assigned CXO approver (%s) - Discuss notification skipped.'
+            ) % (approver.employee_id.name or approver.display_name))
+            return
+        # Inbox, so the message shows in Discuss rather than going out as one more
+        # email. sudo: whoever triggers it need not be allowed to edit other users.
+        user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
+        self.message_notify(
+            body=_(
+                'RFQ %(rfq)s needs your CXO approval (amount: %(currency)s %(amount).2f).'
+            ) % {'rfq': self.display_name, 'currency': self.currency_id.name, 'amount': self.amount_total},
+            partner_ids=user.partner_id.ids,
+            subject=_('CXO Approval Required'),
+        )
 
     # ------------------------------------------------------------------
     # Trigger the email whenever the approver is (re)assigned - or, for an
