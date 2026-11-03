@@ -150,10 +150,7 @@
                             </div>
                             <field name="microfinance_line_ids" readonly="1">
                                 <tree>
-                                    <field name="installment_no" />
-                                    <!-- ADDED PRODUCT FIELD HERE -->
-                                    <field name="product_id" string="Product" />
-                                    
+                                    <field name="installment_no" />                                    
                                     <field name="payment_type" string = "Payment Type"/>
                                     <field name="due_date" />
                                     
