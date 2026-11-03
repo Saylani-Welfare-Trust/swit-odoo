@@ -158,6 +158,7 @@
                                     <field name="paid_amount" />
                                     <field name="paid_date" />
                                     <field name="remaining_amount" sum="Total Remaining" />
+                                    <field name="currency_id" column_invisible="1" />
                                     <field name="state" force_save="1" widget="badge" decoration-info="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-danger="state == 'overdue'" decoration-success="state == 'paid'" />
                                 </tree>
                             </field>
