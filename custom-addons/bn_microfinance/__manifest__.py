@@ -16,6 +16,7 @@
         'security/ir.model.access.csv',
         
         'data/sequence.xml',
+        'data/ir_cron.xml',
         
         'reports/microfinance_pdc_template_report.xml',
         'reports/microfinance_receipt_report.xml',

@@ -5,14 +5,14 @@
         <field name="name">microfinance.line.tree</field>
         <field name="model">microfinance.line</field>
         <field name="arch" type="xml">
-            <tree>
+            <tree decoration-danger="state == 'overdue'">
                 <field name="installment_no" />
                 <field name="payment_type" string = "Payment Type"/>
                 <field name="due_date" />
                 <field name="amount" />
                 <field name="paid_amount" />
                 <field name="remaining_amount" />
-                <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                <field name="state" force_save="1" widget="badge" decoration-info="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-danger="state == 'overdue'" decoration-success="state == 'paid'" />
             </tree>
         </field>
     </record>
@@ -33,6 +33,8 @@
                         domain="[('state', '=', 'unpaid')]"/>
                 <filter name="filter_partial" string="Partial"
                         domain="[('state', '=', 'partial')]"/>
+                <filter name="filter_overdue" string="Overdue"
+                        domain="[('state', '=', 'overdue')]"/>
                 <filter name="filter_paid" string="Paid"
                         domain="[('state', '=', 'paid')]"/>
                 
@@ -48,8 +50,6 @@
                 <filter name="filter_this_month" string="Due This Month"
                         domain="[('due_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')),
                                  ('due_date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
-                <filter name="filter_overdue" string="Overdue"
-                        domain="[('due_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', '!=', 'paid')]"/>
 
                 <separator/>
 
