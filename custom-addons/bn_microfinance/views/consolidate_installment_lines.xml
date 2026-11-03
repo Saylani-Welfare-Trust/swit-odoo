@@ -17,6 +17,63 @@
         </field>
     </record>
 
+    <record id="view_microfinance_line_search" model="ir.ui.view">
+        <field name="name">microfinance.line.search</field>
+        <field name="model">microfinance.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Search Fields -->
+                <field name="installment_no"/>
+                <field name="payment_type"/>
+                <field name="due_date"/>
+                <field name="microfinance_id"/>
+                <field name="partner_id" string="Donee"/>
+
+                <!-- Quick Filters -->
+                <filter name="filter_unpaid" string="Unpaid"
+                        domain="[('state', '=', 'unpaid')]"/>
+                <filter name="filter_partial" string="Partial"
+                        domain="[('state', '=', 'partial')]"/>
+                <filter name="filter_paid" string="Paid"
+                        domain="[('state', '=', 'paid')]"/>
+                
+                <separator/>
+                
+                <filter name="filter_cheque" string="Cheque"
+                        domain="[('payment_type', '=', 'cheque')]"/>
+                <filter name="filter_cash" string="Cash"
+                        domain="[('payment_type', '=', 'cash')]"/>
+
+                <separator/>
+
+                <filter name="filter_this_month" string="Due This Month"
+                        domain="[('due_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')),
+                                 ('due_date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_overdue" string="Overdue"
+                        domain="[('due_date', '&lt;', context_today().strftime('%Y-%m-%d')), ('state', '!=', 'paid')]"/>
+
+                <separator/>
+
+                <filter name="filter_my_records" string="My Records"
+                        domain="[('create_uid', '=', uid)]"/>
+
+                <!-- Group By -->
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_payment_type" string="Payment Type"
+                            context="{'group_by': 'payment_type'}"/>
+                    <filter name="group_microfinance" string="Microfinance"
+                            context="{'group_by': 'microfinance_id'}"/>
+                    <filter name="group_due_date" string="Due Date"
+                            context="{'group_by': 'due_date'}"/>
+                    <filter name="group_partner" string="Donee"
+                            context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
 
     <!-- Action Window -->
     <record id="action_microfinance_consolidated_lines" model="ir.actions.act_window">
