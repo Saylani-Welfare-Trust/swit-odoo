@@ -211,6 +211,7 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
+    
     <!-- Contact -->
     <!-- Purchase -->
     <record id="purchase.access_res_partner_purchase_manager" model="ir.model.access">
