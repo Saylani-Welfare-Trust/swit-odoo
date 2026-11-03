@@ -108,7 +108,15 @@ class PosOrder(models.Model):
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
 
+        # --- NEW: Location Restriction ---
+        user = self.env.user
+        # If user has assigned locations and is not a superuser, restrict data
+        if user.allowed_location_ids and not user.has_group('base.group_system'):
+            domain.append(('config_id.analytic_account_id', 'in', user.allowed_location_ids.ids))
+        # ---------------------------------
+
         if province_id or city_id or zone_id or segment_id or segment_type:
+            # ... (keep your existing analytic_domain logic) ...
             analytic_domain = []
             if province_id:
                 analytic_domain.append(('id', 'child_of', int(province_id)))
@@ -126,6 +134,7 @@ class PosOrder(models.Model):
                 domain.append(('id', '=', 0))
             else:
                 analytic_filters = []
+                # ... (keep your existing analytic_filters logic) ...
                 if 'analytic_account_id' in self._fields:
                     analytic_filters.append(('analytic_account_id', 'in', accounts.ids))
                 if 'session_id' in self._fields:

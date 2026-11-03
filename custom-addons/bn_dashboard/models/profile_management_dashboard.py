@@ -29,6 +29,11 @@ class ProfileManagementDashboard(models.TransientModel):
         if date_to: domain.append(('create_date', '<=', date_to + ' 23:59:59'))
 
         Partner = self.env['res.partner']
+        # --- NEW: Location Restriction ---
+        # Note: You can only restrict models that have an analytic_account_id or similar link
+        # For Partners, it might be difficult. For transactions (pos.order, welfare.line), it's easier.
+        user = self.env.user
+        allowed_locs = user.allowed_location_ids.ids if user.allowed_location_ids and not user.has_group('base.group_system') else []
         
         def safe_count(model, dom):
             try: return model.search_count(dom)
@@ -60,7 +65,7 @@ class ProfileManagementDashboard(models.TransientModel):
         # =========================================================================
         # HELPER: Dynamic Top 10 Aggregation (Scans fields automatically)
         # =========================================================================
-        def get_top_orm(model_name, partner_fields, amount_fields, date_fields=['create_date', 'date', 'application_date']):
+        def get_top_orm(model_name, partner_fields, amount_fields, date_fields=['create_date', 'date', 'application_date'], custom_domain=None):
             if model_name not in self.env: return []
             Model = self.env[model_name]
             
@@ -89,6 +94,10 @@ class ProfileManagementDashboard(models.TransientModel):
             if date_field:
                 if date_from: dom.append((date_field, '>=', date_from + ' 00:00:00' if 'datetime' in Model._fields[date_field].type else date_from))
                 if date_to: dom.append((date_field, '<=', date_to + ' 23:59:59' if 'datetime' in Model._fields[date_field].type else date_to))
+            
+            # --- ADD THIS BLOCK ---
+            if custom_domain:
+                dom.extend(custom_domain)
                 
             # Try fast read_group first
             if amount_field:
