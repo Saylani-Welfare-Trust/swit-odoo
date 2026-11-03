@@ -12,6 +12,23 @@
             <xpath expr="//div[@name='amount_div']" position="inside">
                 <field name="amount_locked" invisible="1"/>
             </xpath>
+
+            <!-- With a tax, the amount is the tax-included one and the payment is made for the net amount -->
+            <xpath expr="//label[@for='amount']" position="attributes">
+                <attribute name="invisible">not can_edit_wizard or can_group_payments and not group_payment or payment_tax_id</attribute>
+            </xpath>
+            <xpath expr="//label[@for='amount']" position="before">
+                <label for="amount" string="Amount (Tax Included)"
+                       invisible="not can_edit_wizard or can_group_payments and not group_payment or not payment_tax_id"/>
+            </xpath>
+            <xpath expr="//div[@name='amount_div']" position="after">
+                <field name="payment_tax_id" options="{'no_create': True}"
+                       invisible="partner_type != 'supplier' or not can_edit_wizard or can_group_payments and not group_payment"/>
+                <field name="payment_tax_amount"
+                       invisible="not payment_tax_id or not can_edit_wizard or can_group_payments and not group_payment"/>
+                <field name="payment_net_amount"
+                       invisible="not payment_tax_id or not can_edit_wizard or can_group_payments and not group_payment"/>
+            </xpath>
         </field>
     </record>
 </odoo>
