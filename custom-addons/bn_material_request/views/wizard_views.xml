@@ -118,6 +118,7 @@
                         <li><b>Option 1:</b> In "Expected Delivery Dates" tab, check "Select to Confirm RFQ" to confirm the entire RFQ with all lines</li>
                         <li><b>Option 2:</b> In "Price Entry" tab, check individual "Select to Confirm" boxes to confirm only specific lines</li>
                         <li><b>Both:</b> You can mix both options - entire RFQs + specific lines from other RFQs</li>
+                        <li><b>Quantity:</b> To split a product between several vendors, select their lines and set each vendor's quantity - together they must make up the Requested Qty, neither more nor less</li>
                         <li><b>Remarks:</b> Any remarks entered above will be posted to all RFQs (both confirmed and updated)</li>
                     </ul>
                 </div>
@@ -149,7 +150,8 @@
                                 <field name="rfq_name" readonly="1" optional="show"/>
                                 <field name="vendor_id" readonly="1" force_save="1"/>
                                 <field name="product_id" readonly="1" force_save="1"/>
-                                <field name="product_qty" readonly="1"/>
+                                <field name="requested_qty" optional="show"/>
+                                <field name="product_qty"/>
                                 <field name="product_uom_id" readonly="1" force_save="1"/>
                                 <field name="price_unit" string="Unit Price"/>
                                 <field name="to_confirm" string="Select to Confirm" widget="boolean"/>

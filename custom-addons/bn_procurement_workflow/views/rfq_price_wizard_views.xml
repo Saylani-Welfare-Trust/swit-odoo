@@ -17,6 +17,13 @@
             <xpath expr="//field[@name='rfq_line_ids']/tree/field[@name='select_for_confirm']" position="attributes">
                 <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
             </xpath>
+            <!-- Splitting a product's quantity between vendors is part of selecting them -->
+            <xpath expr="//field[@name='line_ids']/tree/field[@name='product_qty']" position="attributes">
+                <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
+            </xpath>
+            <xpath expr="//field[@name='line_ids']/tree/field[@name='product_qty']" position="after">
+                <field name="product_qty" readonly="1" force_save="1" groups="!bn_procurement_workflow.group_rfq_selection"/>
+            </xpath>
             <xpath expr="//field[@name='line_ids']/tree/field[@name='to_confirm']" position="attributes">
                 <attribute name="groups">bn_procurement_workflow.group_rfq_selection</attribute>
             </xpath>

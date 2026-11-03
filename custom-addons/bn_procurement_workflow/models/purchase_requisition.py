@@ -321,16 +321,17 @@ class PurchaseRequisition(models.Model):
         return self.state in ('procurement_approval', 'rfq_sent') or bool(
             self.selected_rfq_id and self.state not in ('done', 'cancel'))
 
-    def action_select_winning_rfq(self, winning_po):
-        """Called by the RFQ price wizard once a winning quote has been selected.
-        The first winner becomes this requisition's selected RFQ, whose approval
-        progress its state follows; winners for its other products only cancel
-        the quotes competing with them. From here on, CXO and HOD approval
-        happen directly on winning_po itself."""
+    def action_select_winning_rfq(self, winning_pos):
+        """Called by the RFQ price wizard once winning quotes have been selected:
+        one per product, or several vendors each given a share of a product's
+        quantity. The first winner becomes this requisition's selected RFQ,
+        whose approval progress its state follows; the other winners only
+        cancel the quotes competing with them. From here on, CXO and HOD
+        approval happen directly on each winning RFQ."""
         self.ensure_one()
         if not self._is_selecting_rfqs():
             raise ValidationError(_('A winning quote cannot be selected for this request in its current state.'))
-        if not winning_po.is_selected_quote:
+        for winning_po in winning_pos.filtered(lambda po: not po.is_selected_quote):
             winning_po.write({
                 'is_selected_quote': True,
                 'selected_quote_by': self.env.user.id,
@@ -341,26 +342,30 @@ class PurchaseRequisition(models.Model):
                 winning_po._send_cxo_approval_email()
         if not self.selected_rfq_id:
             self.write({
-                'selected_rfq_id': winning_po.id,
+                'selected_rfq_id': winning_pos[0].id,
                 'state': 'vendor_selected',
             })
-        other_rfqs = self._cancel_other_rfqs(winning_po, _(
-            'Cancelled - the quote of %(vendor)s was selected for Purchase Request %(request)s.'
-        ) % {'vendor': winning_po.partner_id.display_name, 'request': self.display_name})
+        vendors = ', '.join(winning_pos.partner_id.mapped('display_name'))
+        other_rfqs = self._cancel_other_rfqs(winning_pos, _(
+            'Cancelled - the quote(s) of %(vendor)s were selected for Purchase Request %(request)s.'
+        ) % {'vendor': vendors, 'request': self.display_name})
         self.message_post(body=_(
-            'Quote from %(vendor)s selected, %(count)s other RFQ(s) cancelled. '
-            'Awaiting CXO and HOD approval on that RFQ.'
-        ) % {'vendor': winning_po.partner_id.display_name, 'count': len(other_rfqs)})
+            'Quote(s) from %(vendor)s selected, %(count)s other RFQ(s) cancelled. '
+            'Awaiting CXO and HOD approval on the selected RFQ(s).'
+        ) % {'vendor': vendors, 'count': len(other_rfqs)})
 
-    def _cancel_other_rfqs(self, kept_rfq, message):
+    def _cancel_other_rfqs(self, kept_rfqs, message):
         """Cancel the other vendors' quotes, still open, for any product of
-        ``kept_rfq``, posting ``message`` on each of them. Quotes for this
-        requisition's other products stay open. Returns the cancelled RFQs."""
+        ``kept_rfqs``, posting ``message`` on each of them. Quotes for this
+        requisition's other products stay open, and so do the selected ones:
+        the vendors a product is split between each have their share of it.
+        Returns the cancelled RFQs."""
         self.ensure_one()
-        products = kept_rfq.order_line.product_id
+        products = kept_rfqs.order_line.product_id
         # sudo: whoever selects or approves the quote need not be a purchase user.
         other_rfqs = self.sudo().purchase_ids.filtered(
-            lambda rfq: rfq != kept_rfq and rfq.state in ('draft', 'sent', 'to approve')
+            lambda rfq: rfq not in kept_rfqs and not rfq.is_selected_quote
+            and rfq.state in ('draft', 'sent', 'to approve')
             and rfq.order_line.product_id & products)
         if other_rfqs:
             # An RFQ waiting for the CFO must not keep its "Waiting for CFO" banner once cancelled.
