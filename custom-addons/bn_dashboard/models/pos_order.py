@@ -337,6 +337,17 @@ class PosOrder(models.Model):
             session_domain.append(('start_at', '>=', date_from + ' 00:00:00'))
         if date_to:
             session_domain.append(('start_at', '<=', date_to + ' 23:59:59'))
+            
+        # --- FIX: Apply location restriction to sessions ---
+        user = self.env.user
+        if not user.has_group('base.group_system'):
+            allowed_analytic_ids = user.get_allowed_analytic_ids()
+            if allowed_analytic_ids:
+                session_domain.append(('config_id.analytic_account_id', 'in', allowed_analytic_ids))
+            elif user.allowed_location_ids or user.allowed_warehouse_ids:
+                session_domain.append(('id', '=', 0))
+        # ----------------------------------------------------
+
         total_session = self.env['pos.session'].search_count(session_domain)
 
         return {
