@@ -72,8 +72,8 @@
                                                 <td/>
                                             </t>
 
-                                            <!-- Only allow ONE line per type: show inputs while empty, hide once a line exists -->
-                                            <t t-if="!(state.lines[props.default_cash_details.id][type]||[]).length">
+                                            <!-- Several slips per type: keep the inputs until the expected amount is fully covered -->
+                                            <t t-if="hasRemainingAmount(props.default_cash_details.id, type)">
                                                 <td>
                                                     <select class="form-select form-select-sm"
                                                         t-model="state.newLines[props.default_cash_details.id][type].bank">
@@ -90,7 +90,8 @@
                                                 <t t-if="shouldShowSlipHeaders()">
                                                     <td>
                                                         <t t-if="shouldShowSlipInput(props.default_cash_details)">
-                                                            <span t-esc="env.utils.formatCurrency(getAutoAmount(props.default_cash_details, type))"/>
+                                                            <input class="form-control form-control-sm" placeholder="Amount"
+                                                                t-model="state.newLines[props.default_cash_details.id][type].amount"/>
                                                         </t>
                                                     </td>
                                                 </t>
@@ -171,8 +172,8 @@
                                                 <td/>
                                             </t>
 
-                                            <!-- Only allow ONE line per type: show inputs while empty, hide once a line exists -->
-                                            <t t-if="!(state.lines[pm.id][type]||[]).length">
+                                            <!-- Several slips per type: keep the inputs until the expected amount is fully covered -->
+                                            <t t-if="hasRemainingAmount(pm.id, type)">
                                                 <td>
                                                     <select class="form-select form-select-sm"
                                                         t-model="state.newLines[pm.id][type].bank">
@@ -189,7 +190,8 @@
                                                 <t t-if="shouldShowSlipHeaders()">
                                                     <td>
                                                         <t t-if="shouldShowSlipInput(pm)">
-                                                            <span t-esc="env.utils.formatCurrency(getAutoAmount(pm, type))"/>
+                                                            <input class="form-control form-control-sm" placeholder="Amount"
+                                                                t-model="state.newLines[pm.id][type].amount"/>
                                                         </t>
                                                     </td>
                                                 </t>

@@ -55,9 +55,9 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             if (!pm?.id) return;
             this.state.lines[pm.id] = { restricted: [], unrestricted: [], neutral: [] };
             this.state.newLines[pm.id] = {
-                restricted: { bank: "0", ref: "", record_id: 0 },
-                unrestricted: { bank: "0", ref: "", record_id: 0 },
-                neutral: { bank: "0", ref: "", record_id: 0 },
+                restricted: this._getNewLine(pm.id, "restricted"),
+                unrestricted: this._getNewLine(pm.id, "unrestricted"),
+                neutral: this._getNewLine(pm.id, "neutral"),
             };
             this.state.payments[pm.id] = this.state.payments[pm.id] || { counted: "0" };
         };
@@ -141,25 +141,50 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     /**
-     * The slip amount is no longer typed in by the user — it is always the
-     * expected breakdown amount for that payment method / type, so that
-     * exactly one line covers the whole expected amount.
+     * Part of the expected breakdown amount for that payment method / type
+     * that is not covered by slips yet. Several slips can be added (e.g. five
+     * slips of 2,000 for 10,000) as long as they add up to the expected amount.
      */
-    getAutoAmount(pm, type) {
-        return pm?.breakdown?.[type] || 0;
+    getRemainingAmount(paymentId, type) {
+        const pm = this._getPaymentMethod(paymentId);
+        const expected = pm?.breakdown?.[type] || 0;
+        const added = (this.state.lines[paymentId]?.[type] || []).reduce((a, l) => a + (l.amount || 0), 0);
+        return expected - added;
+    }
+
+    hasRemainingAmount(paymentId, type) {
+        return !this.env.utils.floatIsZero(this.getRemainingAmount(paymentId, type));
+    }
+
+    _formatAmountInput(value) {
+        return value.toFixed(this.pos.currency.decimal_places);
+    }
+
+    _getNewLine(paymentId, type) {
+        return {
+            bank: "0",
+            ref: "",
+            amount: this._formatAmountInput(this.getRemainingAmount(paymentId, type)),
+            record_id: 0,
+        };
+    }
+
+    _getTypeLabel(type) {
+        if (type === "restricted") return this.pos.company.restricted_category;
+        if (type === "unrestricted") return this.pos.company.unrestricted_category;
+        return _t("Non-Donation");
     }
 
     async handleAddLine(paymentId, type = "restricted") {
         const pm = this._getPaymentMethod(paymentId);
+        const remaining = this.getRemainingAmount(paymentId, type);
 
-        // Only one line is allowed per payment method / type.
-        if ((this.state.lines[paymentId][type] || []).length > 0) {
+        if (this.env.utils.floatIsZero(remaining)) {
             return;
         }
 
-        const { ref, bank } = this.state.newLines[paymentId][type];
+        const { ref, bank, amount } = this.state.newLines[paymentId][type];
         const isBankInvalid = !bank || bank === "0";
-        const numAmount = this.getAutoAmount(pm, type);
 
         if (this.shouldShowSlipInput(pm) && (!ref || isBankInvalid)) {
             this.popup.add(ErrorPopup, {
@@ -167,6 +192,30 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
                 body: _t("Bank and Slip No. are required."),
             });
             return;
+        }
+
+        // Without an amount input the slip simply covers whatever is left.
+        let numAmount = this.shouldShowSlipInput(pm) ? parseFloat(amount) : remaining;
+        const isAmountInvalid =
+            isNaN(numAmount) ||
+            this.env.utils.floatIsZero(numAmount) ||
+            Math.sign(numAmount) !== Math.sign(remaining) ||
+            (Math.abs(numAmount) > Math.abs(remaining) && !this.env.utils.floatIsZero(remaining - numAmount));
+
+        if (isAmountInvalid) {
+            this.popup.add(ErrorPopup, {
+                title: _t("Invalid Amount"),
+                body: _t(
+                    `Slip amount must be between 0 and the remaining amount (${this.env.utils.formatCurrency(remaining)}).`
+                ),
+            });
+            return;
+        }
+
+        // Use the exact remaining amount for the last slip so the slips add up
+        // to the expected total without rounding differences.
+        if (this.env.utils.floatIsZero(remaining - numAmount)) {
+            numAmount = remaining;
         }
 
         const slip = await this.orm.call("pos.session.slip", "create_session_slip", [
@@ -193,13 +242,17 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             record_id: slip.id,
         });
 
-        this.state.newLines[paymentId][type] = { bank: "0", ref: "", record_id: 0 };
+        // Keep the selected bank for the next slip and prefill the amount that is still left.
+        this.state.newLines[paymentId][type] = { ...this._getNewLine(paymentId, type), bank: bank };
     }
 
     async handleRemoveLine(paymentId, lineId, recordId, type) {
         const res = await this.orm.call("pos.session.slip", "delete_session_slip", [recordId]);
         if (res?.status !== "error") {
             this.state.lines[paymentId][type] = this.state.lines[paymentId][type].filter((l) => l.id !== lineId);
+            this.state.newLines[paymentId][type].amount = this._formatAmountInput(
+                this.getRemainingAmount(paymentId, type)
+            );
         }
     }
 
@@ -212,6 +265,27 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     async confirm() {
+        // The slips of every payment method / type must add up to its expected amount.
+        const visibleMethods = [
+            ...(this.pos.config.cash_control && this.props.default_cash_details ? [this.props.default_cash_details] : []),
+            ...(this.props.other_payment_methods || []),
+        ];
+        for (const pm of visibleMethods) {
+            for (const type of ["restricted", "unrestricted", "neutral"]) {
+                const remaining = this.getRemainingAmount(pm.id, type);
+                if (!this.env.utils.floatIsZero(remaining)) {
+                    const expected = pm.breakdown?.[type] || 0;
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Validation Error"),
+                        body: _t(
+                            `Slips of "${pm.name}" (${this._getTypeLabel(type)} Amount) total ${this.env.utils.formatCurrency(expected - remaining)} but the expected amount is ${this.env.utils.formatCurrency(expected)}.`
+                        ),
+                    });
+                    return;
+                }
+            }
+        }
+
         for (const pm of (this.props.other_payment_methods || [])) {
 
             if (pm.type !== "bank") {
