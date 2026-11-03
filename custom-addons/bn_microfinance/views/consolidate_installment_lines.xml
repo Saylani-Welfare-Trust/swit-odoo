@@ -27,7 +27,6 @@
                 <field name="payment_type"/>
                 <field name="due_date"/>
                 <field name="microfinance_id"/>
-                <field name="partner_id" string="Donee"/>
 
                 <!-- Quick Filters -->
                 <filter name="filter_unpaid" string="Unpaid"
@@ -67,8 +66,6 @@
                             context="{'group_by': 'microfinance_id'}"/>
                     <filter name="group_due_date" string="Due Date"
                             context="{'group_by': 'due_date'}"/>
-                    <filter name="group_partner" string="Donee"
-                            context="{'group_by': 'partner_id'}"/>
                 </group>
             </search>
         </field>
