@@ -144,17 +144,19 @@
                     </group>
 
                     <notebook>
-                        <page name="recovery_installment" string="Installments" invisible="not in_recovery">
-                            <field name="microfinance_recovery_line_ids" readonly="1">
+                        <page name="installment" string="Installments" invisible="state not in ['done', 'reject'] or in_recovery">
+                            <div class="mb-3">
+                                <button name="action_print_installment_plan" string="Print Installment Plan" type="object" class="btn btn-primary" icon="fa-print"/>
+                            </div>
+                            <field name="microfinance_line_ids" readonly="1">
                                 <tree>
                                     <field name="installment_no" />
+                                    <field name="payment_type" string = "Payment Type"/>
                                     <field name="due_date" />
-                                    
-                                    <!-- ADDED sum="..." here too -->
-                                    <field name="amount" sum="Total Amount" />
-                                    <field name="paid_amount" sum="Total Paid" />
-                                    <field name="remaining_amount" sum="Total Remaining" />
-                                    
+                                    <field name="amount" />
+                                    <field name="paid_amount" />
+                                    <field name="paid_date" />
+                                    <field name="remaining_amount" />
                                     <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
                                 </tree>
                             </field>
