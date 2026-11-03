@@ -33,6 +33,7 @@
         'views/advance_donation_category.xml',
         'views/menu.xml',
         'views/advance_donation_statement_action.xml',
+        'views/res_partner.xml',
         
         'wizard/partial_payment.xml',
     ],
