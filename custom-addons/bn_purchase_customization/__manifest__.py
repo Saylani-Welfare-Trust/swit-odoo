@@ -12,6 +12,7 @@
         'security/group.xml',
         
         'data/sequence.xml',
+        'data/state_cleanup.xml',
         
         'views/purchase_requisition.xml',
         'views/purchase_requisition_type.xml',

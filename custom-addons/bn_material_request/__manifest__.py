@@ -31,6 +31,7 @@
         'security/ir.model.access.csv',
         
         'data/sequence.xml',
+        'data/state_cleanup.xml',
         
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',

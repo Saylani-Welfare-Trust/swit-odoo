@@ -18,7 +18,7 @@
                 <field name="is_in_budget"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
-                       decoration-warning="state in ['budget_check', 'hod_approval', 'pending', 'committee_approval']"
+                       decoration-warning="state in ['hod_approval', 'pending', 'committee_approval']"
                        decoration-success="state == 'done'"
                        decoration-danger="state == 'rejected'"/>
             </tree>
@@ -46,7 +46,7 @@
                                 class="oe_highlight" invisible="state != 'committee_approval' or coo_approved"
                                 groups="bn_material_request.menu_group_material_request_coo"/>
                     <button string="Reject" name="action_reject" type="object"
-                            invisible="state not in ['hod_approval', 'committee_approval', 'cfo_approval', 'coo_approval']"/>
+                            invisible="state not in ['hod_approval', 'committee_approval']"/>
                     <button string="Reset to Draft" name="action_reset_to_draft" type="object"
                             invisible="state not in ['rejected']"/>
                     <button name="action_open_revert_wizard"

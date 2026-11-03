@@ -6,8 +6,6 @@ PURCHASE_REQUISITION_STATES = [
     ('draft', 'Draft'),
     ('confirm', 'Confirm'),
     ('ongoing', 'Ongoing'),
-    ('hod_approval', 'HOD Approval'),
-    ('mem_approval', 'Member Approval'),
     ('procurement_approval', 'Procurement Manager Approval'),
     ('deferred', 'Deferred / On Hold'),
     ('rfq_sent', 'RFQ Sent'),
@@ -45,14 +43,17 @@ class PurchaseRequisition(models.Model):
 
         super(PurchaseRequisition, self).action_in_progress()
 
-    def action_hod_approval(self):
-        self.state = 'hod_approval'
-
-    def action_mem_approval(self):
-        self.state = 'mem_approval'
-
     def action_confirm(self):
         self.state = 'confirm'
+
+    @api.model
+    def _move_from_removed_states(self):
+        """Requests left in a state that no longer exists (HOD Approval, Member
+        Approval) are moved back to Confirm, the step they came from. Run at
+        module update."""
+        # sudo: run at module update.
+        self.sudo().search([('state', 'in', ('hod_approval', 'mem_approval'))]).with_context(
+            tracking_disable=True).write({'state': 'confirm'})
         
 class PurchaseRequisitionLine(models.Model):
     _inherit = 'purchase.requisition.line'

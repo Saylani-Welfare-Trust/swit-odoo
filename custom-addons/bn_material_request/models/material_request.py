@@ -85,7 +85,6 @@ class MemberApproval(models.Model):
     # State
     state = fields.Selection([
         ('draft', 'Draft'),
-        ('budget_check', 'Budget Checked'),
         ('hod_approval', 'HOD Approval'),
         # ('cfo_approval', 'CFO Approval'),
         # ('coo_approval', 'COO Approval'),
@@ -166,6 +165,14 @@ class MemberApproval(models.Model):
     #         else:
     #             rec.source_location_domain = "[('usage','=','internal')]"
     
+    @api.model
+    def _move_from_removed_states(self):
+        """Requests left in a state that no longer exists ("Budget Checked",
+        which Confirm skipped) are moved on to HOD Approval, where Confirm
+        now leads. Run at module update."""
+        # sudo: run at module update.
+        self.sudo().search([('state', '=', 'budget_check')]).with_context(
+            tracking_disable=True).write({'state': 'hod_approval'})
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
@@ -236,7 +243,7 @@ class MemberApproval(models.Model):
     def action_hod_approve(self):
         """HOD approves the request - next step depends on budget status"""
         self.ensure_one()
-        if self.state not in ['hod_approval', 'budget_check']:
+        if self.state != 'hod_approval':
             raise ValidationError(_('This request is not in HOD Approval state.'))
 
         if self.department_id and self.department_id.manager_id.id != self.env.user.employee_id.id:

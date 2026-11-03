@@ -28,15 +28,14 @@
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
                 <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_purchase_customization.purchase_request_confirm_group" />
-                <button string="CXO Approval" name="action_mem_approval" type="object" class="oe_highlight" invisible="state != 'hod_approval'" groups="bn_purchase_customization.purchase_cxo_group" />
             </xpath>
 
             <xpath expr="//button[@name='action_in_progress']" position="attributes">
-                <attribute name="invisible">state != 'mem_approval'</attribute>
+                <attribute name="invisible">state != 'confirm'</attribute>
             </xpath>
 
             <xpath expr="//field[@name='state']" position="replace">
-                <field name="state" widget="statusbar" statusbar_visible="draft,confirm,hod_approval,mem_approval,in_progress,open,done" invisible="type_id.name == 'Blanket Order' or is_quantity_copy == 'none'"/>
+                <field name="state" widget="statusbar" statusbar_visible="draft,confirm,in_progress,open,done" invisible="type_id.name == 'Blanket Order' or is_quantity_copy == 'none'"/>
             </xpath>
             
             <xpath expr="//field[@name='state_blanket_order']" position="attributes">
