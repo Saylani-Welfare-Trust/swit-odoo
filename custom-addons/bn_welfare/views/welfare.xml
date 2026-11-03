@@ -82,7 +82,9 @@
 
                     <group>
                         <group name="welfare_col_1">
-                            <field name="order_type" required="1" readonly=" state  in ['disbursed','recurring', 'disbursed']" />
+                            <field name="order_type" 
+                                    required="state in ['completed', 'send_for_inquiry', 'inquiry', 'committee_approval']" 
+                                    readonly="state in ['committee_approval', 'hod_approve', 'mem_approve', 'approve', 'recurring', 'disbursed', 'reject']" />
                             <field name="employee_category_id" invisible="1" />
                             <field name="employee_category_id_officer" invisible="1" />
                             <field name="employee_domain" invisible="1"/>
