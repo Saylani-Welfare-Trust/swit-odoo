@@ -20,6 +20,7 @@ class MicrofinanceLine(models.Model):
 
 
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
+    product_id = fields.Many2one('product.product', related='microfinance_id.product_id', store=True, string="Product")
     
     bank_name = fields.Char('Bank Name')
     cheque_no = fields.Char('Cheque No.')

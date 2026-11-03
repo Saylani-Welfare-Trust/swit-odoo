@@ -7,6 +7,7 @@
         <field name="arch" type="xml">
             <tree decoration-danger="state == 'overdue'">
                 <field name="installment_no" />
+                <field name="product_id" />
                 <field name="payment_type" string = "Payment Type"/>
                 <field name="due_date" />
                 <field name="amount" />
@@ -27,6 +28,7 @@
                 <field name="payment_type"/>
                 <field name="due_date"/>
                 <field name="microfinance_id"/>
+                <field name="product_id"/>
 
                 <!-- Quick Filters -->
                 <filter name="filter_unpaid" string="Unpaid"
@@ -64,6 +66,8 @@
                             context="{'group_by': 'payment_type'}"/>
                     <filter name="group_microfinance" string="Microfinance"
                             context="{'group_by': 'microfinance_id'}"/>
+                    <filter name="group_product" string="Product"
+                            context="{'group_by': 'product_id'}"/>
                     <filter name="group_due_date" string="Due Date"
                             context="{'group_by': 'due_date'}"/>
                 </group>
