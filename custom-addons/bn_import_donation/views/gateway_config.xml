@@ -31,7 +31,7 @@
                         <group>
                             <field name="journal_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type == 'api'" />
                             <field name="account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="type == 'api'" />
-                            <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="!is_fee_enabled" />
+                            <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="not is_fee_enabled" />
                         </group>
                     </group>
                     <notebook>
