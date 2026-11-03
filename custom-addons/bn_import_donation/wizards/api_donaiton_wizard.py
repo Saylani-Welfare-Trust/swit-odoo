@@ -1,4 +1,4 @@
-from odoo import models, fields, _
+from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
 from datetime import datetime, time, timezone, timedelta
 from urllib.parse import urlparse
@@ -48,6 +48,23 @@ class APIDonationWizard(models.TransientModel):
             'status': status,
             'reason': reason
         })
+        
+    @api.model
+    def cron_fetch_weekly_donations(self):
+        today = fields.Date.context_today(self)
+
+        # Previous complete week (Monday to Sunday)
+        end_date = today - timedelta(days=today.weekday() + 1)
+        start_date = end_date - timedelta(days=6)
+
+        wizard = self.create({
+            'start_date': start_date,
+            'end_date': end_date,
+        })
+
+        wizard.action_fetch_donation()
+
+        return True
 
     # =========================================================
     # ENTRY POINT (NOW PER PAGE HISTORY)
@@ -55,7 +72,7 @@ class APIDonationWizard(models.TransientModel):
     def action_fetch_donation(self):
         self.ensure_one()
 
-        today = fields.Date.today()
+        today = fields.Date.context_today(self)
 
         # Fallback range: yesterday (used only if the wizard's own dates are empty)
         yesterday_start_date = today - timedelta(days=1)

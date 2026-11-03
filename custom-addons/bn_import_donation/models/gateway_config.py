@@ -18,7 +18,10 @@ class GatewayConfig(models.Model):
     type = fields.Selection(selection=type_selection, string="Type", tracking=True)
 
     journal_id = fields.Many2one('account.journal', string="Journal", tracking=True)
+    product_id = fields.Many2one('product.product', string="Fee Product", tracking=True)
     account_id = fields.Many2one(related="journal_id.default_account_id", string="Debit Account", tracking=True)
+
+    is_fee_enabled = fields.Boolean('Is Fee Enabled', tracking=True)
 
     gateway_config_line_ids = fields.One2many('gateway.config.line', 'gateway_config_id', string="Gateway Config Lines")
     gateway_config_header_ids = fields.One2many('gateway.config.header', 'gateway_config_id', string="Gateway Config Headers")
