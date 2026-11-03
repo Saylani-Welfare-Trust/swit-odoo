@@ -464,7 +464,19 @@ patch(PaymentScreen.prototype, {
                     } catch (error) {
                         console.error("❌ [Microfinance] Error creating installment record:", error);
                     }
-                    
+
+                    // Outstanding balance after this payment, shown on the receipt
+                    try {
+                        const unpaidLines = await this.env.services.orm.searchRead(
+                            'microfinance.line',
+                            [['microfinance_id', '=', microfinanceId], ['state', '!=', 'paid']],
+                            ['remaining_amount']
+                        );
+                        mfData.remaining_amount = unpaidLines.reduce((sum, l) => sum + (l.remaining_amount || 0), 0);
+                    } catch (error) {
+                        console.error("❌ [Microfinance] Error fetching remaining amount:", error);
+                    }
+
                     currentOrder.set_source_document(mfData.record_number);
 
                     this.env.services.notification.add(
