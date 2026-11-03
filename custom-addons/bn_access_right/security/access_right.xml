@@ -10,6 +10,7 @@
         <field name="perm_unlink" eval="0"/>
     </record>
     
+    
     <!-- Point Of Sale -->
     <record id="point_of_sale.access_product_template_pos_manager" model="ir.model.access">
         <field name="perm_read" eval="1"/>
