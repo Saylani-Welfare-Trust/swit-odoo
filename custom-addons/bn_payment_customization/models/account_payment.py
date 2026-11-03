@@ -72,17 +72,17 @@ class AccountPayment(models.Model):
 
             worksheet.write(
                 row, 1,
-                payment.partner_bank_id.acc_holder_name or ''
+                payment.partner_id.bank_ids[0].acc_holder_name if payment.partner_id.bank_ids else ''
             )
 
             worksheet.write_string(
                 row, 2,
-                payment.partner_bank_id.acc_number or ''
+                payment.partner_id.bank_ids[0].acc_number if payment.partner_id.bank_ids else ''
             )
 
             worksheet.write(
                 row, 3,
-                payment.partner_bank_id.bank_id.name or ''
+                payment.partner_id.bank_ids[0].bank_id.name if payment.partner_id.bank_ids else ''
             )
 
             worksheet.write(
