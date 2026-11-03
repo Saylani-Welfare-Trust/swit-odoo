@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Among the journal entries, the auditor sees what a Purchase User sees: the vendor bills,
+         and the entries of the advance payments of the Purchase Orders -->
+    <record id="purchase.purchase_user_account_move_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+    </record>
+
+    <record id="purchase.purchase_user_account_move_line_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+    </record>
+
+    <record id="bn_procurement_finance.purchase_user_po_advance_payment_move_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+    </record>
+</odoo>
