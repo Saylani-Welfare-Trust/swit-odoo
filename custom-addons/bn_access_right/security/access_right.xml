@@ -210,7 +210,46 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
+    <!-- Contact -->
+    <!-- Purchase -->
+    <record id="purchase.access_res_partner_purchase_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Sales -->
+    <record id="sale.access_res_partner_sale_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+    
+    <!-- Manufacturing -->
+    <record id="mrp.access_product_group_res_partner_mrp_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
 
+    <!-- Inventory -->
+    <record id="stock.access_product_group_res_partner_stock_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <!-- Base -->
+    <record id="base.access_res_partner_group_partner_manager" model="ir.model.access">
+        <field name="perm_read" eval="1"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="1"/>
+    </record>
 
     <!-- Custom -->
     <!-- Product Template -->
@@ -273,6 +312,17 @@
         <field name="name">custom.product.template.attribute.value.access</field>
         <field name="model_id" ref="product.model_product_template_attribute_value"/>
         <field name="group_id" ref="bn_access_right.custom_inventory_product_group"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+    
+    <!-- Contact -->
+    <record id="custom_contact_access" model="ir.model.access">
+        <field name="name">custom.contact.access</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="group_id" ref="bn_access_right.custom_contact_group"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="True"/>
