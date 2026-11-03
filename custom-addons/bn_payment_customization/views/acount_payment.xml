@@ -9,6 +9,7 @@
             <xpath expr="//header" position="inside">
                 <button name="action_ibft_status" type="object" string="Confirm IBFT" class="btn-primary"/>
             </xpath>
+            
 
             <xpath expr="//field[@name='state']" position="after">
                 <field name="ibft_status"/>
