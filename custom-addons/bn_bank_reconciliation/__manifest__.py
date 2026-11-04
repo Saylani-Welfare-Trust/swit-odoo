@@ -14,14 +14,19 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
+        
         'data/sequence.xml',
+        
         'views/bank_reconciliation_master.xml',
         'views/bank_reconciliation_transaction.xml',
         'views/bank_reconciliation_reconciled.xml',
+        'views/account_move.xml',
         'views/menu.xml',
         'views/bank_statement_header_type.xml',
         'views/bank_statement_config.xml',
+        
         'wizards/reconcile_wizard.xml',
+        'wizards/multi_match_wizard.xml',
         'wizards/import_bank_statement.xml',
     ],
     'auto_install': False,

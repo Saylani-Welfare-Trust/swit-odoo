@@ -6,4 +6,5 @@ class BankStatementHeaderType(models.Model):
     _description = "Bank Statement Header Type"
 
 
+
     name = fields.Char('Name')

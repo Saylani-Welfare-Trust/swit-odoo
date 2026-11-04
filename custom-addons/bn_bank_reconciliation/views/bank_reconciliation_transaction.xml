@@ -32,8 +32,12 @@
                         string="Reject" icon="fa-times"
                         invisible="state != 'matched'"/>
                 <button name="action_view_related_move" type="object"
-                        string="View Entry" icon="fa-eye"
+                        string="Original Entry" icon="fa-eye"
                         invisible="not matched_move_id"/>
+                <field name="reconciliation_move_id" column_invisible="1"/>
+                <button name="action_view_reconciliation_move" type="object"
+                        string="Reconciliation Entry" icon="fa-book"
+                        invisible="not reconciliation_move_id"/>
                 <button name="action_manual_match" type="object"
                         string="Manual Match" icon="fa-hand-pointer-o"
                         invisible="state in ['reconciled']"/>
@@ -53,12 +57,13 @@
                     <button name="action_reject_match" type="object"
                             string="Reject Match" class="btn-danger"
                             invisible="state != 'matched'"/>
-                    <button name="action_manual_reconcile" type="object"
-                            string="Manual Reconcile" class="btn-primary"
-                            invisible="state not in ['matched','unmatched']"/>
                     <button name="action_view_related_move" type="object"
-                            string="View Entry" class="btn-info"
+                            string="Original Entry" class="btn-info"
                             invisible="not matched_move_id"/>
+                    <field name="reconciliation_move_id" invisible="1"/>
+                    <button name="action_view_reconciliation_move" type="object"
+                            string="Reconciliation Entry" class="btn-info"
+                            invisible="not reconciliation_move_id"/>
                     <button name="action_view_related_move_line" type="object"
                             string="View Line" class="btn-info"
                             invisible="not matched_move_line_id"/>
@@ -86,7 +91,7 @@
                             <field name="debit"/>
                             <field name="credit"/>
                             <field name="amount" readonly="1"/>
-                            <field name="account_id" required="1"/>
+                            <field name="account_id"/>
                             <field name="state" widget="badge"/>
                             <field name="confidence_level" widget="badge"/>
                             <field name="match_score"/>
@@ -110,7 +115,7 @@
                                     <field name="matched_move_line_name" string="Matched Line Description"/>
                                     <field name="matched_move_ref" string="Entry Reference"/>
                                     <button name="action_view_related_move" type="object" 
-                                            string="View Accounting Entry" class="btn-info"
+                                            string="Original Entry" class="btn-info"
                                             invisible="not matched_move_id"/>
                                     <button name="action_view_related_move_line" type="object"
                                             string="View Journal Item" class="btn-info"

@@ -1,6 +1,5 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
-from odoo.tools import float_compare
 from datetime import timedelta
 import logging
 
@@ -130,6 +129,13 @@ class BankReconciliationTransaction(models.Model):
         compute='_compute_is_already_reconciled',
         store=False
     )
+    reconciliation_move_id = fields.Many2one(
+        'account.move',
+        string='Reconciliation Entry',
+        compute='_compute_reconciliation_move_id',
+        help='Entry moving this line from the holding account to the Posted Account, '
+             'created on Accept and posted by Validate & Complete'
+    )
 
     is_adjustment = fields.Boolean(
         string='Is Adjustment Entry',
@@ -200,6 +206,22 @@ class BankReconciliationTransaction(models.Model):
                 record.matched_move_line_name = False
                 record.matched_move_ref = False
 
+    @api.depends('state', 'master_id.move_id', 'master_id.posted_account_id', 'matched_move_line_id.account_id')
+    def _compute_reconciliation_move_id(self):
+        reconciled = self.env['bank.reconciliation.reconciled'].search([
+            ('transaction_id', 'in', [id_ for id_ in self.ids if isinstance(id_, int)]),
+        ])
+        moves = {record.transaction_id.id: record.reconciliation_move_id for record in reconciled}
+        for record in self:
+            move = moves.get(record.id) if record.state == 'reconciled' else False
+            master = record.master_id
+            # Reconciliations validated before the entries were made per line have
+            # one entry for all their lines, except those booked on the Posted Account
+            if (not move and record.state == 'reconciled' and master.move_id
+                    and record.matched_move_line_id.account_id != master.posted_account_id):
+                move = master.move_id
+            record.reconciliation_move_id = move or False
+
     def _compute_is_already_reconciled(self):
         for record in self:
             record.is_already_reconciled = self.env['bank.reconciliation.reconciled'].search_count([
@@ -259,36 +281,25 @@ class BankReconciliationTransaction(models.Model):
                 })
 
     def _find_matching_move_lines(self):
-        """Find matching account move lines - EXCLUDING already reconciled ones"""
+        """Find matching account move lines of the selected journal - EXCLUDING already reconciled ones"""
         self.ensure_one()
         matches = []
         
-        # Build search domain - EXCLUDE reconciled move lines
-        domain = [
-            ('is_bank_reconciled', '=', False),  # This is the key - exclude reconciled entries
-            ('reconciled', '=', False),  # This is the key - exclude reconciled entries
-            ('company_id', '=', self.company_id.id)
-        ]
-        
-        if self.account_id:
-            domain.append(('account_id', '=', self.account_id.id))
-        else:
-            domain.append(('account_id', '!=', False))
-        
+        # Only the selected journal's entries are compared with the statement
+        domain = self.master_id._get_candidate_move_line_domain(self)
+        if self.master_id.match_by_amount:
+            # Searching on the amount keeps every candidate: a busy journal has more
+            # items in the date window than the search limit
+            tolerance = self.master_id.match_tolerance_amount or 0.01
+            balance = abs(self.amount) if self.credit > self.debit else -abs(self.amount)
+            domain += [('balance', '>=', balance - tolerance), ('balance', '<=', balance + tolerance)]
+
         if self.date:
-            days = self.master_id.match_tolerance_days or 3
+            days = 0 if self.env.context.get('bank_rec_same_day') else self.master_id.match_tolerance_days or 3
             from_date = self.date - timedelta(days=days)
             to_date = self.date + timedelta(days=days)
             domain.append(('date', '>=', from_date))
             domain.append(('date', '<=', to_date))
-        
-        # Also exclude move lines that are already linked to reconciled records
-        reconciled_line_ids = self.env['bank.reconciliation.reconciled'].search([
-            ('matched_move_line_id', '!=', False)
-        ]).mapped('matched_move_line_id.id')
-        
-        if reconciled_line_ids:
-            domain.append(('id', 'not in', reconciled_line_ids))
         
         move_lines = self.env['account.move.line'].search(domain, limit=1000)
         
@@ -296,7 +307,7 @@ class BankReconciliationTransaction(models.Model):
             # Double check that the move line is not reconciled
             if move_line.reconciled:
                 continue
-            if move_line.id in reconciled_line_ids:
+            if self.master_id.match_by_amount and not self._check_amount_match(move_line):
                 continue
             
             score = 0
@@ -343,18 +354,18 @@ class BankReconciliationTransaction(models.Model):
                     'move_line_display': move_line.display_name or move_line.name,
                     'move_ref': move_line.move_id.ref or '',
                 })
-        return sorted(matches, key=lambda x: x['score'], reverse=True)
+        # On the same score the entry closest to the statement date comes first,
+        # so that same-amount donations are not matched with another day's entry
+        return sorted(matches, key=lambda x: (
+            -x['score'],
+            abs((x['date'] - self.date).days) if self.date and x['date'] else 0,
+        ))
 
     def _check_amount_match(self, move_line):
-        if self.debit and move_line.debit:
-            if abs(move_line.debit - self.debit) <= (self.master_id.match_tolerance_amount or 0.01):
-                return True
-        if self.credit and move_line.credit:
-            if abs(move_line.credit - self.credit) <= (self.master_id.match_tolerance_amount or 0.01):
-                return True
-        if float_compare(abs(move_line.balance), abs(self.amount), precision_digits=2) == 0:
-            return True
-        return False
+        # The side is already checked by the candidate domain: money in on the
+        # statement (Credit) is a debit on the bank side, money out a credit
+        tolerance = self.master_id.match_tolerance_amount or 0.01
+        return abs(abs(move_line.balance) - abs(self.amount)) <= tolerance
 
     def _check_reference_match(self, move_line):
         if not self.reference:
@@ -470,6 +481,34 @@ class BankReconciliationTransaction(models.Model):
             else:
                 self.confidence_level = 'low'
 
+        # The account comes from the journal item the statement line is matched to
+        if self.matched_move_line_id:
+            self.account_id = self.matched_move_line_id.account_id
+
+    def _mark_move_lines_reconciled(self, lines):
+        """Flag the whole entries of these journal items, so that no other
+        statement line is matched with another item of the same entry"""
+        self.ensure_one()
+        lines.mapped('move_id.line_ids').write({
+            'is_bank_reconciled': True,
+            'bank_reconciliation_id': self.master_id.id,
+            'bank_reconciliation_date': fields.Date.today(),
+            'bank_reconciliation_transaction_id': self.id,
+        })
+
+    def _release_move_lines(self):
+        """Make the journal items reconciled by these statement lines available again"""
+        lines = self.env['account.move.line'].search([
+            ('bank_reconciliation_transaction_id', 'in', self.ids)
+        ])
+        lines.write({
+            'is_bank_reconciled': False,
+            'bank_reconciliation_id': False,
+            'bank_reconciliation_date': False,
+            'bank_reconciliation_transaction_id': False,
+        })
+        return lines
+
     def action_manual_match(self):
         self.ensure_one()
         if self.state == 'reconciled':
@@ -486,7 +525,6 @@ class BankReconciliationTransaction(models.Model):
             'context': {
                 'default_master_id': self.master_id.id,
                 'default_transaction_id': self.id,
-                'default_account_id': self.account_id.id if self.account_id else False,
                 'default_create_journal_entry': True,
             }
         }
@@ -553,6 +591,13 @@ class BankReconciliationTransaction(models.Model):
         ], limit=1)
         if existing:
             raise UserError(_('This transaction already has a reconciled record. Cannot reconcile again.'))
+        if self.matched_move_line_id.is_bank_reconciled:
+            # Statement lines matched together with one entry share its journal item
+            owner = self.matched_move_line_id.bank_reconciliation_transaction_id
+            if owner.master_id != self.master_id or owner.matched_move_line_id != self.matched_move_line_id:
+                raise UserError(_(
+                    'The matched journal item (%s) is already reconciled with another bank statement line.'
+                ) % self.matched_move_line_id.display_name)
         
         Reconciled = self.env['bank.reconciliation.reconciled']
         vals = {
@@ -580,8 +625,13 @@ class BankReconciliationTransaction(models.Model):
             'matched_by_date': self.matched_by_date,
             'matched_by_description': self.matched_by_description,
             'matched_by_manual': self.matched_by_manual,
+            # The matched entry is the accounting entry: nothing else is posted
+            'is_posted': self.matched_move_id.state == 'posted',
         }
-        return Reconciled.create(vals)
+        reconciled = Reconciled.create(vals)
+        self._mark_move_lines_reconciled(self.matched_move_line_id)
+        reconciled._create_reconciliation_move()
+        return reconciled
 
     def _create_journal_entry_for_transaction(self, reconciled):
         self.ensure_one()
@@ -718,8 +768,6 @@ class BankReconciliationTransaction(models.Model):
             raise UserError(_('This transaction is already reconciled.'))
         if self.state not in ['matched', 'unmatched']:
             raise UserError(_('Only matched or unmatched transactions can be reconciled.'))
-        if not self.account_id:
-            raise UserError(_('Please select an account for this transaction.'))
         if self.env['bank.reconciliation.reconciled'].search_count([('transaction_id', '=', self.id)]) > 0:
             raise UserError(_('This transaction already has a reconciled record. Cannot reconcile again.'))
         
@@ -738,15 +786,9 @@ class BankReconciliationTransaction(models.Model):
             ('transaction_id', '=', self.id)
         ], limit=1)
         if reconciled:
-            if reconciled.matched_move_id:
-                try:
-                    if reconciled.matched_move_id.state == 'posted':
-                        reconciled.matched_move_id.button_cancel()
-                    reconciled.matched_move_id.unlink()
-                except Exception as e:
-                    _logger.warning("Could not delete journal entry: %s", str(e))
-            reconciled.unlink()
+            return reconciled.action_unreconcile()
         
+        self._release_move_lines()
         self.write({
             'state': 'matched',
             'reconciled': False,
@@ -779,16 +821,21 @@ class BankReconciliationTransaction(models.Model):
             'target': 'current'
         }
 
+    def action_view_reconciliation_move(self):
+        self.ensure_one()
+        if not self.reconciliation_move_id:
+            raise UserError(_('No reconciliation entry found for this line.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'res_id': self.reconciliation_move_id.id,
+            'view_mode': 'form',
+            'target': 'current'
+        }
+
     def action_show_unreconciled_entries(self):
         self.ensure_one()
-        if not self.account_id:
-            raise UserError(_('Please select an account first.'))
-        domain = [
-            ('account_id', '=', self.account_id.id),
-            ('reconciled', '=', False),
-            ('is_bank_reconciled', '=', False),
-            ('company_id', '=', self.company_id.id)
-        ]
+        domain = self.master_id._get_candidate_move_line_domain(self)
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'account.move.line',

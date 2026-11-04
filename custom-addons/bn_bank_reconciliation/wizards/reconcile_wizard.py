@@ -16,12 +16,6 @@ class ReconcileWizard(models.TransientModel):
         'bank.reconciliation.transaction',
         string='Transaction'
     )
-    account_id = fields.Many2one(
-        'account.account',
-        string='Account',
-        required=True,
-        domain="[('deprecated', '=', False)]"
-    )
 
     unreconciled_line_ids = fields.Many2many(
         'account.move.line',
@@ -71,29 +65,21 @@ class ReconcileWizard(models.TransientModel):
         ('detailed', 'Detailed View')
     ], string='View Mode', default='detailed')
 
-    @api.depends('account_id', 'date_from', 'date_to', 'partner_id', 'transaction_id', 'match_type')
+    @api.depends('master_id', 'date_from', 'date_to', 'partner_id', 'transaction_id', 'match_type',
+                 'show_only_matching_amount', 'match_threshold')
     def _compute_unreconciled_lines(self):
         for wizard in self:
-            domain = [
-                ('account_id', '=', wizard.account_id.id),
-                ('is_bank_reconciled', '=', False),  # Exclude already reconciled lines
-                ('reconciled', '=', False),  # Exclude already reconciled lines
-                ('company_id', '=', wizard.master_id.company_id.id)
-            ]
+            if not wizard.master_id:
+                wizard.unreconciled_line_ids = False
+                continue
+            # Unreconciled entries of the selected journal only
+            domain = wizard.master_id._get_candidate_move_line_domain(wizard.transaction_id)
             if wizard.date_from:
                 domain.append(('date', '>=', wizard.date_from))
             if wizard.date_to:
                 domain.append(('date', '<=', wizard.date_to))
             if wizard.partner_id:
                 domain.append(('partner_id', '=', wizard.partner_id.id))
-            
-            # Also exclude lines already linked to reconciled records
-            reconciled_line_ids = self.env['bank.reconciliation.reconciled'].search([
-                ('matched_move_line_id', '!=', False)
-            ]).mapped('matched_move_line_id.id')
-            
-            if reconciled_line_ids:
-                domain.append(('id', 'not in', reconciled_line_ids))
             
             lines = self.env['account.move.line'].search(domain)
             
@@ -170,13 +156,6 @@ class ReconcileWizard(models.TransientModel):
         if not self._validate_selected_lines(transaction):
             return False
         
-        for line in self.selected_line_ids:
-            line.write({
-                'is_bank_reconciled': True,
-                'bank_reconciliation_id': self.master_id.id,
-                'bank_reconciliation_date': fields.Date.today()
-            })
-        
         first_line = self.selected_line_ids[0] if self.selected_line_ids else False
         
         match_data = {
@@ -190,6 +169,8 @@ class ReconcileWizard(models.TransientModel):
             raise UserError(_('This transaction already has a reconciled record. Cannot reconcile again.'))
         
         transaction.action_accept_match()
+        # Every selected entry is reconciled with this statement line, not only the first
+        transaction._mark_move_lines_reconciled(self.selected_line_ids)
         
         if self.create_journal_entry:
             reconciled = self.env['bank.reconciliation.reconciled'].search([
@@ -200,20 +181,26 @@ class ReconcileWizard(models.TransientModel):
 
     def _validate_selected_lines(self, transaction):
         self.ensure_one()
-        
+        tolerance = transaction.master_id.match_tolerance_amount or 0.01
+
         if self.match_type == 'intelligent':
-            return True
+            if transaction.master_id.match_by_amount:
+                total_selected = sum(abs(line.balance) for line in self.selected_line_ids)
+                if abs(total_selected - abs(transaction.amount)) > tolerance:
+                    raise UserError(_(
+                        'Total selected amount (%s) does not match transaction amount (%s).'
+                    ) % (total_selected, abs(transaction.amount)))
             
         elif self.match_type == 'debit_credit':
             total_debit = sum(line.debit for line in self.selected_line_ids)
             total_credit = sum(line.credit for line in self.selected_line_ids)
             
-            if transaction.debit and abs(transaction.debit - total_debit) > 0.01:
+            if transaction.debit and abs(transaction.debit - total_debit) > tolerance:
                 raise UserError(_(
                     'Total debit amount (%s) does not match transaction debit (%s).'
                 ) % (total_debit, transaction.debit))
             
-            if transaction.credit and abs(transaction.credit - total_credit) > 0.01:
+            if transaction.credit and abs(transaction.credit - total_credit) > tolerance:
                 raise UserError(_(
                     'Total credit amount (%s) does not match transaction credit (%s).'
                 ) % (total_credit, transaction.credit))
@@ -221,7 +208,7 @@ class ReconcileWizard(models.TransientModel):
             total_selected = sum(abs(line.balance) for line in self.selected_line_ids)
             transaction_amount = abs(transaction.amount)
             
-            if abs(total_selected - transaction_amount) > 0.01:
+            if abs(total_selected - transaction_amount) > tolerance:
                 raise UserError(_(
                     'Total selected amount (%s) does not match transaction amount (%s).'
                 ) % (total_selected, transaction_amount))
@@ -236,11 +223,11 @@ class ReconcileWizard(models.TransientModel):
         total_selected_amount = sum(abs(line.balance) for line in self.selected_line_ids)
         
         unmatched_trans = self.master_id.transaction_ids.filtered(
-            lambda t: t.state in ['matched', 'unmatched'] and t.account_id == self.account_id
+            lambda t: t.state in ['matched', 'unmatched']
         )
         
         if not unmatched_trans:
-            raise UserError(_('No unmatched transactions found for this account.'))
+            raise UserError(_('No unmatched transactions found.'))
         
         matching_trans = self.env['bank.reconciliation.transaction']
         
@@ -303,13 +290,6 @@ class ReconcileWizard(models.TransientModel):
         if self.env['bank.reconciliation.reconciled'].search_count([('transaction_id', '=', transaction.id)]) > 0:
             return
         
-        for line in lines:
-            line.write({
-                'is_bank_reconciled': True,
-                'bank_reconciliation_id': self.master_id.id,
-                'bank_reconciliation_date': fields.Date.today()
-            })
-        
         first_line = lines[0] if lines else False
         
         match_data = {
@@ -323,6 +303,7 @@ class ReconcileWizard(models.TransientModel):
             return
         
         transaction.action_accept_match()
+        transaction._mark_move_lines_reconciled(lines)
         
         if self.create_journal_entry:
             reconciled = self.env['bank.reconciliation.reconciled'].search([
