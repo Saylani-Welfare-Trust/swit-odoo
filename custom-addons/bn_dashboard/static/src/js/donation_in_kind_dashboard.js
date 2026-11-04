@@ -15,12 +15,12 @@ export class DonationDashboard extends Component {
         this.is_mounted = false;
 
         this.state = useState({
-            province_id: null, city_id: null, zone_id: null, branch_id: null,
+            segment_l1: null, segment_l2: null, segment_l3: null, segment_l4: null,
             state_filter: '',
             amount_min: null, amount_max: null,
             date_from: '', date_to: '',
 
-            provinces: [], cities: [], zones: [], branches: [],
+            segments_l1: [], segments_l2: [], segments_l3: [], segments_l4: [],
 
             kpi: { total_records: 0, total_quantity: '0', total_value: '0',
                    unique_donors: 0, state_counts: {}, state_labels: {},
@@ -65,10 +65,10 @@ export class DonationDashboard extends Component {
 
         onWillDestroy(() => {
             sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
-                province_id: this.state.province_id,
-                city_id: this.state.city_id,
-                zone_id: this.state.zone_id,
-                branch_id: this.state.branch_id,
+                segment_l1: this.state.segment_l1,
+                segment_l2: this.state.segment_l2,
+                segment_l3: this.state.segment_l3,
+                segment_l4: this.state.segment_l4,
                 state_filter: this.state.state_filter,
                 amount_min: this.state.amount_min,
                 amount_max: this.state.amount_max,
@@ -83,47 +83,39 @@ export class DonationDashboard extends Component {
 
     async fetch_dropdowns() {
         const h = await this.orm.call('donation.in.kind', 'get_din_hierarchy', []);
-        this.state.provinces = h.provinces || [];
-        this.state.cities = h.cities || [];
-        this.state.zones = h.zones || [];
-        this.state.branches = h.branches || [];
+        this.state.segments_l1 = h.segments_l1 || [];
+        this.state.segments_l2 = h.segments_l2 || [];
+        this.state.segments_l3 = h.segments_l3 || [];
+        this.state.segments_l4 = h.segments_l4 || [];
     }
 
-    get filteredCities() {
-        if (!this.state.province_id) return this.state.cities;
-        const pId = parseInt(this.state.province_id, 10);
-        return this.state.cities.filter(c => c.province_id === pId);
+    get filteredSegmentsL2() {
+        if (!this.state.segment_l1) return [];
+        const pId = parseInt(this.state.segment_l1, 10);
+        return this.state.segments_l2.filter(s => s.parent_id === pId);
     }
-    get filteredZones() {
-        if (!this.state.city_id) return this.state.zones;
-        const cId = parseInt(this.state.city_id, 10);
-        return this.state.zones.filter(z => z.city_id === cId);
+    get filteredSegmentsL3() {
+        if (!this.state.segment_l2) return [];
+        const pId = parseInt(this.state.segment_l2, 10);
+        return this.state.segments_l3.filter(s => s.parent_id === pId);
     }
-    get filteredBranches() {
-        let b = this.state.branches;
-        if (this.state.province_id) {
-            const pId = parseInt(this.state.province_id, 10);
-            b = b.filter(x => x.province_id === pId);
-        }
-        if (this.state.city_id) {
-            const cId = parseInt(this.state.city_id, 10);
-            b = b.filter(x => x.city_id === cId);
-        }
-        if (this.state.zone_id) {
-            const zId = parseInt(this.state.zone_id, 10);
-            b = b.filter(x => x.zone_id === zId);
-        }
-        return b;
+    get filteredSegmentsL4() {
+        if (!this.state.segment_l3) return [];
+        const pId = parseInt(this.state.segment_l3, 10);
+        return this.state.segments_l4.filter(s => s.parent_id === pId);
     }
 
     _args() {
+        let effective_segment_id = null;
+        if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
+
         return [
             this.state.date_from || null,
             this.state.date_to || null,
-            this.state.province_id ? parseInt(this.state.province_id, 10) : null,
-            this.state.city_id ? parseInt(this.state.city_id, 10) : null,
-            this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
-            this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+            effective_segment_id,
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -151,19 +143,19 @@ export class DonationDashboard extends Component {
         if (this.is_mounted) await this.render_all_charts();
     }
 
-    async onchange_province() {
-        this.state.city_id = null;
-        this.state.zone_id = null;
-        this.state.branch_id = null;
+    async onchange_segment_l1() {
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
         await this.refresh();
     }
-    async onchange_city() {
-        this.state.zone_id = null;
-        this.state.branch_id = null;
+    async onchange_segment_l2() {
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
         await this.refresh();
     }
-    async onchange_zone() {
-        this.state.branch_id = null;
+    async onchange_segment_l3() {
+        this.state.segment_l4 = null;
         await this.refresh();
     }
     async onchange_filter() {
@@ -171,10 +163,10 @@ export class DonationDashboard extends Component {
     }
 
     async clear_filter() {
-        this.state.province_id = null;
-        this.state.city_id = null;
-        this.state.zone_id = null;
-        this.state.branch_id = null;
+        this.state.segment_l1 = null;
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
         this.state.state_filter = '';
         this.state.amount_min = null;
         this.state.amount_max = null;
@@ -305,14 +297,17 @@ export class DonationDashboard extends Component {
     }
 
     async fetch_comparison() {
+        let effective_segment_id = null;
+        if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
+
         const args = [
             this.state.comparison_mode,
             this.state.comparison_period1,
             this.state.comparison_period2,
-            this.state.province_id ? parseInt(this.state.province_id, 10) : null,
-            this.state.city_id ? parseInt(this.state.city_id, 10) : null,
-            this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
-            this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+            effective_segment_id,
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -334,10 +329,14 @@ export class DonationDashboard extends Component {
         const domain = [];
         if (this.state.date_from) domain.push(['create_date', '>=', this.state.date_from + ' 00:00:00']);
         if (this.state.date_to) domain.push(['create_date', '<=', this.state.date_to + ' 23:59:59']);
-        if (this.state.branch_id) domain.push(['analytical_account_id', '=', parseInt(this.state.branch_id, 10)]);
-        if (this.state.province_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.province_id, 10)]);
-        if (this.state.city_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.city_id, 10)]);
-        if (this.state.zone_id) domain.push(['analytical_account_id', 'child_of', parseInt(this.state.zone_id, 10)]);
+
+        let effective_segment_id = null;
+        if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
+
+        if (effective_segment_id) domain.push(['analytical_account_id', 'child_of', effective_segment_id]);
         if (state_filter) domain.push(['state', '=', state_filter]);
 
         this.actionService.doAction({

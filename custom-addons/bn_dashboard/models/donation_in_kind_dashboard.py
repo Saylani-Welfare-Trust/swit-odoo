@@ -12,35 +12,16 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_hierarchy(self):
-        provinces = self.env['account.analytic.account'].search(
-            [('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        cities = self.env['account.analytic.account'].search(
-            [('parent_id', 'in', provinces.ids)])
-        zones = self.env['account.analytic.account'].search(
-            [('parent_id', 'in', cities.ids)])
-
-        branches = self.env['account.analytic.account'].browse(
-            list(set(self.search([]).mapped('analytical_account_id').ids)))
-
-        branch_data = []
-        for b in branches:
-            p = b.parent_id
-            zone_id = p.id if p else False
-            city_id = p.parent_id.id if p and p.parent_id else False
-            province_id = (p.parent_id.parent_id.id
-                           if p and p.parent_id and p.parent_id.parent_id else False)
-            branch_data.append({
-                'id': b.id, 'name': b.name,
-                'zone_id': zone_id,
-                'city_id': city_id,
-                'province_id': province_id,
-            })
+        seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+        seg_l2 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
+        seg_l3 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
+        seg_l4 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
 
         return {
-            'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
-            'cities': [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
-            'zones': [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
-            'branches': sorted(branch_data, key=lambda x: (x['name'] or '').lower()),
+            'segments_l1': [{'id': s.id, 'name': s.name} for s in seg_l1],
+            'segments_l2': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l2],
+            'segments_l3': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l3],
+            'segments_l4': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l4],
         }
 
     # ------------------------------------------------------------------
@@ -48,22 +29,15 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def _get_din_domain(self, date_from=None, date_to=None,
-                        province_id=None, city_id=None, zone_id=None,
-                        analytic_id=None, state=None):
+                        segment_id=None, state=None):
         domain = []
         if date_from:
             domain.append(('create_date', '>=', date_from + ' 00:00:00'))
         if date_to:
             domain.append(('create_date', '<=', date_to + ' 23:59:59'))
 
-        if analytic_id:
-            domain.append(('analytical_account_id', '=', int(analytic_id)))
-        if province_id:
-            domain.append(('analytical_account_id', 'child_of', int(province_id)))
-        if city_id:
-            domain.append(('analytical_account_id', 'child_of', int(city_id)))
-        if zone_id:
-            domain.append(('analytical_account_id', 'child_of', int(zone_id)))
+        if segment_id:
+            domain.append(('analytical_account_id', 'child_of', int(segment_id)))
 
         if state:
             domain.append(('state', '=', state))
@@ -74,11 +48,9 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_dashboard_data(self, date_from=None, date_to=None,
-                               province_id=None, city_id=None, zone_id=None,
-                               analytic_id=None, state=None,
+                               segment_id=None, state=None,
                                amount_min=None, amount_max=None):
-        domain = self._get_din_domain(date_from, date_to, province_id, city_id,
-                                      zone_id, analytic_id, state)
+        domain = self._get_din_domain(date_from, date_to, segment_id, state)
         donations = self.search(domain, order='id desc')
 
         # Amount range filter
@@ -215,20 +187,18 @@ class DonationInKindDashboard(models.Model):
         }
 
     # ------------------------------------------------------------------
-    # Category Group Time Series (display-only, not a filter)
+    # Category Group Time Series (display-only)
     # ------------------------------------------------------------------
     @api.model
     def get_din_category_time_series(self, date_from=None, date_to=None,
-                                     province_id=None, city_id=None, zone_id=None,
-                                     analytic_id=None, state=None,
+                                     segment_id=None, state=None,
                                      amount_min=None, amount_max=None, **kwargs):
         if not date_from and not date_to:
             today = datetime.today()
             date_from = (today - relativedelta(months=11)).replace(day=1).strftime('%Y-%m-%d')
             date_to = today.strftime('%Y-%m-%d')
 
-        domain = self._get_din_domain(date_from, date_to, province_id, city_id,
-                                      zone_id, analytic_id, state)
+        domain = self._get_din_domain(date_from, date_to, segment_id, state)
         donations = self.search(domain)
 
         tree = {}
@@ -286,8 +256,7 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_comparison(self, mode='month', period1=None, period2=None,
-                           province_id=None, city_id=None, zone_id=None,
-                           analytic_id=None, state=None,
+                           segment_id=None, state=None,
                            amount_min=None, amount_max=None, **kwargs):
         def parse_period(p):
             if not p:
@@ -316,7 +285,7 @@ class DonationInKindDashboard(models.Model):
         def stats(start, end):
             domain = self._get_din_domain(
                 start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'),
-                province_id, city_id, zone_id, analytic_id, state)
+                segment_id, state)
             dons = self.search(domain)
             qty = sum(sum(l.quantity for l in d.donation_in_kind_line_ids) for d in dons)
             val = sum(sum(l.quantity * l.avg_price
