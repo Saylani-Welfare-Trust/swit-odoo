@@ -6,7 +6,7 @@
             <field name="name">POS Journal Transfer</field>
             <field name="model_id" ref="model_journal_transfer"/>
             <field name="state">code</field>
-            <field name="code">model._cron_pull_pos_entries()</field>
+            <field name="code">model._pull_pos_entries()</field>
             <field name="interval_number">15</field>
             <field name="interval_type">minutes</field>
             <field name="numbercall">-1</field>
