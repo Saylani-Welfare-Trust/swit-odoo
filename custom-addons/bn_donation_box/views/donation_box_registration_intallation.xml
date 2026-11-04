@@ -8,8 +8,8 @@
             <form create="0">
                 <header>
                     <button name="action_install" string="Install" type="object" class="oe_highlight" invisible="status != 'draft'" />
-                    <button name="action_approved" string="Approved" type="object" class="oe_highlight" invisible="status not in ['installed', 'change_request']" groups="bn_donation_box.donation_box_registration_installation_approve_group" />
-                    <button name="action_change_request" string="Change Request" type="object" class="oe_highlight" invisible="status not in ['available', 'close']" groups="bn_donation_box.donation_box_registration_installation_change_request_group" />
+                    <button name="action_approved" string="Approved" type="object" class="oe_highlight" invisible="status not in ['installed', 'change_request']" groups="bn_donation_box.donation_box_manager_group" />
+                    <button name="action_change_request" string="Change Request" type="object" class="oe_highlight" invisible="status not in ['available', 'close']" groups="bn_donation_box.donation_box_manager_group" />
 
                     <field name="status" widget="statusbar" statusbar_visible="draft, installed, available"/>
                 </header>
