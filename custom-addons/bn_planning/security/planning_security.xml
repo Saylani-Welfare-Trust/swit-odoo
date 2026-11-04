@@ -1,26 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- 1. Create the Category -->
+    <!-- 1. The Category (This creates the Header/Title "Monthly Planning") -->
     <record id="module_category_planning" model="ir.module.category">
         <field name="name">Monthly Planning</field>
-        <field name="description">Access to the specific Planning features</field>
+        <field name="description">Access to the specific Planning Menus</field>
         <field name="sequence">10</field>
     </record>
 
-    <!-- 2. Create the Groups -->
+    <!-- 2. Group for Menu 1 (Monthly Planning) -->
     <record id="group_planning_user" model="res.groups">
-        <field name="name">Monthly Planning / User</field>
+        <field name="name">Monthly Planning</field>
         <field name="category_id" ref="module_category_planning"/>
     </record>
 
+    <!-- 3. Group for Menu 2 (Planning Types) -->
     <record id="group_planning_manager" model="res.groups">
-        <field name="name">Monthly Planning / Manager</field>
+        <field name="name">Planning Types</field>
         <field name="category_id" ref="module_category_planning"/>
+        <!-- Optional: If Managers should also see Monthly Planning, keep this implied_ids -->
         <field name="implied_ids" eval="[(4, ref('group_planning_user'))]"/>
     </record>
 
+    <!-- 4. Group for Menu 3 (Planning Summary) -->
     <record id="group_planning_report_viewer" model="res.groups">
-        <field name="name">Monthly Planning / Report Viewer</field>
+        <field name="name">Planning Summary Report</field>
         <field name="category_id" ref="module_category_planning"/>
     </record>
 </odoo>
