@@ -12,6 +12,7 @@
     ],
     'data': [
         'security/ir.model.access.csv',
+        'security/planning_security.xml',
         
         'data/stock_location.xml',
         'data/ir_cron.xml',
