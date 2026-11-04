@@ -8,6 +8,11 @@ import re
 class POSOrder(models.Model):
     _inherit = 'pos.order'
 
+    is_non_donation_receipt = fields.Boolean(
+        string='Non-donation Receipt',
+        copy=False,
+    )
+
     customer_note = fields.Char(
         string='Customer Note',
         compute='_compute_customer_note',
@@ -40,13 +45,45 @@ class POSOrder(models.Model):
             """)
         return super()._auto_init()
 
+    @api.model
+    def _order_fields(self, ui_order):
+        vals = super()._order_fields(ui_order)
+        extra_data = ui_order.get('extra_data') or {}
+        vals['is_non_donation_receipt'] = any(
+            extra_data.get(source)
+            for source in ('medical_equipment', 'microfinance', 'welfare')
+        )
+        return vals
+
+
+    product_ids = fields.Many2many(
+        'product.product',
+        compute='_compute_product_ids',
+        string='Products',
+        store=True,          # required for search / filter / group by
+    )
+    
+    @api.depends('lines.product_id')
+    def _compute_product_ids(self):
+        for order in self:
+            order.product_ids = order.lines.mapped('product_id')
     mobile = fields.Char(related='partner_id.mobile', string="Mobile No.")
 
     state = fields.Selection(
         [('draft', 'New'), ('cancel', 'Cancelled'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced'), ('refund', 'Refunded'), ('reject', 'Reject')],
         'Status', readonly=True, copy=False, default='draft', index=True)
     
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account', 
+        string="Analytic Account", 
+        compute="_compute_config_analytic_account", 
+        store=True
+    )
+    
+    @api.depends('config_id', 'config_id.analytic_account_id')
+    def _compute_config_analytic_account(self):
+        for rec in self:
+            rec.analytic_account_id = rec.config_id.analytic_account_id or None
     
 
     @api.constrains('mobile')
@@ -68,6 +105,7 @@ class POSOrder(models.Model):
                 pos_order.state = 'done'
         
         self.state = 'reject'
+
     def action_cfo_approval(self):
         self.state = 'cfo_approval'
     
@@ -82,6 +120,44 @@ class POSOrder(models.Model):
             'context': self.env.context,
             'type': 'ir.actions.act_window',
             'target': 'current',
+        }
+
+    def action_correct_order_ref(self):
+        fixed_count = 0
+        skipped_count = 0
+
+        for rec in self:
+            pos_name = rec.config_id.name
+
+            # Order Ref is "<POS name>/<number>"; draft orders are still "/"
+            old_pos_name, sep, number = (rec.name or '').rpartition('/')
+
+            if not pos_name or not old_pos_name or not number:
+                skipped_count += 1
+                continue
+
+            if old_pos_name != pos_name:
+                rec.name = f"{pos_name}/{number}"
+                fixed_count += 1
+
+        # Renaming a POS does not rename its sequence, so new orders
+        # would keep coming with the old POS name
+        for config in self.config_id.sudo():
+            prefix = f"{config.name}/"
+
+            if config.sequence_id.prefix != prefix:
+                config.sequence_id.prefix = prefix
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Order Ref Corrected'),
+                'message': _('%s order(s) updated, %s skipped.') % (fixed_count, skipped_count),
+                'type': 'warning' if skipped_count else 'success',
+                'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'soft_reload'},
+            },
         }
 
     @api.depends('user_id')
