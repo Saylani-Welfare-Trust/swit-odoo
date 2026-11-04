@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="journal.transfer" name="_bn_split_description"/>
+</odoo>

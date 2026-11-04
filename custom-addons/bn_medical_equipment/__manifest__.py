@@ -12,7 +12,6 @@
         'bn_direct_deposit',
         'bn_donation_box',
         'bn_master_setup',
-        'bn_res_company',
         'stock',
         'product',
     ],

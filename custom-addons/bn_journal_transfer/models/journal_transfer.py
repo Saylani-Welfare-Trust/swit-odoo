@@ -176,3 +176,19 @@ class JournalTransfer(models.Model):
         if records:
             self.create(records)
             
+
+    @api.model
+    def _bn_split_description(self):
+        """Upgrade hook (data/upgrade_hooks.xml): fill session / category /
+        deposit slip of the older transfers from their description
+        "<session> - <category> - <slip>". Only rows not done yet."""
+        self.env.cr.execute("""
+            UPDATE journal_transfer
+               SET session         = NULLIF(TRIM(SPLIT_PART(descripiton, ' - ', 1)), ''),
+                   category        = NULLIF(TRIM(SPLIT_PART(descripiton, ' - ', 2)), ''),
+                   deposit_slip_no = NULLIF(TRIM(SPLIT_PART(descripiton, ' - ', 3)), '')
+             WHERE descripiton IS NOT NULL AND descripiton <> '' AND session IS NULL
+        """)
+        if self.env.cr.rowcount:
+            _logger.info("journal.transfer: session / category / slip filled on %s transfers", self.env.cr.rowcount)
+            self.invalidate_model(['session', 'category', 'deposit_slip_no'])

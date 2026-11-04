@@ -47,7 +47,6 @@
         <field name="category_id" ref="module_microfinance"/>
         <field name="implied_ids" eval="[(4, ref('microfinance_manager_group')), (4, ref('microfinance_audit_group'))]"/>
         <field name="comment">Everything, including delete.</field>
-        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
     </record>
 
     <record id="microfinance_hod_group" model="res.groups">

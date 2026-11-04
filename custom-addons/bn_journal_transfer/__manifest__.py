@@ -15,7 +15,9 @@
         'data/sequence.xml',
         'data/schedule_action.xml',
         
-        'views/journal_transfer.xml'
+        'views/journal_transfer.xml',
+
+        'data/upgrade_hooks.xml',
     ],
     'auto_install': False,
     'application': False,

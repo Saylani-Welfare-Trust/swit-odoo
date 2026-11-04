@@ -44,7 +44,12 @@ class PurchaseRequisition(models.Model):
         super(PurchaseRequisition, self).action_in_progress()
 
     def action_confirm(self):
-        self.state = 'confirm'
+        if not self.env.su and not self.env.user.has_group('bn_purchase_customization.purchase_request_confirm_group'):
+            raise ValidationError('You are not allowed to confirm a Purchase Request.')
+        for requisition in self:
+            if requisition.state != 'draft':
+                raise ValidationError('Only a Draft request can be confirmed.')
+        self.write({'state': 'confirm'})
 
     @api.model
     def _move_from_removed_states(self):

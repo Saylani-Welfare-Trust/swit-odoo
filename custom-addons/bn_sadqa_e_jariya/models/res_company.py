@@ -23,6 +23,12 @@ def portal_setting(name, string, default=False):
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
+    # Welfare Institution API (the donee API settings are in bn_profile_management)
+    welfare_instituiton_url = fields.Char('Welfare Institution URL', tracking=True)
+    odoo_auth_institution_key = fields.Char('Odoo Auth Institution Key')
+    welfare_institution_endpoint = fields.Char('Welfare Institution Endpoint')
+    mark_institution_application_endpoint = fields.Char('Mark Institution Application Endpoint')
+
     # Institution portal: Send Form / Check Portal Status / Send for Inquiry
     # (endpoints are appended to welfare_instituiton_url)
     institution_portal_login_url = portal_setting('institution_portal_login_url', 'Institution Portal Login URL')

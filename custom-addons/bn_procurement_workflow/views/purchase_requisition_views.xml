@@ -25,7 +25,7 @@
                         class="oe_highlight" invisible="state != 'confirm'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Defer" name="action_open_defer_wizard" type="object"
-                        invisible="state != 'draft'"
+                        invisible="state not in ('draft', 'confirm')"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Resume from Hold" name="action_procurement_resume" type="object"
                         class="oe_highlight" invisible="state != 'deferred'"

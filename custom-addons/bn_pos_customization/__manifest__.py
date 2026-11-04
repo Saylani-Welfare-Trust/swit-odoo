@@ -15,6 +15,7 @@
         'security/record_rule.xml',
 
         'views/pos_assets_index.xml',
+        'views/res_company.xml',
     ],
     'auto_install': False,
     'application': False,

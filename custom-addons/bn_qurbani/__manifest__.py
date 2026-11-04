@@ -1,6 +1,6 @@
 {
     'name': 'Qurbani',
-    'version': '17.0.1.6.0',
+    'version': '17.0.1.7.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -10,11 +10,12 @@
         'bn_donation_home_service',
         'bn_pos_customization',
         'bn_pos_payment_method',
-        'bn_res_company',
+        'bn_master_setup',
         'bn_pos_order',
         'bn_direct_deposit',
     ],
     'data': [
+        'data/bn_absorb.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'security/stock_scope_rule.xml',

@@ -8,7 +8,7 @@
     'depends': [
         'bn_welfare',
         'bn_profile_management',
-        'bn_res_company',
+        'bn_master_setup',
         'bn_sms_whatsapp',
     ],
     'data': [

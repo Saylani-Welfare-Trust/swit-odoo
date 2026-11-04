@@ -33,7 +33,8 @@ class BankReconciliationMaster(models.Model):
     posted_account_id = fields.Many2one(
         related='journal_id.default_account_id',
         string='Posted Account',
-        required=True,
+        # not required: a stored related field is only filled after the insert;
+        # _check_posted_account makes sure the journal has one
         store=True,
         domain="[('account_type', 'in', ['asset_cash', 'asset_current']), ('deprecated', '=', False)]"
     )
@@ -186,6 +187,13 @@ class BankReconciliationMaster(models.Model):
     match_by_date = fields.Boolean(string='Match by Date', default=False)
     match_tolerance_days = fields.Integer(string='Date Tolerance (Days)', default=3)
     match_tolerance_amount = fields.Float(string='Amount Tolerance', default=0.01)
+
+    @api.constrains('journal_id')
+    def _check_posted_account(self):
+        for master in self:
+            if not master.journal_id.default_account_id:
+                raise ValidationError(_('Journal %s has no default account: set it before reconciling its statement.')
+                                      % master.journal_id.display_name)
 
     @api.constrains('date')
     def _check_date(self):

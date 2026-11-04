@@ -13,7 +13,6 @@
         'bn_master_setup',
         'bn_pos_custom_action',
         'bn_pos_cheque',
-        'bn_res_company',
     ],
     'data': [
         'security/groups.xml',

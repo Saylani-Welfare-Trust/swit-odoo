@@ -40,10 +40,14 @@
 
     <record id="medical_equipment_ceo_approval_group" model="res.groups">
         <field name="name">Medical Equipment / Approval 1</field>
+        <!-- an approver opens the request and writes the decision on it -->
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_read_access_group')), (4, ref('medical_equipment_write_access_group'))]"/>
     </record>
 
     <record id="medical_equipment_cfo_approval_group" model="res.groups">
         <field name="name">Medical Equipment / Approval 2</field>
+        <!-- an approver opens the request and writes the decision on it -->
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_read_access_group')), (4, ref('medical_equipment_write_access_group'))]"/>
     </record>
 
 </odoo>

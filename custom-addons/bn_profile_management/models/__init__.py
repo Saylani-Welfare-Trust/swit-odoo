@@ -6,3 +6,4 @@ from . import res_partner_registration
 from . import res_partner_views
 from . import profile_view_field
 from . import pos_session
+from . import res_company

@@ -1,11 +1,12 @@
 {
     'name': 'Inventory Customization',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Inventory Customization',
     'depends': [
+        'bn_master_setup',
         'base',
         'product',
         'stock',
@@ -17,6 +18,7 @@
         'bn_donation_home_service',
     ],
     'data': [
+        'data/bn_absorb.xml',
         'security/stock_security.xml',
         'security/ir.model.access.csv',
         

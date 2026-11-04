@@ -61,28 +61,31 @@ class LivestockSlaughter(models.Model):
     cutting_hide = fields.Boolean('Cutting Hide')
     transfer_bool = fields.Boolean('Cutting Hide')
 
-    _sql_constraints = [
-        (
-            'unique_pos_order_line_id',
-            'unique(pos_order_line_id)',
-            'A livestock slaughter record already exists for this POS order line.',
-        ),
-        (
-            'unique_direct_deposit_line_id',
-            'unique(direct_deposit_line_id)',
-            'A livestock slaughter record already exists for this Direct Deposit line.',
-        ),
-        (
-            'unique_donation_id',
-            'unique(donation_id)',
-            'A livestock slaughter record already exists for this Donation.',
-        ),
-        (
-            'unique_api_donation_item_id',
-            'unique(api_donation_item_id)',
-            'A livestock slaughter record already exists for this API Donation item.',
-        ),
-    ]
+    # One record per animal: a source line (POS line, Direct Deposit line,
+    # donation, API item) gets as many records as animals it paid for, see
+    # _bn_create_for_source. The former one-record-per-line unique constraints
+    # are dropped by data/upgrade_hooks.xml.
+
+    @api.model
+    def _bn_drop_line_unique_constraints(self):
+        for name in ('unique_pos_order_line_id', 'unique_direct_deposit_line_id',
+                     'unique_donation_id', 'unique_api_donation_item_id'):
+            self.env.cr.execute('ALTER TABLE livestock_slaugther DROP CONSTRAINT IF EXISTS %s'
+                                % ('livestock_slaugther_' + name))
+
+    @api.model
+    def _bn_create_for_source(self, source_field, source, animals, total, vals):
+        """Create the missing records of ``source`` (one per animal, ``animals``
+        in all, sharing ``total``). Run again, it creates nothing more."""
+        animals = int(animals or 0)
+        if animals <= 0:
+            return self.browse()
+        existing = self.sudo().search_count([(source_field, '=', source.id)])
+        missing = animals - existing
+        if missing <= 0:
+            return self.browse()
+        vals = dict(vals, **{source_field: source.id, 'quantity': 1, 'price': (total or 0.0) / animals})
+        return self.sudo().create([dict(vals) for _i in range(missing)])
 
     @api.model
     def create(self, vals):

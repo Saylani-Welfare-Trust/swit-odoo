@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import _, models, fields
+from odoo.exceptions import AccessError, UserError
 
 import io
 import base64
@@ -22,6 +23,20 @@ class AccountPayment(models.Model):
 
         if not self:
             return False
+        if not self.env.user.has_group('account.group_account_invoice'):
+            raise AccessError(_('Only accounting users can confirm an IBFT.'))
+        wrong = self.filtered(lambda p: p.state != 'posted' or p.payment_type != 'outbound')
+        if wrong:
+            raise UserError(_('Only posted outgoing payments are sent by IBFT:\n%s')
+                            % '\n'.join(wrong.mapped('display_name')))
+        done = self.filtered(lambda p: p.ibft_status == 'success')
+        if done:
+            raise UserError(_('These payments were already confirmed by IBFT:\n%s')
+                            % '\n'.join(done.mapped('display_name')))
+        no_bank = self.filtered(lambda p: not (p.partner_bank_id or p.partner_id.bank_ids))
+        if no_bank:
+            raise UserError(_('These payments have no recipient bank account:\n%s')
+                            % '\n'.join(no_bank.mapped('display_name')))
 
         # Update all selected payment statuses
         self.write({
@@ -72,17 +87,17 @@ class AccountPayment(models.Model):
 
             worksheet.write(
                 row, 1,
-                payment.partner_id.bank_ids[0].acc_holder_name if payment.partner_id.bank_ids else ''
+                (payment.partner_bank_id or payment.partner_id.bank_ids[:1]).acc_holder_name or ''
             )
 
             worksheet.write_string(
                 row, 2,
-                payment.partner_id.bank_ids[0].acc_number if payment.partner_id.bank_ids else ''
+                (payment.partner_bank_id or payment.partner_id.bank_ids[:1]).acc_number or ''
             )
 
             worksheet.write(
                 row, 3,
-                payment.partner_id.bank_ids[0].bank_id.name if payment.partner_id.bank_ids else ''
+                (payment.partner_bank_id or payment.partner_id.bank_ids[:1]).bank_id.name or ''
             )
 
             worksheet.write(

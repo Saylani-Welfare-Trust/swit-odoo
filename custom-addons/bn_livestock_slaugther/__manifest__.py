@@ -1,6 +1,6 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '17.0.1.5.0',
+    'version': '17.0.1.6.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -35,6 +35,7 @@
         
         'wizards/livestock_slaugther.xml',
         'data/bn_program_types.xml',
+        'data/upgrade_hooks.xml',
     ],
     'auto_install': False,
     'application': True,

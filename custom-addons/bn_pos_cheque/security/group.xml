@@ -11,7 +11,6 @@
         <field name="name">Treasury</field>
         <field name="category_id" ref="module_category_pos_cheque"/>
         <field name="comment">Treasury &gt; POS Cheque: choose the deposit bank, clear or bounce cheques.</field>
-        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
     </record>
 
     <!-- Cashiers: the POS Cheques screen (re-deposit, settle bounced cheques). -->

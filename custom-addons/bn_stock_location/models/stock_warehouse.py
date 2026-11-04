@@ -9,11 +9,47 @@ _logger = logging.getLogger(__name__)
 class StockPickingType(models.Model):
     _inherit = 'stock.picking.type'
 
-    bn_program = fields.Char(
-        string='Program', readonly=True, copy=False, index=True,
-        help="Set on the operation types created for a program (Welfare, Material "
-             "Request ...): every warehouse has its own one, used by that program "
-             "instead of the general Receipts / Delivery Orders / Internal Transfers.")
+    bn_program = fields.Selection(
+        selection='_bn_program_selection', string='Program', copy=False, index=True,
+        help="The program (Donation Box, Welfare, Material Request ...) this operation type "
+             "is used by in its warehouse. Every warehouse has one per program, created "
+             "automatically; an Inventory Administrator can give the program another "
+             "operation type of the warehouse instead (Receipt, Delivery, Internal ...).")
+
+    @api.model
+    def _bn_program_selection(self):
+        specs = self.env['stock.warehouse']._bn_program_type_specs()
+        return sorted(((key, str(spec['name'])) for key, spec in specs.items()), key=lambda item: item[1])
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        types = super().create(vals_list)
+        types.filtered('bn_program')._bn_release_program()
+        return types
+
+    def write(self, vals):
+        if 'bn_program' in vals and not self.env.su and not self.env.context.get('bn_program_sync') \
+                and not self.env.user.has_group('stock.group_stock_manager'):
+            raise UserError(_('Only Inventory Administrators can change the program of an operation type.'))
+        res = super().write(vals)
+        if vals.get('bn_program') or 'warehouse_id' in vals:
+            self.filtered('bn_program')._bn_release_program()
+        return res
+
+    def _bn_release_program(self):
+        """One operation type per program and warehouse: giving a program to a
+        type takes it away from the type that had it."""
+        for picking_type in self:
+            if not picking_type.warehouse_id:
+                continue  # bound to its warehouse later (e.g. a historical type)
+            others = self.sudo().with_context(active_test=False).search([
+                ('id', '!=', picking_type.id),
+                ('warehouse_id', '=', picking_type.warehouse_id.id),
+                ('bn_program', '=', picking_type.bn_program),
+            ])
+            if others:
+                others.with_context(bn_program_sync=True).write({'bn_program': False})
+            picking_type.warehouse_id._bn_program_type_changed(picking_type.bn_program, picking_type)
 
 
 class StockWarehouse(models.Model):
@@ -23,6 +59,10 @@ class StockWarehouse(models.Model):
         'stock.picking.type', 'warehouse_id', string='Program Operation Types',
         domain=[('bn_program', '!=', False)])
 
+    def _bn_program_type_changed(self, program, picking_type):
+        """Hook: a module keeping the type of its program on the warehouse too
+        (Donation Box) follows the change."""
+
     # ------------------------------------------------------------------
     # Program operation types
     # ------------------------------------------------------------------
@@ -31,7 +71,8 @@ class StockWarehouse(models.Model):
         """{program: spec} - each program module adds its own:
 
             name, code ('incoming' / 'outgoing' / 'internal' / 'mrp_operation'),
-            sequence_code, src, dest
+            sequence_code, src, dest; or create_method: a warehouse method
+            creating the type itself
 
         src / dest: 'stock' (the warehouse stock), 'customer', 'supplier', the
         xml id of a location, or None (set by the document)."""
@@ -62,6 +103,11 @@ class StockWarehouse(models.Model):
         spec = self._bn_program_type_specs().get(program)
         if not spec:
             raise UserError(_('Unknown operation type program "%s".') % program)
+        if spec.get('create_method'):
+            # the program creates its own type (and locations), e.g. Donation Box
+            picking_type = getattr(self, spec['create_method'])()
+            picking_type.sudo().with_context(bn_program_sync=True).bn_program = program
+            return picking_type
         picking_type = PickingType.create({
             'name': spec['name'],
             'code': spec['code'],

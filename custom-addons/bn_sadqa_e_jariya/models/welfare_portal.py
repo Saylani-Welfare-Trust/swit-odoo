@@ -7,7 +7,7 @@ import string
 import requests
 
 from odoo import models, fields, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
 
@@ -61,6 +61,8 @@ class Welfare(models.Model):
 
     def action_send_institution_form(self):
         """Create the donee's institution portal login (random password) and send it on WhatsApp"""
+        if not self.env.su and not self.env.user.has_group('bn_welfare.group_bn_welfare_user'):
+            raise AccessError(_("Only Welfare users can send the institution form."))
         company = self.env.company
         if not company.institution_login_whatsapp_template or not company.institution_login_whatsapp_namespace:
             raise UserError(_("Set the Portal Login WhatsApp Template and Namespace in the Company settings first."))

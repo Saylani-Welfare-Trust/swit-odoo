@@ -101,7 +101,6 @@ class PurchaseOrder(models.Model):
             return
         # Inbox, so the message shows in Discuss rather than going out as one more
         # email. sudo: whoever triggers it need not be allowed to edit other users.
-        user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
         # mail_notify_author: also sent when the approver is the one who selected the quote.
         self.with_context(mail_notify_author=True).message_notify(
             body=_(
@@ -352,7 +351,6 @@ class PurchaseOrder(models.Model):
                 'No user currently holds the CFO approval group (%s) - nobody was notified.'
             ) % CFO_GROUP)
             return
-        cfo_users.filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
         self.message_notify(
             body=body,
             partner_ids=cfo_users.partner_id.ids,
@@ -440,7 +438,8 @@ class PurchaseOrder(models.Model):
         res = super().action_cxo_approve_po()
         for order in self:
             requisition = order.requisition_id
-            if not requisition or not requisition.material_request_id:
+            # a request entered by hand (no Material Request) moves on the same way
+            if not requisition:
                 continue
             if requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
                 requisition.write({'state': 'cxo_approved'})

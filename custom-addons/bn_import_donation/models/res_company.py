@@ -10,3 +10,4 @@ class ResCompany(models.Model):
     url = fields.Char('Donation API URL', tracking=True, help="Base URL of the website donation API, e.g. https://example.org")
     client_id = fields.Char('Donation API Client ID', groups=SECRET_GROUP)
     client_secret = fields.Char('Donation API Client Secret', groups=SECRET_GROUP)
+    difference_account_prefix = fields.Char('Difference Account Prefix', tracking=True)

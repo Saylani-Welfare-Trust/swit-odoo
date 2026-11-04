@@ -38,7 +38,6 @@
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_audit_trail"/>
         <field name="implied_ids" eval="[(4, ref('group_audit_trail_manager'))]"/>
-        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
         <field name="comment">Manager + deletes (purges) log entries. Every purge leaves a permanent entry.</field>
     </record>
 

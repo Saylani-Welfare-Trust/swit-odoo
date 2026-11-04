@@ -117,12 +117,6 @@ class MemberApproval(models.Model):
    
     
     
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
-        return super().create(vals)
-
     @api.depends_context('uid')
     @api.depends('department_id.manager_id')
     def _compute_is_current_user_hod(self):
@@ -625,6 +619,12 @@ class MemberApproval(models.Model):
     #     self.state = 'committee_approval'
 
 
+    def _bn_default_program_type(self, user):
+        try:
+            return self.env['stock.warehouse']._bn_get_program_type('material_request', user=user)
+        except UserError:
+            return self.env['stock.picking.type']
+
     def _get_default_source_location(self, user):
         """Get the Stock location from the user's allowed warehouses."""
         if user.allowed_warehouse_ids:
@@ -633,11 +633,8 @@ class MemberApproval(models.Model):
             if warehouse.lot_stock_id:
                 return warehouse.lot_stock_id
                 
-        # Fallback to internal picking type default
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
+        # Fallback: the Material Request operation type of the user's warehouse
+        picking_type = self._bn_default_program_type(user)
         return picking_type.default_location_src_id if picking_type else False
 
 
@@ -647,11 +644,8 @@ class MemberApproval(models.Model):
         if hasattr(user, 'allowed_location_ids') and user.allowed_location_ids:
             return user.allowed_location_ids[0]
             
-        # Fallback to internal picking type default
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
+        # Fallback: the Material Request operation type of the user's warehouse
+        picking_type = self._bn_default_program_type(user)
         return picking_type.default_location_dest_id if picking_type else False
 
     @api.model
@@ -723,9 +717,35 @@ class MemberApproval(models.Model):
             }
         }
 
+    # where a request in each step may be sent back to
+    _REVERT_TARGETS = {
+        'hod_approval': ('draft',),
+        'committee_approval': ('draft', 'hod_approval'),
+    }
+
+    def _check_can_revert(self, target_state):
+        """Only who decides at the current step sends the request back, and
+        only to an earlier step."""
+        self.ensure_one()
+        if target_state not in self._REVERT_TARGETS.get(self.state, ()):
+            raise ValidationError(_('A request in "%(state)s" cannot be reverted to "%(target)s".') % {
+                'state': dict(self._fields['state'].selection).get(self.state),
+                'target': dict(self._fields['state'].selection).get(target_state, target_state)})
+        if self.env.su or self.env.user.has_group('base.group_system'):
+            return
+        if self.state == 'hod_approval':
+            if self.department_id and self.department_id.manager_id != self.env.user.employee_id:
+                raise AccessError(_('Only the HOD of the department can revert this request.'))
+        elif not (self.env.user.has_group('bn_material_request.menu_group_material_request_cfo')
+                  or self.env.user.has_group('bn_material_request.menu_group_material_request_coo')):
+            raise AccessError(_('Only the CFO or the COO can revert a request in Budget Approval.'))
+
     def action_process_revert(self, reason, target_state):
         """Process the revert action based on the selected target state."""
         self.ensure_one()
+        if not (reason or '').strip():
+            raise ValidationError(_('You must provide a reason to revert this request.'))
+        self._check_can_revert(target_state)
         
         # Update state and reason
         self.write({
@@ -734,7 +754,8 @@ class MemberApproval(models.Model):
         })
         
         # Log it in the chatter for full traceability
-        self.message_post(body=_("Request reverted to %s by %s. Reason: %s") % (target_state, self.env.user.name, reason))
+        self.message_post(body=_("Request reverted to %(state)s by %(user)s. Reason: %(reason)s") % {
+            'state': dict(self._fields['state'].selection).get(target_state), 'user': self.env.user.name, 'reason': reason})
 
         # Reset approvals based on where it was reverted to
         if target_state == 'draft':

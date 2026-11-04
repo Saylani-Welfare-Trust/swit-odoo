@@ -1,4 +1,3 @@
-from psycopg2 import IntegrityError
 
 from odoo import models
 
@@ -34,25 +33,14 @@ class Donation(models.Model):
             if not product or not product.is_livestock:
                 continue
 
-            if slaughter_obj.search_count([('donation_id', '=', donation.id)]):
-                continue
-
-            for i in range(int(donation.quantity or 1)):
-                slaughter_vals = {
-                    'product_id': product.id,
-                    'donee_id': donation.donor_id.id,
-                    'donation_id': donation.id,
-                    'quantity': 1,
-                    'price': donation.amount,
-                    'ref': donation.name,
-                }
-                slaughter_vals.update(donation._get_livestock_department_vals(product))
-
-                try:
-                    with self.env.cr.savepoint():
-                        slaughter_obj.create(slaughter_vals)
-                except IntegrityError:
-                    continue
+            # an imported donation is one animal
+            vals = {
+                'product_id': product.id,
+                'donee_id': donation.donor_id.id,
+                'ref': donation.name,
+            }
+            vals.update(donation._get_livestock_department_vals(product))
+            slaughter_obj._bn_create_for_source('donation_id', donation, 1, donation.amount, vals)
 
 
 class ImportDonation(models.Model):

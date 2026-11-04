@@ -19,6 +19,7 @@
         'security/access_right.xml',
         'security/ir.model.access.csv',
         'views/res_partner.xml',
+        'views/res_company.xml',
         'views/res_partner_layer.xml',
         'views/res_partner_category.xml',
         'wizards/confirm_search.xml',

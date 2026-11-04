@@ -21,6 +21,22 @@ class StockWarehouse(models.Model):
              "destination locations of the transfer are taken from this operation type.",
     )
 
+    def write(self, vals):
+        res = super().write(vals)
+        if vals.get('donation_box_picking_type_id') and not self.env.context.get('bn_program_sync'):
+            # the program operation type follows the warehouse field
+            for warehouse in self:
+                warehouse.donation_box_picking_type_id.sudo().with_context(bn_program_sync=True).write(
+                    {'bn_program': 'donation_box'})
+        return res
+
+    def _bn_program_type_changed(self, program, picking_type):
+        super()._bn_program_type_changed(program, picking_type)
+        if program == 'donation_box':
+            for warehouse in self:
+                if warehouse.donation_box_picking_type_id != picking_type:
+                    warehouse.sudo().with_context(bn_program_sync=True).donation_box_picking_type_id = picking_type
+
     @api.constrains('donation_box_picking_type_id')
     def _check_donation_box_picking_type_id(self):
         for warehouse in self:
@@ -46,6 +62,12 @@ class StockWarehouse(models.Model):
             raise UserError(_('This warehouse already has a Donation Box operation type.'))
         self._bn_create_donation_box_picking_type()
         return True
+
+    def _bn_donation_box_program_type(self):
+        """Program 'donation_box' (bn_stock_location): the warehouse's Donation
+        Box Operation Type, created when it has none."""
+        self.ensure_one()
+        return self.donation_box_picking_type_id or self._bn_create_donation_box_picking_type()
 
     def _bn_create_donation_box_picking_type(self):
         self.ensure_one()
@@ -74,7 +96,8 @@ class StockWarehouse(models.Model):
             'use_create_lots': False,
             'use_existing_lots': True,
         })
-        self.donation_box_picking_type_id = picking_type
+        self.with_context(bn_program_sync=True).donation_box_picking_type_id = picking_type
+        picking_type.with_context(bn_program_sync=True).bn_program = 'donation_box'
         return picking_type
 
     @api.model

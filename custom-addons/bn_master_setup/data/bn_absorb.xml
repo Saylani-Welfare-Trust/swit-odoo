@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Must stay the first data file: modules merged into this one hand
+         their records over before they are loaded again from here. -->
+    <function model="ir.module.module" name="_bn_absorb_modules">
+        <value>bn_master_setup</value>
+        <value eval="['bn_res_company', 'bn_res_users', 'bn_res_currency']"/>
+    </function>
+</odoo>

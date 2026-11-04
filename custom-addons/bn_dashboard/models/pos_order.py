@@ -183,9 +183,9 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_ids_sql(self, domain):
-        if not domain:
-            return ""
-        orders = self.env['pos.order'].search(domain)
+        # Always through search(): the raw queries below then only count the
+        # orders the user may see (POS record rules), filters or not.
+        orders = self.env['pos.order'].search(domain or [])
         if not orders:
             return " AND 1=0 "
         return " AND pos_order.id IN (%s) " % ','.join(str(i) for i in orders.ids)
@@ -209,11 +209,11 @@ class PosOrder(models.Model):
         if option == 'pos_hourly_sales':
             user_tz = self.env.user.tz if self.env.user.tz else pytz.UTC
             query = (
-                "select EXTRACT(hour FROM date_order at time zone 'utc' at time zone '%s') "
+                "select EXTRACT(hour FROM date_order at time zone 'utc' at time zone %%(tz)s) "
                 "as date_month, sum(amount_total) from pos_order "
                 "where pos_order.company_id = %d %s "
                 "group by date_month order by date_month"
-            ) % (user_tz, company_id, order_sql)
+            ) % (company_id, order_sql)
             label = 'HOURS'
         elif option == 'pos_monthly_sales':
             query = (
@@ -231,7 +231,7 @@ class PosOrder(models.Model):
             ) % (company_id, order_sql)
             label = 'MONTHS'
 
-        self._cr.execute(query)
+        self._cr.execute(query, {'tz': str(user_tz)})
         docs = self._cr.dictfetchall()
         return [
             [r.get('sum') for r in docs],

@@ -7,7 +7,7 @@
     'category': 'BytesNode/Key Management',
     'depends': [
         'bn_donation_box',
-        'bn_res_company'
+        'bn_master_setup',
     ],
     'data': [
         'data/schedule_action.xml',

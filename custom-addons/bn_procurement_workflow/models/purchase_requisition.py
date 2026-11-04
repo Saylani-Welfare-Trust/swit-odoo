@@ -162,7 +162,6 @@ class PurchaseRequisition(models.Model):
             user = requisition.assigned_user_id
             # Inbox, so the message shows in Discuss rather than as an email.
             # sudo: whoever assigns need not be allowed to edit other users.
-            user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
             requisition.with_context(mail_notify_author=True).message_notify(
                 body=_('Purchase Request %(request)s has been assigned to you by %(user)s to create its RFQs.',
                        request=requisition.display_name, user=self.env.user.display_name),
@@ -179,15 +178,12 @@ class PurchaseRequisition(models.Model):
         approval step in this workflow. Moves the PR into its own 'Procurement Manager
         Approval' state, which unlocks RFQ creation."""
         self.ensure_one()
-        # if self.state != 'confirm':
-        #     raise ValidationError(_('This request is not in confirm state.'))
-        # if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
-        #     raise ValidationError(_('Only a Procurement Manager can approve this request.'))
-        # if not self.material_request_id:
-        #     raise ValidationError(
-        #         _('This Purchase Requisition has no source Material Request, so there is no '
-        #           'requesting department to run Technical Evaluation against. It cannot enter '
-        #           'the Procurement workflow.'))
+        # Confirm (a request entered by hand), or Draft (a request created for
+        # the remaining products of a Material Request)
+        if self.state not in ('draft', 'confirm'):
+            raise ValidationError(_('This request is not waiting for Procurement Manager approval.'))
+        if not self.env.su and not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+            raise ValidationError(_('Only a Procurement Manager can approve this request.'))
         # The request gets its number here, so that the RFQs sent out next carry it.
         self._assign_reference_number()
         self.write({
@@ -200,8 +196,8 @@ class PurchaseRequisition(models.Model):
     def action_open_defer_wizard(self):
         """Open the small popup collecting the mandatory deferral reason."""
         self.ensure_one()
-        if self.state != 'draft':
-            raise ValidationError(_('This request is not in Draft state.'))
+        if self.state not in ('draft', 'confirm'):
+            raise ValidationError(_('Only a request waiting for Procurement Manager approval can be deferred.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can defer this request.'))
         return {
@@ -216,8 +212,8 @@ class PurchaseRequisition(models.Model):
     def action_procurement_defer(self, reason):
         """Procurement Manager defers the PR instead of approving it."""
         self.ensure_one()
-        if self.state != 'draft':
-            raise ValidationError(_('This request is not in Draft state.'))
+        if self.state not in ('draft', 'confirm'):
+            raise ValidationError(_('Only a request waiting for Procurement Manager approval can be deferred.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can defer this request.'))
         if not reason:
@@ -226,13 +222,13 @@ class PurchaseRequisition(models.Model):
         self.message_post(body=_('Purchase Requisition deferred by Procurement Manager.\nReason: %s') % reason)
 
     def action_procurement_resume(self):
-        """Resume a deferred PR back to Draft for Procurement Manager review."""
+        """Resume a deferred PR back to Confirm for Procurement Manager review."""
         self.ensure_one()
         if self.state != 'deferred':
             raise ValidationError(_('This request is not Deferred.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can resume this request.'))
-        self.state = 'draft'
+        self.state = 'confirm'
 
     def action_mark_rfq_sent(self):
         """Called once RFQs have been created for this requisition."""

@@ -12,7 +12,6 @@
         'bn_profile_management',
         'bn_analytic_account_customization',
         'bn_master_setup',
-        'bn_res_company',
     ],
     'data': [
         'security/group.xml',

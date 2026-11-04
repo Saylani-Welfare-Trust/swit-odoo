@@ -11,6 +11,7 @@
                     <group string="Website Donation API">
                         <group name="donation_api_configuration_col_1">
                             <field name="url" widget="url" />
+                            <field name="difference_account_prefix" />
                         </group>
                         <group name="donation_api_configuration_col_2">
                             <field name="client_id" />
