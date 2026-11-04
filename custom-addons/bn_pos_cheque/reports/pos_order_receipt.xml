@@ -13,12 +13,15 @@
             <div class="watermark"><t t-if="is_provisional">Provisional</t><t t-else="">Duplicate</t></div>
         </xpath>
 
-        <xpath expr="//h1[@t-if='order.is_non_donation_receipt']" position="replace">
-            <h1 t-if="is_provisional">Provisional Receipt</h1>
-            <h1 t-elif="order.is_non_donation_receipt">Non Donation Receipt</h1>
-            <h1 t-else="">Donation Receipt</h1>
+        <!-- Keep the parent's heading block (incl. Non Donation Receipt, if present) and hide it when provisional -->
+        <xpath expr="//h1[normalize-space()='Donation Receipt']/.." position="before">
+            <div t-if="is_provisional" class="col-6">
+                <h1>Provisional Receipt</h1>
+            </div>
         </xpath>
-        <xpath expr="//h1[normalize-space()='Donation Receipt']" position="replace"/>
+        <xpath expr="//h1[normalize-space()='Donation Receipt']/.." position="attributes">
+            <attribute name="t-if">not is_provisional</attribute>
+        </xpath>
     </template>
 
     <!-- Same receipt without the Duplicate mark (Print menu, WhatsApp PDF) -->
@@ -31,12 +34,14 @@
             <div t-if="is_provisional" class="watermark">Provisional</div>
         </xpath>
 
-        <xpath expr="//h1[@t-if='order.is_non_donation_receipt']" position="replace">
-            <h1 t-if="is_provisional" style="font-size: 15px;font-weight: bold;">Provisional Receipt</h1>
-            <h1 t-elif="order.is_non_donation_receipt" style="font-size: 15px;font-weight: bold;">Non Donation Receipt</h1>
-            <h1 t-else="" style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
+        <xpath expr="//h1[normalize-space()='Donation Receipt']/.." position="before">
+            <div t-if="is_provisional" class="col-6">
+                <h1 style="font-size: 15px;font-weight: bold;">Provisional Receipt</h1>
+            </div>
         </xpath>
-        <xpath expr="//h1[normalize-space()='Donation Receipt']" position="replace"/>
+        <xpath expr="//h1[normalize-space()='Donation Receipt']/.." position="attributes">
+            <attribute name="t-if">not is_provisional</attribute>
+        </xpath>
     </template>
 
 </odoo>
