@@ -75,6 +75,7 @@
     <menuitem
         id="foreign_currency_menu"
         name="Foreign Currency"
+        groups="bn_rider_shift.group_foreign_currency_collection"
         action="foreign_currency_action"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="3"/>
