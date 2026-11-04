@@ -41,12 +41,12 @@
     </record>
 
     <record id="complain_center_process_complain_group" model="res.groups">
-        <field name="name">Process Complain Center</field>
+        <field name="name">Process Complain</field>
         <field name="category_id" ref="module_donation_box"/>
     </record>
     
     <record id="complain_center_resolve_complain_group" model="res.groups">
-        <field name="name">Resolve Complain Center</field>
+        <field name="name">Resolve Complain</field>
         <field name="category_id" ref="module_donation_box"/>
     </record>
 
