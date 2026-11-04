@@ -23,16 +23,16 @@ def portal_setting(name, string, default=False):
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    # Institution portal: Send Form / Check Portal Status / Send for Inquiry
-    # (endpoints are appended to welfare_instituiton_url)
+    # Institution portal: operations are POSTed to welfare_instituiton_url + /rpc/odoo/institutional/<operation>
     institution_portal_login_url = portal_setting('institution_portal_login_url', 'Institution Portal Login URL')
-    # Donee logins are <donee name>.<form number>@<this domain>
+    # A donee's permanent login, made on their first application: <donee name>.<form number>@<this domain>
     institution_portal_email_domain = portal_setting('institution_portal_email_domain', 'Portal Login Email Domain')
-    create_institution_account_endpoint = portal_setting('create_institution_account_endpoint', 'Create Institution Account Endpoint')
-    institution_application_status_endpoint = portal_setting('institution_application_status_endpoint', 'Institution Application Status Endpoint')
-    assign_institution_inquiry_endpoint = portal_setting('assign_institution_inquiry_endpoint', 'Assign Institution Inquiry Officer Endpoint')
 
-    # Approved WhatsApp template, body: {{1}} donee name, {{2}} portal link, {{3}} login email, {{4}} password
+    # Optional approved WhatsApp template for the portal login (SMS without it),
+    # body: {{1}} donee name, {{2}} portal link, {{3}} login email, {{4}} password
     institution_login_whatsapp_template = portal_setting('institution_login_whatsapp_template', 'Portal Login WhatsApp Template')
     institution_login_whatsapp_namespace = portal_setting('institution_login_whatsapp_namespace', 'Portal Login WhatsApp Namespace')
     institution_login_whatsapp_language = portal_setting('institution_login_whatsapp_language', 'Portal Login WhatsApp Language', default='en')
+
+    # Service product (available in POS) the cashier pays applications with, like Welfare's welfare_product
+    sadqa_jariya_pos_product = portal_setting('sadqa_jariya_pos_product', 'Sadqa e Jariya POS Product')

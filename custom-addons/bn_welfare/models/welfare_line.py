@@ -153,10 +153,6 @@ class WelfareLine(models.Model):
         for rec in self:
             rec.media_count = len(rec.media_ids)
 
-    def _get_pending_welfare_extra_vals(self, welfare):
-        """Extra values copied from welfare by action_set_pending, extended in bn_sadqa_e_jariya."""
-        return {}
-
     def action_set_pending(self, create_return_line=True):
         """
         Create a new welfare record with only the pending disbursement line.
@@ -248,7 +244,6 @@ class WelfareLine(models.Model):
                     'total_children': welfare.total_children if welfare.total_children else 0,
                     'boys_count': welfare.boys_count if welfare.boys_count else 0,
                 }
-                new_welfare_vals.update(record._get_pending_welfare_extra_vals(welfare))
 
                 # Create the new welfare record
                 new_welfare = self.env['welfare'].create(new_welfare_vals)

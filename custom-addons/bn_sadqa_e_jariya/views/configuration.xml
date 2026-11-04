@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sadqa_jariya_application_type_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.application.type.view.tree</field>
+        <field name="model">sadqa.jariya.application.type</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="order_type"/>
+                <field name="product_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                <field name="analytic_account_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_application_type_action" model="ir.actions.act_window">
+        <field name="name">Disbursement Application Types</field>
+        <field name="res_model">sadqa.jariya.application.type</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create a disbursement application type for Sadqa e Jariya....
+            </p>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_disbursement_category_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.disbursement.category.view.tree</field>
+        <field name="model">sadqa.jariya.disbursement.category</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_disbursement_category_action" model="ir.actions.act_window">
+        <field name="name">Disbursement Categories</field>
+        <field name="res_model">sadqa.jariya.disbursement.category</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <record id="sadqa_jariya_approval_limit_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.approval.limit.view.tree</field>
+        <field name="model">sadqa.jariya.approval.limit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="group_id"/>
+                <field name="max_amount_limit" widget="monetary"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_approval_limit_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.approval.limit.view.form</field>
+        <field name="model">sadqa.jariya.approval.limit</field>
+        <field name="arch" type="xml">
+            <form string="Approval Limit">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="group_id"/>
+                            <field name="max_amount_limit" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="allowed_product_ids" widget="many2many_tags" placeholder="Leave empty to allow all products"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_approval_limit_action" model="ir.actions.act_window">
+        <field name="name">Approval Limits</field>
+        <field name="res_model">sadqa.jariya.approval.limit</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configure the HOD approval limit
+            </p>
+            <p>
+                Set the maximum amount and allowed products the HOD can approve.
+                Above the limit the application goes to Final Approval (Member).
+            </p>
+        </field>
+    </record>
+
+    <record id="product_template_only_form_view_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">product.template.only.form.view.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Sadqa e Jariya" name="sadqa_jariya">
+                    <group name="sadqa_jariya">
+                        <field name="is_sadqa_jariya"/>
+                        <field name="is_sadqa_jariya_hod"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

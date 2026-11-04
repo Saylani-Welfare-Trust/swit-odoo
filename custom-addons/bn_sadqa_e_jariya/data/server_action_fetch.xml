@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- xmlid kept from 1.0 (Fetch Institution Applications) -->
+    <record id="action_fetch_institution_applications" model="ir.actions.server">
+        <field name="name">Portal Sync</field>
+        <field name="model_id" ref="model_sadqa_jariya"/>
+        <!-- 1.0 bound it to welfare.institution.fetch.log, removed by the upgrade with all its actions -->
+        <field name="binding_model_id" eval="False"/>
+        <field name="state">code</field>
+        <field name="code">model._sync_portal()
+action = env['ir.actions.act_window']._for_xml_id('bn_sadqa_e_jariya.sadqa_jariya_fetch_log_action')</field>
+    </record>
+
+</odoo>

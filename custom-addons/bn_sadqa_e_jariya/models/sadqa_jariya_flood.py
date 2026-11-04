@@ -1,7 +1,9 @@
 from odoo import models, fields
 
-# Flood Inquiry Institute Form keys sent by the portal, same as the field names
-FLOOD_FORM_KEYS = (
+from .portal_keys import camel_key
+
+# Flood institute form fields, the portal export sends them camelCased (form_date -> formDate)
+FLOOD_FORM_FIELDS = (
     'form_date', 'app_date',
     'institute_name', 'address', 'mohtamim_mutawalli', 'contact_number', 'short_intro',
     'count_oula', 'count_sania', 'count_salisa', 'count_rabia', 'count_khamisa', 'count_sadisa', 'count_dawra',
@@ -11,15 +13,14 @@ FLOOD_FORM_KEYS = (
     'attendance_jummah', 'attendance_eidain',
     'status_before_flood', 'status_after_flood',
     'total_estimate', 'estimate_iron_steel', 'estimate_cement', 'estimate_labor', 'current_work', 'remaining_work',
-    'officer_report', 'officer_name', 'officer_contact', 'final_decision',
 )
 
 
-class WelfareFlood(models.Model):
-    _name = 'welfare.flood'
+class SadqaJariyaFlood(models.Model):
+    _name = 'sadqa.jariya.flood'
     _description = 'Flood Affected Institute Application Details'
 
-    welfare_id = fields.Many2one('welfare', string='Welfare Application', required=True, ondelete='cascade')
+    application_id = fields.Many2one('sadqa.jariya', string='Application', required=True, ondelete='cascade')
 
     # Header
     form_date = fields.Date(string='Form Date')
@@ -69,10 +70,4 @@ class WelfareFlood(models.Model):
     current_work = fields.Text(string='Current Work')
     remaining_work = fields.Text(string='Remaining Work')
 
-    # Official Inquiry & Decision
-    officer_report = fields.Text(string='Inquiry Officer Report')
-    officer_name = fields.Char(string='Inquiry Officer Name')
-    officer_contact = fields.Char(string='Inquiry Officer Contact')
-    final_decision = fields.Text(string='Final Decision')
-
-    _portal_form_fields = {key: key for key in FLOOD_FORM_KEYS}
+    _portal_form_fields = {camel_key(name): name for name in FLOOD_FORM_FIELDS}

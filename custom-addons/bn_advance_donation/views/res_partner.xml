@@ -16,7 +16,7 @@
                             <field name="payment_type"/>
                             <field name="total_product_amount"/>
                             <field name="paid_amount"/>
-                            <field name="remaining_amount"/>
+                            <field name="remaining_amount"/>    
                             <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state in ('approved')"/>
                         </tree>
                     </field>

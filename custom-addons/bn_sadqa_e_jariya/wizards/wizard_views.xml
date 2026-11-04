@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sadqa_jariya_line_disbursement_popup_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.disbursement.popup.view.form</field>
+        <field name="model">sadqa.jariya.line.disbursement.popup</field>
+        <field name="arch" type="xml">
+            <form string="Disbursement Details">
+                <sheet>
+                    <group string="Donee Information">
+                        <field name="line_id" invisible="1"/>
+                        <field name="application_id"/>
+                        <field name="donee_id"/>
+                        <field name="donee_cnic_no"/>
+                        <field name="donee_mobile"/>
+                        <field name="donee_street"/>
+                        <field name="donee_street2"/>
+                        <field name="donee_city"/>
+                        <field name="donee_state_id"/>
+                        <field name="donee_country_id"/>
+                    </group>
+                    <group string="Disbursement Information">
+                        <field name="disbursement_category_id"/>
+                        <field name="application_type_id"/>
+                        <field name="product_id"/>
+                        <field name="quantity"/>
+                        <field name="total_amount"/>
+                        <field name="collection_point"/>
+                        <field name="collection_date"/>
+                        <field name="assigned_officer_id"/>
+                        <field name="state"/>
+                    </group>
+                    <group string="Media">
+                        <field name="media_ids" widget="many2many_binary" required="1" nolabel="1" colspan="2" options="{'accepted_file_extensions': 'image/*,video/*'}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
+                    <button name="action_mark_pending" type="object" string="Mark as Pending" class="btn-secondary"/>
+                    <button string="Close" class="btn-link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_recurring_line_disbursement_popup_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.disbursement.popup.view.form</field>
+        <field name="model">sadqa.jariya.recurring.line.disbursement.popup</field>
+        <field name="arch" type="xml">
+            <form string="Recurring Disbursement Details">
+                <sheet>
+                    <group string="Donee Information">
+                        <field name="recurring_line_id" invisible="1"/>
+                        <field name="application_id"/>
+                        <field name="donee_id"/>
+                        <field name="donee_cnic_no"/>
+                        <field name="donee_mobile"/>
+                        <field name="donee_street"/>
+                        <field name="donee_street2"/>
+                        <field name="donee_city"/>
+                        <field name="donee_state_id"/>
+                        <field name="donee_country_id"/>
+                    </group>
+                    <group string="Recurring Disbursement Information">
+                        <field name="disbursement_category_id"/>
+                        <field name="application_type_id"/>
+                        <field name="product_id"/>
+                        <field name="currency_id" invisible="1"/>
+                        <field name="quantity"/>
+                        <field name="amount"/>
+                        <field name="collection_point"/>
+                        <field name="collection_date"/>
+                        <field name="assigned_officer_id"/>
+                        <field name="state"/>
+                    </group>
+                    <group string="Media">
+                        <field name="media_ids" widget="many2many_binary" required="1" nolabel="1" colspan="2" options="{'accepted_file_extensions': 'image/*,video/*'}"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_disbursed" type="object" string="Mark as Done" class="btn-primary"/>
+                    <button name="action_mark_pending" type="object" string="Mark as Pending" class="btn-secondary"/>
+                    <button string="Close" class="btn-link" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_marfat_shift_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.marfat.shift.view.form</field>
+        <field name="model">sadqa.jariya.marfat.shift</field>
+        <field name="arch" type="xml">
+            <form string="Check Assigned Officer (Marfat) Shift">
+                <header>
+                    <button name="action_check_shift" string="Check Shift" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h2>Check Assigned Officer Disbursements</h2>
+                    </div>
+                    <group>
+                        <field name="assigned_officer_id"/>
+                    </group>
+                    <notebook>
+                        <page string="Disbursement Lines">
+                            <field name="line_ids" nolabel="1">
+                                <tree>
+                                    <field name="application_id"/>
+                                    <field name="disbursement_category_id"/>
+                                    <field name="product_id"/>
+                                    <field name="collection_point"/>
+                                    <field name="collection_date"/>
+                                    <field name="quantity"/>
+                                    <field name="total_amount"/>
+                                    <button name="open_disbursement_popup" string="Details" type="object" class="btn-secondary"/>
+                                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'collected'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Recurring Lines">
+                            <field name="recurring_line_ids" nolabel="1">
+                                <tree>
+                                    <field name="application_id"/>
+                                    <field name="disbursement_category_id"/>
+                                    <field name="product_id"/>
+                                    <field name="collection_point"/>
+                                    <field name="collection_date"/>
+                                    <field name="quantity"/>
+                                    <field name="amount"/>
+                                    <button name="open_recurring_disbursement_popup" string="Details" type="object" class="btn-secondary"/>
+                                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'collected'"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_marfat_shift_action" model="ir.actions.act_window">
+        <field name="name">Check Assigned Officer Shift</field>
+        <field name="res_model">sadqa.jariya.marfat.shift</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="sadqa_jariya_review_wizard_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.review.wizard.view.form</field>
+        <field name="model">sadqa.jariya.review.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Review Application">
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="application_id" readonly="1" options="{'no_open': True}"/></h1>
+                    </div>
+                    <group>
+                        <group string="Institution">
+                            <field name="donee_id"/>
+                            <field name="institution_category"/>
+                            <field name="subcategory"/>
+                            <field name="institute_name"/>
+                            <field name="address"/>
+                        </group>
+                        <group string="Request">
+                            <field name="state"/>
+                            <field name="order_type"/>
+                            <field name="employee_id"/>
+                            <field name="account_title"/>
+                            <field name="account_number"/>
+                        </group>
+                    </group>
+                    <separator string="Disbursement Items"/>
+                    <field name="lines_html" nolabel="1"/>
+                    <separator string="Inquiry Reports"/>
+                    <field name="inquiry_reports_html" nolabel="1"/>
+                    <group string="Remarks">
+                        <field name="committee_remarks" invisible="state != 'committee_approval'" required="state == 'committee_approval'"/>
+                        <field name="hod_remarks" invisible="state != 'hod_approve'" required="state == 'hod_approve'"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_approve" string="Approve" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

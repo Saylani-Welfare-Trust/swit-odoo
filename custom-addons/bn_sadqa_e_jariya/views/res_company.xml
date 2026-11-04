@@ -9,18 +9,22 @@
             <xpath expr="//page[@name='welfare_api_auth_endpoints']" position="inside">
                 <group>
                     <group name="sadqa_e_jariya_portal" string="Sadqa e Jariya Portal">
+                        <div colspan="2" class="text-muted">
+                            Calls go to the Welfare Institution URL + /rpc/odoo/institutional/&lt;operation&gt; with the Odoo Auth Institution Key.
+                        </div>
                         <field name="institution_portal_login_url" />
                         <field name="institution_portal_email_domain" placeholder="e.g. saylani.org" />
-                        <field name="create_institution_account_endpoint" />
-                        <field name="institution_application_status_endpoint" />
-                        <field name="assign_institution_inquiry_endpoint" />
+                        <field name="sadqa_jariya_pos_product" placeholder="Service product name, available in POS" />
                     </group>
-                    <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template">
+                    <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template (optional)">
+                        <div colspan="2" class="text-muted">
+                            Leave empty to send the donee's portal login by SMS. Once a Meta-approved template is set here, it goes on WhatsApp instead.
+                        </div>
                         <field name="institution_login_whatsapp_template" />
                         <field name="institution_login_whatsapp_namespace" />
                         <field name="institution_login_whatsapp_language" />
                         <div colspan="2" class="text-muted">
-                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} login email, {{4}} password.
+                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} login email, {{4}} password ("Use your existing password" on a donee's later applications).
                         </div>
                     </group>
                 </group>

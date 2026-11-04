@@ -35,18 +35,17 @@
                     (0, 0, {'view_mode': 'form', 'view_id': ref('bn_profile_management.profile_management_view_form')})]"/>
     </record>
 
-    <!-- Users who had Institution Disbursement / Fetch Institution under Welfare keep their access here -->
     <menuitem
         id="sadqa_e_jariya_menu"
         name="Sadqa e Jariya"
         web_icon="bn_sadqa_e_jariya,static/description/icon.png"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.group_fetch_institution"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.group_fetch_institution,bn_sadqa_e_jariya.group_sadqa_jariya_marfat_officer,bn_sadqa_e_jariya.group_sadqa_jariya_all_lines"
         sequence="7"/>
 
     <menuitem
         id="sadqa_e_jariya_institution_disbursement_menu"
         name="Institution Disbursement"
-        action="welfare_action_institution"
+        action="sadqa_jariya_action"
         groups="bn_sadqa_e_jariya.group_institutional_disbursement"
         parent="sadqa_e_jariya_menu"
         sequence="1"/>
@@ -73,25 +72,81 @@
         sequence="1"/>
 
     <menuitem
+        id="sadqa_jariya_lines_menu"
+        name="All Lines"
+        groups="bn_sadqa_e_jariya.group_sadqa_jariya_all_lines"
+        parent="sadqa_e_jariya_menu"
+        sequence="4"/>
+
+    <menuitem
+        id="sadqa_jariya_line_menu"
+        name="All Disbursement Lines"
+        action="sadqa_jariya_line_action"
+        parent="sadqa_jariya_lines_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="sadqa_jariya_recurring_line_menu"
+        name="All Recurring Lines"
+        action="sadqa_jariya_recurring_line_action"
+        parent="sadqa_jariya_lines_menu"
+        sequence="2"/>
+
+    <menuitem
+        id="sadqa_jariya_marfat_shift_menu"
+        name="Check Assigned Officer Shift"
+        action="sadqa_jariya_marfat_shift_action"
+        groups="bn_sadqa_e_jariya.group_sadqa_jariya_marfat_officer"
+        parent="sadqa_e_jariya_menu"
+        sequence="25"/>
+
+    <menuitem
         id="menu_fetch_institution_applications"
-        name="Fetch Institution Applications"
+        name="Portal Sync"
         groups="bn_sadqa_e_jariya.group_fetch_institution"
         parent="sadqa_e_jariya_menu"
         sequence="100"/>
 
     <menuitem
         id="fetch_institution_applications"
-        name="Fetch"
+        name="Sync Now"
         parent="menu_fetch_institution_applications"
-        groups="bn_sadqa_e_jariya.group_fetch_institution"
         action="action_fetch_institution_applications"
         sequence="100"/>
 
-    <menuitem id="menu_welfare_institution_fetch_log"
+    <menuitem
+        id="menu_sadqa_jariya_fetch_log"
         name="Logs"
         parent="menu_fetch_institution_applications"
-        groups="bn_sadqa_e_jariya.group_fetch_institution"
-        action="action_welfare_institution_fetch_log"
+        action="sadqa_jariya_fetch_log_action"
         sequence="99"/>
+
+    <!-- Configuration lives in Master Setup, like Welfare's -->
+    <menuitem
+        id="sadqa_jariya_config_menu"
+        name="Sadqa e Jariya"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="5"/>
+
+    <menuitem
+        id="sadqa_jariya_application_type_menu"
+        name="Disbursement Application Types"
+        action="sadqa_jariya_application_type_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="sadqa_jariya_disbursement_category_menu"
+        name="Disbursement Categories"
+        action="sadqa_jariya_disbursement_category_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="2"/>
+
+    <menuitem
+        id="sadqa_jariya_approval_limit_menu"
+        name="Approval Limits"
+        action="sadqa_jariya_approval_limit_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="3"/>
 
 </odoo>
