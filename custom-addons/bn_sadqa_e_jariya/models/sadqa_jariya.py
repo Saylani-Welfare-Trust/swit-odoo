@@ -36,10 +36,9 @@ REVERT_STATE = {
     'mem_approve': 'hod_approve',
 }
 
-# Tags a Sadqa e Jariya donee has, by xmlid: their names can be edited (Coorporate -> Corporate / Institute)
+# Tags required for a corporate/institute Sadqa e Jariya donee.
 DONEE_TAGS = (
     'bn_profile_management.donee_partner_category',
-    'bn_profile_management.welfare_partner_category',
     'bn_profile_management.coorporate_institute_partner_category',
 )
 
@@ -141,7 +140,7 @@ class SadqaJariya(models.Model):
 
     @api.model
     def _donee_tag_domain(self):
-        """Registered donees with every Sadqa e Jariya tag"""
+        """Registered donees tagged Donee and Corporate / Institute."""
         domain = [('state', '=', 'register')]
         for xmlid in DONEE_TAGS:
             tag = self.env.ref(xmlid, raise_if_not_found=False)
