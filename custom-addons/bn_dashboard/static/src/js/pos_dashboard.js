@@ -58,6 +58,7 @@ export class PosDashboard extends Component {
             cheque_count: 0,
             deposit_count: 0,
             transfer_count: 0,
+            restriction: null,
         });
 
         // Restore filter state from sessionStorage if it exists
@@ -151,6 +152,7 @@ export class PosDashboard extends Component {
         this.state.segments_l4 = hierarchy.segments_l4 || [];
 
         this.state.categories = await this.orm.call('pos.order', 'get_pos_categories', []);
+        this.state.restriction = await this.orm.call('dashboard.configurator', 'get_user_restrictions', ['pos_order']);
     }
 
     get filteredCities() {
@@ -550,6 +552,10 @@ export class PosDashboard extends Component {
     getFilterDomain(model) {
         const domain = [];
         if (this.state.config_id) domain.push(['config_id', '=', parseInt(this.state.config_id, 10)]);
+
+        if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
+            domain.push(['config_id.analytic_account_id', 'child_of', this.state.restriction.analytic_ids]);
+        }
 
         const isSession = model === 'pos.session';
         const dateField = isSession ? 'start_at' : 'date_order';

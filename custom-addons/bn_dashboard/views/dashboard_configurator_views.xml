@@ -99,4 +99,19 @@
               action="action_treasury_configurator"
               sequence="1"/>
 
+    <record id="action_pos_order_configurator" model="ir.actions.act_window">
+        <field name="name">POS Order Configurator</field>
+        <field name="res_model">dashboard.configurator</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('dashboard_type', 'in', ['pos_order', 'all'])]</field>
+        <field name="context">{'default_dashboard_type': 'pos_order'}</field>
+    </record>
+
+    <!-- POS Order Configurator Menu (under the ⚙️ Configurations folder) -->
+    <menuitem id="menu_pos_order_configurator"
+              name="POS Order Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_pos_order_configurator"
+              sequence="2"/>
+
 </odoo>
