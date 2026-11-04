@@ -100,7 +100,7 @@
                                    required="state in ['completed', 'form_sent', 'form_filled', 'send_for_inquiry', 'inquiry', 'committee_approval']"
                                    readonly="state in ['hod_approve', 'mem_approve', 'approve', 'recurring', 'disbursed', 'reject']"/>
                             <field name="donee_id"
-                                   domain="donee_domain"
+                                   domain="donee_domain or '[]'"
                                    options="{'no_create': True}"
                                    readonly="state not in ['draft', 'completed']" required="1"/>
                             <!-- Picked any time before Send for Inquiry -->
@@ -149,12 +149,12 @@
                                     <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'"/>
                                     <field name="disbursement_category_id" optional="hide" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
-                                    <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="product_id" domain="product_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="is_hod" optional="hide"/>
                                     <field name="payment_type"/>
                                     <field name="assigned_officer_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'"/>
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
-                                    <field name="analytic_account_id" domain="analytic_account_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="collection_point == 'bank'"/>
+                                    <field name="analytic_account_id" domain="analytic_account_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="collection_point == 'bank'"/>
                                     <field name="collection_date"/>
                                     <field name="quantity" readonly="is_cash_category" force_save="1"/>
                                     <field name="amount" readonly="1" optional="hide"/>
