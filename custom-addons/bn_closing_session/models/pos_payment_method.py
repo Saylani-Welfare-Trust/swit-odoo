@@ -30,4 +30,5 @@ class PosPaymentMethod(models.Model):
         # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
         help="Account for neutral receivable amounts"
     )
+
     

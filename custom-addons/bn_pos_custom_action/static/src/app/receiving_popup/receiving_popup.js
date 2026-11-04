@@ -18,7 +18,9 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         this.popup = useService("popup");
         this.report = useService("report");
         this.notification = useService("notification");
-        
+        // Own the numpad buffer while open, so stray keystrokes can't edit the order line underneath
+        useService("number_buffer").use();
+
         // Set component properties
         this.title = this.props.title || "Receive Order Details";
         this.action_type = this.props.action_type;
@@ -1096,18 +1098,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
 
         const productId = line.product_id[0];
-        const product = this.pos.db.get_product_by_id(productId);
-        
-        if (!product) {
-            console.error("Product not found in POS database:", productId);
-            return false;
-        }
-
         const quantity = this.calculateProductQuantity(line, record);
         
         if (this.action_type === 'me') {
             if (record.state == 'refund') {
-                // Fetch the service product
+                // Refund state: Only care about the Security Deposit Refund product
                 const serviceProduct = await this.orm.searchRead(
                     'product.product',
                     [
@@ -1120,59 +1115,69 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
                 );
                 
                 if (serviceProduct.length) {
-                    // Get the product from POS DB
-                    const product = this.pos.db.get_product_by_id(serviceProduct[0].id);
+                    const refundProduct = this.pos.db.get_product_by_id(serviceProduct[0].id);
                     
-                    if (!product) {
+                    if (!refundProduct) {
                         this.popup.add(ErrorPopup, {
                             title: _t("Error"),
                             body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
                         });
-                        
-                        return
+                        return false;
                     }
-                    console.log("Adding refund line with negative quantity and security deposit as price extra:", {
-                        product: product.name,
-                        quantity: quantity * -1,
-                        price_extra: line.security_deposit,
-                    });
                     
-                    // Add product to order
-                    selectedOrder.add_product(product, {
+                    selectedOrder.add_product(refundProduct, {
                         quantity: quantity * -1,
                         price_extra: line.security_deposit,
                     });
+                    return true;
+                } else {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} not found or not available in POS.`),
+                    });
+                    return false;
                 }
             } else {
+                // Normal state: Check if the original product is in POS
+                const product = this.pos.db.get_product_by_id(productId);
+                if (!product) {
+                    console.error("Product not found in POS database:", productId);
+                    return false;
+                }
+                
                 if (product.lst_price > 0) {
                     selectedOrder.add_product(product, {
                         quantity: quantity || 1,
                     });
-                }
-                else if (product.lst_price <= 0) {
+                } else {
                     selectedOrder.add_product(product, {
                         quantity: quantity || 1,
                         price_extra: line.security_deposit || product.lst_price,
                     });
                 }
+                return true;
             }
         }
         else {
+            // Other action types (like dhs)
+            const product = this.pos.db.get_product_by_id(productId);
+            if (!product) {
+                console.error("Product not found in POS database:", productId);
+                return false;
+            }
+            
             if (product.lst_price > 0) {
                 selectedOrder.add_product(product, {
                     quantity: quantity || 1,
                 });
-            }
-            else if (product.lst_price <= 0) {
+            } else {
                 selectedOrder.add_product(product, {
                     quantity: quantity || 1,
                     price_extra: line.security_deposit || product.lst_price || line.amount,
                 });
             }
-
+            return true;
         }
-        
-        return true;
     }
 
     /**

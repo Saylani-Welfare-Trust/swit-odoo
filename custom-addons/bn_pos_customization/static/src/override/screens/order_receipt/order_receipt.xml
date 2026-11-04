@@ -137,6 +137,11 @@
                             <strong>Medical Eq. Ref:</strong>
                             <t t-esc="order.extra_data.medical_equipment.medical_equipment_request_no"/>
                         </div>
+                        <!-- ===== MICROFINANCE REMAINING AMOUNT (After Total Amount) ===== -->
+                        <div t-if="order.extra_data and order.extra_data.microfinance and order.extra_data.microfinance.remaining_amount !== undefined">
+                            <strong>Remaining Amount:</strong>
+                            <t t-esc="props.formatCurrency(order.extra_data.microfinance.remaining_amount)"/>
+                        </div>
 
                     </div>
                 </div>

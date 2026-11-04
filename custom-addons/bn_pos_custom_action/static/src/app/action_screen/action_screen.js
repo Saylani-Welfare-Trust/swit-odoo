@@ -15,6 +15,8 @@ export class ActionScreen extends AbstractAwaitablePopup {
         this.popup = useService("popup");
         this.report = useService("report");
         this.notification = useService("notification");
+        // Own the numpad buffer while open, so stray keystrokes can't edit the order line underneath
+        useService("number_buffer").use();
     }
 
     canCancel() {
