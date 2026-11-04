@@ -49,7 +49,8 @@ class SadqaJariya(models.Model):
             raise UserError(_("Set the Welfare Institution URL and Odoo Auth Institution Key in the Company settings."))
         url = self._portal_base_url() + INSTITUTIONAL_RPC + operation
         headers = {
-            'x-odoo-auth-key': f'{company.odoo_auth_institution_key}',
+            # pasted keys often bring a space / line break / invisible character with them
+            'x-odoo-auth-key': self._clean_url(company.odoo_auth_institution_key or ''),
             'Content-Type': 'application/json'
         }
         body = {'json': json.loads(json.dumps(payload, default=str))}
