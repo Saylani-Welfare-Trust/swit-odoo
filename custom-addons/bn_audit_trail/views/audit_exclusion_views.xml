@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_audit_trail_exclusion_tree" model="ir.ui.view">
+        <field name="name">audit.trail.exclusion.tree</field>
+        <field name="model">audit.trail.exclusion</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="model_id"/>
+                <field name="model_name"/>
+                <field name="reason" placeholder="Optional - why exclude this?"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_audit_trail_exclusion_form" model="ir.ui.view">
+        <field name="name">audit.trail.exclusion.form</field>
+        <field name="model">audit.trail.exclusion</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="model_id"/>
+                        <field name="reason"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_audit_trail_exclusion" model="ir.actions.act_window">
+        <field name="name">Excluded Models</field>
+        <field name="res_model">audit.trail.exclusion</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Every model is audited by default - exclude one only if
+                you're sure you don't need its trail
+            </p>
+            <p>
+                Pick a model that generates high-volume, low-value log
+                entries (a technical detail model, for example) and it
+                will stop being logged entirely - Create, Update, Delete
+                and View. Everything else keeps being audited.
+            </p>
+        </field>
+    </record>
+</odoo>

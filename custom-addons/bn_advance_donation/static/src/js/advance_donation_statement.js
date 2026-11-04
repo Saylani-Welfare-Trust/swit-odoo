@@ -180,12 +180,14 @@ export class AdvanceDonationStatement extends Component {
             rows = rows.filter(l => (l.type || '') === this.state.filter_type);
         }
 
+
+
         // 3) Beneficiary
         if (this.state.filter_beneficiary) {
             rows = rows.filter(l => (l.beneficiary || '') === this.state.filter_beneficiary);
         }
 
-        // 4) Amount range
+        // 4) Amount range (transaction size = in + out)
         const min = parseFloat(this.state.amount_min);
         const max = parseFloat(this.state.amount_max);
         if (!isNaN(min)) {
@@ -194,14 +196,6 @@ export class AdvanceDonationStatement extends Component {
         if (!isNaN(max)) {
             rows = rows.filter(l => (Number(l.amount_in || 0) + Number(l.amount_out || 0)) <= max);
         }
-
-        // 5) ⭐ Recalculate running balance for the filtered rows
-        let running = 0;
-        rows = rows.map((l) => {
-            running += Number(l.amount_in  || 0);
-            running -= Number(l.amount_out || 0);
-            return { ...l, balance: running };
-        });
 
         return rows;
     }
