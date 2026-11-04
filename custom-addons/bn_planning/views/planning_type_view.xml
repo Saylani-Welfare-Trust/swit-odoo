@@ -65,14 +65,15 @@
         id="planning_config_menu"
         name="Planning"
         parent="bn_master_setup.master_setup_menu"
+        groups="bn_monthly_planning.group_planning_manager"
         sequence="200"/>
 
-    <!-- Child: Planning Type -->
     <menuitem
         id="planning_type_menu"
         name="Planning Type"
         action="planning_type_action"
         parent="planning_config_menu"
+        groups="bn_monthly_planning.group_planning_manager"
         sequence="0"/>
 
 </odoo>
