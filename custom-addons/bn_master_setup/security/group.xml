@@ -13,7 +13,6 @@
     <record id="master_setup_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_master_setup"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Can look up City, Bank and Area reference data. Cannot edit it.</field>
     </record>
     
