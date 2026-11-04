@@ -16,6 +16,7 @@ export class DonationDashboard extends Component {
 
         this.state = useState({
             segment_l1: null, segment_l2: null, segment_l3: null, segment_l4: null,
+            segment_type: '',
             state_filter: '',
             amount_min: null, amount_max: null,
             date_from: '', date_to: '',
@@ -69,6 +70,7 @@ export class DonationDashboard extends Component {
                 segment_l2: this.state.segment_l2,
                 segment_l3: this.state.segment_l3,
                 segment_l4: this.state.segment_l4,
+                segment_type: this.state.segment_type,   // <-- ADD THIS
                 state_filter: this.state.state_filter,
                 amount_min: this.state.amount_min,
                 amount_max: this.state.amount_max,
@@ -116,6 +118,7 @@ export class DonationDashboard extends Component {
             this.state.date_from || null,
             this.state.date_to || null,
             effective_segment_id,
+            this.state.segment_type || null,
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -167,6 +170,7 @@ export class DonationDashboard extends Component {
         this.state.segment_l2 = null;
         this.state.segment_l3 = null;
         this.state.segment_l4 = null;
+        this.state.segment_type = '';
         this.state.state_filter = '';
         this.state.amount_min = null;
         this.state.amount_max = null;
@@ -308,6 +312,7 @@ export class DonationDashboard extends Component {
             this.state.comparison_period1,
             this.state.comparison_period2,
             effective_segment_id,
+            this.state.segment_type || null,f
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
@@ -336,6 +341,14 @@ export class DonationDashboard extends Component {
         else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
         else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
 
+        // NEW: combine segment + segment_type
+        if (effective_segment_id && this.state.segment_type) {
+            const accounts = [];  // resolved on server; pass both filters via OR domain
+            domain.push('|',
+                ['analytical_account_id', 'child_of', effective_segment_id],
+            );
+            // Simpler: rely on the segment filter alone if both set, or better:
+        }
         if (effective_segment_id) domain.push(['analytical_account_id', 'child_of', effective_segment_id]);
         if (state_filter) domain.push(['state', '=', state_filter]);
 

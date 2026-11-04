@@ -29,15 +29,33 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def _get_din_domain(self, date_from=None, date_to=None,
-                        segment_id=None, state=None):
+                        segment_id=None, segment_type=None, state=None):
         domain = []
         if date_from:
             domain.append(('create_date', '>=', date_from + ' 00:00:00'))
         if date_to:
             domain.append(('create_date', '<=', date_to + ' 23:59:59'))
 
-        if segment_id:
+        # Combine segment hierarchy + segment type filter
+        if segment_id and segment_type:
+            accounts = self.env['account.analytic.account'].search([
+                ('id', 'child_of', int(segment_id)),
+                ('name', 'ilike', f'%({segment_type})%'),
+            ])
+            if accounts:
+                domain.append(('analytical_account_id', 'in', accounts.ids))
+            else:
+                domain.append(('id', '=', 0))
+        elif segment_id:
             domain.append(('analytical_account_id', 'child_of', int(segment_id)))
+        elif segment_type:
+            accounts = self.env['account.analytic.account'].search([
+                ('name', 'ilike', f'%({segment_type})%'),
+            ])
+            if accounts:
+                domain.append(('analytical_account_id', 'in', accounts.ids))
+            else:
+                domain.append(('id', '=', 0))
 
         if state:
             domain.append(('state', '=', state))
@@ -48,9 +66,9 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_dashboard_data(self, date_from=None, date_to=None,
-                               segment_id=None, state=None,
+                               segment_id=None, segment_type=None, state=None,
                                amount_min=None, amount_max=None):
-        domain = self._get_din_domain(date_from, date_to, segment_id, state)
+        domain = self._get_din_domain(date_from, date_to, segment_id, segment_type, state)
         donations = self.search(domain, order='id desc')
 
         # Amount range filter
@@ -191,14 +209,14 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_category_time_series(self, date_from=None, date_to=None,
-                                     segment_id=None, state=None,
+                                     segment_id=None, segment_type=None, state=None,
                                      amount_min=None, amount_max=None, **kwargs):
         if not date_from and not date_to:
             today = datetime.today()
             date_from = (today - relativedelta(months=11)).replace(day=1).strftime('%Y-%m-%d')
             date_to = today.strftime('%Y-%m-%d')
 
-        domain = self._get_din_domain(date_from, date_to, segment_id, state)
+        domain = self._get_din_domain(date_from, date_to, segment_id, segment_type, state)
         donations = self.search(domain)
 
         tree = {}
@@ -256,7 +274,7 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_comparison(self, mode='month', period1=None, period2=None,
-                           segment_id=None, state=None,
+                           segment_id=None, segment_type=None, state=None,
                            amount_min=None, amount_max=None, **kwargs):
         def parse_period(p):
             if not p:
@@ -285,7 +303,7 @@ class DonationInKindDashboard(models.Model):
         def stats(start, end):
             domain = self._get_din_domain(
                 start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'),
-                segment_id, state)
+                segment_id, segment_type, state)
             dons = self.search(domain)
             qty = sum(sum(l.quantity for l in d.donation_in_kind_line_ids) for d in dons)
             val = sum(sum(l.quantity * l.avg_price
