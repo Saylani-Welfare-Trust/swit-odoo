@@ -1,6 +1,15 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from datetime import date, timedelta
+
+STATE_LABELS = {
+    'draft': 'Draft', 'approval_1': 'Approval 1', 'approval_2': 'Approval 2',
+    'approved': 'Approved', 'rejected': 'Rejected',
+}
+APPROVAL_GROUPS = {
+    'approval_1': 'bn_advance_donation.group_adv_don_approval_1',
+    'approval_2': 'bn_advance_donation.group_adv_don_approval_2',
+}
 
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
@@ -87,11 +96,29 @@ class AdvanceDonation(models.Model):
         currency_field='currency_id'
     )
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('advance.donation') or ('New')
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('advance.donation') or _('New')
+        return super().create(vals_list)
+
+    # ------------------------------------------------------------------
+    # Workflow checks
+    # ------------------------------------------------------------------
+    def _check_donation_state(self, allowed, action):
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': STATE_LABELS.get(rec.state, rec.state)})
+
+    def _check_approver(self, action):
+        """The approver of the current approval step decides."""
+        self._check_donation_state(('approval_1', 'approval_2'), action)
+        for rec in self:
+            if not self.env.su and not self.env.user.has_group(APPROVAL_GROUPS[rec.state]):
+                raise AccessError(_('Only %(step)s approvers can do "%(action)s" on %(name)s.') % {
+                    'step': STATE_LABELS[rec.state], 'action': action, 'name': rec.name})
 
     @api.depends('advance_donation_lines')
     def _compute_amount(self):
@@ -108,15 +135,9 @@ class AdvanceDonation(models.Model):
 
     @api.depends('advance_donation_lines.is_disbursed')
     def _compute_fully_disbursed(self):
-        donation_length = len(self.advance_donation_lines)
-        disbursed_records = self.advance_donation_lines.filtered(
-            lambda line: line.is_disbursed == True
-        )
-        disbursed_records = len(disbursed_records)
-        if donation_length <= disbursed_records:
-            self.is_fully_disbursed = True
-        else:
-            self.is_fully_disbursed = False
+        for rec in self:
+            lines = rec.advance_donation_lines
+            rec.is_fully_disbursed = bool(lines) and all(lines.mapped('is_disbursed'))
     
     @api.depends('donor_id', 'donation_slip_usage_lines', 'donation_slip_usage_lines.usage_amount')
     def _compute_total_balance(self):
@@ -165,6 +186,10 @@ class AdvanceDonation(models.Model):
         )
 
     def compute_donation(self):
+        self.ensure_one()
+        self._check_donation_state(('draft',), _('Compute Donation'))
+        if any(self.advance_donation_lines.mapped('paid_amount')) or self.advance_donation_lines.filtered('is_disbursed'):
+            raise UserError(_('%s already has payments or disbursements: cancel the payments before computing the lines again.') % self.name)
         self.advance_donation_lines.unlink()
         amount = (self.product_id.lst_price / 100) * self.amount_percentage
         unit_service_charge = self.service_charge_amount or 0.0 if self.service_charges else 0.0
@@ -291,7 +316,10 @@ class AdvanceDonation(models.Model):
 
 
     def action_send_for_approval(self):
-        # self._validate_manual_payment()
+        self._check_donation_state(('draft',), _('Send for Approval'))
+        for rec in self:
+            if not rec.advance_donation_lines:
+                raise UserError(_('Compute the donation lines of %s before sending it for approval.') % rec.name)
         self.write({'state': 'approval_1'})
     
     # def _validate_manual_payment(self):
@@ -343,38 +371,33 @@ class AdvanceDonation(models.Model):
         return True
 
     def action_approved(self):
-        if self.state == 'approval_1':
-            self.write({'state': 'approval_2'})
-        else:
-            self.write({
-                'approved_date': fields.datetime.now(),
-                'state': 'approved'
-            })
+        self._check_approver(_('Approve'))
+        for rec in self:
+            if rec.state == 'approval_1':
+                rec.write({'state': 'approval_2'})
+            else:
+                rec.write({'approved_date': fields.Datetime.now(), 'state': 'approved'})
+
+    def _check_remarks(self):
+        for rec in self:
+            if not (rec.approval_1_remarks if rec.state == 'approval_1' else rec.approval_2_remarks):
+                raise UserError(_('Please provide remarks'))
 
     def action_revert(self):
-        if self.state == 'approval_1':
-            if not self.approval_1_remarks:
-                raise UserError('Please provide remarks')
-            self.is_revert = True
-            self.write({'state': 'draft'})
-        if self.state == 'approval_2':
-            if not self.approval_2_remarks:
-                raise UserError('Please provide remarks')
-            self.is_revert = True
-            self.write({'state': 'approval_1'})
+        self._check_approver(_('Revert'))
+        self._check_remarks()
+        for rec in self:
+            rec.write({'is_revert': True, 'state': 'draft' if rec.state == 'approval_1' else 'approval_1'})
 
     def action_rejected(self):
-        if self.state == 'approval_1':
-            if not self.approval_1_remarks:
-                raise UserError('Please provide remarks')
-        if self.state == 'approval_2':
-            if not self.approval_2_remarks:
-                raise UserError('Please provide remarks')
+        self._check_approver(_('Reject'))
+        self._check_remarks()
         self.write({'state': 'rejected'})
 
     def action_cancel_payment(self):
         """Cancel payment for non-disbursed lines and return amounts to receipts"""
         self.ensure_one()
+        self._check_donation_state(('draft', 'approval_1', 'approval_2', 'approved'), _('Cancel Payment'))
         
         # Get non-disbursed lines
         non_disbursed_lines = self.advance_donation_lines.filtered(lambda l: not l.is_disbursed)
@@ -592,26 +615,23 @@ class AdvanceDonation(models.Model):
 
 
     def _compute_fully_paid(self):
-        paid_lines = self.advance_donation_lines.filtered(lambda line: line.state == 'paid')
-
-        if len(paid_lines) == len(self.advance_donation_lines):
-            self.is_fully_paid = True
-            return {
-                'domain': {
-                    'donation_slip_ids': [('id', 'in', self.donation_slip_ids.ids)]
-                    # Only show already selected records
-                }
-            }
-        else:
-            self.is_fully_paid = False
+        for rec in self:
+            lines = rec.advance_donation_lines
+            rec.is_fully_paid = bool(lines) and all(state == 'paid' for state in lines.mapped('state'))
     
     def action_print_non_cash_report(self):
         return self.env.ref('bn_advance_donation.action_report_advance_donation_non_cash').report_action(self)
     
     def allocate_payment(self, amount, receipt_ids):
         self.ensure_one()
+        self._check_donation_state(('draft', 'approval_1', 'approval_2', 'approved'), _('Add Payment'))
         if amount <= 0:
             raise UserError(_('Payment amount must be positive.'))
+        foreign = self.env['advance.donation.receipt'].browse(receipt_ids).filtered(
+            lambda r: r.donor_id != self.donor_id or r.state != 'paid')
+        if foreign:
+            raise UserError(_('Only paid receipts of the donor %(donor)s can be used (not %(receipts)s).') % {
+                'donor': self.donor_id.display_name, 'receipts': ', '.join(foreign.mapped('name'))})
 
         unpaid_lines = self.advance_donation_lines.filtered(lambda l: l.remaining_amount > 0)
         unpaid_lines = unpaid_lines.sorted(lambda l: (l.date or fields.Date.today(), l.serial_no))

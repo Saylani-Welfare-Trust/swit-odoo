@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Profile form (bn_profile_management): print the application of a registered Microfinance donee. -->
+    <record id="profile_management_view_form_inherit_bn_microfinance" model="ir.ui.view">
+        <field name="name">profile.management.view.form.inherit.bn.microfinance</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_reset_to_draft']" position="after">
+                <button string="Print Microfinance Application" name="action_print_microfinance_application" type="object" class="oe_highlight" invisible="state != 'register' or is_donor" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

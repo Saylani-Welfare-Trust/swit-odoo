@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Run on every install / upgrade; both calls are idempotent. -->
+
+    <!-- Warehouses without a Donation Box operation type get one
+         (see stock.warehouse._bn_setup_donation_box_types). -->
+    <function model="stock.warehouse" name="_bn_setup_donation_box_types"/>
+
+    <!-- Boxes taken out of service by earlier versions: Box Status "Removed". -->
+    <function model="donation.box.registration.installation" name="_bn_setup_removed_box_status"/>
+</odoo>

@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_pos_cheque,pos.cheque,bn_pos_cheque.model_pos_cheque,,1,1,1,1
+access_pos_cheque,pos.cheque user,bn_pos_cheque.model_pos_cheque,base.group_user,1,0,0,0
+access_pos_cheque_treasury,pos.cheque treasury,bn_pos_cheque.model_pos_cheque,bn_pos_cheque.pos_cheque_menu_group,1,1,0,0
+access_pos_cheque_admin,pos.cheque admin,bn_pos_cheque.model_pos_cheque,base.group_system,1,1,1,1

@@ -94,13 +94,15 @@ class AdvanceDonationLine(models.Model):
                 rec.date_visibility = True
             else: rec.date_visibility = False
     
-    @api.depends('paid_amount', 'amount')
+    @api.depends('paid_amount', 'amount', 'service_charge_amount')
     def _compute_installment_state(self):
         for rec in self:
-            if rec.paid_amount < rec.amount and rec.paid_amount != 0:
-                rec.state = 'partial'
-            elif rec.paid_amount == rec.amount:
+            total = rec.amount + rec.service_charge_amount
+            currency = rec.currency_id or self.env.company.currency_id
+            if total and currency.compare_amounts(rec.paid_amount, total) >= 0:
                 rec.state = 'paid'
+            elif not currency.is_zero(rec.paid_amount):
+                rec.state = 'partial'
             else:
                 rec.state = 'unpaid'
     

@@ -1,11 +1,10 @@
 from odoo import models, fields, _, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from datetime import datetime, time, timezone, timedelta
 from urllib.parse import urlparse
 import requests
 import logging
 from collections import defaultdict
-from pprint import pformat
 
 _logger = logging.getLogger(__name__)
 
@@ -20,10 +19,7 @@ class APIDonationWizard(models.TransientModel):
     picking_type_id = fields.Many2one(
         'stock.picking.type',
         string="Picking Type",
-        default=lambda self: self.env.ref(
-            'bn_import_donation.online_donation_stock_picking_type',
-            raise_if_not_found=False
-        ).id
+        default=lambda self: self._default_picking_type_id()
     )
 
     source_location_id = fields.Many2one(
@@ -37,6 +33,14 @@ class APIDonationWizard(models.TransientModel):
         string="Destination Location",
         store=True
     )
+
+    # Pages requested from the API, and days fetched again by the daily cron
+    # (already imported donations are skipped, so a missed run is caught up).
+    PER_PAGE = 50
+    CRON_DAYS_BACK = 3
+
+    def _default_picking_type_id(self):
+        return self.env['stock.warehouse']._bn_get_program_type('online_donation').id
 
     # =========================================================
     # LOG HELPER
@@ -57,7 +61,9 @@ class APIDonationWizard(models.TransientModel):
         end_date = today - timedelta(days=today.weekday() + 1)
         start_date = end_date - timedelta(days=6)
 
-        wizard = self.create({
+        # Scheduled job: catches up the previous week (donations already
+        # imported are skipped)
+        wizard = self.sudo().create({
             'start_date': start_date,
             'end_date': end_date,
         })
@@ -70,36 +76,39 @@ class APIDonationWizard(models.TransientModel):
     # ENTRY POINT (NOW PER PAGE HISTORY)
     # =========================================================
     def action_fetch_donation(self):
+        if not self:
+            # Daily cron "Fetch Donation Data": it calls this on the empty model.
+            return self.create({}).action_fetch_donation()
         self.ensure_one()
+        if not self.env.su:
+            # Fetch Donation group (or Administrator): the fetch then writes the
+            # logs, donations, transfer and entry like the scheduled fetch does
+            user = self.env.user
+            if not (user.has_group('bn_import_donation.api_donation_fetch_donation_group')
+                    or user.has_group('bn_import_donation.import_donation_admin_group')):
+                raise AccessError(_('You are not allowed to fetch donations.'))
+            return self.sudo().action_fetch_donation()
 
         today = fields.Date.context_today(self)
-
-        # Fallback range: yesterday (used only if the wizard's own dates are empty)
-        yesterday_start_date = today - timedelta(days=1)
-        yesterday_end_date = today - timedelta(days=1)
-
-        # FIXED: previously `yesterday_start_date or self.start_date` always picked
-        # yesterday because yesterday_start_date is never falsy - the wizard's
-        # own start_date/end_date fields were being ignored entirely.
-        start_date = None
-        end_date = None
 
         if self.start_date and self.end_date:
             start_date = self.start_date
             end_date = self.end_date
         else:
-            start_date = yesterday_start_date
-            end_date = yesterday_end_date
-
-        # start_date = self.start_date or yesterday_start_date
-        # end_date = self.end_date or yesterday_end_date
+            # Without dates (cron): the last days up to yesterday. Donations
+            # already imported are skipped, so a missed run is caught up.
+            start_date = today - timedelta(days=self.CRON_DAYS_BACK)
+            end_date = today - timedelta(days=1)
 
         if start_date and end_date and start_date > end_date:
             raise ValidationError(_("Start Date must be earlier than or equal to End Date."))
 
-        company = self.env.company
+        # The credentials are readable by the Import Donation Administrator only.
+        company = self.env.company.sudo()
         if not (company.url and company.client_id and company.client_secret):
-            raise ValidationError(_("Missing URL, Client ID, or Client Secret."))
+            raise ValidationError(_(
+                "The Donation API is not configured: set its URL, Client ID and Client Secret on the "
+                "company (Settings > Companies > Donation API)."))
 
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url') or ''
         origin_host = urlparse(base_url).hostname or ''
@@ -108,8 +117,7 @@ class APIDonationWizard(models.TransientModel):
         donate_url = f"{company.url.rstrip('/')}/api/odoo/donationInfo"
 
         page = 1
-        per_page = 50
-        all_page_data = []
+        per_page = self.PER_PAGE
         while True:
 
             # =========================================================
@@ -119,6 +127,7 @@ class APIDonationWizard(models.TransientModel):
                 'start_date': start_date,
                 'end_date': end_date,
                 'page': page,
+                'per_page': per_page,
             })
 
             self.create_fetch_log(history.id, f"Starting Page {page}", "Initiated", "Page-wise fetch started")
@@ -126,7 +135,7 @@ class APIDonationWizard(models.TransientModel):
             payload = {
                 "status": "success",
                 "page": page,
-                "perPage": history.per_page or 50,
+                "perPage": per_page,
             }
 
             if start_date:
@@ -146,9 +155,12 @@ class APIDonationWizard(models.TransientModel):
             )
 
             if not page_data:
-                # self.create_fetch_log(history.id, "No data on page", "Empty", "Stopping pagination")
+                if page > 1:
+                    # The previous page was the last one: no empty history.
+                    history.sudo().unlink()
+                else:
+                    self.create_fetch_log(history.id, "No donations in this period", "Done", "Nothing to import")
                 break
-            all_page_data.append({"page": page, "data": page_data})
 
             # =========================================================
             # PROCESS THIS PAGE ONLY
@@ -170,8 +182,14 @@ class APIDonationWizard(models.TransientModel):
 
         self.create_fetch_log(history.id, "Processing page data", "Processing", f"Records: {len(donations_info)}")
 
-        journal = self.env['account.journal'].search([('name', 'ilike', 'Bank')], limit=1)
+        journal = self.env['account.journal'].search(
+            [('type', '=', 'bank'), ('company_id', '=', company.id)], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
+        if not gateway_config:
+            gateway_config = self.env['gateway.config'].search([('type', '=', 'api')], limit=1)
+        if not gateway_config:
+            self.create_fetch_log(history.id, "No API gateway configuration ('Web API')", "Error",
+                                  "Donations are stored without journal entry or stock transfer")
         company_currency = company.currency_id
 
         all_data = self._prefetch_all_data(donations_info, gateway_config, company_currency, history)
@@ -185,7 +203,7 @@ class APIDonationWizard(models.TransientModel):
             history
         )
 
-        if result.get('new_donations') and journal and result.get('accumulators'):
+        if result.get('new_donations') and journal and result['accumulators']['credit']:
             move = self._create_grouped_journal_move(
                 journal,
                 result['accumulators']['debit'],
@@ -194,10 +212,9 @@ class APIDonationWizard(models.TransientModel):
                 history
             )
 
-            history.write({
-                'journal_entry_id': move.id,
-                'picking_id': result.get('picking_id') or False,
-            })
+            history.write({'journal_entry_id': move.id})
+        if result.get('picking_id'):
+            history.write({'picking_id': result['picking_id']})
 
         self.create_fetch_log(history.id, "Page Completed", "Done", "Page processing finished")
 
@@ -290,8 +307,10 @@ class APIDonationWizard(models.TransientModel):
         self.create_fetch_log(history.id, f"Unique Currencies: {unique_currencies}, Unique Country Codes: {unique_country_codes}, Unique Mobiles: {unique_mobiles}, Unique Import IDs: {unique_import_ids}", 'Prefetching', 'Extracted unique values for bulk data fetching')
 
         # Bulk fetch currencies
-        currencies = self.env['res.currency'].search([('name', 'in', list(unique_currencies))])
+        currencies = self.env['res.currency'].search(
+            [('name', 'in', [name.upper() for name in unique_currencies])])
         currency_by_name = {c.name.lower(): c for c in currencies}
+        currency_by_name.setdefault(company_currency.name.lower(), company_currency)
 
         # Bulk fetch conversion rates
         conversion_rates = {}
@@ -372,11 +391,7 @@ class APIDonationWizard(models.TransientModel):
         individual_category = self.env.ref('bn_profile_management.individual_partner_category', raise_if_not_found=False)
         
         # Default partner for missing donors
-        default_partner = self.env['res.partner'].search(
-            [('primary_registration_id', '=', '2025-9999998-9')], 
-            limit=1
-        )
-        default_partner_id = default_partner.id if default_partner else False
+        default_partner_id = gateway_config.default_partner_id.id if gateway_config else False
         
         self.create_fetch_log(history.id, f"End _prefetch_all_data", 'Prefetching', 'Completed prefetching all required data for processing')
 
@@ -393,6 +408,8 @@ class APIDonationWizard(models.TransientModel):
                 individual_category.id if individual_category else False
             ],
             'default_partner_id': default_partner_id,
+            'bank_charges_account_id': gateway_config.bank_charges_account_id.id if gateway_config else False,
+            'company_currency': company_currency,
         }
 
     # ---------------------- Bulk Processing ----------------------
@@ -451,36 +468,30 @@ class APIDonationWizard(models.TransientModel):
                 history
             )
 
-            if donation_vals:
-                donations_to_create.append(donation_vals)
+            if not donation_vals:
+                # Unsuccessful payment: nothing is stored, booked or delivered.
+                continue
 
-                if gateway_config and journal:
-                    self._accumulate_donation_lines_fast(
-                        donation_vals,
-                        all_data,
-                        company_currency,
-                        debit_accumulator,
-                        credit_accumulator,
-                        history
-                    )
-
-            # STOCK PROCESSING (unchanged)
-            items = info.get('items') or []
-            for it in items:
-                item_name = ''
-                item_data = it.get('item', {})
-
-                if isinstance(item_data, dict) and 'en' in item_data:
-                    item_name = item_data.get('en', {}).get('name', '')
-
-                normalized_item_name = (item_name or '').strip().lower()
-
-                product_line = gateway_config.gateway_config_line_ids.filtered(
-                    lambda l: (l.name or '').strip().lower() == normalized_item_name
+            if gateway_config and journal:
+                self._accumulate_donation_lines_fast(
+                    donation_vals,
+                    all_data,
+                    company_currency,
+                    debit_accumulator,
+                    credit_accumulator,
+                    history
                 )
+            else:
+                donation_vals.update({
+                    'journal_status': 'not_in_entry',
+                    'journal_note': _('No bank journal or no API gateway configuration.'),
+                })
+            donations_to_create.append(donation_vals)
 
-                product = product_line.product_id if product_line else False
-
+            # STOCK: same product mapping as the journal entry
+            for it in info.get('items') or []:
+                config = self._resolve_product(all_data, *self._item_names(it))
+                product = self.env['product.product'].browse(config['product_id']) if config else False
                 if product and product.detailed_type == 'product':
                     qty = float(it.get('qty') or 1.0)
                     stock_accumulator[product.id] += qty
@@ -526,7 +537,14 @@ class APIDonationWizard(models.TransientModel):
 
             picking.action_confirm()
             picking.action_assign()
-            picking.button_validate()
+            picking.with_context(skip_backorder=True, skip_immediate=True).button_validate()
+            if picking.state != 'done':
+                self.create_fetch_log(
+                    history.id,
+                    f"Stock transfer {picking.name} could not be validated (status: {picking.state})",
+                    'Error',
+                    'button_validate did not complete the transfer automatically'
+                )
 
         self.create_fetch_log(
             history.id,
@@ -563,19 +581,27 @@ class APIDonationWizard(models.TransientModel):
         created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'), history)
         updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'), history)
         
-        # Get currency and conversion rate
+        # Get currency and the conversion rate of the donation's date
         currency_name = info.get('currency', '') or ''
-        conv_rate = all_data['conversion_rates'].get(currency_name.lower(), 1.0)
+        currency_rec = all_data['currency_by_name'].get(currency_name.lower())
+        company_currency = all_data['company_currency']
+        conv_rate = 1.0
+        if currency_rec and currency_rec != company_currency:
+            rate_date = (created_dt or datetime.now()).date()
+            conv_rate = company_currency._get_conversion_rate(
+                company_currency, currency_rec, self.env.company, rate_date) or 1.0
         
-        if currency_name.lower() and currency_name.lower() not in all_data['currency_by_name']:
+        if not currency_name:
+            currency_name = company_currency.name
+        elif currency_name.lower() not in all_data['currency_by_name']:
+            # Never book a foreign amount as company currency: the donation is
+            # stored and flagged "Not in Journal Entry" (see the accumulation).
             self.create_fetch_log(
                 history.id,
-                f"Currency {currency_name} not found, using company currency",
-                'Warning',
-                f"Falling back to company currency"
+                f"Currency {currency_name} is not active in Odoo",
+                'Error',
+                "The donation is stored but left out of the journal entry"
             )
-            currency_name = self.env.company.currency_id.name.lower()
-            conv_rate = 1.0
         
         # Calculate amounts
         total_amount = float(info.get('total_amount', 0) or 0) - float(info.get('bank_charges', 0) or 0)
@@ -730,375 +756,123 @@ class APIDonationWizard(models.TransientModel):
 
         return donation_vals
           
-    def _prepare_donation_vals_fast(self, info, all_data, info_idx, partner_to_create, partner_mapping, history):
-        self.create_fetch_log(history.id, f"Start _prepare_donation_vals_fast", 'Processing', f"Preparing donation values for index {info_idx} with optimized lookups")
-
-        """Prepare donation values with optimized lookups"""
-        if info.get('status') != 'success':
-            self.create_fetch_log(history.id, f"Skipping donation {info} at index {info_idx} due to unsuccessful status", 'Skipped', f"Donation at index {info_idx} is skipped because its status is not successful")
-
-            return None
-        
-        # Parse dates
-        created_dt = self._parse_iso_to_dt_fast(info.get('createdAt'), history)
-        updated_dt = self._parse_iso_to_dt_fast(info.get('updatedAt'), history)
-        
-        # Get currency and conversion rate - ensure we have a valid currency
-        currency_name = info.get('currency', '') or ''
-        conv_rate = all_data['conversion_rates'].get(currency_name.lower(), 1.0)
-        
-        # Validate currency exists
-        if currency_name.lower() and currency_name.lower() not in all_data['currency_by_name']:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found in system, using company currency", 'Error', f"Currency {currency_name} not found in system, using company currency")
-
-            _logger.warning(f"Currency {currency_name} not found in system, using company currency")
-            # Use company currency as fallback
-            currency_name = self.env.company.currency_id.name.lower()
-            conv_rate = 1.0
-        
-        # Calculate amounts
-        total_amount = float(info.get('total_amount', 0) or 0) - float(info.get('bank_charges', 0) or 0)
-        total_local = total_amount / conv_rate
-        
-        # Prepare donor info
-        donor = info.get('donor_details') or {}
-        donor_id = None
-        partner_key = None
-        
-        if donor.get('name', ''):
-            mobile = donor.get('phone', '')[-10:] if donor.get('phone') else ''
-            country_code = donor.get('country', '')
-            country_id = all_data['country_by_code'].get(country_code)
-            
-            # Check cache first - simpler approach
-            if mobile and country_id:
-                
-                # Try to find by mobile number in cache
-                for cached_key, cached_id in all_data['partner_cache'].items():
-                    if cached_key[0] == mobile and cached_key[1] == country_id:  # Compare mobile numbers
-                        donor_id = cached_id
-                        break
-            
-            if not donor_id:
-                # Create new partner
-                partner_vals = {
-                    'name': donor.get('name', ''),
-                    'mobile': mobile,
-                    'email': donor.get('email', ''),
-                    'country_code_id': country_id,
-                    'category_id': [(6, 0, [cid for cid in all_data['donor_category_ids'] if cid])],
-                }
-                
-                partner_to_create.append(partner_vals)
-                # Use (mobile, country_id) tuple as key for mapping later
-                partner_key = (mobile, country_id)
-        else:
-            donor_id = all_data['default_partner_id']
-        
-        default_center = False
-        # Prepare donation items
-        items = info.get('items') or []
-        orm_items = []
-        order_lines = []
-        for it in items:
-            types_name = ''
-            item_name = ''
-            
-            # Fast extraction of type and item names
-            type_data = it.get('type', {})
-            if isinstance(type_data, dict) and 'en' in type_data:
-                types_name = type_data.get('en', {}).get('name', '')
-            
-            item_data = it.get('item', {})
-            if isinstance(item_data, dict) and 'en' in item_data:
-                item_name = item_data.get('en', {}).get('name', '')
-            
-            if info.get('qurbani') != True:
-                orm_items.append({
-                    'donation_type': it.get('donationType', ''),
-                    'total': float(it.get('total', 0) or 0),
-                    'price': it.get('price', 0),
-                    'price_id': it.get('price_id', 0),
-                    'qty': it.get('qty', 0),
-                    'type': types_name,
-                    'item': item_name,
-                    'donation_no': it.get('donationNo', 0),
-                    'is_priced_item': it.get('isPricedItem', False),
-                })
-            
-            else:   # qurbani == True
-                # -------------------------------------------------------------
-                # 1. Product resolution (from your upper code)
-                # -------------------------------------------------------------
-                self.create_fetch_log(
-                    history.id,
-                    f"Distribution Data from API",
-                    "Qurbani",
-                    f"Qurbani json {info}"
-                )
-
-                # -------------------------------------------------------------
-                # 2. Share names (from upper code)
-                # -------------------------------------------------------------
-                share_names = it.get('share_names', [donor.get('name', '')])
-                if not share_names:
-                    share_names = [donor.get('name', '')]
-
-                # -------------------------------------------------------------
-                # 3. Create qurbani order lines (from upper code)
-                # -------------------------------------------------------------
-                # FIXED: number of lines should follow the number of share
-                # names actually provided, not `qty` - a "Full - 7 Shares"
-                # item can have qty=2 (2 units bought) but 14 share_names
-                # (2 x 7 shares). Using qty here silently dropped shares.
-                item_qty = int(it.get('qty', 1) or 1)
-                num_lines = len(share_names)
-                if num_lines != item_qty:
-                    self.create_fetch_log(
-                        history.id,
-                        f"Qurbani share count mismatch for item '{item_name}': "
-                        f"qty={item_qty} but {num_lines} share_names provided. "
-                        f"Using share_names count ({num_lines}) to build order lines.",
-                        'Warning',
-                        'qty vs share_names length mismatch'
-                    )
-
-                item_total = float(it.get('total', 0) or 0)
-                # FIXED: previously each generated line carried the item's
-                # full total, so summing `total` across lines double/multi
-                # counted the amount. Split evenly across the actual lines.
-                per_line_total = item_total / num_lines if num_lines else item_total
-
-                for idx in range(num_lines):
-                    share_name = share_names[idx % len(share_names)]
-
-                    order_lines.append({
-                        'donation_type': it.get('donationType', ''),
-                        'total': per_line_total,
-                        'price': it.get('price', 0),
-                        'price_id': it.get('price_id', 0),
-                        'qty': 1,
-                        'type': types_name,
-                        'item': item_name,
-                        'donation_no': it.get('donationNo', 0),
-                        'day': it.get('day', ''),
-                        # City now sourced from donor_details.qurbaniCity
-                        # (donation-level city) instead of the item's own
-                        # 'city' key.
-                        'city': donor.get('qurbaniCity', ''),
-                        'hissa_name': share_name,
-                        'branch': it.get('branch', ''),
-                        'qurbani_fullfilment': it.get('qurbaniFulfillment', ''),
-                    })
-
-
-        self.create_fetch_log(history.id, f"orm_items for donation at index {info_idx}: {orm_items}", 'Processing', f"Prepared ORM items for donation at index {info_idx}")
-        self.create_fetch_log(history.id, f"order_lines for donation at index {info_idx}: {order_lines}", 'Processing', f"Prepared Order lines for donation at index {info_idx}")
-
-        # Build donation values
-        donation_vals = {
-            'import_id': info.get('_id', ''),
-            'remarks': info.get('remarks', ''),
-            'total_amount': total_amount,
-            'total_amount_local': total_local,
-            'donor': info.get('donor', ''),
-            'donation_type': info.get('donation_type', ''),
-            'donation_from': info.get('donation_from', ''),
-            'dn_number': info.get('DN_Number', ''),
-            'subscription_interval': info.get('subscriptionInterval', ''),
-            'is_recurring': info.get('isRecurring', False),
-            'response_code': info.get('response_code', ''),
-            'response_description': info.get('response_description', ''),
-            'currency': currency_name,
-            'referer': info.get('referer', ''),
-            'website': info.get('website', ''),
-            'account_source': info.get('account_source', ''),
-            'conversion_rate': conv_rate,
-            'bank_charges': info.get('bank_charges', 0),
-            'bank_charges_in_text': info.get('bank_charges_in_text', ''),
-            'blinq_notification_number': info.get('blinq_notification_number', ''),
-            'created_at': created_dt,
-            'updated_at': updated_dt,
-            'donation_id': info.get('donation_id', ''),
-            'invoice_id': info.get('invoice_id', ''),
-            'transaction_id': info.get('transaction_id', ''),
-            'name': donor.get('name', ''),
-            'phone': donor.get('phone', ''),
-            'email': donor.get('email', ''),
-            'cnic': donor.get('cnic', ''),
-            'country': donor.get('country', ''),
-            'ip_address': donor.get('ipAddress', ''),
-            'subscription_for_news': donor.get('subscriptionForNews', False),
-            'subscription_for_whatsapp': donor.get('subscriptionForWhatsapp', False),
-            'subscription_for_sms': donor.get('subscriptionForSms', False),
-            'qurbani_country': donor.get('qurbaniCountry', ''),
-            'qurbani_city': donor.get('qurbaniCity', ''),
-            'qurbani_day': donor.get('qurbaniDay', ''),
-            'donation_item_ids': [(0, 0, it) for it in orm_items],
-            'qurbani_order_line_ids': [(0, 0, it) for it in order_lines],
-            'fetch_history_id': history.id,
-            'qurbani': True if info.get('qurbani') else False,
-        }
-
-        # Set donor_id - either from cache, from new partner, or default
-        if donor_id:
-            donation_vals['donor_id'] = donor_id
-        elif partner_key is not None:
-            donation_vals['partner_key'] = partner_key
-        else:
-            donation_vals['donor_id'] = all_data['default_partner_id']
-
-        self.create_fetch_log(history.id, f"End _prepare_donation_vals_fast", 'Processing', f"Completed preparation of donation values for index {info_idx}")
-        
-        return donation_vals
-
-    def _accumulate_donation_lines_fast(self, donation_vals, all_data, company_currency, 
+    def _accumulate_donation_lines_fast(self, donation_vals, all_data, company_currency,
                                         debit_accumulator, credit_accumulator, history):
-        self.create_fetch_log(history.id, f"Start _accumulate_donation_lines_fast", 'Processing', f"Starting to accumulate journal lines for donation with import_id {donation_vals.get('import_id', '')} using optimized lookups")
+        """Add one donation to the page's journal entry:
+          Cr income account of each mapped item ........ gross item total
+          Dr gateway account of the currency ............ gross - bank charges
+          Dr Bank Charges Account of the gateway ........ bank charges
+        Items that are not mapped (or whose product has no income account) are
+        left out; the donation then says so in its Accounting status/note."""
+        import_id = donation_vals.get('import_id', '')
+        notes = []
 
-        """Accumulate journal lines with optimized lookups"""
-        currency_name = donation_vals.get('currency', '')
+        def done(status):
+            donation_vals['journal_status'] = status
+            donation_vals['journal_note'] = '\n'.join(notes) or False
+            if notes:
+                self.create_fetch_log(history.id, f"Donation {import_id}: " + ' | '.join(notes),
+                                      'Error' if status != 'in_entry' else 'Warning', 'Journal entry')
+
+        currency_name = donation_vals.get('currency', '') or ''
         currency_rec = all_data['currency_by_name'].get(currency_name.lower())
         if not currency_rec:
-            self.create_fetch_log(history.id, f"Currency {currency_name} not found for donation, skipping journal line accumulation", 'Error', f"Currency {currency_name} not found for donation, skipping journal line accumulation")
+            notes.append(_('Currency "%s" is not active in Odoo.') % currency_name)
+            return done('not_in_entry')
 
-            _logger.warning(f"Currency {currency_name} not found for donation")
-            return
-        
-        # Get debit account from cache
         debit_account_id = all_data['gateway_currency_lines'].get(currency_name.lower())
         if not debit_account_id:
-            self.create_fetch_log(history.id, f"Debit account not found for currency {currency_name}, skipping journal line accumulation", 'Error', f"Debit account not found for currency {currency_name}, skipping journal line accumulation")
+            notes.append(_('No debit account for currency %s on the API gateway configuration.') % currency_rec.name)
+            return done('not_in_entry')
 
-            _logger.warning(f"Debit account not found for currency {currency_name}")
-            return
-        
         is_foreign = currency_rec != company_currency
-        
-        # raise ValidationError(str(donation_vals.get('donation_item_ids', [])))
-        missing_account_products = []
-        # Process items
-        for it in donation_vals.get('donation_item_ids', []):
-            item = it[2]  # (0, 0, values) format
-            product_name = (
-                f"{item.get('donation_type', '')}"
-                f"{item.get('item', '')}"
-                f"{item.get('type', '')}"
-            ).strip().lower()
+        conv_rate = float(donation_vals.get('conversion_rate') or 1.0) or 1.0
 
-            config = all_data['gateway_product_lines'].get(product_name)
-            if not config:
-                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
+        def to_base(amount):
+            return company_currency.round(amount / conv_rate)
 
-                _logger.warning(f"Product config not found for {product_name}")
-                continue
-            
-            credit_account_id = config['account_id']
-            if not credit_account_id:
-                missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id'
-            })
-            
-            item_total = float(item.get('total', 0))
-            conv_rate = float(donation_vals.get('conversion_rate', 1.0))
-            
-            # Apply rounding at the item level
+        items = [it[2] for it in donation_vals.get('donation_item_ids', [])] + \
+                [it[2] for it in donation_vals.get('qurbani_order_line_ids', [])]
+        all_total = 0.0
+        mapped_total = 0.0
+        mapped_base = 0.0
+        unbooked = False
+        for item in items:
+            item_total = float(item.get('total') or 0.0)
             if is_foreign:
-                # Round foreign amount to currency precision
                 item_total = currency_rec.round(item_total)
-            
-            item_total_base = item_total / conv_rate
-            # Round base amount to company currency precision
-            item_total_base = company_currency.round(item_total_base)
-            
-            # Ensure we have a currency ID
-            currency_id = currency_rec.id if currency_rec else company_currency.id
-            
-            # Accumulate debit
-            debit_key = (debit_account_id, currency_id)
-            d = debit_accumulator[debit_key]
-            d['debit_base'] += item_total_base
-            if is_foreign:
-                d['amount_currency'] += item_total
-            
-            # Accumulate credit
-            credit_key = (credit_account_id, currency_id)
-            c = credit_accumulator[credit_key]
-            c['credit_base'] += item_total_base
+            all_total += item_total
+            label = ' / '.join(filter(None, (item.get('donation_type'), item.get('item'), item.get('type'))))
+            config = self._resolve_product(all_data, item.get('donation_type', ''), item.get('item', ''),
+                                           item.get('type', ''))
+            if not config:
+                notes.append(_('"%s" is not mapped to a product on the API gateway configuration.') % label)
+                unbooked = True
+                continue
+            if not config['account_id']:
+                notes.append(_('The product of "%s" has no Income Account.') % label)
+                unbooked = True
+                continue
+            if not item_total:
+                continue
+            base = to_base(item_total)
+            c = credit_accumulator[(config['account_id'], currency_rec.id)]
+            c['credit_base'] += base
             if is_foreign:
                 c['amount_currency'] -= item_total
-            missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id',
-                'credit': c,
-            })
-        # raise ValidationError(str(missing_account_products))
-        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast process for normal donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
+            mapped_total += item_total
+            mapped_base += base
 
-        missing_account_products = []
-        # Process items
-        for it in donation_vals.get('qurbani_order_line_ids', []):
-            item = it[2]  # (0, 0, values) format
-            product_name = (
-                f"{item.get('donation_type', '')}"
-                f"{item.get('item', '')}"
-                f"{item.get('type', '')}"
-            ).strip().lower()
+        if not items:
+            notes.append(_('The donation has no items.'))
+        if not mapped_total:
+            return done('not_in_entry' if unbooked or not items else 'in_entry')
 
-            config = all_data['gateway_product_lines'].get(product_name)
-            if not config:
-                self.create_fetch_log(history.id, f"Product config not found for {product_name}, skipping journal line accumulation", 'Error', f"Product config not found for {product_name}, skipping journal line accumulation")
+        # Bank charges of the booked part of the donation.
+        charges = float(donation_vals.get('bank_charges') or 0.0)
+        if charges and all_total:
+            charges = charges * mapped_total / all_total
+        if is_foreign:
+            charges = currency_rec.round(charges)
+        charges_base = to_base(charges) if charges else 0.0
+        if charges and not all_data.get('bank_charges_account_id'):
+            notes.append(_('Bank charges %(amount)s %(currency)s are included in the gateway debit: set the '
+                           'Bank Charges Account on the API gateway configuration.') % {
+                'amount': charges, 'currency': currency_rec.name})
+            charges = charges_base = 0.0
+        if charges:
+            d = debit_accumulator[(all_data['bank_charges_account_id'], currency_rec.id)]
+            d['debit_base'] += charges_base
+            if is_foreign:
+                d['amount_currency'] += charges
 
-                _logger.warning(f"Product config not found for {product_name}")
-                continue
-            
-            credit_account_id = config['account_id']
-            if not credit_account_id:
-                missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id'
-            })
-            
-            item_total = float(item.get('total', 0))
-            conv_rate = float(donation_vals.get('conversion_rate', 1.0))
-            
-            # Apply rounding at the item level
-            if is_foreign:
-                # Round foreign amount to currency precision
-                item_total = currency_rec.round(item_total)
-            
-            item_total_base = item_total / conv_rate
-            # Round base amount to company currency precision
-            item_total_base = company_currency.round(item_total_base)
-            
-            # Ensure we have a currency ID
-            currency_id = currency_rec.id if currency_rec else company_currency.id
-            
-            # Accumulate debit
-            debit_key = (debit_account_id, currency_id)
-            d = debit_accumulator[debit_key]
-            d['debit_base'] += item_total_base
-            if is_foreign:
-                d['amount_currency'] += item_total
-            
-            # Accumulate credit
-            credit_key = (credit_account_id, currency_id)
-            c = credit_accumulator[credit_key]
-            c['credit_base'] += item_total_base
-            if is_foreign:
-                c['amount_currency'] -= item_total
-            missing_account_products.append({
-                'product_name': product_name,
-                'config': config,
-                'reason': 'Missing gateway config or account_id',
-                'credit': c,
-            })
-        # raise ValidationError(str(missing_account_products))
-        self.create_fetch_log(history.id, f"End _accumulate_donation_lines_fast for qurbani donation", 'Processing', f"Completed accumulation of journal lines for donation with import_id {donation_vals.get('import_id', '')}")
+        d = debit_accumulator[(debit_account_id, currency_rec.id)]
+        d['debit_base'] += mapped_base - charges_base
+        if is_foreign:
+            d['amount_currency'] += mapped_total - charges
+
+        return done('partial' if unbooked else 'in_entry')
+
+    # ---------------------- Product mapping ----------------------
+    @staticmethod
+    def _item_names(it):
+        """(donation type, item name, type name) of a raw API item."""
+        def en_name(value):
+            if isinstance(value, dict) and 'en' in value:
+                return (value.get('en') or {}).get('name', '') or ''
+            return ''
+        return it.get('donationType', '') or '', en_name(it.get('item', {})), en_name(it.get('type', {}))
+
+    @staticmethod
+    def _resolve_product(all_data, donation_type, item, type_name):
+        """Gateway mapping of an item: by "<donation type><item><type>" (journal
+        entry key) or else by the item name (stock key until 17.0.1.2.0)."""
+        lines = all_data['gateway_product_lines']
+        for key in (f"{donation_type}{item}{type_name}", item):
+            config = lines.get((key or '').strip().lower())
+            if config:
+                return config
+        return None
 
     # ---------------------- Optimized Helper Methods ----------------------
     def _date_to_iso_z(self, date_val, t):
@@ -1146,7 +920,6 @@ class APIDonationWizard(models.TransientModel):
 
         lines = []
         company_currency_id = company_currency.id
-        # raise ValidationError(str(debit_accumulator)+" "+str(credit_accumulator))
 
         # -----------------------------
         # Debit lines
@@ -1173,7 +946,7 @@ class APIDonationWizard(models.TransientModel):
                     'debit': debit_amount,
                     'credit': 0.0,
                     'currency_id': currency_id,
-                    'amount_currency': company_currency.round(vals['amount_currency']),
+                    'amount_currency': self.env['res.currency'].browse(currency_id).round(vals['amount_currency']),
                     'name': 'Donation Import - Debit',
                 }))
 
@@ -1200,13 +973,12 @@ class APIDonationWizard(models.TransientModel):
                     'debit': 0.0,
                     'credit': credit_amount,
                     'currency_id': currency_id,
-                    'amount_currency': company_currency.round(vals['amount_currency']),  # already negative
+                    'amount_currency': self.env['res.currency'].browse(currency_id).round(vals['amount_currency']),  # already negative
                     'name': 'Donation Import - Credit',
                 }))
 
         if not lines:
             self.create_fetch_log(history.id, "No journal lines to create.", 'Error', "No journal lines to create.")
-            # raise ValidationError(_("No journal lines to create."))
 
         # -----------------------------
         # Balance check before create
@@ -1238,7 +1010,6 @@ class APIDonationWizard(models.TransientModel):
         # -----------------------------
         # Create & Post Move
         # -----------------------------
-        # raise ValidationError(str(lines))
         move = self.env['account.move'].sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,

@@ -44,7 +44,11 @@ class StockWarehouse(models.Model):
             raise UserError(_('Only Inventory Administrators can configure warehouse operation types.'))
         if self.donation_box_picking_type_id:
             raise UserError(_('This warehouse already has a Donation Box operation type.'))
+        self._bn_create_donation_box_picking_type()
+        return True
 
+    def _bn_create_donation_box_picking_type(self):
+        self.ensure_one()
         Location = self.env['stock.location']
         location = Location.search([
             ('name', '=', 'Donation Box'),
@@ -71,7 +75,28 @@ class StockWarehouse(models.Model):
             'use_existing_lots': True,
         })
         self.donation_box_picking_type_id = picking_type
-        return True
+        return picking_type
+
+    @api.model
+    def _bn_setup_donation_box_types(self):
+        """Run on install and on every upgrade (data/stock_warehouse.xml).
+        Gives every warehouse without one a Donation Box operation type:
+        the historical one, or an unlinked 'Donation Box' type taking stock
+        from this warehouse (created by older versions without being set on
+        the warehouse), otherwise a new one. Idempotent."""
+        self._bn_migrate_legacy_donation_box_type()
+        PickingType = self.env['stock.picking.type'].with_context(active_test=False)
+        for warehouse in self.search([('donation_box_picking_type_id', '=', False)]):
+            orphan = PickingType.search([
+                ('name', '=', 'Donation Box'), ('code', '=', 'internal'),
+                ('default_location_src_id', '=', warehouse.lot_stock_id.id),
+                '|', ('warehouse_id', '=', False), ('warehouse_id', '=', warehouse.id),
+            ], limit=1)
+            if orphan:
+                orphan.write({'warehouse_id': warehouse.id, 'active': True})
+                warehouse.donation_box_picking_type_id = orphan
+            else:
+                warehouse._bn_create_donation_box_picking_type()
 
     @api.model
     def _bn_migrate_legacy_donation_box_type(self):

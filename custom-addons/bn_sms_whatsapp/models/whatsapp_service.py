@@ -4,13 +4,24 @@ from odoo import models
 
 _logger = logging.getLogger(__name__)
 
-API_URL = "https://wa-bsp.contegris.com/v3/whatsApp/sendTemplateMessage"
-API_TOKEN = "1cef8d8cae4f4ed0c3e060ee1b56f3547cf314fd7a347851da97eded440404a5f30288b174bf6ebdcaae454d2ab116df7b83b91238d6d601b6eaffecf2be6149fb71b3d3f4eb2083a4109dfdde7c75fc4639b9acf33d71173a21d310f69f16d559a8a3ed061a0ae8b897172f31d8989980c3138447bad13fc3f4f1dbb59a1c6e5d5b2260776bfd6e11c69990578e9805c110c487bb4f9cd11e29cba7332b14b6d88ed602c3e449eb7d24c1ebbd401f1a10b9005a8c963f73c14992cb9e2e4f09"
-SENDER_NUMBER = "923111729526"
+# System parameters (Settings > Technical > System Parameters)
+PARAM_PREFIX = 'bn_sms_whatsapp.'
+WHATSAPP_DEFAULTS = {
+    'whatsapp_url': 'https://wa-bsp.contegris.com/v3/whatsApp/sendTemplateMessage',
+    'whatsapp_template': 'oddo_receipt',
+    'whatsapp_namespace': 'e8ae951d_c2e0_4b3a_b304_a4f7c4893315',
+}
+
 
 class WhatsAppService(models.Model):
     _name = 'whatsapp.service'
     _description = 'WhatsApp Service'
+
+    def _get_param(self, key, required=True):
+        value = self.env['ir.config_parameter'].sudo().get_param(PARAM_PREFIX + key) or WHATSAPP_DEFAULTS.get(key)
+        if required and not value:
+            raise Exception("System parameter %s%s is not set." % (PARAM_PREFIX, key))
+        return value
 
     def format_number(self, mobile):
         mobile = ''.join(filter(str.isdigit, str(mobile)))
@@ -23,12 +34,17 @@ class WhatsAppService(models.Model):
         return '92' + mobile
 
     def _post_template(self, payload):
+        # the API token and sender number are credentials: kept out of the code
+        token = self._get_param('whatsapp_token')
+        sender = self._get_param('whatsapp_from')
+        payload = dict(payload, **{"from": sender, "number": sender})
+
         headers = {
-            "Authorization": f"Bearer {API_TOKEN}",
+            "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(self._get_param('whatsapp_url'), headers=headers, json=payload, timeout=30)
 
         if response.status_code != 200:
             _logger.error("WhatsApp API Error: %s", response.text)
@@ -41,13 +57,11 @@ class WhatsAppService(models.Model):
         formatted_mobile = self.format_number(mobile)
 
         payload = {
-            "from": SENDER_NUMBER,
-            "number": SENDER_NUMBER,
             "toNumber": formatted_mobile,
             "messageType": "template",
-            "name": "oddo_receipt",
+            "name": self._get_param('whatsapp_template'),
             "language": "en",
-            "namespace": "e8ae951d_c2e0_4b3a_b304_a4f7c4893315",
+            "namespace": self._get_param('whatsapp_namespace'),
             "header": {
                 "parameters": [
                     {
@@ -62,7 +76,6 @@ class WhatsAppService(models.Model):
         }
 
         _logger.info("Sending WhatsApp to: %s", formatted_mobile)
-        _logger.info("Document URL: %s", document_link)
 
         return self._post_template(payload)
 
@@ -71,8 +84,6 @@ class WhatsAppService(models.Model):
         formatted_mobile = self.format_number(mobile)
 
         payload = {
-            "from": SENDER_NUMBER,
-            "number": SENDER_NUMBER,
             "toNumber": formatted_mobile,
             "messageType": "template",
             "name": template_name,

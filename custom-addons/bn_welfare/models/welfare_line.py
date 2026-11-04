@@ -1,5 +1,5 @@
 from odoo import models, fields,_,api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -112,8 +112,8 @@ class WelfareLine(models.Model):
     show_deliver_button = fields.Boolean(string="Show Deliver Button", compute='_compute_show_deliver_button', store=False)
     is_collection_point_readonly = fields.Boolean(string="Is Collection Point Readonly", compute='_compute_is_collection_point_readonly', store=False)
 
-    marriage_date = fields.Date('Marriage Date', default=fields.Date.today())
-    collection_date = fields.Date('Collection Date', default=fields.Date.today())
+    marriage_date = fields.Date('Marriage Date', default=fields.Date.context_today)
+    collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
     quantity = fields.Float('Quantity', default=1.0)
     amount = fields.Float(
         'Amount',
@@ -274,6 +274,8 @@ class WelfareLine(models.Model):
 
     def action_mark_pending(self):
         """Mark the current line as pending."""
+        if any(line.state not in ('collected', 'pending') for line in self):
+            raise UserError(_("Only lines collected by the officer can be marked as Pending."))
         self.write({'state': 'pending'})
         return {
             'type': 'ir.actions.client',
@@ -334,7 +336,7 @@ class WelfareLine(models.Model):
     def _auto_create_bills_for_cash_bank(self):
         """Scheduled action to create bills for Cash + Bank collection on collection date"""
         today = fields.Date.today()
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
         
         if not cash_category:
             return
@@ -406,8 +408,8 @@ class WelfareLine(models.Model):
                 
     @api.depends('disbursement_category_id', 'welfare_id.order_type')
     def _compute_show_deliver_button(self):
-        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
         for rec in self:
             rec.show_deliver_button = False
             if rec.disbursement_category_id:
@@ -521,11 +523,36 @@ class WelfareLine(models.Model):
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""
+        # By name: older databases have two "In Kind" categories (master setup and welfare data)
         if self.disbursement_category_id.name == 'In Kind':
             self.collection_point = 'branch'
         # Quantity is read-only for Cash, so don't leave a quantity from another category
         if self.disbursement_category_id.name == "Cash":
             self.quantity = 1
+
+    def _check_welfare_payable(self):
+        """Lines are paid once their welfare is approved (HOD lines from HOD
+        approval on, the HOD decides on them)."""
+        self.ensure_one()
+        allowed = ('approve', 'recurring')
+        if self.is_hod:
+            allowed += ('hod_approve', 'mem_approve')
+        if self.welfare_id.state not in allowed:
+            raise ValidationError(_('%(welfare)s is not approved yet (status: %(state)s): its lines cannot be paid.') % {
+                'welfare': self.welfare_id.name,
+                'state': dict(self.welfare_id._fields['state'].selection).get(self.welfare_id.state)})
+
+    @api.model
+    def pos_check_payable(self, ids):
+        """POS: called before the payment is validated, so a line that
+        cannot be paid stops the order instead of the cash going out."""
+        for line in self.browse(ids):
+            if line.state not in ('draft', 'delivered'):
+                raise ValidationError(_("Welfare line %s is already %s.") % (
+                    line.display_name, dict(self._fields['state'].selection).get(line.state)))
+            line._check_welfare_payable()
+        return True
+
     def can_disburse(self):
         """Check if line can be disbursed (not already collected/returned/disbursed)"""
         return self.state not in ['collected', 'return', 'disbursed']
@@ -545,31 +572,9 @@ class WelfareLine(models.Model):
                     "This welfare line cannot be paid again. "
                     "Current state is '%s'. Only Draft or Delivery Created lines can be paid."
                 ) % line.state)
+            line._check_welfare_payable()
 
             line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
-
-            if getattr(line, 'advance_donation_line_id', False) and line.advance_donation_line_id:
-                donation_line = line.advance_donation_line_id
-                advance_donation = donation_line.advance_donation_id
-                amount_to_disburse = line.advance_donation_amount
-
-                # Update disbursed_amount so is_disbursed becomes True
-                donation_line.write({'disbursed_amount': amount_to_disburse})
-                donation_line._compute_disbursement_and_disbursed()
-
-                # Create disbursement line with all fields populated
-                self.env['advance.donation.disbursement.line'].create({
-                    'advance_donation_id': advance_donation.id,
-                    'advance_donation_line_id': donation_line.id,
-                    'product_id': donation_line.product_id.id if donation_line.product_id else False,
-                    'date': fields.Date.today(),
-                    'total_amount': line.total_amount,
-                    'advance_amount': amount_to_disburse,
-                    'disbursed_amount': amount_to_disburse,
-                    'welfare_id': line.welfare_id.id if line.welfare_id else False,
-                    'welfare_line_id': line.id,
-                    'disbursed_record': line.welfare_id.name if line.welfare_id else '',
-                })
 
             if line.welfare_id:
                 line.welfare_id._auto_disburse_if_all_lines_delivered()
@@ -581,14 +586,29 @@ class WelfareLine(models.Model):
         lines = self.exists().filtered(lambda l: l.is_hod and l.state == 'draft')
         for welfare in lines.welfare_id:
             products = lines.filtered(lambda l: l.welfare_id == welfare).product_id
-            welfare.message_post(body=_("HOD line(s) removed at POS by %s: %s") % (
+            welfare._message_log(body=_("HOD line(s) removed at POS by %s: %s") % (
                 self.env.user.name, ", ".join(products.mapped('display_name'))
             ))
         lines.write({'state': 'cancel'})
         return True
 
+    def _get_delivery_locations(self):
+        """The Welfare Delivery operation type of the user's warehouse, with
+        its source and customer locations."""
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('welfare')
+        location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
+        location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
+        return picking_type, location_src, location_dest
+
     def action_delivered(self):
+        for line in self:
+            line._action_delivered_one()
+
+    def _action_delivered_one(self):
             _logger.info(f"Delivery Method Triggered {self.welfare_id.name} with product {self.product_id.name} and quantity {self.quantity}")
+            if self.state != 'draft':
+                raise ValidationError(_('A delivery is only created for a Draft line (%s).') % self.display_name)
+            # By name: older databases have two "In Kind" categories (master setup and welfare data)
             if self.disbursement_category_id.name == 'In Kind':
                 StockPicking = self.env['stock.picking']
                 StockMove = self.env['stock.move']
@@ -600,11 +620,8 @@ class WelfareLine(models.Model):
                 #     picking_type = warehouse.out_type_id
                 #     location_src = warehouse.lot_stock_id
                 # else:
-                picking_type = self.env.ref('stock.picking_type_out')
-                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
-                
-                location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
-                
+                picking_type, location_src, location_dest = self._get_delivery_locations()
+
                 picking_vals = {
                     'partner_id': self.welfare_id.donee_id.id,
                     'picking_type_id': picking_type.id,
@@ -639,17 +656,6 @@ class WelfareLine(models.Model):
                 picking.action_assign()
                 self.state = 'delivered'
 
-
-    def mark_selected_as_collected(self):
-        """Mark all selected disbursement lines as collected"""
-        for line in self.disbursement_line_ids:
-            if line.state != 'collected':
-                line.write({'state': 'collected'})
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
-        }        
-    
 
     def action_return_to_pos(self, **kwargs):
         """
@@ -689,7 +695,7 @@ class WelfareLine(models.Model):
             self.welfare_id.write({'state': 'return'})
             
             # Post message
-            self.welfare_id.message_post(body=f"""
+            self.welfare_id._message_log(body=f"""
                 <b>💰 Welfare Line Returned (Money Received Back)</b><br/>
                 <b>Product:</b> {self.product_id.name}<br/>
                 <b>Amount Returned:</b> {self.total_amount} {self.currency_id.symbol}<br/>
@@ -710,14 +716,14 @@ class WelfareLine(models.Model):
         Create a journal entry for money returned from Donee
         This INCREASES company cash (money coming IN)
         """
-        # Find cash or bank account
-        cash_account = self.env['account.account'].search([
-            ('account_type', 'in', ['asset_cash', 'asset_bank']),
+        # The cash journal and its own account: money comes back in cash
+        journal = self.env['account.journal'].search([
+            ('type', '=', 'cash'),
             ('company_id', '=', self.company_id.id)
         ], limit=1)
-        
+        cash_account = journal.default_account_id
         if not cash_account:
-            raise ValidationError(_("No cash/bank account found to process return."))
+            raise ValidationError(_("No cash journal with a default account found to process return."))
         
         # Find expense/income account for the product
         expense_account = self.product_id.property_account_expense_id or \
@@ -729,12 +735,6 @@ class WelfareLine(models.Model):
                 ('account_type', '=', 'expense'),
                 ('company_id', '=', self.company_id.id)
             ], limit=1)
-        
-        # Create journal entry (money IN)
-        journal = self.env['account.journal'].search([
-            ('type', 'in', ['cash', 'bank', 'general']),
-            ('company_id', '=', self.company_id.id)
-        ], limit=1)
         
         move_vals = {
             'move_type': 'entry',
@@ -766,49 +766,6 @@ class WelfareLine(models.Model):
         
         return move
 
-    def _create_pos_return_order(self):
-        """
-        Create a POS return order if POS integration exists
-        This records the return in POS system
-        """
-        # Check if POS module is installed
-        if 'pos.order' not in self.env:
-            return None
-        
-        # Look for original POS order for this donee around the collection date
-        original_pos_order = self.env['pos.order'].search([
-            ('partner_id', '=', self.welfare_id.donee_id.id),
-            ('state', '=', 'paid'),
-            ('date_order', '>=', self.collection_date),
-        ], limit=1)
-        
-        if not original_pos_order:
-            _logger.warning(f"No original POS order found for donee {self.welfare_id.donee_id.name}")
-            return None
-        
-        # Create return order with POSITIVE amount (money coming IN)
-        return_order_vals = {
-            'partner_id': self.welfare_id.donee_id.id,
-            'amount_total': self.total_amount,  # ✅ POSITIVE (not negative)
-            'amount_paid': self.total_amount,   # ✅ POSITIVE
-            'amount_return': 0,                 # ✅ No return amount needed
-            'state': 'paid',
-            'is_return': True,
-            'original_order_id': original_pos_order.id,
-            'lines': [(0, 0, {
-                'product_id': self.product_id.id,
-                'qty': self.quantity,           # ✅ POSITIVE (not negative)
-                'price_unit': self.total_amount / self.quantity if self.quantity else self.total_amount,
-                'price_subtotal': self.total_amount,      # ✅ POSITIVE
-                'price_subtotal_incl': self.total_amount, # ✅ POSITIVE
-            })],
-        }
-        
-        pos_return = self.env['pos.order'].create(return_order_vals)
-        
-        _logger.info(f"Created POS return order {pos_return.name} for amount {self.total_amount}")
-        
-        return pos_return
     def action_return_to_draft(self):
         """Allow returning a line to draft state and record state to hod approve for re-processing"""
         for line in self:

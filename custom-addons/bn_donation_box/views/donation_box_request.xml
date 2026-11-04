@@ -7,8 +7,8 @@
         <field name="arch" type="xml">
             <form>
                  <header>
-                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_request_approve_reject_group" />
-                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_request_approve_reject_group" />
+                    <button name="action_approve" string="Approved" type="object" class="oe_highlight" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
+                    <button name="action_reject" string="Rejected" type="object" invisible="status != 'draft'" groups="bn_donation_box.donation_box_manager_group" />
                     
                     <field name="status" widget="statusbar" statusbar_visible="draft, approved, rejected"/>
                 </header>
@@ -48,7 +48,7 @@
                                     <field name="old_box_no" />
                                     <field name="key_tag" readonly="1" />
 
-                                    <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved' or is_returned" />
+                                    <button name="action_draft_line" string="Return" type="object" icon="fa-undo" invisible="parent.status != 'approved' or is_returned" groups="bn_donation_box.donation_box_manager_group" confirm="Return this box to the warehouse? Its registration and key are closed." />
                                 </tree>
                             </field>
                         </page>
@@ -63,7 +63,7 @@
                                     <field name="contact_no" />
                                     <field name="lot_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" string="Box No." />
                                     <field name="lock_no" />
-                                    <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
+                                    <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" decoration-muted="box_status == 'removed'" />
                                     <field name="installation_date" />
                                     <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" />
                                 </tree>
@@ -138,6 +138,7 @@
         name="Request"
         action="donation_box_request_action"
         parent="donation_box_root_menu"
+        groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group"
         sequence="0"/>
 
 </odoo>

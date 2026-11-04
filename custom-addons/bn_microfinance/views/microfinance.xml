@@ -25,23 +25,25 @@
             <form>
                 <header>
                     <field name="sale_order_id" invisible="1"/>
-                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'draft' or in_recovery" />
+                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'draft' or in_recovery" groups="bn_microfinance.microfinance_user_group" />
                     
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group" />
-                    <button string="Reject" name="action_reject" type="object" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group,bn_microfinance.microfinance_member_group" />
-                    <button string="Revert" name="action_revert" type="object" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group,bn_microfinance.microfinance_member_group" />
+                    <button string="Reject" name="action_reject" type="object" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group" />
+                    <button string="Reject" name="action_reject" type="object" invisible="state != 'mem_approve' or in_recovery" groups="bn_microfinance.microfinance_member_group" />
+                    <button string="Revert" name="action_revert" type="object" invisible="state != 'hod_approve' or in_recovery" groups="bn_microfinance.microfinance_hod_group" />
+                    <button string="Revert" name="action_revert" type="object" invisible="state != 'mem_approve' or in_recovery" groups="bn_microfinance.microfinance_member_group" />
                     
                     <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve' or in_recovery" groups="bn_microfinance.microfinance_member_group" />
                     
-                    <button string="Proceed" name="action_proceed" type="object" class="oe_highlight" invisible="state != 'approve' or in_recovery or asset_type == 'cash'" />
-                    <button string="Move to Treasury" name="action_move_to_treasury" type="object" class="oe_highlight" invisible="state != 'approve' or in_recovery or asset_type != 'cash'" />
-                    <button string="SD Slip" name="action_sd_slip" type="object" invisible="state != 'approve' or in_recovery" />
+                    <button string="Proceed" name="action_proceed" type="object" groups="bn_microfinance.microfinance_user_group" class="oe_highlight" invisible="state != 'approve' or in_recovery or asset_type == 'cash'" />
+                    <button string="Move to Treasury" name="action_move_to_treasury" type="object" groups="bn_microfinance.microfinance_user_group" class="oe_highlight" invisible="state != 'approve' or in_recovery or asset_type != 'cash'" />
+                    <button string="SD Slip" name="action_sd_slip" type="object" groups="bn_microfinance.microfinance_user_group" invisible="state != 'approve' or in_recovery" />
                     
                     <!-- For movable assets: No Done button - auto done when picking validated -->
                     <!-- For non-movable/non-cash assets in WFD: Show Done button -->
-                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery or asset_type in ['cash', 'movable_asset']" groups="stock.group_stock_user"/>
-                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'treasury' or in_recovery or asset_type != 'cash'"/>
-                    <button string="Receipt" name="action_receipt" type="object" invisible="state not in ['wfd', 'treasury'] or in_recovery" />
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'wfd' or in_recovery or asset_type in ['cash', 'movable_asset']" groups="bn_microfinance.microfinance_user_group"/>
+                    <button string="Move to Done" name="action_move_to_done" type="object" class="oe_highlight" invisible="state != 'treasury' or in_recovery or asset_type != 'cash'" groups="bn_microfinance.microfinance_user_group"/>
+                    <button string="Receipt" name="action_receipt" type="object" groups="bn_microfinance.microfinance_user_group" invisible="state not in ['wfd', 'treasury'] or in_recovery" />
 
 
                     <!-- Updated Recovery Process Buttons -->
@@ -55,7 +57,7 @@
                     <button name="action_right_of_rejected" invisible="state != 'right_of_approval_2'" string="Reject" type="object" groups="bn_microfinance.microfinance_write_off_approval_2_group"/>
                     <!-- <field name="state" widget="statusbar" statusbar_visible="in_recovery,recover,fully_recover"/> -->
 
-                    <button string="Send for Recovery" name="action_send_to_recovery" type="object" invisible="in_recovery or state != 'done'" />
+                    <button string="Send for Recovery" name="action_send_to_recovery" type="object" groups="bn_microfinance.microfinance_user_group" invisible="in_recovery or state != 'done'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, wfd, treasury, done, reject" invisible="in_recovery or asset_type == 'cash'" />
                     <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, treasury, done, reject" invisible="in_recovery or asset_type != 'cash'" />

@@ -32,7 +32,7 @@ class SecurityOffered(models.Model):
             'name': _('Microfinance Applications'),
             'res_model': 'microfinance',
             'view_mode': 'tree,form',
-            'domain': [('security_offered_id    ', '=', self.id)],
+            'domain': [('security_offered_id', '=', self.id)],
             'context': {'create': False},
         }
     

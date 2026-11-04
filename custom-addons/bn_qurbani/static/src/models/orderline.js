@@ -5,8 +5,14 @@ import { patch } from "@web/core/utils/patch";
 
 patch(Orderline.prototype, {
     hasQurbani(order) {
-        // Only lines booked through the Qurbani Schedule popup; lines loaded from a DHS must still merge
-        return order.get_orderlines().some(line => line.qurbani_schedule && this.pos.isQurbaniProduct(line.product));
+        return order.get_orderlines().some(line => {
+            const product = line.product;
+            return (
+                product.is_livestock &&
+                product.detailed_type === "product" &&
+                product.categ?.name?.toLowerCase().includes("qurbani")
+            );
+        });
     },
 
     set_quantity(quantity, keep_price) {

@@ -34,8 +34,15 @@ class BnCityAccessMixin(models.AbstractModel):
     def _bn_user_city_ids(self):
         """City of the analytic account on the user's employee (the account
         itself or one of its parents)."""
-        return self.env['account.analytic.account'].search([
-            ('id', 'parent_of', self.env.user.employee_id.analytic_account_id.ids),
+        return self._bn_user_city_ids_of(self.env.user)
+
+    @api.model
+    def _bn_user_city_ids_of(self, user):
+        accounts = user.sudo().employee_id.analytic_account_id
+        if not accounts:
+            return self.env['account.analytic.account']
+        return self.env['account.analytic.account'].sudo().search([
+            ('id', 'parent_of', accounts.ids),
             ('location_option_id.name', '=', 'City'),
         ])
 

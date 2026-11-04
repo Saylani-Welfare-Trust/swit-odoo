@@ -45,8 +45,8 @@
                                     </tr>
                                 </tbody>
 
-                                <!-- Cash Breakdown Rows -->
-                                <tbody class="cash-overview small text-muted">
+                                <!-- Cash Breakdown Rows (deposit slips) -->
+                                <tbody class="cash-overview small text-muted" t-if="props.default_cash_details.use_slips">
                                     <t t-foreach="['restricted','unrestricted','neutral']" t-as="type" t-key="type">
                                         <tr t-key="props.default_cash_details.id + '-' + type">
                                             <td>
@@ -135,18 +135,21 @@
                                     <tr>
                                         <td t-esc="pm.name"/>
                                         <td t-esc="env.utils.formatCurrency(pm.amount)"/>
-                                        <t t-if="shouldShowSlipInput(pm)">
+                                        <t t-if="shouldShowSlipInput(pm) and !pm.use_slips">
                                             <td>
                                                 <input class="form-control form-control-sm" placeholder="Counted"
                                                     t-model="state.payments[pm.id].counted"/>
                                             </td>
+                                        </t>
+                                        <t t-elif="shouldShowSlipHeaders()">
+                                            <td/>
                                         </t>
                                         <td t-esc="env.utils.formatCurrency(getDifference(pm.id))"
                                             t-att-class="{'text-danger fw-bold': !env.utils.floatIsZero(getDifference(pm.id))}"/>
                                     </tr>
                                 </tbody>
 
-                                <tbody class="cash-overview small text-muted">
+                                <tbody class="cash-overview small text-muted" t-if="pm.use_slips">
                                     <t t-foreach="['restricted','unrestricted','neutral']" t-as="type" t-key="type">
                                         <tr t-key="pm.id+'-'+type">
                                             <td>

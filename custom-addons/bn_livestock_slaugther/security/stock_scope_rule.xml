@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Same scope as bn_stock_location (security/record_rule.xml): only the warehouses / locations set on the user; a document without one yet stays visible. -->
+
+    <record id="scope_livestock_slaugther_rule" model="ir.rule">
+        <field name="name">Livestock Slaughter: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_slaugther"/>
+        <field name="domain_force">['|', '|', ('source_location_id', '=', False), ('source_location_id', 'child_of', user.allowed_location_ids.ids), ('transfer_location', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_livestock_slaugther_unrestricted_rule" model="ir.rule">
+        <field name="name">Livestock Slaughter: unrestricted</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_slaugther"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_livestock_meat_management_rule" model="ir.rule">
+        <field name="name">Meat Management: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_meat_management"/>
+        <field name="domain_force">['|', ('location_id', '=', False), ('location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_livestock_meat_management_unrestricted_rule" model="ir.rule">
+        <field name="name">Meat Management: unrestricted</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_meat_management"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_livestock_requisition_rule" model="ir.rule">
+        <field name="name">Livestock Requisition: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_requisition"/>
+        <field name="domain_force">['|', '|', ('destination_location_id', '=', False), ('destination_location_id', 'child_of', user.allowed_location_ids.ids), ('source_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_livestock_requisition_unrestricted_rule" model="ir.rule">
+        <field name="name">Livestock Requisition: unrestricted</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_requisition"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+</odoo>

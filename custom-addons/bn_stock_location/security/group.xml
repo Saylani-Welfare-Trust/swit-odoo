@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="inventory_custom_access_group" model="res.groups">
-        <field name="name">Inventory / Custom Access</field>
+    <!-- Shows the Inventory > Configuration > Locations menu. The warehouse /
+         location / category scope itself applies to every internal user
+         (security/record_rule.xml), it does not depend on this group. -->
+    <record id="stock_location_user_group" model="res.groups">
+        <field name="name">Locations Menu</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Shows the Locations menu.</field>
     </record>
-    
-    <record id="inventory_location_menu_group" model="res.groups">
-        <field name="name">Inventory / Location Menu</field>
+
+    <record id="stock_scope_unrestricted_group" model="res.groups">
+        <field name="name">Unrestricted Custom Access</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="comment">Sees every warehouse, location, operation type and product category, whatever is set on the user (e.g. central inventory or finance). Settings administrators are always unrestricted.</field>
     </record>
 
 </odoo>

@@ -33,7 +33,8 @@
         name="Record Search"
         action="bn_profile_management.record_search_microfinance_action"
         parent="microfinance_profile_management_menu"
-        sequence="0"/>
+        sequence="0"
+        groups="bn_profile_management.profile_management_user_group"/>
 
     <menuitem
         id="microfinance_donee_menu"

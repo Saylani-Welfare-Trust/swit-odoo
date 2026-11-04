@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
-  
+
     <record id="advance_donation" model="ir.module.category">
         <field name="name">Advance Donation</field>
     </record>
@@ -9,18 +9,25 @@
         <field name="name">POS Advance Donation Access</field>
         <field name="category_id" ref="bn_advance_donation.advance_donation"/>
     </record>
-    
+
+    <!-- The app: advance donations, receipts, payments, disbursements. -->
+    <record id="group_adv_don_menu" model="res.groups">
+        <field name="name">User (Menu)</field>
+        <field name="category_id" ref="bn_advance_donation.advance_donation"/>
+        <field name="comment">Create advance donations, compute the lines, send them for approval, add / cancel payments, record receipts.</field>
+    </record>
+
     <record id="group_adv_don_approval_1" model="res.groups">
         <field name="name">Approval 1</field>
         <field name="category_id" ref="bn_advance_donation.advance_donation"/>
+        <field name="implied_ids" eval="[(4, ref('group_adv_don_menu'))]"/>
+        <field name="comment">First approval: approve, reject or revert to Draft.</field>
     </record>
 
     <record id="group_adv_don_approval_2" model="res.groups">
         <field name="name">Approval 2</field>
         <field name="category_id" ref="bn_advance_donation.advance_donation"/>
-    </record>
-    <record id="group_adv_don_menu" model="res.groups">
-        <field name="name">Adv Menu</field>
-        <field name="category_id" ref="bn_advance_donation.advance_donation"/>
+        <field name="implied_ids" eval="[(4, ref('group_adv_don_menu'))]"/>
+        <field name="comment">Final approval: approve, reject or revert to Approval 1.</field>
     </record>
 </odoo>

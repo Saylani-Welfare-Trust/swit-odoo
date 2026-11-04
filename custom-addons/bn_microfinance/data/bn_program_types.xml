@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- every warehouse gets this module's operation types (install / upgrade) -->
+    <function model="stock.warehouse" name="_bn_setup_program_types"/>
+</odoo>

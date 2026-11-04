@@ -72,6 +72,6 @@ patch(Order.prototype, {
     },
     
     get_qr_code(){
-        return this.cheque_date
+        return this.qr_code
     }
 });

@@ -1,9 +1,16 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_advance_donation,advance.donation,model_advance_donation,,1,1,1,1
-access_advance_donation_line,advance.donation.lines,model_advance_donation_lines,,1,1,1,1
-access_advance_donation_receipt,advance.donation.receipt,model_advance_donation_receipt,,1,1,1,1
-access_advance_donation_slip_usage,advance.donation.slip.usage,model_advance_donation_slip_usage,,1,1,1,1
-access_advance_donation_payment_wizard,advance.donation.payment.wizard,model_advance_donation_payment_wizard,,1,1,1,1
-access_advance_donation_disbursement_line_user,access.advance.donation.disbursement.line.user,model_advance_donation_disbursement_line,,1,1,1,1
-access_advance_donation_category,advance.donation.category,model_advance_donation_category,,1,1,1,1
-access_advance_donation_category_line,advance.donation.category.line,model_advance_donation_category_line,,1,1,1,1
+access_advance_donation,advance.donation,model_advance_donation,base.group_user,1,1,1,0
+access_advance_donation_line,advance.donation.lines,model_advance_donation_lines,base.group_user,1,1,1,0
+access_advance_donation_line_menu,advance.donation.lines menu,model_advance_donation_lines,group_adv_don_menu,1,1,1,1
+access_advance_donation_receipt,advance.donation.receipt,model_advance_donation_receipt,base.group_user,1,1,1,0
+access_advance_donation_receipt_menu,advance.donation.receipt menu,model_advance_donation_receipt,group_adv_don_menu,1,1,1,1
+access_advance_donation_slip_usage,advance.donation.slip.usage,model_advance_donation_slip_usage,base.group_user,1,1,1,0
+access_advance_donation_slip_usage_menu,advance.donation.slip.usage menu,model_advance_donation_slip_usage,group_adv_don_menu,1,1,1,1
+access_advance_donation_payment_wizard,advance.donation.payment.wizard,model_advance_donation_payment_wizard,group_adv_don_menu,1,1,1,1
+access_advance_donation_disbursement_line_user,access.advance.donation.disbursement.line.user,model_advance_donation_disbursement_line,base.group_user,1,1,1,0
+access_advance_donation_disbursement_line_menu,advance.donation.disbursement.line menu,model_advance_donation_disbursement_line,group_adv_don_menu,1,1,1,1
+access_advance_donation_category,advance.donation.category,model_advance_donation_category,base.group_user,1,0,0,0
+access_advance_donation_category_menu,advance.donation.category menu,model_advance_donation_category,group_adv_don_menu,1,1,1,1
+access_advance_donation_category_line,advance.donation.category.line,model_advance_donation_category_line,base.group_user,1,0,0,0
+access_advance_donation_category_line_menu,advance.donation.category.line menu,model_advance_donation_category_line,group_adv_don_menu,1,1,1,1
+access_advance_donation_admin,advance.donation admin,model_advance_donation,base.group_system,1,1,1,1

@@ -51,12 +51,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             raise UserError(_('Source location "Livestock Slaugther" not found. Please create it or rename appropriately.'))
 
         # choose internal picking type for the company (fallback to any internal if company-specific not found)
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
-        ], limit=1)
-        if not picking_type:
-            picking_type = self.env['stock.picking.type'].search([('code', '=', 'internal')], limit=1)
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock', src_loc)
         if not picking_type:
             raise UserError(_('No internal picking type found. Configure a Warehouse with an Internal Transfers type.'))
 

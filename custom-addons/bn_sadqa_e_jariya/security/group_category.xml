@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- group.xml is noupdate: shown in the Welfare category of the user form -->
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_fetch_institution'), ref('group_institutional_disbursement')]"/>
+        <value eval="{'category_id': ref('bn_welfare.module_category_welfare')}"/>
+    </function>
+
+</odoo>

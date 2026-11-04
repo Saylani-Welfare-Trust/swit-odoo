@@ -31,10 +31,10 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_pending" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state == 'draft' and payment_type == 'cash' or state != 'draft'"/>
+                    <button name="action_pending" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type != 'cheque'"/>
                     <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type == 'cheque'"/>
-                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
-                    <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
+                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
+                    <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
                     <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="state != 'bounced'"/>
                 
                     <button name="%(bn_advance_donation.action_report_advance_donation_receipt)d" 

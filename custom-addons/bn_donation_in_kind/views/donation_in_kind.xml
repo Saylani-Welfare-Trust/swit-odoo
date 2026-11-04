@@ -53,6 +53,9 @@
                         <button name="action_reversal_operations_type_receipts" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="reversal_picking_id == False">
                             <field name="reversal_picking_id" widget="statinfo"/>
                         </button>
+                        <button name="action_box_return_picking" type="object" class="oe_stat_button" icon="fa-undo" invisible="not box_return_picking_id">
+                            <field name="box_return_picking_id" widget="statinfo"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -64,7 +67,7 @@
                         <group>
                             <field name="donor_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="product_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                            <field name="picking_type_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="picking_type_id" domain="[('bn_program', '=', 'donation_in_kind')]" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="check_bool" invisible="1" />
                         </group>
                         <group>

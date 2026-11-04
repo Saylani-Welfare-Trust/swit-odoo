@@ -10,18 +10,16 @@ class POSOrder(models.Model):
 
     @api.model
     def _process_order(self, order_data, draft=False, existing_order=False):
-        if order_data.get('data'):
-            data = order_data['data']
-            if data.get('pos_order_seq'):
-                self.pos_order_seq = data['pos_order_seq']
         order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
         order = self.browse(order_id)
         if order and not order.dn_number:
             dn_number = order._compute_dn_number()
-            order.write({
-                'dn_number': dn_number,
-                'source_document': dn_number,
-            })
+            vals = {'dn_number': dn_number}
+            # keep the request a program order was made for (welfare,
+            # medical equipment, qurbani ...)
+            if not order.source_document:
+                vals['source_document'] = dn_number
+            order.write(vals)
         return order_id
 
     def _get_branch_code(self):

@@ -5,7 +5,12 @@
     'author': 'Abdul Hai',
     'website': 'https://bytesnode.com/',
     'summary': 'A custom Dashboard for Odoo 17 Community',
-    'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management','hr',],
+    'depends': [
+        'base', 'web', 'account', 'hr',
+        'bn_pos_cheque', 'bn_donation_box', 'bn_profile_management',
+        'bn_key_management', 'bn_rider_shift', 'bn_direct_deposit',
+        'bn_journal_transfer', 'bn_donation_in_kind',
+    ],
     'data': [
         'security/dashboard_security.xml',  
         'security/ir.model.access.csv',
@@ -33,12 +38,10 @@
             'bn_dashboard/static/src/xml/pos_dashboard.xml',
             'bn_dashboard/static/src/css/pos_dashboard.css',
             'bn_dashboard/static/src/css/pos_dashboard_v2.scss',
-            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
+            # Chart.js shipped with Odoo (no internet needed)
+            'web/static/lib/Chart/Chart.js',
         ],
     },
-    'external_dependencies': {
-            'python': ['pandas'],
-        },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

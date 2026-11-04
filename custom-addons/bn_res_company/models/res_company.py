@@ -12,15 +12,15 @@ class ResCompany(models.Model):
     # Online Donation
     url = fields.Char('URL', tracking=True)
     client_id = fields.Char('Client ID', tracking=True)
-    client_secret = fields.Char('Client Secret', tracking=True)
+    client_secret = fields.Char('Client Secret')  # not tracked: kept out of the chatter
     difference_account_prefix = fields.Char('Difference Account Prefix', tracking=True)
     
 
     # Welfare
     welfare_url = fields.Char('Welfare URL', tracking=True)
     welfare_instituiton_url = fields.Char('Welfare Institution URL', tracking=True)
-    odoo_auth_key = fields.Char('Odoo Auth Key', tracking=True)
-    odoo_auth_institution_key = fields.Char('Odoo Auth Institution Key', tracking=True)
+    odoo_auth_key = fields.Char('Odoo Auth Key')
+    odoo_auth_institution_key = fields.Char('Odoo Auth Institution Key')
     
     search_endpoint = fields.Char('Search Endpoint', tracking=True)
     create_application_endpoint = fields.Char('Create Application Endpoint', tracking=True)

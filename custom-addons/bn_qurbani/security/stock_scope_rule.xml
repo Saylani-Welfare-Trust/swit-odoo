@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Same scope as bn_stock_location (security/record_rule.xml): only the warehouses / locations set on the user; a document without one yet stays visible. -->
+
+    <record id="scope_qurbani_cow_slaughter_rule" model="ir.rule">
+        <field name="name">Cow Slaughter: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_cow_slaughter"/>
+        <field name="domain_force">['|', ('slaughter_location_id', '=', False), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_cow_slaughter_unrestricted_rule" model="ir.rule">
+        <field name="name">Cow Slaughter: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_cow_slaughter"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_goat_slaughter_rule" model="ir.rule">
+        <field name="name">Goat Slaughter: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_goat_slaughter"/>
+        <field name="domain_force">['|', ('slaughter_location_id', '=', False), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_goat_slaughter_unrestricted_rule" model="ir.rule">
+        <field name="name">Goat Slaughter: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_goat_slaughter"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_cow_distribution_rule" model="ir.rule">
+        <field name="name">Cow Distribution: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_cow_distribution"/>
+        <field name="domain_force">['|', '|', ('distribution_location_id', '=', False), ('distribution_location_id', 'child_of', user.allowed_location_ids.ids), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_cow_distribution_unrestricted_rule" model="ir.rule">
+        <field name="name">Cow Distribution: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_cow_distribution"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_goat_distribution_rule" model="ir.rule">
+        <field name="name">Goat Distribution: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_goat_distribution"/>
+        <field name="domain_force">['|', '|', ('distribution_location_id', '=', False), ('distribution_location_id', 'child_of', user.allowed_location_ids.ids), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_goat_distribution_unrestricted_rule" model="ir.rule">
+        <field name="name">Goat Distribution: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_goat_distribution"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_slaughter_schedule_rule" model="ir.rule">
+        <field name="name">Slaughter Schedule: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_slaughter_schedule"/>
+        <field name="domain_force">['|', '|', ('location_id', '=', False), ('location_id', 'child_of', user.allowed_location_ids.ids), ('city_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_slaughter_schedule_unrestricted_rule" model="ir.rule">
+        <field name="name">Slaughter Schedule: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_slaughter_schedule"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_distribution_schedule_rule" model="ir.rule">
+        <field name="name">Distribution Schedule: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_distribution_schedule"/>
+        <field name="domain_force">['|', '|', ('location_id', '=', False), ('location_id', 'child_of', user.allowed_location_ids.ids), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_distribution_schedule_unrestricted_rule" model="ir.rule">
+        <field name="name">Distribution Schedule: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_distribution_schedule"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_city_schedule_rule" model="ir.rule">
+        <field name="name">City Schedule: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_city_schedule"/>
+        <field name="domain_force">['|', '|', ('location_id', '=', False), ('location_id', 'child_of', user.allowed_location_ids.ids), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_city_schedule_unrestricted_rule" model="ir.rule">
+        <field name="name">City Schedule: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_city_schedule"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_city_rule" model="ir.rule">
+        <field name="name">Qurbani City: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_city"/>
+        <field name="domain_force">['|', ('city_id', '=', False), ('city_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_city_unrestricted_rule" model="ir.rule">
+        <field name="name">Qurbani City: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_city"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_city_demand_rule" model="ir.rule">
+        <field name="name">City Demand: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_city_demand"/>
+        <field name="domain_force">['|', ('city_location_id', '=', False), ('city_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_city_demand_unrestricted_rule" model="ir.rule">
+        <field name="name">City Demand: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_city_demand"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_slaughter_demand_rule" model="ir.rule">
+        <field name="name">Slaughter Demand: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_slaughter_demand"/>
+        <field name="domain_force">['|', '|', ('slaughter_location_id', '=', False), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids), ('city_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_slaughter_demand_unrestricted_rule" model="ir.rule">
+        <field name="name">Slaughter Demand: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_slaughter_demand"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_qurbani_slaughter_slot_demand_rule" model="ir.rule">
+        <field name="name">Slot Demand: allowed warehouses / locations</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_slaughter_slot_demand"/>
+        <field name="domain_force">['|', ('slaughter_location_id', '=', False), ('slaughter_location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_qurbani_slaughter_slot_demand_unrestricted_rule" model="ir.rule">
+        <field name="name">Slot Demand: unrestricted</field>
+        <field name="model_id" ref="bn_qurbani.model_qurbani_slaughter_slot_demand"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+</odoo>

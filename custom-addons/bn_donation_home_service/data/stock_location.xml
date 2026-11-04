@@ -6,13 +6,13 @@
         <record id="gate_out_location" model="stock.location">
             <field name="name">Gate Out</field>
             <field name="usage">transit</field>
-            <field name="location_id" ref="__custom__.wh" />
+            <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
         </record>
         
         <record id="gate_in_location" model="stock.location">
             <field name="name">Gate In</field>
             <field name="usage">transit</field>
-            <field name="location_id" ref="__custom__.wh" />
+            <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
         </record>
     
     </data>

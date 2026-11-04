@@ -9,4 +9,5 @@ from . import pos_order
 from . import advance_donation_disbursement
 from . import advance_donation_category
 from . import advance_donation_category_line
+from . import pos_cheque
 from . import res_partner

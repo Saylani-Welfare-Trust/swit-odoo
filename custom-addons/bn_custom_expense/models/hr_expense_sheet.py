@@ -1,5 +1,5 @@
-from odoo import models
-from odoo.exceptions import ValidationError
+from odoo import _, models
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools.misc import clean_context
 
 
@@ -32,8 +32,8 @@ class HRExpenseSheet(models.Model):
         return moves
     
     def action_reset_approval_expense_sheets(self):
-        if self.state == 'approve':
-            raise ValidationError('Cannot set an approve expense to draft.')
+        if any(sheet.state == 'approve' for sheet in self):
+            raise ValidationError(_('Cannot set an approved expense to draft.'))
         
         return super(HRExpenseSheet, self).action_reset_approval_expense_sheets()
     

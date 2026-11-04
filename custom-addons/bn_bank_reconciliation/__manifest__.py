@@ -1,6 +1,6 @@
 {
     'name': 'Bank Reconciliation',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'description': 'Bank Reconciliation Module for Odoo',
     'summary': 'Manage bank reconciliations',
     'author': 'Syed Owais Noor',

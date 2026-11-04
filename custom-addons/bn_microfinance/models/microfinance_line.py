@@ -67,7 +67,7 @@ class MicrofinanceLine(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('NEW') == _('NEW')):
+        if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
             vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_line') or ('New')
                 
         res = super(MicrofinanceLine, self).create(vals)

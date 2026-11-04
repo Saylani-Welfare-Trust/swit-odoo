@@ -118,10 +118,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
-        ], limit=1)
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock')
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
@@ -135,7 +132,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.product_id or 'Live Stock Slaughter',
+            'origin': self.name or 'Live Stock Slaughter',
         })
 
         # Create the stock move
@@ -173,10 +170,7 @@ class LivestockSlaughter(models.Model):
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('warehouse_id.company_id', '=', self.env.company.id)
-        ], limit=1)
+        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock')
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
@@ -186,7 +180,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.product_id.id or '',
+            'origin': self.name or '',
         })
 
         self.env['stock.move'].create({

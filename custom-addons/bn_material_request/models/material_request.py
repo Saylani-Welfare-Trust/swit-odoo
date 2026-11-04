@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 
 class MemberApproval(models.Model):
@@ -177,6 +177,8 @@ class MemberApproval(models.Model):
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
         self.ensure_one()
+        if self.state != 'draft':
+            raise ValidationError(_('Only a draft request can be confirmed.'))
 
         if not self.line_ids:
             raise ValidationError(_('Please add at least one product line.'))
@@ -308,6 +310,8 @@ class MemberApproval(models.Model):
         self.ensure_one()
         if self.state != 'committee_approval' or self.cfo_approved:
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
+        if not self.env.user.has_group('bn_material_request.menu_group_material_request_cfo'):
+            raise AccessError(_('Only the CFO can give this approval.'))
         if not self.cfo_remarks:
             raise ValidationError(_('CFO Remarks are required to approve.'))
         hold = self._shariah_hold_gate()
@@ -322,6 +326,8 @@ class MemberApproval(models.Model):
         self.ensure_one()
         if self.state != 'committee_approval' or self.coo_approved:
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
+        if not self.env.user.has_group('bn_material_request.menu_group_material_request_coo'):
+            raise AccessError(_('Only the COO can give this approval.'))
         if not self.coo_remarks:
             raise ValidationError(_('COO Remarks are required to approve.'))
         hold = self._shariah_hold_gate()
@@ -350,13 +356,9 @@ class MemberApproval(models.Model):
         if not self.dest_location_id:
             raise ValidationError(_('Please specify a Destination Location.'))
 
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
-
-        if not picking_type:
-            raise ValidationError(_('No internal transfer picking type found.'))
+        # the Material Request operation type of the source warehouse
+        picking_type = self.env['stock.warehouse']._bn_get_program_type(
+            'material_request', self.source_location_id)
 
         move_vals = []
         shortage_move_vals = []
@@ -506,11 +508,13 @@ class MemberApproval(models.Model):
     def action_reject(self):
         """Reject the request"""
         self.ensure_one()
+        # once approved, the transfer / purchase request carries on
+        # (shariah_hold: bn_procurement_workflow, rejected by the CFO)
+        if self.state not in ('hod_approval', 'committee_approval', 'shariah_hold'):
+            raise ValidationError(_('Only a request waiting for approval can be rejected.'))
         
         if not self.rejection_reason:
             raise ValidationError(_('Please provide a rejection reason.'))
-        
-        self.picking_id.action_cancel()
 
         self.state = 'rejected'
         
@@ -519,6 +523,8 @@ class MemberApproval(models.Model):
     def action_reset_to_draft(self):
         """Reset to draft state"""
         self.ensure_one()
+        if self.state != 'rejected':
+            raise ValidationError(_('Only a rejected request can be reset to draft.'))
         
         self.write({
             'state': 'draft',

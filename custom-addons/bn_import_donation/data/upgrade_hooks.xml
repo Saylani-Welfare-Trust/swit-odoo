@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Run on every install / upgrade; idempotent. Gateways named SMIT / PIAIC
+         get "Student Fees", the API gateway gets the former hard-coded Default
+         Donor (see gateway.config._bn_setup_gateway_config). -->
+    <function model="gateway.config" name="_bn_setup_gateway_config"/>
+</odoo>

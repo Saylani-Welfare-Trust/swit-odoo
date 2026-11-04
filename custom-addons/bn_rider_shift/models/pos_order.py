@@ -1,16 +1,34 @@
+import logging
+
 from odoo import api, fields, models
 
+_logger = logging.getLogger(__name__)
 
-class PosOrder(models.Model):
+
+class POSOrder(models.Model):
     _inherit = 'pos.order'
 
     @api.model
     def _process_order(self, order, draft, existing_order):
+        """The donation box collection is closed once its POS order is saved
+        (not from the POS before validation)."""
         order_id = super()._process_order(order, draft, existing_order)
-        # The POS Donation Box popup puts the paid rider collection in extra_data.
-        box_data = ((order.get('data') or {}).get('extra_data') or {}).get('donation_box') or {}
-        if not draft and box_data.get('collection_id'):
-            self.browse(order_id)._bn_link_rider_collection(box_data['collection_id'])
+        box_data = ((order.get('data') or {}).get('extra_data') or {}).get('donation_box')
+        pos_order = self.browse(order_id)
+        if box_data and pos_order.state in ('paid', 'done', 'invoiced'):
+            KeyIssuance = self.env['key.issuance'].sudo()
+            result, collection, issuance = KeyIssuance._bn_check_donation_box(box_data)
+            if result.get('status') == 'success':
+                KeyIssuance._bn_apply_donation_box(collection, issuance, box_data)
+                pos_order._bn_link_rider_collection(collection.id)
+                # the receipt the donor got for this collection
+                collection.sudo().pos_receipt_number = (
+                    box_data.get('receipt_number')
+                    or ('dn_number' in pos_order._fields and pos_order.dn_number)
+                    or pos_order.pos_reference or pos_order.name)
+            else:
+                # already closed (order synced twice) or changed meanwhile
+                _logger.warning("POS order %s: donation box not closed: %s", pos_order.name, result.get('body'))
         return order_id
 
     def _bn_link_rider_collection(self, collection_id):
@@ -28,8 +46,8 @@ class PosOrder(models.Model):
             return self.dn_number
         year = fields.Datetime.context_timestamp(self, self.date_order).year
         return '%s-C%s-%s-%s' % (
-            self.user_id.branch_code or 'UNK',
-            self.config_id.counter or 0,
+            ('branch_code' in self.user_id._fields and self.user_id.branch_code) or 'UNK',
+            ('counter' in self.config_id._fields and self.config_id.counter) or 0,
             year,
-            self.pos_order_seq or '0000',
+            ('pos_order_seq' in self._fields and self.pos_order_seq) or '0000',
         )

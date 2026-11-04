@@ -12,20 +12,20 @@
 
                 <field name="accounting_date" readonly="1" />
                 <!-- <field name="name" readonly="1" /> -->
-                <field name="session" />
-                <field name="category" />
-                <field name="deposit_slip_no" />
+                <field name="session" readonly="state != 'draft'" />
+                <field name="category" readonly="state != 'draft'" />
+                <field name="deposit_slip_no" readonly="state != 'draft'" />
                 <field name="analytic_account_id" string="Branch"/>
-                <field name="reference" />
-                <field name="source_journal_id" optional="hide"/>
-                <field name="dest_journal_id" />
-                <field name="date" />
-                <field name="remarks"/>
+                <field name="reference" readonly="state != 'draft'" />
+                <field name="source_journal_id" optional="hide" readonly="state != 'draft'"/>
+                <field name="dest_journal_id" readonly="state != 'draft'" />
+                <field name="date" readonly="state != 'draft'" />
+                <field name="remarks" readonly="state != 'draft'"/>
                 <field name="user_id" string="POS Owner" readonly="1" />
                 <field name="amount" readonly="1" />
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
 
-                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                 <!-- <button string="Cancel" name="action_cancel" type="object"/> -->
             </tree>
         </field>

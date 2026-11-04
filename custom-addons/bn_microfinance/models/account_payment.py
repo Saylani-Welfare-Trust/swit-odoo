@@ -10,7 +10,7 @@ class AccountRegisterPayments(models.TransientModel):
         if invoices:
             bill = invoices[0]
             if bill.ref:
-                microfinance = self.env['microfinance'].search([
+                microfinance = self.env['microfinance'].sudo().search([
                     ('name', '=', bill.ref)
                 ], limit=1)
                 if microfinance:
@@ -21,7 +21,7 @@ class AccountRegisterPayments(models.TransientModel):
         res = super().action_create_payments()
 
 
-        microfinance = self.env['microfinance'].search([
+        microfinance = self.env['microfinance'].sudo().search([
             ('name', '=', self.communication)
         ], limit=1)
 

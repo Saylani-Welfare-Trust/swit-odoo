@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='contact_addresses']" position="after">
-                <page name="donation" string="Donation" invisible="not is_donor">
+                <page name="donation" string="Donation" invisible="',donation,' not in profile_visible_page_names">
                     <notebook>
                         <page name="pos" string="POS Details">
                             
@@ -29,66 +29,68 @@
                         </page>
                     </notebook>
                 </page>
-                <page name="welfare" string="Welfare Details" invisible="is_donor">
+                <page name="welfare" string="Welfare Details" invisible="',welfare,' not in profile_visible_page_names">
                     
                 </page>
-                <page name="microfinance" string="Microfinance Details" invisible="is_donor">
+                <page name="microfinance" string="Microfinance Details" invisible="',microfinance,' not in profile_visible_page_names">
                     
                 </page>
-                <page name="medical" string="Medical Equipment" invisible="is_donor">
+                <page name="medical" string="Medical Equipment" invisible="',medical,' not in profile_visible_page_names">
 
                 </page>
             </xpath>
 
             <xpath expr="//page[@name='contact_addresses']" position="before">
-                <page name="general_info" string="General Information" invisible="category_id.name not in ['Donor', 'Donee']">
+                <page name="general_info" string="General Information" invisible="',general_info,' not in profile_visible_page_names">
                     <group>
                         <field name="state" invisible="1" />
+                        <field name="profile_visible_form_field_names" invisible="1" />
+                        <field name="profile_visible_page_names" invisible="1" />
                         <field name="donee_required_fields" invisible="1" />
                         <field name="is_donor" invisible="1"/>
                         <group name="general_info_col_1">
-                            <field name="surname"  />
-                            <field name="area" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields" />
-                            <field name="gender" required="donee_required_fields" />
-                            <field name="religion" />
+                            <field name="surname"   invisible="',surname,' not in profile_visible_form_field_names"/>
+                            <field name="area" options="{'no_create': True, 'no_edit': True}" required="(donee_required_fields) and ',area,' in profile_visible_form_field_names"  invisible="',area,' not in profile_visible_form_field_names"/>
+                            <field name="gender" required="(donee_required_fields) and ',gender,' in profile_visible_form_field_names"  invisible="',gender,' not in profile_visible_form_field_names"/>
+                            <field name="religion"  invisible="',religion,' not in profile_visible_form_field_names"/>
 
                            <!-- <field name="donee_required_fields" invisible="1" /> -->
                            <field name="welfare_donee_required_fields" invisible="1" />
                            <field name="welfare_donee_female_required" invisible="1" />
 
-                            <field name="martial_status" />
-                            <field name="spouse_name" invisible="martial_status == 'unmarried'" required="donee_required_fields and martial_status == 'married'" />
-                            <field name="has_cnic" />
-                            <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
-                            <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
-                            <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
-                            <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" />
-                            <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
-                            <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
-                            <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" />
-                            <field name="approved_form_file" filename="approved_form" />
+                            <field name="martial_status"  invisible="',martial_status,' not in profile_visible_form_field_names"/>
+                            <field name="spouse_name" invisible="(martial_status == 'un_married') or ',spouse_name,' not in profile_visible_form_field_names" required="(donee_required_fields and martial_status == 'married') and ',spouse_name,' in profile_visible_form_field_names" />
+                            <field name="has_cnic"  invisible="',has_cnic,' not in profile_visible_form_field_names"/>
+                            <field name="cnic_no" invisible="(has_cnic == 'no') or ',cnic_no,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_no,' in profile_visible_form_field_names" />
+                            <field name="cnic_expiration" invisible="(has_cnic == 'no') or ',cnic_expiration,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_expiration,' in profile_visible_form_field_names" />
+                            <field name="cnic_front_image" filename="cnic_front" invisible="(has_cnic == 'no') or ',cnic_front_image,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_front_image,' in profile_visible_form_field_names" />
+                            <field name="cnic_back_image" filename="cnic_back" invisible="(has_cnic == 'no') or ',cnic_back_image,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'yes') and ',cnic_back_image,' in profile_visible_form_field_names" />
+                            <field name="head_cnic_no" invisible="(has_cnic == 'yes') or ',head_cnic_no,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'no') and ',head_cnic_no,' in profile_visible_form_field_names" />
+                            <field name="member_cnic_no" invisible="(has_cnic == 'yes') or ',member_cnic_no,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'no') and ',member_cnic_no,' in profile_visible_form_field_names" />
+                            <field name="reference_letter_file" filename="reference_letter" invisible="(has_cnic == 'yes') or ',reference_letter_file,' not in profile_visible_form_field_names" required="(donee_required_fields and has_cnic == 'no') and ',reference_letter_file,' in profile_visible_form_field_names" />
+                            <field name="approved_form_file" filename="approved_form"  invisible="',approved_form_file,' not in profile_visible_form_field_names"/>
                         </group>
                         <group name="general_info_col_2">
-                            <field name="date_of_birth" required="donee_required_fields" />
-                            <field name="age" />
-                            <field name="father_name" required="donee_required_fields" />
-                            <field name="father_cnic_no" required="welfare_donee_required_fields" />
-                            <field name="next_kin" required="welfare_donee_required_fields" />
-                            <field name="nearest_land_mark" required="donee_required_fields" />
-                            <field name="reference_remarks" />
-                            <field name="bank_wallet_account" />
+                            <field name="date_of_birth" required="(donee_required_fields) and ',date_of_birth,' in profile_visible_form_field_names"  invisible="',date_of_birth,' not in profile_visible_form_field_names"/>
+                            <field name="age"  invisible="',age,' not in profile_visible_form_field_names"/>
+                            <field name="father_name" required="(donee_required_fields) and ',father_name,' in profile_visible_form_field_names"  invisible="',father_name,' not in profile_visible_form_field_names"/>
+                            <field name="father_cnic_no" required="(welfare_donee_required_fields) and ',father_cnic_no,' in profile_visible_form_field_names"  invisible="',father_cnic_no,' not in profile_visible_form_field_names"/>
+                            <field name="next_kin" required="(welfare_donee_required_fields) and ',next_kin,' in profile_visible_form_field_names"  invisible="',next_kin,' not in profile_visible_form_field_names"/>
+                            <field name="nearest_land_mark" required="(donee_required_fields) and ',nearest_land_mark,' in profile_visible_form_field_names"  invisible="',nearest_land_mark,' not in profile_visible_form_field_names"/>
+                            <field name="reference_remarks"  invisible="',reference_remarks,' not in profile_visible_form_field_names"/>
+                            <field name="bank_wallet_account"  invisible="',bank_wallet_account,' not in profile_visible_form_field_names"/>
                             
                             <label for="primary_registration_id" string="Donor" invisible="category_id.name == 'Donee'" />
                             <label for="primary_registration_id" string="Donee" invisible="category_id.name == 'Donor'" />
-                            <field name="primary_registration_id" readonly="1" nolabel="1" />
+                            <field name="primary_registration_id" readonly="1" nolabel="1"  invisible="',primary_registration_id,' not in profile_visible_form_field_names"/>
                             
                             <label for="secondary_registration_id" string="Donor" invisible="category_id.name == 'Donor'" />
                             <label for="secondary_registration_id" string="Donee" invisible="category_id.name == 'Donee'" />
-                            <field name="secondary_registration_id" readonly="1" nolabel="1" />
+                            <field name="secondary_registration_id" readonly="1" nolabel="1"  invisible="',secondary_registration_id,' not in profile_visible_form_field_names"/>
                             
-                            <field name="old_system_id" />
-                            <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="donee_required_fields" />
-                            <field name="details" />
+                            <field name="old_system_id"  invisible="',old_system_id,' not in profile_visible_form_field_names"/>
+                            <field name="analytic_account_id" string="Branch" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="(donee_required_fields) and ',analytic_account_id,' in profile_visible_form_field_names"  invisible="',analytic_account_id,' not in profile_visible_form_field_names"/>
+                            <field name="details"  invisible="',details,' not in profile_visible_form_field_names"/>
                         </group>
                     </group>
                 </page>

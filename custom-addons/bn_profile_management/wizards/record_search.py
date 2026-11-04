@@ -31,11 +31,11 @@ class RecordSearch(models.TransientModel):
 
 
     registration_id = fields.Char('Registration ID')
-    mobile_no = fields.Char('Mobile No.', size=10)
+    # No size=: it would silently truncate longer input.
+    mobile_no = fields.Char('Mobile No.')
     cnic_no = fields.Char('CNIC No.', size=15)
     
     country_code_id = fields.Many2one('res.country', string="Country Code")
-    microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
 
     search_type = fields.Selection(selection=search_type_selection, string="Search Type", default="registration_id")
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
@@ -87,7 +87,6 @@ class RecordSearch(models.TransientModel):
                 'default_cnic_no': self.cnic_no,
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
-                'default_microfinance_scheme_id': self.microfinance_scheme_id.id,
                 'default_category': self.category,
                 # carried on to the profile popup, see action_change_request
                 'from_record_search': True,

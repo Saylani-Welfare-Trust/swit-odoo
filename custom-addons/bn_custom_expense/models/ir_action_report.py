@@ -1,5 +1,5 @@
 import io
-from odoo import models
+from odoo import _, models
 from odoo.tools.pdf import PdfFileWriter, PdfFileReader
 from odoo.exceptions import UserError
 

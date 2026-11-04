@@ -5,7 +5,7 @@ from odoo.tools import float_compare
 
 from .bn_workflow import bn_transition
 
-APPROVE_GROUP = 'bn_donation_box.donation_box_request_approve_reject_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 
 
 class DonationBoxRequestLine(models.Model):
@@ -231,9 +231,9 @@ class DonationBoxRequestLine(models.Model):
         return_picking = request._bn_return_lot(picking, self.lot_id)
 
         with bn_transition():
-            registration._bn_write({'status': 'close'})
+            registration._bn_take_out_of_service()
             registration._bn_key_close()
-            self.lot_id.write({'lot_consume': False})
+            self.lot_id.sudo().write({'lot_consume': False})
             self.write({'is_returned': True, 'return_picking_id': return_picking.id})
-        request.message_post(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
+        request._message_log(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
             'lot': self.lot_id.display_name, 'picking': return_picking.display_name})
