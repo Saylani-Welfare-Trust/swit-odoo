@@ -69,11 +69,17 @@ class SadqaJariya(models.Model):
             # anything else (an HTML 404 page...) is usually a wrong Welfare Institution URL
             error = result.get('json') if isinstance(result.get('json'), dict) else {}
             message = error.get('message') or ' '.join(re.sub(r'<[^>]+>', ' ', response.text or '').split())[:300]
-            raise UserError(_("Portal %(operation)s: %(code)s %(message)s\nCalled: %(url)s",
+            details = _("Called: %s") % url
+            if response.status_code in (401, 403):
+                # enough to compare with the key the portal team gave, never the key itself
+                key = headers['x-odoo-auth-key']
+                details += '\n' + _("Key sent from company %(company)s: %(length)s characters, ending ...%(end)s",
+                                     company=company.name, length=len(key), end=key[-4:])
+            raise UserError(_("Portal %(operation)s: %(code)s %(message)s\n%(details)s",
                               operation=operation,
                               code=error.get('code') or response.status_code,
                               message=message,
-                              url=url))
+                              details=details))
         return result.get('json')
 
     @api.model
