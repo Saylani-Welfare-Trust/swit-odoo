@@ -15,9 +15,7 @@ class DashboardConfigurator(models.Model):
         ('treasury', 'Treasury'),
         ('donation_box', 'Donation Box'),
         ('pos_order', 'POS Order'),
-        ('profile', 'Profile Management'),
         ('donation_in_kind', 'Donation In Kind'),
-        ('donation_inflow', 'Donation Inflows'),
     ], string='Dashboard', required=True, default='treasury', tracking=True)
 
     user_ids = fields.Many2many(
