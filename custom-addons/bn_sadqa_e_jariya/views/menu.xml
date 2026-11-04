@@ -18,7 +18,10 @@
         <field name="name">Donee</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('category_id.name', '=', 'Coorporate / Institute')]</field>
+        <!-- by tag record, not name: the tags can be renamed (Coorporate -> Corporate / Institute) -->
+        <field name="domain" eval="str([('category_id', 'in', [ref('bn_profile_management.donee_partner_category')]),
+                                        ('category_id', 'in', [ref('bn_profile_management.welfare_partner_category')]),
+                                        ('category_id', 'in', [ref('bn_profile_management.coorporate_institute_partner_category')])])"/>
         <field name="context">{
             'create': 0,
             'delete': 0,

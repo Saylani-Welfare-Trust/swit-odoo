@@ -1,3 +1,5 @@
+import json
+
 from dateutil.relativedelta import relativedelta
 
 from odoo import models, fields, api, _
@@ -33,6 +35,13 @@ REVERT_STATE = {
     'hod_approve': 'committee_approval',
     'mem_approve': 'hod_approve',
 }
+
+# Tags a Sadqa e Jariya donee has, by xmlid: their names can be edited (Coorporate -> Corporate / Institute)
+DONEE_TAGS = (
+    'bn_profile_management.donee_partner_category',
+    'bn_profile_management.welfare_partner_category',
+    'bn_profile_management.coorporate_institute_partner_category',
+)
 
 # institution_category -> portal formKind
 FORM_KINDS = {
@@ -72,6 +81,7 @@ class SadqaJariya(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
 
     donee_id = fields.Many2one('res.partner', string='Donee', tracking=True)
+    donee_domain = fields.Char('Donee Domain', compute='_compute_donee_domain')
     cnic_no = fields.Char(related='donee_id.cnic_no', string='CNIC No.', store=True)
     employee_category_id = fields.Many2one(
         'hr.employee.category',
@@ -128,6 +138,21 @@ class SadqaJariya(models.Model):
         string='Most Recent Previous Application',
         compute='_compute_previous_application_id',
     )
+
+    @api.model
+    def _donee_tag_domain(self):
+        """Registered donees with every Sadqa e Jariya tag"""
+        domain = [('state', '=', 'register')]
+        for xmlid in DONEE_TAGS:
+            tag = self.env.ref(xmlid, raise_if_not_found=False)
+            if tag:
+                domain.append(('category_id', 'in', tag.ids))
+        return domain
+
+    def _compute_donee_domain(self):
+        domain = json.dumps(self._donee_tag_domain())
+        for rec in self:
+            rec.donee_domain = domain
 
     @api.depends('donee_id')
     def _compute_previous_application_id(self):

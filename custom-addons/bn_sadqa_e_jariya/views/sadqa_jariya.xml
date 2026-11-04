@@ -94,12 +94,13 @@
                     <group>
                         <group name="application_col_1">
                             <field name="previous_application_id" invisible="1"/>
+                            <field name="donee_domain" invisible="1"/>
                             <field name="employee_category_id" invisible="1"/>
                             <field name="order_type"
                                    required="state in ['completed', 'form_sent', 'form_filled', 'send_for_inquiry', 'inquiry', 'committee_approval']"
                                    readonly="state in ['hod_approve', 'mem_approve', 'approve', 'recurring', 'disbursed', 'reject']"/>
                             <field name="donee_id"
-                                   domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare'), ('category_id.name', '=', 'Coorporate / Institute'), ('state', '=', 'register')]"
+                                   domain="donee_domain"
                                    options="{'no_create': True}"
                                    readonly="state not in ['draft', 'completed']" required="1"/>
                             <!-- Picked any time before Send for Inquiry -->
