@@ -8,7 +8,6 @@
     <record id="rider_shift_root_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_rider_shift"/>
-        <field name="implied_ids" eval="[(4, ref('bn_donation_box.donation_box_root_group'))]"/>
         <field name="comment">Grants visibility of the Rider section (and the parent Donation Box app icon). Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
     </record>
 
@@ -30,7 +29,6 @@
     <record id="rider_shift_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_rider_shift"/>
-        <field name="implied_ids" eval="[(4, ref('rider_shift_root_group'))]"/>
         <field name="comment">Day-to-day access to shifts, schedules and collections. Cannot delete or edit collected amounts.</field>
     </record>
 
@@ -47,7 +45,6 @@
     <record id="rider_shift_audit_group" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_rider_shift"/>
-        <field name="implied_ids" eval="[(4, ref('rider_shift_root_group'))]"/>
         <field name="comment">Read-only oversight across shifts, schedules and collections, for reporting. No create, write or delete anywhere.</field>
     </record>
 
