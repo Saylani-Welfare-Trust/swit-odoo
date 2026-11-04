@@ -17,7 +17,7 @@
             </field>
             <!-- Institution only -->
             <field name="category" position="attributes">
-                <attribute name="readonly">is_sadqa_e_jariya</attribute>
+                <attribute name="readonly">is_welfare or is_sadqa_e_jariya</attribute>
             </field>
         </field>
     </record>

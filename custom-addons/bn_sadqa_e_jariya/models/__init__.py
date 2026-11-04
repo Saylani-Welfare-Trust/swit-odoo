@@ -8,6 +8,7 @@ from . import sadqa_jariya_masjid
 from . import sadqa_jariya_madrasa
 from . import sadqa_jariya_flood
 from . import sadqa_jariya_construction
+from . import sadqa_jariya_form_tabs
 from . import sadqa_jariya_fetch_log
 from . import product_template
 from . import stock_picking

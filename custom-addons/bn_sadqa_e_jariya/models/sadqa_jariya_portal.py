@@ -233,6 +233,8 @@ class SadqaJariya(models.Model):
         self.ensure_one()
         if self.state != 'form_filled':
             raise UserError(_("The donee has to fill the form before it can be sent for inquiry."))
+        if not self.line_ids:
+            raise UserError(_("Add the Disbursement Items before sending for inquiry."))
         officer = self.employee_id
         if not officer:
             raise UserError(_("Select the Inquiry Officer first."))

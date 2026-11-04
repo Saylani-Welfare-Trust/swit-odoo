@@ -233,10 +233,8 @@ class SadqaJariya(models.Model):
             } for product in new_products])
 
     def action_complete(self):
-        for rec in self:
-            if not rec.line_ids:
-                raise ValidationError(_('You must add a Disbursement Item before completing.'))
-            rec.state = 'completed'
+        # Disbursement Items come once the portal form is in (Form Filled), see action_send_for_inquiry
+        self.write({'state': 'completed'})
 
     def action_committee_approval(self):
         self.write({'state': 'committee_approval'})
