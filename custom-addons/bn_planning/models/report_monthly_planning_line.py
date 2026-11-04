@@ -32,6 +32,10 @@ class ReportMonthlyPlanningLine(models.Model):
     to_date = fields.Date(
         related='monthly_planning_id.to_date', string='To Date', store=False,
     )
+    created_by = fields.Many2one(
+        'res.users', string='Created By', readonly=True,
+    )
+
 
     # ── Line info ──────────────────────────────────────
     tab = fields.Selection(
@@ -163,37 +167,44 @@ class ReportMonthlyPlanningLine(models.Model):
                     k.quantity                     AS quantity,
                     k.planned_qty                  AS planned_qty,
                     k.purchase_requisition_id      AS purchase_requisition_id,
-                    k.transfer_picking_id          AS transfer_picking_id
+                    k.transfer_picking_id          AS transfer_picking_id,
+                    k.create_uid                   AS created_by
                 FROM monthly_planning_kitchen k
                 UNION ALL
                 SELECT m.id, m.monthly_planning_id, 'madaris', m.date,
                     m.product_id, m.location_id, m.quantity, m.planned_qty,
-                    m.purchase_requisition_id, m.transfer_picking_id
+                    m.purchase_requisition_id, m.transfer_picking_id,
+                    m.create_uid
                 FROM monthly_planning_madaris m
                 UNION ALL
                 SELECT md.id, md.monthly_planning_id, 'medical', md.date,
                     md.product_id, md.location_id, md.quantity, md.planned_qty,
-                    md.purchase_requisition_id, md.transfer_picking_id
+                    md.purchase_requisition_id, md.transfer_picking_id,
+                    md.create_uid
                 FROM monthly_planning_medical md
                 UNION ALL
                 SELECT l.id, l.monthly_planning_id, 'livestock', l.date,
                     l.product_id, l.location_id, l.quantity, l.planned_qty,
-                    l.purchase_requisition_id, l.transfer_picking_id
+                    l.purchase_requisition_id, l.transfer_picking_id,
+                    l.create_uid
                 FROM monthly_planning_livestock l
                 UNION ALL
                 SELECT f.id, f.monthly_planning_id, 'food', f.date,
                     f.product_id, f.location_id, f.quantity, f.planned_qty,
-                    f.purchase_requisition_id, f.transfer_picking_id
+                    f.purchase_requisition_id, f.transfer_picking_id,
+                    f.create_uid
                 FROM monthly_planning_food f
                 UNION ALL
                 SELECT r.id, r.monthly_planning_id, 'ration', r.date,
                     r.product_id, r.location_id, r.quantity, r.planned_qty,
-                    r.purchase_requisition_id, r.transfer_picking_id
+                    r.purchase_requisition_id, r.transfer_picking_id,
+                    r.create_uid
                 FROM monthly_planning_ration r
                 UNION ALL
                 SELECT mt.id, mt.monthly_planning_id, 'meat', mt.date,
                     mt.product_id, mt.location_id, mt.quantity, mt.planned_qty,
-                    mt.purchase_requisition_id, mt.transfer_picking_id
+                    mt.purchase_requisition_id, mt.transfer_picking_id,
+                    mt.create_uid
                 FROM monthly_planning_meat mt
             ) sub
             JOIN monthly_planning mp ON mp.id = sub.monthly_planning_id

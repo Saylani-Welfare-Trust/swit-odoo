@@ -8,7 +8,7 @@ status_selection = [
     ('rejected', 'Rejected'),
 ]
 
-APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_request_approve_reject_group'
 
 
 class DonationBoxRequest(models.Model):
@@ -49,7 +49,7 @@ class DonationBoxRequest(models.Model):
     request_date = fields.Datetime(string='Request Date', default=fields.Datetime.now, tracking=True)
 
     status = fields.Selection(selection=status_selection, string='Status', default='draft',
-                              tracking=True, copy=False, index=True)
+                              tracking=True, copy=False)
 
     key_tag_assign = fields.Boolean('Key Tag Assign', default=False, copy=False)
 
@@ -199,7 +199,7 @@ class DonationBoxRequest(models.Model):
             registration._bn_key_create(line)
 
         # 4. The boxes are now consumed.
-        lines.mapped('lot_id').sudo().write({'lot_consume': True})
+        lines.mapped('lot_id').write({'lot_consume': True})
 
         self._bn_write({
             'status': 'approved',
@@ -214,13 +214,11 @@ class DonationBoxRequest(models.Model):
     # ------------------------------------------------------------------
     # Stock helpers
     # ------------------------------------------------------------------
-    # Stock helpers run as superuser: the Donation Box group checked by the
-    # calling action is the gate, so its users need no Inventory rights.
     def _bn_create_and_validate_picking(self):
         self.ensure_one()
-        Picking = self.env['stock.picking'].sudo()
-        Move = self.env['stock.move'].sudo()
-        MoveLine = self.env['stock.move.line'].sudo()
+        Picking = self.env['stock.picking']
+        Move = self.env['stock.move']
+        MoveLine = self.env['stock.move.line']
 
         picking = Picking.create({
             'picking_type_id': self.picking_type_id.id,
@@ -264,7 +262,6 @@ class DonationBoxRequest(models.Model):
         instead of validating; ignoring that silently leaves stock untouched while the
         Donation Box records claim otherwise.
         """
-        picking = picking.sudo()
         picking.with_context(skip_backorder=True, skip_immediate=True).button_validate()
         if picking.state != 'done':
             raise UserError(_(
@@ -281,7 +278,6 @@ class DonationBoxRequest(models.Model):
         confirmed, so the return can never pick another box of the same product
         that happens to sit in the same location.
         """
-        picking = picking.sudo()
         source_line = picking.move_line_ids.filtered(lambda ml: ml.lot_id == lot)[:1]
         if not source_line:
             raise ValidationError(_('Box "%(lot)s" does not belong to transfer %(picking)s.') % {
@@ -290,13 +286,13 @@ class DonationBoxRequest(models.Model):
         product = source_line.product_id
 
         picking_type = picking.picking_type_id.return_picking_type_id or picking.picking_type_id
-        return_picking = self.env['stock.picking'].sudo().create({
+        return_picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
             'location_id': picking.location_dest_id.id,
             'location_dest_id': picking.location_id.id,
             'origin': _('Return of %s') % picking.name,
         })
-        return_move = self.env['stock.move'].sudo().create({
+        return_move = self.env['stock.move'].create({
             'name': _('Return: %s') % product.display_name,
             'product_id': product.id,
             'product_uom_qty': 1.0,
@@ -307,7 +303,7 @@ class DonationBoxRequest(models.Model):
             'origin_returned_move_id': source_move.id,
             'company_id': return_picking.company_id.id,
         })
-        self.env['stock.move.line'].sudo().create({
+        self.env['stock.move.line'].create({
             'move_id': return_move.id,
             'picking_id': return_picking.id,
             'product_id': product.id,
@@ -324,9 +320,9 @@ class DonationBoxRequest(models.Model):
     @api.model
     def _bn_find_done_picking(self, request):
         """The done transfer created when ``request`` was approved."""
-        picking = request.sudo().picking_id
+        picking = request.picking_id
         if not picking or picking.state != 'done':
-            picking = self.env['stock.picking'].sudo().search([
+            picking = self.env['stock.picking'].search([
                 ('origin', '=', request.name),
                 ('state', '=', 'done'),
             ], order='id desc', limit=1)

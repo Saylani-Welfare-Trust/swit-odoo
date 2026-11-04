@@ -6,8 +6,6 @@ from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
-KEY_USER_GROUP = 'bn_key_management.key_management_user_group'
-
 key_selection = [
     ('draft', 'Draft'),
     ('issued', 'Issued'),
@@ -37,6 +35,7 @@ class KeyIssuance(models.Model):
     donation_box_registration_installation_id = fields.Many2one(
         related='key_id.donation_box_registration_installation_id',
         string="Donation Box Registration / Installation", store=True)
+    rider_collection_id = fields.Many2one('rider.collection', string="Rider Collection", copy=False)
 
     name = fields.Char('Key Name', default="New")
     key_name = fields.Char(related='key_id.name', string="Key Name", store=True)
@@ -45,7 +44,7 @@ class KeyIssuance(models.Model):
     issue_date = fields.Date('Issued Date', default=fields.Date.today)
     returned_on = fields.Datetime('Returned On')
 
-    state = fields.Selection(selection=key_selection, default='draft', string="Status", tracking=True, index=True)
+    state = fields.Selection(selection=key_selection, default='draft', string="Status", tracking=True)
     action_type = fields.Selection(selection=action_type_selection, default='bulk', string="Action Type")
 
     donation_amount = fields.Float('Donation Amount')
@@ -86,10 +85,18 @@ class KeyIssuance(models.Model):
         return super().unlink()
 
     # ------------------------------------------------------------------
+    # Cross-module helper: bn_rider_shift defines rider.collection / foreign.currency,
+    # but bn_key_management (this module) is a DEPENDENCY of bn_rider_shift, not the
+    # other way around, so these models may legitimately not exist in the registry.
+    # Never assume they do.
+    # ------------------------------------------------------------------
+    def _bn_has_rider_collection(self):
+        return 'rider.collection' in self.env.registry.models
+
+    # ------------------------------------------------------------------
     # Workflow
     # ------------------------------------------------------------------
     def action_issue(self):
-        self._bn_require_group(KEY_USER_GROUP)
         for record in self:
             record._bn_do_issue()
         return True
@@ -116,10 +123,23 @@ class KeyIssuance(models.Model):
             ) % {'key': key.display_name, 'rider': open_issuance.rider_id.display_name})
 
         key._bn_write({'state': 'issued'})
-        self._bn_write({'state': 'issued', 'issued_on': fields.Datetime.now()})
+        vals = {'state': 'issued', 'issued_on': fields.Datetime.now()}
+
+        if self._bn_has_rider_collection():
+            collection = self.env['rider.collection'].create({
+                'rider_id': self.rider_id.id,
+                'donation_box_registration_installation_id': key.donation_box_registration_installation_id.id,
+                'lot_id': key.lot_id.id,
+                'date': self.issue_date,
+            })
+            vals['rider_collection_id'] = collection.id
+        else:
+            _logger.info('rider.collection model not installed; skipping collection creation for %s.',
+                        self.display_name)
+
+        self._bn_write(vals)
 
     def action_return(self):
-        self._bn_require_group(KEY_USER_GROUP)
         for record in self:
             record._bn_do_return()
         return True
@@ -142,7 +162,6 @@ class KeyIssuance(models.Model):
         return True
 
     def action_overdue(self):
-        self._bn_require_group(KEY_USER_GROUP)
         for rec in self:
             if rec.state == 'issued':
                 rec._bn_write({'state': 'overdue'})

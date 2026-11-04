@@ -112,19 +112,36 @@ class MonthlyPlanning(models.Model):
     # ─── Default destination ──────────────────────────────
     @api.model
     def _default_location_dest(self):
+        """Pick the destination location from the current user, in this order:
+        1. The user's explicitly allowed location (user.allowed_location_ids[0])
+        2. A stock.location whose analytic_account_id matches the user's employee branch
+        (only if stock.location actually has that field in your DB)
+        3. The standard stock location fallback
+        """
+        user = self.env.user
+
+        # 1. Explicitly allowed location on the user
+        if 'allowed_location_ids' in user._fields and user.allowed_location_ids:
+            return user.allowed_location_ids[0].id
+
+        # 2. Match by the employee's branch — safe only if the field exists
         employee = self.env['hr.employee'].search(
-            [('user_id', '=', self.env.uid)], limit=1
+            [('user_id', '=', user.id)], limit=1
         )
-        if employee and employee.analytic_account_id:
+        if (employee and employee.analytic_account_id
+                and 'analytic_account_id' in self.env['stock.location']._fields):
             location = self.env['stock.location'].search(
                 [
                     ('analytic_account_id', '=', employee.analytic_account_id.id),
                     ('usage', 'in', ['internal']),
                 ],
+                order='id',
                 limit=1,
             )
             if location:
                 return location.id
+
+        # 3. Fallback
         fallback = self.env.ref(
             'stock.stock_location_stock', raise_if_not_found=False
         )
@@ -158,10 +175,13 @@ class MonthlyPlanning(models.Model):
 
     @api.model
     def _default_source_location(self):
-        # the stock of the user's warehouse
-        warehouse = self.env['stock.warehouse'].sudo().search([], limit=1) and \
-            self.env['stock.warehouse']._bn_warehouse_for()
-        return warehouse.lot_stock_id.id if warehouse else False
+        picking_type = self.env.ref(
+            'stock.picking_type_internal', raise_if_not_found=False
+        )
+        if picking_type and picking_type.default_location_src_id:
+            return picking_type.default_location_src_id.id
+        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+        return fallback.id if fallback else False
     
     # ─── Internal transfer generation ─────────────────────
     def _create_internal_transfer_for_lines(self, line_list, dest_location):
@@ -182,9 +202,9 @@ class MonthlyPlanning(models.Model):
         if not line_list:
             return StockPicking
 
-        # the Monthly Planning operation type of the source warehouse
-        picking_type = self.env['stock.warehouse']._bn_get_program_type(
-            'planning', self.source_location_id or None)
+        picking_type = self.env.ref(
+            'stock.picking_type_internal', raise_if_not_found=False
+        )
         if not picking_type:
             _logger.warning(
                 "Cron: 'stock.picking_type_internal' not found. "
@@ -247,22 +267,28 @@ class MonthlyPlanning(models.Model):
 
     @api.model
     def _cron_generate_internal_transfers(self):
-        """Daily job: scan Active plans and create one internal transfer
-        per plan for all not-yet-transferred lines."""
+        """Daily job: only processes Active plans whose To Date is
+        tomorrow (or today, to catch up if the run was missed).
+        So the internal transfer is generated one day before the plan ends."""
         o2m_names = (
             'kitchen_line_ids', 'madaris_line_ids', 'medical_line_ids',
             'livestock_line_ids', 'food_line_ids', 'ration_line_ids',
             'meat_line_ids',
         )
 
+        today = fields.Date.today()
+        tomorrow = today + timedelta(days=1)
+
         plans = self.search([
             ('state', '=', 'active'),
             ('is_locked', '=', False),
             ('location_dest_id', '!=', False),
+            ('to_date', '<=', tomorrow),      # <-- NEW: ends today or tomorrow
         ])
 
         _logger.info(
-            "Cron internal transfers: scanning %d active plan(s).", len(plans)
+            "Cron internal transfers: scanning %d active plan(s) ending by %s.",
+            len(plans), tomorrow,
         )
 
         created_total = 0

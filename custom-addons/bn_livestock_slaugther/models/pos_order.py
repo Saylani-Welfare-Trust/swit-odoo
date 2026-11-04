@@ -10,16 +10,18 @@ class POSOrder(models.Model):
 
     @api.model
     def _process_order(self, order_data, draft=False, existing_order=False):
+        if order_data.get('data'):
+            data = order_data['data']
+            if data.get('pos_order_seq'):
+                self.pos_order_seq = data['pos_order_seq']
         order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
         order = self.browse(order_id)
         if order and not order.dn_number:
             dn_number = order._compute_dn_number()
-            vals = {'dn_number': dn_number}
-            # keep the request a program order was made for (welfare,
-            # medical equipment, qurbani ...)
-            if not order.source_document:
-                vals['source_document'] = dn_number
-            order.write(vals)
+            order.write({
+                'dn_number': dn_number,
+                'source_document': dn_number,
+            })
         return order_id
 
     def _get_branch_code(self):
@@ -53,6 +55,8 @@ class POSOrder(models.Model):
             return {'is_goat_depart': True}
         if 'cow' in product_markers:
             return {'is_meat_depart': True}
+        if 'chicken' in product_markers:
+            return {'is_chicken_depart': True}
         return {}
 
     def _create_livestock_slaughter_records(self):
@@ -94,22 +98,23 @@ class POSOrder(models.Model):
 
                 price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
 
-                slaughter_vals = {
-                    'product_id': line.product_id.id,
-                    'donee_id': order.partner_id.id,
-                    'pos_order_id': order.id,
-                    'pos_order_line_id': line.id,
-                    'quantity': int(line.qty),
-                    'price': price,
-                    'ref': reference,
-                }
-                slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
+                for i in range(int(line.qty)):
+                    slaughter_vals = {
+                        'product_id': line.product_id.id,
+                        'donee_id': order.partner_id.id,
+                        'pos_order_id': order.id,
+                        'pos_order_line_id': line.id,
+                        'quantity': 1,
+                        'price': price,
+                        'ref': reference,
+                    }
+                    slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
 
-                try:
-                    with self.env.cr.savepoint():
-                        slaughter_obj.create(slaughter_vals)
-                except IntegrityError:
-                    continue
+                    try:
+                        with self.env.cr.savepoint():
+                            slaughter_obj.create(slaughter_vals)
+                    except IntegrityError:
+                        continue
 
     @api.model_create_multi
     def create(self, vals_list):

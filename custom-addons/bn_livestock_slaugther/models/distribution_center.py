@@ -29,7 +29,7 @@ class DistributionCenter(models.Model):
     purchase_requisition_id = fields.Many2one('purchase.requisition', string="Purchase Requisition")
     picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    request_date = fields.Date('Request Date', default=fields.Date.context_today)
+    request_date = fields.Date('Request Date', default=fields.Date.today())
     delivery_date = fields.Date('Delivery Date', compute="_set_delivery_date", store=True)
 
     type = fields.Selection(selection=type_selection, string="Type")
@@ -120,7 +120,7 @@ class DistributionCenter(models.Model):
         picking = self.env['stock.picking'].create({
             'origin': self.name,
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env['stock.warehouse']._bn_get_program_type('livestock_distribution', warehouse_loc).id,
+            'picking_type_id': self.env.ref('stock.picking_type_out').id,
             'location_id': warehouse_loc.id,
             'location_dest_id': self.donee_id.property_stock_customer.id,
             'move_ids': [

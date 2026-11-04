@@ -23,7 +23,7 @@ class HrEmployeeBase(models.AbstractModel):
             'company_id': employee.company_id.id,
             'category_id': [(6, 0, list(set(
                 PartnerCategory.search([('name', 'in', employee.category_ids.mapped('name'))]).ids
-                + (employee_tag | individual_tag).ids
+                + [employee_tag.id, individual_tag.id]
             )))]
         } for employee in self])
 

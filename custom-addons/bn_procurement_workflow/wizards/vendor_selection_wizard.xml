@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <record id="bn_material_request_rfq_price_wizard_view_form_inherit_bn_procurement_flow" model="ir.ui.view">
+        <field name="name">bn.material.request.rfq.price.wizard.view.form.inherit.bn.procurement.flow</field>
+        <field name="model">vendor.selection.wizard</field>
+        <field name="inherit_id" ref="bn_material_request.rfq_price_wizard_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='vendor_ids']" position="after">
+                <field name="designated_cxo_approver_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

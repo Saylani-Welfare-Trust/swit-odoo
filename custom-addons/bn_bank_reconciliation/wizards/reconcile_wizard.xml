@@ -26,7 +26,6 @@
                         <group>
                             <field name="master_id" invisible="1"/>
                             <field name="transaction_id" invisible="1"/>
-                            <field name="account_id" required="1"/>
                             <field name="match_type"/>
                             <field name="match_threshold" invisible="match_type != 'intelligent'"/>
                         </group>

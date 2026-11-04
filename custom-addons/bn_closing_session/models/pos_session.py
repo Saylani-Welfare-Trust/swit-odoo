@@ -19,9 +19,7 @@ class PosSession(models.Model):
     # OVERRIDE _get_closed_orders
     # ------------------------------------------------------------
     def _get_closed_orders(self):
-        # Every order whose money was taken: like Odoo, minus the refunds
-        # still waiting for CFO approval or rejected (bn_pos_order).
-        return self.order_ids.filtered(lambda o: o.state not in ('draft', 'cancel', 'cfo_approval', 'reject'))
+        return self.order_ids.filtered(lambda o: o.state in ['refund', 'paid'])
 
     # ------------------------------------------------------------
     # DATA COMPUTATION FOR THE CLOSING POPUP
@@ -53,16 +51,28 @@ class PosSession(models.Model):
                 breakdown[pm_id]['neutral'] += payment.amount * ratios[2]
         return breakdown
 
+    def _compute_payment_breakdown_from_slips(self):
+        slips = self.env['pos.session.slip'].search([('session_id', '=', self.id)])
+        result = {}
+        for slip in slips:
+            pm_id = slip.pos_payment_method_id.id
+            result.setdefault(pm_id, {'restricted': [], 'unrestricted': [], 'neutral': []})
+            result[pm_id][slip.type].append({
+                'amount': slip.amount,
+                'ref': slip.ref,
+                'bank_id': slip.bank_id.id if slip.bank_id else False,
+            })
+        return result
+
     def _is_restricted_product(self, product):
         if not product.categ_id:
             return 0
-        cat_name = (product.categ_id.complete_name or '').lower()
-        # an empty setting matches nothing (not every category)
-        restricted = (self.company_id.restricted_category or '').strip().lower()
-        unrestricted = (self.company_id.unrestricted_category or '').strip().lower()
-        if unrestricted and unrestricted in cat_name:
+        cat_name = product.categ_id.complete_name.lower()
+        restricted = self.company_id.restricted_category.lower()
+        unrestricted = self.company_id.unrestricted_category.lower()
+        if unrestricted in cat_name:
             return 2
-        if restricted and restricted in cat_name:
+        if restricted in cat_name:
             return 1
         return 0
 
@@ -536,3 +546,20 @@ class PosSession(models.Model):
         vals = super()._loader_params_res_company()
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
         return vals
+    
+    @api.constrains('ref', 'session_id')
+    def _check_unique_slip_ref(self):
+        for slip in self:
+            if slip.ref:
+                # Check if another slip with the same ref exists in this session
+                existing = self.search([
+                    ('id', '!=', slip.id),
+                    ('session_id', '=', slip.session_id.id),
+                    ('ref', '=', slip.ref)
+                ], limit=1)
+                
+                if existing:
+                    raise ValidationError(
+                        f"The Slip No. '{slip.ref}' is already used in this session. "
+                        "Please use a unique slip number."
+                    )

@@ -1,5 +1,4 @@
-from odoo import _, models, fields
-from odoo.exceptions import UserError
+from odoo import models, fields
 
 
 class ReturnMicrofinanceProduct(models.TransientModel):
@@ -18,11 +17,7 @@ class ReturnMicrofinanceProduct(models.TransientModel):
     source_document = fields.Char('Source Document')
 
     def action_recovery_done(self):
-        self.microfinance_id._mf_check(_('Recover'), ('in_recovery',), 'bn_microfinance.microfinance_recovery_group')
-        if not self.product_id or not self.destination_location_id:
-            raise UserError(_('Please select the product and the destination location.'))
-        # Stock created as superuser: the Recovery group checked above is the gate.
-        stock_move = self.env['stock.move'].sudo().create({
+        stock_move = self.env['stock.move'].create({
             'name': f'Recovered Product of Loan {self.source_document}',
             'product_id': self.product_id.id,
             'product_uom': self.product_id.uom_id.id,
@@ -31,10 +26,9 @@ class ReturnMicrofinanceProduct(models.TransientModel):
             'location_dest_id': self.destination_location_id.id
         })
 
-        picking = self.env['stock.picking'].sudo().create({
+        picking = self.env['stock.picking'].create({
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env['stock.warehouse']._bn_get_program_type(
-                'microfinance_recovery', self.destination_location_id).id,
+            'picking_type_id': self.env.ref('stock.picking_type_in').id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
             'origin': self.source_document,
             'location_id': self.env.ref('stock.stock_location_customers').id,

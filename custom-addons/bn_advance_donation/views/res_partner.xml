@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <record id="profile_management_view_form_inherit_bn_advance_donation" model="ir.ui.view">
+        <field name="name">profile.management.view.form.inherit.bn.advance.donation</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='donation_in_kind']" position="after">
+                <page name="advance_donations" string="Donor Account">
+                    <field name="advance_donation_ids" readonly="1">
+                        <tree default_order="create_date desc">
+                            <field name="currency_id" column_invisible="1"/>
+                            <field name="name"/>
+                            <field name="donor_id"/>
+                            <field name="payment_type"/>
+                            <field name="total_product_amount"/>
+                            <field name="paid_amount"/>
+                            <field name="remaining_amount"/>
+                            <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state in ('approved')"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+    
+</odoo>

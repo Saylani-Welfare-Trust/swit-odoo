@@ -5,7 +5,7 @@ from odoo.tools import float_compare
 
 from .bn_workflow import bn_transition
 
-APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
+APPROVE_GROUP = 'bn_donation_box.donation_box_request_approve_reject_group'
 
 
 class DonationBoxRequestLine(models.Model):
@@ -150,7 +150,8 @@ class DonationBoxRequestLine(models.Model):
                 'The following boxes are already issued to another request: %s'
             ) % ', '.join(consumed.mapped('display_name')))
 
-        busy = Registration.search([('lot_id', 'in', lots.ids), ('status', '!=', 'close')])
+        # sudo: a box must not be active in any city, not only the user's own.
+        busy = Registration.sudo().search([('lot_id', 'in', lots.ids), ('status', '!=', 'close')])
         if busy:
             raise ValidationError(_(
                 'The following boxes still have an active registration: %s'
@@ -205,7 +206,8 @@ class DonationBoxRequestLine(models.Model):
         if self.is_returned:
             raise UserError(_('Box "%s" has already been returned.') % self.lot_id.display_name)
 
-        registrations = self.env['donation.box.registration.installation'].search([
+        # sudo: requests are not limited by city, so neither is returning their boxes.
+        registrations = self.env['donation.box.registration.installation'].sudo().search([
             ('donation_box_request_id', '=', request.id),
             ('lot_id', '=', self.lot_id.id),
             ('status', '!=', 'close'),
@@ -229,9 +231,9 @@ class DonationBoxRequestLine(models.Model):
         return_picking = request._bn_return_lot(picking, self.lot_id)
 
         with bn_transition():
-            registration._bn_take_out_of_service()
+            registration._bn_write({'status': 'close'})
             registration._bn_key_close()
-            self.lot_id.sudo().write({'lot_consume': False})
+            self.lot_id.write({'lot_consume': False})
             self.write({'is_returned': True, 'return_picking_id': return_picking.id})
-        request._message_log(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
+        request.message_post(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
             'lot': self.lot_id.display_name, 'picking': return_picking.display_name})

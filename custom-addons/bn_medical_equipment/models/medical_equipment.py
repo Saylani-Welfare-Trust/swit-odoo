@@ -1,3 +1,5 @@
+from unittest import result
+
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 
@@ -23,13 +25,15 @@ status_selection = [
     ('completed', 'Completed'),
     ('send_for_inquiry', 'Send for Inquiry'),
     ('inquiry', 'Inquiry Officer'),
-    ('ceo_approval', 'Approval(1)'),
-    ('cfo_approval', 'Approval(2)'),
+    ('ceo_approval', 'CEO Approval'),
+    ('cfo_approval', 'CFO Approval'),
     ('approved', 'Approved'),
     ('sd_received', 'Security Received'),
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
     ('return', 'Return'),
+    ('refund_ceo_approval', 'Refund Approval (1)'),
+    ('refund_cfo_approval', 'Refund Approval (2)'),
     ('refund', 'Refund'),
     ('payment_return','Payment Return'),
     ('donate', 'Donate'),
@@ -173,6 +177,14 @@ class MedicalEquipment(models.Model):
         readonly=True
     )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
+    
+    refund_approval_count = fields.Integer('Refund Approval Count', default=0, copy=False)
+    refund_remarks_approval1 = fields.Text('Refund Approval (1) Remarks')
+    refund_remarks_approval2 = fields.Text('Refund Approval (2) Remarks')
+    refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By (1)', readonly=True, copy=False)
+    refund_approved_by_2 = fields.Many2one('res.users', string='Refund Approved By (2)', readonly=True, copy=False)
+    refund_approved_date_1 = fields.Datetime('Refund Approved On (1)', readonly=True, copy=False)
+    refund_approved_date_2 = fields.Datetime('Refund Approved On (2)', readonly=True, copy=False)
 
     def _inverse_mobile(self):
         for rec in self:
@@ -303,15 +315,7 @@ class MedicalEquipment(models.Model):
     #                     raise ValidationError(
     #                         f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
     #                     )
-    def _check_me_state(self, allowed, action):
-        labels = dict(status_selection)
-        for rec in self:
-            if rec.state not in allowed:
-                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
-                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
-
     def action_reject(self):
-        self._check_me_state(('draft', 'completed', 'inquiry', 'send_for_inquiry', 'ceo_approval', 'cfo_approval'), _('Reject'))
         self.state = 'closed'
 
     @api.depends('date_of_birth')
@@ -593,14 +597,13 @@ class MedicalEquipment(models.Model):
         Automatically create return picking and update state
         """
         self.ensure_one()
-        self._check_me_state(('validate',), _('Return'))
-
+        
         if not self.picking_id:
             raise ValidationError('No stock picking found to return. Please validate the equipment first.')
-
+        
         if self.picking_id.state != 'done':
             raise ValidationError('Stock picking must be validated before returning.')
-
+        
         # Create return wizard and generate return picking
         return_wizard = self.env['stock.return.picking'].with_context(
             active_id=self.picking_id.id,
@@ -639,12 +642,8 @@ class MedicalEquipment(models.Model):
         """
         # Ensure we're working with a single record
         self.ensure_one()
-        # paid at the POS (payment_received) or no payment due (sd_received)
-        self._check_me_state(('sd_received', 'payment_received'), _('Validate'))
-        if self.picking_id:
-            raise UserError(_('%s is already validated.') % self.name)
-
-        operation_type = self.env['stock.warehouse']._bn_get_program_type('medical_equipment')
+        
+        operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
         
         # Prepare stock picking values
         picking_vals = {
@@ -953,47 +952,6 @@ class MedicalEquipment(models.Model):
             'target': 'current',
         }
     
-    # ---------- SECURITY DEPOSIT (POS, cheque, direct deposit) ----------
-    def _get_security_deposit(self):
-        self.ensure_one()
-        return self.sd_slip_id or self.env['medical.security.deposit'].search(
-            [('medical_equipment_id', '=', self.id)], order='id desc', limit=1)
-
-    def _receive_security_deposit(self, state, vals=None):
-        """Record the security deposit of an approved request. 'paid' moves
-        the request to Security Received; 'pending' waits for its cheque."""
-        self.ensure_one()
-        if self.state in ('draft', 'completed', 'send_for_inquiry', 'inquiry', 'ceo_approval', 'closed'):
-            raise UserError(_('The security deposit of %s cannot be received in status "%s".') % (
-                self.name, dict(status_selection).get(self.state, self.state)))
-        deposit = self._get_security_deposit()
-        vals = dict(vals or {}, state=state)
-        if deposit:
-            deposit.write(vals)
-        else:
-            deposit = self.env['medical.security.deposit'].create(dict({
-                'medical_equipment_id': self.id,
-                'donee_id': self.donee_id.id,
-                'cnic_no': self.donee_id.cnic_no or '',
-                'amount': self.total_amount,
-                'date': fields.Date.today(),
-            }, **vals))
-        if self.sd_slip_id != deposit:
-            self.sd_slip_id = deposit
-        if state == 'paid' and self.state in ('cfo_approval', 'approved'):
-            self.state = 'sd_received'
-        return deposit
-
-    def _bounce_security_deposit(self, deposit=None):
-        """The cheque of the security deposit bounced: the request waits for
-        a new deposit again."""
-        self.ensure_one()
-        deposit = deposit or self._get_security_deposit()
-        if deposit:
-            deposit.state = 'bounced'
-        if self.state == 'sd_received':
-            self.state = 'cfo_approval'
-
     def action_show_move(self):
         return {
             'type': 'ir.actions.act_window',
@@ -1046,19 +1004,23 @@ class MedicalEquipment(models.Model):
     @api.model
     def get_me_record(self, data):
         """Fetch ME record by name and return product information"""
+        # Strip spaces just in case the barcode scanner added some
+        me_name = str(data.get('name', '')).strip()
+        
         # Search for the ME record
-        me = self.sudo().search([('name', '=', data['name']), ('state', '!=', 'paid')], limit=1)
+        me = self.sudo().search([('name', '=', me_name)], limit=1)
         
         if not me:
             return {
                 "status": "error",
-                "body": f"Donation Home Service record with reference {data['name']} not found."
+                "body": f"Medical Equipment record with reference {me_name} not found."
             }
         
-        if me.state not in ['gate_pass', 'gate_in']:
+        # Block settlement only if the record is already closed, cancelled, or refunded
+        if me.state in ['closed', 'cancel', 'refund']:
             return {
                 "status": "error",
-                "body": f"Current status of {data['name']} is in a {me.state.capitalize()}."
+                "body": f"Current status of {me_name} is {me.state.capitalize()}. It cannot be settled."
             }
         
         # Prepare product data for POS
@@ -1066,6 +1028,10 @@ class MedicalEquipment(models.Model):
         
         # Add regular product lines
         for line in me.medical_equipment_line_ids:
+            # Skip lines that don't have a valid product linked
+            if not line.product_id:
+                continue
+                
             product = line.product_id
             products_data.append({
                 'product_id': product.id,
@@ -1075,6 +1041,13 @@ class MedicalEquipment(models.Model):
                 'default_code': product.default_code,
                 'category': product.categ_id.name if product.categ_id else ''
             })
+            
+        # If the list is still empty, return a very clear error message
+        if not products_data:
+            return {
+                "status": "error",
+                "body": f"No valid products found in {me_name}. Please open the record in the backend and ensure the 'Items' tab has products assigned."
+            }
         
         return {
             'id': me.id,
@@ -1090,8 +1063,7 @@ class MedicalEquipment(models.Model):
         Automatically create recovery picking and update state
         """
         self.ensure_one()
-        self._check_me_state(('validate',), _('Recovery'))
-
+        
         if not self.picking_id:
             raise ValidationError('No stock picking found to return. Please validate the equipment first.')
         if self.return_picking_id:
@@ -1131,12 +1103,43 @@ class MedicalEquipment(models.Model):
         
         raise ValidationError('Failed to create recovery picking.')
     
-    def action_refund(self):
-        self._check_me_state(('return',), _('Refund'))
-        self.state = 'refund'
+    def action_request_refund(self):
+        """Initiate the refund approval flow from the Return state."""
+        self.ensure_one()
+        if self.state != 'return':
+            raise ValidationError('Refund can only be requested from the Return state.')
+        self.write({'state': 'refund_ceo_approval'})
 
+    def action_refund_approve(self):
+        """Handle refund approval. Only one approval is required now."""
+        self.ensure_one()
+
+        if self.state != 'refund_ceo_approval':
+            raise ValidationError('This record is not in a refund approval state.')
+
+        case_type = self.case_type
+        is_zero_percent = self.medical_equipment_reference_id and self.actual_deposit_percentage == 0.0
+        
+        # Determine if remarks are required (keeping the same logic as before for the first approval)
+        requires_remarks = case_type in ['50_percent', 'below_50_percent'] or is_zero_percent
+
+        if requires_remarks and not self.refund_remarks_approval1:
+            raise ValidationError('Refund Approval remarks are required for this case type.')
+
+        # Single approval: Move directly to 'refund' state
+        self.write({
+            'state': 'refund',
+            'refund_approved_by_1': self.env.user.id,
+            'refund_approved_date_1': fields.Datetime.now(),
+            'refund_approval_count': self.refund_approval_count + 1,
+            # Optional: Fill the second approval fields with the same user for record keeping
+            'refund_approved_by_2': self.env.user.id,
+            'refund_approved_date_2': fields.Datetime.now(),
+        })
+
+        return True
+    
     def action_donate(self):
-        self._check_me_state(('return',), _('Donate'))
         return {
             'type': 'ir.actions.act_window',
             'name': 'Product Wizard',
@@ -1164,8 +1167,6 @@ class MedicalEquipment(models.Model):
         return None            
     
     def action_complete(self):
-        self.ensure_one()
-        self._check_me_state(('draft',), _('Complete'))
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
         

@@ -50,7 +50,7 @@ class WelfareRecurringLine(models.Model):
     payment_type = fields.Selection(selection=payment_type_selection, string="Payment Type", default='self', store=True)
     assigned_officer_id = fields.Many2one('hr.employee', string="Assigned Officer (Marfat)", domain="[('category_ids', 'in', [employee_category_id_officer])]")
 
-    collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
+    collection_date = fields.Date('Collection Date', default=fields.Date.today())
 
     amount = fields.Monetary('Amount', currency_field='currency_id')
     quantity = fields.Float('Quantity', default=1.0)
@@ -76,27 +76,29 @@ class WelfareRecurringLine(models.Model):
     @api.model
     def _auto_mark_as_delivered_today(self):
         today = fields.Date.today()
-        lines = self.search([('collection_date', '=', today), 
+        # Recurring lines exist once "Create Recurring Orders" moved the application to Recurring;
+        # <= today so a month whose date passed is still delivered
+        lines = self.search([('collection_date', '<=', today),
                              ('state', '=', 'draft'),
-                             ('disbursement_category_id', '=', self.env.ref('bn_welfare.disbursement_category_in_kind').id),
-                            ('welfare_id.state', '=', 'approve'),
-                            ('collection_point', '=', 'branch'),
-                            ('welfare_id.order_type', 'in', ['one_time'])
+                             ('disbursement_category_id.name', '=', 'In Kind'),
+                            ('welfare_id.state', '=', 'recurring'),
+                            # empty: In Kind lines whose branch was never filled in (read-only for In Kind)
+                            ('collection_point', 'in', ['branch', False]),
+                            ('welfare_id.order_type', '=', 'recurring')
                             ])
         # _logger.info(f"rec_line: {lines.read()}")
         for line in lines:
-            if line.welfare_id.order_type == 'recurring':
-                try:
+            try:
+                with self.env.cr.savepoint():
                     line.action_delivered()
-                except Exception as e:
-                    # Optionally log error
-                    pass
+            except Exception:
+                _logger.exception("Could not create delivery for welfare %s recurring line %s", line.welfare_id.name, line.id)
     
     @api.model
     def _auto_create_bills_for_cash_bank(self):
         """Scheduled action to create bills for Cash + Bank collection on collection date"""
         today = fields.Date.today()
-        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         
         if not cash_category:
             return
@@ -177,21 +179,6 @@ class WelfareRecurringLine(models.Model):
             'target': 'new',
         }
 
-    def _check_welfare_payable(self):
-        self.ensure_one()
-        if self.welfare_id.state != 'recurring':
-            raise ValidationError(_('%s is not in Recurring status: its recurring lines cannot be paid.') % self.welfare_id.name)
-
-    @api.model
-    def pos_check_payable(self, ids):
-        """POS: called before the payment is validated (see welfare.line)."""
-        for line in self.browse(ids):
-            if line.state not in ('draft', 'delivered'):
-                raise ValidationError(_("Recurring welfare line %s is already %s.") % (
-                    line.display_name, dict(self._fields['state'].selection).get(line.state)))
-            line._check_welfare_payable()
-        return True
-
     def action_disbursed(self):
         # Mark as disbursed or collected based on payment type, then update welfare if all lines are delivered/disbursed
         for line in self:
@@ -201,11 +188,11 @@ class WelfareRecurringLine(models.Model):
                     "Current state is '%s'. Only Draft or Delivery Created lines can be paid."
                 ) % line.state)
 
-            line._check_welfare_payable()
-
             line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
+            if getattr(line, 'advance_donation_line_id', False):
+                line.advance_donation_line_id.write({'disbursed_amount': line.advance_donation_amount})
         # # For Cash + Bank, check if bill is paid
-        # cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
+        # cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         # if cash_category and self.disbursement_category_id.id == cash_category.id:
         #     if self.collection_point == 'bank' and self.bill_id:
         #         # Bill payment is handled through account.move payment
@@ -228,18 +215,24 @@ class WelfareRecurringLine(models.Model):
                 analytic_account_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
                 rec.analytic_account_domain = str([('id', 'in', analytic_account_ids)])
     
+    @api.onchange('disbursement_application_type_id')
+    def _onchange_disbursement_application_type_id(self):
+        """Take the category set on the application type in master setup"""
+        if self.disbursement_application_type_id.disbursement_category_id:
+            self.disbursement_category_id = self.disbursement_application_type_id.disbursement_category_id
+
     @api.onchange('disbursement_category_id')
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
         """Auto-select branch for In Kind category"""
-        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
-        if in_kind_category and self.disbursement_category_id.id == in_kind_category.id:
+        # By name: older databases have two "In Kind" categories (master setup and welfare data)
+        if self.disbursement_category_id.name == 'In Kind':
             self.collection_point = 'branch'
     
     @api.depends('disbursement_category_id', 'state')
     def _compute_show_deliver_button(self):
-        in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind', raise_if_not_found=False)
-        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
+        in_kind_category = self.env.ref('bn_master_setup.disbursement_category_in_kind', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
         for rec in self:
             rec.show_deliver_button = False
             if rec.disbursement_category_id:
@@ -251,14 +244,7 @@ class WelfareRecurringLine(models.Model):
                     rec.show_deliver_button = False
 
     def action_delivered(self):
-        for line in self:
-            line._action_delivered_one()
-
-    def _action_delivered_one(self):
-            in_kind_category = self.env.ref('bn_welfare.disbursement_category_in_kind')
-            if self.state != 'draft':
-                raise ValidationError(_('A delivery is only created for a Draft line (%s).') % self.display_name)
-            if self.disbursement_category_id == in_kind_category:        
+            if self.disbursement_category_id.name == 'In Kind':
                 StockPicking = self.env['stock.picking']
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
@@ -269,7 +255,10 @@ class WelfareRecurringLine(models.Model):
                 #     picking_type = warehouse.out_type_id
                 #     location_src = warehouse.lot_stock_id
                 # else:
-                picking_type, location_src, location_dest = self.env['welfare.line']._get_delivery_locations()
+                picking_type = self.env.ref('stock.picking_type_out')
+                location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
+            
+                location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
                 
                 picking_vals = {
                     'partner_id': self.donee_id.id,
@@ -337,9 +326,9 @@ class WelfareRecurringLine(models.Model):
 
         self.write({'state': 'return'})
         self.welfare_id.write({'state': 'return'})
-        self.welfare_id._message_log(body=_(
+        self.welfare_id.message_post(body=_(
             "Recurring welfare line returned from POS. Product: %s, Amount: %s. "
-            "Welfare and line are in Returned status until the line is set back to Draft."
+            "Welfare state changed to Recurring and line state changed to Draft."
         ) % (self.product_id.name, self.amount))
 
         return True

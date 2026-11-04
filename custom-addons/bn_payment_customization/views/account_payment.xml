@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <record id="account_view_account_supplier_payment_tree_inherit_bn_payment_customization" model="ir.ui.view">
+        <field name="name">account.view.account.supplier.payment.tree.inherit.bn.payment.customization</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_supplier_payment_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_confirm_ibft" type="object" string="Confirm IBFT" class="btn-primary"/>
+            </xpath>
+            
+
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="ibft_status" widget="badge" decoration-info="ibft_status == 'pending'" decoration-success="ibft_status == 'success'"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

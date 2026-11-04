@@ -1,4 +1,5 @@
 from . import bn_workflow
+from . import bn_city_access
 from . import stock_warehouse
 from . import donation_box_request
 from . import donation_box_request_line
@@ -12,5 +13,3 @@ from . import stock_lot
 from . import stock_move
 from . import installation_category
 from . import res_company
-from . import pos_session
-from . import bn_program_types

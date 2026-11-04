@@ -10,6 +10,7 @@
         <field name="perm_unlink" eval="0"/>
     </record>
     
+    
     <!-- Point Of Sale -->
     <record id="point_of_sale.access_product_template_pos_manager" model="ir.model.access">
         <field name="perm_read" eval="1"/>
@@ -210,6 +211,7 @@
         <field name="perm_create" eval="0"/>
         <field name="perm_unlink" eval="0"/>
     </record>
+    
     <!-- Contact -->
     <!-- Purchase -->
     <record id="purchase.access_res_partner_purchase_manager" model="ir.model.access">

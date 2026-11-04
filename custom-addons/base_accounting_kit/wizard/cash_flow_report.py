@@ -126,9 +126,8 @@ class AccountingReport(models.TransientModel):
         res['data']['form']['comparison_context'] = comparison_context
         return res
 
-    def _print_report(self, data):
-        raise NotImplementedError()
-
+    # NOTE: the first '_print_report' that only raised NotImplementedError was
+    # a dead duplicate shadowed by this real implementation; removed.
     def _print_report(self, data):
         data['form'].update(self.read(
             ['date_from_cmp', 'debit_credit', 'date_to_cmp', 'filter_cmp',

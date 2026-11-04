@@ -1,5 +1,5 @@
-from odoo import _, models, fields
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields
+from odoo.exceptions import ValidationError
 
 
 month_selection = [
@@ -10,9 +10,9 @@ month_selection = [
     ('may', 'May'),
     ('jun', 'June'),
     ('jul', 'July'),
+    ('aug', 'Auguest'),
     ('aug', 'August'),
     ('sep', 'September'),
-    ('oct', 'October'),
     ('nov', 'November'),
     ('dec', 'December'),
 ]
@@ -40,7 +40,7 @@ class BranchKitchenRequest(models.Model):
 
     month = fields.Selection(selection=month_selection, string="Month")
 
-    date = fields.Date('Date', default=fields.Date.context_today)
+    date = fields.Date('Date', default=fields.Date.today())
 
     name = fields.Char(related='branch_id.name', string="Name")
     year = fields.Char('Year', size=4)
@@ -56,19 +56,12 @@ class BranchKitchenRequest(models.Model):
 
 
     def action_approve(self):
-        if any(rec.state != 'draft' for rec in self):
-            raise UserError(_('Only a draft kitchen request can be approved.'))
         self.state = 'approve'
 
     def action_manufacture(self):
-        self.ensure_one()
-        if self.state != 'approve':
-            raise UserError(_('Only an approved kitchen request can be manufactured.'))
         Production = self.env['mrp.production']
         kitchen_loc = self.env['stock.location'].search([('usage', '=', 'internal'), ('name', 'ilike', 'kitchen')], limit=1)
         warehouse_loc = self.env['stock.location'].search([('usage', '=', 'internal'), ('name', 'ilike', 'stock')],limit=1)
-        if not kitchen_loc or not warehouse_loc:
-            raise UserError(_('The Kitchen and Stock locations must exist to manufacture.'))
 
         mo_ids = []
 
@@ -89,8 +82,6 @@ class BranchKitchenRequest(models.Model):
                     'product_qty': line.quantity,
                     'product_uom_id': line.product_id.uom_id.id,
                     'bom_id': bom.id,
-                    # the Kitchen Production operation type of the stock's warehouse
-                    'picking_type_id': self.env['stock.warehouse']._bn_get_program_type('kitchen', warehouse_loc).id,
                     'location_src_id': warehouse_loc.id,
                     'location_dest_id': kitchen_loc.id,
                     'origin': f"Kitchen Request {self.id}",

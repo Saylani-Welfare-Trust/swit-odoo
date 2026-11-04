@@ -18,6 +18,8 @@ class Donation(models.Model):
             return {'is_goat_depart': True}
         if 'cow' in product_markers:
             return {'is_meat_depart': True}
+        if 'chicken' in product_markers:
+            return {'is_chicken_depart': True}
         return {}
 
     def _create_livestock_slaughter_records(self):
@@ -35,21 +37,22 @@ class Donation(models.Model):
             if slaughter_obj.search_count([('donation_id', '=', donation.id)]):
                 continue
 
-            slaughter_vals = {
-                'product_id': product.id,
-                'donee_id': donation.donor_id.id,
-                'donation_id': donation.id,
-                'quantity': 1,
-                'price': donation.amount,
-                'ref': donation.name,
-            }
-            slaughter_vals.update(donation._get_livestock_department_vals(product))
+            for i in range(int(donation.quantity or 1)):
+                slaughter_vals = {
+                    'product_id': product.id,
+                    'donee_id': donation.donor_id.id,
+                    'donation_id': donation.id,
+                    'quantity': 1,
+                    'price': donation.amount,
+                    'ref': donation.name,
+                }
+                slaughter_vals.update(donation._get_livestock_department_vals(product))
 
-            try:
-                with self.env.cr.savepoint():
-                    slaughter_obj.create(slaughter_vals)
-            except IntegrityError:
-                continue
+                try:
+                    with self.env.cr.savepoint():
+                        slaughter_obj.create(slaughter_vals)
+                except IntegrityError:
+                    continue
 
 
 class ImportDonation(models.Model):

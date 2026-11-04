@@ -12,9 +12,7 @@ class StockPicking(models.Model):
         for picking in self:
             if picking.origin and picking.state == 'done':
                 # Search for microfinance record with this origin
-                # Warehouse users need no Microfinance rights: the loan only
-                # moves on when its own delivery / recovery is done.
-                microfinance = self.env['microfinance'].sudo().search([
+                microfinance = self.env['microfinance'].search([
                     ('name', '=', picking.origin),
                     # ('state', '=', 'wfd')
                 ], limit=1)

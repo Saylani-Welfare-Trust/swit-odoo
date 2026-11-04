@@ -22,24 +22,14 @@ class BulkKeyIssuance(models.TransientModel):
 
     date = fields.Date('Date', default=fields.Date.context_today)
 
-    # Who may get which bunch on the wizard's date. bn_rider_shift narrows
-    # these to the riders and bunches scheduled for that day.
-    def _get_scheduled_riders(self):
-        category = self.env.ref('bn_donation_box.donation_box_rider_hr_employee_category', raise_if_not_found=False)
-        if not category:
-            return self.env['hr.employee']
-        return self.env['hr.employee'].search([('category_ids', 'in', category.ids)])
-
-    def _get_scheduled_key_bunches(self):
-        return self.env['key.bunch'].search([])
-
     @api.depends('date', 'action_type')
     def _set_rider_domain(self):
         for rec in self:
             rec.domain_rider_ids = [(6, 0, [])]
 
             if rec.action_type == 'issue':
-                scheduled_riders = rec._get_scheduled_riders()
+                schedule_days = self.env['rider.schedule.day'].search([('date', '=', rec.date)])
+                scheduled_riders = schedule_days.mapped('rider_shift_id.rider_id')
 
                 issued_riders = self.env['key.issuance'].search([
                     ('issue_date', '=', rec.date),
@@ -61,7 +51,11 @@ class BulkKeyIssuance(models.TransientModel):
 
             if rec.date and rec.rider_id:
                 if rec.action_type == 'issue':
-                    scheduled_bunches = rec._get_scheduled_key_bunches()
+                    schedule_days = self.env['rider.schedule.day'].search([
+                        ('rider_shift_id.rider_id', '=', rec.rider_id.id),
+                        ('date', '=', rec.date),
+                    ])
+                    scheduled_bunches = schedule_days.mapped('key_bunch_id')
 
                     issued_bunches = self.env['key.issuance'].search([
                         ('rider_id', '=', rec.rider_id.id),
@@ -123,30 +117,21 @@ class BulkKeyIssuance(models.TransientModel):
         invalid_keys = []
         valid_issuances = self.env['key.issuance']
 
-        all_keys = self.key_bunch_ids.key_ids
-        # One batched query for every key in every selected bunch, instead of a
-        # separate search per key (which, at up to 50 keys per bunch, could mean
-        # hundreds of individual queries for one button click). Ordering by id
-        # descending means the first match per key_id we keep is the latest one,
-        # matching the original per-key "order=id desc, limit=1" semantics.
-        all_issuances = KeyIssuance.search([
-            ('key_id', 'in', all_keys.ids), ('rider_id', '=', self.rider_id.id),
-        ], order="id desc")
-        latest_by_key = {}
-        for issuance in all_issuances:
-            latest_by_key.setdefault(issuance.key_id.id, issuance)
+        for bunch in self.key_bunch_ids:
+            for key in bunch.key_ids:
+                issuance = KeyIssuance.search([
+                    ('key_id', '=', key.id), ('rider_id', '=', self.rider_id.id),
+                ], order="id desc", limit=1)
 
-        for key in all_keys:
-            issuance = latest_by_key.get(key.id)
-            if not issuance:
-                # This particular key was never issued to this rider:
-                # nothing to return, nothing to block on - skip it.
-                continue
-            if issuance.state not in ('donation_receive', 'pending'):
-                invalid_keys.append('%s (%s)' % (key.display_name,
-                                                  issuance._bn_selection_label('state', issuance.state)))
-            else:
-                valid_issuances |= issuance
+                if not issuance:
+                    # This particular key of the bunch was never issued to this rider:
+                    # nothing to return, nothing to block on - skip it.
+                    continue
+                if issuance.state not in ('donation_receive', 'pending'):
+                    invalid_keys.append('%s (%s)' % (key.display_name,
+                                                      issuance._bn_selection_label('state', issuance.state)))
+                else:
+                    valid_issuances |= issuance
 
         if invalid_keys:
             raise ValidationError(_(

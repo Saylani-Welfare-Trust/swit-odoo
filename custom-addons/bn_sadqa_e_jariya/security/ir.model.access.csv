@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_welfare_institution_fetch_log,welfare.institution.fetch.log,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,,1,1,1,1
+access_welfare_committee_member,welfare.committee.member,bn_sadqa_e_jariya.model_welfare_committee_member,,1,1,1,1
+access_welfare_inquiry_report,welfare.inquiry.report,bn_sadqa_e_jariya.model_welfare_inquiry_report,,1,1,1,1
+access_welfare_madrasa,welfare.madrasa,bn_sadqa_e_jariya.model_welfare_madrasa,,1,1,1,1
+access_welfare_masjid,welfare.masjid,bn_sadqa_e_jariya.model_welfare_masjid,,1,1,1,1
+access_welfare_teacher,welfare.teacher,bn_sadqa_e_jariya.model_welfare_teacher,,1,1,1,1
+access_welfare_flood,welfare.flood,bn_sadqa_e_jariya.model_welfare_flood,,1,1,1,1

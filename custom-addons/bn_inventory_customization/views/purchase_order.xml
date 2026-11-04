@@ -41,6 +41,21 @@
             <xpath expr="//header/field[@name='state']" position="after">
                 <field name="receipt_bill_state" widget="statusbar" invisible="state not in ('purchase', 'done')"/>
             </xpath>
+
+            <!-- Why a receipt was closed without a backorder, or cancelled -->
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Receipt Reasons" name="receipt_reasons" invisible="not receipt_reason_ids">
+                    <field name="receipt_reason_ids" readonly="1">
+                        <tree create="0" edit="0" delete="0">
+                            <field name="date"/>
+                            <field name="picking_id"/>
+                            <field name="reason_type"/>
+                            <field name="reason"/>
+                            <field name="user_id"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
         </field>
     </record>
 

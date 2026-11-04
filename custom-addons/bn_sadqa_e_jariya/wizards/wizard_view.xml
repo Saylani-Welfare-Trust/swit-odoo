@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_welfare_fields_wizard_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">welfare.fields.wizard.form.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">welfare.fields.wizard</field>
+        <field name="inherit_id" ref="bn_welfare.view_welfare_fields_wizard_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='loan_request_amount']" position="before">
+                <field name="institution_category"/>
+                <field name="subcategory"/>
+            </xpath>
+
+            <xpath expr="//field[@name='recurring_lines_html']" position="after">
+                <!-- Committee Members Section -->
+                <separator string="Committee Members" class="text-uppercase"/>
+                <field name="committee_members_html" nolabel="1" widget="html"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

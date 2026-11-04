@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- City access (everything except Requests): a user only sees the records of
+         the city of the analytic account on their employee (a branch matches its
+         parent City through parent_of). Records without a City stay hidden.
+         Create is left out so flows can still create records that get their City later.
+         Managers / Admins / Audit see every city (bn_key_management adds its
+         Manager / Audit groups to the "All Cities" rules after these set theirs).
+         Settings administrators are limited like everyone else.
+         Keep the groups in line with ALL_CITIES_GROUPS in models/bn_city_access.py. -->
+
+    <!-- Registration -->
+    <record id="donation_box_registration_own_city_rule" model="ir.rule">
+        <field name="name">Registration: Own City</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
+        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="donation_box_registration_all_cities_rule" model="ir.rule">
+        <field name="name">Registration: All Cities</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.donation_box_manager_group'), ref('bn_donation_box.donation_box_audit_group')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Complain Center -->
+    <record id="donation_box_complain_center_own_city_rule" model="ir.rule">
+        <field name="name">Complain Center: Own City</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
+        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="donation_box_complain_center_all_cities_rule" model="ir.rule">
+        <field name="name">Complain Center: All Cities</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.donation_box_manager_group'), ref('bn_donation_box.donation_box_audit_group')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="donation_box_complain_center_resolve_rule" model="ir.rule">
+        <field name="name">Complain Center: Resolve</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_resolve_complain_group')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="complain_center_process_complain_rule" model="ir.rule">
+        <field name="name">Complain Center: Process</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_process_complain_group')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="complain_center_admin_rule" model="ir.rule">
+        <field name="name">Complain Center: Admin</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_admin_group')])]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

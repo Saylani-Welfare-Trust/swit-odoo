@@ -111,15 +111,18 @@ class BankReconciliationReconciled(models.Model):
         ('transfer', 'Bank Transfer')
     ], string='Adjustment Type')
     
-    created_move = fields.Boolean(
-        string='Entry Created by Reconciliation', readonly=True, copy=False,
-        help='The matched entry was created by this reconciliation (not an '
-             'existing entry of the books): only such an entry is removed '
-             'when the line is unreconciled.')
     is_posted = fields.Boolean(
         string='Is Posted',
         default=False,
         help='Indicates if this reconciled transaction has been posted to accounting'
+    )
+    reconciliation_move_id = fields.Many2one(
+        'account.move',
+        string='Reconciliation Entry',
+        readonly=True,
+        copy=False,
+        help='Entry moving this line from the holding account to the Posted Account, '
+             'created on Accept and posted by Validate & Complete'
     )
     
     journal_line_id = fields.Many2one(
@@ -144,11 +147,15 @@ class BankReconciliationReconciled(models.Model):
     matched_by_date = fields.Boolean(string='Matched by Date', default=False)
     matched_by_description = fields.Boolean(string='Matched by Description', default=False)
     matched_by_manual = fields.Boolean(string='Matched Manually', default=False)
+    # Unreconciling archives the record instead of deleting it
+    active = fields.Boolean(string='Active', default=True)
 
-    _sql_constraints = [
-        ('unique_transaction_id', 'unique(transaction_id)',
-         'This transaction is already reconciled. Only one reconciled record per transaction is allowed.'),
-    ]
+    def init(self):
+        # Only one live reconciled record per transaction; archived ones are history
+        self.env.cr.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS bank_reconciliation_reconciled_active_transaction_uniq
+            ON bank_reconciliation_reconciled (transaction_id) WHERE active
+        """)
 
     @api.constrains('debit', 'credit')
     def _check_amounts(self):
@@ -187,54 +194,102 @@ class BankReconciliationReconciled(models.Model):
             'target': 'current'
         }
 
-    def _is_own_move(self):
-        """The matched entry was created by the reconciliation (flag, or the
-        narration given to such entries before the flag existed)."""
-        self.ensure_one()
-        move = self.matched_move_id
-        return bool(move) and (self.created_move or 'Bank Reconciliation:' in str(move.narration or ''))
-
-    def _remove_own_move(self):
-        """Delete the entry the reconciliation created. An existing entry of
-        the books that was only matched (a payment, a session entry ...) is
-        never touched."""
-        for rec in self:
-            if not rec._is_own_move():
-                continue
-            move = rec.matched_move_id
-            try:
-                if move.state == 'posted':
-                    move.button_cancel()
-                move.unlink()
-            except Exception as e:
-                raise UserError(_('Error removing journal entry: %s') % str(e))
-            if rec.transaction_id.matched_move_id == move:
-                rec.transaction_id.matched_move_id = False
-
     def action_unreconcile(self):
         self.ensure_one()
         if self.master_id.state == 'completed':
             raise UserError(_('Cannot unreconcile from a completed reconciliation.'))
         
-        self._remove_own_move()
-        
+        # Statement lines matched together with one entry are unreconciled together
+        group = self
         if self.matched_move_line_id:
-            self.matched_move_line_id.write({
-                'is_bank_reconciled': False,
-                'bank_reconciliation_id': False,
-                'bank_reconciliation_date': False
-            })
-        
-        if self.transaction_id:
-            self.transaction_id.write({
+            group |= self.search([
+                ('master_id', '=', self.master_id.id),
+                ('matched_move_line_id', '=', self.matched_move_line_id.id),
+            ])
+
+        # Reconciled records are never deleted: archive to keep the history
+        group.write({'active': False})
+
+        # The matched entry is the journal's own accounting entry: it is only
+        # released for matching again, never cancelled or deleted.
+        transactions = group.mapped('transaction_id')
+        if transactions:
+            released_lines = transactions._release_move_lines()
+            transactions.write({
                 'state': 'matched',
                 'reconciled': False,
                 'reconciled_date': False,
                 'reconciled_by': False,
             })
+            if len(group) > 1 or len(released_lines.mapped('move_id')) > 1:
+                # Only one entry is kept as the pending match of one statement line,
+                # so a match against several entries or of several lines has to be
+                # done again
+                for transaction in transactions:
+                    transaction.action_reject_match()
+
+        # Entries the reconciliation created for these lines are not needed any more
+        (group.mapped('matched_move_id') | group.mapped('reconciliation_move_id')).filtered(
+            lambda move: move.bank_reconciliation_created_id and move.state == 'draft'
+        ).button_cancel()
         
-        self.with_context(bn_unreconcile=True).unlink()
         return True
+
+    def _check_bank_side(self):
+        """Each line must be matched with the bank side of its entry: never a
+        receivable or payable item, and a debit for money in (Credit on the
+        statement), a credit for money out. Otherwise the reconciliation entry
+        would move the wrong account, the wrong way."""
+        wrong = self.filtered(lambda r: r.matched_move_line_id and (
+            r.matched_move_line_id.account_id.account_type in ('asset_receivable', 'liability_payable')
+            or (r.transaction_id.credit > r.transaction_id.debit) != (r.matched_move_line_id.balance > 0)
+        ))
+        if wrong:
+            raise UserError(_(
+                'These lines are matched with the wrong item of their journal entry (a receivable or '
+                'payable item, or the wrong side). Reject or unreconcile them and match them again:\n%s'
+            ) % '\n'.join('- %s: %s %s' % (
+                r.description, r.matched_move_id.display_name, r.matched_move_line_id.account_id.display_name
+            ) for r in wrong[:20]))
+
+    def _create_reconciliation_move(self):
+        """Move each line's amount from the account holding it (the account of
+        the matched journal item) to the Posted Account, on the analytic accounts
+        of the matched item: when the holding account was debited it is credited
+        and the Posted Account debited, and vice versa. The entry stays in draft
+        until Validate & Complete posts it."""
+        for record in self:
+            master = record.master_id
+            line = record.matched_move_line_id
+            # Nothing to move when the entry is already on the Posted Account
+            if record.reconciliation_move_id or not line.balance or line.account_id == master.posted_account_id:
+                continue
+            record._check_bank_side()
+            amount = master.currency_id.round(abs(record.amount))
+            holding_side, bank_side = ('credit', 'debit') if line.balance > 0 else ('debit', 'credit')
+            common = {
+                'is_bank_reconciled': True,
+                'bank_reconciliation_id': master.id,
+                'bank_reconciliation_date': master.date,
+                'analytic_distribution': line.analytic_distribution or False,
+            }
+            # The reference names the original entry this line was matched with
+            reference = '%s - %s' % (master.name, line.move_id.ref or line.move_id.name)
+            record.reconciliation_move_id = self.env['account.move'].create({
+                'journal_id': master.journal_id.id,
+                'date': record.date or master.date,
+                'ref': reference,
+                'company_id': master.company_id.id,
+                'narration': _('Bank Reconciliation: %s - Statement line: %s %s') % (
+                    master.name, record.reference or '', record.description),
+                'bank_reconciliation_created_id': master.id,
+                'line_ids': [
+                    (0, 0, dict(common, account_id=line.account_id.id,
+                                name=_('Reconciliation: %s') % reference, **{holding_side: amount})),
+                    (0, 0, dict(common, account_id=master.posted_account_id.id,
+                                name=_('Contra - %s') % reference, **{bank_side: amount})),
+                ],
+            })
 
     @api.model
     def create(self, vals):
@@ -287,10 +342,7 @@ class BankReconciliationReconciled(models.Model):
         return super(BankReconciliationReconciled, self).write(vals)
 
     def unlink(self):
-        # only removed by Unreconcile / Cancel Reconciliation
-        if not self.env.context.get('bn_unreconcile'):
-            raise UserError(_('You cannot delete a reconciled transaction.'))
-        return super().unlink()
+        raise UserError(_('You cannot delete a reconciled transaction.'))
         # for record in self:
         #     if record.is_posted:
         #         raise UserError(_('Cannot delete a posted reconciled transaction.'))

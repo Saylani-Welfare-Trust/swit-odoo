@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_res_groups_form_inherit" model="ir.ui.view">
+        <field name="name">res.groups.form.inherit</field>
+        <field name="model">res.groups</field>
+        <field name="inherit_id" ref="base.view_groups_form"/>
+        <field name="arch" type="xml">
+            
+            <!-- Add new fields after share -->
+            <field name="share" position="after">
+                <field name="user_count" string="Count"/>
+                <field name="user_names" string="Names"/>
+            </field>
+            
+            <!-- Add Activity Log as a new page in the notebook -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Activity Log" name="activity_log">
+                    <field name="log_ids" readonly="1" nolabel="1">
+                        <tree create="false" delete="false" edit="false" default_order="create_date desc">
+                            <field name="create_date" string="Date"/>
+                            <field name="create_uid" string="Changed By"/>
+                            <field name="note" string="Description"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+            
+        </field>
+    </record>
+</odoo>

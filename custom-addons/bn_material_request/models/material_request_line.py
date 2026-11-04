@@ -3,7 +3,10 @@ from odoo import models, fields, api, _
 
 class MemberApprovalLine(models.Model):
     _name = 'material.request.line'
+    _inherit = ['line.change.log.mixin']
     _description = 'Member Approval Line'
+    _line_log_parent = 'approval_id'
+    _line_log_fields = ['product_id', 'quantity', 'description', 'analytic_account_id', 'budget_id']
 
     budget_id = fields.Many2one(
         'budget.budget',
@@ -15,7 +18,7 @@ class MemberApprovalLine(models.Model):
     )
     product_id = fields.Many2one('product.product', string='Product', required=True)
     product_uom_id = fields.Many2one(
-        'uom.uom', string='Unit of Measure',
+        'uom.uom', string='UOM',
         related='product_id.uom_id', readonly=True
     )
     quantity = fields.Float('Quantity', default=1.0, required=True)
@@ -125,3 +128,33 @@ class MemberApprovalLine(models.Model):
     #             # If you want to always override:
     #             # line.analytic_account_id.default_budget_id = line.budget_id.id
             
+
+    product_packaging_id = fields.Many2one(
+        'product.packaging',
+        string='Pack Size/UOM',
+        domain="[('product_id', '=', product_id)]",
+        help="Select the packaging for this product."
+    )
+    product_packaging_qty = fields.Float(
+        string='Packaging Qty',
+        compute='_compute_product_packaging_qty',
+        inverse='_set_product_packaging_qty',
+        store=True,
+        help="Quantity of packaging. The total quantity is calculated automatically."
+    )
+
+    @api.depends('product_id', 'product_packaging_id', 'quantity')
+    def _compute_product_packaging_qty(self):
+        for line in self:
+            if not line.product_packaging_id or not line.product_id:
+                line.product_packaging_qty = 0.0
+                continue
+            # Calculate how many packages are needed based on the total quantity
+            if line.product_packaging_id.qty > 0:
+                line.product_packaging_qty = line.quantity / line.product_packaging_id.qty
+
+    def _set_product_packaging_qty(self):
+        for line in self:
+            if line.product_packaging_id and line.product_packaging_qty:
+                # Update the total quantity based on the packaging quantity
+                line.quantity = line.product_packaging_qty * line.product_packaging_id.qty

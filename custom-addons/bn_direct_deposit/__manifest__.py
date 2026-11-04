@@ -1,8 +1,8 @@
 {
     'name': 'Direct Deposit',
-    'version': '17.0.1.2.0',
+    'version': '1.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com',
+    'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Direct Deposit',
     'depends': [
@@ -22,12 +22,10 @@
         'views/direct_deposit.xml',
         'views/pos_direct_deposit.xml',
         'views/direct_deposit_account_setup.xml',
-        'data/account_setup.xml',
         
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
         'reports/direct_deposit_dn_report.xml',
-        'data/bn_program_types.xml',
     ],
     'auto_install': False,
     'application': False,

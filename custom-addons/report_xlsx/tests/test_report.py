@@ -67,9 +67,9 @@ class TestReport(common.TransactionCase):
     def test_currency_format(self):
         usd = self.env.ref("base.USD")
         self.assertEqual(
-            self.xlsx_report._report_xlsx_1_currency_format(usd), "$#,##0.00"
+            self.xlsx_report._report_xlsx_currency_format(usd), "$#,##0.00"
         )
         eur = self.env.ref("base.EUR")
         self.assertEqual(
-            self.xlsx_report._report_xlsx_1_currency_format(eur), "#,##0.00 €"
+            self.xlsx_report._report_xlsx_currency_format(eur), "#,##0.00 €"
         )

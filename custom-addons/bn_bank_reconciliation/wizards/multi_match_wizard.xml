@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_reconcile_multi_match_wizard_form" model="ir.ui.view">
+        <field name="name">reconcile.multi.match.wizard.form</field>
+        <field name="model">reconcile.multi.match.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Match Several Statement Lines">
+                <sheet>
+                    <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
+                        <i class="fa fa-info-circle"/>
+                        <span invisible="match_mode != 'create'">Add the bank statement lines that have no entry in Odoo (e.g. bank charges): one entry is created for all of them and posted on Validate &amp; Complete.</span>
+                        <span invisible="match_mode != 'existing'">Add the bank statement lines, then select the one journal entry they add up to.</span>
+                    </div>
+                    <field name="master_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <field name="available_line_ids" invisible="1"/>
+
+                    <group>
+                        <field name="match_mode" widget="radio" options="{'horizontal': true}"/>
+                    </group>
+
+                    <separator string="Statement Lines"/>
+                    <field name="transaction_ids" nolabel="1" options="{'no_create': True}">
+                        <tree string="Statement Lines">
+                            <field name="date"/>
+                            <field name="description"/>
+                            <field name="reference"/>
+                            <field name="partner_id" optional="show"/>
+                            <field name="debit" sum="Total Debit"/>
+                            <field name="credit" sum="Total Credit"/>
+                            <field name="state" widget="badge"/>
+                        </tree>
+                    </field>
+
+                    <group invisible="match_mode != 'create'">
+                        <group string="New Entry">
+                            <field name="account_id" options="{'no_create': True}"
+                                   required="match_mode == 'create'"/>
+                            <field name="label" placeholder="e.g. Bank charges October"/>
+                            <field name="date"/>
+                        </group>
+                        <group string="Totals">
+                            <field name="statement_total"/>
+                            <field name="entry_preview" readonly="1" invisible="not entry_preview"/>
+                        </group>
+                    </group>
+
+                    <group invisible="match_mode != 'existing'">
+                        <group string="Journal Entry">
+                            <field name="show_only_matching_amount"/>
+                            <field name="move_line_id" options="{'no_create': True}"
+                                   required="match_mode == 'existing'"/>
+                        </group>
+                        <group string="Totals">
+                            <field name="statement_total"/>
+                            <field name="entry_amount"/>
+                            <field name="difference"/>
+                        </group>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_match" string="Create Entry &amp; Reconcile" type="object" class="btn-primary"
+                            invisible="match_mode != 'create' or not transaction_ids or not account_id"/>
+                    <button name="action_match" string="Match" type="object" class="btn-primary"
+                            invisible="match_mode != 'existing' or not transaction_ids or not move_line_id"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

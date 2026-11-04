@@ -2,6 +2,7 @@ from odoo import fields, models, api
 from odoo.exceptions import UserError
 from odoo.tools.translate import _
 
+from datetime import timedelta
 
 state_selection =[
     ('draft', 'Draft'),
@@ -23,7 +24,7 @@ class RiderShift(models.Model):
 
     start_date = fields.Date("Start Date", tracking=True)
     end_date = fields.Date("End Date", tracking=True)
-    state = fields.Selection(selection=state_selection, default='draft', string="Status", tracking=True, index=True)
+    state= fields.Selection(selection=state_selection, default='draft', string="Status", tracking=True)
  
     schedule_day_ids = fields.One2many('rider.schedule.day', 'rider_shift_id', string="Schedule Days")
 

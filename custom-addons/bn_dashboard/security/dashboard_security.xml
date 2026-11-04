@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Category (This creates the Header/Title in the user settings) -->
+    <record id="module_category_bn_dashboard" model="ir.module.category">
+        <field name="name">Dashboard</field>
+        <field name="description">Access to the specific Dashboards</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <!-- 1. Treasury Dashboard Group -->
+    <record id="group_treasury_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Treasury</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <!-- 2. Donation Box Dashboard Group -->
+    <record id="group_donation_box_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation Box</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <!-- 3. Profile Management Dashboard Group -->
+    <record id="group_profile_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Profile Management</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <!-- 4. POS Order Dashboard Group -->
+    <record id="group_pos_order_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / POS Order</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <!-- 5. Donation In Kind Dashboard Group -->
+    <record id="group_din_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation In Kind</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <!-- 6. Donation Inflows Dashboard Group -->
+    <record id="group_donation_inflow_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation Inflows</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+</odoo>

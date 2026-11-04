@@ -59,7 +59,8 @@
 
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <h1 style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
+                                    <h1 t-if="order.is_non_donation_receipt" style="font-size: 15px;font-weight: bold;">Non Donation Receipt</h1>
+                                    <h1 t-else="" style="font-size: 15px;font-weight: bold;">Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1 class="text-transform" style="font-size: 12px;">
@@ -90,6 +91,15 @@
                                     <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
                                     <div t-if="'Cheque' in payment_method">
                                         <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
+                                    </div>
+                                    <div>
+                                        <strong>Remarks:</strong>
+                                        <t t-set="count" t-value="1"/>
+                                        <t t-foreach="order.lines" t-as="l">
+                                            <t t-esc="count"/>. <t t-esc="l.full_product_name"/> - <t t-esc="l.customer_note or '-'"/>
+                                            <br/>
+                                            <t t-set="count" t-value="count + 1"/>
+                                        </t>
                                     </div>
                                 </div>
                                 <div class="col-6">

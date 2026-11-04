@@ -1,5 +1,6 @@
 from odoo import models, fields
 from odoo.exceptions import UserError
+import logging
 
 
 class CounterfeitNotesWizard(models.TransientModel):
@@ -31,9 +32,9 @@ class CounterfeitNotesWizard(models.TransientModel):
         if any(not note.lot_id for note in notes):
             raise UserError('Selected counterfeit notes must have a box assigned.')
 
-        counterfeit_rider = self.env['hr.employee'].sudo().search([('name', '=', 'Counterfeit')], limit=1)
+        counterfeit_rider = self.env['hr.employee'].search([('name', '=', 'Counterfeit')], limit=1)
         if not counterfeit_rider:
-            counterfeit_rider = self.env['hr.employee'].sudo().create({'name': 'Counterfeit'})
+            counterfeit_rider = self.env['hr.employee'].create({'name': 'Counterfeit'})
 
         # Create collection with links to counterfeit notes
         collection = self.env['rider.collection'].create({
@@ -48,22 +49,19 @@ class CounterfeitNotesWizard(models.TransientModel):
 
         # Get all unique boxes/lots from selected notes
         unique_lots = notes.mapped('lot_id')
-        # One registration per box: the one in service wins over closed ones of a
-        # reused box number.
-        Registration = self.env['donation.box.registration.installation'].sudo()
-        unique_boxes = Registration.browse()
-        for lot in unique_lots:
-            unique_boxes |= Registration._bn_find_by_lot(lot)
+        unique_boxes = self.env['donation.box.registration.installation'].search([
+            ('lot_id', 'in', unique_lots.ids)
+        ])
 
         # Create key issuance for each box
         for box in unique_boxes:
-            key = self.env['key'].sudo().search([
+            key = self.env['key'].search([
                 ('donation_box_registration_installation_id', '=', box.id),
                 ('state', 'in', ['available', 'issued'])
             ], limit=1)
             
             if not key:
-                key = self.env['key'].sudo().search([
+                key = self.env['key'].search([
                     ('donation_box_registration_installation_id', '=', box.id)
                 ], limit=1)
 
@@ -89,7 +87,7 @@ class CounterfeitNotesWizard(models.TransientModel):
                 'is_cfb': True,
                 'rider_collection_id': collection.id,
             }
-            self.env['key.issuance'].sudo().create(key_issuance_vals)
+            self.env['key.issuance'].create(key_issuance_vals)
 
         # IMPORTANT: Do NOT change note state here
         # Notes will be updated to 'paid' when POS collects payment

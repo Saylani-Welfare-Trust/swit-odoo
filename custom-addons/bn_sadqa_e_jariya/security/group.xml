@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Moved from bn_welfare (bn_welfare 1.2 migration keeps their users) -->
+
+    <!--Fetch institution Group-->
+    <record id ="group_fetch_institution" model="res.groups">
+        <field name="name">Fetch Institution</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <!--Institutional Disbursement Group-->
+    <record id ="group_institutional_disbursement" model="res.groups">
+        <field name="name">Institutional Disbursement</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+</odoo>
