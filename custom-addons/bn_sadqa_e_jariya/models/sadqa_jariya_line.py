@@ -112,7 +112,7 @@ class SadqaJariyaLine(models.Model):
     def _compute_analytic_account_domain(self):
         for rec in self:
             branches = rec.application_type_id.analytic_account_ids
-            rec.analytic_account_domain = str([('id', 'in', branches.ids)]) if branches else ""
+            rec.analytic_account_domain = str([('id', 'in', branches.ids)]) if branches else "[]"
 
     @api.depends('disbursement_category_id')
     def _compute_fixed_amount_check(self):

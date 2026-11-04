@@ -494,7 +494,7 @@ class WelfareLine(models.Model):
     @api.depends('disbursement_application_type_id')
     def _compute_analytic_account_domain(self):
         for rec in self:
-            rec.analytic_account_domain = ""
+            rec.analytic_account_domain = "[]"
             if rec.disbursement_application_type_id and rec.disbursement_application_type_id.analytic_account_ids:
                 analytic_account_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
                 rec.analytic_account_domain = str([('id', 'in', analytic_account_ids)])
