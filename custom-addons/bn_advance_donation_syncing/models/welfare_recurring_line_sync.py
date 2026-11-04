@@ -22,7 +22,7 @@ class WelfareRecurringLineSync(models.Model):
         ondelete='set null'
     )
     advance_donation_amount = fields.Float(
-        string="Advance Donation Amount",
+        string="Donor Acc",
         help="Amount from the advance donation line that is allocated to this recurring line"
     )
     
