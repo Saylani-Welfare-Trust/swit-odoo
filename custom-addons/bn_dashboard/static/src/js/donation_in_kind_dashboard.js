@@ -312,7 +312,7 @@ export class DonationDashboard extends Component {
             this.state.comparison_period1,
             this.state.comparison_period2,
             effective_segment_id,
-            this.state.segment_type || null,f
+            this.state.segment_type || null,
             this.state.state_filter || null,
             this.state.amount_min ? parseFloat(this.state.amount_min) : null,
             this.state.amount_max ? parseFloat(this.state.amount_max) : null,
