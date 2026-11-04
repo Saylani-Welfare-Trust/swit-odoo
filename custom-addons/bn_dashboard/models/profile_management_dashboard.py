@@ -266,3 +266,74 @@ class ProfileManagementDashboard(models.TransientModel):
             'microfinance_top_donees': microfinance_top_donees,
             'medical_top_donees': medical_top_donees,
         }
+
+    @api.model
+    def get_comparison_data(self, mode='month', period1=None, period2=None):
+        """Return KPI counts for two periods so the dashboard can compare them."""
+        import calendar
+        from datetime import date
+
+        def _parse_period(period_str, mode):
+            if not period_str:
+                return None, None
+            try:
+                if mode == 'month':
+                    year, month = map(int, str(period_str).split('-'))
+                    start = date(year, month, 1)
+                    end = date(year, month, calendar.monthrange(year, month)[1])
+                else:
+                    year = int(period_str)
+                    start = date(year, 1, 1)
+                    end = date(year, 12, 31)
+            except (ValueError, TypeError):
+                return None, None
+            return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
+
+        p1_start, p1_end = _parse_period(period1, mode)
+        p2_start, p2_end = _parse_period(period2, mode)
+
+        empty = {
+            'registered': 0, 'draft': 0, 'rejected': 0,
+            'donors': 0, 'donees': 0, 'individuals': 0,
+        }
+        if not p1_start or not p2_start:
+            return {'p1': empty, 'p2': empty, 'diffs': {}, 'mode': mode,
+                    'period1': period1, 'period2': period2}
+
+        Partner = self.env['res.partner']
+
+        def _count_period(start, end):
+            d = [
+                ('create_date', '>=', start + ' 00:00:00'),
+                ('create_date', '<=', end + ' 23:59:59'),
+            ]
+            return {
+                'registered': Partner.search_count(d + [('state', '=', 'register')]),
+                'draft': Partner.search_count(d + [('state', '=', 'draft')]),
+                'rejected': Partner.search_count(d + [('state', '=', 'reject')]),
+                'donors': Partner.search_count(d + [('category_id.name', 'ilike', 'Donor')]),
+                'donees': Partner.search_count(d + [('category_id.name', 'ilike', 'Donee')]),
+                'individuals': Partner.search_count(d + [('category_id.name', 'ilike', 'Individual')]),
+            }
+
+        p1 = _count_period(p1_start, p1_end)
+        p2 = _count_period(p2_start, p2_end)
+
+        diffs = {}
+        for key in p1:
+            v1 = p1[key]
+            v2 = p2[key]
+            diff = v2 - v1
+            pct = 0.0
+            if v1 > 0:
+                pct = (diff / v1) * 100
+            elif v2 > 0:
+                pct = 100.0
+            diffs[key] = {
+                'diff': diff,
+                'pct': pct,
+                'is_positive': diff >= 0,
+            }
+
+        return {'p1': p1, 'p2': p2, 'diffs': diffs,
+                'mode': mode, 'period1': period1, 'period2': period2}

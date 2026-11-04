@@ -42,6 +42,10 @@ export class DonationBoxDashboard extends Component {
             comp_month_1: fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
             comp_month_2: fmt_month(today),
             comparison_result: { m1_sum: '0.00', m2_sum: '0.00', diff: '0.00', pct: '0.0%', is_positive: true },
+            comparison_mode: savedFilters.comparison_mode || 'month',
+            comp_period1:    savedFilters.comp_period1 || fmt_month(new Date(today.getFullYear(), today.getMonth() - 1, 1)),
+            comp_period2:    savedFilters.comp_period2 || fmt_month(today),
+            comparison_result: { p1: {}, p2: {}, diffs: {} },
 
             kpi: {
                 draft_boxes: 0, available: 0, installed: 0, closed: 0,
@@ -55,6 +59,7 @@ export class DonationBoxDashboard extends Component {
             recent_complaints: [], 
             recent_registrations: [], 
             recent_collections: [],
+            restriction: null,
         });
 
         this._charts = {};
@@ -63,6 +68,7 @@ export class DonationBoxDashboard extends Component {
         onWillStart(async () => {
             await this.fetch_dropdowns();
             await this.fetch_data();
+            this._init_comparison_periods();
             await this.fetch_comparison();
         });
 
@@ -81,8 +87,55 @@ export class DonationBoxDashboard extends Component {
             city_id: this.state.city_id,
             zone_id: this.state.zone_id,
             bunch_id: this.state.bunch_id,
+            comparison_mode: this.state.comparison_mode,
+            comp_period1: this.state.comp_period1,
+            comp_period2: this.state.comp_period2,
         };
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    }
+
+    _init_comparison_periods() {
+        const today = new Date();
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comp_period1) {
+                this.state.comp_period1 = String(today.getFullYear() - 1);
+            }
+            if (!this.state.comp_period2) {
+                this.state.comp_period2 = String(today.getFullYear());
+            }
+        } else {
+            const fmt_m = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!this.state.comp_period1) {
+                this.state.comp_period1 = fmt_m(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            }
+            if (!this.state.comp_period2) {
+                this.state.comp_period2 = fmt_m(today);
+            }
+        }
+    }
+
+    async onchange_comparison_mode() {
+        this.state.comp_period1 = '';
+        this.state.comp_period2 = '';
+        this._init_comparison_periods();
+        await this.fetch_comparison();
+    }
+
+    async fetch_comparison() {
+        try {
+            const data = await this.orm.call('donation.box.dashboard', 'get_comparison_data', [
+                this.state.comparison_mode,
+                this.state.comp_period1,
+                this.state.comp_period2,
+                this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+                this.state.bunch_id ? parseInt(this.state.bunch_id, 10) : null,
+            ]);
+            this.state.comparison_result = data;
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
+        }
     }
 
     async fetch_dropdowns() {
@@ -91,6 +144,7 @@ export class DonationBoxDashboard extends Component {
         this.state.cities = hierarchy.cities || [];
         this.state.zones = hierarchy.zones || [];
         this.state.bunches = hierarchy.bunches || [];
+        this.state.restriction = await this.orm.call('dashboard.configurator', 'get_user_restrictions', ['donation_box']);
     }
 
     get filteredCities() {
@@ -230,8 +284,69 @@ export class DonationBoxDashboard extends Component {
         return 'bg-secondary text-white';
     }
     
+    // ------------------------------------------------------------------
+    // Build the domain that matches the dashboard's current filters
+    // ------------------------------------------------------------------
+    getFilterDomain(model) {
+        const domain = [];
+        const pid = this.state.province_id ? parseInt(this.state.province_id, 10) : null;
+        const cid = this.state.city_id ? parseInt(this.state.city_id, 10) : null;
+        const zid = this.state.zone_id ? parseInt(this.state.zone_id, 10) : null;
+        const bid = this.state.bunch_id ? parseInt(this.state.bunch_id, 10) : null;
+
+        if (model === 'rider.collection') {
+            // Collections link to registration via donation_box_registration_installation_id
+            if (pid) domain.push(['donation_box_registration_installation_id.city_id.parent_id', '=', pid]);
+            if (cid) domain.push(['donation_box_registration_installation_id.city_id', '=', cid]);
+            if (zid) domain.push(['donation_box_registration_installation_id.zone_id', '=', zid]);
+            if (bid) domain.push(['donation_box_registration_installation_id.key_bunch_id', '=', bid]);
+            if (this.state.date_from) domain.push(['date', '>=', this.state.date_from]);
+            if (this.state.date_to) domain.push(['date', '<=', this.state.date_to]);
+            if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
+                const ids = this.state.restriction.analytic_ids;
+                domain.push('|', ['donation_box_registration_installation_id.city_id', 'child_of', ids], ['donation_box_registration_installation_id.zone_id', 'child_of', ids]);
+            }
+
+        } else if (model === 'donation.box.registration.installation') {
+            // Registrations have the location fields directly on them
+            if (pid) domain.push(['city_id.parent_id', '=', pid]);
+            if (cid) domain.push(['city_id', '=', cid]);
+            if (zid) domain.push(['zone_id', '=', zid]);
+            if (bid) domain.push(['key_bunch_id', '=', bid]);
+            if (this.state.date_from) domain.push(['installation_date', '>=', this.state.date_from]);
+            if (this.state.date_to) domain.push(['installation_date', '<=', this.state.date_to]);
+
+        } else if (model === 'donation.box.complain.center') {
+            // Complaints link to registration via donation_box_registration_installation_id
+            if (pid) domain.push(['donation_box_registration_installation_id.city_id.parent_id', '=', pid]);
+            if (cid) domain.push(['donation_box_registration_installation_id.city_id', '=', cid]);
+            if (zid) domain.push(['donation_box_registration_installation_id.zone_id', '=', zid]);
+            if (bid) domain.push(['donation_box_registration_installation_id.key_bunch_id', '=', bid]);
+            if (this.state.date_from) domain.push(['date', '>=', this.state.date_from]);
+            if (this.state.date_to) domain.push(['date', '<=', this.state.date_to]);
+            if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
+                const ids = this.state.restriction.analytic_ids;
+                domain.push('|', ['city_id', 'child_of', ids], ['zone_id', 'child_of', ids]);
+            }
+        }
+
+        return domain;
+    }
+
+    // ------------------------------------------------------------------
+    // Open a list view and automatically apply the dashboard filters
+    // ------------------------------------------------------------------
     openView(model, domain = []) {
-        this.actionService.doAction({ type: 'ir.actions.act_window', res_model: model, views: [[false, 'list'], [false, 'form']], domain: domain, target: 'current' });
+        const filterDomain = this.getFilterDomain(model);
+        const fullDomain = [...domain, ...filterDomain];
+
+        this.actionService.doAction({
+            type: 'ir.actions.act_window',
+            res_model: model,
+            views: [[false, 'list'], [false, 'form']],
+            domain: fullDomain,
+            target: 'current',
+        });
     }
 }
 DonationBoxDashboard.template = 'DonationBoxDashboard';

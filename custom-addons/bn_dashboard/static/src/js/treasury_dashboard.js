@@ -43,6 +43,7 @@ export class TreasuryDashboard extends Component {
             provinces: [],
             cities: [],
             zones: [],
+            restriction: null,
             segments_l1: [],
             segments_l2: [],
             segments_l3: [],
@@ -51,9 +52,71 @@ export class TreasuryDashboard extends Component {
             cheques:   { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             deposits:  { count: 0, total_amount: 0, states: {}, state_amounts: {} },
             transfers: { count: 0, total_amount: 0, states: {}, state_amounts: {} },
+            comparison_mode: savedFilters.comparison_mode || 'month',
+            comparison_period1: savedFilters.comparison_period1 || '',
+            comparison_period2: savedFilters.comparison_period2 || '',
+            comparison_result: {},
         });
 
-        onWillStart(async () => { await this.fetchData(); });
+        onWillStart(async () => {
+            this._init_comparison_periods();
+            await this.fetchData();
+            await this.fetchComparison();
+        });
+    }
+
+    _init_comparison_periods() {
+        const today = new Date();
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = String(today.getFullYear() - 1);
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = String(today.getFullYear());
+            }
+        } else {
+            const fmt_m = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (!this.state.comparison_period1) {
+                this.state.comparison_period1 = fmt_m(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            }
+            if (!this.state.comparison_period2) {
+                this.state.comparison_period2 = fmt_m(today);
+            }
+        }
+    }
+
+    async onchange_comparison_mode() {
+        // Reset periods when the mode switches
+        this.state.comparison_period1 = '';
+        this.state.comparison_period2 = '';
+        this._init_comparison_periods();
+        await this.fetchComparison();
+    }
+
+    async fetchComparison() {
+        try {
+            let eff_seg = null;
+            if (this.state.segment_l4) eff_seg = parseInt(this.state.segment_l4, 10);
+            else if (this.state.segment_l3) eff_seg = parseInt(this.state.segment_l3, 10);
+            else if (this.state.segment_l2) eff_seg = parseInt(this.state.segment_l2, 10);
+            else if (this.state.segment_l1) eff_seg = parseInt(this.state.segment_l1, 10);
+
+            const data = await this.env.services.rpc("/treasury/dashboard/comparison", {
+                mode: this.state.comparison_mode,
+                period1: this.state.comparison_period1,
+                period2: this.state.comparison_period2,
+                analytic_account_id: this.state.branch_id ? parseInt(this.state.branch_id, 10) : null,
+                province_id: this.state.province_id ? parseInt(this.state.province_id, 10) : null,
+                city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
+                zone_id: this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
+                segment_id: eff_seg,
+                amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
+                amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
+            });
+            this.state.comparison_result = data.models || {};
+        } catch (error) {
+            console.error("Comparison Fetch Error:", error);
+        }
     }
 
     // Helper to save current filters to sessionStorage
@@ -71,6 +134,9 @@ export class TreasuryDashboard extends Component {
             segment_l4: this.state.segment_l4,
             amount_min: this.state.amount_min,
             amount_max: this.state.amount_max,
+            comparison_mode: this.state.comparison_mode,
+            comparison_period1: this.state.comparison_period1,
+            comparison_period2: this.state.comparison_period2,
         };
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
     }
@@ -153,6 +219,7 @@ export class TreasuryDashboard extends Component {
             this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
             this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
             this.state.transfers = { ...this.state.transfers, ...data.transfers };
+            this.state.restriction = data.restriction || null;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
@@ -193,8 +260,9 @@ export class TreasuryDashboard extends Component {
     }
 
     async applyFilter() {
-        this.save_filters(); // <-- SAVE FILTERS
+        this.save_filters();
         await this.fetchData();
+        await this.fetchComparison();
     }
 
     clearFilter() {
@@ -273,12 +341,66 @@ export class TreasuryDashboard extends Component {
         });
     }
 
-    openCustomModel(modelName) {
+    // ------------------------------------------------------------------
+    // Build the domain that mirrors the dashboard's current filters
+    // ------------------------------------------------------------------
+    getFilterDomain(model) {
+        const domain = [];
+        if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
+                domain.push(['analytic_account_id', 'child_of', this.state.restriction.analytic_ids]);
+            }
+        const bid = this.state.branch_id   ? parseInt(this.state.branch_id, 10)   : null;
+        const pid = this.state.province_id ? parseInt(this.state.province_id, 10) : null;
+        const cid = this.state.city_id     ? parseInt(this.state.city_id, 10)     : null;
+        const zid = this.state.zone_id     ? parseInt(this.state.zone_id, 10)     : null;
+
+        // Effective segment (deepest non-empty level)
+        let seg_id = null;
+        if (this.state.segment_l4)      seg_id = parseInt(this.state.segment_l4, 10);
+        else if (this.state.segment_l3) seg_id = parseInt(this.state.segment_l3, 10);
+        else if (this.state.segment_l2) seg_id = parseInt(this.state.segment_l2, 10);
+        else if (this.state.segment_l1) seg_id = parseInt(this.state.segment_l1, 10);
+
+        // Analytic filter — apply ALL non-empty filters, mirroring the backend
+        if (bid)    domain.push(['analytic_account_id', '=', bid]);
+        if (pid)    domain.push(['analytic_account_id', 'child_of', pid]);
+        if (cid)    domain.push(['analytic_account_id', 'child_of', cid]);
+        if (zid)    domain.push(['analytic_account_id', 'child_of', zid]);
+        if (seg_id) domain.push(['analytic_account_id', 'child_of', seg_id]);
+
+        // Date field per model — match what the backend actually uses
+        const DATE_FIELD = {
+            'pos.cheque': 'date',
+            'direct.deposit': 'create_date',  
+            'journal.transfer': 'date',
+        }[model] || 'date';
+
+        if (this.state.date_from) domain.push([DATE_FIELD, '>=', this.state.date_from]);
+        if (this.state.date_to)   domain.push([DATE_FIELD, '<=', this.state.date_to]);
+
+        // Amount filter
+        if (this.state.amount_min) domain.push(['amount', '>=', parseFloat(this.state.amount_min)]);
+        if (this.state.amount_max) domain.push(['amount', '<=', parseFloat(this.state.amount_max)]);
+
+        return domain;
+    }
+
+    async refresh() {
+        await this.fetchData();
+    }
+
+
+    // ------------------------------------------------------------------
+    // Open a list view with the dashboard filters automatically applied
+    // ------------------------------------------------------------------
+    openCustomModel(modelName, extraDomain = []) {
+        const fullDomain = [...extraDomain, ...this.getFilterDomain(modelName)];
         this.actionService.doAction({
             type: 'ir.actions.act_window',
             res_model: modelName,
             views: [[false, 'list'], [false, 'form']],
-            target: 'current'
+            domain: fullDomain,
+            target: 'current',
         });
     }
 

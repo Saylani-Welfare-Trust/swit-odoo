@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timedelta
 from odoo import api, models
 
+
 class PosOrder(models.Model):
     _inherit = 'pos.order'
 
@@ -12,7 +13,16 @@ class PosOrder(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_shops(self):
-        configs = self.env['pos.config'].search([])
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        
+        domain = []
+        if restriction:
+            domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
+            
+        configs = self.env['pos.config'].search(domain)
+        # ==============================================
+        
         shops = []
         for c in configs:
             province_id = False
@@ -41,11 +51,20 @@ class PosOrder(models.Model):
 
     @api.model
     def get_location_hierarchy(self):
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+
+        if restriction:
+            if restriction['provinces']:
+                provinces = provinces.browse(restriction['provinces'])
+            if restriction['segment_l1']:
+                seg_l1 = seg_l1.browse(restriction['segment_l1'])
+
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
         
-        seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
         seg_l2 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
         seg_l3 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
         seg_l4 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
@@ -106,6 +125,11 @@ class PosOrder(models.Model):
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
+
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        if restriction:
+            domain.append(('config_id.analytic_account_id', 'child_of', restriction['analytic_ids']))
 
         if province_id or city_id or zone_id or segment_id or segment_type:
             analytic_domain = []
@@ -454,6 +478,11 @@ class PosOrder(models.Model):
         if segment_type:
             analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        if restriction:
+            analytic_domain.append(('id', 'child_of', restriction['analytic_ids']))
+
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
         if analytic_domain:
@@ -492,6 +521,11 @@ class PosOrder(models.Model):
             analytic_domain.append(('id', 'child_of', int(segment_id)))
         if segment_type:
             analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
+
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        if restriction:
+            analytic_domain.append(('id', 'child_of', restriction['analytic_ids']))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -788,6 +822,10 @@ class PosOrder(models.Model):
         all_cities = set()
         grouped_products = {}
 
+        # Initialize totals
+        total_city_amounts = {c: 0.0 for c in sorted(list(all_cities))} # Will be re-initialized after cities are found
+        total_grand_amount = 0.0
+
         for r in docs:
             city = (r.get('city_name') or 'No City').strip()
             
@@ -816,6 +854,15 @@ class PosOrder(models.Model):
 
         sorted_cities = sorted(list(all_cities))
         
+        # Re-initialize totals with the final list of cities
+        total_city_amounts = {c: 0.0 for c in sorted_cities}
+        
+        # Calculate totals
+        for pdata in grouped_products.values():
+            total_grand_amount += pdata['total_amount']
+            for c in sorted_cities:
+                total_city_amounts[c] += pdata['city_amount'].get(c, 0.0)
+
         group_order = ['Nafla', 'Wajiba', 'Non-Donation', 'PoS',
                     'Donation In Kind', 'Donation Box', 'Other']
         
@@ -842,9 +889,15 @@ class PosOrder(models.Model):
                 'products': prods
             })
 
+        # Format the totals
+        city_totals_fmt = {c: _fmt(a) for c, a in total_city_amounts.items()}
+        grand_total_fmt = _fmt(total_grand_amount)
+
         return {
             'cities': sorted_cities,
-            'groups': result_groups
+            'groups': result_groups,
+            'totals': city_totals_fmt,       # <-- NEW
+            'grand_total': grand_total_fmt   # <-- NEW
         }
 
 
@@ -985,4 +1038,72 @@ class PosOrder(models.Model):
             'groups': result_groups,
             'grand_totals': grand_totals_fmt,
             'grand_total': _fmt(grand_totals['total'])
+        }
+        
+    @api.model
+    def get_comparison_data(self, mode='month', period1=None, period2=None,
+                            config_id=None, province_id=None, city_id=None,
+                            zone_id=None, segment_id=None, segment_type=None,
+                            category_id=None, amount_min=None, amount_max=None,
+                            *extra, **kwargs):
+        """Compare POS metrics between two periods (Month or Year)."""
+        def _parse_period(p_str):
+            if not p_str:
+                return None, None
+            try:
+                if mode == 'month':
+                    y, m = map(int, str(p_str).split('-'))
+                    start = datetime(y, m, 1).date()
+                    from calendar import monthrange
+                    end = datetime(y, m, monthrange(y, m)[1]).date()
+                else:
+                    y = int(p_str)
+                    start = datetime(y, 1, 1).date()
+                    end = datetime(y, 12, 31).date()
+            except (ValueError, TypeError):
+                return None, None
+            return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
+
+        p1_start, p1_end = _parse_period(period1)
+        p2_start, p2_end = _parse_period(period2)
+
+        empty = {'p1': {}, 'p2': {}, 'diffs': {},
+                 'mode': mode, 'period1': period1, 'period2': period2}
+        if not p1_start or not p2_start:
+            return empty
+
+        def _get_stats(start, end):
+            domain = self._get_order_domain(
+                config_id, start, end, province_id, city_id,
+                zone_id, segment_id, segment_type)
+            domain = self._apply_dashboard_filters(
+                domain, category_id, amount_min, amount_max)
+            orders = self.search(domain)
+
+            refunds = orders.filtered(lambda o: o.amount_total < 0)
+            return {
+                'total_sale':   sum(orders.mapped('amount_total')),
+                'order_count':  len(orders),
+                'refund_count': len(refunds),
+                'refund_amount': abs(sum(refunds.mapped('amount_total'))),
+            }
+
+        p1 = _get_stats(p1_start, p1_end)
+        p2 = _get_stats(p2_start, p2_end)
+
+        diffs = {}
+        for key in p1:
+            v1 = p1[key]
+            v2 = p2[key]
+            diff = v2 - v1
+            pct = 0.0
+            if v1 > 0:
+                pct = (diff / v1) * 100
+            elif v2 > 0:
+                pct = 100.0
+            diffs[key] = {'diff': diff, 'pct': pct, 'is_positive': diff >= 0}
+
+        return {
+            'p1': p1, 'p2': p2, 'diffs': diffs,
+            'mode': mode, 'period1': period1, 'period2': period2,
         }
