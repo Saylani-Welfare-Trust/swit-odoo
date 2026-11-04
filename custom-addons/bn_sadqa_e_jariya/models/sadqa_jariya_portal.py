@@ -55,12 +55,15 @@ class SadqaJariya(models.Model):
         except ValueError:
             result = {}
         if not response.ok:
-            # oRPC error: {"json": {"code": "CONFLICT", "status": 409, "message": "..."}}
+            # oRPC error: {"json": {"code": "CONFLICT", "status": 409, "message": "..."}};
+            # anything else (an HTML 404 page...) is usually a wrong Welfare Institution URL
             error = result.get('json') if isinstance(result.get('json'), dict) else {}
-            raise UserError(_("Portal %(operation)s: %(code)s %(message)s",
+            message = error.get('message') or ' '.join(re.sub(r'<[^>]+>', ' ', response.text or '').split())[:300]
+            raise UserError(_("Portal %(operation)s: %(code)s %(message)s\nCalled: %(url)s",
                               operation=operation,
                               code=error.get('code') or response.status_code,
-                              message=error.get('message') or (response.text or '')[:300]))
+                              message=message,
+                              url=url))
         return result.get('json')
 
     @api.model
