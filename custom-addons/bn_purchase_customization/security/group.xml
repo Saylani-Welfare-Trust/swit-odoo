@@ -9,4 +9,8 @@
         <field name="name">Purchase / CXO</field>
     </record>
 
+    <record id="purchase_request_confirm_group" model="res.groups">
+        <field name="name">Purchase / Confirm Purchase Request</field>
+    </record>
+
 </odoo>

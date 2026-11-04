@@ -8,6 +8,9 @@ class StockPicking(models.Model):
     
     bill_amount = fields.Float("Bill Amount")
 
+    # Why this receipt was closed without a backorder, or cancelled
+    receipt_reason_ids = fields.One2many('purchase.receipt.reason', 'picking_id', string='Reasons')
+
     show_create_bill = fields.Boolean(
         string="Show Create Bill Button",
         compute="_compute_show_create_bill"
@@ -96,6 +99,29 @@ class StockPicking(models.Model):
             'name': 'Receive by Weight',
             'type': 'ir.actions.act_window',
             'res_model': 'receive.by.weight',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': wizard.id,
+        }
+
+    def action_open_receipt_cancel_reason(self):
+        """Cancel on a Purchase Order's receipt: the reason is asked first, and
+        kept on that Purchase Order."""
+        return self._open_receipt_reason_wizard('cancel')
+
+    def _open_receipt_reason_wizard(self, reason_type, backorder_confirmation=False, validate_pickings=False):
+        # The wizard is created here rather than through default_* context
+        # keys, which would leak into the records created by the validation.
+        wizard = self.env['receipt.reason.wizard'].create({
+            'picking_ids': [(6, 0, self.ids)],
+            'reason_type': reason_type,
+            'backorder_confirmation_id': backorder_confirmation and backorder_confirmation.id,
+            'validate_picking_ids': [(6, 0, validate_pickings.ids if validate_pickings else [])],
+        })
+        return {
+            'name': _('No Backorder Reason') if reason_type == 'no_backorder' else _('Cancel Reason'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'receipt.reason.wizard',
             'view_mode': 'form',
             'target': 'new',
             'res_id': wizard.id,

@@ -10,24 +10,19 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
-            <!-- This workflow skips HOD/Member Approval entirely: the Procurement Manager
-                 reviews and approves the draft PR directly. Hide those two buttons only for
-                 requisitions that came from a Material Request (this workflow); other
-                 purchase requisitions/blanket orders keep the original behaviour. -->
-            <xpath expr="//button[@name='action_hod_approval']" position="attributes">
-                <attribute name="invisible">state != 'draft' or material_request_id</attribute>
-            </xpath>
-            <xpath expr="//button[@name='action_mem_approval']" position="attributes">
-                <attribute name="invisible">state != 'hod_approval' or material_request_id</attribute>
+            <!-- A request from a Material Request is Confirmed only until its last Purchase Order
+                 is: there are no bids to select. Other purchase requisitions keep Odoo's Validate. -->
+            <xpath expr="//button[@name='action_open']" position="attributes">
+                <attribute name="invisible">state != 'in_progress' or material_request_id</attribute>
             </xpath>
 
             <xpath expr="//field[@name='state']" position="attributes">
-                <attribute name="statusbar_visible">draft,procurement_approval,rfq_sent,vendor_selected,cxo_approved,funds_check,in_progress,open,done</attribute>
+                <attribute name="statusbar_visible">draft,procurement_approval,rfq_sent,vendor_selected,cxo_approved,funds_check,in_progress,done</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
                 <button string="Procurement Approve" name="action_procurement_approve" type="object"
-                        class="oe_highlight" invisible="state != 'draft'"
+                        class="oe_highlight" invisible="state != 'confirm'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Defer" name="action_open_defer_wizard" type="object"
                         invisible="state != 'draft'"
@@ -36,12 +31,17 @@
                         class="oe_highlight" invisible="state != 'deferred'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
 
-                <!-- A closed request whose Purchase Order covers only part of its Material Request,
-                     or a request whose RFQs cover only part of it: a new Purchase Request is
-                     created for what is not on an RFQ yet -->
-                <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
-                        class="oe_highlight" invisible="state not in ('done', 'rfq_sent') or not has_pending_rfq_products"
-                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not on an RFQ yet. Continue?"/>
+                <!-- An open request with lines not yet on an RFQ: more RFQs are created for
+                     them on this same request (Vendor Selection Wizard) -->
+                <button string="Create RFQs for Remaining Products" name="action_create_multi_vendor_rfqs" type="object"
+                        class="oe_highlight" icon="fa-clone"
+                        invisible="state not in ('rfq_sent', 'vendor_selected', 'cxo_approved', 'funds_check', 'in_progress','done') or not has_lines_to_rfq or not is_rfq_creator_allowed"/>
+
+                <!-- A closed request whose Purchase Order covers only part of its Material Request:
+                     a new Purchase Request is created for what is not on an RFQ yet -->
+                <!-- <button string="Create PR for Remaining Products" name="action_create_remaining_request" type="object"
+                        class="oe_highlight" invisible="state != 'done' or not has_pending_rfq_products"
+                        confirm="This creates a new Purchase Request, ready for RFQs, for the products and quantities of the Material Request that are not on an RFQ yet. Continue?"/> -->
 
                 <button string="Funds Available" name="action_funds_available" type="object"
                         class="oe_highlight" invisible="state != 'funds_check'"
@@ -54,12 +54,17 @@
                         groups="bn_procurement_workflow.group_cfo_shariah"/>
             </xpath>
 
-            <!-- RFQs can only ever be created while state == 'procurement_approval' -
-                 action_create_rfqs() on the wizard enforces this unconditionally, so
-                 showing the button in any other state (e.g. after _release_po() has
-                 already closed the requisition) is a guaranteed dead end. -->
+            <!-- The first RFQs are created in Procurement Manager Approval; later ones, for
+                 lines not yet on an RFQ, through "Create RFQs for Remaining Products".
+                 Once someone is assigned to the request, only they see either button. -->
             <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
-                <attribute name="invisible">state != 'procurement_approval'</attribute>
+                <attribute name="invisible">state not in ('procurement_approval') or not is_rfq_creator_allowed</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="assigned_employee_id" options="{'no_create': True}" readonly="state == 'cancel'"/>
+                <field name="assigned_by_id" invisible="not assigned_by_id"/>
+                <field name="is_rfq_creator_allowed" invisible="1"/>
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="inside">
@@ -76,6 +81,7 @@
             <xpath expr="//field[@name='vendor_id']" position="after">
                 <field name="selected_vendor_id" invisible="not selected_vendor_id"/>
                 <field name="has_pending_rfq_products" invisible="1"/>
+                <field name="has_lines_to_rfq" invisible="1"/>
             </xpath>
 
             <!-- Department of the Material Request, next to the request's number (Source Document) -->
@@ -115,6 +121,37 @@
                         </group>
                     </group>
                 </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_requisition_view_tree_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.tree.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="assigned_employee_id" optional="show"/>
+                <field name="assigned_by_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_requisition_view_search_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.search.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="assigned_employee_id"/>
+                <field name="assigned_by_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='my_agreements']" position="after">
+                <filter string="Assigned to Me" name="assigned_to_me" domain="[('assigned_user_id', '=', uid)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='representative']" position="after">
+                <filter string="Assigned To" name="group_assigned_employee" context="{'group_by': 'assigned_employee_id'}"/>
+                <filter string="Assigned By" name="group_assigned_by" context="{'group_by': 'assigned_by_id'}"/>
             </xpath>
         </field>
     </record>

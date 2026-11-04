@@ -35,6 +35,7 @@
         'views/stock_move.xml',
         
         'wizards/receive_by_weight.xml',
+        'wizards/receipt_reason_wizard.xml',
     ],
     'auto_install': False,
     'application': False,

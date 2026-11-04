@@ -7,3 +7,4 @@ from . import purchase_order
 from . import account_analytic_account
 from . import stock_move_line
 from . import ir_ui_menu
+from . import purchase_receipt_reason

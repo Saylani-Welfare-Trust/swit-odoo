@@ -15,35 +15,187 @@ class PurchaseOrder(models.Model):
     cfo_approved_by = fields.Many2one('res.users', string='CFO Approved By', readonly=True, copy=False)
     cfo_approved_date = fields.Datetime(string='CFO Approved On', readonly=True, copy=False)
 
+    # NEW FIELD: Assign a specific person to approve this RFQ from the Master Setup list
+    designated_cxo_approver_id = fields.Many2one(
+        'master.cxo.approver', 
+        string='Assigned CXO Approver', 
+        tracking=True,
+        help='If set, ONLY this user can give CXO approval to this RFQ.'
+    )
+
     is_cxo_approver_allowed = fields.Boolean(
         compute='_compute_is_cxo_approver_allowed',
-        help='Whether the current user may CXO-approve this RFQ: when it comes from a '
-             'Material Request, only the user who gave that request its HOD approval can.')
+        help='Whether the current user may CXO-approve this RFQ.')
 
-    # The RFQ's state is left untouched while on hold (its CXO / HOD approval
-    # flags carry its position in the flow), so once the CFO releases it the
-    # flow simply carries on from where it stopped.
+    # Set when the RFQ is selected as a winning quote ("Confirm Selected
+    # Lines" in Bulk Price Entry); CXO approval waits for it.
+    is_selected_quote = fields.Boolean(string='Selected Quote', copy=False, readonly=True, tracking=True)
+    selected_quote_by = fields.Many2one('res.users', string='Selected By', readonly=True, copy=False)
+    selected_quote_date = fields.Datetime(string='Selected On', readonly=True, copy=False)
+    awaiting_quote_selection = fields.Boolean(
+        compute='_compute_awaiting_quote_selection',
+        help='Whether this RFQ must first be selected in Bulk Price Entry before CXO approval.')
+
+    # The RFQ's state is left untouched while on hold
     shariah_hold = fields.Boolean(string='Shariah Hold', copy=False, readonly=True, tracking=True)
     shariah_hold_reason = fields.Text(string='Shariah Hold Reason', copy=False, readonly=True)
 
-    @api.depends_context('uid')
-    @api.depends('material_request_id.hod_approved_by')
-    def _compute_is_cxo_approver_allowed(self):
-        for order in self:
-            # sudo: the Material Request record rule hides requests the user didn't create.
-            hod_user = order.material_request_id.sudo().hod_approved_by
-            order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
+    # ------------------------------------------------------------------
+    # Notify the designated CXO approver by email
+    # ------------------------------------------------------------------
+    def _send_cxo_approval_email(self):
+        """Send the 'please approve' email to the assigned approver's
+        work_email, and a message in their Discuss inbox. Silently skips if
+        no approver / no email."""
+        self.ensure_one()
+        approver = self.designated_cxo_approver_id
+        if not approver:
+            return
+        self._notify_cxo_approver_in_discuss(approver)
+        if not approver.work_email:
+            self.message_post(body=_(
+                'No work email set for the assigned CXO approver (%s) - '
+                'email notification skipped.'
+            ) % (approver.employee_id.name or approver.display_name))
+            return
+
+        template = self.env.ref(
+            'bn_procurement_workflow.email_template_cxo_approval_request',
+            raise_if_not_found=False,
+        )
+        if template:
+            template.send_mail(self.id, force_send=True)
+        else:
+            self.env['mail.mail'].create({
+                'subject': _('Approval Required: %s') % (self.name or self.display_name),
+                'email_to': approver.work_email,
+                'email_from': self.company_id.email or self.env.user.email,
+                'model': self._name,
+                'res_id': self.id,
+                'body_html': _(
+                    '<p>Dear %(name)s,</p>'
+                    '<p>Purchase order <strong>%(po)s</strong> needs your CXO approval.</p>'
+                    '<p>Amount: %(currency)s %(amount).2f</p>'
+                ) % {
+                    'name': approver.employee_id.name or '',
+                    'po': self.name or self.display_name,
+                    'currency': self.currency_id.name,
+                    'amount': self.amount_total,
+                },
+            }).send()
+
+        self.message_post(body=_(
+            'CXO approval request emailed to %(name)s &lt;%(email)s&gt;.'
+        ) % {
+            'name': approver.employee_id.name or '',
+            'email': approver.work_email,
+        })
+
+    def _notify_cxo_approver_in_discuss(self, approver):
+        self.ensure_one()
+        user = approver.user_id
+        if not user:
+            self.message_post(body=_(
+                'No user linked to the assigned CXO approver (%s) - Discuss notification skipped.'
+            ) % (approver.employee_id.name or approver.display_name))
+            return
+        # Inbox, so the message shows in Discuss rather than going out as one more
+        # email. sudo: whoever triggers it need not be allowed to edit other users.
+        user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
+        # mail_notify_author: also sent when the approver is the one who selected the quote.
+        self.with_context(mail_notify_author=True).message_notify(
+            body=_(
+                'RFQ %(rfq)s needs your CXO approval (amount: %(currency)s %(amount).2f).'
+            ) % {'rfq': self.display_name, 'currency': self.currency_id.name, 'amount': self.amount_total},
+            partner_ids=user.partner_id.ids,
+            subject=_('CXO Approval Required'),
+        )
 
     # ------------------------------------------------------------------
-    # CFO budget approval
+    # Trigger the email whenever the approver is (re)assigned - or, for an
+    # RFQ still to be selected in Bulk Price Entry, once it is selected
+    # (purchase.requisition.action_select_winning_rfq)
+    # ------------------------------------------------------------------
+    @api.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        for order in orders:
+            if order.designated_cxo_approver_id and not order.awaiting_quote_selection:
+                order._send_cxo_approval_email()
+        return orders
+
+    def write(self, vals):
+        old_approvers = {}
+        if 'designated_cxo_approver_id' in vals:
+            old_approvers = {rec.id: rec.designated_cxo_approver_id for rec in self}
+
+        res = super().write(vals)
+
+        if 'designated_cxo_approver_id' in vals:
+            for order in self:
+                new_approver = order.designated_cxo_approver_id
+                if new_approver and new_approver != old_approvers.get(order.id) \
+                        and not order.awaiting_quote_selection:
+                    order._send_cxo_approval_email()
+        return res
+
+    # Optional: a manual "resend" button
+    def action_resend_cxo_approval_email(self):
+        for order in self:
+            if not order.designated_cxo_approver_id:
+                raise UserError(_('No CXO approver is assigned to %s.') % order.display_name)
+            if order.awaiting_quote_selection:
+                raise UserError(_(
+                    'RFQ %s has not been selected yet: the approval email is sent once it is '
+                    'selected with "Confirm Selected Lines" in Bulk Price Entry.'
+                ) % order.display_name)
+            order._send_cxo_approval_email()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Email Sent'),
+                'message': _('Approval email has been sent to the assigned approver.'),
+                'type': 'success',
+                'sticky': False,
+            },
+        }
+
+    @api.depends_context('uid')
+    @api.depends('designated_cxo_approver_id', 'material_request_id.hod_approved_by')
+    def _compute_is_cxo_approver_allowed(self):
+        for order in self:
+            if order.designated_cxo_approver_id:
+                # If an approver is assigned, ONLY they can approve
+                order.is_cxo_approver_allowed = (order.designated_cxo_approver_id.user_id == self.env.user)
+            else:
+                # Fallback to the original HOD rule
+                hod_user = order.material_request_id.sudo().hod_approved_by
+                order.is_cxo_approver_allowed = not hod_user or hod_user == self.env.user
+
+    @api.depends('is_selected_quote', 'requisition_id.state', 'requisition_id.selected_rfq_id')
+    def _compute_awaiting_quote_selection(self):
+        """Only while its Purchase Request is still choosing winning quotes -
+        when Bulk Price Entry would select the RFQ rather than confirm it."""
+        for order in self:
+            # sudo: whoever opens the RFQ need not be able to read the requisition.
+            requisition = order.requisition_id.sudo()
+            order.awaiting_quote_selection = bool(
+                requisition and requisition._is_selecting_rfqs() and not order.is_selected_quote)
+
+    @api.model
+    def _backfill_selected_quote(self):
+        """Mark as selected the RFQs selected before is_selected_quote existed:
+        the selected RFQ of each requisition (who and when are not known)."""
+        # sudo: run at module update.
+        requisitions = self.env['purchase.requisition'].sudo().search([('selected_rfq_id', '!=', False)])
+        requisitions.selected_rfq_id.filtered(lambda order: not order.is_selected_quote).with_context(
+            tracking_disable=True).write({'is_selected_quote': True})
+
+    # ------------------------------------------------------------------
+    # CFO budget approval (Unchanged)
     # ------------------------------------------------------------------
     def _get_accounting_budget_rows(self):
-        """Every (analytic account, budget, required, available) row of the
-        accounting budget check, whether it is short or not. Checks the RFQ's own amounts against the accounting budget, the same
-        way the Material Request does (available budget per analytic account and
-        budget). The vendor's prices can differ from the Material Request's
-        estimate that its CFO / COO approved, so the RFQ is checked again.
-        Returns [(analytic account, budget, required, available)]."""
         self.ensure_one()
         request = self.material_request_id
         if not request:
@@ -57,14 +209,11 @@ class PurchaseOrder(models.Model):
             analytic = self._get_product_segment(line.product_id)
             if not analytic:
                 continue
-            # sudo: the Material Request record rule hides requests the user didn't create.
             request_line = request.sudo().line_ids.filtered(lambda l: l.product_id == line.product_id)[:1]
             budget = request_line.budget_id.sudo(False) or line_model._get_default_budget_for_analytic(analytic)
             totals[(analytic, budget)] += line.price_subtotal
         rows = []
         for (analytic, budget), required in totals.items():
-            # sudo: practical_amount reads account.budget.post, which only
-            # accounting users may access.
             budget_lines = self.env['budget.lines'].sudo().search([
                 ('analytic_account_id', '=', analytic.id),
                 ('budget_id', '=', budget.id),
@@ -76,13 +225,10 @@ class PurchaseOrder(models.Model):
         return rows
 
     def _get_accounting_budget_shortfalls(self):
-        """The rows of the accounting budget check where the RFQ exceeds the budget."""
         self.ensure_one()
         return [row for row in self._get_accounting_budget_rows() if row[2] > row[3]]
 
     def _get_budget_check_summary(self):
-        """Human-readable figures behind the budget check, so it is visible why an
-        RFQ was (or was not) sent to the CFO."""
         self.ensure_one()
         lines = []
         if not self.material_request_id:
@@ -108,11 +254,6 @@ class PurchaseOrder(models.Model):
         return lines
 
     def _get_budget_exceeded_reasons(self):
-        """Why this RFQ needs the CFO's decision; empty when it is within the
-        Shariah Law balance, or when the CFO has already approved it. The
-        accounting budget is not checked here - the Material Request's own
-        CFO / COO Budget Approval already covers that; this step only looks at
-        Shariah. Checked on the RFQ's current amounts every time."""
         self.ensure_one()
         if self.shariah_override:
             return []
@@ -123,8 +264,6 @@ class PurchaseOrder(models.Model):
         ]
 
     def _mark_cfo_approved(self, auto=False):
-        """Record the CFO approval and let the requisition move on to the Funds
-        Availability gate."""
         for order in self:
             order.write({
                 'cfo_approved': True,
@@ -141,11 +280,6 @@ class PurchaseOrder(models.Model):
                 ) % order.name)
 
     def _release_to_po(self):
-        """Turn the approved RFQ into a PO. For an RFQ picked in a Purchase
-        Requisition this goes through the requisition's own release, so the
-        requisition is marked as in progress too. A failure is reported on the
-        RFQ instead of undoing the approval that triggered it - Confirm Order
-        then stays available to do it by hand."""
         self.ensure_one()
         order = self.sudo()
         try:
@@ -160,9 +294,6 @@ class PurchaseOrder(models.Model):
                 'The PO could not be created automatically: %s<br/>Use Confirm Order once this is resolved.') % e)
 
     def _evaluate_cfo_stage(self):
-        """Within budget: CFO approval is recorded automatically and the PO is
-        created. Over budget: the RFQ waits for the CFO, who approves it or
-        arranges the budget. Returns the RFQs that were put on hold."""
         held = self.browse()
         for order in self:
             reasons = order._get_budget_exceeded_reasons()
@@ -178,7 +309,6 @@ class PurchaseOrder(models.Model):
         return held
 
     def action_open_arrange_budget(self):
-        """CFO opens the wizard that moves budget in from other Shariah segments."""
         self.ensure_one()
         self._check_shariah_cfo()
         return {
@@ -191,8 +321,6 @@ class PurchaseOrder(models.Model):
         }
 
     def _after_budget_arranged(self, transfers):
-        """Called once the CFO's Shariah transfers are done: when the RFQ now
-        fits the balance it is approved and its PO created."""
         self.ensure_one()
         pending = transfers.filtered(lambda t: t.state != 'posted')
         if transfers:
@@ -214,14 +342,6 @@ class PurchaseOrder(models.Model):
         self._release_to_po()
 
     def _notify_cfo_approval_needed(self, reason):
-        """Ping every user who can give CFO approval (the Material Request CFO
-        group) that this RFQ needs their action, two ways:
-        - a direct message to each of them (message_notify - lands straight in
-          their own inbox as a personal notification, and by email per their own
-          notification preference, rather than a comment on the RFQ's chatter
-          that they'd only see by opening the record);
-        - a "To Do" activity assigned to each of them, since that shows up on
-          their own Activities view/dashboard too."""
         self.ensure_one()
         cfo_users = self.env.ref(CFO_GROUP).users
         body = _(
@@ -232,12 +352,6 @@ class PurchaseOrder(models.Model):
                 'No user currently holds the CFO approval group (%s) - nobody was notified.'
             ) % CFO_GROUP)
             return
-        # A user whose notification preference is "Handle by Emails" (the
-        # default) gets no inbox item at all for message_notify - only a
-        # queued email. Force these approvers onto "Handle in Odoo" so the
-        # message reliably reaches them even if outgoing email is down; this
-        # also changes how they receive every other Odoo notification, not
-        # just this one.
         cfo_users.filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
         self.message_notify(
             body=body,
@@ -274,9 +388,6 @@ class PurchaseOrder(models.Model):
             raise UserError(_('Only the CFO can approve or reject a Shariah Hold.'))
 
     def action_shariah_hold_approve(self):
-        """CFO approves the RFQ despite the exceeded budget, and its PO is created.
-        The amounts are checked again first: if they changed since the hold was
-        raised, the CFO gets to review the new figures before approving."""
         self.ensure_one()
         self._check_shariah_cfo()
         reason = '\n'.join(self._get_budget_exceeded_reasons())
@@ -292,7 +403,6 @@ class PurchaseOrder(models.Model):
         return True
 
     def action_shariah_hold_reject(self):
-        """CFO rejects the held RFQ, which cancels it."""
         self.ensure_one()
         self._check_shariah_cfo()
         self.write({'shariah_hold': False, 'shariah_hold_reason': False})
@@ -301,57 +411,48 @@ class PurchaseOrder(models.Model):
         return True
 
     # ------------------------------------------------------------------
-    # Approval steps
+    # Approval steps (UPDATED)
     # ------------------------------------------------------------------
     def action_cxo_approve_po(self):
-        """CXO approval on this RFQ is the only CXO approval in the Procurement
-        workflow - reflect it onto the requisition's own state so the PR
-        doesn't need a second, duplicate CXO Approval step of its own.
-
-        If the requisition doesn't have a selected RFQ yet, approving one
-        here claims it as the winning quote - this doesn't require having
-        gone through the Bulk RFQ Price wizard's "Confirm Selected Lines"
-        first, since that's an easy step to miss when there's only one
-        vendor to compare anyway.
-
-        When the RFQ comes from a Material Request, only the user who gave that
-        request its HOD approval may do this CXO approval."""
+        """CXO approval on this RFQ."""
         for order in self:
-            # sudo: the Material Request record rule hides requests the user didn't create.
-            request = order.material_request_id.sudo()
-            hod_user = request.hod_approved_by
-            if hod_user and hod_user != self.env.user:
+            if order.awaiting_quote_selection:
                 raise UserError(_(
-                    'Only %(user)s, who gave HOD approval to Material Request %(request)s, '
-                    'can give CXO approval to this RFQ.'
-                ) % {'user': hod_user.display_name, 'request': request.name})
+                    'RFQ %s has not been selected yet: select it with "Confirm Selected Lines" '
+                    'in Bulk Price Entry before CXO approval.'
+                ) % order.display_name)
+            # 1. Check the new designated approver first
+            if order.designated_cxo_approver_id:
+                if order.designated_cxo_approver_id.user_id != self.env.user:
+                    raise UserError(_(
+                        'Only the assigned approver, %s, can give CXO approval to this RFQ.'
+                    ) % order.designated_cxo_approver_id.user_id.name)
+            else:
+                # 2. Fallback to the original HOD rule if no one is specifically assigned
+                request = order.material_request_id.sudo()
+                hod_user = request.hod_approved_by
+                if hod_user and hod_user != self.env.user:
+                    raise UserError(_(
+                        'Only %(user)s, who gave HOD approval to Material Request %(request)s, '
+                        'can give CXO approval to this RFQ.'
+                    ) % {'user': hod_user.display_name, 'request': request.name})
+                    
         res = super().action_cxo_approve_po()
         for order in self:
             requisition = order.requisition_id
             if not requisition or not requisition.material_request_id:
                 continue
-            if requisition.state == 'rfq_sent' and not requisition.selected_rfq_id:
-                requisition.write({'selected_rfq_id': order.id, 'state': 'cxo_approved'})
-                requisition.message_post(body=_(
-                    'RFQ %s approved by CXO and claimed as the selected quote.'
-                ) % order.name)
-            elif requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
+            if requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
                 requisition.write({'state': 'cxo_approved'})
                 requisition.message_post(body=_('CXO approved the selected RFQ %s.') % order.name)
         return res
 
     def action_hod_approve_po(self):
-        """HOD approval. Then the budget decides the CFO stage: within budget the
-        CFO approval is recorded automatically and the PO is created; over
-        budget the RFQ waits for the CFO."""
         res = super().action_hod_approve_po()
         held = self._evaluate_cfo_stage()
         return self._shariah_hold_notification() if held else res
 
     def action_cfo_approve_po(self):
-        """Manual CFO approval, for RFQs that got CXO and HOD approval before the
-        automatic budget check existed. Same rules: within budget it is approved,
-        over budget it waits for the CFO's decision."""
         if not self.env.user.has_group(CFO_GROUP):
             raise UserError(_('Only the CFO can give CFO approval.'))
         for order in self:
@@ -379,25 +480,26 @@ class PurchaseOrder(models.Model):
         return res
 
     def _close_purchase_request(self):
-        """A Purchase Request is finished once its PO is confirmed: the quotes of
-        the other vendors that are still open are cancelled and the request is
-        closed, so nothing more can be ordered from it. A Blanket Order stays
-        open - it is there to be ordered from again."""
         for order in self:
-            # sudo: whoever gives the last approval need not be a purchase user.
             requisition = order.requisition_id.sudo()
             if not requisition or requisition.state in ('done', 'cancel'):
                 continue
-            # What makes a Blanket Order is its vendor, as in action_in_progress():
-            # a Purchase Request has the same default type but never a vendor.
             if requisition.state == 'ongoing' or (
                     requisition.type_id.quantity_copy == 'none' and requisition.vendor_id):
                 continue
-            # Selecting the winning quote already cancels them; this covers an order
-            # confirmed without that step.
             other_rfqs = requisition._cancel_other_rfqs(order, _(
                 'Cancelled - %(order)s was confirmed for Purchase Request %(request)s.'
             ) % {'order': order.display_name, 'request': requisition.display_name})
+            # Quotes for its other products are still open, or some products
+            # have not gone out on an RFQ yet: the requisition stays open for
+            # them, and closes with the Purchase Order of the last one.
+            if requisition.purchase_ids.filtered(lambda rfq: rfq.state in ('draft', 'sent', 'to approve')) \
+                    or requisition._get_lines_to_rfq():
+                requisition.message_post(body=_(
+                    'Purchase Order %(order)s confirmed. %(count)s other RFQ(s) for the same '
+                    'product(s) cancelled; the request stays open for its other products.'
+                ) % {'order': order.display_name, 'count': len(other_rfqs)})
+                continue
             requisition.action_done()
             requisition.message_post(body=_(
                 'Closed - Purchase Order %(order)s confirmed. %(count)s other RFQ(s) cancelled.'

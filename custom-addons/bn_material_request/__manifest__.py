@@ -20,17 +20,27 @@
         'mail',
         'purchase_requisition',
         'bn_stock_location',
+        # The multi-PR / multi-page vendor-selection wizard filters other Purchase
+        # Requests by the "Procurement Manager Approval" state, which this module
+        # defines (PURCHASE_REQUISITION_STATES).
+        'bn_purchase_customization',
     ],
     'data': [
         'security/groups.xml',
         'security/record_rule.xml',
         'security/ir.model.access.csv',
+        
         'data/sequence.xml',
+        'data/state_cleanup.xml',
+        
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',
+        'views/purchase_requisition_line_deletion_log_views.xml',
         'views/wizard_views.xml',
         'views/purchase_order.xml',
         'views/stock_picking_views.xml',
+        
+        'wizards/material_request_revert_wizard_views.xml',
     ],
     'installable': True,
     'application': True,

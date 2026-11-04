@@ -4,3 +4,5 @@ access_receive_by_weight_line,access.receive.by.weight.line,bn_inventory_customi
 access_livestock_variant,access.livestock.variant,bn_inventory_customization.model_livestock_variant,base.group_user,1,1,1,1
 access_livestock_variant,access.livestock.variant,model_livestock_variant,base.group_user,1,1,1,1
 access_stock_valuation_layer_user_reporting,stock.valuation.layer user reporting,stock_account.model_stock_valuation_layer,group_stock_user_reporting,1,0,0,0
+access_purchase_receipt_reason,access.purchase.receipt.reason,model_purchase_receipt_reason,base.group_user,1,0,0,0
+access_receipt_reason_wizard,access.receipt.reason.wizard,model_receipt_reason_wizard,base.group_user,1,1,1,1

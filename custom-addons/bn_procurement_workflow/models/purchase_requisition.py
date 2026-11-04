@@ -15,6 +15,21 @@ class PurchaseRequisition(models.Model):
     procurement_review_date = fields.Datetime(readonly=True, copy=False)
     defer_reason = fields.Text(string='Deferral Reason')
 
+    # Who creates the RFQs: once someone is assigned, only they can select the
+    # vendors (Vendor Selection Wizard) for this request.
+    assigned_employee_id = fields.Many2one(
+        'hr.employee', string='Assigned To', tracking=True, copy=False,
+        domain=[('user_id', '!=', False)],
+        help='Employee who creates the RFQs of this request. Once set, only this '
+             'employee can select the vendors for its RFQs.')
+    # Stored, so that users without HR access can be matched against it.
+    assigned_user_id = fields.Many2one(
+        related='assigned_employee_id.user_id', string='Assigned User', store=True)
+    assigned_by_id = fields.Many2one('res.users', string='Assigned By', readonly=True, copy=False)
+    is_rfq_creator_allowed = fields.Boolean(
+        compute='_compute_is_rfq_creator_allowed',
+        help='Whether the current user may select the vendors for the RFQs of this request.')
+
     # Funds availability gate
     funds_available = fields.Boolean(string='Funds Available', copy=False, tracking=True)
     funds_transfer_remarks = fields.Text(string='CFO / Shariah Fund Transfer Remarks')
@@ -53,6 +68,11 @@ class PurchaseRequisition(models.Model):
         help='Whether the Material Request asks for products or quantities that '
              'are not on an RFQ yet, and no more recent Purchase Request has been '
              'created for them.')
+    # Lines (or part of their quantity) not yet sent out on an RFQ: more RFQs
+    # are created for them on this same requisition, until it is closed.
+    has_lines_to_rfq = fields.Boolean(
+        compute='_compute_has_lines_to_rfq',
+        help='Whether some of its lines have not been sent out on an RFQ yet.')
 
     # Automatic Shariah Law balance check for the Funds Availability gate
     funds_shariah_balance = fields.Monetary(
@@ -98,20 +118,76 @@ class PurchaseRequisition(models.Model):
             lowest_balance = min(balances)
         return not insufficient_accounts, lowest_balance, insufficient_accounts
 
+    @api.depends_context('uid')
+    @api.depends('assigned_employee_id', 'assigned_user_id')
+    def _compute_is_rfq_creator_allowed(self):
+        for requisition in self:
+            requisition.is_rfq_creator_allowed = (
+                not requisition.assigned_employee_id or requisition.assigned_user_id == self.env.user)
+
+    def _check_rfq_creator(self):
+        for requisition in self:
+            if not requisition.is_rfq_creator_allowed:
+                raise ValidationError(_(
+                    'Only %(employee)s, assigned to Purchase Request %(request)s, can select the vendors for its RFQs.',
+                    employee=requisition.sudo().assigned_employee_id.name, request=requisition.name))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('assigned_employee_id'):
+                vals['assigned_by_id'] = self.env.uid
+        requisitions = super().create(vals_list)
+        requisitions.filtered('assigned_user_id')._notify_assigned_user()
+        return requisitions
+
+    def write(self, vals):
+        old_users = {}
+        if 'assigned_employee_id' in vals:
+            vals = dict(vals, assigned_by_id=self.env.uid if vals['assigned_employee_id'] else False)
+            old_users = {requisition.id: requisition.assigned_user_id for requisition in self}
+        res = super().write(vals)
+        if 'assigned_employee_id' in vals:
+            self.filtered(
+                lambda requisition: requisition.assigned_user_id
+                and requisition.assigned_user_id != old_users.get(requisition.id)
+            )._notify_assigned_user()
+        return res
+
+    def _notify_assigned_user(self):
+        """A message in the assigned employee's Discuss inbox: the request now
+        waits for them to create its RFQs. Also sent to someone assigning
+        themselves (mail_notify_author: Odoo leaves the author out otherwise)."""
+        for requisition in self:
+            user = requisition.assigned_user_id
+            # Inbox, so the message shows in Discuss rather than as an email.
+            # sudo: whoever assigns need not be allowed to edit other users.
+            user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
+            requisition.with_context(mail_notify_author=True).message_notify(
+                body=_('Purchase Request %(request)s has been assigned to you by %(user)s to create its RFQs.',
+                       request=requisition.display_name, user=self.env.user.display_name),
+                partner_ids=user.partner_id.ids,
+                subject=_('Purchase Request Assigned'),
+            )
+
+    def action_create_multi_vendor_rfqs(self):
+        self._check_rfq_creator()
+        return super().action_create_multi_vendor_rfqs()
+
     def action_procurement_approve(self):
         """Procurement Manager reviews and approves the draft PR directly - no HOD/Member
         approval step in this workflow. Moves the PR into its own 'Procurement Manager
         Approval' state, which unlocks RFQ creation."""
         self.ensure_one()
-        if self.state != 'draft':
-            raise ValidationError(_('This request is not in Draft state.'))
-        if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
-            raise ValidationError(_('Only a Procurement Manager can approve this request.'))
-        if not self.material_request_id:
-            raise ValidationError(
-                _('This Purchase Requisition has no source Material Request, so there is no '
-                  'requesting department to run Technical Evaluation against. It cannot enter '
-                  'the Procurement workflow.'))
+        # if self.state != 'confirm':
+        #     raise ValidationError(_('This request is not in confirm state.'))
+        # if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+        #     raise ValidationError(_('Only a Procurement Manager can approve this request.'))
+        # if not self.material_request_id:
+        #     raise ValidationError(
+        #         _('This Purchase Requisition has no source Material Request, so there is no '
+        #           'requesting department to run Technical Evaluation against. It cannot enter '
+        #           'the Procurement workflow.'))
         # The request gets its number here, so that the RFQs sent out next carry it.
         self._assign_reference_number()
         self.write({
@@ -182,16 +258,31 @@ class PurchaseRequisition(models.Model):
                 and not requisition._has_newer_request()
                 and requisition._get_request_shortfall())
 
+    @api.depends('line_ids.is_locked')
+    def _compute_has_lines_to_rfq(self):
+        for requisition in self:
+            requisition.has_lines_to_rfq = bool(requisition._get_lines_to_rfq())
+
+    def _get_lines_to_rfq(self):
+        """Lines not yet fully sent out on an RFQ. A requisition whose RFQs were
+        all created before lines were locked has no line locked at all, and is
+        treated as having none left."""
+        self.ensure_one()
+        if not any(line.locked_qty for line in self.line_ids):
+            return self.line_ids.browse()
+        return self.line_ids.filtered(lambda line: not line.is_locked)
+
     def action_create_remaining_request(self):
         """A closed request whose Purchase Order covers only part of its Material
-        Request, or a request whose RFQs cover only part of it: create a new
-        Purchase Request for the products and quantities that are not on an
-        RFQ yet. This one is left as it is. The new one starts in Procurement
-        Manager Approval, ready for RFQs: the Procurement Manager creating it
-        is the one who would approve it."""
+        Request: create a new Purchase Request for the products and quantities
+        that are not on an RFQ yet. This one is left as it is. While a request
+        is open, its remaining products get their RFQs on it instead. The new
+        one starts in Procurement Manager Approval, ready for RFQs: the
+        Procurement Manager creating it is the one who would approve it."""
         self.ensure_one()
-        if self.state not in ('done', 'rfq_sent'):
-            raise ValidationError(_('This request is neither Closed nor in RFQ Sent state.'))
+        if self.state != 'done':
+            raise ValidationError(_(
+                'This request is still open: create the RFQs for its remaining products on it instead.'))
         if not self.material_request_id:
             raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
         if self._has_newer_request():
@@ -220,32 +311,62 @@ class PurchaseRequisition(models.Model):
             'target': 'current',
         }
 
-    def action_select_winning_rfq(self, winning_po):
-        """Called by the RFQ price wizard once a winning quote has been selected.
-        From here on, CXO and HOD approval happen directly on winning_po itself -
-        this requisition just waits for that RFQ's approval flags to advance."""
+    def _is_selecting_rfqs(self):
+        """Whether a winning quote can be selected for this requisition. Each
+        product gets its own winner: the first is selected in RFQ Sent - or
+        still in Procurement Manager Approval, while some products are not on
+        an RFQ yet - and the others any time after that until the requisition
+        is closed."""
         self.ensure_one()
-        if self.state != 'rfq_sent':
-            raise ValidationError(_('This request is not in RFQ Sent state.'))
-        self.write({
-            'selected_rfq_id': winning_po.id,
-            'state': 'vendor_selected',
-        })
-        other_rfqs = self._cancel_other_rfqs(winning_po, _(
-            'Cancelled - the quote of %(vendor)s was selected for Purchase Request %(request)s.'
-        ) % {'vendor': winning_po.partner_id.display_name, 'request': self.display_name})
-        self.message_post(body=_(
-            'Quote from %(vendor)s selected, %(count)s other RFQ(s) cancelled. '
-            'Awaiting CXO and HOD approval on that RFQ.'
-        ) % {'vendor': winning_po.partner_id.display_name, 'count': len(other_rfqs)})
+        return self.state in ('procurement_approval', 'rfq_sent') or bool(
+            self.selected_rfq_id and self.state not in ('done', 'cancel'))
 
-    def _cancel_other_rfqs(self, kept_rfq, message):
-        """Cancel the quotes of the other vendors that are still open, posting
-        ``message`` on each of them. Returns the cancelled RFQs."""
+    def action_select_winning_rfq(self, winning_pos):
+        """Called by the RFQ price wizard once winning quotes have been selected:
+        one per product, or several vendors each given a share of a product's
+        quantity. The first winner becomes this requisition's selected RFQ,
+        whose approval progress its state follows; the other winners only
+        cancel the quotes competing with them. From here on, CXO and HOD
+        approval happen directly on each winning RFQ."""
         self.ensure_one()
+        if not self._is_selecting_rfqs():
+            raise ValidationError(_('A winning quote cannot be selected for this request in its current state.'))
+        for winning_po in winning_pos.filtered(lambda po: not po.is_selected_quote):
+            winning_po.write({
+                'is_selected_quote': True,
+                'selected_quote_by': self.env.user.id,
+                'selected_quote_date': fields.Datetime.now(),
+            })
+            # Held back until now: the approver can only act once it is selected.
+            if winning_po.designated_cxo_approver_id:
+                winning_po._send_cxo_approval_email()
+        if not self.selected_rfq_id:
+            self.write({
+                'selected_rfq_id': winning_pos[0].id,
+                'state': 'vendor_selected',
+            })
+        vendors = ', '.join(winning_pos.partner_id.mapped('display_name'))
+        other_rfqs = self._cancel_other_rfqs(winning_pos, _(
+            'Cancelled - the quote(s) of %(vendor)s were selected for Purchase Request %(request)s.'
+        ) % {'vendor': vendors, 'request': self.display_name})
+        self.message_post(body=_(
+            'Quote(s) from %(vendor)s selected, %(count)s other RFQ(s) cancelled. '
+            'Awaiting CXO and HOD approval on the selected RFQ(s).'
+        ) % {'vendor': vendors, 'count': len(other_rfqs)})
+
+    def _cancel_other_rfqs(self, kept_rfqs, message):
+        """Cancel the other vendors' quotes, still open, for any product of
+        ``kept_rfqs``, posting ``message`` on each of them. Quotes for this
+        requisition's other products stay open, and so do the selected ones:
+        the vendors a product is split between each have their share of it.
+        Returns the cancelled RFQs."""
+        self.ensure_one()
+        products = kept_rfqs.order_line.product_id
         # sudo: whoever selects or approves the quote need not be a purchase user.
         other_rfqs = self.sudo().purchase_ids.filtered(
-            lambda rfq: rfq != kept_rfq and rfq.state in ('draft', 'sent', 'to approve'))
+            lambda rfq: rfq not in kept_rfqs and not rfq.is_selected_quote
+            and rfq.state in ('draft', 'sent', 'to approve')
+            and rfq.order_line.product_id & products)
         if other_rfqs:
             # An RFQ waiting for the CFO must not keep its "Waiting for CFO" banner once cancelled.
             other_rfqs.write({'shariah_hold': False, 'shariah_hold_reason': False})
