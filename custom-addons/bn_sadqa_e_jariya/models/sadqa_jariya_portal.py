@@ -102,8 +102,9 @@ class SadqaJariya(models.Model):
         address = ', '.join(part for part in (donee.street, donee.street2, donee.city) if part)
         if address:
             vals['address'] = address
-        if donee.area:
-            vals['area'] = donee.area.name
+        area = donee.sadqa_area_id or donee.area
+        if area:
+            vals['area'] = area.name
         return vals
 
     def _portal_base_info(self):

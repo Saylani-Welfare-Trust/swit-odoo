@@ -11,6 +11,17 @@ class SadqaJariyaDisbursementCategory(models.Model):
     name = fields.Char('Name', required=True)
 
 
+class SadqaJariyaArea(models.Model):
+    _name = 'sadqa.jariya.area'
+    _description = 'Sadqa e Jariya Area'
+    _order = 'name'
+
+    name = fields.Char('Name', required=True)
+    code = fields.Char('Area Code')
+    description = fields.Text('Description')
+    active = fields.Boolean('Active', default=True)
+
+
 class SadqaJariyaApplicationType(models.Model):
     _name = 'sadqa.jariya.application.type'
     _description = 'Sadqa e Jariya Disbursement Application Type'

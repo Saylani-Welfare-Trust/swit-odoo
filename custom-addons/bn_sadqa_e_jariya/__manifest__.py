@@ -37,6 +37,7 @@
         'views/res_company.xml',
 
         'wizards/wizard_views.xml',
+        'wizards/record_search_views.xml',
 
         'views/menu.xml',
     ],

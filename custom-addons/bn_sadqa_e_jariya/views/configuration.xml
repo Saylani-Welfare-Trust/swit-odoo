@@ -1,6 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="sadqa_jariya_area_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.area.view.tree</field>
+        <field name="model">sadqa.jariya.area</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_area_action" model="ir.actions.act_window">
+        <field name="name">Areas</field>
+        <field name="res_model">sadqa.jariya.area</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create the areas of Sadqa e Jariya donees....
+            </p>
+        </field>
+    </record>
+
     <record id="sadqa_jariya_application_type_view_tree" model="ir.ui.view">
         <field name="name">sadqa.jariya.application.type.view.tree</field>
         <field name="model">sadqa.jariya.application.type</field>
@@ -92,6 +117,21 @@
         </field>
     </record>
 
+    <!-- next to Can be Sold / Can be Purchased -->
+    <record id="product_template_form_view_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">product.template.form.view.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='options']" position="inside">
+                <span class="d-inline-flex">
+                    <field name="is_sadqa_jariya"/>
+                    <label for="is_sadqa_jariya"/>
+                </span>
+            </xpath>
+        </field>
+    </record>
+
     <record id="product_template_only_form_view_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
         <field name="name">product.template.only.form.view.inherit.bn.sadqa.e.jariya</field>
         <field name="model">product.template</field>
@@ -100,7 +140,6 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Sadqa e Jariya" name="sadqa_jariya">
                     <group name="sadqa_jariya">
-                        <field name="is_sadqa_jariya"/>
                         <field name="is_sadqa_jariya_hod"/>
                     </group>
                 </page>

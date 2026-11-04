@@ -87,7 +87,8 @@ class RecordSearch(models.TransientModel):
                 'default_cnic_no': self.cnic_no,
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
-                'default_microfinance_scheme_id': self.microfinance_scheme_id.id,
+                # microfinance.scheme only exists with bn_microfinance installed
+                'default_microfinance_scheme_id': self.microfinance_scheme_id.id if 'microfinance.scheme' in self.env else False,
                 'default_category': self.category,
                 # carried on to the profile popup, see action_change_request
                 'from_record_search': True,

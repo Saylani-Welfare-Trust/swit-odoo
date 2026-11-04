@@ -30,7 +30,8 @@
                         </group>
                         <group name="record_search_col_2">
                             <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" readonly="is_microfinance or is_welfare or is_medical" />
-                            <field name='category' string='Category' invisible="registration_type != 'donee' or is_microfinance or is_medical"/>
+                            <!-- Welfare registers individuals only (institutions: Sadqa e Jariya) -->
+                            <field name='category' string='Category' invisible="registration_type != 'donee' or is_microfinance or is_medical or is_welfare"/>
                         </group>
                     </group>
                 </sheet>
@@ -70,6 +71,7 @@
             'default_registration_type': 'donee',
             'default_donee_registration_type': 'welfare',
             'default_is_welfare': True,
+            'default_category': 'individual',
         }</field>
         <field name="target">new</field>
     </record>

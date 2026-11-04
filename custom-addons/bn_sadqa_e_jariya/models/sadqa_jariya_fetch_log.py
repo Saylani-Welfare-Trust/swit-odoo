@@ -1,7 +1,18 @@
+import base64
+import logging
+
+import requests
+
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 
 from .sadqa_jariya import FORM_KINDS, FORM_HEADER_KEYS, FORM_DETAIL_FIELDS
+
+_logger = logging.getLogger(__name__)
+
+# Contact person's picture in a submitted row, becomes the donee's picture
+# (not in the contract yet: profileImage is the old portal's donee photo)
+PICTURE_KEYS = ('contactPersonImage', 'profileImage')
 
 # portal formKind -> institution_category
 FORM_KIND_CATEGORIES = {form_kind: category for category, form_kind in FORM_KINDS.items()}
@@ -115,7 +126,41 @@ class SadqaJariyaFetchLog(models.Model):
         self.env[detail_model].create(dict(self._portal_form_vals(detail_model, form), application_id=application.id))
         application.message_post(body=_("📝 Form submitted by the donee on the portal (%s), imported.")
                                  % (row.get('submittedAt') or '').replace('T', ' ')[:16])
+        self._import_donee_picture(application.donee_id, row)
         return True
+
+    def _portal_picture(self, value):
+        """base64 of a portal picture: URL, data URL or plain base64"""
+        if isinstance(value, dict):
+            value = value.get('url') or value.get('data')
+        if not isinstance(value, str) or not value.strip():
+            return False
+        value = value.strip()
+        if value.startswith('http'):
+            response = requests.get(value, timeout=20)
+            response.raise_for_status()
+            return base64.b64encode(response.content)
+        if value.startswith('data:') and ',' in value:
+            value = value.split(',', 1)[1]
+        base64.b64decode(value, validate=True)
+        return value.encode()
+
+    def _import_donee_picture(self, donee, row):
+        """The contact person's picture, if the portal sent one, becomes the donee's picture"""
+        for source in (row.get('form') or {}, row.get('baseInfo') or {}, row):
+            for key in PICTURE_KEYS:
+                if not source.get(key):
+                    continue
+                try:
+                    with self.env.cr.savepoint():
+                        picture = self._portal_picture(source[key])
+                        if picture:
+                            donee.image_1920 = picture
+                            return True
+                except Exception as e:
+                    # a bad picture must not stop the form import
+                    _logger.warning("Sadqa e Jariya donee %s: portal picture %s not imported: %s", donee.id, key, e)
+        return False
 
     def _import_inquiry_row(self, application, row):
         """Completed inquiry of a getCompletedInquiries row, True when imported now (False: imported before)"""

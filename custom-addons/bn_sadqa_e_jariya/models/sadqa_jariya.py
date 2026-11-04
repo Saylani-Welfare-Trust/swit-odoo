@@ -40,6 +40,7 @@ REVERT_STATE = {
 DONEE_TAGS = (
     'bn_profile_management.donee_partner_category',
     'bn_profile_management.coorporate_institute_partner_category',
+    'bn_sadqa_e_jariya.sadqa_jariya_partner_category',
 )
 
 # institution_category -> portal formKind
