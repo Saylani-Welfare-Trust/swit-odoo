@@ -114,4 +114,20 @@
               action="action_pos_order_configurator"
               sequence="2"/>
 
+    <!-- Donation Box Configurator Action -->
+    <record id="action_donation_box_configurator" model="ir.actions.act_window">
+        <field name="name">Donation Box Configurator</field>
+        <field name="res_model">dashboard.configurator</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('dashboard_type', 'in', ['donation_box', 'all'])]</field>
+        <field name="context">{'default_dashboard_type': 'donation_box'}</field>
+    </record>
+
+    <!-- Donation Box Configurator Menu -->
+    <menuitem id="menu_donation_box_configurator"
+              name="Donation Box Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_donation_box_configurator"
+              sequence="3"/>
+
 </odoo>
