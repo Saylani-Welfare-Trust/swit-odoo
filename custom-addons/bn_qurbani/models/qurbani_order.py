@@ -565,7 +565,7 @@ class QurbaniOrder(models.Model):
         # ==================================================
         def _get_demand(line):
 
-            schedule = line.get('qurbani_schedule', {})
+            schedule = line.get('qurbani_schedule') or {}
             slot = schedule.get('slot', {})
 
             slot_demand_id = slot.get('slot_demand_id')
@@ -678,7 +678,7 @@ class QurbaniOrder(models.Model):
             if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
-            schedule = line.get('qurbani_schedule', {})
+            schedule = line.get('qurbani_schedule') or {}
             slot = schedule.get('slot', {})
 
             demand = _get_demand(line)
