@@ -113,7 +113,7 @@
         name="Planning Summary"
         action="report_monthly_planning_line_action"
         parent="stock.menu_warehouse_report"
-        groups="bn_monthly_planning.group_planning_report_viewer,stock.group_stock_manager"
+        groups="bn_planning.group_planning_report_viewer,stock.group_stock_manager"
         sequence="96"/>
 
 </odoo>

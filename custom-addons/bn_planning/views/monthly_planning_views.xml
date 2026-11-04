@@ -296,14 +296,14 @@
         id="planning_root_menu"
         name="Planning"
         web_icon="bn_master_setup,static/description/icon.png"
-        groups="bn_monthly_planning.group_planning_user"
+        groups="bn_planning.group_planning_user"
         sequence="6"/>
     <menuitem
         id="menu_monthly_planning"
         name="Monthly Planning"
         action="action_monthly_planning"
         parent="planning_root_menu"
-        groups="bn_monthly_planning.group_planning_user"
+        groups="bn_planning.group_planning_user"
         sequence="1"/>
 
 </odoo>
