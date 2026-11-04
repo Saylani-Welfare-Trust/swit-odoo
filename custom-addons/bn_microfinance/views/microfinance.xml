@@ -149,15 +149,17 @@
                                 <button name="action_print_installment_plan" string="Print Installment Plan" type="object" class="btn btn-primary" icon="fa-print"/>
                             </div>
                             <field name="microfinance_line_ids" readonly="1">
-                                <tree>
+                                <tree decoration-danger="state == 'overdue'">
                                     <field name="installment_no" />
+                                    <field name="product_id" />
                                     <field name="payment_type" string = "Payment Type"/>
                                     <field name="due_date" />
                                     <field name="amount" />
                                     <field name="paid_amount" />
                                     <field name="paid_date" />
-                                    <field name="remaining_amount" />
-                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                                    <field name="remaining_amount" sum="Total Remaining" />
+                                    <field name="currency_id" column_invisible="1" />
+                                    <field name="state" force_save="1" widget="badge" decoration-info="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-danger="state == 'overdue'" decoration-success="state == 'paid'" />
                                 </tree>
                             </field>
                         </page>
