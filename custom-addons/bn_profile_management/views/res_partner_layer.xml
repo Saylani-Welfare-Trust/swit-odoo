@@ -137,7 +137,7 @@
 
                     <field name="avatar_128" invisible="1"/>
                     <field name="user_id" invisible="1"/>
-                    <field name="image_1920" widget="image" class="oe_avatar" required="not is_donor" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" />
+                    <field name="image_1920" widget="image" class="oe_avatar" required="not is_donor and state != 'register'" options="{&quot;preview_image&quot;: &quot;avatar_128&quot;}" />
                     <div class="oe_title mb24">
                         <field name="is_company" invisible="1"/>
                         <field name="welfare_donee_required_fields" invisible="1" />
@@ -150,7 +150,7 @@
                         <field name="company_id" invisible="1"/>
                         <field name="country_code" invisible="1"/>
                         <h1>
-                            <field id="individual" options="{'line_breaks': False}" widget="text" class="text-break" name="name" default_focus="1" placeholder="e.g. Brandom Freeman" readonly="state == 'register'" required="1"/>
+                            <field id="individual" options="{'line_breaks': False}" widget="text" class="text-break" name="name" default_focus="1" placeholder="e.g. Brandom Freeman" readonly="state == 'register'" required="state != 'register'"/>
                         </h1>
                     </div>
 
@@ -163,7 +163,7 @@
                                 <field name="country_id" invisible="1"/>
                                 <field name="street" placeholder="Street..." class="o_address_street" readonly="state == 'register'"/>
                                 <field name="street2" placeholder="Street 2..." class="o_address_street" readonly="state == 'register'"/>
-                                <field name="city" placeholder="City" class="o_address_city" required="donee_required_fields" readonly="state == 'register'"/>
+                                <field name="city" placeholder="City" class="o_address_city" required="donee_required_fields and state != 'register'" readonly="state == 'register'"/>
                                 <field name="state_id" readonly="state == 'register'" class="o_address_state" placeholder="State" options="{'no_open': True, 'no_quick_create': True}" context="{'country_id': country_code_id, 'default_country_id': country_code_id, 'zip': zip}"/>
                                 <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="state == 'register'"/>
                             </div>
@@ -172,8 +172,8 @@
                         <group name="profile_management_col_2">
                             <label for="mobile"/>
                             <div style="display: flex;">
-                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" required="1" name="country_code_id" nolabel="1" readonly="state == 'register'" /> 
-                                <field style="width: 70% !important;" name="mobile" required="1" nolabel="1" readonly="state == 'register'" />
+                                <field options="{'no_create': True, 'no_edit': True, 'no_open': True}" style="width: 30% !important;" required="state != 'register'" name="country_code_id" nolabel="1" readonly="state == 'register'" /> 
+                                <field style="width: 70% !important;" name="mobile" required="state != 'register'" nolabel="1" readonly="state == 'register'" />
                             </div>
                             <field name="email" widget="email" context="{'gravatar_image': True}" readonly="state == 'register'" />
                         </group>
@@ -184,28 +184,28 @@
                             <group>
                                 <group name="general_info_col_1">
                                     <field name="surname" readonly="state == 'register'" />
-                                    <field name="area" readonly="state == 'register'" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields" />
-                                    <field name="gender" required="donee_required_fields" readonly="state == 'register'" />
+                                    <field name="area" readonly="state == 'register'" options="{'no_create': True, 'no_edit': True}" required="donee_required_fields and state != 'register'" />
+                                    <field name="gender" required="donee_required_fields and state != 'register'" readonly="state == 'register'" />
                                     <field name="religion" readonly="state == 'register'" />
                                     <field name="martial_status" readonly="state == 'register'" />
-                                    <field name="spouse_name" invisible="martial_status == 'un_married'" required="donee_required_fields and martial_status == 'married'" readonly="state == 'register'" />
+                                    <field name="spouse_name" invisible="martial_status == 'un_married'" required="donee_required_fields and martial_status == 'married' and state != 'register'" readonly="state == 'register'" />
                                     <field name="has_cnic" readonly="state == 'register'" />
-                                    <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes'" readonly="state == 'register'" />
-                                    <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state == 'register'" />
-                                    <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state == 'register'" />
-                                    <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no'" readonly="state == 'register'" />
+                                    <field name="cnic_no" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes' and state != 'register'" readonly="state == 'register'" />
+                                    <field name="cnic_expiration" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes' and state != 'register'" readonly="state == 'register'" />
+                                    <field name="cnic_front_image" filename="cnic_front" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes' and state != 'register'" readonly="state == 'register'" />
+                                    <field name="cnic_back_image" filename="cnic_back" invisible="has_cnic == 'no'" required="donee_required_fields and has_cnic == 'yes' and state != 'register'" readonly="state == 'register'" />
+                                    <field name="head_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no' and state != 'register'" readonly="state == 'register'" />
+                                    <field name="member_cnic_no" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no' and state != 'register'" readonly="state == 'register'" />
+                                    <field name="reference_letter_file" filename="reference_letter" invisible="has_cnic == 'yes'" required="donee_required_fields and has_cnic == 'no' and state != 'register'" readonly="state == 'register'" />
                                     <field name="approved_form_file" filename="approved_form" readonly="not is_change_request" required="is_change_request" />
                                 </group>
                                 <group name="general_info_col_2">
-                                    <field name="date_of_birth" required="donee_required_fields" readonly="state == 'register'" />
+                                    <field name="date_of_birth" required="donee_required_fields and state != 'register'" readonly="state == 'register'" />
                                     <field name="age" />
-                                    <field name="father_name" required="donee_required_fields" readonly="state == 'register'" />
-                                    <field name="father_cnic_no" required="welfare_donee_required_fields" readonly="state == 'register'" />
-                                    <field name="next_kin" required="welfare_donee_required_fields" readonly="state == 'register'" />
-                                    <field name="nearest_land_mark" required="donee_required_fields" readonly="state == 'register'" />
+                                    <field name="father_name" required="donee_required_fields and state != 'register'" readonly="state == 'register'" />
+                                    <field name="father_cnic_no" required="welfare_donee_required_fields and state != 'register'" readonly="state == 'register'" />
+                                    <field name="next_kin" required="welfare_donee_required_fields and state != 'register'" readonly="state == 'register'" />
+                                    <field name="nearest_land_mark" required="donee_required_fields and state != 'register'" readonly="state == 'register'" />
                                     <field name="reference_remarks" readonly="state == 'register'" />
                                     <field name="bank_wallet_account" readonly="state == 'register'" />
                                     <field name="primary_registration_id" string="Primary ID" readonly="1" />
