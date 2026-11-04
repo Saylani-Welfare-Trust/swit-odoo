@@ -724,7 +724,7 @@ May Allah bless you!
             return False
 
         lines = microfinance_record.mapped('microfinance_line_ids').filtered(
-            lambda line: line.state in ('unpaid', 'partial') and (line.amount - line.paid_amount) > 0
+            lambda line: line.state in ('unpaid', 'partial', 'overdue') and (line.amount - line.paid_amount) > 0
         )
         if not lines:
             return False
