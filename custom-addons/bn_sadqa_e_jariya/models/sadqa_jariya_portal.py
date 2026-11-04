@@ -33,12 +33,21 @@ class SadqaJariya(models.Model):
         return bool(company.welfare_instituiton_url and company.odoo_auth_institution_key)
 
     @api.model
+    def _portal_base_url(self):
+        """Portal server address, also when the setting already ends with /rpc, /rpc/odoo or /rpc/odoo/institutional"""
+        base = self._clean_url(self.env.company.welfare_instituiton_url).rstrip('/')
+        for suffix in INSTITUTIONAL_RPC.rstrip('/'), '/rpc/odoo', '/rpc':
+            if base.endswith(suffix):
+                return base[:-len(suffix)]
+        return base
+
+    @api.model
     def _portal_call(self, operation, payload):
         """Call an institutional operation, returns its result (the response's 'json')"""
         company = self.env.company
         if not self._portal_configured():
             raise UserError(_("Set the Welfare Institution URL and Odoo Auth Institution Key in the Company settings."))
-        url = self._clean_url(company.welfare_instituiton_url).rstrip('/') + INSTITUTIONAL_RPC + operation
+        url = self._portal_base_url() + INSTITUTIONAL_RPC + operation
         headers = {
             'x-odoo-auth-key': f'{company.odoo_auth_institution_key}',
             'Content-Type': 'application/json'
