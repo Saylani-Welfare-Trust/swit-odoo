@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
 from odoo import models, fields, api
+import math
 from odoo.exceptions import UserError
+
 
 
 class AccountPayment(models.Model):
@@ -44,4 +47,76 @@ class AccountPayment(models.Model):
     @api.depends('payment_method_line_id', 'currency_id', 'net_amount')
     def _compute_check_amount_in_words(self):
         super()._compute_check_amount_in_words()
-        # ... existing body unchanged ...
+        super()._compute_check_amount_in_words()
+
+        for pay in self:
+            if not pay.currency_id:
+                pay.check_amount_in_words = False
+                continue
+
+            amount = abs(pay.net_amount)
+            rupees = int(amount)
+            paisa = int(round((amount - rupees) * 100))
+
+            words = pay.currency_id.amount_to_text(rupees) or ""
+
+            # Cleanup
+            words = (
+            pay.currency_id.amount_to_text(rupees)
+            .replace("Rupees", "")
+            .replace("Rupee", "")
+            .replace(",", "")
+            .replace("-", " ")
+            .strip()
+        )
+
+            words = " ".join(words.split()).lower()
+
+            # Remove all 'and'
+            words = words.replace(" and ", " ")
+
+            remainder = rupees % 1000
+
+            if paisa == 0:
+
+                if 0 < remainder < 100 and rupees >= 1000:
+                    for unit in ("thousand", "lakh", "crore", "million"):
+                        if unit in words:
+                            words = words.replace(unit, unit + " and", 1)
+                            break
+
+                elif remainder in (100, 200, 300, 400, 500, 600, 700, 800, 900):
+                    for unit in ("thousand", "lakh", "crore", "million"):
+                        if unit in words:
+                            words = words.replace(unit, unit + " and", 1)
+                            break
+
+                elif remainder > 100 and remainder % 100 != 0:
+                    parts = words.split()
+
+                    if "hundred" in parts:
+                        idx = len(parts) - 1 - parts[::-1].index("hundred")
+
+                        if idx + 1 < len(parts):
+                            parts.insert(idx + 1, "and")
+
+                    words = " ".join(parts)
+
+                pay.check_amount_in_words = words.capitalize() + " only"
+    
+            else:
+                paisa_words = pay.currency_id.amount_to_text(paisa) or ""
+                paisa_words = (
+                    paisa_words.replace("Rupees", "")
+                               .replace("Rupee", "")
+                               .replace(",", "")
+                               .replace("-", " ")
+                               .replace(" And ", " ")
+                               .replace(" and ", " ")
+                               .strip()
+                )
+                paisa_words = " ".join(paisa_words.split()).lower()
+
+                pay.check_amount_in_words = (
+                    f"{words.capitalize()} and {paisa_words} paisa only"
+                )
