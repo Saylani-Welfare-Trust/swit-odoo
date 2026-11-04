@@ -140,13 +140,22 @@ class SadqaJariya(models.Model):
     )
 
     @api.model
-    def _donee_tag_domain(self):
-        """Registered donees tagged Donee and Corporate / Institute."""
-        domain = [('state', '=', 'register')]
+    def _donee_tag_groups(self):
+        """Each Sadqa e Jariya donee tag with the tags of the same name (typed by hand, or kept after a rename)"""
+        Tag = self.env['res.partner.category']
+        groups = []
         for xmlid in DONEE_TAGS:
             tag = self.env.ref(xmlid, raise_if_not_found=False)
             if tag:
-                domain.append(('category_id', 'in', tag.ids))
+                groups.append(tag | Tag.search([('name', '=ilike', tag.name)]))
+        return groups
+
+    @api.model
+    def _donee_tag_domain(self, registered=True):
+        """Donees with every Sadqa e Jariya tag (Donee, Corporate / Institute, Sadqa-e-Jaria)"""
+        domain = [('state', '=', 'register')] if registered else []
+        for tags in self._donee_tag_groups():
+            domain.append(('category_id', 'in', tags.ids))
         return domain
 
     def _compute_donee_domain(self):

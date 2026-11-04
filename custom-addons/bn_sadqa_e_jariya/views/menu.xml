@@ -14,28 +14,12 @@
         <field name="target">new</field>
     </record>
 
-    <record id="sadqa_e_jariya_donee_action" model="ir.actions.act_window">
+    <!-- tags matched when the menu opens, also by name: see res.partner.action_sadqa_jariya_donees -->
+    <record id="sadqa_e_jariya_donee_server_action" model="ir.actions.server">
         <field name="name">Donee</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
-        <!-- by tag record, not name: the tags can be renamed (Coorporate -> Corporate / Institute) -->
-        <field name="domain" eval="str([('category_id', 'in', [ref('bn_profile_management.donee_partner_category')]),
-                                        ('category_id', 'in', [ref('bn_profile_management.coorporate_institute_partner_category')]),
-                                        ('category_id', 'in', [ref('sadqa_jariya_partner_category')])])"/>
-        <field name="context">{
-            'create': 0,
-            'delete': 0,
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Waiting for Sadqa e Jariya Donee's....
-            </p>
-        </field>
-        <field name="view_ids"
-            eval="[(5, 0, 0),
-                    (0, 0, {'view_mode': 'kanban', 'view_id': ref('bn_profile_management.profile_management_view_kanban')}),
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('bn_profile_management.profile_management_view_tree')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('bn_profile_management.profile_management_view_form')})]"/>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_sadqa_jariya_donees()</field>
     </record>
 
     <menuitem
@@ -70,7 +54,7 @@
     <menuitem
         id="sadqa_e_jariya_donee_menu"
         name="Donee"
-        action="sadqa_e_jariya_donee_action"
+        action="sadqa_e_jariya_donee_server_action"
         parent="sadqa_e_jariya_profile_menu"
         sequence="1"/>
 

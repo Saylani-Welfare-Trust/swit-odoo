@@ -16,9 +16,23 @@ class ResPartner(models.Model):
 
     @api.depends('category_id')
     def _compute_is_sadqa_jariya_donee(self):
-        tags = [self.env.ref(xmlid, raise_if_not_found=False) for xmlid in DONEE_TAGS]
+        groups = self.env['sadqa.jariya']._donee_tag_groups()
         for partner in self:
-            partner.is_sadqa_jariya_donee = all(tag and tag in partner.category_id for tag in tags)
+            partner.is_sadqa_jariya_donee = len(groups) == len(DONEE_TAGS) and all(partner.category_id & tags for tags in groups)
+
+    @api.model
+    def action_sadqa_jariya_donees(self):
+        """Sadqa e Jariya → Profile → Donee: the tags are matched when the menu opens"""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Donee'),
+            'res_model': 'res.partner',
+            'views': [(self.env.ref(f'bn_profile_management.profile_management_view_{view}').id, view)
+                      for view in ('kanban', 'tree', 'form')],
+            'domain': self.env['sadqa.jariya']._donee_tag_domain(registered=False),
+            'context': {'create': 0, 'delete': 0},
+            'help': _('<p class="o_view_nocontent_smiling_face">Waiting for Sadqa e Jariya Donee\'s....</p>'),
+        }
 
     def _sadqa_profile_popup(self):
         """The profile popup of Sadqa e Jariya's Record Search (its Save keeps it open)"""
