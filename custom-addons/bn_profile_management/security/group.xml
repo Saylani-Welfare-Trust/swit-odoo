@@ -13,7 +13,6 @@
     <record id="profile_management_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_profile_management"/>
-        <field name="implied_ids" eval="[(4, ref('profile_management_root_group'))]"/>
         <field name="comment">Day-to-day access: create, edit and read contacts. Cannot delete, and cannot change which fields/pages a profile type shows.</field>
     </record>
 
@@ -27,7 +26,7 @@
     <record id="profile_management_audit_group" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_profile_management"/>
-        <field name="implied_ids" eval="[(4, ref('profile_management_root_group')), (4, ref('bn_master_setup.master_setup_root_group'))]"/>
+        <field name="implied_ids" eval="[(4, ref('bn_master_setup.master_setup_root_group'))]"/>
         <field name="comment">Read-only oversight of contacts and profile-type configuration (Master Setup > Profile Management), for reporting. No create, write or delete anywhere.</field>
     </record>
 
