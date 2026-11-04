@@ -546,3 +546,20 @@ class PosSession(models.Model):
         vals = super()._loader_params_res_company()
         vals['search_params']['fields'] += ['restricted_category', 'unrestricted_category']
         return vals
+    
+    @api.constrains('ref', 'session_id')
+    def _check_unique_slip_ref(self):
+        for slip in self:
+            if slip.ref:
+                # Check if another slip with the same ref exists in this session
+                existing = self.search([
+                    ('id', '!=', slip.id),
+                    ('session_id', '=', slip.session_id.id),
+                    ('ref', '=', slip.ref)
+                ], limit=1)
+                
+                if existing:
+                    raise ValidationError(
+                        f"The Slip No. '{slip.ref}' is already used in this session. "
+                        "Please use a unique slip number."
+                    )

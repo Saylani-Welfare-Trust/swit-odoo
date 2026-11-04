@@ -199,6 +199,31 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
             return;
         }
 
+        // === NEW: Check for duplicate slip number ===
+        if (ref && ref.trim()) {
+            const allExistingRefs = [];
+            for (const pid in this.state.lines) {
+                for (const t of ['restricted', 'unrestricted', 'neutral']) {
+                    if (this.state.lines[pid][t]) {
+                        this.state.lines[pid][t].forEach(line => {
+                            if (line.ref) {
+                                allExistingRefs.push(line.ref.trim().toLowerCase());
+                            }
+                        });
+                    }
+                }
+            }
+            
+            if (allExistingRefs.includes(ref.trim().toLowerCase())) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Duplicate Slip No."),
+                    body: _t(`The slip number "${ref}" has already been added. Please use a unique slip number.`),
+                });
+                return;
+            }
+        }
+        // ==============================================
+
         // Without an amount input the slip simply covers whatever is left.
         let numAmount = this.shouldShowSlipInput(pm) ? parseFloat(amount) : remaining;
         const isAmountInvalid =
@@ -235,7 +260,7 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         ]);
 
         if (slip?.status === "error") {
-            this.popup.add(ErrorPopup, { title: _t("Error"), body: _t("Slip creation failed.") });
+            this.popup.add(ErrorPopup, { title: _t("Error"), body: _t(slip.message || "Slip creation failed.") });
             return;
         }
 
