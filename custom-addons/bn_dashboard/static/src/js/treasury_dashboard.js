@@ -366,7 +366,7 @@ export class TreasuryDashboard extends Component {
         // Date field per model — match what the backend actually uses
         const DATE_FIELD = {
             'pos.cheque': 'date',
-            'direct.deposit': 'deposit_date',
+            'direct.deposit': 'create_date',  
             'journal.transfer': 'date',
         }[model] || 'date';
 
