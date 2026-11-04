@@ -32,7 +32,7 @@ DONOR_CATEGORY_XMLIDS = (
 class DonationBoxRegistrationInstallation(models.Model):
     _name = 'donation.box.registration.installation'
     _description = 'Donation Box Registration'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin", "bn.city.access.mixin"]
     _rec_name = 'shop_name'
     _bn_guarded_fields = ('status', 'box_status')
 
@@ -140,6 +140,7 @@ class DonationBoxRegistrationInstallation(models.Model):
             if immutable:
                 labels = ', '.join(self._fields[name].string for name in immutable)
                 raise UserError(_('The field(s) "%s" are set by the request and cannot be edited.') % labels)
+            self._bn_check_city(vals.get('city_id'))
             locked_map = self._bn_locked_fields_by_status()
             touched = set(vals)
             for rec in self:

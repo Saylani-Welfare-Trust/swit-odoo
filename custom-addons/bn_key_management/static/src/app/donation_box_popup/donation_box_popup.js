@@ -43,6 +43,16 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
     }
 
     async onClick(collection) {
+        // 🔹 Add product line to current order
+        const current_order = this.pos.get_order();
+
+        const cityCode = current_order.branch_code || 'UNK';
+        const counter = current_order.counter || '0';
+        const currentYear = new Date().getFullYear();
+        const posOrderSeq = current_order.pos_order_seq || '0000';
+
+        const orderReference = `${cityCode}-C${counter}-${currentYear}-${posOrderSeq}`;
+
         const payload = { 
             collection_id: collection.id,
             lot_id: collection.lot_id,
@@ -53,7 +63,8 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
             contact_number: collection.contact_number,
             box_location: collection.box_location,
             date: collection.date,
-            check_validation: true
+            check_validation: true,
+            receipt_number: orderReference
         };
         
         
@@ -69,9 +80,6 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
         }
         
         if (data.status === 'success') {
-            // 🔹 Add product line to current order
-            const current_order = this.pos.get_order();
-
             payload.check_validation = false
 
             if (!current_order.extra_data) {

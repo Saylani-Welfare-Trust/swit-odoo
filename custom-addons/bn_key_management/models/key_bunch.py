@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 class KeyBunch(models.Model):
     _name = 'key.bunch'
     _description = 'Key Bunch'
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "bn.city.access.mixin"]
 
     name = fields.Char('Name', tracking=True)
     room_no = fields.Char('Room No.', tracking=True)
@@ -19,6 +19,16 @@ class KeyBunch(models.Model):
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
     key_ids = fields.One2many('key', 'key_bunch_id', string="Keys")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._bn_check_city(vals.get('city_id'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._bn_check_city(vals.get('city_id'))
+        return super().write(vals)
 
     def unlink(self):
         for bunch in self:

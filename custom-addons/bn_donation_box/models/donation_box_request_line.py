@@ -150,7 +150,8 @@ class DonationBoxRequestLine(models.Model):
                 'The following boxes are already issued to another request: %s'
             ) % ', '.join(consumed.mapped('display_name')))
 
-        busy = Registration.search([('lot_id', 'in', lots.ids), ('status', '!=', 'close')])
+        # sudo: a box must not be active in any city, not only the user's own.
+        busy = Registration.sudo().search([('lot_id', 'in', lots.ids), ('status', '!=', 'close')])
         if busy:
             raise ValidationError(_(
                 'The following boxes still have an active registration: %s'
@@ -205,7 +206,8 @@ class DonationBoxRequestLine(models.Model):
         if self.is_returned:
             raise UserError(_('Box "%s" has already been returned.') % self.lot_id.display_name)
 
-        registrations = self.env['donation.box.registration.installation'].search([
+        # sudo: requests are not limited by city, so neither is returning their boxes.
+        registrations = self.env['donation.box.registration.installation'].sudo().search([
             ('donation_box_request_id', '=', request.id),
             ('lot_id', '=', self.lot_id.id),
             ('status', '!=', 'close'),

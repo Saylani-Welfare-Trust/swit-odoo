@@ -208,49 +208,94 @@ class ImportDonation(models.Model):
         donation_vals = []
 
         for line in self.valid_import_donation_ids:
+            partner = None
+            
+            if not self.gateway_config_id.is_fee_enabled or (self.gateway_config_id.is_fee_enabled and not self.gateway_config_id.product_id):
+                config_line = self.gateway_config_id.gateway_config_line_ids.filtered(
+                    lambda c: c.name == line.product
+                )
 
-            config_line = self.gateway_config_id.gateway_config_line_ids.filtered(
-                lambda c: c.name == line.product
-            )
+                product = config_line.product_id if config_line else False
 
-            product = config_line.product_id if config_line else False
-
-            partner_key = line.mobile or line.cnic_no or line.email or line.donor_student_name
-            partner = partner_cache.get(partner_key)
-            if not partner:
-                partner = False
-                if line.mobile:
-                    partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
-                if not partner and line.cnic_no:
-                    partner = Partner.search([('cnic_no', '=', line.cnic_no)], limit=1)
-                if not partner and line.email:
-                    partner = Partner.search([('email', '=', line.email)], limit=1)
-                if not partner and line.donor_student_name:
-                    partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
+                partner_key = line.mobile or line.cnic_no or line.email or line.donor_student_name
+                partner = partner_cache.get(partner_key)
                 if not partner:
-                    partner = Partner.create({
-                        'name': line.donor_student_name or f"Undefined {line.mobile}",
-                        'mobile': line.mobile,
-                        'cnic_no': line.cnic_no,
-                        'email': line.email,
-                        'category_id': [(6, 0, [
-                            cats['donee'] if line.is_student else cats['donor'],
-                            cats['individual'],
-                        ])],
-                    })
-                partner_cache[partner_key] = partner
-
-            donation_vals.append({
-                'import_donation_id': self.id,
-                'transaction_id': line.transaction_id,
-                'donor_id': partner.id,
-                'product_id': product.id if product else False,
-                'date': line.date,
-                'amount': line.amount,
-                'reference': line.reference,
-                'gateway_config_id': self.gateway_config_id.id,
-                'is_fee': line.is_student,
-            })
+                    partner = False
+                    if line.mobile:
+                        partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
+                    if not partner and line.cnic_no:
+                        partner = Partner.search([('cnic_no', '=', line.cnic_no)], limit=1)
+                    if not partner and line.email:
+                        partner = Partner.search([('email', '=', line.email)], limit=1)
+                    if not partner and line.donor_student_name:
+                        partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
+                    if not partner and line.mobile:
+                        partner = Partner.create({
+                            'name': line.donor_student_name or f"Undefined {line.mobile}",
+                            'mobile': line.mobile,
+                            'cnic_no': line.cnic_no,
+                            'email': line.email,
+                            'category_id': [(6, 0, [
+                                cats['donee'] if line.is_student else cats['donor'],
+                                cats['individual'],
+                            ])],
+                        })
+                    if not line.mobile:
+                        partner = Partner.search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
+                        
+                    partner_cache[partner_key] = partner
+                
+                donation_vals.append({
+                    'import_donation_id': self.id,
+                    'transaction_id': line.transaction_id,
+                    'donor_id': partner.id if partner else False,
+                    'product_id': product.id if product else False,
+                    'date': line.date,
+                    'amount': line.amount,
+                    'reference': line.reference,
+                    'gateway_config_id': self.gateway_config_id.id,
+                    'is_fee': line.is_student,
+                })
+            elif self.gateway_config_id.is_fee_enabled:
+                partner_key = line.mobile or line.cnic_no or line.email or line.donor_student_name
+                partner = partner_cache.get(partner_key)
+                if not partner:
+                    partner = False
+                    if line.mobile:
+                        partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
+                    if not partner and line.cnic_no:
+                        partner = Partner.search([('cnic_no', '=', line.cnic_no)], limit=1)
+                    if not partner and line.email:
+                        partner = Partner.search([('email', '=', line.email)], limit=1)
+                    if not partner and line.donor_student_name:
+                        partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
+                    if not partner and line.mobile:
+                        partner = Partner.create({
+                            'name': line.donor_student_name or f"Undefined {line.mobile}",
+                            'mobile': line.mobile,
+                            'cnic_no': line.cnic_no,
+                            'email': line.email,
+                            'category_id': [(6, 0, [
+                                cats['donee'] if line.is_student else cats['donor'],
+                                cats['individual'],
+                            ])],
+                        })
+                    if not line.mobile:
+                        partner = Partner.search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
+                        
+                    partner_cache[partner_key] = partner
+                
+                donation_vals.append({
+                    'import_donation_id': self.id,
+                    'transaction_id': line.transaction_id,
+                    'donor_id': partner.id if partner else False,
+                    'product_id': self.gateway_config_id.product_id.id if product else False,
+                    'date': line.date,
+                    'amount': line.amount,
+                    'reference': line.reference,
+                    'gateway_config_id': self.gateway_config_id.id,
+                    'is_fee': line.is_student,
+                })
 
         Donation.create(donation_vals)
 
@@ -291,7 +336,7 @@ class ImportDonation(models.Model):
                 if not partner and line.donor_student_name:
                     partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
 
-                if not partner:
+                if not partner and line.mobile:
                     vals = {
                         'name': line.donor_student_name or f"Undefined {line.mobile}",
                         'mobile': line.mobile,
@@ -305,6 +350,8 @@ class ImportDonation(models.Model):
                     ])]
 
                     partner = Partner.create(vals)
+                if not line.mobile:
+                    partner = Partner.search([('primary_registration_id', '=', '2025-9999998-9')], limit=1)
 
                 partner_cache[key] = partner
 
@@ -322,11 +369,7 @@ class ImportDonation(models.Model):
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
 
-        journal = self.env['account.journal'].search(
-            [('name', 'ilike', 'Bank')], limit=1
-        )
-
-        if not journal:
+        if not self.gateway_config_id.journal_id:
             raise ValidationError("Bank journal not found.")
 
         donations = Donation.search([
@@ -397,7 +440,7 @@ class ImportDonation(models.Model):
 
         move = self.env['account.move'].create({
             'move_type': 'entry',
-            'journal_id': journal.id,
+            'journal_id': self.gateway_config_id.journal_id.id,
             'ref': self.name,
             'line_ids': [debit] + credits,
         })
