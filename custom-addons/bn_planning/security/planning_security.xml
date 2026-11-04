@@ -2,7 +2,7 @@
 <odoo>
     <!-- 1. The Category (This creates the Header/Title "Monthly Planning") -->
     <record id="module_category_planning" model="ir.module.category">
-        <field name="name">Monthly Planning</field>
+        <field name="name">Planning</field>
         <field name="description">Access to the specific Planning Menus</field>
         <field name="sequence">10</field>
     </record>
