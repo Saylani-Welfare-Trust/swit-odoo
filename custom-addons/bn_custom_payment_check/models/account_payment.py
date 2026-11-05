@@ -111,3 +111,26 @@ class AccountPayment(models.Model):
                 pay.check_amount_in_words = (
                     f"{words.capitalize()} and {paisa_words} paisa only"
                 )
+                
+    show_double_cheque = fields.Boolean(compute="_compute_show_double_cheque")
+
+    @api.depends('journal_id')
+    def _compute_show_double_cheque(self):
+        for rec in self:
+            if not rec.journal_id:
+                rec.show_double_cheque = False
+                continue
+            # Check if this journal is configured for Double Cheques
+            config = self.env['bank.double.cheque.config'].search([
+                ('journal_ids', 'in', [rec.journal_id.id])
+            ], limit=1)
+            rec.show_double_cheque = bool(config)
+
+    def action_print_double_check(self):
+        configs = self.env['bank.double.cheque.config'].search(
+            [('journal_ids', 'in', [self.journal_id.id])]
+        )
+        if not configs:
+            raise UserError("No Bank Double Cheque Configuration is linked to this journal.")
+        configs.ensure_one()
+        return configs.action_print_double_cheque_for_payment(self)

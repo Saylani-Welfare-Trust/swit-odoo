@@ -14,6 +14,7 @@
         'report/cheque_templates.xml',
         'views/bank_cheque_config_view.xml',
         'views/account_payment_view.xml',
+        'views/bank_double_cheque_config_view.xml',
     ],
     'installable': True,
     'application': False,

@@ -10,6 +10,13 @@
                         type="object"
                         string="Print Cheque"
                         class="btn-primary"/>
+                
+                <!-- ⚡ NEW: Only shows if journal is in double cheque config -->
+                <button name="action_print_double_check"
+                        type="object"
+                        string="Print Double Cheque"
+                        class="btn-secondary"
+                        invisible="not show_double_cheque"/>
             </header>
 
             <xpath expr="//field[@name='payment_type']" position="after">
