@@ -223,11 +223,13 @@ export class TreasuryDashboard extends Component {
                 const allowedProvinces = this.state.restriction.provinces || [];
                 const allowedIds = this.state.restriction.analytic_ids || [];
 
-                // If restricted to specific Provinces
                 if (allowedProvinces.length) {
                     provinces = provinces.filter(p => allowedProvinces.includes(p.id));
+                    // Auto-select if there is only 1 province allowed
+                    if (provinces.length === 1 && !this.state.province_id) {
+                        this.state.province_id = provinces[0].id;
+                    }
                 }
-                // If restricted to Cities/Zones/Branches, filter them out
                 if (allowedIds.length) {
                     cities = cities.filter(c => allowedIds.includes(c.id) || allowedIds.includes(c.province_id));
                     zones = zones.filter(z => allowedIds.includes(z.id) || allowedIds.includes(z.city_id));
