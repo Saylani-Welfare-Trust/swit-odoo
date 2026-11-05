@@ -8,6 +8,7 @@ class AccountPayment(models.Model):
     # ⚡ FIX: Add these missing fields so Odoo view validation doesn't crash
     effective_date = fields.Date(string="Effective Date")
     bank_reference = fields.Char(string="Bank Reference")
+    cheque_reference = fields.Char(string="Cheque Reference")
 
     net_amount = fields.Monetary(
         string="Net Amount",
