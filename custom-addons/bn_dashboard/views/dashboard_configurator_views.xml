@@ -77,7 +77,6 @@
         </field>
     </record>
 
-    <!-- Action -->
     <record id="action_treasury_configurator" model="ir.actions.act_window">
         <field name="name">Treasury Configurator</field>
         <field name="res_model">dashboard.configurator</field>
@@ -86,23 +85,19 @@
         <field name="context">{'default_dashboard_type': 'treasury'}</field>
     </record>
 
-    <!-- Menu -->
+    <!-- ⚠ groups= on a SINGLE LINE, no whitespace after commas -->
     <menuitem id="menu_dashboard_configurations"
-            name="⚙️ Configurations"
-            parent="menu_dashboard_root"
-            sequence="90"
-            groups="base.group_system,
-                    group_treasury_configurator,
-                    group_donation_box_configurator,
-                    group_pos_order_configurator,
-                    group_din_configurator"/>
+              name="⚙️ Configurations"
+              parent="menu_dashboard_root"
+              sequence="90"
+              groups="base.group_system,group_treasury_configurator,group_donation_box_configurator,group_pos_order_configurator,group_din_configurator"/>
 
     <menuitem id="menu_treasury_configurator"
-            name="Treasury Configurator"
-            parent="menu_dashboard_configurations"
-            action="action_treasury_configurator"
-            sequence="1"
-            groups="base.group_system,group_treasury_configurator"/>
+              name="Treasury Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_treasury_configurator"
+              sequence="1"
+              groups="base.group_system,group_treasury_configurator"/>
 
     <record id="action_pos_order_configurator" model="ir.actions.act_window">
         <field name="name">POS Order Configurator</field>
@@ -112,15 +107,13 @@
         <field name="context">{'default_dashboard_type': 'pos_order'}</field>
     </record>
 
-    <!-- POS Order Configurator Menu (under the ⚙️ Configurations folder) -->
     <menuitem id="menu_pos_order_configurator"
-          name="POS Order Configurator"
-          parent="menu_dashboard_configurations"
-          action="action_pos_order_configurator"
-          sequence="3"
-          groups="base.group_system,group_pos_order_configurator"/>
+              name="POS Order Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_pos_order_configurator"
+              sequence="3"
+              groups="base.group_system,group_pos_order_configurator"/>
 
-    <!-- Donation Box Configurator Action -->
     <record id="action_donation_box_configurator" model="ir.actions.act_window">
         <field name="name">Donation Box Configurator</field>
         <field name="res_model">dashboard.configurator</field>
@@ -129,12 +122,11 @@
         <field name="context">{'default_dashboard_type': 'donation_box'}</field>
     </record>
 
-    <!-- Donation Box Configurator Menu -->
     <menuitem id="menu_donation_box_configurator"
-          name="Donation Box Configurator"
-          parent="menu_dashboard_configurations"
-          action="action_donation_box_configurator"
-          sequence="2"
-          groups="base.group_system,group_donation_box_configurator"/>
+              name="Donation Box Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_donation_box_configurator"
+              sequence="2"
+              groups="base.group_system,group_donation_box_configurator"/>
 
 </odoo>
