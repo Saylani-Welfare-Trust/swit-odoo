@@ -67,4 +67,10 @@
         <field name="category_id" ref="base.module_category_manufacturing_manufacturing"/>
     </record>
 
+    <!-- Employees Menu -->
+    <record id="custom_employees_menu_group" model="res.groups">
+        <field name="name">Employees Menu</field>
+        <field name="category_id" ref="base.module_category_human_resources"/>
+    </record>
+
 </odoo>
