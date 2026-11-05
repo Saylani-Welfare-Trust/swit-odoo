@@ -7,16 +7,11 @@ _logger = logging.getLogger(__name__)
 class TreasuryDashboardController(http.Controller):
 
     def _get_location_hierarchy(self):
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
 
         provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
 
-        if restriction:
-            if restriction['provinces']:
-                provinces = provinces.browse(restriction['provinces'])
-            if restriction['segment_l1']:
-                seg_l1 = seg_l1.browse(restriction['segment_l1'])
+        
 
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
@@ -79,23 +74,7 @@ class TreasuryDashboardController(http.Controller):
         if date_field:
             if date_from: base_domain.append((date_field, '>=', date_from))
             if date_to: base_domain.append((date_field, '<=', date_to))
-
-        # === Configurator restriction ===
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-        
-        # DEBUG: Print to Odoo server logs
-        _logger.info(f"TREASURY DEBUG - Model: {model_name} | Restriction: {restriction}")
-        _logger.info(f"TREASURY DEBUG - Has analytic_account_id? {'analytic_account_id' in Model._fields}")
-
-        # Apply restriction if it exists
-        if restriction and restriction['analytic_ids']:
-            if 'analytic_account_id' in Model._fields:
-                base_domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
-            elif 'branch_id' in Model._fields:  # Fallback just in case your model uses branch_id
-                base_domain.append(('branch_id', 'child_of', restriction['analytic_ids']))
-        # ======================================
-
-        # Apply UI filters (these will further narrow down the restricted data)
+       
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except: pass
@@ -141,14 +120,12 @@ class TreasuryDashboardController(http.Controller):
     def get_dashboard_data(self, **kwargs):
         currency = request.env.company.currency_id
         p, c, z, s1, s2, s3, s4 = self._get_location_hierarchy()
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
 
         return {
             'currency': {'symbol': currency.symbol, 'position': currency.position},
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': p, 'cities': c, 'zones': z,
             'segments_l1': s1, 'segments_l2': s2, 'segments_l3': s3, 'segments_l4': s4,
-            'restriction': restriction,  # <--- NEW
             'cheques':   self._get_custom_model_stats('pos.cheque', 'amount', 'state', **kwargs),
             'deposits':  self._get_custom_model_stats('direct.deposit', 'amount', 'state', **kwargs),
             'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status', **kwargs),
@@ -182,12 +159,6 @@ class TreasuryDashboardController(http.Controller):
             if not date_field: return 0.0
 
             domain = [(date_field, '>=', start), (date_field, '<=', end)]
-
-            # === NEW: Configurator restriction ===
-            restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-            if restriction and 'analytic_account_id' in Model._fields:
-                domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
-            # ======================================
 
             for k, v in kwargs.items():
                 if v and k in Model._fields:

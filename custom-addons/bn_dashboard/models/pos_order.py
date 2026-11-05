@@ -13,12 +13,7 @@ class PosOrder(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_shops(self):
-        # === NEW: Dashboard Configurator restriction ===
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
-        
         domain = []
-        if restriction:
-            domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
             
         configs = self.env['pos.config'].search(domain)
         # ==============================================
@@ -51,16 +46,10 @@ class PosOrder(models.Model):
 
     @api.model
     def get_location_hierarchy(self):
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
 
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
 
-        if restriction:
-            if restriction['provinces']:
-                provinces = provinces.browse(restriction['provinces'])
-            if restriction['segment_l1']:
-                seg_l1 = seg_l1.browse(restriction['segment_l1'])
 
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
@@ -125,11 +114,6 @@ class PosOrder(models.Model):
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
-
-        # === NEW: Dashboard Configurator restriction ===
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
-        if restriction:
-            domain.append(('config_id.analytic_account_id', 'child_of', restriction['analytic_ids']))
 
         if province_id or city_id or zone_id or segment_id or segment_type:
             analytic_domain = []
@@ -478,10 +462,6 @@ class PosOrder(models.Model):
         if segment_type:
             analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
-        # === NEW: Dashboard Configurator restriction ===
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
-        if restriction:
-            analytic_domain.append(('id', 'child_of', restriction['analytic_ids']))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -522,10 +502,6 @@ class PosOrder(models.Model):
         if segment_type:
             analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
-        # === NEW: Dashboard Configurator restriction ===
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
-        if restriction:
-            analytic_domain.append(('id', 'child_of', restriction['analytic_ids']))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
