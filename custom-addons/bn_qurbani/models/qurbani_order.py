@@ -9,7 +9,7 @@ from datetime import datetime
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
-    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
     _description = 'Qurbani POS Orders'
 
     donor_id = fields.Many2one('res.partner', string="Donor")
@@ -581,7 +581,7 @@ class QurbaniOrder(models.Model):
         schedules and demands are scoped to the planners' locations: the
         booking runs as superuser once the cashier is checked."""
         # records made here carry the POS session / POS they come from
-        self = self.with_context(bn_pos_create=True)
+        self = self.with_context(pos_link_create=True)
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
             raise AccessError(_('Only Point of Sale users can book a Qurbani.'))
         return self.sudo()._create_qurbani_record(data)

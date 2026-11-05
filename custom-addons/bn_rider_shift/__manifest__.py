@@ -25,7 +25,7 @@
         'wizards/foreign_currency_wizard.xml',
         'wizards/counterfeit_notes_wizard.xml',
         'views/pos_link_views.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,

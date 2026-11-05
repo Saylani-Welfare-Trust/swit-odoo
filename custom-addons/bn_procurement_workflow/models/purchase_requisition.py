@@ -461,6 +461,6 @@ class PurchaseRequisition(models.Model):
 
 
 class PurchaseRequisitionStepActivity(models.Model):
-    """Activity for whoever has to act next (bn.step.activity.mixin)."""
+    """Activity for whoever has to act next (step.activity.mixin)."""
     _name = 'purchase.requisition'
-    _inherit = ['bn.step.activity.mixin', 'purchase.requisition']
+    _inherit = ['step.activity.mixin', 'purchase.requisition']

@@ -4,8 +4,8 @@ from odoo import models
 class PosOrder(models.Model):
     _inherit = 'pos.order'
 
-    def _bn_pos_documents(self, extra_data):
-        res = super()._bn_pos_documents(extra_data)
+    def _pos_documents(self, extra_data):
+        res = super()._pos_documents(extra_data)
         Line, Recurring = self.env['welfare.line'], self.env['welfare.recurring.line']
         wf = extra_data.get('welfare') or {}
         ids = [line.get('id') for line in (wf.get('recurring_line_ids') if wf.get('is_recurring') else wf.get('welfare_line_ids')) or []

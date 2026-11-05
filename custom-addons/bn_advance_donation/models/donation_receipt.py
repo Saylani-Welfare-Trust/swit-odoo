@@ -8,7 +8,7 @@ _logger = logging.getLogger(__name__)
 
 class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['pos.link.mixin']
     _description = "Advance Donation Receipt"
 
     def init(self):
@@ -101,7 +101,7 @@ class DonationReceipt(models.Model):
             line = {'name': rec.name, 'partner_id': rec.donor_id.id,
                     'currency_id': rec.currency_id.id if rec.currency_id else None}
             # the deposit entry is part of the receipt, not an accounting task
-            move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (rec._name, rec.id)).sudo().create({
+            move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (rec._name, rec.id)).sudo().create({
                 'ref': rec.name,
                 'partner_id': rec.donor_id.id,
                 'line_ids': [

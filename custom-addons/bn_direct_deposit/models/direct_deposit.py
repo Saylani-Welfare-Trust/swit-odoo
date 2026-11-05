@@ -19,7 +19,7 @@ status_selection = [
 
 class DirectDeposit(models.Model):
     _name = 'direct.deposit'
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin', 'bn.pos.link.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin', 'pos.link.mixin']
     _description = "Direct Deposit"
     _order = "id desc"
 
@@ -86,10 +86,10 @@ May Allah bless you!
 
     def _send_clear_notification(self):
         """Donation receipt to the donor when the direct deposit is cleared:
-        WhatsApp first, SMS fallback (bn.donor.notifier)."""
+        WhatsApp first, SMS fallback (donor.notifier)."""
         self.ensure_one()
         message = self._build_dd_receipt_message()
-        return self.env['bn.donor.notifier']._send(
+        return self.env['donor.notifier']._send(
             self, self.donor_id,
             lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
             report_name='bn_direct_deposit.report_direct_deposit_dn',
@@ -222,7 +222,7 @@ May Allah bless you!
     @api.model
     def create_dd_record(self, data):
         # records made here carry the POS session / POS they come from
-        self = self.with_context(bn_pos_create=True)
+        self = self.with_context(pos_link_create=True)
         self._check_dd_pos_access()
 
         transaction_ref = data.get('transaction_ref')
@@ -355,7 +355,7 @@ May Allah bless you!
         StockMove = self.env['stock.move']
 
         # the Direct Deposit Delivery operation type of the creator's warehouse
-        picking_type = self.env['stock.warehouse']._bn_get_program_type('direct_deposit', user=self.user_id)
+        picking_type = self.env['stock.warehouse']._get_program_type('direct_deposit', user=self.user_id)
         destination_location = self.env.ref('stock.stock_location_customers')
 
         product_lines = self._get_non_donor_lines().filtered(
@@ -370,7 +370,7 @@ May Allah bless you!
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': destination_location.id,
             'origin': self.name,
-            'bn_source_ref': '%s,%s' % (self._name, self.id),
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
 
         for line in product_lines:

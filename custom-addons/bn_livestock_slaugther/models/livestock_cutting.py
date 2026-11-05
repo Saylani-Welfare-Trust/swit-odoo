@@ -53,7 +53,7 @@ class LivestockCutting(models.Model):
 
         cutting_location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         slaughter_location = self.env['stock.location'].search([('name', '=', 'Livestock Slaugther')], limit=1)
-        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock', slaughter_location or None)
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock', slaughter_location or None)
         if not cutting_location:
             raise ValidationError("Slaughter Stock location not found. Please create it in Inventory > Configuration > Locations.")
 

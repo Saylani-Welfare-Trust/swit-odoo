@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="search_counterfeit_notes" model="ir.ui.view">
+        <field name="name">counterfeit.notes.search</field>
+        <field name="model">counterfeit.notes</field>
+        <field name="inherit_id" ref="bn_rider_shift.counterfeit_notes_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_lot_id" string="Lot" context="{'group_by': 'lot_id'}"/>
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_foreign_currency" model="ir.ui.view">
+        <field name="name">foreign.currency.search</field>
+        <field name="model">foreign.currency</field>
+        <field name="inherit_id" ref="bn_rider_shift.foreign_currency_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_lot_id" string="Lot" context="{'group_by': 'lot_id'}"/>
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_rider_collection" model="ir.ui.view">
+        <field name="name">rider.collection.search</field>
+        <field name="model">rider.collection</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_collection_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="groupby_lot_id" string="Box No." context="{'group_by': 'lot_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_rider_shift" model="ir.ui.view">
+        <field name="name">rider.shift.search</field>
+        <field name="model">rider.shift</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_shift_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

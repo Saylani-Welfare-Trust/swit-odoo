@@ -38,9 +38,9 @@
         
         'wizards/check_marfat_shift.xml',
         'wizards/wizard_view.xml',
-        'data/bn_program_types.xml',
+        'data/program_types.xml',
         'views/pos_link_views.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,

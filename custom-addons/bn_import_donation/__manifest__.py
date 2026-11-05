@@ -44,8 +44,8 @@
         'views/res_company.xml',
 
         'data/upgrade_hooks.xml',
-        'data/bn_program_types.xml',
-        'views/bn_search_views.xml',
+        'data/program_types.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -24,7 +24,7 @@
         'views/key_issuance.xml',
         'views/donation_box_request.xml',
         'views/donation_box_registration_installation.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,

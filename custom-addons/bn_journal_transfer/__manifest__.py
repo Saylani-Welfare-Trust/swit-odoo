@@ -19,7 +19,7 @@
 
         'data/upgrade_hooks.xml',
         'views/pos_link_views.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,

@@ -14,7 +14,7 @@ state_selection = [
 class LivestockSlaughter(models.Model):
     _name = 'livestock.slaugther'
     _description = "Livestock Slaugther"
-    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
 
 
     donee_id = fields.Many2one('res.partner', string="Donee")
@@ -58,18 +58,18 @@ class LivestockSlaughter(models.Model):
 
     # One record per animal: a source line (POS line, Direct Deposit line,
     # donation, API item) gets as many records as animals it paid for, see
-    # _bn_create_for_source. The former one-record-per-line unique constraints
+    # _create_for_source. The former one-record-per-line unique constraints
     # are dropped by data/upgrade_hooks.xml.
 
     @api.model
-    def _bn_drop_line_unique_constraints(self):
+    def _drop_line_unique_constraints(self):
         for name in ('unique_pos_order_line_id', 'unique_direct_deposit_line_id',
                      'unique_donation_id', 'unique_api_donation_item_id'):
             self.env.cr.execute('ALTER TABLE livestock_slaugther DROP CONSTRAINT IF EXISTS %s'
                                 % ('livestock_slaugther_' + name))
 
     @api.model
-    def _bn_create_for_source(self, source_field, source, animals, total, vals):
+    def _create_for_source(self, source_field, source, animals, total, vals):
         """Create the missing records of ``source`` (one per animal, ``animals``
         in all, sharing ``total``). Run again, it creates nothing more."""
         animals = int(animals or 0)
@@ -116,7 +116,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock')
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
@@ -168,7 +168,7 @@ class LivestockSlaughter(models.Model):
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        picking_type = self.env['stock.warehouse']._bn_get_program_type('livestock')
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 

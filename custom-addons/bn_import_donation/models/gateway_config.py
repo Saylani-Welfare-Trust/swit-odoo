@@ -91,7 +91,7 @@ class GatewayConfig(models.Model):
         return partner.sudo(False)
 
     @api.model
-    def _bn_setup_gateway_config(self):
+    def _setup_gateway_config(self):
         """Data hook (idempotent): settings that used to be hard-coded."""
         self.search([('name', 'in', ('SMIT', 'PIAIC')), ('is_fee', '=', False)]).write({'is_fee': True})
         default_donor = self.env['res.partner'].search(

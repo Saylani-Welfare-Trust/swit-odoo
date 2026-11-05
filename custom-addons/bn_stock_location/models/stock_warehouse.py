@@ -1,5 +1,6 @@
 import logging
 
+from odoo.tools.sql import column_exists, rename_column
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -9,34 +10,41 @@ _logger = logging.getLogger(__name__)
 class StockPickingType(models.Model):
     _inherit = 'stock.picking.type'
 
-    bn_program = fields.Selection(
-        selection='_bn_program_selection', string='Program', copy=False, index=True,
+    def _auto_init(self):
+        # the column of an earlier version keeps each type's program
+        if column_exists(self.env.cr, self._table, 'bn_program') \
+                and not column_exists(self.env.cr, self._table, 'program_type'):
+            rename_column(self.env.cr, self._table, 'bn_program', 'program_type')
+        return super()._auto_init()
+
+    program_type = fields.Selection(
+        selection='_program_selection', string='Program', copy=False, index=True,
         help="The program (Donation Box, Welfare, Material Request ...) this operation type "
              "is used by in its warehouse. Every warehouse has one per program, created "
              "automatically; an Inventory Administrator can give the program another "
              "operation type of the warehouse instead (Receipt, Delivery, Internal ...).")
 
     @api.model
-    def _bn_program_selection(self):
-        specs = self.env['stock.warehouse']._bn_program_type_specs()
+    def _program_selection(self):
+        specs = self.env['stock.warehouse']._program_type_specs()
         return sorted(((key, str(spec['name'])) for key, spec in specs.items()), key=lambda item: item[1])
 
     @api.model_create_multi
     def create(self, vals_list):
         types = super().create(vals_list)
-        types.filtered('bn_program')._bn_release_program()
+        types.filtered('program_type')._release_program()
         return types
 
     def write(self, vals):
-        if 'bn_program' in vals and not self.env.su and not self.env.context.get('bn_program_sync') \
+        if 'program_type' in vals and not self.env.su and not self.env.context.get('program_type_sync') \
                 and not self.env.user.has_group('stock.group_stock_manager'):
             raise UserError(_('Only Inventory Administrators can change the program of an operation type.'))
         res = super().write(vals)
-        if vals.get('bn_program') or 'warehouse_id' in vals:
-            self.filtered('bn_program')._bn_release_program()
+        if vals.get('program_type') or 'warehouse_id' in vals:
+            self.filtered('program_type')._release_program()
         return res
 
-    def _bn_release_program(self):
+    def _release_program(self):
         """One operation type per program and warehouse: giving a program to a
         type takes it away from the type that had it."""
         for picking_type in self:
@@ -45,21 +53,21 @@ class StockPickingType(models.Model):
             others = self.sudo().with_context(active_test=False).search([
                 ('id', '!=', picking_type.id),
                 ('warehouse_id', '=', picking_type.warehouse_id.id),
-                ('bn_program', '=', picking_type.bn_program),
+                ('program_type', '=', picking_type.program_type),
             ])
             if others:
-                others.with_context(bn_program_sync=True).write({'bn_program': False})
-            picking_type.warehouse_id._bn_program_type_changed(picking_type.bn_program, picking_type)
+                others.with_context(program_type_sync=True).write({'program_type': False})
+            picking_type.warehouse_id._program_type_changed(picking_type.program_type, picking_type)
 
 
 class StockWarehouse(models.Model):
     _inherit = 'stock.warehouse'
 
-    bn_program_picking_type_ids = fields.One2many(
+    program_picking_type_ids = fields.One2many(
         'stock.picking.type', 'warehouse_id', string='Program Operation Types',
-        domain=[('bn_program', '!=', False)])
+        domain=[('program_type', '!=', False)])
 
-    def _bn_program_type_changed(self, program, picking_type):
+    def _program_type_changed(self, program, picking_type):
         """Hook: a module keeping the type of its program on the warehouse too
         (Donation Box) follows the change."""
 
@@ -67,7 +75,7 @@ class StockWarehouse(models.Model):
     # Program operation types
     # ------------------------------------------------------------------
     @api.model
-    def _bn_program_type_specs(self):
+    def _program_type_specs(self):
         """{program: spec} - each program module adds its own:
 
             name, code ('incoming' / 'outgoing' / 'internal' / 'mrp_operation'),
@@ -78,7 +86,7 @@ class StockWarehouse(models.Model):
         xml id of a location, or None (set by the document)."""
         return {}
 
-    def _bn_spec_location(self, spec):
+    def _spec_location(self, spec):
         self.ensure_one()
         if not spec:
             return self.env['stock.location']
@@ -90,23 +98,23 @@ class StockWarehouse(models.Model):
             return self.env.ref('stock.stock_location_suppliers')
         return self.env.ref(spec, raise_if_not_found=False) or self.env['stock.location']
 
-    def _bn_program_type(self, program):
+    def _program_type(self, program):
         """The operation type of `program` in this warehouse (created if missing)."""
         self.ensure_one()
         PickingType = self.env['stock.picking.type'].sudo().with_context(active_test=False)
         picking_type = PickingType.search([
-            ('warehouse_id', '=', self.id), ('bn_program', '=', program)], limit=1)
+            ('warehouse_id', '=', self.id), ('program_type', '=', program)], limit=1)
         if picking_type:
             if not picking_type.active:
                 picking_type.active = True
             return picking_type.sudo(False)
-        spec = self._bn_program_type_specs().get(program)
+        spec = self._program_type_specs().get(program)
         if not spec:
             raise UserError(_('Unknown operation type program "%s".') % program)
         if spec.get('create_method'):
             # the program creates its own type (and locations), e.g. Donation Box
             picking_type = getattr(self, spec['create_method'])()
-            picking_type.sudo().with_context(bn_program_sync=True).bn_program = program
+            picking_type.sudo().with_context(program_type_sync=True).program_type = program
             return picking_type
         picking_type = PickingType.create({
             'name': spec['name'],
@@ -114,15 +122,15 @@ class StockWarehouse(models.Model):
             'sequence_code': spec['sequence_code'],
             'warehouse_id': self.id,
             'company_id': self.company_id.id,
-            'default_location_src_id': self._bn_spec_location(spec.get('src')).id,
-            'default_location_dest_id': self._bn_spec_location(spec.get('dest')).id,
-            'bn_program': program,
+            'default_location_src_id': self._spec_location(spec.get('src')).id,
+            'default_location_dest_id': self._spec_location(spec.get('dest')).id,
+            'program_type': program,
         })
         _logger.info('Operation type %s created for %s.', picking_type.display_name, self.display_name)
         return picking_type.sudo(False)
 
     @api.model
-    def _bn_warehouse_for(self, location=None, user=None):
+    def _warehouse_for(self, location=None, user=None):
         """The warehouse a program document works in: the warehouse of its
         location, else the first allowed warehouse of the user, else the
         company's first warehouse."""
@@ -139,32 +147,32 @@ class StockWarehouse(models.Model):
         return warehouse
 
     @api.model
-    def _bn_get_program_type(self, program, location=None, user=None):
-        return self._bn_warehouse_for(location, user)._bn_program_type(program)
+    def _get_program_type(self, program, location=None, user=None):
+        return self._warehouse_for(location, user)._program_type(program)
 
     @api.model
-    def _bn_setup_program_types(self):
+    def _setup_program_types(self):
         """Install / upgrade hook of every program module: each warehouse gets
         the operation types of all installed programs. Idempotent."""
-        specs = self._bn_program_type_specs()
+        specs = self._program_type_specs()
         for warehouse in self.sudo().search([]):
             for program in specs:
-                warehouse._bn_program_type(program)
+                warehouse._program_type(program)
 
     @api.model
-    def _bn_archive_legacy_types(self, xmlids):
+    def _archive_legacy_types(self, xmlids):
         """Archive the old global operation types replaced by the per-warehouse
         program types (no warehouse: everybody saw them). Their transfers keep
         them."""
         for xmlid in xmlids:
             picking_type = self.env.ref(xmlid, raise_if_not_found=False)
-            if picking_type and picking_type.active and not picking_type.bn_program:
+            if picking_type and picking_type.active and not picking_type.program_type:
                 picking_type.sudo().active = False
 
     @api.model_create_multi
     def create(self, vals_list):
         warehouses = super().create(vals_list)
         for warehouse in warehouses:
-            for program in self._bn_program_type_specs():
-                warehouse._bn_program_type(program)
+            for program in self._program_type_specs():
+                warehouse._program_type(program)
         return warehouses

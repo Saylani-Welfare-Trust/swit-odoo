@@ -18,7 +18,7 @@
         'views/analytic_account.xml',
         'views/analytic_distribution_model.xml',
         'views/hr_employee.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,

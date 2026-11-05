@@ -54,15 +54,15 @@ class POSSession(models.Model):
             pickings.write({
                 'pos_session_id': self.id,
                 'origin': self.name,
-                'bn_source_ref': '%s,%s' % (self._name, self.id),
+                'source_record_ref': '%s,%s' % (self._name, self.id),
             })
 
         # ------------------------------------------------
         # DHS PICKINGS (SEPARATE)
         # ------------------------------------------------
         # the DHS POS operation type of the shop's warehouse
-        dhs_picking_type = self.config_id.warehouse_id._bn_program_type('dhs_pos') \
-            if self.config_id.warehouse_id else self.env['stock.warehouse']._bn_get_program_type('dhs_pos')
+        dhs_picking_type = self.config_id.warehouse_id._program_type('dhs_pos') \
+            if self.config_id.warehouse_id else self.env['stock.warehouse']._get_program_type('dhs_pos')
 
         for location_dest_id, lines in dhs_orders_by_document.items():
             pickings = self.env['stock.picking']._create_picking_from_pos_order_lines(
@@ -71,5 +71,5 @@ class POSSession(models.Model):
             pickings.write({
                 'pos_session_id': self.id,
                 'origin': self.name,
-                'bn_source_ref': '%s,%s' % (self._name, self.id),
+                'source_record_ref': '%s,%s' % (self._name, self.id),
             })

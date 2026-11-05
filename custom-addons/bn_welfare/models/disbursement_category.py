@@ -9,7 +9,7 @@ class DisbursementCategory(models.Model):
     name = fields.Char('Name')
 
     @api.model
-    def _bn_adopt_master_setup_categories(self):
+    def _adopt_master_setup_categories(self):
         """The In Kind / Cash categories used to be data of bn_master_setup.
         Databases that still have those records keep them (existing welfare
         lines point at them): they take over the bn_welfare xml ids, and the
@@ -31,11 +31,11 @@ class DisbursementCategory(models.Model):
                     IMD.create({'module': 'bn_welfare', 'name': name, 'model': self._name,
                                 'res_id': old.id, 'noupdate': True})
                 if new and new != old:
-                    self._bn_repoint_category(new, old)
+                    self._repoint_category(new, old)
                     new.unlink()
             old_xmlid.unlink()
 
-    def _bn_repoint_category(self, src, dest):
+    def _repoint_category(self, src, dest):
         """Point every stored many2one on ``src`` to ``dest``."""
         fields_ = self.env['ir.model.fields'].sudo().search([
             ('relation', '=', self._name), ('ttype', '=', 'many2one'), ('store', '=', True),

@@ -28,7 +28,7 @@ type_selection = [
 class DonationInKind(models.Model):
     _name = 'donation.in.kind'
     _description = "Donation In Kind"
-    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin", 'pos.link.mixin']
 
     
     def default_set_value(self, name):
@@ -239,7 +239,7 @@ May Allah bless you!
 
     @api.model
     def _din_picking_type(self, location):
-        return self.env['stock.warehouse']._bn_get_program_type('donation_in_kind', location or None)
+        return self.env['stock.warehouse']._get_program_type('donation_in_kind', location or None)
 
     def action_validate(self):
         self._check_din_state(('delivered',), _('Validate'))
@@ -277,7 +277,7 @@ May Allah bless you!
                     'location_id': vendor_location_id,
                     'scheduled_date': fields.Datetime.today(),
                     'origin': record.name,
-                    'bn_source_ref': '%s,%s' % (record._name, record.id),
+                    'source_record_ref': '%s,%s' % (record._name, record.id),
                     'move_ids_without_package': move_ids,
                 }
                 picking_id = self.env['stock.picking'].sudo().create(move_vals)
@@ -488,7 +488,7 @@ May Allah bless you!
             'location_dest_id': location_dest_id,
             'scheduled_date': fields.Datetime.now(),
             'origin': self.name,
-            'bn_source_ref': '%s,%s' % (self._name, self.id),
+            'source_record_ref': '%s,%s' % (self._name, self.id),
             'move_ids_without_package': [(0, 0, {
                 'product_id': product.id,
                 'name': product.name,
@@ -568,7 +568,7 @@ May Allah bless you!
                 'line_ids': box_lines_tuples,
             }
             
-            account_move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (record._name, record.id)).sudo().create(vals)
+            account_move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (record._name, record.id)).sudo().create(vals)
             
             if account_move:
                 account_move.action_post()
@@ -581,7 +581,7 @@ May Allah bless you!
 
     def _send_receipt_notification(self):
         """Donation receipt to the donor once the items are received:
-        WhatsApp first, SMS fallback (bn.donor.notifier). A failed message
+        WhatsApp first, SMS fallback (donor.notifier). A failed message
         never stops the validation."""
         self.ensure_one()
         items = ', '.join('%s x %g' % (line.product_id.display_name, line.quantity)
@@ -589,7 +589,7 @@ May Allah bless you!
         message = (f"Dear {self.donor_id.name},\n\nThank you for your donation in kind!\n\n"
                    f"Reference: {self.name}\nItems: {items or '-'}\n\nMay Allah bless you!\n\n- SWIT")
         try:
-            return self.env['bn.donor.notifier']._send(
+            return self.env['donor.notifier']._send(
                 self, self.donor_id,
                 lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
                 report_name='bn_donation_in_kind.donation_in_kind_whatsapp_report',
@@ -667,7 +667,7 @@ May Allah bless you!
     @api.model
     def create_din_record(self, data):
         # records made here carry the POS session / POS they come from
-        self = self.with_context(bn_pos_create=True)
+        self = self.with_context(pos_link_create=True)
         din = None
         dins = self.browse()
         

@@ -33,7 +33,7 @@ state_selection = [
 
 class RiderCollection(models.Model):
     _name = 'rider.collection'
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['pos.link.mixin']
     _description = "Rider Collection"
     _rec_name = "shop_name"
 
@@ -127,12 +127,12 @@ class RiderCollection(models.Model):
                 progress = False
                 claims = defaultdict(lambda: self.browse())
                 for collection in todo:
-                    order = collection._bn_find_paying_pos_order(product_name, used_order_ids, by_moment)
+                    order = collection._find_paying_pos_order(product_name, used_order_ids, by_moment)
                     if order:
                         claims[order] |= collection
                 for order, collections in claims.items():
                     if len(collections) == 1:
-                        order._bn_link_rider_collection(collections.id)
+                        order._link_rider_collection(collections.id)
                         used_order_ids.add(order.id)
                         todo -= collections
                         progress = True
@@ -155,7 +155,7 @@ class RiderCollection(models.Model):
             },
         }
 
-    def _bn_find_paying_pos_order(self, product_name, used_order_ids, by_moment=False):
+    def _find_paying_pos_order(self, product_name, used_order_ids, by_moment=False):
         """The POS order that paid this collection, or an empty recordset when it is not
         sure. Candidates: a paid order with a Donation Box line of the same amount, not
         linked to another collection, between this collection's submission and the next
@@ -185,19 +185,19 @@ class RiderCollection(models.Model):
         orders = lines.filtered(
             lambda l: float_compare(l.price_subtotal_incl, self.amount, precision_digits=2) == 0).order_id
 
-        customer = self._bn_pos_customer()
+        customer = self._pos_customer()
         by_customer = orders.filtered(lambda o: o.partner_id == customer) if customer else orders.browse()
         if not by_moment:
             return by_customer if len(by_customer) == 1 else orders.browse()
 
-        cashier, paid_at = self._bn_paid_moment()
+        cashier, paid_at = self._paid_moment()
         if not (cashier and paid_at):
             return orders.browse()
         matched = (by_customer or orders).filtered(
             lambda o: o.user_id == cashier and abs(o.date_order - paid_at) <= POS_MATCH_WINDOW)
         return matched if len(matched) == 1 else orders.browse()
 
-    def _bn_pos_customer(self):
+    def _pos_customer(self):
         """Customer the POS puts on the order (see key.issuance.set_donation_amount)."""
         self.ensure_one()
         Partner = self.env['res.partner'].sudo()
@@ -207,7 +207,7 @@ class RiderCollection(models.Model):
             return Partner.search([('name', 'ilike', 'Foreign Currency Donor')], limit=1)
         return self.donation_box_registration_installation_id.donor_id
 
-    def _bn_paid_moment(self):
+    def _paid_moment(self):
         """(cashier, time) the POS marked this collection Paid. Taken from the chatter of
         its key issuance (the POS sets it to Donation Received, or Returned for CFB / FCB),
         else from the collection's last write unless the system made it (an upgrade

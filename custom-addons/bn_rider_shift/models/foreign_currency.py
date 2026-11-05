@@ -78,7 +78,7 @@ class ForeignCurrency(models.Model):
 
         # Find the donation box registration for this lot
         # The registration in service wins over closed ones of a reused box number.
-        box = self.env['donation.box.registration.installation'].sudo()._bn_find_by_lot(lot)
+        box = self.env['donation.box.registration.installation'].sudo()._find_by_lot(lot)
         if not box:
             raise UserError('Could not find a donation box registration for the selected box.')
 
@@ -112,11 +112,11 @@ class ForeignCurrency(models.Model):
                     f'Key "{key.name}" is not Available (current status: {key.state}); '
                     'cannot create an FCB issuance for it.'
                 )
-            key._bn_lock()
+            key._lock_key()
             # Keep key.state consistent with the issuance created below - money is
             # already collected (via currency conversion), so the key goes straight
             # to Issued and the issuance record starts at "Donation Received".
-            key._bn_write({'state': 'issued'})
+            key._workflow_write({'state': 'issued'})
 
             key_issuance_vals = {
                 'rider_id': fc_rider.id,

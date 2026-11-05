@@ -20,7 +20,7 @@ class PosOrder(models.Model):
 
     def send_whatsapp_after_payment(self, order_id):
         """Donation receipt to the donor: WhatsApp first, SMS fallback
-        (bn.donor.notifier)."""
+        (donor.notifier)."""
         if isinstance(order_id, list):
             order_id = order_id[0] if order_id else None
         order = self.browse(int(order_id)).exists() if order_id else None
@@ -41,7 +41,7 @@ class PosOrder(models.Model):
             )
             return text + (f"\n\nReceipt: {link}" if link else '')
 
-        result = self.env['bn.donor.notifier']._send(
+        result = self.env['donor.notifier']._send(
             order, order.partner_id, sms_message,
             report_name='bn_pos_order.pos_whatsapp_donation_receipt_template',
             filename=f"Receipt_{order.name.replace('/', '_')}.pdf")

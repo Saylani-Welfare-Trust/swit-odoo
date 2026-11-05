@@ -51,7 +51,7 @@ case_type_selection = [
 class MedicalEquipment(models.Model):
     _name = 'medical.equipment'
     _description = "Medical Equipment"
-    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin", 'pos.link.mixin']
 
 
 
@@ -628,7 +628,7 @@ class MedicalEquipment(models.Model):
         if self.picking_id:
             raise UserError(_('%s is already validated.') % self.name)
 
-        operation_type = self.env['stock.warehouse']._bn_get_program_type('medical_equipment')
+        operation_type = self.env['stock.warehouse']._get_program_type('medical_equipment')
         
         # Prepare stock picking values
         picking_vals = {
@@ -636,7 +636,7 @@ class MedicalEquipment(models.Model):
             'location_id': operation_type.default_location_src_id.id,
             'location_dest_id': operation_type.default_location_dest_id.id,
             'origin': self.name,  # Reference to your medical equipment record
-            'bn_source_ref': '%s,%s' % (self._name, self.id),
+            'source_record_ref': '%s,%s' % (self._name, self.id),
             'scheduled_date': fields.Datetime.now(),
             'move_ids': [(0, 0, {
                 'name': f'Medical Equipment: {self.name}',
@@ -992,7 +992,7 @@ class MedicalEquipment(models.Model):
     @api.model
     def create_me_record(self, data):
         # records made here carry the POS session / POS they come from
-        self = self.with_context(bn_pos_create=True)
+        self = self.with_context(pos_link_create=True)
         product_lines = []
 
         for line in data['order_lines']:

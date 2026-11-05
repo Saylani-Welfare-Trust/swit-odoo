@@ -16,5 +16,5 @@ from . import gateway_config_header
 from . import gateway_config_currency
 from . import api_qurbani_item
 from . import res_company
-from . import bn_program_types
+from . import program_types
 from . import account_move

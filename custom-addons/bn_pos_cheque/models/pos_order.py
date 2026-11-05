@@ -144,5 +144,5 @@ class POSOrder(models.Model):
             return {"status": "error", "body": str(e)}
         return {"status": "success", "body": _("Cheque Status has been updated successfully.")}
 
-    def _bn_pos_documents(self, extra_data):
-        return super()._bn_pos_documents(extra_data) + [self.pos_cheque_id]
+    def _pos_documents(self, extra_data):
+        return super()._pos_documents(extra_data) + [self.pos_cheque_id]

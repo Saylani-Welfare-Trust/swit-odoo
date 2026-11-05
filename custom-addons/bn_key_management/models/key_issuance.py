@@ -29,8 +29,8 @@ GUARDED_FIELDS = ('state', 'returned_on', 'donation_amount', 'is_fcb', 'is_cfb')
 class KeyIssuance(models.Model):
     _name = 'key.issuance'
     _description = 'Key Issuance'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
-    _bn_guarded_fields = GUARDED_FIELDS
+    _inherit = ["mail.thread", "mail.activity.mixin", "workflow.mixin"]
+    _guarded_fields = GUARDED_FIELDS
 
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     key_id = fields.Many2one('key', string="Key", tracking=True)
@@ -89,12 +89,12 @@ class KeyIssuance(models.Model):
     # Workflow
     # ------------------------------------------------------------------
     def action_issue(self):
-        self._bn_require_group(KEY_USER_GROUP)
+        self._require_group(KEY_USER_GROUP)
         for record in self:
-            record._bn_do_issue()
+            record._do_issue()
         return True
 
-    def _bn_do_issue(self):
+    def _do_issue(self):
         self.ensure_one()
         key = self.key_id
         if not key:
@@ -102,11 +102,11 @@ class KeyIssuance(models.Model):
         if self.state != 'draft':
             raise UserError(_('Issuance "%s" is not in Draft status.') % self.display_name)
 
-        key._bn_lock()
+        key._lock_key()
         if key.state != 'available':
             raise ValidationError(_(
                 'Key "%(key)s" is not Available (current status: %(state)s).'
-            ) % {'key': key.display_name, 'state': key._bn_selection_label('state', key.state)})
+            ) % {'key': key.display_name, 'state': key._selection_label('state', key.state)})
         open_issuance = self.search([
             ('key_id', '=', key.id), ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
         ], limit=1)
@@ -115,45 +115,45 @@ class KeyIssuance(models.Model):
                 'Key "%(key)s" is already issued to %(rider)s.'
             ) % {'key': key.display_name, 'rider': open_issuance.rider_id.display_name})
 
-        key._bn_write({'state': 'issued'})
-        self._bn_write({'state': 'issued', 'issued_on': fields.Datetime.now()})
+        key._workflow_write({'state': 'issued'})
+        self._workflow_write({'state': 'issued', 'issued_on': fields.Datetime.now()})
 
     def action_return(self):
-        self._bn_require_group(KEY_USER_GROUP)
+        self._require_group(KEY_USER_GROUP)
         for record in self:
-            record._bn_do_return()
+            record._do_return()
         return True
 
-    def _bn_do_return(self):
+    def _do_return(self):
         self.ensure_one()
         if self.state not in ('donation_receive', 'pending'):
             raise UserError(_(
                 'Issuance "%(name)s" cannot be returned from status "%(state)s".'
-            ) % {'name': self.display_name, 'state': self._bn_selection_label('state', self.state)})
+            ) % {'name': self.display_name, 'state': self._selection_label('state', self.state)})
         key = self.key_id
-        key._bn_lock()
-        key._bn_write({'state': 'available'})
-        self._bn_write({'state': 'returned', 'returned_on': fields.Datetime.now()})
+        key._lock_key()
+        key._workflow_write({'state': 'available'})
+        self._workflow_write({'state': 'returned', 'returned_on': fields.Datetime.now()})
 
     def action_donation_receive(self):
-        self._bn_require_group(KEY_USER_GROUP)
-        self._bn_check_state('state', ('issued', 'overdue', 'pending'), _('Donation Received'))
+        self._require_group(KEY_USER_GROUP)
+        self._check_workflow_state('state', ('issued', 'overdue', 'pending'), _('Donation Received'))
         for rec in self:
-            rec._bn_write({'state': 'donation_receive'})
+            rec._workflow_write({'state': 'donation_receive'})
         return True
 
     def action_overdue(self):
-        self._bn_require_group(KEY_USER_GROUP)
-        self._bn_check_state('state', ('issued',), _('Overdue'))
+        self._require_group(KEY_USER_GROUP)
+        self._check_workflow_state('state', ('issued',), _('Overdue'))
         for rec in self:
-            rec._bn_write({'state': 'overdue'})
+            rec._workflow_write({'state': 'overdue'})
         return True
 
     def action_pending(self):
-        self._bn_require_group(KEY_USER_GROUP)
-        self._bn_check_state('state', ('issued', 'overdue'), _('Mark Pending'))
+        self._require_group(KEY_USER_GROUP)
+        self._check_workflow_state('state', ('issued', 'overdue'), _('Mark Pending'))
         for rec in self:
-            rec.key_id._bn_lock()
-            rec.key_id._bn_write({'state': 'pending'})
-            rec._bn_write({'state': 'pending'})
+            rec.key_id._lock_key()
+            rec.key_id._workflow_write({'state': 'pending'})
+            rec._workflow_write({'state': 'pending'})
         return True

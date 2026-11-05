@@ -59,7 +59,7 @@ PROFILE_LOCKED_FIELDS = (
 # Set while a profile workflow method runs. A Python ContextVar, not an Odoo
 # context key: an RPC client can put any key in the context, but cannot set
 # server-side Python state.
-_PROFILE_TRANSITION = contextvars.ContextVar('bn_profile_transition', default=False)
+_PROFILE_TRANSITION = contextvars.ContextVar('profile_transition', default=False)
 
 
 @contextlib.contextmanager
@@ -579,7 +579,7 @@ class ResPartner(models.Model):
         return created
 
     @api.model
-    def _bn_backfill_registration_ids(self):
+    def _backfill_registration_ids(self):
         """Record IDs issued before per-tag IDs existed (idempotent)."""
         Registration = self.env['res.partner.registration'].sudo()
         tags = {name: self.env.ref('bn_profile_management.%s_partner_category' % name.lower(), raise_if_not_found=False)

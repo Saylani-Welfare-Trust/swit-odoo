@@ -21,8 +21,8 @@
         </field>
     </record>
 
-    <record id="purchase_requisition_view_purchase_requisition_form_inherit_bn_purchse_customization" model="ir.ui.view">
-        <field name="name">purchase.requisition.view.purchase.requisition.form.inherit.bn.purchse.customization</field>
+    <record id="purchase_requisition_view_purchase_requisition_form_inherit_purchse_customization" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.purchase.requisition.form.inherit.bn.purchase.customization</field>
         <field name="model">purchase.requisition</field>
         <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
         <field name="arch" type="xml">

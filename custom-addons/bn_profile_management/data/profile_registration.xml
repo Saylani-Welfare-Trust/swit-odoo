@@ -2,5 +2,5 @@
 <odoo>
     <!-- Runs on every install / upgrade. Idempotent: configures the Donor /
          Donee ID patterns only if empty, records IDs issued earlier. -->
-    <function model="res.partner.category" name="_bn_setup_registration_ids"/>
+    <function model="res.partner.category" name="_setup_registration_ids"/>
 </odoo>

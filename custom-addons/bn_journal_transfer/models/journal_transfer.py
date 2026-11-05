@@ -13,7 +13,7 @@ status_selection = [
 
 class JournalTransfer(models.Model):
     _name = "journal.transfer"
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['pos.link.mixin']
     _description = "Journal Transfer"
 
 
@@ -89,7 +89,7 @@ class JournalTransfer(models.Model):
                 'ref': f'Transfer {rec.amount} from {rec.source_journal_id.name} to {rec.dest_journal_id.name}'
             }
 
-            move = rec.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (rec._name, rec.id)).create(move_vals)
+            move = rec.env['account.move'].with_context(default_source_ref='%s,%s' % (rec._name, rec.id)).create(move_vals)
             rec.move_id = move.id
             move.action_post()
 
@@ -190,7 +190,7 @@ class JournalTransfer(models.Model):
             
 
     @api.model
-    def _bn_split_description(self):
+    def _split_description(self):
         """Upgrade hook (data/upgrade_hooks.xml): fill session / category /
         deposit slip of the older transfers from their description
         "<session> - <category> - <slip>". Only rows not done yet."""

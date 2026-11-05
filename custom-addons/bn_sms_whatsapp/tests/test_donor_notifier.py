@@ -12,7 +12,7 @@ class TestDonorNotifier(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.Notifier = cls.env['bn.donor.notifier']
+        cls.Notifier = cls.env['donor.notifier']
         cls.sent = []
         cls.record = cls.env['res.partner'].create({'name': 'Receipt record'})
 

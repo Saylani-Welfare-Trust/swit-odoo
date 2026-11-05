@@ -222,10 +222,10 @@ class TestProfileRegistrationIds(ProfileCase):
         self.env.cr.execute("UPDATE res_partner SET state = 'register', primary_registration_id = '24-80-09999-1' WHERE id = %s",
                             (legacy.id,))
         legacy.invalidate_recordset()
-        self.env['res.partner.category']._bn_setup_registration_ids()
+        self.env['res.partner.category']._setup_registration_ids()
         self.assertEqual(legacy.registration_ids.code, '24-80-09999-1')
         self.assertEqual(legacy.registration_ids.category_id, self.donee)
-        self.env['res.partner.category']._bn_setup_registration_ids()
+        self.env['res.partner.category']._setup_registration_ids()
         self.assertEqual(len(legacy.registration_ids), 1, 'idempotent')
 
     def test_ids_readable_without_profile_groups(self):

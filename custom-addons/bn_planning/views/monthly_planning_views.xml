@@ -48,7 +48,7 @@
                                  ('from_date','&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <filter name="filter_this_month" string="This Month"
                         domain="[('from_date','&gt;=', context_today().strftime('%Y-%m-01')),
-                                 ('from_date','&lt;=', context_today().strftime('%Y-%m-31'))]"/>
+                                 ('from_date','&lt;', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
 
                 <separator/>
 

@@ -16,13 +16,13 @@ KEY_BUNCH_LIMIT = 50
 class Key(models.Model):
     _name = 'key'
     _description = 'Key'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
-    _bn_guarded_fields = ('state', 'key_bunch_id')
+    _inherit = ["mail.thread", "mail.activity.mixin", "workflow.mixin"]
+    _guarded_fields = ('state', 'key_bunch_id')
 
     donation_box_request_id = fields.Many2one('donation.box.request', string="Donation Box Request")
     donation_box_registration_installation_id = fields.Many2one(
         'donation.box.registration.installation', string="Donation Box Registration", index=True)
-    # Assigned when the registration is approved (see the registration's _bn_key_activate).
+    # Assigned when the registration is approved (see the registration's _key_activate).
     # It used to be a stored related field, which attached a still-draft key to the bunch as
     # soon as the bunch was chosen on the registration form.
     key_bunch_id = fields.Many2one('key.bunch', string="Key Bunch", index=True, tracking=True)
@@ -57,20 +57,20 @@ class Key(models.Model):
     # ------------------------------------------------------------------
     # Workflow (internal: keys are moved by the registration / issuance workflows)
     # ------------------------------------------------------------------
-    def _bn_lock(self):
+    def _lock_key(self):
         """Serialise concurrent issue/return operations on the same keys."""
         if self.ids:
             self.env.cr.execute('SELECT id FROM "key" WHERE id IN %s FOR UPDATE', (tuple(self.ids),))
             self.invalidate_recordset(['state'])
 
-    def _bn_make_available(self, bunch=None):
+    def _make_available(self, bunch=None):
         vals = {'state': 'available'}
         if bunch:
             vals['key_bunch_id'] = bunch.id
-        self._bn_write(vals)
+        self._workflow_write(vals)
 
-    def _bn_close(self):
-        self._bn_write({'state': 'closed', 'key_bunch_id': False})
+    def _close_key(self):
+        self._workflow_write({'state': 'closed', 'key_bunch_id': False})
 
     def action_available(self):
         """Kept for backward compatibility. Keys can no longer be made available by hand:

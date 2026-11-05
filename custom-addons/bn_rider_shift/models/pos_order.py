@@ -17,10 +17,10 @@ class POSOrder(models.Model):
         pos_order = self.browse(order_id)
         if box_data and pos_order.state in ('paid', 'done', 'invoiced'):
             KeyIssuance = self.env['key.issuance'].sudo()
-            result, collection, issuance = KeyIssuance._bn_check_donation_box(box_data)
+            result, collection, issuance = KeyIssuance._check_donation_box(box_data)
             if result.get('status') == 'success':
-                KeyIssuance._bn_apply_donation_box(collection, issuance, box_data)
-                pos_order._bn_link_rider_collection(collection.id)
+                KeyIssuance._apply_donation_box(collection, issuance, box_data)
+                pos_order._link_rider_collection(collection.id)
                 # the receipt the donor got for this collection
                 collection.sudo().pos_receipt_number = (
                     box_data.get('receipt_number')
@@ -31,14 +31,14 @@ class POSOrder(models.Model):
                 _logger.warning("POS order %s: donation box not closed: %s", pos_order.name, result.get('body'))
         return order_id
 
-    def _bn_link_rider_collection(self, collection_id):
+    def _link_rider_collection(self, collection_id):
         """Keep on the rider collection the POS order that paid it and its DN #."""
         self.ensure_one()
         collection = self.env['rider.collection'].sudo().browse(collection_id).exists()
         if collection and not collection.pos_order_id:
-            collection.write({'pos_order_id': self.id, 'dn_number': self._bn_dn_number()})
+            collection.write({'pos_order_id': self.id, 'dn_number': self._dn_number()})
 
-    def _bn_dn_number(self):
+    def _dn_number(self):
         """DN # as printed on the POS receipt: <branch code>-C<counter>-<year>-<POS order seq>."""
         self.ensure_one()
         # bn_livestock_slaugther, when installed, already stores it on every order when paid

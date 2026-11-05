@@ -9,7 +9,7 @@ class DirectDepositAccountSetup(models.Model):
     name = fields.Char(string="Name", default="Account Prefix")
 
     @api.model
-    def _bn_setup_default_prefix(self):
+    def _setup_default_prefix(self):
         """Data hook: the default receivable account prefix (formerly loaded by
         bn_master_setup), created only when no prefix is configured yet."""
         if not self.sudo().search_count([]):

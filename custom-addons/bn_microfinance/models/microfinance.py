@@ -70,7 +70,7 @@ class Microfinance(models.Model):
 
     _name = 'microfinance'
     _description = "Microfinance"
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
 
 
     name = fields.Char('Name', default="NEW")
@@ -511,7 +511,7 @@ class Microfinance(models.Model):
                 ]
             }
 
-            move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self._name, self.id)).create(move_vals)
+            move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).create(move_vals)
             move.action_post()
     
     # ------------------------------------------------------------------
@@ -645,7 +645,7 @@ class Microfinance(models.Model):
         }
         # Accounting document created as superuser: the Microfinance group
         # checked above is the gate.
-        bill = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self._name, self.id)).sudo().create(move_vals)
+        bill = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).sudo().create(move_vals)
         # Optionally, you can post the bill automatically:
         # bill.action_post()
 
@@ -809,11 +809,11 @@ class Microfinance(models.Model):
         # Create picking
         picking = self.env['stock.picking'].create({
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env['stock.warehouse']._bn_get_program_type(
+            'picking_type_id': self.env['stock.warehouse']._get_program_type(
                 'microfinance_delivery', self.env['stock.location'].browse(location_id)).id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
             'origin': self.name,
-            'bn_source_ref': '%s,%s' % (self._name, self.id),
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
         
         # Confirm and assign the picking (but don't validate - that's manual)

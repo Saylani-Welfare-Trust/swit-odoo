@@ -177,7 +177,7 @@ class MonthlyPlanning(models.Model):
     def _default_source_location(self):
         # the stock of the user's warehouse
         warehouse = self.env['stock.warehouse'].sudo().search([], limit=1) and \
-            self.env['stock.warehouse']._bn_warehouse_for()
+            self.env['stock.warehouse']._warehouse_for()
         return warehouse.lot_stock_id.id if warehouse else False
     
     # ─── Internal transfer generation ─────────────────────
@@ -200,7 +200,7 @@ class MonthlyPlanning(models.Model):
             return StockPicking
 
         # the Monthly Planning operation type of the source warehouse
-        picking_type = self.env['stock.warehouse']._bn_get_program_type(
+        picking_type = self.env['stock.warehouse']._get_program_type(
             'planning', self.source_location_id or None)
         if not picking_type:
             _logger.warning(

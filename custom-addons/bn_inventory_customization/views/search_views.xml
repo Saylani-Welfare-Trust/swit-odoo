@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="search_livestock_variant" model="ir.ui.view">
+        <field name="name">livestock.variant.search</field>
+        <field name="model">livestock.variant</field>
+        <field name="arch" type="xml">
+            <search string="Livestock Variant">
+                <field name="name"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

@@ -17,7 +17,7 @@
         "views/approval_request_views.xml",
         "wizard/approval_reject_wizard_views.xml",
         "views/approval_menus.xml",
-        "views/bn_search_views.xml",
+        "views/search_views.xml",
     ],
     "application": True,
     "installable": True

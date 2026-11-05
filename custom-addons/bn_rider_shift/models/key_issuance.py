@@ -8,8 +8,8 @@ class KeyIssuance(models.Model):
 
     rider_collection_id = fields.Many2one('rider.collection', string="Rider Collection", copy=False)
 
-    def _bn_do_issue(self):
-        super()._bn_do_issue()
+    def _do_issue(self):
+        super()._do_issue()
         # Rider Shift record: created as superuser, the Key Management group
         # checked by action_issue is the gate.
         key = self.key_id
@@ -19,7 +19,7 @@ class KeyIssuance(models.Model):
             'lot_id': key.lot_id.id,
             'date': self.issue_date,
         })
-        self._bn_write({'rider_collection_id': collection.id})
+        self._workflow_write({'rider_collection_id': collection.id})
 
     # ------------------------------------------------------------------
     # POS RPC entry point
@@ -29,19 +29,19 @@ class KeyIssuance(models.Model):
         """POS Donation Box screen. With check_validation (the popup) the box
         is only checked and its donor returned; the collection is closed when
         the POS order is saved (pos.order._process_order), never before."""
-        result, collection, issuance = self._bn_check_donation_box(data)
+        result, collection, issuance = self._check_donation_box(data)
         if result.get('status') != 'success' or (data or {}).get('check_validation'):
             return result
-        self._bn_apply_donation_box(collection, issuance, data)
+        self._apply_donation_box(collection, issuance, data)
         return {"status": "success"}
 
-    def _bn_special_donor(self, name):
+    def _special_donor(self, name):
         donor = self.env['res.partner'].sudo().search([('name', 'ilike', name)], limit=1)
         return donor or self.env['res.partner'].sudo().create({
             'name': name, 'is_company': False, 'customer_rank': 1,
         })
 
-    def _bn_check_donation_box(self, data):
+    def _check_donation_box(self, data):
         """(result, collection, issuance) - nothing is written."""
         none = self.env['rider.collection'], self.browse()
         if not data:
@@ -57,10 +57,10 @@ class KeyIssuance(models.Model):
 
         # CFB (counterfeit notes) / FCB (foreign currency): no box amount to match
         if collection.remarks == 'CFB':
-            donor = self._bn_special_donor('Counterfeit Donor')
+            donor = self._special_donor('Counterfeit Donor')
             return {"status": "success", "donor_id": donor.id, "is_cfb": True}, collection, self.browse()
         if collection.remarks == 'FCB':
-            donor = self._bn_special_donor('Foreign Currency Donor')
+            donor = self._special_donor('Foreign Currency Donor')
             return {"status": "success", "donor_id": donor.id, "is_fcb": True}, collection, self.browse()
 
         if collection.state != 'donation_submit':
@@ -93,35 +93,35 @@ class KeyIssuance(models.Model):
         ], limit=1)
         return {"status": "success", "id": issuance.id, "donor_id": box.donor_id.id}, collection, issuance
 
-    def _bn_apply_donation_box(self, collection, issuance, data):
+    def _apply_donation_box(self, collection, issuance, data):
         """Close the collection paid at the POS."""
         collection = collection.sudo()
         if collection.remarks == 'CFB':
             collection.write({'state': 'paid'})
             collection.counterfeit_note_ids.write({'state': 'paid'})
-            self._bn_mark_collection_issuance(collection, is_cfb=True)
+            self._mark_collection_issuance(collection, is_cfb=True)
         elif collection.remarks == 'FCB':
             collection.write({'state': 'paid'})
             self.env['foreign.currency'].sudo().search([
                 ('rider_collection_id', '=', collection.id),
                 ('state', '=', 'payment_received'),
             ]).write({'state': 'paid'})
-            self._bn_mark_collection_issuance(collection, is_fcb=True)
+            self._mark_collection_issuance(collection, is_fcb=True)
         else:
-            issuance._bn_write({'donation_amount': float(data.get('amount'))})
+            issuance._workflow_write({'donation_amount': float(data.get('amount'))})
             issuance.action_donation_receive()
             collection.state = 'paid'
 
-    def _bn_mark_collection_issuance(self, collection, is_fcb=False, is_cfb=False):
+    def _mark_collection_issuance(self, collection, is_fcb=False, is_cfb=False):
         """CFB/FCB collections have no real box return: close their issuance record
         (if any) explicitly so it does not block a later bulk issuance of its bunch."""
         issuance = self.sudo().search([('rider_collection_id', '=', collection.id)], limit=1)
         if issuance and issuance.state in ('issued', 'overdue', 'pending'):
-            issuance._bn_write({
+            issuance._workflow_write({
                 'state': 'returned',
                 'returned_on': fields.Datetime.now(),
                 'is_fcb': is_fcb,
                 'is_cfb': is_cfb,
             })
-            issuance.key_id._bn_lock()
-            issuance.key_id._bn_write({'state': 'available'})
+            issuance.key_id._lock_key()
+            issuance.key_id._workflow_write({'state': 'available'})

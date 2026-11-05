@@ -144,7 +144,7 @@ class BulkKeyIssuance(models.TransientModel):
                 continue
             if issuance.state not in ('donation_receive', 'pending'):
                 invalid_keys.append('%s (%s)' % (key.display_name,
-                                                  issuance._bn_selection_label('state', issuance.state)))
+                                                  issuance._selection_label('state', issuance.state)))
             else:
                 valid_issuances |= issuance
 

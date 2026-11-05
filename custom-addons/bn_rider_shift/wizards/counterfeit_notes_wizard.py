@@ -53,7 +53,7 @@ class CounterfeitNotesWizard(models.TransientModel):
         Registration = self.env['donation.box.registration.installation'].sudo()
         unique_boxes = Registration.browse()
         for lot in unique_lots:
-            unique_boxes |= Registration._bn_find_by_lot(lot)
+            unique_boxes |= Registration._find_by_lot(lot)
 
         # Create key issuance for each box
         for box in unique_boxes:
@@ -75,8 +75,8 @@ class CounterfeitNotesWizard(models.TransientModel):
                     f'Key "{key.name}" is not Available (current status: {key.state}); '
                     'cannot create a CFB issuance for it.'
                 )
-            key._bn_lock()
-            key._bn_write({'state': 'issued'})
+            key._lock_key()
+            key._workflow_write({'state': 'issued'})
 
             key_issuance_vals = {
                 'rider_id': counterfeit_rider.id,

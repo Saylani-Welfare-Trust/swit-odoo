@@ -6,7 +6,7 @@ class MemberApproval(models.Model):
 
     _name = 'material.request'
     _description = 'Member Approval - Internal Transfer Request'
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
     name = fields.Char('Reference', default='New', readonly=True, copy=False, tracking=True)
@@ -324,7 +324,7 @@ class MemberApproval(models.Model):
             raise ValidationError(_('Please specify a Destination Location.'))
 
         # the Material Request operation type of the source warehouse
-        picking_type = self.env['stock.warehouse']._bn_get_program_type(
+        picking_type = self.env['stock.warehouse']._get_program_type(
             'material_request', self.source_location_id)
 
         move_vals = []
@@ -412,7 +412,7 @@ class MemberApproval(models.Model):
                 'location_id': self.source_location_id.id,
                 'location_dest_id': self.dest_location_id.id,
                 'origin': self.name,
-                'bn_source_ref': '%s,%s' % (self._name, self.id),
+                'source_record_ref': '%s,%s' % (self._name, self.id),
                 'material_request_id': self.id,
                 'move_ids_without_package': move_vals,
             })
@@ -557,7 +557,7 @@ class MemberApproval(models.Model):
             # sudo: the requester need not be a purchase user.
             rec.purchase_requisition_count = len(rec.sudo().purchase_requisition_ids)
 
-    def _bn_purchase_orders(self):
+    def _purchase_orders(self):
         """Confirmed Purchase Orders of all its Purchase Requests (sudo: the
         requester need not be a purchase user)."""
         self.ensure_one()
@@ -566,12 +566,12 @@ class MemberApproval(models.Model):
 
     def _compute_purchase_documents(self):
         for rec in self:
-            orders = rec._bn_purchase_orders() if rec.id else self.env['purchase.order']
+            orders = rec._purchase_orders() if rec.id else self.env['purchase.order']
             rec.purchase_order_count = len(orders)
             rec.purchase_receipt_count = len(orders.picking_ids)
             rec.vendor_bill_count = len(orders.invoice_ids)
 
-    def _bn_open(self, model, records, name):
+    def _open_documents(self, model, records, name):
         return {
             'type': 'ir.actions.act_window', 'name': name, 'res_model': model,
             'view_mode': 'tree,form', 'domain': [('id', 'in', records.ids)],
@@ -579,13 +579,13 @@ class MemberApproval(models.Model):
         }
 
     def action_view_purchase_orders(self):
-        return self._bn_open('purchase.order', self._bn_purchase_orders(), _('Purchase Orders of %s', self.name))
+        return self._open_documents('purchase.order', self._purchase_orders(), _('Purchase Orders of %s', self.name))
 
     def action_view_purchase_receipts(self):
-        return self._bn_open('stock.picking', self._bn_purchase_orders().picking_ids, _('Receipts of %s', self.name))
+        return self._open_documents('stock.picking', self._purchase_orders().picking_ids, _('Receipts of %s', self.name))
 
     def action_view_vendor_bills(self):
-        return self._bn_open('account.move', self._bn_purchase_orders().invoice_ids, _('Vendor Bills of %s', self.name))
+        return self._open_documents('account.move', self._purchase_orders().invoice_ids, _('Vendor Bills of %s', self.name))
 
     def action_view_purchase_requisitions(self):
         """View every Purchase Request made for this request"""
@@ -620,9 +620,9 @@ class MemberApproval(models.Model):
     #     self.state = 'committee_approval'
 
 
-    def _bn_default_program_type(self, user):
+    def _default_program_type(self, user):
         try:
-            return self.env['stock.warehouse']._bn_get_program_type('material_request', user=user)
+            return self.env['stock.warehouse']._get_program_type('material_request', user=user)
         except UserError:
             return self.env['stock.picking.type']
 
@@ -635,7 +635,7 @@ class MemberApproval(models.Model):
                 return warehouse.lot_stock_id
                 
         # Fallback: the Material Request operation type of the user's warehouse
-        picking_type = self._bn_default_program_type(user)
+        picking_type = self._default_program_type(user)
         return picking_type.default_location_src_id if picking_type else False
 
 
@@ -646,7 +646,7 @@ class MemberApproval(models.Model):
             return user.allowed_location_ids[0]
             
         # Fallback: the Material Request operation type of the user's warehouse
-        picking_type = self._bn_default_program_type(user)
+        picking_type = self._default_program_type(user)
         return picking_type.default_location_dest_id if picking_type else False
 
     @api.model

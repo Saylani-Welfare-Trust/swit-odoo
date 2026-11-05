@@ -40,7 +40,7 @@ class Donation(models.Model):
                 'ref': donation.name,
             }
             vals.update(donation._get_livestock_department_vals(product))
-            slaughter_obj._bn_create_for_source('donation_id', donation, 1, donation.amount, vals)
+            slaughter_obj._create_for_source('donation_id', donation, 1, donation.amount, vals)
 
 
 class ImportDonation(models.Model):

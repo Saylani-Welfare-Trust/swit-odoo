@@ -6,13 +6,13 @@ from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
 
-ACTIVITY_TYPE = 'bn_master_setup.mail_activity_type_bn_step'
+ACTIVITY_TYPE = 'bn_master_setup.mail_activity_type_next_step'
 # Everybody has these: a button restricted to them names no one in particular
 GENERIC_GROUPS = ('base.group_user', 'base.group_portal', 'base.group_public', 'base.group_system')
 PRIMARY_CLASSES = ('oe_highlight', 'btn-primary')
 
 
-class BnStepActivityMixin(models.AbstractModel):
+class StepActivityMixin(models.AbstractModel):
     """An activity for whoever has to act next on a record.
 
     When the record's state changes, the next step is what its form shows:
@@ -23,29 +23,29 @@ class BnStepActivityMixin(models.AbstractModel):
     (responsible user, else its creator) may do the step, only they get it.
 
     Steps follow the views: a new button or group needs no change here."""
-    _name = 'bn.step.activity.mixin'
+    _name = 'step.activity.mixin'
     _description = 'Activities for the next approval / action step'
 
-    _bn_step_field = 'state'
-    _bn_step_owner_fields = ('user_id', 'create_uid')
+    _step_field = 'state'
+    _step_owner_fields = ('user_id', 'create_uid')
 
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        records._bn_sync_step_activities()
+        records._sync_step_activities()
         return records
 
     def write(self, vals):
         res = super().write(vals)
-        if self._bn_step_field in vals:
-            self._bn_sync_step_activities()
+        if self._step_field in vals:
+            self._sync_step_activities()
         return res
 
     # ------------------------------------------------------------------
     @api.model
-    def _bn_step_buttons(self):
+    def _step_buttons(self):
         """[(label, groups, invisible)] of the form's primary header buttons."""
-        cache = self.env.registry.__dict__.setdefault('_bn_step_buttons', {})
+        cache = self.env.registry.__dict__.setdefault('_step_buttons', {})
         if self._name in cache:
             return cache[self._name]
         buttons = []
@@ -68,7 +68,7 @@ class BnStepActivityMixin(models.AbstractModel):
         cache[self._name] = buttons
         return buttons
 
-    def _bn_button_visible(self, expression):
+    def _button_visible(self, expression):
         if not expression:
             return True
         try:
@@ -92,17 +92,17 @@ class BnStepActivityMixin(models.AbstractModel):
         except Exception:  # noqa: BLE001
             return False
 
-    def _bn_step_assignees(self):
+    def _step_assignees(self):
         """{user: [button labels]} of whoever has to act on this record now."""
         self.ensure_one()
         assignees = {}
         owner = self.env['res.users']
-        for fname in self._bn_step_owner_fields:
+        for fname in self._step_owner_fields:
             if fname in self._fields and self._fields[fname].comodel_name == 'res.users' and self[fname]:
                 owner = self[fname]
                 break
-        for label, groups, invisible in self._bn_step_buttons():
-            if not self._bn_button_visible(invisible):
+        for label, groups, invisible in self._step_buttons():
+            if not self._button_visible(invisible):
                 continue
             users = self.env['res.users']
             for xmlid in groups:
@@ -116,8 +116,8 @@ class BnStepActivityMixin(models.AbstractModel):
                 assignees.setdefault(user, []).append(label)
         return assignees
 
-    def _bn_sync_step_activities(self):
-        if self.env.context.get('bn_no_step_activity') or not self:
+    def _sync_step_activities(self):
+        if self.env.context.get('no_step_activity') or not self:
             return
         activity_type = self.env.ref(ACTIVITY_TYPE, raise_if_not_found=False)
         if not activity_type or 'activity_ids' not in self._fields:
@@ -125,19 +125,19 @@ class BnStepActivityMixin(models.AbstractModel):
         for record in self.sudo():
             try:
                 with self.env.cr.savepoint():
-                    record._bn_sync_one(activity_type)
+                    record._sync_one(activity_type)
             except Exception as e:  # noqa: BLE001 - an activity must never block the step
                 _logger.warning('%s: next-step activity not updated: %s', record.display_name, e)
 
-    def _bn_sync_one(self, activity_type):
+    def _sync_one(self, activity_type):
         current = self.activity_ids.filtered(lambda a: a.activity_type_id == activity_type)
         mine = current.filtered(lambda a: a.user_id == self.env.user)
         if mine:
             mine.action_feedback(feedback=_('Done: the record moved on.'))
         (current - mine).unlink()
-        state_label = dict(self._fields[self._bn_step_field]._description_selection(self.env)).get(
-            self[self._bn_step_field], self[self._bn_step_field])
-        for user, labels in self._bn_step_assignees().items():
+        state_label = dict(self._fields[self._step_field]._description_selection(self.env)).get(
+            self[self._step_field], self[self._step_field])
+        for user, labels in self._step_assignees().items():
             self.activity_schedule(
                 ACTIVITY_TYPE, user_id=user.id,
                 summary=_('%(actions)s: %(record)s', actions=' / '.join(dict.fromkeys(labels)),

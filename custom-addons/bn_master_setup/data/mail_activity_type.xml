@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Next approval / action step of a record (bn.step.activity.mixin) -->
-    <record id="mail_activity_type_bn_step" model="mail.activity.type">
+    <!-- Next approval / action step of a record (step.activity.mixin) -->
+    <record id="mail_activity_type_next_step" model="mail.activity.type">
         <field name="name">Action Required</field>
         <field name="icon">fa-tasks</field>
         <field name="summary">Action required</field>

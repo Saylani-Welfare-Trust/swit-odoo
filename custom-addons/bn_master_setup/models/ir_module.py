@@ -2,6 +2,7 @@
 import csv
 import logging
 import os
+import re
 
 from lxml import etree
 
@@ -57,11 +58,75 @@ MERGED_BY = {
 }
 
 
+# External ids an earlier version named with "bn" (see _rename_xmlids); ids
+# built from a module name keep it
+_XMLID_RENAMES = {'mail_activity_type_bn_step': 'mail_activity_type_next_step'}
+
+
+def _new_xmlid_name(name, modules):
+    if name in _XMLID_RENAMES:
+        return _XMLID_RENAMES[name]
+    held = name
+    for module in sorted(modules, key=len, reverse=True):
+        held = re.sub(r'(?:(?<=_)|^)%s(?=_|$)' % re.escape(module), module.replace('bn_', '\x00'), held)
+    held = re.sub(r'^bn_', '', held)
+    held = re.sub(r'_bn_', '_', held)
+    held = re.sub(r'_bn$', '', held)
+    return held.replace('\x00', 'bn_')
+
+
 class IrModuleModule(models.Model):
     _inherit = 'ir.module.module'
 
     @api.model
-    def _bn_remove_records(self, xmlids):
+    def _rename_xmlids(self):
+        """External ids renamed in this version (search views, the next-step
+        activity type ...) are renamed in place before the modules load them
+        under their new name, so records keep their data and no old view is
+        left behind. Only when the module declares the new id."""
+        cr = self.env.cr
+        cr.execute("SELECT name FROM ir_module_module WHERE name LIKE 'bn\\_%%'")
+        modules = [row[0] for row in cr.fetchall()]
+        cr.execute("""SELECT id, module, name, model, res_id FROM ir_model_data
+                       WHERE module LIKE 'bn\\_%%' AND name ~ '(^|_)bn(_|$)'""")
+        declared, renamed = {}, 0
+        for data_id, module, name, model, res_id in cr.fetchall():
+            if module not in declared:
+                declared[module] = _declared_ids(module) if get_module_path(module) else set()
+            new = _new_xmlid_name(name, modules)
+            if new == name or new not in declared[module]:
+                continue
+            cr.execute("SELECT res_id FROM ir_model_data WHERE module = %s AND name = %s", [module, new])
+            row = cr.fetchone()
+            if row:
+                # both exist (an interrupted update): what uses the old record
+                # moves to the new one, the old one is then removed as usual
+                self._merge_renamed_record(model, res_id, row[0])
+                continue
+            cr.execute("UPDATE ir_model_data SET name = %s WHERE id = %s", [new, data_id])
+            renamed += 1
+        if renamed:
+            _logger.info("%s external ids renamed", renamed)
+            self.env.registry.clear_cache()
+
+    @api.model
+    def _merge_renamed_record(self, model, old_id, new_id):
+        cr = self.env.cr
+        if old_id == new_id:
+            return
+        if model == 'mail.activity.type':
+            cr.execute("UPDATE mail_activity SET activity_type_id = %s WHERE activity_type_id = %s", [new_id, old_id])
+            cr.execute("UPDATE mail_message SET mail_activity_type_id = %s WHERE mail_activity_type_id = %s",
+                       [new_id, old_id])
+        elif model == 'res.groups':
+            cr.execute("""INSERT INTO res_groups_users_rel (gid, uid)
+                          SELECT %s, uid FROM res_groups_users_rel WHERE gid = %s ON CONFLICT DO NOTHING""",
+                       [new_id, old_id])
+        elif model == 'ir.module.category':
+            cr.execute("UPDATE res_groups SET category_id = %s WHERE category_id = %s", [new_id, old_id])
+
+    @api.model
+    def _remove_records(self, xmlids):
         """Remove records a module no longer declares but that Odoo keeps
         because they were loaded as noupdate (e.g. a dropped group)."""
         for xmlid in xmlids:
@@ -71,7 +136,7 @@ class IrModuleModule(models.Model):
                 _logger.info("Removed %s (no longer used)", xmlid)
 
     @api.model
-    def _bn_release_merged_modules(self):
+    def _release_merged_modules(self):
         """Database updated with a release that merged modules which are now
         their own modules again (MERGED_BY): give each its records back and
         install it again. Runs first in bn_master_setup, before the owners are
@@ -111,7 +176,7 @@ class IrModuleModule(models.Model):
         return released
 
     @api.model
-    def _bn_absorb_modules(self, new, olds):
+    def _absorb_modules(self, new, olds):
         """A module merged into ``new``: hand its records over before ``new``
         loads its data (call it from the first data file of ``new``).
 

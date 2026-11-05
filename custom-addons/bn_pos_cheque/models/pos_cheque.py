@@ -26,7 +26,7 @@ SLIP_TYPES = {1: 'restricted', 2: 'unrestricted', 0: 'neutral'}
 
 class POSCheque(models.Model):
     _name = 'pos.cheque'
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin', 'bn.pos.link.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin', 'pos.link.mixin']
     _description = "POS Cheque"
     _order = 'id desc'
 
@@ -179,7 +179,7 @@ class POSCheque(models.Model):
         analytic_dist = {str(self.analytic_account_id.id): 100} if self.analytic_account_id else {}
         partner_id = self.donor_id.id or False
         label = _("Cheque Deposit %s") % self.name
-        move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).sudo().create({
+        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).sudo().create({
             'move_type': 'entry',
             'journal_id': self.bank_id.id,
             'date': fields.Date.context_today(self),

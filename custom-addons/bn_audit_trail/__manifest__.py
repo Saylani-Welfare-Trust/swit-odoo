@@ -33,7 +33,7 @@ Key features
         'views/audit_exclusion_views.xml',
         'views/audit_log_views.xml',
         'views/menu.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'installable': True,
     'application': True,

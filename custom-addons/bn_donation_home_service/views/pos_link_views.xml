@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="bn_donation_home_service.donation_home_service_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
-                <group string="Point of Sale" name="bn_pos_link" invisible="not pos_session_id and not pos_order_id">
+                <group string="Point of Sale" name="pos_link_info" invisible="not pos_session_id and not pos_order_id">
                     <group>
                         <field name="pos_config_id" options="{'no_create': True}"/>
                         <field name="pos_session_id" options="{'no_create': True}"/>

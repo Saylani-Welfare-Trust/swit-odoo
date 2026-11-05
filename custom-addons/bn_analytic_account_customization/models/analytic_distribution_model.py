@@ -27,7 +27,7 @@ class AnalyticDistributionModel(models.Model):
 
 
     @api.model
-    def _bn_product_commands(self, vals):
+    def _product_commands(self, vals):
         """product_id is a Many2many here, but Odoo (and imports) may still
         give one product id, as for the standard Many2one."""
         if isinstance(vals.get('product_id'), int):
@@ -36,10 +36,10 @@ class AnalyticDistributionModel(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        return super().create([self._bn_product_commands(vals) for vals in vals_list])
+        return super().create([self._product_commands(vals) for vals in vals_list])
 
     def write(self, vals):
-        return super().write(self._bn_product_commands(vals))
+        return super().write(self._product_commands(vals))
 
     @api.model
     def _get_distribution(self, vals):

@@ -59,8 +59,8 @@ class POSOrder(models.Model):
         if cheque and not cheque.medical_security_deposit_id:
             cheque.medical_security_deposit_id = deposit
 
-    def _bn_pos_documents(self, extra_data):
-        res = super()._bn_pos_documents(extra_data)
+    def _pos_documents(self, extra_data):
+        res = super()._pos_documents(extra_data)
         me_id = (extra_data.get('medical_equipment') or {}).get('equipment_id')
         equipment = self.env['medical.equipment'].browse(me_id).exists() if me_id else self.env['medical.equipment']
         return res + [equipment, equipment.sd_slip_id]

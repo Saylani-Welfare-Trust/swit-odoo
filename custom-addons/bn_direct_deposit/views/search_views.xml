@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="search_direct_deposit" model="ir.ui.view">
+        <field name="name">direct.deposit.search</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.direct_deposit_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="cnic_no"/>
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <field name="user_id"/>
+                <field name="direct_deposit_line_ids" string="Line Product" filter_domain="[('direct_deposit_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="filter_state_transferred" string="Transferred to DHS" domain="[('state', '=', 'transferred')]"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('user_id', '=', uid)]"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="groupby_user_id" string="Created By" context="{'group_by': 'user_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_direct_deposit_account_setup" model="ir.ui.view">
+        <field name="name">direct.deposit.account.setup.search</field>
+        <field name="model">direct.deposit.account.setup</field>
+        <field name="arch" type="xml">
+            <search string="Direct Deposit Account Setup">
+                <field name="name"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

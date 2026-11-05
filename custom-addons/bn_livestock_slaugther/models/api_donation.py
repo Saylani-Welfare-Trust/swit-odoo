@@ -50,7 +50,7 @@ class APIDonation(models.Model):
                     'ref': donation.name or donation.import_id,
                 }
                 vals.update(donation._get_livestock_department_vals(product))
-                slaughter_obj._bn_create_for_source('api_donation_item_id', item, item.qty or 1, item.total, vals)
+                slaughter_obj._create_for_source('api_donation_item_id', item, item.qty or 1, item.total, vals)
 
 class APIDonationWizard(models.TransientModel):
     _inherit = 'api.donation.wizard'

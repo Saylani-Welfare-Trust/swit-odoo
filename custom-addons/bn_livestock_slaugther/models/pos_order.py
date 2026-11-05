@@ -94,7 +94,7 @@ class POSOrder(models.Model):
                 }
                 vals.update(order._get_livestock_department_vals(line.product_id))
                 total = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
-                slaughter_obj._bn_create_for_source('pos_order_line_id', line, line.qty, total, vals)
+                slaughter_obj._create_for_source('pos_order_line_id', line, line.qty, total, vals)
 
     @api.model_create_multi
     def create(self, vals_list):

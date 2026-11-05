@@ -18,7 +18,7 @@
         'bn_donation_home_service',
     ],
     'data': [
-        'data/bn_absorb.xml',
+        'data/absorb.xml',
         'security/stock_security.xml',
         'security/ir.model.access.csv',
         
@@ -38,7 +38,7 @@
         
         'wizards/receive_by_weight.xml',
         'wizards/receipt_reason_wizard.xml',
-        'views/bn_search_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,

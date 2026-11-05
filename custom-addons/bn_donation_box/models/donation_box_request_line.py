@@ -3,7 +3,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare
 
-from .bn_workflow import bn_transition
+from .workflow import workflow_transition
 
 APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 
@@ -11,11 +11,11 @@ APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 class DonationBoxRequestLine(models.Model):
     _name = 'donation.box.request.line'
     _description = 'Donation Box Request Line'
-    _inherit = ['bn.workflow.mixin']
-    _bn_guarded_fields = ('is_returned', 'return_picking_id')
+    _inherit = ['workflow.mixin']
+    _guarded_fields = ('is_returned', 'return_picking_id')
 
     # Fields that cannot be changed once the parent request left the draft status.
-    _bn_locked_after_draft = ('product_id', 'lot_id', 'lock_no', 'old_box_no', 'key_tag',
+    _locked_after_draft = ('product_id', 'lot_id', 'lock_no', 'old_box_no', 'key_tag',
                               'donation_box_request_id')
 
     donation_box_request_id = fields.Many2one(
@@ -94,7 +94,7 @@ class DonationBoxRequestLine(models.Model):
 
     def write(self, vals):
         if not self.env.su:
-            locked = [name for name in self._bn_locked_after_draft if name in vals]
+            locked = [name for name in self._locked_after_draft if name in vals]
             if locked:
                 for line in self:
                     if line.donation_box_request_id.status != 'draft':
@@ -116,7 +116,7 @@ class DonationBoxRequestLine(models.Model):
     # ------------------------------------------------------------------
     # Approval helpers (called by donation.box.request)
     # ------------------------------------------------------------------
-    def _bn_validate_for_approval(self):
+    def _validate_for_approval(self):
         """Server side validation of the lines of one request (see the request)."""
         Registration = self.env['donation.box.registration.installation']
         Quant = self.env['stock.quant']
@@ -170,7 +170,7 @@ class DonationBoxRequestLine(models.Model):
                     'Box "%(lot)s" is not available in "%(location)s".'
                 ) % {'lot': line.lot_id.display_name, 'location': source.display_name})
 
-    def _bn_prefix_key_tags(self):
+    def _prefix_key_tags(self):
         """Key tag format: <YY><box class><lock no>-<sequence>."""
         year = str(fields.Date.today().year)[2:]
         for line in self.filtered(lambda l: not l.is_returned):
@@ -193,12 +193,12 @@ class DonationBoxRequestLine(models.Model):
         registration and key are closed and the box becomes selectable again.
         Installed boxes must go through the Complain Center.
         """
-        self._bn_require_group(APPROVE_GROUP)
+        self._require_group(APPROVE_GROUP)
         for line in self:
-            line._bn_return_line()
+            line._return_line()
         return True
 
-    def _bn_return_line(self):
+    def _return_line(self):
         self.ensure_one()
         request = self.donation_box_request_id
         if request.status != 'approved':
@@ -223,16 +223,16 @@ class DonationBoxRequestLine(models.Model):
             ) % self.sudo().lot_id.display_name)
         if registration.complain_center_ids.filtered(lambda c: c.status in ('draft', 'process')):
             raise ValidationError(_('Box "%s" has an open complaint.') % self.sudo().lot_id.display_name)
-        registration._bn_check_can_release()
+        registration._check_can_release()
 
-        picking = request._bn_find_done_picking(request)
+        picking = request._find_done_picking(request)
         if not picking:
             raise ValidationError(_('No completed stock transfer found for request "%s".') % request.display_name)
-        return_picking = request._bn_return_lot(picking, self.lot_id)
+        return_picking = request._return_lot(picking, self.lot_id)
 
-        with bn_transition():
-            registration._bn_take_out_of_service()
-            registration._bn_key_close()
+        with workflow_transition():
+            registration._take_box_out_of_service()
+            registration._key_close()
             self.lot_id.sudo().write({'lot_consume': False})
             self.write({'is_returned': True, 'return_picking_id': return_picking.id})
         request._message_log(body=_('Box %(lot)s returned to stock (%(picking)s).') % {

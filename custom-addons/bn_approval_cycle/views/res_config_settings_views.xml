@@ -13,7 +13,7 @@
                             <field name="approval_enabled"/>
                         </setting>
                     </block>
-                    <block title="Departments" name="bn_approval_departments"
+                    <block title="Departments" name="approval_departments"
                            invisible="not approval_enabled">
                         <setting string="Department-wise Approval"
                                  help="Record the requester's department on every request. Users then see requests from their own department, plus a request they raised or must approve. Rules can be limited to departments, and HOD follows the department manager. When off, a user only sees requests they raised or must approve.">

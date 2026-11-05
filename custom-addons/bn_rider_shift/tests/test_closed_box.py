@@ -132,7 +132,7 @@ class TestClosedBox(BoxFlowCase):
         self.assertNotEqual(old, new)
 
         Registration = self.env['donation.box.registration.installation']
-        self.assertEqual(Registration._bn_find_by_lot(self.lot), new)
+        self.assertEqual(Registration._find_by_lot(self.lot), new)
 
         wizard = self.env['manual.key.issuance'].create({
             'action_type': 'issue', 'rider_id': self.rider.id, 'lot_id': self.lot.id})
@@ -194,7 +194,7 @@ class TestBunchOut(BoxFlowCase):
         with self.assertRaises(ValidationError):
             complaint.action_resolve()   # its bunch is still out
 
-        issuance._bn_write({'state': 'donation_receive'})
+        issuance._workflow_write({'state': 'donation_receive'})
         issuance.action_return()
         registration.action_change_request()
         self.assertEqual(registration.status, 'change_request')

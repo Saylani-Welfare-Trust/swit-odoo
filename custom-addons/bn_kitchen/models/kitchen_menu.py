@@ -27,7 +27,7 @@ state_selection = [
 class KitchenMenu(models.Model):
     _name = 'kitchen.menu'
     _description = "Kitchen Menu"
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
 
 
     product_tmpl_id = fields.Many2one('product.template', domain=[('is_kitchen', '=', True)], string="Product")

@@ -94,7 +94,7 @@ class TestRoles(BoxFlowCase):
         complaint.with_user(self.db_user).action_process()
         with self.assertRaises(AccessError):
             complaint.with_user(self.db_user).action_resolve()
-        issuance.sudo()._bn_write({'state': 'donation_receive'})
+        issuance.sudo()._workflow_write({'state': 'donation_receive'})
         issuance.with_user(self.key_user).action_return()
         complaint.with_user(self.db_manager).action_resolve()
         complaint.with_user(self.db_manager).action_return()

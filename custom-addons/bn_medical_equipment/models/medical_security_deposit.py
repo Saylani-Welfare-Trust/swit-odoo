@@ -19,7 +19,7 @@ state_selection = [
 
 class MedicalSecurityDeposit(models.Model):
     _name = 'medical.security.deposit'
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['pos.link.mixin']
     _description = "Medical Security Deposit"
 
 

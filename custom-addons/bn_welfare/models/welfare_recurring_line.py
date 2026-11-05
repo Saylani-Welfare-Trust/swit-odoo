@@ -29,7 +29,7 @@ class WelfareRecurringLine(models.Model):
 
     _name = 'welfare.recurring.line'
 
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['pos.link.mixin']
     _description = "Welfare Recurring Line"
 
 
@@ -156,7 +156,7 @@ class WelfareRecurringLine(models.Model):
             'recurring_line_id': self.id,
         }
         
-        bill = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
+        bill = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
         self.bill_id = bill.id
         
         # Auto-post the bill
@@ -279,7 +279,7 @@ class WelfareRecurringLine(models.Model):
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
                     'origin': self.name,
-                    'bn_source_ref': '%s,%s' % (self._name, self.id),
+                    'source_record_ref': '%s,%s' % (self._name, self.id),
                     'recurring_line_id': self.id,
                 }
                 picking = StockPicking.create(picking_vals)

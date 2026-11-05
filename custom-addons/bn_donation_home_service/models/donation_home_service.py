@@ -16,7 +16,7 @@ status_selection = [
 
 class DonationHomeService(models.Model):
     _name = 'donation.home.service'
-    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
     _description = "Donation Home Service"
 
 
@@ -139,7 +139,7 @@ class DonationHomeService(models.Model):
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
         # the DHS Gate Out operation type of the user's warehouse: from its stock
-        PickingType = self.env['stock.warehouse']._bn_get_program_type('dhs_gate_out')
+        PickingType = self.env['stock.warehouse']._get_program_type('dhs_gate_out')
         StockLocation = PickingType.default_location_src_id
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
 
@@ -171,7 +171,7 @@ class DonationHomeService(models.Model):
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
                 'origin': record.name,
-                'bn_source_ref': '%s,%s' % (record._name, record.id),
+                'source_record_ref': '%s,%s' % (record._name, record.id),
                 'dhs_id': record.id,
                 'state': 'draft',
             })
@@ -219,7 +219,7 @@ class DonationHomeService(models.Model):
         StockMove = self.env['stock.move']
         StockLocation = self.env.ref('bn_donation_home_service.gate_out_location')
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_in_location')
-        PickingType = self.env['stock.warehouse']._bn_get_program_type('dhs_gate_in')
+        PickingType = self.env['stock.warehouse']._get_program_type('dhs_gate_in')
 
         self._check_dhs_state(('gate_out',), _('Gate In'))
         for record in self:
@@ -246,7 +246,7 @@ class DonationHomeService(models.Model):
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
                 'origin': record.name,
-                'bn_source_ref': '%s,%s' % (record._name, record.id),
+                'source_record_ref': '%s,%s' % (record._name, record.id),
                 'dhs_id': record.id,
                 'state': 'draft',
             })
@@ -311,7 +311,7 @@ class DonationHomeService(models.Model):
     @api.model
     def create_dhs_record(self, data):
         # records made here carry the POS session / POS they come from
-        self = self.with_context(bn_pos_create=True)
+        self = self.with_context(pos_link_create=True)
         # -------------------------
         # 1. Prepare Line Items
         # -------------------------

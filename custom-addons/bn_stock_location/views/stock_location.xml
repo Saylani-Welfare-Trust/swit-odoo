@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="stock_view_location_form_inherit_bn_stock_locaiton" model="ir.ui.view">
-        <field name="name">stock.view.location.form.inherit.bn.stock.locaiton</field>
+    <record id="stock_view_location_form_inherit_stock_locaiton" model="ir.ui.view">
+        <field name="name">stock.view.location.form.inherit.bn.stock.location</field>
         <field name="model">stock.location</field>
         <field name="inherit_id" ref="stock.view_location_form"/>
         <field name="arch" type="xml">

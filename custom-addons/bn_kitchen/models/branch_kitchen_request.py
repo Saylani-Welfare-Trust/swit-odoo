@@ -32,7 +32,7 @@ state_selection = [
 class BranchKitchenRequest(models.Model):
     _name = 'branch.kitchen.request'
     _description = "Branch Kitchen Request"
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
 
 
     branch_id = fields.Many2one('stock.location', string="Branch")
@@ -73,8 +73,8 @@ class BranchKitchenRequest(models.Model):
 
         mo_ids = []
 
-        for bn_line in self.branch_kitchen_request_line_ids:
-            for line in bn_line.kitchen_menu_id.kitchen_menu_line_ids:
+        for request_line in self.branch_kitchen_request_line_ids:
+            for line in request_line.kitchen_menu_id.kitchen_menu_line_ids:
                 bom = self.env['mrp.bom'].search([
                     '|',
                     ('product_id', '=', line.product_id.id),
@@ -91,7 +91,7 @@ class BranchKitchenRequest(models.Model):
                     'product_uom_id': line.product_id.uom_id.id,
                     'bom_id': bom.id,
                     # the Kitchen Production operation type of the stock's warehouse
-                    'picking_type_id': self.env['stock.warehouse']._bn_get_program_type('kitchen', warehouse_loc).id,
+                    'picking_type_id': self.env['stock.warehouse']._get_program_type('kitchen', warehouse_loc).id,
                     'location_src_id': warehouse_loc.id,
                     'location_dest_id': kitchen_loc.id,
                     'origin': f"Kitchen Request {self.id}",

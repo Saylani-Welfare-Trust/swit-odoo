@@ -43,7 +43,7 @@ class DirectDeposit(models.Model):
                 }
                 vals.update(deposit._get_livestock_department_vals(line.product_id))
                 # line.amount is the unit price
-                slaughter_obj._bn_create_for_source(
+                slaughter_obj._create_for_source(
                     'direct_deposit_line_id', line, line.quantity, line.amount * line.quantity, vals)
 
     def action_clear(self):

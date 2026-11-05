@@ -7,10 +7,10 @@
         <field name="inherit_id" ref="stock.view_warehouse"/>
         <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page name="bn_program_types" string="Program Operation Types" groups="stock.group_stock_manager">
-                    <field name="bn_program_picking_type_ids" context="{'active_test': False}">
+                <page name="program_types" string="Program Operation Types" groups="stock.group_stock_manager">
+                    <field name="program_picking_type_ids" context="{'active_test': False}">
                         <tree create="0" delete="0">
-                            <field name="bn_program"/>
+                            <field name="program_type"/>
                             <field name="name"/>
                             <field name="code"/>
                             <field name="sequence_code"/>
@@ -31,7 +31,7 @@
         <field name="inherit_id" ref="stock.view_picking_type_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='warehouse_id']" position="after">
-                <field name="bn_program" groups="stock.group_stock_manager"/>
+                <field name="program_type" groups="stock.group_stock_manager"/>
             </xpath>
         </field>
     </record>

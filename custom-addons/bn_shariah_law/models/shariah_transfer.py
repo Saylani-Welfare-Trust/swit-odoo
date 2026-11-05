@@ -9,7 +9,7 @@ class ShariahTransfer(models.Model):
     _name = 'shariah.transfer'
     _description = 'Shariah Fund Transfer'
     _order = 'date desc, id'
-    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string='Reference', default=lambda self: _('New'), required=True, copy=False)
     date = fields.Date(string='Transfer Date', required=True, default=fields.Date.context_today)

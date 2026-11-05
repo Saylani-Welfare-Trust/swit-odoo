@@ -41,7 +41,7 @@ ROW_FIELDS = ('transaction_id', 'donor_student_name', 'mobile', 'cnic_no', 'emai
 class ImportDonation(models.Model):
     _name = 'import.donation'
     _description = "Import Donation"
-    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin"]
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin"]
 
 
     name = fields.Char('Name', tracking=True)
@@ -57,7 +57,7 @@ class ImportDonation(models.Model):
     picking_type_id = fields.Many2one(
         'stock.picking.type', string="Operation Type",
         default=lambda self: self._default_picking_type_id(),
-        domain="[('warehouse_id', '=', warehouse_id), ('bn_program', '=', 'online_donation')]",
+        domain="[('warehouse_id', '=', warehouse_id), ('program_type', '=', 'online_donation')]",
         help="Operation type used for the receipt of stockable donated products. "
              "Only needed when a line's product is a storable product.")
     source_location_id = fields.Many2one(
@@ -84,16 +84,16 @@ class ImportDonation(models.Model):
     @api.model
     def _default_warehouse_id(self):
         # the user's warehouse
-        return self.env['stock.warehouse']._bn_warehouse_for().id
+        return self.env['stock.warehouse']._warehouse_for().id
 
     @api.model
     def _default_picking_type_id(self):
-        return self.env['stock.warehouse']._bn_get_program_type('online_donation').id
+        return self.env['stock.warehouse']._get_program_type('online_donation').id
 
     @api.onchange('warehouse_id')
     def _onchange_warehouse_id_program_type(self):
         if self.warehouse_id:
-            self.picking_type_id = self.warehouse_id._bn_program_type('online_donation')
+            self.picking_type_id = self.warehouse_id._program_type('online_donation')
 
     @api.depends('picking_type_id', 'picking_type_id.default_location_src_id',
                  'picking_type_id.default_location_dest_id')
@@ -545,7 +545,7 @@ class ImportDonation(models.Model):
                         'location_id': self.source_location_id.id,
                         'location_dest_id': self.destination_location_id.id,
                         'origin': self.name,
-                        'bn_source_ref': '%s,%s' % (self._name, self.id),
+                        'source_record_ref': '%s,%s' % (self._name, self.id),
                     })
 
         # STOCK
@@ -589,7 +589,7 @@ class ImportDonation(models.Model):
             for acc, amt in credit_groups.items()
         ]
 
-        move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self._name, self.id)).sudo().create({
+        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'ref': self.name,

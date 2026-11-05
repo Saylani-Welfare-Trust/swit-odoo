@@ -17,7 +17,7 @@
          Technical category, where they could not be assigned. -->
     <data noupdate="0">
         <!-- HOD Procurement: its approval step was dropped from the workflow -->
-        <function model="ir.module.module" name="_bn_remove_records">
+        <function model="ir.module.module" name="_remove_records">
             <value eval="['bn_procurement_workflow.group_hod_procurement']"/>
         </function>
         <function model="res.groups" name="write">

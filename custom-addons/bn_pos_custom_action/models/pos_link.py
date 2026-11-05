@@ -2,18 +2,18 @@
 from odoo import api, fields, models
 
 
-class BnPosLinkMixin(models.AbstractModel):
+class PosLinkMixin(models.AbstractModel):
     """Where a record was made or paid at the POS: its order, session and POS
     (shop). Every program record created or settled at the POS carries them,
     so it can be traced back - and reported on - by shop and session.
 
     - created from a POS popup (before the payment): the session and POS of
-      the user's open session (_bn_pos_creation_vals)
+      the user's open session (_pos_creation_vals)
     - paid by a POS order: the order, and with it its session and POS
-      (pos.order._bn_pos_documents / _bn_link_pos)
+      (pos.order._pos_documents / _link_pos)
     - created by the POS screen itself: give pos_reference, the order's
       reference, and the order is found once it is saved"""
-    _name = 'bn.pos.link.mixin'
+    _name = 'pos.link.mixin'
     _description = 'Link to the POS order / session / POS it comes from'
 
     pos_order_id = fields.Many2one('pos.order', string='POS Order', readonly=True, copy=False,
@@ -46,7 +46,7 @@ class BnPosLinkMixin(models.AbstractModel):
         """.format(table=self._table))
 
     @api.model
-    def _bn_current_pos_session(self):
+    def _current_pos_session(self):
         """The POS session the current user works in (context, else their open one)."""
         Session = self.env['pos.session'].sudo()
         session = Session.browse(self.env.context.get('pos_session_id') or []).exists()
@@ -55,12 +55,12 @@ class BnPosLinkMixin(models.AbstractModel):
         ], order='id desc', limit=1)
 
     @api.model
-    def _bn_pos_creation_vals(self, session=None):
-        session = session or self._bn_current_pos_session()
+    def _pos_creation_vals(self, session=None):
+        session = session or self._current_pos_session()
         return {'pos_session_id': session.id, 'pos_config_id': session.config_id.id} if session else {}
 
     @api.model
-    def _bn_complete_pos_vals(self, vals):
+    def _complete_pos_vals(self, vals):
         """Session and POS follow the order; the order is found by its reference."""
         if vals.get('pos_reference') and not vals.get('pos_order_id'):
             order = self.env['pos.order'].sudo().search([('pos_reference', '=', vals['pos_reference'])], limit=1)
@@ -78,19 +78,19 @@ class BnPosLinkMixin(models.AbstractModel):
     @api.model_create_multi
     def create(self, vals_list):
         # made from a POS popup: the user's open session and its POS
-        creation = self._bn_pos_creation_vals() if self.env.context.get('bn_pos_create') else {}
+        creation = self._pos_creation_vals() if self.env.context.get('pos_link_create') else {}
         for vals in vals_list:
             if creation and not vals.get('pos_session_id') and not vals.get('pos_order_id'):
                 vals.update(creation)
-            self._bn_complete_pos_vals(vals)
+            self._complete_pos_vals(vals)
         return super().create(vals_list)
 
     def write(self, vals):
         if vals.get('pos_order_id') or vals.get('pos_reference') or vals.get('pos_session_id'):
-            vals = self._bn_complete_pos_vals(dict(vals))
+            vals = self._complete_pos_vals(dict(vals))
         return super().write(vals)
 
-    def _bn_link_pos(self, order):
+    def _link_pos(self, order):
         """Link the records to ``order`` (paid by it); a link already set is kept."""
         order = order.sudo()
         for rec in self.sudo():
@@ -116,12 +116,12 @@ class PosOrder(models.Model):
         pos_order = self.browse(order_id)
         if not draft and pos_order.state in ('paid', 'done', 'invoiced'):
             extra_data = (order.get('data') or {}).get('extra_data') or {}
-            for records in pos_order.sudo()._bn_pos_documents(extra_data):
-                if records and 'pos_order_id' in records._fields and hasattr(records, '_bn_link_pos'):
-                    records._bn_link_pos(pos_order)
+            for records in pos_order.sudo()._pos_documents(extra_data):
+                if records and 'pos_order_id' in records._fields and hasattr(records, '_link_pos'):
+                    records._link_pos(pos_order)
         return order_id
 
-    def _bn_pos_documents(self, extra_data):
+    def _pos_documents(self, extra_data):
         """Program records paid or settled by this order (from its extra_data):
         a list of recordsets, each module adds its own."""
         return []

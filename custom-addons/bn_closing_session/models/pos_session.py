@@ -83,7 +83,7 @@ class PosSession(models.Model):
                         'amount': move.amount} for i, move in enumerate(cash_moves)]
 
         breakdown = self._compute_closing_details()
-        slip_methods = self._bn_slip_methods()
+        slip_methods = self._slip_methods()
         default_cash_details = None
         if default_cash:
             default_cash_details = {
@@ -141,7 +141,7 @@ class PosSession(models.Model):
     # follow the standard Odoo flow.
     SLIP_TYPES = ('restricted', 'unrestricted', 'neutral')
 
-    def _bn_slip_methods(self):
+    def _slip_methods(self):
         # cash is counted (and so deposited by slip) only with cash control
         return self.payment_method_ids.filtered(
             lambda pm: (pm.type == 'bank' or (pm.type == 'cash' and self.config_id.cash_control))
@@ -159,7 +159,7 @@ class PosSession(models.Model):
         return (payment_method.unrestricted_account_id or
                 self.company_id.account_default_pos_unrestricted_receivable_account_id)
 
-    def _bn_slip_account_label(self, payment_method, slip_type):
+    def _slip_account_label(self, payment_method, slip_type):
         if slip_type == 'restricted':
             return (self._get_restricted_receivable_account(payment_method),
                     self.company_id.restricted_category or _('Restricted'))
@@ -168,11 +168,11 @@ class PosSession(models.Model):
                     self.company_id.unrestricted_category or _('Unrestricted'))
         return self._get_neutral_receivable_account(payment_method), _('Non Donation')
 
-    def _bn_parse_slips(self, lines):
+    def _parse_slips(self, lines):
         """{payment method: [(type, amount, ref, bank_id)]} of the slip
         methods, checked against what each method took."""
         rounding = self.currency_id.rounding
-        slip_methods = self._bn_slip_methods()
+        slip_methods = self._slip_methods()
         payments = self._get_closed_orders().payment_ids
         slips = {}
         for pm_id, vals in (lines or {}).items():
@@ -198,18 +198,18 @@ class PosSession(models.Model):
                     method=pm.name, slips=self.currency_id.round(deposited),
                     expected=self.currency_id.round(expected)))
             for slip_type, amount, ref, bank_id in slips.get(pm, []):
-                account, label = self._bn_slip_account_label(pm, slip_type)
+                account, label = self._slip_account_label(pm, slip_type)
                 if not account:
                     raise UserError(_("No account defined for %s (%s).", pm.name, label))
         return slips
 
-    def _bn_create_cash_deposits(self, slips):
+    def _create_cash_deposits(self, slips):
         """The cash deposited by slip leaves the cash journal."""
         for pm, pm_slips in slips.items():
             if pm.type != 'cash':
                 continue
             for slip_type, amount, ref, bank_id in pm_slips:
-                account, label = self._bn_slip_account_label(pm, slip_type)
+                account, label = self._slip_account_label(pm, slip_type)
                 self.env['account.bank.statement.line'].sudo().create({
                     'pos_session_id': self.id,
                     'journal_id': pm.journal_id.id,
@@ -219,14 +219,14 @@ class PosSession(models.Model):
                     'counterpart_account_id': account.id,
                 })
 
-    def _bn_create_bank_slip_lines(self, slips):
+    def _create_bank_slip_lines(self, slips):
         """The bank money deposited by slip: debit the category accounts."""
         MoveLine = self.env['account.move.line'].with_context(check_move_validity=False)
         for pm, pm_slips in slips.items():
             if pm.type != 'bank':
                 continue
             for slip_type, amount, ref, bank_id in pm_slips:
-                account, label = self._bn_slip_account_label(pm, slip_type)
+                account, label = self._slip_account_label(pm, slip_type)
                 MoveLine.create({
                     'move_id': self.move_id.id,
                     'name': ' - '.join(filter(None, [self.name, label, pm.name, ref])),
@@ -240,9 +240,9 @@ class PosSession(models.Model):
     def _create_bank_payment_moves(self, data):
         """Bank slip methods: no combined receivable line nor payment, the
         slips debit the category accounts instead."""
-        if not self.env.context.get('bn_slip_closing'):
+        if not self.env.context.get('slip_closing'):
             return super()._create_bank_payment_moves(data)
-        slip_methods = self._bn_slip_methods()
+        slip_methods = self._slip_methods()
         combine = data.get('combine_receivables_bank') or {}
         data['combine_receivables_bank'] = {pm: amounts for pm, amounts in combine.items() if pm not in slip_methods}
         data = super()._create_bank_payment_moves(data)
@@ -273,14 +273,14 @@ class PosSession(models.Model):
             if self.state == 'closed':
                 raise UserError(_('This session is already closed.'))
             self._check_if_no_draft_orders()
-            self._bn_check_no_pending_refunds()
+            self._check_no_pending_refunds()
             self._check_invoices_are_posted()
 
-            slips = self._bn_parse_slips(lines)
+            slips = self._parse_slips(lines)
             # before the cash difference: the deposited cash is not missing
-            self._bn_create_cash_deposits(slips)
+            self._create_cash_deposits(slips)
             # the bank slip methods have no counted amount of their own
-            slip_methods = self._bn_slip_methods()
+            slip_methods = self._slip_methods()
             bank_payment_method_diffs = {pm_id: diff for pm_id, diff in bank_payment_method_diffs.items()
                                          if pm_id not in slip_methods.ids}
 
@@ -292,9 +292,9 @@ class PosSession(models.Model):
                 self._get_closed_orders().filtered(lambda o: not o.is_total_cost_computed)._compute_total_cost_at_session_closing(self.picking_ids.move_ids)
 
             def create_move(session):
-                move_data = super(PosSession, session.with_context(bn_slip_closing=True))._create_account_move(
+                move_data = super(PosSession, session.with_context(slip_closing=True))._create_account_move(
                     balancing_account, amount_to_balance, bank_payment_method_diffs)
-                session.with_company(session.company_id)._bn_create_bank_slip_lines(slips)
+                session.with_company(session.company_id)._create_bank_slip_lines(slips)
                 return move_data
 
             try:
@@ -338,7 +338,7 @@ class PosSession(models.Model):
         self.write({'state': 'closed'})
         return True
 
-    def _bn_check_no_pending_refunds(self):
+    def _check_no_pending_refunds(self):
         """A refund waiting for the CFO has not been decided: closing now would
         leave it out of every session's entry once approved."""
         pending = self.order_ids.filtered(lambda o: o.state == 'cfo_approval')
@@ -374,7 +374,7 @@ class PosSession(models.Model):
         """Closing popup. ``cash_counted``: the cash left in the drawer once
         the slips are deposited (the next session opens with it)."""
         self.ensure_one()
-        slip_method_ids = self._bn_slip_methods().ids
+        slip_method_ids = self._slip_methods().ids
         bank_diffs = {pm_id: diff for pm_id, diff in dict(bank_payment_method_diff_pairs or []).items()
                       if pm_id not in slip_method_ids}
         check = self._cannot_close_session(bank_diffs)

@@ -14,7 +14,7 @@ class ResCompany(models.Model):
              "session closing posted the cheque to.")
 
     @api.model
-    def _bn_set_legacy_cheque_clearing_account(self):
+    def _set_legacy_cheque_clearing_account(self):
         """On upgrade only: keep the account the clearing entry has always used."""
         module = self.env['ir.module.module'].sudo().search([('name', '=', 'bn_pos_cheque')], limit=1)
         if module.state != 'to upgrade':

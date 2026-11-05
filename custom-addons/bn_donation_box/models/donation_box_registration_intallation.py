@@ -2,7 +2,7 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
-from .bn_workflow import in_transition
+from .workflow import in_transition
 
 box_status_selection = [
     ('not_installed', 'Not Installed'),
@@ -33,13 +33,13 @@ DONOR_CATEGORY_XMLIDS = (
 class DonationBoxRegistrationInstallation(models.Model):
     _name = 'donation.box.registration.installation'
     _description = 'Donation Box Registration'
-    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", "bn.workflow.mixin", "bn.city.access.mixin"]
-    _bn_step_field = 'status'
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin", "workflow.mixin", "city.access.mixin"]
+    _step_field = 'status'
     _rec_name = 'shop_name'
-    _bn_guarded_fields = ('status', 'box_status')
+    _guarded_fields = ('status', 'box_status')
 
     # Technical links, set once by the approval of the request.
-    _bn_immutable_fields = ('lot_id', 'product_id', 'donation_box_request_id', 'installer_id',
+    _immutable_fields = ('lot_id', 'product_id', 'donation_box_request_id', 'installer_id',
                             'lock_no', 'old_box_no')
 
     donation_box_request_id = fields.Many2one('donation.box.request', string="Donation Box Request", index=True)
@@ -117,7 +117,7 @@ class DonationBoxRegistrationInstallation(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or 'New'
         return super().create(vals_list)
 
-    def _bn_locked_fields_by_status(self):
+    def _locked_fields_by_status(self):
         """Business fields that cannot be edited any more, per status.
         (The form already makes them read-only; this enforces it on the server.)"""
         approved = {
@@ -136,20 +136,20 @@ class DonationBoxRegistrationInstallation(models.Model):
         }
 
     # Fields that may still change on a Closed registration (chatter only).
-    _bn_closed_writable_prefixes = ('message_', 'activity_', 'website_message')
+    _closed_writable_prefixes = ('message_', 'activity_', 'website_message')
 
     def write(self, vals):
         if not self.env.su and not in_transition():
-            immutable = [name for name in self._bn_immutable_fields if name in vals]
+            immutable = [name for name in self._immutable_fields if name in vals]
             if immutable:
                 labels = ', '.join(self._fields[name].string for name in immutable)
                 raise UserError(_('The field(s) "%s" are set by the request and cannot be edited.') % labels)
-            self._bn_check_city(vals.get('city_id'))
-            locked_map = self._bn_locked_fields_by_status()
+            self._check_city(vals.get('city_id'))
+            locked_map = self._locked_fields_by_status()
             touched = set(vals)
             if any(rec.status == 'close' for rec in self):
                 business = {name for name in touched
-                            if not name.startswith(self._bn_closed_writable_prefixes)}
+                            if not name.startswith(self._closed_writable_prefixes)}
                 if business:
                     raise UserError(_(
                         'A closed registration belongs to a box taken out of service and cannot be '
@@ -160,7 +160,7 @@ class DonationBoxRegistrationInstallation(models.Model):
                     labels = ', '.join(self._fields[name].string for name in sorted(locked))
                     raise UserError(_(
                         '"%(labels)s" cannot be edited while the registration is in status "%(status)s".'
-                    ) % {'labels': labels, 'status': self._bn_selection_label('status', rec.status)})
+                    ) % {'labels': labels, 'status': self._selection_label('status', rec.status)})
         return super().write(vals)
 
     def unlink(self):
@@ -171,7 +171,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         return super().unlink()
 
     @api.model
-    def _bn_find_by_lot(self, lot):
+    def _find_by_lot(self, lot):
         """The registration of a box number. A box can be reused after it was taken
         out of service, so the registration in service wins over closed ones; when
         every registration is closed, the most recent one is returned."""
@@ -180,21 +180,21 @@ class DonationBoxRegistrationInstallation(models.Model):
         return (self.search([('lot_id', '=', lot.id), ('status', '!=', 'close')], order='id desc', limit=1)
                 or self.search([('lot_id', '=', lot.id)], order='id desc', limit=1))
 
-    def _bn_take_out_of_service(self):
+    def _take_box_out_of_service(self):
         """Close the registration: the box was returned, scrapped or lost."""
         for rec in self.filtered(lambda r: r.status != 'close'):
             vals = {'status': 'close'}
             if rec.box_status == 'installed':
                 vals['box_status'] = 'removed'
-            rec._bn_write(vals)
+            rec._workflow_write(vals)
 
     @api.model
-    def _bn_setup_removed_box_status(self):
+    def _setup_removed_box_status(self):
         """Data hook: boxes closed by earlier versions still read "Installed"."""
         self.sudo().search([('status', '=', 'close'), ('box_status', '=', 'installed')]) \
-            ._bn_write({'box_status': 'removed'})
+            ._workflow_write({'box_status': 'removed'})
 
-    def _bn_check_in_service(self):
+    def _check_in_service(self):
         for rec in self:
             if rec.status == 'close':
                 raise ValidationError(_(
@@ -204,42 +204,42 @@ class DonationBoxRegistrationInstallation(models.Model):
     # ------------------------------------------------------------------
     # Hooks overridden by bn_key_management (the key model lives there)
     # ------------------------------------------------------------------
-    def _bn_required_for_install(self):
+    def _required_for_install(self):
         return ['shop_name', 'contact_person', 'location', 'shop_plot_no', 'street', 'landmark',
                 'block_floor_office_no', 'installation_date', 'installation_category_id',
                 'country_id', 'contact_no']
 
-    def _bn_required_for_approval(self):
+    def _required_for_approval(self):
         return ['city_id', 'zone_id', 'sub_zone_id']
 
-    def _bn_key_create(self, line):
+    def _key_create(self, line):
         """Create the key of this registration (bn_key_management)."""
         return False
 
-    def _bn_key_activate(self):
+    def _key_activate(self):
         """Make the key(s) available in the selected bunch (bn_key_management)."""
         return True
 
-    def _bn_key_change_request(self):
+    def _key_change_request(self):
         """Validate that the key(s) can be re-assigned (bn_key_management)."""
         return True
 
-    def _bn_key_close(self):
+    def _key_close(self):
         """Close the key(s) of this registration (bn_key_management)."""
         return True
 
-    def _bn_check_can_release(self):
+    def _check_can_release(self):
         """Raise if the box cannot be taken back (key with a rider ...)."""
         return True
 
-    def _bn_unreturned_key_messages(self):
+    def _unreturned_key_messages(self):
         """Human readable list of keys that still have to be returned."""
         return []
 
     # ------------------------------------------------------------------
     # Donor
     # ------------------------------------------------------------------
-    def _bn_find_or_create_donor(self):
+    def _find_or_create_donor(self):
         self.ensure_one()
         Partner = self.env['res.partner']
         categories = self._get_donor_categories()
@@ -268,12 +268,12 @@ class DonationBoxRegistrationInstallation(models.Model):
     # Workflow
     # ------------------------------------------------------------------
     def action_install(self):
-        self._bn_require_group(USER_GROUP, ADMIN_GROUP, APPROVE_GROUP)
-        self._bn_check_state('status', ('draft',), _('Install'))
+        self._require_group(USER_GROUP, ADMIN_GROUP, APPROVE_GROUP)
+        self._check_workflow_state('status', ('draft',), _('Install'))
         for rec in self:
-            rec._bn_check_required(rec._bn_required_for_install())
-            donor = rec.donor_id or rec._bn_find_or_create_donor()
-            rec._bn_write({
+            rec._check_required(rec._required_for_install())
+            donor = rec.donor_id or rec._find_or_create_donor()
+            rec._workflow_write({
                 'donor_id': donor.id,
                 'box_status': 'installed',
                 'status': 'installed',
@@ -281,22 +281,22 @@ class DonationBoxRegistrationInstallation(models.Model):
         return True
 
     def action_approved(self):
-        self._bn_require_group(APPROVE_GROUP)
-        self._bn_check_state('status', ('installed', 'change_request'), _('Approve'))
+        self._require_group(APPROVE_GROUP)
+        self._check_workflow_state('status', ('installed', 'change_request'), _('Approve'))
         for rec in self:
-            rec._bn_check_required(rec._bn_required_for_approval())
-            rec._bn_key_activate()
-            rec._bn_write({'status': 'available'})
+            rec._check_required(rec._required_for_approval())
+            rec._key_activate()
+            rec._workflow_write({'status': 'available'})
         return True
 
     def action_change_request(self):
         # Closed is final: a registration is only closed once its box was returned,
         # scrapped or reported lost. Installing the box again needs a new request.
-        self._bn_require_group(CHANGE_REQUEST_GROUP)
-        self._bn_check_state('status', ('available',), _('Change Request'))
+        self._require_group(CHANGE_REQUEST_GROUP)
+        self._check_workflow_state('status', ('available',), _('Change Request'))
         for rec in self:
-            rec._bn_key_change_request()
-            rec._bn_write({'status': 'change_request'})
+            rec._key_change_request()
+            rec._workflow_write({'status': 'change_request'})
         return True
 
     # -- entry points of the server actions (list view > Action menu) ----
@@ -307,11 +307,11 @@ class DonationBoxRegistrationInstallation(models.Model):
         return records.action_approved()
 
     def populate_lock_no(self, records):
-        self._bn_require_group(ADMIN_GROUP, APPROVE_GROUP)
+        self._require_group(ADMIN_GROUP, APPROVE_GROUP)
         for rec in records.filtered(lambda r: r.status != 'close'):
             lines = rec.donation_box_request_id.donation_box_request_line_ids.filtered(
                 lambda x: x.lot_id == rec.lot_id and not x.is_returned)
             lock_no = lines[:1].lock_no
             if lock_no and lock_no != rec.lock_no:
-                rec._bn_write({'lock_no': lock_no})
+                rec._workflow_write({'lock_no': lock_no})
         return True

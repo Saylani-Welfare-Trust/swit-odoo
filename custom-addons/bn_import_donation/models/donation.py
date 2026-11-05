@@ -65,12 +65,12 @@ May Allah bless you!
 
     def _send_donation_notification(self):
         """Donation receipt to the donor of an imported / online donation:
-        WhatsApp first, SMS fallback (bn.donor.notifier of bn_sms_whatsapp)."""
+        WhatsApp first, SMS fallback (donor.notifier of bn_sms_whatsapp)."""
         self.ensure_one()
-        if 'bn.donor.notifier' not in self.env:
+        if 'donor.notifier' not in self.env:
             return {'status': 'error', 'message': 'The WhatsApp / SMS module is not installed'}
         message = self._build_donation_receipt_message()
-        return self.env['bn.donor.notifier']._send(
+        return self.env['donor.notifier']._send(
             self, self.donor_id,
             lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
             report_name='bn_import_donation.donation_form',

@@ -45,7 +45,7 @@ recurring_duration_selection = [
 
 class WelfareLine(models.Model):
     _name = 'welfare.line'
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['pos.link.mixin']
     _description = "Welfare Line"
 
     return_date = fields.Datetime('Return Date', readonly=True)
@@ -387,7 +387,7 @@ class WelfareLine(models.Model):
             'welfare_line_id': self.id,
         }
         
-        bill = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
+        bill = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
         self.bill_id = bill.id
         
         # Auto-post the bill
@@ -570,7 +570,7 @@ class WelfareLine(models.Model):
     def _get_delivery_locations(self):
         """The Welfare Delivery operation type of the user's warehouse, with
         its source and customer locations."""
-        picking_type = self.env['stock.warehouse']._bn_get_program_type('welfare')
+        picking_type = self.env['stock.warehouse']._get_program_type('welfare')
         location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
         location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
         return picking_type, location_src, location_dest
@@ -597,7 +597,7 @@ class WelfareLine(models.Model):
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
                     'origin': self.welfare_id.name,
-                    'bn_source_ref': '%s,%s' % (self.welfare_id._name, self.welfare_id.id),
+                    'source_record_ref': '%s,%s' % (self.welfare_id._name, self.welfare_id.id),
                     'welfare_line_id': self.id,
 
                 }
@@ -729,7 +729,7 @@ class WelfareLine(models.Model):
             ]
         }
         
-        move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(move_vals)
+        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(move_vals)
         move.action_post()
         
         _logger.info(f"Created return journal entry {move.name} for amount {self.total_amount}")

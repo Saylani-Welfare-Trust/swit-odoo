@@ -506,6 +506,6 @@ class PurchaseOrder(models.Model):
 
 
 class PurchaseOrderStepActivity(models.Model):
-    """Activity for whoever has to act next (bn.step.activity.mixin)."""
+    """Activity for whoever has to act next (step.activity.mixin)."""
     _name = 'purchase.order'
-    _inherit = ['bn.step.activity.mixin', 'purchase.order']
+    _inherit = ['step.activity.mixin', 'purchase.order']

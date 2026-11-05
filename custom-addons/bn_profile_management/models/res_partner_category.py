@@ -153,7 +153,7 @@ class ResPartnerCategory(models.Model):
             })
 
     @api.model
-    def _bn_setup_registration_ids(self):
+    def _setup_registration_ids(self):
         """Run on every install/upgrade (data/profile_registration.xml).
         Gives Donor and Donee their pattern - reusing their existing
         sequences, so new IDs continue today's numbering in today's format -
@@ -175,11 +175,11 @@ class ResPartnerCategory(models.Model):
                     'registration_padding': sequence.padding if sequence else 5,
                     'registration_sequence_id': sequence.id if sequence else False,
                 })
-        self.env['res.partner']._bn_backfill_registration_ids()
-        self._bn_setup_dynamic_views()
+        self.env['res.partner']._backfill_registration_ids()
+        self._setup_dynamic_views()
 
     @api.model
-    def _bn_setup_dynamic_views(self):
+    def _setup_dynamic_views(self):
         """Views are built from the tag configuration. Tags still on the
         install default (every field everywhere) get what their screens
         really showed until now, then every profile menu is refreshed so it

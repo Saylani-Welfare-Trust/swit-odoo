@@ -15,7 +15,7 @@ class DonorNotifier(models.AbstractModel):
     WhatsApp message could not be sent, so a donor gets one message, not two.
     The SMS carries the receipt link when the receipt could be generated.
     Each attempt is logged on the donation's chatter."""
-    _name = 'bn.donor.notifier'
+    _name = 'donor.notifier'
     _description = 'Donation receipt: WhatsApp first, SMS fallback'
 
     @api.model
