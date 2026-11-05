@@ -1,143 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="report_dynamic_cheque">
-        <t t-call="web.html_container">
-            <style>
-                html, body {
-                    margin: 0 !important;
-                    padding: 0 !important;
-                }
-                .page {
-                    position: relative;
-                    width: 297mm;
-                    height: 210mm;
-                    font-family: Arial, Helvetica, sans-serif;
-                }
-                .cheque-box {
-                    position: absolute;
-                    /* ⚡ THIS RED DASHED BOX IS FOR ALIGNMENT. REMOVE IT WHEN DONE! */
-                    border: 1px dashed red; 
-                }
-                .date-box span {
-                    display: inline-block;
-                    width: 4mm;
-                    text-align: center;
-                    font-weight: bold;
-                }
-            </style>
 
-            <t t-foreach="docs" t-as="o">
-                <t t-set="cfg" t-value="o.env['bank.cheque.config'].browse(o.env.context.get('cheque_config_id'))"/>
-                <t t-set="chq_date" t-value="o.date"/>
-
-                <t t-set="d1" t-value="str(chq_date.day).zfill(2)[0] if chq_date else ''"/>
-                <t t-set="d2" t-value="str(chq_date.day).zfill(2)[1] if chq_date else ''"/>
-                <t t-set="m1" t-value="str(chq_date.month).zfill(2)[0] if chq_date else ''"/>
-                <t t-set="m2" t-value="str(chq_date.month).zfill(2)[1] if chq_date else ''"/>
-                <t t-set="y1" t-value="str(chq_date.year)[0] if chq_date else ''"/>
-                <t t-set="y2" t-value="str(chq_date.year)[1] if chq_date else ''"/>
-                <t t-set="y3" t-value="str(chq_date.year)[2] if chq_date else ''"/>
-                <t t-set="y4" t-value="str(chq_date.year)[3] if chq_date else ''"/>
-
-                <t t-set="amt_formatted" t-value="'{:,.2f}'.format(o.net_amount)"/>
-
-                <div class="page">
-                    <!-- CHEQUE BOX -->
-                    <div class="cheque-box"
-                         t-attf-style="
-                            left: {{ cfg.cheque_margin_left or 0 }}mm;
-                            top: {{ cfg.cheque_margin_top or 0 }}mm;
-                            width: {{ cfg.cheque_width or 0 }}mm;
-                            height: {{ cfg.cheque_height or 0 }}mm;
-                         ">
-                        <!-- A/C Payee -->
-                        <div t-attf-style="
-                            position:absolute;
-                            left: {{ cfg.ac_payee_margin_left or 0 }}mm;
-                            top: {{ cfg.ac_payee_margin_top or 0 }}mm;
-                            font-size: {{ cfg.ac_payee_font_size or 10 }}pt;
-                            white-space: nowrap;
-                        " class="date-box" t-if="o.cheque_print_mode == 'ac_payee_only'">
-                            <span>------------------------</span><br/>
-                            <span>A/C Payee Only</span><br/>
-                            <span>------------------------</span>
-                        </div>
-
-                        <!-- DATE -->
-                        <div t-attf-style="
-                            position:absolute;
-                            left: {{ cfg.date_margin_left or 0 }}mm;
-                            top: {{ cfg.date_margin_top or 0 }}mm;
-                            font-size: {{ cfg.date_font_size or 10 }}pt;
-                            white-space: nowrap;
-                        " class="date-box">
-                            <t t-foreach="[d1,d2,m1,m2,y1,y2,y3,y4]" t-as="c">
-                                <span><t t-esc="c"/></span>
-                            </t>
-                        </div>
-
-                        <!-- PAYEE -->
-                        <div t-attf-style="
-                            position:absolute;
-                            left: {{ cfg.payee_margin_left or 0 }}mm;
-                            top: {{ cfg.payee_margin_top or 0 }}mm;
-                            font-size: {{ cfg.payee_font_size or 10 }}pt;
-                            white-space: nowrap;
-                        ">
-                            <t t-if="o.cheque_print_mode != 'cash'">
-                                <t t-if="o.partner_id">
-                                    <span t-field="o.partner_id.name"/>
-                                </t>
-                            </t>
-                            <t t-else="">
-                                Cash
-                            </t>
-                        </div>
-
-                        <!-- WORDS -->
-                        <div t-attf-style="
-                            position:absolute;
-                            left: {{ cfg.words_margin_left or 0 }}mm;
-                            top: {{ cfg.words_margin_top or 0 }}mm;
-                            font-size: {{ cfg.words_font_size or 10 }}pt;
-                            width: 100mm;
-                            word-break: break-word;
-                        ">  
-                            <span t-esc="o.check_amount_in_words"/>
-                        </div>
-
-                        <!-- AMOUNT -->
-                        <div t-attf-style="
-                            position:absolute;
-                            left: {{ cfg.amount_margin_left or 0 }}mm;
-                            top: {{ cfg.amount_margin_top or 0 }}mm;
-                            font-size: {{ cfg.amount_font_size or 10 }}pt;
-                            font-weight: bold;
-                            text-align: center;
-                            width: 60mm;
-                        ">
-                            <t t-esc="amt_formatted"/>
-                        </div>
-                    </div>
-                </div>
-            </t>
-        </t>
-    </template>
-
-    <record id="action_report_dynamic_cheque" model="ir.actions.report">
-        <field name="name">Bank Cheque</field>
-        <field name="model">account.payment</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_custom_payment_check.report_dynamic_cheque</field>
-        <field name="report_file">bn_custom_payment_check.report_dynamic_cheque</field>
-        <field name="print_report_name">'Cheque-%s' % object.name</field>
-        <field name="paperformat_id" ref="bn_custom_payment_check.paperformat_dynamic_cheque"/>
-    </record>
+    <!-- ============================================== -->
+    <!-- SINGLE CHEQUE REPORT                           -->
+    <!-- ============================================== -->
     <template id="report_dynamic_cheque">
         <t t-call="web.html_container">
             <style>
                 html, body { margin: 0 !important; padding: 0 !important; }
-                .page { position: relative; width: 297mm; height: 210mm; font-family: Arial, Helvetica, sans-serif; }
+                .page { position: relative; width: 297mm; height: 210mm; font-family: Arial, sans-serif; }
                 .cheque-box { position: absolute; }
                 .date-box span { display: inline-block; width: 4mm; text-align: center; font-weight: bold; }
             </style>
@@ -145,7 +16,6 @@
             <t t-foreach="docs" t-as="o">
                 <t t-set="cfg" t-value="o.env['bank.cheque.config'].browse(o.env.context.get('cheque_config_id'))"/>
                 <t t-set="chq_date" t-value="o.date"/>
-
                 <t t-set="d1" t-value="str(chq_date.day).zfill(2)[0] if chq_date else ''"/>
                 <t t-set="d2" t-value="str(chq_date.day).zfill(2)[1] if chq_date else ''"/>
                 <t t-set="m1" t-value="str(chq_date.month).zfill(2)[0] if chq_date else ''"/>
@@ -157,33 +27,19 @@
                 <t t-set="amt_formatted" t-value="'{:,.2f}'.format(o.net_amount)"/>
 
                 <div class="page">
-                    <div class="cheque-box"
-                         t-attf-style="
-                            left: {{ cfg.cheque_margin_left or 0 }}mm;
-                            top: {{ cfg.cheque_margin_top or 0 }}mm;
-                            width: {{ cfg.cheque_width or 0 }}mm;
-                            height: {{ cfg.cheque_height or 0 }}mm;
-                         ">
-                        <!-- A/C Payee -->
+                    <div class="cheque-box" t-attf-style="left: {{ cfg.cheque_margin_left or 0 }}mm; top: {{ cfg.cheque_margin_top or 0 }}mm; width: {{ cfg.cheque_width or 0 }}mm; height: {{ cfg.cheque_height or 0 }}mm;">
                         <div t-attf-style="position:absolute; left: {{ cfg.ac_payee_margin_left or 0 }}mm; top: {{ cfg.ac_payee_margin_top or 0 }}mm; font-size: {{ cfg.ac_payee_font_size or 10 }}pt; white-space: nowrap;" class="date-box" t-if="o.cheque_print_mode == 'ac_payee_only'">
-                            <span>------------------------</span><br/>
-                            <span>A/C Payee Only</span><br/>
-                            <span>------------------------</span>
+                            <span>------------------------</span><br/><span>A/C Payee Only</span><br/><span>------------------------</span>
                         </div>
-                        <!-- DATE -->
                         <div t-attf-style="position:absolute; left: {{ cfg.date_margin_left or 0 }}mm; top: {{ cfg.date_margin_top or 0 }}mm; font-size: {{ cfg.date_font_size or 10 }}pt; white-space: nowrap;" class="date-box">
                             <t t-foreach="[d1,d2,m1,m2,y1,y2,y3,y4]" t-as="c"><span><t t-esc="c"/></span></t>
                         </div>
-                        <!-- PAYEE -->
                         <div t-attf-style="position:absolute; left: {{ cfg.payee_margin_left or 0 }}mm; top: {{ cfg.payee_margin_top or 0 }}mm; font-size: {{ cfg.payee_font_size or 10 }}pt; white-space: nowrap;">
-                            <t t-if="o.cheque_print_mode != 'cash'"><t t-if="o.partner_id"><span t-field="o.partner_id.name"/></t></t>
-                            <t t-else="">Cash</t>
+                            <t t-if="o.cheque_print_mode != 'cash'"><t t-if="o.partner_id"><span t-field="o.partner_id.name"/></t></t><t t-else="">Cash</t>
                         </div>
-                        <!-- WORDS -->
                         <div t-attf-style="position:absolute; left: {{ cfg.words_margin_left or 0 }}mm; top: {{ cfg.words_margin_top or 0 }}mm; font-size: {{ cfg.words_font_size or 10 }}pt; width: 100mm; word-break: break-word;">  
                             <span t-esc="o.check_amount_in_words"/>
                         </div>
-                        <!-- AMOUNT -->
                         <div t-attf-style="position:absolute; left: {{ cfg.amount_margin_left or 0 }}mm; top: {{ cfg.amount_margin_top or 0 }}mm; font-size: {{ cfg.amount_font_size or 10 }}pt; font-weight: bold; text-align: center; width: 60mm;">
                             <t t-esc="amt_formatted"/>
                         </div>
@@ -204,10 +60,8 @@
     </record>
 
     <!-- ============================================== -->
-    <!-- DOUBLE CHEQUE REPORT (NEW)                     -->
+    <!-- DOUBLE CHEQUE REPORT                           -->
     <!-- ============================================== -->
-    
-    <!-- Reusable block for the double cheque layout -->
     <template id="cheque_block_double">
         <t t-set="chq_date" t-value="record.date"/>
         <t t-set="d1" t-value="str(chq_date.day).zfill(2)[0] if chq_date else ''"/>
@@ -221,34 +75,19 @@
         <t t-set="amt_formatted" t-value="'{:,.2f}'.format(record.net_amount)"/>
 
         <div class="cheque-box"
-             t-attf-style="
-                position: absolute;
-                left: {{ double_cfg.cheque_margin_left or 0 }}mm;
-                top: {{ top_offset }}mm;
-                width: {{ double_cfg.cheque_width or 0 }}mm;
-                height: {{ double_cfg.cheque_height or 0 }}mm;
-                border: 1px dashed red; /* ⚡ REMOVE THIS LINE FOR PRODUCTION */
-             ">
-            <!-- A/C Payee -->
+             t-attf-style="position: absolute; left: {{ double_cfg.cheque_margin_left or 0 }}mm; top: {{ top_offset }}mm; width: {{ double_cfg.cheque_width or 0 }}mm; height: {{ double_cfg.cheque_height or 0 }}mm; border: 1px dashed red;">
             <div t-attf-style="position:absolute; left: {{ double_cfg.ac_payee_margin_left or 0 }}mm; top: {{ double_cfg.ac_payee_margin_top or 0 }}mm; font-size: {{ double_cfg.ac_payee_font_size or 10 }}pt; white-space: nowrap;" class="date-box" t-if="record.cheque_print_mode == 'ac_payee_only'">
-                <span>------------------------</span><br/>
-                <span>A/C Payee Only</span><br/>
-                <span>------------------------</span>
+                <span>------------------------</span><br/><span>A/C Payee Only</span><br/><span>------------------------</span>
             </div>
-            <!-- DATE -->
             <div t-attf-style="position:absolute; left: {{ double_cfg.date_margin_left or 0 }}mm; top: {{ double_cfg.date_margin_top or 0 }}mm; font-size: {{ double_cfg.date_font_size or 10 }}pt; white-space: nowrap;" class="date-box">
                 <t t-foreach="[d1,d2,m1,m2,y1,y2,y3,y4]" t-as="c"><span><t t-esc="c"/></span></t>
             </div>
-            <!-- PAYEE -->
             <div t-attf-style="position:absolute; left: {{ double_cfg.payee_margin_left or 0 }}mm; top: {{ double_cfg.payee_margin_top or 0 }}mm; font-size: {{ double_cfg.payee_font_size or 10 }}pt; white-space: nowrap;">
-                <t t-if="record.cheque_print_mode != 'cash'"><t t-if="record.partner_id"><span t-field="record.partner_id.name"/></t></t>
-                <t t-else="">Cash</t>
+                <t t-if="record.cheque_print_mode != 'cash'"><t t-if="record.partner_id"><span t-field="record.partner_id.name"/></t></t><t t-else="">Cash</t>
             </div>
-            <!-- WORDS -->
             <div t-attf-style="position:absolute; left: {{ double_cfg.words_margin_left or 0 }}mm; top: {{ double_cfg.words_margin_top or 0 }}mm; font-size: {{ double_cfg.words_font_size or 10 }}pt; width: 100mm; word-break: break-word;">  
                 <span t-esc="record.check_amount_in_words"/>
             </div>
-            <!-- AMOUNT -->
             <div t-attf-style="position:absolute; left: {{ double_cfg.amount_margin_left or 0 }}mm; top: {{ double_cfg.amount_margin_top or 0 }}mm; font-size: {{ double_cfg.amount_font_size or 10 }}pt; font-weight: bold; text-align: center; width: 60mm;">
                 <t t-esc="amt_formatted"/>
             </div>
@@ -259,13 +98,12 @@
         <t t-call="web.html_container">
             <style>
                 html, body { margin: 0 !important; padding: 0 !important; }
-                /* ⚡ A4 PORTRAIT: 210mm Wide, 297mm High */
                 .page { position: relative; width: 210mm; height: 297mm; page-break-after: always; font-family: Arial, sans-serif; }
                 .date-box span { display: inline-block; width: 4mm; text-align: center; font-weight: bold; }
             </style>
 
             <t t-foreach="docs" t-as="o">
-                <!-- Render a page for every 2 records (index 0, 2, 4...) -->
+                <!-- ⚡ THIS IS THE MAGIC: Renders a new page for every 2 records -->
                 <t t-if="o_index % 2 == 0">
                     <t t-set="double_cfg" t-value="o.env['bank.double.cheque.config'].browse(o.env.context.get('double_cheque_config_id'))"/>
                     
@@ -276,8 +114,8 @@
                             <t t-set="top_offset" t-value="double_cfg.cheque_margin_top or 0"/>
                         </t>
 
-                        <!-- BOTTOM CHEQUE (Next Record, if exists) -->
-                        <!-- ⚡ FIXED: &lt; instead of < -->
+                        <!-- BOTTOM CHEQUE (Next Record) -->
+                        <!-- ⚡ ESCAPED < AS &lt; -->
                         <t t-if="o_index + 1 &lt; len(docs)">
                             <t t-call="bn_custom_payment_check.cheque_block_double">
                                 <t t-set="record" t-value="docs[o_index + 1]"/>
@@ -290,7 +128,6 @@
         </t>
     </template>
 
-
     <record id="action_report_double_cheque" model="ir.actions.report">
         <field name="name">Bank Double Cheque</field>
         <field name="model">account.payment</field>
@@ -298,7 +135,7 @@
         <field name="report_name">bn_custom_payment_check.report_double_cheque</field>
         <field name="report_file">bn_custom_payment_check.report_double_cheque</field>
         <field name="print_report_name">'DoubleCheque-%s' % object.name</field>
-        <!-- ⚡ CHANGED: Point to the new Portrait Paper Format -->
+        <!-- ⚡ USING PORTRAIT PAPER FORMAT -->
         <field name="paperformat_id" ref="bn_custom_payment_check.paperformat_double_cheque"/>
         <field name="binding_model_id" ref="account.model_account_payment"/>
         <field name="binding_type">report</field>

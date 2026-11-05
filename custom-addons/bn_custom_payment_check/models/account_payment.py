@@ -38,16 +38,13 @@ class AccountPayment(models.Model):
             [('journal_ids', 'in', [self.journal_id.id])]
         )
         if not configs:
-            raise UserError(
-                "No Bank Cheque Configuration is linked to this journal."
-            )
+            raise UserError("No Bank Cheque Configuration is linked to this journal.")
         configs.ensure_one()
         return configs.action_print_cheque_for_payment(self)
 
     @api.depends('payment_method_line_id', 'currency_id', 'net_amount')
     def _compute_check_amount_in_words(self):
         super()._compute_check_amount_in_words() 
-
         for pay in self:
             if not pay.currency_id:
                 pay.check_amount_in_words = False
@@ -58,20 +55,12 @@ class AccountPayment(models.Model):
             paisa = int(round((amount - rupees) * 100))
 
             words = pay.currency_id.amount_to_text(rupees) or ""
-
-            # Cleanup
             words = (
                 pay.currency_id.amount_to_text(rupees)
-                .replace("Rupees", "")
-                .replace("Rupee", "")
-                .replace(",", "")
-                .replace("-", " ")
-                .strip()
+                .replace("Rupees", "").replace("Rupee", "").replace(",", "").replace("-", " ").strip()
             )
-
             words = " ".join(words.split()).lower()
             words = words.replace(" and ", " ")
-
             remainder = rupees % 1000
 
             if paisa == 0:
@@ -94,23 +83,14 @@ class AccountPayment(models.Model):
                     words = " ".join(parts)
 
                 pay.check_amount_in_words = words.capitalize() + " only"
-    
             else:
                 paisa_words = pay.currency_id.amount_to_text(paisa) or ""
                 paisa_words = (
-                    paisa_words.replace("Rupees", "")
-                               .replace("Rupee", "")
-                               .replace(",", "")
-                               .replace("-", " ")
-                               .replace(" And ", " ")
-                               .replace(" and ", " ")
-                               .strip()
+                    paisa_words.replace("Rupees", "").replace("Rupee", "").replace(",", "").replace("-", " ")
+                               .replace(" And ", " ").replace(" and ", " ").strip()
                 )
                 paisa_words = " ".join(paisa_words.split()).lower()
-
-                pay.check_amount_in_words = (
-                    f"{words.capitalize()} and {paisa_words} paisa only"
-                )
+                pay.check_amount_in_words = f"{words.capitalize()} and {paisa_words} paisa only"
                 
     show_double_cheque = fields.Boolean(compute="_compute_show_double_cheque")
 
@@ -120,7 +100,6 @@ class AccountPayment(models.Model):
             if not rec.journal_id:
                 rec.show_double_cheque = False
                 continue
-            # Check if this journal is configured for Double Cheques
             config = self.env['bank.double.cheque.config'].search([
                 ('journal_ids', 'in', [rec.journal_id.id])
             ], limit=1)

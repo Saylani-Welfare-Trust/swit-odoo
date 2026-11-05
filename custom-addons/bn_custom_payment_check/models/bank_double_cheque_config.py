@@ -10,8 +10,8 @@ class BankDoubleChequeConfig(models.Model):
     bank_name = fields.Char(string='Bank Name', required=True)
     journal_ids = fields.Many2many('account.journal', string='Journals', required=True)
 
-    # Offset for the second cheque (Default: 105mm = half of A4 height)
-    second_cheque_offset = fields.Float(string='Second Cheque Top Offset (mm)', default=105.0)
+    # Offset for the bottom cheque (Default: 148mm = half of A4 Portrait)
+    second_cheque_offset = fields.Float(string='Second Cheque Top Offset (mm)', default=148.0)
 
     # --- Same fields as single cheque ---
     ac_payee_margin_top = fields.Float(string='A/C Payee Top Margin (mm)', default=16.0)

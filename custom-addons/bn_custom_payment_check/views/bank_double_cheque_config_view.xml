@@ -4,10 +4,7 @@
         <field name="name">bank.double.cheque.config.tree</field>
         <field name="model">bank.double.cheque.config</field>
         <field name="arch" type="xml">
-            <tree>
-                <field name="bank_name"/>
-                <field name="active" column_invisible="1"/>
-            </tree>
+            <tree><field name="bank_name"/></tree>
         </field>
     </record>
 
@@ -18,73 +15,35 @@
             <form>
                 <sheet>
                     <div class="oe_title">
-                        <h1><field name="bank_name" placeholder="e.g. Meezan Bank"/></h1>
+                        <h1><field name="bank_name" placeholder="e.g. MCB Double Cheque"/></h1>
                         <field name="journal_ids" widget="many2many_tags" options="{'no_create': True}"/>
                     </div>
-                    
                     <group string="Double Cheque Specific Settings">
                         <field name="second_cheque_offset"/>
                     </group>
-
                     <group string="Cheque Position">
-                        <group>
-                            <field name="cheque_width"/>
-                            <field name="cheque_height"/>
-                        </group>
-                        <group>
-                            <field name="cheque_margin_left"/>
-                            <field name="cheque_margin_top"/>
-                        </group>
+                        <group><field name="cheque_width"/><field name="cheque_height"/></group>
+                        <group><field name="cheque_margin_left"/><field name="cheque_margin_top"/></group>
                     </group>
-
                     <group string="Payee Only">
-                        <group>
-                            <field name="ac_payee_margin_left"/>
-                            <field name="ac_payee_margin_top"/>
-                        </group>
-                        <group>
-                            <field name="ac_payee_font_size"/>
-                        </group>
+                        <group><field name="ac_payee_margin_left"/><field name="ac_payee_margin_top"/></group>
+                        <group><field name="ac_payee_font_size"/></group>
                     </group>
-
                     <group string="Date Position">
-                        <group>
-                            <field name="date_margin_left"/>
-                            <field name="date_margin_top"/>
-                        </group>
-                        <group>
-                            <field name="date_font_size"/>
-                        </group>
+                        <group><field name="date_margin_left"/><field name="date_margin_top"/></group>
+                        <group><field name="date_font_size"/></group>
                     </group>
-
                     <group string="Payee Position">
-                        <group>
-                            <field name="payee_margin_left"/>
-                            <field name="payee_margin_top"/>
-                        </group>
-                        <group>
-                            <field name="payee_font_size"/>
-                        </group>
+                        <group><field name="payee_margin_left"/><field name="payee_margin_top"/></group>
+                        <group><field name="payee_font_size"/></group>
                     </group>
-
                     <group string="Amount in Words Position">
-                        <group>
-                            <field name="words_margin_left"/>
-                            <field name="words_margin_top"/>
-                        </group>
-                        <group>
-                            <field name="words_font_size"/>
-                        </group>
+                        <group><field name="words_margin_left"/><field name="words_margin_top"/></group>
+                        <group><field name="words_font_size"/></group>
                     </group>
-
                     <group string="Amount Position">
-                        <group>
-                            <field name="amount_margin_left"/>
-                            <field name="amount_margin_top"/>
-                        </group>
-                        <group>
-                            <field name="amount_font_size"/>
-                        </group>
+                        <group><field name="amount_margin_left"/><field name="amount_margin_top"/></group>
+                        <group><field name="amount_font_size"/></group>
                     </group>
                 </sheet>
             </form>
