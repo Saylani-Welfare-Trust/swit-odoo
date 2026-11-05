@@ -351,7 +351,7 @@ class PosSession(models.Model):
                         'debit': amount,
                         'credit': 0.0,
                         'partner_id': False,
-                        # 'bank_journal_id': bank_id,
+                        'bank_journal_id': bank_id,
                     })
                     split_line_ids.append(line.id)
                     total_new_debit += amount
