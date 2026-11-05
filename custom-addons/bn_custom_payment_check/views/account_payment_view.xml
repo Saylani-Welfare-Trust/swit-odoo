@@ -5,19 +5,22 @@
         <field name="model">account.payment</field>
         <field name="inherit_id" ref="account.view_account_payment_form"/>
         <field name="arch" type="xml">
+
             <header position="inside">
+
+                <!-- Required for invisible condition -->
+                <field name="show_double_cheque" invisible="1"/>
+
                 <button name="action_print_check" type="object" string="Print Cheque" class="btn-primary"/>
-                
-                <!-- ⚡ DOUBLE CHEQUE BUTTON -->
-                <button name="action_print_double_check"
-                        type="object"
-                        string="Print Double Cheque"
-                        class="btn-secondary"
-                        invisible="not show_double_cheque"/>
+
+                <button name="action_print_double_check" type="object" string="Print Double Cheque" class="btn-secondary" invisible="not show_double_cheque"/>
+
             </header>
+
             <xpath expr="//field[@name='payment_type']" position="after">
                 <field name="cheque_print_mode" readonly="state != 'draft'"/>
             </xpath>
+
         </field>
     </record>
 </odoo>
