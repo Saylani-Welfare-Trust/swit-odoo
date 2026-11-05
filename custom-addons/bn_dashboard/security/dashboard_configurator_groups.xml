@@ -3,41 +3,29 @@
 
     <record id="module_category_bn_dashboard_configurator" model="ir.module.category">
         <field name="name">Dashboard Configurator</field>
-        <field name="description">Which dashboard configurator each user can edit</field>
+        <field name="description">Access to configure all dashboards</field>
         <field name="sequence">11</field>
     </record>
 
-    <!-- Sub-groups -->
-    <record id="group_treasury_configurator" model="res.groups">
-        <field name="name">Configurator / Treasury</field>
-        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
-    </record>
-
-    <record id="group_donation_box_configurator" model="res.groups">
-        <field name="name">Configurator / Donation Box</field>
-        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
-    </record>
-
-    <record id="group_pos_order_configurator" model="res.groups">
-        <field name="name">Configurator / POS Order</field>
-        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
-    </record>
-
-    <record id="group_din_configurator" model="res.groups">
-        <field name="name">Configurator / Donation In Kind</field>
-        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
-    </record>
-
-    <!-- ⚡ MASTER GROUP: Single tick for all Configurators -->
+    <!-- ⚡ SINGLE GROUP FOR ALL CONFIGURATORS -->
     <record id="group_dashboard_configurator_all" model="res.groups">
-        <field name="name">Configurator / All Configurators</field>
+        <field name="name">Dashboard Configurator / All</field>
         <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
-        <field name="implied_ids" eval="[
-            (4, ref('group_treasury_configurator')),
-            (4, ref('group_donation_box_configurator')),
-            (4, ref('group_pos_order_configurator')),
-            (4, ref('group_din_configurator'))
-        ]"/>
+    </record>
+
+    <record id="rule_dashboard_configurator_admin" model="ir.rule">
+        <field name="name">Dashboard Configurator: Full (System)</field>
+        <field name="model_id" ref="model_dashboard_configurator"/>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- Single group: see & edit everything -->
+    <record id="rule_dashboard_configurator_all" model="ir.rule">
+        <field name="name">Dashboard Configurator: All Access</field>
+        <field name="model_id" ref="model_dashboard_configurator"/>
+        <field name="groups" eval="[(4, ref('group_dashboard_configurator_all'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
     </record>
 
 </odoo>

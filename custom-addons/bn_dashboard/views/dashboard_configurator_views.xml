@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- [Keep your tree and form views exactly as they are] -->
     <record id="view_dashboard_configurator_tree" model="ir.ui.view">
         <field name="name">dashboard.configurator.tree</field>
         <field name="model">dashboard.configurator</field>
@@ -27,7 +28,6 @@
                         <label for="name"/>
                         <h1><field name="name" placeholder="e.g. Karachi Users - Treasury"/></h1>
                     </div>
-
                     <group>
                         <group>
                             <field name="dashboard_type" invisible="context.get('default_dashboard_type') == 'treasury'"/>
@@ -35,19 +35,13 @@
                             <field name="active" widget="boolean_toggle"/>
                         </group>
                     </group>
-
                     <notebook>
                         <page string="Who (Users / Groups)" name="who">
                             <group>
-                                <group>
-                                    <field name="user_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                                </group>
-                                <group>
-                                    <field name="group_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                                </group>
+                                <group><field name="user_ids" widget="many2many_tags" options="{'no_create': True}"/></group>
+                                <group><field name="group_ids" widget="many2many_tags" options="{'no_create': True}"/></group>
                             </group>
                         </page>
-
                         <page string="Location Filters" name="locations">
                             <group>
                                 <group>
@@ -60,15 +54,10 @@
                                 </group>
                             </group>
                         </page>
-
                         <page string="Segment Filters" name="segments">
                             <group>
-                                <group>
-                                    <field name="allowed_segment_l1_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                                </group>
-                                <group>
-                                    <field name="allowed_segment_l2_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                                </group>
+                                <group><field name="allowed_segment_l1_ids" widget="many2many_tags" options="{'no_create': True}"/></group>
+                                <group><field name="allowed_segment_l2_ids" widget="many2many_tags" options="{'no_create': True}"/></group>
                             </group>
                         </page>
                     </notebook>
@@ -77,6 +66,7 @@
         </field>
     </record>
 
+    <!-- Actions -->
     <record id="action_treasury_configurator" model="ir.actions.act_window">
         <field name="name">Treasury Configurator</field>
         <field name="res_model">dashboard.configurator</field>
@@ -84,20 +74,6 @@
         <field name="domain">[('dashboard_type', 'in', ['treasury', 'all'])]</field>
         <field name="context">{'default_dashboard_type': 'treasury'}</field>
     </record>
-
-    <!-- ⚠ groups= on a SINGLE LINE, no whitespace after commas -->
-    <menuitem id="menu_dashboard_configurations"
-              name="⚙️ Configurations"
-              parent="menu_dashboard_root"
-              sequence="90"
-              groups="base.group_system,group_treasury_configurator,group_donation_box_configurator,group_pos_order_configurator,group_din_configurator"/>
-
-    <menuitem id="menu_treasury_configurator"
-              name="Treasury Configurator"
-              parent="menu_dashboard_configurations"
-              action="action_treasury_configurator"
-              sequence="1"
-              groups="base.group_system,group_treasury_configurator"/>
 
     <record id="action_pos_order_configurator" model="ir.actions.act_window">
         <field name="name">POS Order Configurator</field>
@@ -107,13 +83,6 @@
         <field name="context">{'default_dashboard_type': 'pos_order'}</field>
     </record>
 
-    <menuitem id="menu_pos_order_configurator"
-              name="POS Order Configurator"
-              parent="menu_dashboard_configurations"
-              action="action_pos_order_configurator"
-              sequence="3"
-              groups="base.group_system,group_pos_order_configurator"/>
-
     <record id="action_donation_box_configurator" model="ir.actions.act_window">
         <field name="name">Donation Box Configurator</field>
         <field name="res_model">dashboard.configurator</field>
@@ -122,11 +91,32 @@
         <field name="context">{'default_dashboard_type': 'donation_box'}</field>
     </record>
 
+    <!-- Menus (Single Line groups=) -->
+    <menuitem id="menu_dashboard_configurations"
+              name="⚙️ Configurations"
+              parent="menu_dashboard_root"
+              sequence="90"
+              groups="base.group_system,group_dashboard_configurator_all"/>
+
+    <menuitem id="menu_treasury_configurator"
+              name="Treasury Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_treasury_configurator"
+              sequence="1"
+              groups="base.group_system,group_dashboard_configurator_all"/>
+
+    <menuitem id="menu_pos_order_configurator"
+              name="POS Order Configurator"
+              parent="menu_dashboard_configurations"
+              action="action_pos_order_configurator"
+              sequence="3"
+              groups="base.group_system,group_dashboard_configurator_all"/>
+
     <menuitem id="menu_donation_box_configurator"
               name="Donation Box Configurator"
               parent="menu_dashboard_configurations"
               action="action_donation_box_configurator"
               sequence="2"
-              groups="base.group_system,group_donation_box_configurator"/>
+              groups="base.group_system,group_dashboard_configurator_all"/>
 
 </odoo>
