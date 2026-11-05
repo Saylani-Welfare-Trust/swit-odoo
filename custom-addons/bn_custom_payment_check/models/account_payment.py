@@ -5,8 +5,9 @@ from odoo.exceptions import UserError
 class AccountPayment(models.Model):
     _inherit = 'account.payment'    
 
-    # ⚡ FIX: Add this field so the view validation doesn't crash
+    # ⚡ FIX: Add these missing fields so Odoo view validation doesn't crash
     effective_date = fields.Date(string="Effective Date")
+    bank_reference = fields.Char(string="Bank Reference")
 
     net_amount = fields.Monetary(
         string="Net Amount",
