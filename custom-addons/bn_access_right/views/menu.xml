@@ -2,27 +2,29 @@
 <odoo>
 
     <record id="base.menu_management" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('app_menu_group')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('custom_app_menu_group')])]"/>
     </record>
     
     <record id="contacts.menu_contacts" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('contacts_menu_group')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('custom_contacts_menu_group')])]"/>
     </record>
     
     <!-- <record id="spreadsheet_dashboard.spreadsheet_dashboard_menu_root" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('dashboard_menu_group')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('custom_dashboard_menu_group')])]"/>
     </record> -->
     
     <record id="hr.menu_hr_root" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('employees_menu_group')])]"/>
+        <!-- ⚠️ You didn't define an Employees group in groups.xml. 
+             I used a placeholder here. You must add it to groups.xml! -->
+        <field name="groups_id" eval="[(6, 0, [ref('custom_employees_menu_group')])]"/>
     </record>
     
     <record id="hr_expense.menu_hr_expense_root" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('expense_menu_group')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('custom_expense_menu_group')])]"/>
     </record>
 
     <record id="account.menu_finance" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('accounting_menu_group')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('custom_accounting_menu_group')])]"/>
     </record>
 
 </odoo>
