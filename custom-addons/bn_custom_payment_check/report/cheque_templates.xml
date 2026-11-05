@@ -259,7 +259,8 @@
         <t t-call="web.html_container">
             <style>
                 html, body { margin: 0 !important; padding: 0 !important; }
-                .page { position: relative; width: 297mm; height: 210mm; page-break-after: always; font-family: Arial, sans-serif; }
+                /* ⚡ A4 PORTRAIT: 210mm Wide, 297mm High */
+                .page { position: relative; width: 210mm; height: 297mm; page-break-after: always; font-family: Arial, sans-serif; }
                 .date-box span { display: inline-block; width: 4mm; text-align: center; font-weight: bold; }
             </style>
 
@@ -276,10 +277,11 @@
                         </t>
 
                         <!-- BOTTOM CHEQUE (Next Record, if exists) -->
+                        <!-- ⚡ FIXED: &lt; instead of < -->
                         <t t-if="o_index + 1 &lt; len(docs)">
                             <t t-call="bn_custom_payment_check.cheque_block_double">
                                 <t t-set="record" t-value="docs[o_index + 1]"/>
-                                <t t-set="top_offset" t-value="(double_cfg.cheque_margin_top or 0) + (double_cfg.second_cheque_offset or 105)"/>
+                                <t t-set="top_offset" t-value="(double_cfg.cheque_margin_top or 0) + (double_cfg.second_cheque_offset or 148)"/>
                             </t>
                         </t>
                     </div>
@@ -288,6 +290,7 @@
         </t>
     </template>
 
+
     <record id="action_report_double_cheque" model="ir.actions.report">
         <field name="name">Bank Double Cheque</field>
         <field name="model">account.payment</field>
@@ -295,8 +298,8 @@
         <field name="report_name">bn_custom_payment_check.report_double_cheque</field>
         <field name="report_file">bn_custom_payment_check.report_double_cheque</field>
         <field name="print_report_name">'DoubleCheque-%s' % object.name</field>
-        <field name="paperformat_id" ref="bn_custom_payment_check.paperformat_dynamic_cheque"/>
-        <!-- Optional: Adds the report to the Print menu in the list view -->
+        <!-- ⚡ CHANGED: Point to the new Portrait Paper Format -->
+        <field name="paperformat_id" ref="bn_custom_payment_check.paperformat_double_cheque"/>
         <field name="binding_model_id" ref="account.model_account_payment"/>
         <field name="binding_type">report</field>
     </record>
