@@ -7,6 +7,7 @@
         <field name="sequence">11</field>
     </record>
 
+    <!-- Sub-groups -->
     <record id="group_treasury_configurator" model="res.groups">
         <field name="name">Configurator / Treasury</field>
         <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
@@ -25,6 +26,18 @@
     <record id="group_din_configurator" model="res.groups">
         <field name="name">Configurator / Donation In Kind</field>
         <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
+    </record>
+
+    <!-- ⚡ MASTER GROUP: Single tick for all Configurators -->
+    <record id="group_dashboard_configurator_all" model="res.groups">
+        <field name="name">Configurator / All Configurators</field>
+        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
+        <field name="implied_ids" eval="[
+            (4, ref('group_treasury_configurator')),
+            (4, ref('group_donation_box_configurator')),
+            (4, ref('group_pos_order_configurator')),
+            (4, ref('group_din_configurator'))
+        ]"/>
     </record>
 
 </odoo>
