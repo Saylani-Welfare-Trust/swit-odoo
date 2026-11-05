@@ -32,3 +32,5 @@ class PosPaymentMethod(models.Model):
     )
 
     
+    def _is_write_forbidden(self, fields):
+        return False
