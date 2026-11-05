@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    
     <record id="paperformat_dynamic_cheque" model="report.paperformat">
-        <field name="name">Dynamic Cheque</field>
-        <field name="format">A4</field>
+        <field name="name">Dynamic Cheque Size</field>
+        <field name="default" eval="False"/>
+        
+        <!-- Use 'custom' if A4 is not the paper size -->
+        <field name="format">custom</field>
+        <field name="page_height">90</field>   <!-- Change to your cheque's physical height -->
+        <field name="page_width">200</field>   <!-- Change to your cheque's physical width -->
+        
         <field name="orientation">Landscape</field>
-
         <field name="margin_top">0</field>
         <field name="margin_bottom">0</field>
         <field name="margin_left">0</field>
         <field name="margin_right">0</field>
-
         <field name="header_line" eval="False"/>
         <field name="header_spacing">0</field>
-        <field name="dpi">0</field>
+        <field name="dpi">90</field>
     </record>
-
 </odoo>
