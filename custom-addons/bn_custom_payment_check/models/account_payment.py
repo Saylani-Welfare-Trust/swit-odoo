@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api
-import math
 from odoo.exceptions import UserError
-
-
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'    
+
+    # ⚡ FIX: Add this field so the view validation doesn't crash
+    effective_date = fields.Date(string="Effective Date")
 
     net_amount = fields.Monetary(
         string="Net Amount",
@@ -19,8 +19,6 @@ class AccountPayment(models.Model):
     @api.depends("amount")
     def _compute_net_amount(self):
         for payment in self:
-            # If bn_wht_customization (or any other module) later
-            # provides a WHT-aware value, override this method.
             payment.net_amount = payment.amount
 
     cheque_print_mode = fields.Selection(
@@ -46,8 +44,7 @@ class AccountPayment(models.Model):
 
     @api.depends('payment_method_line_id', 'currency_id', 'net_amount')
     def _compute_check_amount_in_words(self):
-        super()._compute_check_amount_in_words()
-        super()._compute_check_amount_in_words()
+        super()._compute_check_amount_in_words() 
 
         for pay in self:
             if not pay.currency_id:
@@ -62,44 +59,36 @@ class AccountPayment(models.Model):
 
             # Cleanup
             words = (
-            pay.currency_id.amount_to_text(rupees)
-            .replace("Rupees", "")
-            .replace("Rupee", "")
-            .replace(",", "")
-            .replace("-", " ")
-            .strip()
-        )
+                pay.currency_id.amount_to_text(rupees)
+                .replace("Rupees", "")
+                .replace("Rupee", "")
+                .replace(",", "")
+                .replace("-", " ")
+                .strip()
+            )
 
             words = " ".join(words.split()).lower()
-
-            # Remove all 'and'
             words = words.replace(" and ", " ")
 
             remainder = rupees % 1000
 
             if paisa == 0:
-
                 if 0 < remainder < 100 and rupees >= 1000:
                     for unit in ("thousand", "lakh", "crore", "million"):
                         if unit in words:
                             words = words.replace(unit, unit + " and", 1)
                             break
-
                 elif remainder in (100, 200, 300, 400, 500, 600, 700, 800, 900):
                     for unit in ("thousand", "lakh", "crore", "million"):
                         if unit in words:
                             words = words.replace(unit, unit + " and", 1)
                             break
-
                 elif remainder > 100 and remainder % 100 != 0:
                     parts = words.split()
-
                     if "hundred" in parts:
                         idx = len(parts) - 1 - parts[::-1].index("hundred")
-
                         if idx + 1 < len(parts):
                             parts.insert(idx + 1, "and")
-
                     words = " ".join(parts)
 
                 pay.check_amount_in_words = words.capitalize() + " only"
