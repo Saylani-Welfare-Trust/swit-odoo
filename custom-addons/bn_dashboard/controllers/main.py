@@ -80,12 +80,22 @@ class TreasuryDashboardController(http.Controller):
             if date_from: base_domain.append((date_field, '>=', date_from))
             if date_to: base_domain.append((date_field, '<=', date_to))
 
-        # === NEW: Configurator restriction ===
+        # === Configurator restriction ===
         restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-        if restriction and 'analytic_account_id' in Model._fields:
-            base_domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
+        
+        # DEBUG: Print to Odoo server logs
+        _logger.info(f"TREASURY DEBUG - Model: {model_name} | Restriction: {restriction}")
+        _logger.info(f"TREASURY DEBUG - Has analytic_account_id? {'analytic_account_id' in Model._fields}")
+
+        # Apply restriction if it exists
+        if restriction and restriction['analytic_ids']:
+            if 'analytic_account_id' in Model._fields:
+                base_domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
+            elif 'branch_id' in Model._fields:  # Fallback just in case your model uses branch_id
+                base_domain.append(('branch_id', 'child_of', restriction['analytic_ids']))
         # ======================================
 
+        # Apply UI filters (these will further narrow down the restricted data)
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except: pass
