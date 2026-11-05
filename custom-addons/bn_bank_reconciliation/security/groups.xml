@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_bank_reconciliation" model="ir.module.category">
+        <field name="name">Bank Reconciliation</field>
+        <field name="sequence">60</field>
+    </record>
+
     <record id="bank_reconciliation_group" model="res.groups">
-        <field name="name">Bank Reconciliation / Menu</field>
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_bank_reconciliation"/>
     </record>
 
     <record id="bank_reconciliation_master_reconcile_group" model="res.groups">
-        <field name="name">Bank Reconciliation / Master Reconcile</field>
-        <field name="implied_ids" eval="[(4, ref('bank_reconciliation_group'))]"/>
+        <field name="name">Master Reconcile</field>
+        <field name="category_id" ref="module_bank_reconciliation"/>
+        <field name="implied_ids" eval="[(4, ref('bank_reconciliation_group')), (4, ref('bank_reconciliation_group'))]"/>
         <field name="comment">Can accept all matched statement lines of a reconciliation at once with Master Reconcile.</field>
     </record>
 

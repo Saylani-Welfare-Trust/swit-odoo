@@ -22,8 +22,8 @@
 
                 <button string="Show Linked POS Order" name="action_show_pos_order" type="object" class="oe_highlight"/>
 
-                <button string="Clear" name="action_clear" type="object" class="oe_highlight" invisible="state not in ('draft', 'bounce') or bounce_count &gt;= 4" confirm="Clear this cheque and post its deposit to the bank?" />
-                <button string="Bounce" name="action_bounce" type="object" invisible="state != 'draft' or bounce_count &gt;= 4" confirm="Mark this cheque as bounced?" />
+                <button string="Clear" name="action_clear" groups="bn_pos_cheque.pos_cheque_menu_group" type="object" class="oe_highlight" invisible="state not in ('draft', 'bounce') or bounce_count &gt;= 4" confirm="Clear this cheque and post its deposit to the bank?" />
+                <button string="Bounce" name="action_bounce" groups="bn_pos_cheque.pos_cheque_menu_group" type="object" invisible="state != 'draft' or bounce_count &gt;= 4" confirm="Mark this cheque as bounced?" />
                 <button string="Print Receipt" name="action_print_receipt" type="object" icon="fa-print" invisible="state != 'clear'" />
             </tree>
         </field>

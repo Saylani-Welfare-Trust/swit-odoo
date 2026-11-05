@@ -119,6 +119,7 @@ class DistributionCenter(models.Model):
         
         picking = self.env['stock.picking'].create({
             'origin': self.name,
+            'bn_source_ref': '%s,%s' % (self._name, self.id),
             'partner_id': self.donee_id.id,
             'picking_type_id': self.env['stock.warehouse']._bn_get_program_type('livestock_distribution', warehouse_loc).id,
             'location_id': warehouse_loc.id,

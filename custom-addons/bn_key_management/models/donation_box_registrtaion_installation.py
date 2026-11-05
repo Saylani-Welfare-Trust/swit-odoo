@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import _, api, fields, models
+from odoo import _, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -37,6 +37,29 @@ class DonationBoxRegistrationInstallation(models.Model):
         })
         return key
 
+    # Key issuance states in which the key is still out with the rider
+    _BN_KEY_OUT_STATES = ('issued', 'overdue', 'pending', 'donation_receive')
+
+    def _bn_open_issuances(self, bunches=None):
+        """Open issuances of this registration's keys and of every key of its
+        bunch(es): a bunch goes out with a rider as a whole, so nothing about a
+        box of the bunch changes until the whole bunch is back."""
+        self.ensure_one()
+        keys = self.sudo().key_ids
+        bunches = (bunches or self.env['key.bunch']) | self.sudo().key_bunch_id | keys.key_bunch_id
+        keys |= bunches.sudo().key_ids
+        return self.env['key.issuance'].sudo().search([
+            ('key_id', 'in', keys.ids), ('state', 'in', self._BN_KEY_OUT_STATES)])
+
+    def _bn_raise_if_out(self, message, bunches=None):
+        self.ensure_one()
+        issuances = self._bn_open_issuances(bunches)
+        if issuances:
+            lines = '\n'.join('- %s: %s (%s)' % (
+                i.key_id.display_name, i.rider_id.display_name,
+                i._bn_selection_label('state', i.state)) for i in issuances[:20])
+            raise ValidationError('%s\n%s' % (message, lines))
+
     def _bn_key_activate(self):
         self.ensure_one()
         if not self.key_bunch_id:
@@ -44,6 +67,11 @@ class DonationBoxRegistrationInstallation(models.Model):
         keys = self.sudo().key_ids.filtered(lambda k: k.state != 'closed')
         if not keys:
             raise ValidationError(_('No key found for this registration.'))
+        # the key leaves its bunch for this one: neither may be out with a rider
+        self._bn_raise_if_out(_(
+            'Box "%s" cannot be approved while its key bunch, or the bunch it moves to, '
+            'is out with a rider. Return these keys first:') % self.lot_id.display_name,
+            bunches=self.key_bunch_id)
         for key in keys:
             key._bn_lock()
             key._bn_make_available(self.key_bunch_id)
@@ -51,15 +79,9 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     def _bn_key_change_request(self):
         self.ensure_one()
-        open_issuance = self.env['key.issuance'].sudo().search([
-            ('key_id', 'in', self.sudo().key_ids.ids),
-            ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
-        ], limit=1)
-        if open_issuance:
-            raise ValidationError(_(
-                'Key "%(key)s" is currently issued to %(rider)s. It must be returned before '
-                'requesting a change.'
-            ) % {'key': open_issuance.key_id.display_name, 'rider': open_issuance.rider_id.display_name})
+        self._bn_raise_if_out(_(
+            'A change cannot be requested for box "%s" while its key bunch is out with a '
+            'rider. The whole bunch must be returned first:') % self.lot_id.display_name)
         return True
 
     def _bn_key_close(self):
@@ -71,27 +93,15 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     def _bn_check_can_release(self):
         self.ensure_one()
-        open_issuance = self.env['key.issuance'].sudo().search([
-            ('key_id', 'in', self.sudo().key_ids.ids),
-            ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
-        ], limit=1)
-        if open_issuance:
-            raise ValidationError(_(
-                'Cannot return box "%(box)s": its key is currently issued to %(rider)s.'
-            ) % {'box': self.lot_id.display_name, 'rider': open_issuance.rider_id.display_name})
+        self._bn_raise_if_out(_(
+            'Box "%s" cannot be returned while its key bunch is out with a rider. '
+            'Return these keys first:') % self.lot_id.display_name)
         return True
 
     def _bn_unreturned_key_messages(self):
         self.ensure_one()
-        messages = []
-        open_issuance = self.env['key.issuance'].sudo().search([
-            ('key_id', 'in', self.sudo().key_ids.ids),
-            ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
-        ])
-        for issuance in open_issuance:
-            messages.append(_('%(key)s — issued to %(rider)s (%(state)s)') % {
-                'key': issuance.key_id.display_name,
-                'rider': issuance.rider_id.display_name,
-                'state': issuance._bn_selection_label('state', issuance.state),
-            })
-        return messages
+        return [_('%(key)s — issued to %(rider)s (%(state)s)') % {
+            'key': issuance.key_id.display_name,
+            'rider': issuance.rider_id.display_name,
+            'state': issuance._bn_selection_label('state', issuance.state),
+        } for issuance in self._bn_open_issuances()]

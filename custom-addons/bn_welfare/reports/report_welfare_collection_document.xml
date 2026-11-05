@@ -38,91 +38,59 @@
                             </div>
                         </div>
                         <!-- Info Section -->
+                        <t t-set="currency" t-value="welfare.currency_id or welfare.env.company.currency_id"/>
+                        <t t-set="lines" t-value="welfare.welfare_line_ids.filtered(lambda l: l.state != 'cancel') if welfare.order_type == 'one_time' else welfare.welfare_recurring_line_ids"/>
+                        <t t-set="total" t-value="sum(lines.mapped('total_amount')) if welfare.order_type == 'one_time' else sum(lines.mapped('amount'))"/>
                         <div class="info-box compact-section">
                             <div class="flex-container">
                                 <div class="flex-column flex-left">
                                     <div class="flex-row"><div class="flex-label">Date:</div><div class="flex-value"><t t-esc="welfare.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/></div></div>
                                     <div class="flex-row"><div class="flex-label">Receipt #:</div><div class="flex-value"><t t-esc="welfare.name"/></div></div>
-                                    <div class="flex-row"><div class="flex-label">Donee Name:</div><div class="flex-value"><t t-esc="welfare.donee_id.name"/></div></div>
-                                    <div class="flex-row"><div class="flex-label">CNIC #:</div><div class="flex-value"><t t-esc="welfare.cnic_no"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Donee Name:</div><div class="flex-value"><t t-esc="welfare.donee_id.name or '-'"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">CNIC #:</div><div class="flex-value"><t t-esc="welfare.cnic_no or '-'"/></div></div>
                                 </div>
                                 <div class="flex-column flex-right">
-                                    <div class="flex-row"><div class="flex-label">Order Type:</div><div class="flex-value"><t t-esc="welfare.order_type"/></div></div>
-                                    <div class="flex-row"><div class="flex-label">State:</div><div class="flex-value"><t t-esc="welfare.state"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Order Type:</div><div class="flex-value"><span t-field="welfare.order_type"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Status:</div><div class="flex-value"><span t-field="welfare.state"/></div></div>
                                 </div>
                             </div>
                         </div>
-                        <!-- Welfare Lines Table -->
-                        <t t-if="welfare.order_type == 'one_time'">
-                            <h3>Welfare Lines</h3>
-                            <table class="table table-bordered-custom">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>Amount</th>
-                                        <th>Total</th>
-                                        <th>Collection Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="welfare.welfare_line_ids.filtered(lambda l: l.state != 'cancel')" t-as="line">
-                                        <tr>
-                                            <td><t t-esc="line.product_id.display_name"/></td>
-                                            <td class="text-center"><t t-esc="line.quantity"/></td>
-                                            <td class="text-right"><t t-esc="line.amount"/></td>
-                                            <td class="text-right"><t t-esc="line.total_amount"/></td>
-                                            <td class="text-center"><t t-esc="line.collection_date"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </t>
-                        <t t-if="welfare.order_type == 'recurring'">
-                            <h3>Recurring Welfare Lines</h3>
-                            <table class="table table-bordered-custom">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>Quantity</th>
-                                        <th>Amount</th>
-                                        <th>Collection Date</th>
-                                        <th>State</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-foreach="welfare.welfare_recurring_line_ids" t-as="line">
-                                        <tr>
-                                            <td><t t-esc="line.product_id.display_name"/></td>
-                                            <td class="text-center"><t t-esc="line.quantity"/></td>
-                                            <td class="text-right"><t t-esc="line.amount"/></td>
-                                            <td class="text-center"><t t-esc="line.collection_date"/></td>
-                                            <td class="text-center"><t t-esc="line.state"/></td>
-                                        </tr>
-                                    </t>
-                                </tbody>
-                            </table>
-                        </t>
-                        <!-- Amount in Words and Total
-                        <table class="table" style="margin-top: 8px; font-size: 11px;">
-                            <tbody>
+                        <!-- Lines -->
+                        <h6 class="fw-bold" style="font-size: 13px;" t-esc="'Welfare Lines' if welfare.order_type == 'one_time' else 'Recurring Welfare Lines'"/>
+                        <table class="table table-bordered-custom" style="width: 100%;">
+                            <thead>
                                 <tr>
-                                    <td style="width: 50%; padding: 6px;">
-                                        <strong>Amount In Words:</strong>
-                                        <t t-esc="welfare.currency_id.amount_to_text(sum([l.total_amount for l in welfare.welfare_line_ids])) if welfare.order_type == 'one_time' else welfare.currency_id.amount_to_text(sum([l.amount for l in welfare.welfare_recurring_line_ids]))"/> Only
-                                    </td>
-                                    <td style="width: 50%; padding: 6px; text-align: right;">
-                                        <strong>Total Amount:</strong>
-                                        <t t-if="welfare.order_type == 'one_time'">
-                                            <t t-esc="sum([l.total_amount for l in welfare.welfare_line_ids])"/>
-                                        </t>
-                                        <t t-if="welfare.order_type == 'recurring'">
-                                            <t t-esc="sum([l.amount for l in welfare.welfare_recurring_line_ids])"/>
-                                        </t>
-                                    </td>
+                                    <th>Product</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-right">Amount</th>
+                                    <th t-if="welfare.order_type == 'one_time'" class="text-right">Total</th>
+                                    <th class="text-center">Collection Date</th>
+                                    <th t-if="welfare.order_type == 'recurring'" class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="lines" t-as="line">
+                                    <td><t t-esc="line.product_id.display_name"/></td>
+                                    <td class="text-center"><t t-esc="'%g' % line.quantity"/></td>
+                                    <td class="text-right"><t t-esc="line.amount" t-options="{'widget': 'monetary', 'display_currency': currency}"/></td>
+                                    <td t-if="welfare.order_type == 'one_time'" class="text-right"><t t-esc="line.total_amount" t-options="{'widget': 'monetary', 'display_currency': currency}"/></td>
+                                    <td class="text-center"><t t-esc="line.collection_date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/></td>
+                                    <td t-if="welfare.order_type == 'recurring'" class="text-center"><span t-field="line.state"/></td>
                                 </tr>
                             </tbody>
-                        </table> -->
+                        </table>
+                        <!-- Total and amount in words -->
+                        <table class="table" style="width: 100%; margin-top: 8px; font-size: 11px;">
+                            <tr>
+                                <td style="width: 65%; padding: 6px;"><strong>Amount in Words:</strong> <t t-esc="currency.amount_to_text(total)"/> Only</td>
+                                <td style="width: 35%; padding: 6px; text-align: right;"><strong>Total Amount:</strong> <t t-esc="total" t-options="{'widget': 'monetary', 'display_currency': currency}"/></td>
+                            </tr>
+                        </table>
+                        <!-- Signatures -->
+                        <div class="flex-container" style="margin-top: 50px; font-size: 11px;">
+                            <div class="flex-column"><div class="signature-line"/>Received By (Donee)</div>
+                            <div class="flex-column" style="text-align: right;"><div class="signature-line" style="margin-left: auto;"/>Authorized Signature</div>
+                        </div>
                     </div>
                 </t>
             </main>

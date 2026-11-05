@@ -1,5 +1,4 @@
 from odoo import models
-from odoo.exceptions import ValidationError
 
 
 class POSSession(models.Model):
@@ -55,6 +54,7 @@ class POSSession(models.Model):
             pickings.write({
                 'pos_session_id': self.id,
                 'origin': self.name,
+                'bn_source_ref': '%s,%s' % (self._name, self.id),
             })
 
         # ------------------------------------------------
@@ -71,4 +71,5 @@ class POSSession(models.Model):
             pickings.write({
                 'pos_session_id': self.id,
                 'origin': self.name,
+                'bn_source_ref': '%s,%s' % (self._name, self.id),
             })

@@ -20,3 +20,5 @@ from . import res_partner
 from . import pos_cheque
 from . import direct_deposit
 from . import bn_program_types
+
+from . import pos_order

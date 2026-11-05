@@ -545,6 +545,7 @@ class ImportDonation(models.Model):
                         'location_id': self.source_location_id.id,
                         'location_dest_id': self.destination_location_id.id,
                         'origin': self.name,
+                        'bn_source_ref': '%s,%s' % (self._name, self.id),
                     })
 
         # STOCK
@@ -588,7 +589,7 @@ class ImportDonation(models.Model):
             for acc, amt in credit_groups.items()
         ]
 
-        move = self.env['account.move'].sudo().create({
+        move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self._name, self.id)).sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'ref': self.name,

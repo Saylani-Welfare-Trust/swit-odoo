@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_approval_role_user,approval.role user,model_approval_role,base.group_user,1,0,0,0
+access_approval_role_manager,approval.role manager,model_approval_role,bn_approval_cycle.group_approval_manager,1,1,1,1
+access_approval_rule_user,approval.rule user,model_approval_rule,base.group_user,1,0,0,0
+access_approval_rule_manager,approval.rule manager,model_approval_rule,bn_approval_cycle.group_approval_manager,1,1,1,1
+access_approval_rule_line_user,approval.rule.line user,model_approval_rule_line,base.group_user,1,0,0,0
+access_approval_rule_line_manager,approval.rule.line manager,model_approval_rule_line,bn_approval_cycle.group_approval_manager,1,1,1,1
+access_approval_request_user,approval.request user,model_approval_request,base.group_user,1,0,0,0
+access_approval_request_stage_user,approval.request.stage user,model_approval_request_stage,base.group_user,1,0,0,0
+access_approval_reject_wizard_user,approval.reject.wizard user,model_approval_reject_wizard,base.group_user,1,1,1,1
+access_approval_model_button_user,approval.model.button user,model_approval_model_button,base.group_user,1,0,0,0
+access_approval_model_button_manager,approval.model.button manager,model_approval_model_button,bn_approval_cycle.group_approval_manager,1,1,1,1

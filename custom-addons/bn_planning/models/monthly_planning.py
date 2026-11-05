@@ -1,6 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 
 
@@ -156,13 +156,13 @@ class MonthlyPlanning(models.Model):
              'tagged on the employee linked to the current user.',
     )
 
-    show_kitchen   = fields.Boolean(related='planning_type_id.kitchen',   string='Kitchen',   store=False)
-    show_madaris   = fields.Boolean(related='planning_type_id.madaris',   string='Madaris',   store=False)
-    show_medical   = fields.Boolean(related='planning_type_id.medical',   string='Medical',   store=False)
-    show_livestock = fields.Boolean(related='planning_type_id.livestock', string='Livestock', store=False)
-    show_food      = fields.Boolean(related='planning_type_id.food',      string='Food',      store=False)
-    show_ration    = fields.Boolean(related='planning_type_id.ration',    string='Ration',    store=False)
-    show_meat      = fields.Boolean(related='planning_type_id.meat',      string='Meat',      store=False)
+    show_kitchen   = fields.Boolean(related='planning_type_id.kitchen',   string='Show Kitchen',   store=False)
+    show_madaris   = fields.Boolean(related='planning_type_id.madaris',   string='Show Madaris',   store=False)
+    show_medical   = fields.Boolean(related='planning_type_id.medical',   string='Show Medical',   store=False)
+    show_livestock = fields.Boolean(related='planning_type_id.livestock', string='Show Livestock', store=False)
+    show_food      = fields.Boolean(related='planning_type_id.food',      string='Show Food',      store=False)
+    show_ration    = fields.Boolean(related='planning_type_id.ration',    string='Show Ration',    store=False)
+    show_meat      = fields.Boolean(related='planning_type_id.meat',      string='Show Meat',      store=False)
 
     source_location_id = fields.Many2one(
         'stock.location',
@@ -436,14 +436,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         default=lambda self: self._default_line_date(),
     )
 
-    plan_from_date = fields.Date(
-        related='monthly_planning_id.from_date',
-        string='Plan From Date', store=False,
-    )
-    plan_to_date = fields.Date(
-        related='monthly_planning_id.to_date',
-        string='Plan To Date', store=False,
-    )
 
     min_line_date = fields.Date(
         string='Earliest Allowed Date',

@@ -136,10 +136,6 @@ class BankReconciliationReconciled(models.Model):
         help='Score indicating how well this transaction matched',
         default=0
     )
-    match_criteria = fields.Text(
-        string='Match Criteria',
-        help='Details of what criteria were matched'
-    )
     matched_by_amount = fields.Boolean(string='Matched by Amount', default=False)
     matched_by_reference = fields.Boolean(string='Matched by Reference', default=False)
     matched_by_partner = fields.Boolean(string='Matched by Partner', default=False)
@@ -343,7 +339,3 @@ class BankReconciliationReconciled(models.Model):
 
     def unlink(self):
         raise UserError(_('You cannot delete a reconciled transaction.'))
-        # for record in self:
-        #     if record.is_posted:
-        #         raise UserError(_('Cannot delete a posted reconciled transaction.'))
-        # return super(BankReconciliationReconciled, self).unlink()

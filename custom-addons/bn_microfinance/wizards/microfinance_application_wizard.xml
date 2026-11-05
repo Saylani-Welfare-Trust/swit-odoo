@@ -11,7 +11,7 @@
                     <field name="microfinance_scheme_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                 </group>
                 <footer>
-                    <button string="Print Application" name="action_print_application" type="object" class="btn-primary"/>
+                    <button string="Print Application" name="action_print_application" groups="bn_microfinance.microfinance_user_group,bn_profile_management.profile_management_user_group" type="object" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

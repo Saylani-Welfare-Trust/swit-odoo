@@ -20,8 +20,8 @@ class MicrofinanceScheme(models.Model):
 
     installment_type = fields.Selection(selection=installment_selection, string='Installment Type', default='daily', tracking=True)
 
-    daily_recovery_days = fields.Integer('Recovery Days', default=0, tracking=True)
-    monthly_recovery_days = fields.Integer('Recovery Days', default=0, tracking=True)
+    daily_recovery_days = fields.Integer('Daily Recovery Days', default=0, tracking=True)
+    monthly_recovery_days = fields.Integer('Monthly Recovery Days', default=0, tracking=True)
 
     microfinance_scheme_line_ids = fields.One2many('microfinance.scheme.line', 'microfinance_scheme_id', string="Microfinance Scheme Line")
 

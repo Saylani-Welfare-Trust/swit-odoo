@@ -1,5 +1,5 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields, _
+from odoo.exceptions import UserError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class WelfareLineSync(models.Model):
     
     advance_donation_line_id = fields.Many2one(
         'advance.donation.lines',
-        string="Advance Donation",
+        string='Advance Donation Line',
         ondelete='set null'
     )
     
@@ -39,10 +39,6 @@ class WelfareLineSync(models.Model):
             }
         }
 
-    # def action_disbursed(self):
-    #     """When disbursing, mark the linked donation line as reserved"""
-
-    #     return super(WelfareLineSync, self).action_disburse()
     
     def action_disbursed(self):
         res = super().action_disbursed()

@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="account.view_account_supplier_payment_tree"/>
         <field name="arch" type="xml">
             <xpath expr="//header" position="inside">
-                <button name="action_confirm_ibft" type="object" string="Confirm IBFT" class="btn-primary"/>
+                <button name="action_confirm_ibft" groups="account.group_account_invoice" type="object" string="Confirm IBFT" class="btn-primary"/>
             </xpath>
             
 

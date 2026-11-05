@@ -1,6 +1,6 @@
 {
     'name': 'Procurement Workflow',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.3.0',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -17,6 +17,7 @@
         
     ],
     'data': [
+        'security/group_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         

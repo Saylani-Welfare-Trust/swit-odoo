@@ -1,32 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_donation_home_service" model="ir.module.category">
+        <field name="name">Donation Home Service</field>
+        <field name="sequence">52</field>
+    </record>
+
     <record id="donation_home_service_menu_group" model="res.groups">
-        <field name="name">Donation Home Service / Menu</field>
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_donation_home_service"/>
     </record>
 
     <!-- Donation Home Service -->
     <record id="donation_home_service_admin_group" model="res.groups">
-        <field name="name">Donation Home Service / Administrator Access</field>
+        <field name="name">Administrator Access</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(4, ref('donation_home_service_menu_group'))]"/>
     </record>
 
     <record id="donation_home_service_create_access_group" model="res.groups">
-        <field name="name">Donation Home Service / Create Access</field>
+        <field name="name">Create Access</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(4, ref('donation_home_service_menu_group'))]"/>
     </record>
     <record id="donation_home_service_write_access_group" model="res.groups">
-        <field name="name">Donation Home Service / Write Access</field>
+        <field name="name">Write Access</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(4, ref('donation_home_service_menu_group'))]"/>
     </record>
     
-    <!-- <record id="donation_home_service_read_access_group" model="res.groups">
-        <field name="name">Donation Home Service / Read Access</field>
-    </record> -->
 
     <record id="donation_home_service_cancel_group" model="res.groups">
-        <field name="name">Donation Home Service / Cancel Rights</field>
+        <field name="name">Cancel Rights</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(4, ref('donation_home_service_menu_group'))]"/>
     </record>
 
     <record id="donation_home_service_pos_action_group" model="res.groups">
-        <field name="name">Donation Home Service / POS Action</field>
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_donation_home_service"/>
     </record>
 
 </odoo>

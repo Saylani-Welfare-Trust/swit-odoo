@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="donation_product_onhand_group" model="res.groups">
-        <field name="name">Donation Products / Inventory</field>
-        <field name="category_id" ref="module_donation_box"/>
-    </record>
 
     <!-- Sole gate on the root app menu. Every tier below implies it, so being
          in ANY tier is enough to see the app; the tiers then decide what you

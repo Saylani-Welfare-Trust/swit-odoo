@@ -45,12 +45,11 @@ recurring_duration_selection = [
 
 class WelfareLine(models.Model):
     _name = 'welfare.line'
+    _inherit = ['bn.pos.link.mixin']
     _description = "Welfare Line"
 
     return_date = fields.Datetime('Return Date', readonly=True)
     return_bill_id = fields.Many2one('account.move', string='Return Bill', readonly=True)
-    pos_return_order_id = fields.Many2one('pos.order', string='POS Return Order', readonly=True)
-    return_reason = fields.Text('Return Reason')
     returned_by = fields.Many2one('res.users', string='Returned By', default=lambda self: self.env.user)
     #welfare related field name order_type put in welfare line
     order_type = fields.Selection(
@@ -63,7 +62,7 @@ class WelfareLine(models.Model):
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     employee_category_id_officer = fields.Many2one(
         'hr.employee.category', 
-        string="Employee Category", 
+        string='Officer Employee Category', 
         default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
     )
     # order_type field moved to main welfare model
@@ -80,14 +79,7 @@ class WelfareLine(models.Model):
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     disbursement_application_type_id = fields.Many2one('disbursement.application.type', string="Disbursement Application Type")
-    # warehouse_id = fields.Many2one('stock.warehouse', string="Warehouse")
-    # warehouse_domain = fields.Char('Warehouse Domain', compute='_compute_warehouse_domain', default="[]", store=True)
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
-    # net_amount = fields.Float(
-    #     'Net Amount',
-    #     compute='_compute_net_amount',
-    #     store=True
-    # )
     
 
     on_hand_qty = fields.Float(
@@ -126,8 +118,6 @@ class WelfareLine(models.Model):
         store=True,
         default=0.0
     )
-
-
 
 
     total_amount = fields.Float(
@@ -358,7 +348,6 @@ class WelfareLine(models.Model):
             except Exception as e:
                 # Log error but continue processing other lines
                 _logger.error(f"Error creating bill for Welfare Line ID {line.id}: {str(e)}")
-                pass
     
     def _create_bill(self):
         """Create vendor bill for Cash + Bank collection"""
@@ -398,7 +387,7 @@ class WelfareLine(models.Model):
             'welfare_line_id': self.id,
         }
         
-        bill = self.env['account.move'].create(bill_vals)
+        bill = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
         self.bill_id = bill.id
         
         # Auto-post the bill
@@ -478,13 +467,6 @@ class WelfareLine(models.Model):
         
         return result
             
-    # @api.depends('total_amount', 'advance_donation_amount')
-    # def _compute_net_amount(self):
-    #     for rec in self:
-    #         if rec.manual_net_total:
-    #             rec.net_amount = rec.total_amount - rec.advance_donation_amount
-    #         else:
-    #             rec.net_amount = rec.total_amount
     @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:
@@ -506,13 +488,6 @@ class WelfareLine(models.Model):
                 analytic_account_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
                 rec.analytic_account_domain = str([('id', 'in', analytic_account_ids)])
     
-    # @api.depends('disbursement_application_type_id')
-    # def _compute_warehouse_domain(self):
-    #     for rec in self:
-    #         rec.warehouse_domain = ""
-    #         if rec.disbursement_application_type_id and rec.disbursement_application_type_id.analytic_account_ids:
-    #             warehouse_ids = rec.disbursement_application_type_id.analytic_account_ids.ids
-    #             rec.warehouse_domain = str([('id', 'in', warehouse_ids)])
     
     @api.onchange('disbursement_application_type_id')
     def _onchange_disbursement_application_type_id(self):
@@ -614,12 +589,6 @@ class WelfareLine(models.Model):
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
                 
-                # Use warehouse from welfare line, fallback to default
-                # if self.warehouse_id:
-                #     warehouse = self.warehouse_id
-                #     picking_type = warehouse.out_type_id
-                #     location_src = warehouse.lot_stock_id
-                # else:
                 picking_type, location_src, location_dest = self._get_delivery_locations()
 
                 picking_vals = {
@@ -628,6 +597,7 @@ class WelfareLine(models.Model):
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
                     'origin': self.welfare_id.name,
+                    'bn_source_ref': '%s,%s' % (self.welfare_id._name, self.welfare_id.id),
                     'welfare_line_id': self.id,
 
                 }
@@ -759,7 +729,7 @@ class WelfareLine(models.Model):
             ]
         }
         
-        move = self.env['account.move'].create(move_vals)
+        move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(move_vals)
         move.action_post()
         
         _logger.info(f"Created return journal entry {move.name} for amount {self.total_amount}")

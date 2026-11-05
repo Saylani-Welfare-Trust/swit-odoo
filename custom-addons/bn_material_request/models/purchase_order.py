@@ -22,7 +22,7 @@ class PurchaseOrder(models.Model):
         help='Every Purchase Request whose line(s) were consolidated into this RFQ '
              'by the Vendor Selection Wizard.')
     requisition_tag_count = fields.Integer(
-        string='Source Purchase Requests', compute='_compute_requisition_tag_count')
+        string='Source Purchase Request Count', compute='_compute_requisition_tag_count')
 
     @api.depends('requisition_ids')
     def _compute_requisition_tag_count(self):

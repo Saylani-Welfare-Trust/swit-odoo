@@ -65,7 +65,7 @@ class DonationBoxComplain(models.Model):
     installation_category_id = fields.Many2one(related='donation_box_registration_installation_id.installation_category_id', string="Installation Category", store=True, tracking=True)
 
     installation_date = fields.Date(related='donation_box_registration_installation_id.installation_date', string='Installation Date', store=True, tracking=True)
-    date = fields.Date('Date', tracking=True)
+    date = fields.Date('Date', tracking=True, index=True)
 
     remarks = fields.Text('Remarks', tracking=True)
     complain_officer_remark = fields.Text('Complain Officer Remark', tracking=True)

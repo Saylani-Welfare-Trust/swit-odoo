@@ -20,7 +20,7 @@ class ForeignCurrency(models.Model):
 
     currency_id = fields.Many2one('res.currency', string="Currency")
     
-    rider_log = fields.Char('Currency')
+    rider_log = fields.Char('Rider Log Currency')
 
     amount = fields.Float('Amount')
     foreign_notes = fields.Float('Foreign Notes')

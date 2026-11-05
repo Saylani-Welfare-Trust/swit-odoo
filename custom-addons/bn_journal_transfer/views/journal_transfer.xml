@@ -11,7 +11,6 @@
                 </header>
 
                 <field name="accounting_date" readonly="1" />
-                <!-- <field name="name" readonly="1" /> -->
                 <field name="session" readonly="state != 'draft'" />
                 <field name="category" readonly="state != 'draft'" />
                 <field name="deposit_slip_no" readonly="state != 'draft'" />
@@ -26,7 +25,6 @@
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
 
                 <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                <!-- <button string="Cancel" name="action_cancel" type="object"/> -->
             </tree>
         </field>
     </record>
@@ -73,7 +71,6 @@
         <field name="name">Journal Transfer</field>
         <field name="res_model">journal.transfer</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for a new record...

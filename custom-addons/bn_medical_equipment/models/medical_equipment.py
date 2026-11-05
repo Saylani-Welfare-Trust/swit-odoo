@@ -51,7 +51,7 @@ case_type_selection = [
 class MedicalEquipment(models.Model):
     _name = 'medical.equipment'
     _description = "Medical Equipment"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
 
 
 
@@ -178,7 +178,6 @@ class MedicalEquipment(models.Model):
     
     refund_approval_count = fields.Integer('Refund Approval Count', default=0, copy=False)
     refund_remarks_approval1 = fields.Text('Refund Approval (1) Remarks')
-    refund_remarks_approval2 = fields.Text('Refund Approval (2) Remarks')
     refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By (1)', readonly=True, copy=False)
     refund_approved_by_2 = fields.Many2one('res.users', string='Refund Approved By (2)', readonly=True, copy=False)
     refund_approved_date_1 = fields.Datetime('Refund Approved On (1)', readonly=True, copy=False)
@@ -418,20 +417,6 @@ class MedicalEquipment(models.Model):
 
 
     def write(self, vals):
-        # Handle the scenario where mobile is being set but donee is already registered
-        # if vals.get('donee_id') or self.donee_id:
-        #     donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
-        #     if donee_id:
-        #         donee = self.env['res.partner'].browse(donee_id)
-        #         if donee and donee.state == 'register':
-        #             # Remove related fields that would cause duplicate validation
-        #             fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-        #             for field in fields_to_remove:
-        #                 if field in vals:
-        #                     _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-        #                     del vals[field]
-        #             if not vals:
-        #                 return True
 
         # Handle medical equipment reference logic
         if vals.get('medical_equipment_reference_id'):
@@ -541,17 +526,6 @@ class MedicalEquipment(models.Model):
     
     @api.model
     def create(self, vals):
-        # Handle the scenario where mobile is being set but donee is already registered
-        # if vals.get('donee_id'):
-        #     donee = self.env['res.partner'].browse(vals.get('donee_id'))
-        #     if donee and donee.state == 'register':
-        #         # Remove mobile from vals to prevent duplicate validation
-        #         # The mobile is already in the donee record
-        #         fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-        #         for field in fields_to_remove:
-        #             if field in vals:
-        #                 _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-        #                 del vals[field]
 
         if vals.get('name', _('New')) == _('New'):
             vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
@@ -662,6 +636,7 @@ class MedicalEquipment(models.Model):
             'location_id': operation_type.default_location_src_id.id,
             'location_dest_id': operation_type.default_location_dest_id.id,
             'origin': self.name,  # Reference to your medical equipment record
+            'bn_source_ref': '%s,%s' % (self._name, self.id),
             'scheduled_date': fields.Datetime.now(),
             'move_ids': [(0, 0, {
                 'name': f'Medical Equipment: {self.name}',
@@ -1016,6 +991,8 @@ class MedicalEquipment(models.Model):
 
     @api.model
     def create_me_record(self, data):
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(bn_pos_create=True)
         product_lines = []
 
         for line in data['order_lines']:
@@ -1212,10 +1189,6 @@ class MedicalEquipment(models.Model):
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
             if app.get('odooId') == self.id and app.get('department') == "medical":
                 return app
-            # # Match by name and WhatsApp
-            # if (app.get('name') == self.donee_id.name and 
-            #     app.get('whatsapp') == self.donee_id.mobile):
-            #     return app
         return None            
     
     def action_complete(self):
@@ -1445,6 +1418,9 @@ class MedicalEquipment(models.Model):
 
     def _update_donee_odoo_mapping(self, portal_donee_id):
         """Update portal mapping for donee if found by alternate criteria"""
+        if not self.env.company.update_donee_mapping_endpoint:
+            _logger.info("Donee mapping not updated: no Update Donee Mapping Endpoint in the company settings")
+            return
         try:
             data = {
                 "json": {

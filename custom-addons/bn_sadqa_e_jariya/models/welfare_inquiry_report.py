@@ -1,5 +1,4 @@
-from odoo import models, fields, api
-from datetime import datetime
+from odoo import models, fields
 
 class WelfareInquiryReport(models.Model):
     _name = 'welfare.inquiry.report'
@@ -12,7 +11,6 @@ class WelfareInquiryReport(models.Model):
     images = fields.Text(string='Image URLs')
     verified = fields.Boolean(string='Verified')
     
-    officer_id = fields.Many2one('hr.employee', string='Officer')
     officer_name = fields.Char(string='Officer Name')
     officer_email = fields.Char(string='Officer Email')
     

@@ -20,7 +20,6 @@ class AdvanceDonationWizard(models.TransientModel):
     )
 
     product_id = fields.Many2one('product.product', string="Product", required=True)
-    today_date = fields.Date(string="Today Date", default=fields.Date.today)
 
     # Context fields
     welfare_line_id = fields.Many2one('welfare.line', string="Welfare Line")

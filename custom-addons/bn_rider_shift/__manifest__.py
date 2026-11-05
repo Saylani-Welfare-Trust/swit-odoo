@@ -24,6 +24,7 @@
         'wizards/rider_schedule.xml',
         'wizards/foreign_currency_wizard.xml',
         'wizards/counterfeit_notes_wizard.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': False,

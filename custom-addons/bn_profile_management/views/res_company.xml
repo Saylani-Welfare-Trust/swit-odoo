@@ -19,6 +19,7 @@
                             <field name="check_donee_endpoint" />
                             <field name="create_donee_endpoint" />
                             <field name="mark_application_endpoint" />
+                            <field name="update_donee_mapping_endpoint" />
                         </group>
                     </group>
                 </page>

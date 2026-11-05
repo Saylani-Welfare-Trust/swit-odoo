@@ -20,6 +20,7 @@ status_selection = [
 
 class DirectDeposit(models.Model):
     _name = 'direct.deposit'
+    _inherit = ['bn.pos.link.mixin']
     _description = "Direct Deposit"
     _order = "id desc"
 
@@ -310,6 +311,8 @@ May Allah bless you!
 
     @api.model
     def create_dd_record(self, data):
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(bn_pos_create=True)
         self._check_dd_pos_access()
 
         transaction_ref = data.get('transaction_ref')
@@ -457,6 +460,7 @@ May Allah bless you!
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': destination_location.id,
             'origin': self.name,
+            'bn_source_ref': '%s,%s' % (self._name, self.id),
         })
 
         for line in product_lines:

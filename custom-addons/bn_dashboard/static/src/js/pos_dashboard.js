@@ -554,7 +554,7 @@ export class PosDashboard extends Component {
         if (this.state.config_id) domain.push(['config_id', '=', parseInt(this.state.config_id, 10)]);
 
         if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
-            domain.push(['config_id.analytic_account_id', 'child_of', this.state.restriction.analytic_ids]);
+            domain.push(['session_id.analytic_account_id', 'child_of', this.state.restriction.analytic_ids]);
         }
 
         const isSession = model === 'pos.session';
@@ -594,7 +594,7 @@ export class PosDashboard extends Component {
             let or_domains = [];
             for (let id of active_analytic_ids) {
                 // Build the OR domains to match the backend's _get_order_domain logic
-                or_domains.push(['config_id.analytic_account_id', 'child_of', id]);
+                or_domains.push(['session_id.analytic_account_id', 'child_of', id]);
                 if (!isSession) {
                     or_domains.push(['session_id.analytic_account_id', 'child_of', id]);
                     or_domains.push(['analytic_account_id', 'child_of', id]);

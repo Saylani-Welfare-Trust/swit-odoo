@@ -1,53 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_medical_equipment" model="ir.module.category">
+        <field name="name">Medical Equipment</field>
+        <field name="sequence">55</field>
+    </record>
+
     <record id="medical_equipment_menu_group" model="res.groups">
         <field name="name">Menu</field>
+        <field name="category_id" ref="module_medical_equipment"/>
     </record>
 
     <!-- Modical Equipment -->
     <record id="medical_equipment_admin_group" model="res.groups">
-        <field name="name">Medical Equipment / Administrator Access</field>
+        <field name="name">Administrator Access</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group'))]"/>
     </record>
 
     <record id="medical_equipment_create_access_group" model="res.groups">
-        <field name="name">Medical Equipment / Create Access</field>
+        <field name="name">Create Access</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group'))]"/>
     </record>
     
     <record id="medical_equipment_write_access_group" model="res.groups">
-        <field name="name">Medical Equipment / Write Access</field>
+        <field name="name">Write Access</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group'))]"/>
     </record>
 
     <record id="medical_equipment_read_access_group" model="res.groups">
-        <field name="name">Medical Equipment / Read Access</field>
+        <field name="name">Read Access</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group'))]"/>
     </record>
     
     <record id="medical_equipment_delete_access_group" model="res.groups">
-        <field name="name">Medical Equipment / Delete Access</field>
+        <field name="name">Delete Access</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group'))]"/>
     </record>
     
     <record id="medical_equipment_pos_action_group" model="res.groups">
-        <field name="name">Medical Equipment / POS Action</field>
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_medical_equipment"/>
     </record>
     
     <record id="medical_equipment_pos_settle_action_group" model="res.groups">
-        <field name="name">Medical Equipment / POS Settle Action</field>
+        <field name="name">POS Settle Action</field>
+        <field name="category_id" ref="module_medical_equipment"/>
     </record>
     
     <record id="medical_equipment_pos_security_deposit_action_group" model="res.groups">
-        <field name="name">Medical Equipment / POS Security Deposit Action</field>
+        <field name="name">POS Security Deposit Action</field>
+        <field name="category_id" ref="module_medical_equipment"/>
     </record>
 
     <record id="medical_equipment_ceo_approval_group" model="res.groups">
-        <field name="name">Medical Equipment / Approval 1</field>
+        <field name="name">Approval 1</field>
+        <field name="category_id" ref="module_medical_equipment"/>
         <!-- an approver opens the request and writes the decision on it -->
-        <field name="implied_ids" eval="[(4, ref('medical_equipment_read_access_group')), (4, ref('medical_equipment_write_access_group'))]"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group')), (4, ref('medical_equipment_read_access_group')), (4, ref('medical_equipment_write_access_group'))]"/>
     </record>
 
     <record id="medical_equipment_cfo_approval_group" model="res.groups">
-        <field name="name">Medical Equipment / Approval 2</field>
+        <field name="name">Approval 2</field>
+        <field name="category_id" ref="module_medical_equipment"/>
         <!-- an approver opens the request and writes the decision on it -->
-        <field name="implied_ids" eval="[(4, ref('medical_equipment_read_access_group')), (4, ref('medical_equipment_write_access_group'))]"/>
+        <field name="implied_ids" eval="[(4, ref('medical_equipment_menu_group')), (4, ref('medical_equipment_read_access_group')), (4, ref('medical_equipment_write_access_group'))]"/>
     </record>
 
 </odoo>

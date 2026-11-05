@@ -36,6 +36,7 @@
         'wizards/livestock_slaugther.xml',
         'data/bn_program_types.xml',
         'data/upgrade_hooks.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -5,10 +5,6 @@
         <field name="name">Advance Donation</field>
     </record>
 
-    <record id="advance_donation_pos_action_group" model="res.groups">
-        <field name="name">POS Advance Donation Access</field>
-        <field name="category_id" ref="bn_advance_donation.advance_donation"/>
-    </record>
 
     <!-- The app: advance donations, receipts, payments, disbursements. -->
     <record id="group_adv_don_menu" model="res.groups">

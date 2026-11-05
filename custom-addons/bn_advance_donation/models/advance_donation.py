@@ -51,8 +51,8 @@ class AdvanceDonation(models.Model):
     no_of_weeks = fields.Integer('No of Weeks')
 
     is_revert = fields.Boolean()
-    approval_1_remarks = fields.Html(string="Remarks")
-    approval_2_remarks = fields.Html(string="Remarks")
+    approval_1_remarks = fields.Html(string='Approval (1) Remarks')
+    approval_2_remarks = fields.Html(string='Approval (2) Remarks')
 
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     total_product_amount = fields.Monetary('Total Amount', currency_field='currency_id')
@@ -61,8 +61,6 @@ class AdvanceDonation(models.Model):
     
     # New fields for balance management
     total_balance = fields.Monetary('Total Balance', currency_field='currency_id', compute='_compute_total_balance', store=False)
-    # manual_payment_amount = fields.Monetary('Manual Payment Amount', currency_field='currency_id', default=0 ,store=True)
-    # available_balance = fields.Monetary('Available Balance', currency_field='currency_id', compute='_compute_available_balance', store=True)
 
     state = fields.Selection([
         ('draft', 'Draft'),
@@ -160,11 +158,6 @@ class AdvanceDonation(models.Model):
             else:
                 rec.total_balance = 0
     
-    # @api.depends('total_balance', 'manual_payment_amount')
-    # def _compute_available_balance(self):
-    #     """Calculate available balance after manual payment"""
-    #     for rec in self:
-    #         rec.available_balance = rec.total_balance - rec.manual_payment_amount
     
     @api.onchange('contract_type')
     def _onchange_contract_type(self):
@@ -330,15 +323,7 @@ class AdvanceDonation(models.Model):
     #             f'total available balance ({self.total_balance})'
     #         )
         
-    #     if self.manual_payment_amount > self.remaining_amount:
-    #         # Allow partial payment but show warning
-    #         return True
     
-    # def action_apply_manual_payment(self):
-    #     """Apply manual payment to donation lines"""
-    #     self._validate_manual_payment()
-    #     if self.manual_payment_amount <= 0:
-    #         raise UserError('Please enter a valid payment amount')
 
     #     # Get available receipts in FIFO order (oldest first)
     #     available_receipts = self.env['advance.donation.receipt'].search([
@@ -352,11 +337,6 @@ class AdvanceDonation(models.Model):
     #     # Apply FIFO logic to determine which receipts to use
     #     receipts_to_use = self._get_receipts_for_payment(available_receipts, self.manual_payment_amount)
 
-    #     # Auto-attach the receipts to donation_slip_ids field
-    #     current_slips = list(self.donation_slip_ids.ids)
-    #     for receipt in receipts_to_use:
-    #         if receipt.id not in current_slips:
-    #             current_slips.append(receipt.id)
 
     #     # Update donation_slip_ids which will trigger onchange_donation_slip_ids automatically
     #     self.write({'donation_slip_ids': [(6, 0, current_slips)]})

@@ -37,7 +37,7 @@ class Donation(models.Model):
 
     reference = fields.Text('Reference/Remarks', tracking=True)
     
-    date = fields.Char('Date', tracking=True)
+    date = fields.Char('Date', tracking=True, index=True)
 
     amount = fields.Monetary('Amount', tracking=True)
 

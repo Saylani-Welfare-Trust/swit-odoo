@@ -1,5 +1,4 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging

@@ -33,7 +33,7 @@ class PosOrder(models.Model):
             if not donation_lines or not order._is_paid_in_cash():
                 continue
             # receipts already linked to this order (by link or POS reference)
-            if Receipt.search_count(['|', ('order_id', '=', order.id), ('pos_reference', '=', order.pos_reference)]):
+            if Receipt.search_count(['|', ('pos_order_id', '=', order.id), ('pos_reference', '=', order.pos_reference)]):
                 continue
             for line in donation_lines:
                 receipt = Receipt.create({
@@ -42,7 +42,6 @@ class PosOrder(models.Model):
                     'product_id': line.product_id.id,
                     'donor_id': order.partner_id.id,
                     'date': order.date_order.date() if order.date_order else fields.Date.today(),
-                    'order_id': order.id,
                     'pos_order_id': order.id,
                     'pos_session_id': order.session_id.id,
                     'pos_reference': order.pos_reference,

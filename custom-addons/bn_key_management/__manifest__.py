@@ -10,6 +10,7 @@
         'bn_master_setup',
     ],
     'data': [
+        'data/sequence.xml',
         'data/schedule_action.xml',
         'data/ir_module_category.xml',
         'security/groups.xml',
@@ -23,9 +24,6 @@
         'views/key_issuance.xml',
         'views/donation_box_request.xml',
         'views/donation_box_registration_installation.xml',
-        
-        'wizards/bulk_key_issuance.xml',
-        'wizards/manual_key_issuance.xml',
     ],
     'auto_install': False,
     'application': False,

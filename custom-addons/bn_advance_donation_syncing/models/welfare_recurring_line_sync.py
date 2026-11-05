@@ -1,5 +1,4 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo import models, fields, _
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ class WelfareRecurringLineSync(models.Model):
     
     advance_donation_line_id = fields.Many2one(
         'advance.donation.lines',
-        string="Advance Donation",
+        string='Advance Donation Line',
         ondelete='set null'
     )
     advance_donation_amount = fields.Float(
@@ -26,11 +25,6 @@ class WelfareRecurringLineSync(models.Model):
         help="Amount from the advance donation line that is allocated to this recurring line"
     )
     
-    # def action_disbursed(self):
-    #     """When disbursing, mark the linked donation line as reserved"""
-    #     if self.advance_donation_line_id:
-    #         self.advance_donation_line_id.write({'is_disbursed': True})
-    #     return super(WelfareRecurringLineSync, self).action_disburse()
     
     def action_disbursed(self):
         res = super().action_disbursed()

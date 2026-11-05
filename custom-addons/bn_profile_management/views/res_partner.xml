@@ -54,7 +54,6 @@
                             <field name="gender" required="(donee_required_fields) and ',gender,' in profile_visible_form_field_names"  invisible="',gender,' not in profile_visible_form_field_names"/>
                             <field name="religion"  invisible="',religion,' not in profile_visible_form_field_names"/>
 
-                           <!-- <field name="donee_required_fields" invisible="1" /> -->
                            <field name="welfare_donee_required_fields" invisible="1" />
                            <field name="welfare_donee_female_required" invisible="1" />
 

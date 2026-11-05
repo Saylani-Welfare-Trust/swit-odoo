@@ -175,16 +175,8 @@ class ReceiveByWeight(models.TransientModel):
             for tmpl in templates:
                 for variant in tmpl.product_variant_ids:
 
-                    # for ptav in variant.product_template_attribute_value_ids:
-                    #     attr_val = ptav.product_attribute_value_id
-
-                    #     if not attr_val or not attr_val.name:
-                    #         continue
 
                     variant_name = variant.display_name.lower()
-                    # raise UserError(f"Checking variant '{variant.display_name}' with attribute value '{variant_name}' against color '{color}'")
-                    # Match color
-                    # var_and_color.append((variant_name,color))
                     if color in variant_name:
                         matched_variant = variant
                         # matched_attr_val = weight_attr

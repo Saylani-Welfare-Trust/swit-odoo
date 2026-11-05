@@ -46,6 +46,7 @@
         'views/res_company.xml',
         'views/advance_donation.xml',
         'data/bn_program_types.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': True,

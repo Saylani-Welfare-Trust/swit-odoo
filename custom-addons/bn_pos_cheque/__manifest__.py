@@ -1,6 +1,6 @@
 {
     'name': 'POS Cheque',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.4.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -17,12 +17,14 @@
         'security/ir.model.access.csv',
         
         'reports/pos_order_receipt.xml',
+        'reports/donation_note.xml',
         
         'views/pos_cheque.xml',
         'views/pos_order.xml',
         'views/res_config_settings.xml',
 
         'data/res_company.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': False,

@@ -28,6 +28,7 @@
         'reports/direct_deposit_duplicate_report.xml',
         'reports/direct_deposit_dn_report.xml',
         'data/bn_program_types.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': False,

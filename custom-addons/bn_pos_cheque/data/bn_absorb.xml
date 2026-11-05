@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <!-- Must stay the first data file: modules merged into this one hand
-         their records over before they are loaded again from here. -->
-    <function model="ir.module.module" name="_bn_absorb_modules">
-        <value>bn_pos_cheque</value>
-        <value eval="['bn_pos_payment_method', 'bn_journal_transfer']"/>
-    </function>
-</odoo>

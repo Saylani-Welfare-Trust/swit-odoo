@@ -80,7 +80,7 @@ class BankReconciliationMaster(models.Model):
         store=True
     )
     reconciled_transactions = fields.Integer(
-        string='Reconciled Transactions',
+        string='Reconciled Transactions (count)',
         compute='_compute_transaction_counts',
         store=True
     )
@@ -215,21 +215,6 @@ class BankReconciliationMaster(models.Model):
     ], string='CSV Delimiter', default=',')
 
 
-    # @api.depends('file_name')
-    # def _compute_file_type(self):
-    #     for rec in self:
-    #         if rec.file_name:
-    #             ext = rec.file_name.lower().split('.')[-1]
-    #             if ext in ('csv',):
-    #                 rec.file_type = 'csv'
-    #             elif ext in ('xls',):
-    #                 rec.file_type = 'xls'
-    #             elif ext in ('xlsx',):
-    #                 rec.file_type = 'xlsx'
-    #             else:
-    #                 rec.file_type = False
-    #         else:
-    #             rec.file_type = False
 
     @api.onchange('bank_statement_config_id')
     def _onchange_bank_statement_config_id(self):
@@ -539,9 +524,3 @@ class BankReconciliationMaster(models.Model):
 
     def unlink(self):
         raise UserError(_('You cannot delete a bank reconciliation.'))
-        # for record in self:
-        #     if record.state != 'draft':
-        #         raise UserError(_('You can only delete draft reconciliations.'))
-        #     if record.transaction_ids:
-        #         raise UserError(_('Cannot delete a reconciliation with transactions. Please cancel it first.'))
-        # return super(BankReconciliationMaster, self).unlink()

@@ -9,7 +9,6 @@
                 <field name="name"/>
                 <field name="donor_id"/>
                 <field name="amount" sum="1" string="Total" />
-                <!-- <field name="total_amount" sum="1" /> -->
             </tree>
         </field>
     </record>

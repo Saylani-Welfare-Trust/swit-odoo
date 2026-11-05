@@ -1,20 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_expense_extra" model="ir.module.category">
+        <field name="name">Expense Extra Rights</field>
+        <field name="sequence">70</field>
+    </record>
+
     <record id="hr_expense_create_access_group" model="res.groups">
-        <field name="name">Expense / Create Access</field>
+        <field name="name">Create Access</field>
+        <field name="category_id" ref="module_expense_extra"/>
     </record>
     
     <record id="hr_expense_write_access_group" model="res.groups">
-        <field name="name">Expense / Update Access</field>
+        <field name="name">Update Access</field>
+        <field name="category_id" ref="module_expense_extra"/>
     </record>
     
     <record id="hr_expense_read_access_group" model="res.groups">
-        <field name="name">Expense / Read Access</field>
+        <field name="name">Read Access</field>
+        <field name="category_id" ref="module_expense_extra"/>
     </record>
     
     <record id="hr_expense_delete_access_group" model="res.groups">
-        <field name="name">Expense / Delete Access</field>
+        <field name="name">Delete Access</field>
+        <field name="category_id" ref="module_expense_extra"/>
     </record>
 
 </odoo>

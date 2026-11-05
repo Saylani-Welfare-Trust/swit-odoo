@@ -33,6 +33,7 @@ state_selection = [
 
 class RiderCollection(models.Model):
     _name = 'rider.collection'
+    _inherit = ['bn.pos.link.mixin']
     _description = "Rider Collection"
     _rec_name = "shop_name"
 
@@ -41,7 +42,7 @@ class RiderCollection(models.Model):
         'rider_collection_counterfeit_rel',
         'collection_id',
         'note_id',
-        string='Counterfeit Notes'
+        string='Counterfeit Note Lines'
     )
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
@@ -62,7 +63,7 @@ class RiderCollection(models.Model):
 
     is_complain_generated = fields.Boolean('Is Complain Generated', default=False)
     
-    date = fields.Date("Date")
+    date = fields.Date("Date", index=True)
 
     submission_time = fields.Date('Submission Date')
 
@@ -75,13 +76,6 @@ class RiderCollection(models.Model):
     # Set when the POS order that paid this collection reaches the server (pos_order.py).
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, readonly=True)
     dn_number = fields.Char('DN Number', copy=False, readonly=True)
-    foreign_currency_line_ids = fields.Many2many(
-        'foreign.currency',
-        'rider_collection_foreign_currency_rel',
-        'collection_id',
-        'foreign_currency_id',
-        string='Foreign Currency Lines'
-    )
 
     is_fcb = fields.Boolean('Is FCB', compute='_compute_is_fcb')
     

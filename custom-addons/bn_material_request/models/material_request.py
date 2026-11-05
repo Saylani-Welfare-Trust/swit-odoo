@@ -21,18 +21,14 @@ class MemberApproval(models.Model):
     purchase_requisition_ids = fields.One2many(
         'purchase.requisition', 'material_request_id', string='Purchase Requests', readonly=True)
     purchase_requisition_count = fields.Integer(
-        string='Purchase Requests', compute='_compute_purchase_requisition_count')
+        string='Purchase Request Count', compute='_compute_purchase_requisition_count')
+    # what was bought for it: Purchase Orders, their receipts and vendor bills
+    purchase_order_count = fields.Integer(string='Purchase Orders', compute='_compute_purchase_documents')
+    purchase_receipt_count = fields.Integer(string='Receipts', compute='_compute_purchase_documents')
+    vendor_bill_count = fields.Integer(string='Vendor Bills', compute='_compute_purchase_documents')
     
     product_id = fields.Many2one(related='line_ids.product_id', string="Product")
    
-    employee_location_id = fields.Many2one(
-        'account.analytic.account',
-        string='Employee Location',
-        related='user_id.employee_id.analytic_account_id',
-        readonly=True,
-        store=True,
-        help='Location (Branch) of the employee who requested the items. Not editable.'
-    )
     request_date = fields.Date('Request Date', default=fields.Date.today, readonly=True, tracking=True)
     
     # Source and Destination Locations
@@ -55,10 +51,6 @@ class MemberApproval(models.Model):
         store=False
     )
 
-    # dest_location_domain = fields.Char(
-    #     compute='_compute_dest_location_domain',
-    #     store=False
-    # )
 
     dest_location_id = fields.Many2one(
         'stock.location',
@@ -130,7 +122,6 @@ class MemberApproval(models.Model):
             rec.total_amount = sum(line.subtotal for line in rec.line_ids)
 
 
-
     @api.depends('user_id.allowed_warehouse_ids')
     def _compute_source_location_domain(self):
         for rec in self:
@@ -145,19 +136,6 @@ class MemberApproval(models.Model):
                 rec.source_location_domain = "[]"
 
 
-
-    # @api.depends('user_id.allowed_warehouse_ids')
-    # def _compute_source_location_domain(self):
-    #     for rec in self:
-    #         warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
-    #         if warehouse_ids:
-    #             rec.source_location_domain = (
-    #                 "[('usage','=','internal'),"
-    #                 "('warehouse_id','in',%s)]"
-    #                 % warehouse_ids
-    #             )
-    #         else:
-    #             rec.source_location_domain = "[('usage','=','internal')]"
     
     @api.model
     def _move_from_removed_states(self):
@@ -208,8 +186,6 @@ class MemberApproval(models.Model):
                 ('date_to', '>=', today),
             ])
             
-            # if not budget_lines:
-            #     raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
             
             available_budget = sum(
                 abs(l.practical_amount)
@@ -261,9 +237,6 @@ class MemberApproval(models.Model):
                 self.budget_amount = 0.0
                 
                 
-            # Update budget lines for each product
-            # today = fields.Date.today()
-            # updated_lines = self.env['budget.lines']
 
             # for line in self.line_ids:
             #     # Find analytic account via product
@@ -439,6 +412,7 @@ class MemberApproval(models.Model):
                 'location_id': self.source_location_id.id,
                 'location_dest_id': self.dest_location_id.id,
                 'origin': self.name,
+                'bn_source_ref': '%s,%s' % (self._name, self.id),
                 'material_request_id': self.id,
                 'move_ids_without_package': move_vals,
             })
@@ -583,6 +557,36 @@ class MemberApproval(models.Model):
             # sudo: the requester need not be a purchase user.
             rec.purchase_requisition_count = len(rec.sudo().purchase_requisition_ids)
 
+    def _bn_purchase_orders(self):
+        """Confirmed Purchase Orders of all its Purchase Requests (sudo: the
+        requester need not be a purchase user)."""
+        self.ensure_one()
+        return self.env['purchase.order'].sudo().search([
+            ('requisition_id.material_request_id', '=', self.id), ('state', 'in', ('purchase', 'done'))])
+
+    def _compute_purchase_documents(self):
+        for rec in self:
+            orders = rec._bn_purchase_orders() if rec.id else self.env['purchase.order']
+            rec.purchase_order_count = len(orders)
+            rec.purchase_receipt_count = len(orders.picking_ids)
+            rec.vendor_bill_count = len(orders.invoice_ids)
+
+    def _bn_open(self, model, records, name):
+        return {
+            'type': 'ir.actions.act_window', 'name': name, 'res_model': model,
+            'view_mode': 'tree,form', 'domain': [('id', 'in', records.ids)],
+            'context': {'create': False}, 'target': 'current',
+        }
+
+    def action_view_purchase_orders(self):
+        return self._bn_open('purchase.order', self._bn_purchase_orders(), _('Purchase Orders of %s', self.name))
+
+    def action_view_purchase_receipts(self):
+        return self._bn_open('stock.picking', self._bn_purchase_orders().picking_ids, _('Receipts of %s', self.name))
+
+    def action_view_vendor_bills(self):
+        return self._bn_open('account.move', self._bn_purchase_orders().invoice_ids, _('Vendor Bills of %s', self.name))
+
     def action_view_purchase_requisitions(self):
         """View every Purchase Request made for this request"""
         self.ensure_one()
@@ -612,9 +616,6 @@ class MemberApproval(models.Model):
             'target': 'current',
         }
 
-    # def action_committee_approve(self):
-    #     if self.state != 'hod_approval':
-    #         raise ValidationError(_('This request is not in HOD Approval state.'))
         
     #     self.state = 'committee_approval'
 

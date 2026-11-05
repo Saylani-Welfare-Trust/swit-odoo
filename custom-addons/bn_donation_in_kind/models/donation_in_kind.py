@@ -28,7 +28,7 @@ type_selection = [
 class DonationInKind(models.Model):
     _name = 'donation.in.kind'
     _description = "Donation In Kind"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
 
     
     def default_set_value(self, name):
@@ -277,6 +277,7 @@ May Allah bless you!
                     'location_id': vendor_location_id,
                     'scheduled_date': fields.Datetime.today(),
                     'origin': record.name,
+                    'bn_source_ref': '%s,%s' % (record._name, record.id),
                     'move_ids_without_package': move_ids,
                 }
                 picking_id = self.env['stock.picking'].sudo().create(move_vals)
@@ -299,6 +300,8 @@ May Allah bless you!
 
     def action_box_open(self):
         self._check_din_state(('validate',), _('Open Box'))
+        if not self.env.user.has_group('bn_donation_in_kind.donation_in_kind_open_box_group'):
+            raise AccessError(_('Only the Open Box group can open a donation box.'))
         for record in self:
             record.state = 'box_open'
 
@@ -485,6 +488,7 @@ May Allah bless you!
             'location_dest_id': location_dest_id,
             'scheduled_date': fields.Datetime.now(),
             'origin': self.name,
+            'bn_source_ref': '%s,%s' % (self._name, self.id),
             'move_ids_without_package': [(0, 0, {
                 'product_id': product.id,
                 'name': product.name,
@@ -503,6 +507,8 @@ May Allah bless you!
         return picking
 
     def action_box_validate(self):
+        if not self.env.user.has_group('bn_donation_in_kind.donation_in_kind_box_validate_group'):
+            raise AccessError(_('Only the Box Validate group can validate a donation box.'))
         for record in self:
             # priced items skip the valuation committee
             if not (record.state == 'approval' or (record.state == 'box_open' and record.check_bool == 'no')):
@@ -562,7 +568,7 @@ May Allah bless you!
                 'line_ids': box_lines_tuples,
             }
             
-            account_move = self.env['account.move'].sudo().create(vals)
+            account_move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (record._name, record.id)).sudo().create(vals)
             
             if account_move:
                 account_move.action_post()
@@ -640,6 +646,8 @@ May Allah bless you!
 
     @api.model
     def create_din_record(self, data):
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(bn_pos_create=True)
         din = None
         dins = self.browse()
         

@@ -129,7 +129,7 @@ class PosOrder(models.Model):
         # === NEW: Dashboard Configurator restriction ===
         restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
         if restriction:
-            domain.append(('config_id.analytic_account_id', 'child_of', restriction['analytic_ids']))
+            domain.append(('session_id.analytic_account_id', 'child_of', restriction['analytic_ids']))
 
         if province_id or city_id or zone_id or segment_id or segment_type:
             analytic_domain = []
@@ -153,8 +153,6 @@ class PosOrder(models.Model):
                     analytic_filters.append(('analytic_account_id', 'in', accounts.ids))
                 if 'session_id' in self._fields:
                     analytic_filters.append(('session_id.analytic_account_id', 'in', accounts.ids))
-                if 'config_id' in self._fields:
-                    analytic_filters.append(('config_id.analytic_account_id', 'in', accounts.ids))
                 if 'user_id' in self._fields:
                     analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
 
@@ -183,12 +181,12 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_ids_sql(self, domain):
-        # Always through search(): the raw queries below then only count the
-        # orders the user may see (POS record rules), filters or not.
-        orders = self.env['pos.order'].search(domain or [])
-        if not orders:
-            return " AND 1=0 "
-        return " AND pos_order.id IN (%s) " % ','.join(str(i) for i in orders.ids)
+        """Condition limiting the raw queries below to the orders the user may
+        see (POS record rules) matching the filters: a subquery, so the database
+        filters them without sending the ids back and forth."""
+        query = self.env['pos.order']._search(domain or [])
+        subselect = query.subselect()
+        return " AND pos_order.id IN (%s) " % self.env.cr.mogrify(subselect.code, subselect.params).decode()
 
     # ------------------------------------------------------------------
     # sales chart
@@ -213,7 +211,7 @@ class PosOrder(models.Model):
                 "as date_month, sum(amount_total) from pos_order "
                 "where pos_order.company_id = %d %s "
                 "group by date_month order by date_month"
-            ) % (company_id, order_sql)
+            ) % (company_id, order_sql.replace('%', '%%'))
             label = 'HOURS'
         elif option == 'pos_monthly_sales':
             query = (
@@ -231,7 +229,10 @@ class PosOrder(models.Model):
             ) % (company_id, order_sql)
             label = 'MONTHS'
 
-        self._cr.execute(query, {'tz': str(user_tz)})
+        if option == 'pos_hourly_sales':
+            self._cr.execute(query, {'tz': str(user_tz)})
+        else:
+            self._cr.execute(query)
         docs = self._cr.dictfetchall()
         return [
             [r.get('sum') for r in docs],
@@ -734,7 +735,7 @@ class PosOrder(models.Model):
         else:
             pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
-        # 4. Join POS Config's Branch Analytic hierarchy (fallback)
+        # 4. Join the POS session's branch analytic hierarchy (fallback)
         pos_fb_city_join = f"""
             LEFT JOIN LATERAL (
                 SELECT
@@ -748,7 +749,7 @@ class PosOrder(models.Model):
                 LEFT JOIN account_analytic_account c2 ON c2.id = c1.parent_id
                 LEFT JOIN account_analytic_account c3 ON c3.id = c2.parent_id
                 LEFT JOIN account_analytic_account c4 ON c4.id = c3.parent_id
-                WHERE c1.id = pos_config.analytic_account_id
+                WHERE c1.id = pos_session.analytic_account_id
                   AND c1.plan_id IN ({plan_ids_sql})
             ) pos_fb_city ON true
         """
@@ -775,6 +776,7 @@ class PosOrder(models.Model):
             FROM pos_order_line
             INNER JOIN pos_order          ON pos_order.id = pos_order_line.order_id
             LEFT  JOIN pos_config         ON pos_config.id = pos_order.config_id
+            LEFT  JOIN pos_session        ON pos_session.id = pos_order.session_id
             {pos_city_join}
             {pos_fb_city_join}
             INNER JOIN product_product    ON product_product.id = pos_order_line.product_id

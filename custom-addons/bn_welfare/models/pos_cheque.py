@@ -17,7 +17,7 @@ class POSCheque(models.Model):
         'pos_cheque_welfare_recurring_line_rel_v2',
         'pos_cheque_id',
         'welfare_recurring_line_id',
-        string="Welfare Recurring Lines",
+        string='Welfare Recurring Lines',
     )
 
     def _clear_welfare(self):

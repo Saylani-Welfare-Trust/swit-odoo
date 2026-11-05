@@ -18,7 +18,7 @@ class DirectDeposit(models.Model):
         'direct_deposit_welfare_recurring_line_rel',
         'direct_deposit_id',
         'welfare_recurring_line_id',
-        string="Welfare Recurring Lines",
+        string='Welfare Recurring Lines',
     )
 
     def _prepare_dd_source_vals(self, data):

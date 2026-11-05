@@ -2,15 +2,14 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 import logging
 import re
-import json
-from datetime import datetime, time
+from datetime import datetime
 _logger = logging.getLogger(__name__)
 from datetime import datetime
 
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
     _description = 'Qurbani POS Orders'
 
     donor_id = fields.Many2one('res.partner', string="Donor")
@@ -25,7 +24,7 @@ class QurbaniOrder(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
 
     # POS vs Web Order indicator
-    pos_qurbani_order = fields.Boolean('POS Order', default=True)
+    pos_qurbani_order = fields.Boolean('From POS', default=True)
 
     # API/Web Order Fields
     api_response_id = fields.Char('API Response ID')
@@ -581,6 +580,8 @@ class QurbaniOrder(models.Model):
         """POS booking. A donor can book a slot in any city, while the
         schedules and demands are scoped to the planners' locations: the
         booking runs as superuser once the cashier is checked."""
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(bn_pos_create=True)
         if not self.env.user.has_group('point_of_sale.group_pos_user'):
             raise AccessError(_('Only Point of Sale users can book a Qurbani.'))
         return self.sudo()._create_qurbani_record(data)

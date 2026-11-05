@@ -1,3 +1,0 @@
-# Example:
-# num2words==0.5.13
-# zeep==4.2.1

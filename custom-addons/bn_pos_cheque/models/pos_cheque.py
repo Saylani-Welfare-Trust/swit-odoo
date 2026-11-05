@@ -1,7 +1,8 @@
 import logging
 
-from odoo import _, api, fields, models
+from odoo import _, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.tools.sql import column_exists
 
 _logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ SLIP_TYPES = {1: 'restricted', 2: 'unrestricted', 0: 'neutral'}
 
 class POSCheque(models.Model):
     _name = 'pos.cheque'
+    _inherit = ['bn.pos.link.mixin']
     _description = "POS Cheque"
     _order = 'id desc'
 
@@ -35,7 +37,7 @@ class POSCheque(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)
     bank_name = fields.Char('Bank Name')
-    date = fields.Date('Cheque Date')
+    date = fields.Date('Cheque Date', index=True)
     bounce_count = fields.Integer('Bounce Count')
     amount = fields.Float('Amount', compute="_set_details", store=True)
     # Program modules add their own values (bn_welfare, bn_medical_equipment)
@@ -44,7 +46,18 @@ class POSCheque(models.Model):
     move_id = fields.Many2one('account.move', string="Journal Entry", readonly=True)
     source_record_id = fields.Integer(string="Source Record ID")
 
-    @api.depends('name')
+    def init(self):
+        super().init()
+        # cheques taken before the link existed: their order is the one paid by
+        # them (on a fresh install pos.order gets its column after this table)
+        if not column_exists(self.env.cr, 'pos_order', 'pos_cheque_id'):
+            return
+        self.env.cr.execute("""
+            UPDATE pos_cheque c SET pos_order_id = o.id
+              FROM pos_order o
+             WHERE o.pos_cheque_id = c.id AND c.pos_order_id IS NULL
+        """)
+
     def _set_details(self):
         for rec in self:
             rec.donor_id = None
@@ -166,7 +179,7 @@ class POSCheque(models.Model):
         analytic_dist = {str(self.analytic_account_id.id): 100} if self.analytic_account_id else {}
         partner_id = self.donor_id.id or False
         label = _("Cheque Deposit %s") % self.name
-        move = self.env['account.move'].sudo().create({
+        move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).sudo().create({
             'move_type': 'entry',
             'journal_id': self.bank_id.id,
             'date': fields.Date.context_today(self),

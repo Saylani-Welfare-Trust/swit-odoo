@@ -14,7 +14,7 @@ class POSCheque(models.Model):
         pos_order = self._get_pos_order()
         lines = pos_order.lines.filtered(lambda l: l.product_id.is_advance_donation and l.price_subtotal_incl > 0)
         for line in lines:
-            if Receipt.search_count([('order_id', '=', pos_order.id), ('product_id', '=', line.product_id.id),
+            if Receipt.search_count([('pos_order_id', '=', pos_order.id), ('product_id', '=', line.product_id.id),
                                      ('cheque_number', '=', self.name)]):
                 continue  # already created (cheque cleared before)
             created |= Receipt.create({
@@ -25,7 +25,7 @@ class POSCheque(models.Model):
                 'cheque_number': self.name,
                 'cheque_date': self.date,
                 'date': fields.Date.today(),
-                'order_id': pos_order.id,
+                'pos_order_id': pos_order.id,
                 'remarks': 'Auto-created from POS Cheque %s' % self.name,
                 'state': 'paid',
             })

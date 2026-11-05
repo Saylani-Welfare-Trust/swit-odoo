@@ -2,8 +2,4 @@ from . import city
 from . import bank
 from . import area
 from . import ir_module
-from . import res_users
-from . import mail_thread
-from . import res_currency
-from . import ir_attachment
-from . import res_company
+from . import source_document

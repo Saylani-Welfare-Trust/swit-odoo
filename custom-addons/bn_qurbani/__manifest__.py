@@ -70,6 +70,7 @@
         'wizards/sync_slaughter_and_distribution.xml',
         'wizards/update_qurbani_demand.xml',
         'data/bn_program_types.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': True,

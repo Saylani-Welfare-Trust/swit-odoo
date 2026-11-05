@@ -181,7 +181,7 @@
                                 <td>Gender:</td>
                                 <td><t t-if="docs.gender" t-esc="docs.gender.title()"/></td>
                                 <td>DOB:</td>
-                                <td><t t-esc="docs.date_of_birth"/></td>
+                                <td><t t-esc="docs.date_of_birth and docs.date_of_birth.strftime('%d-%m-%Y') or ''"/></td>
                             </tr>
                             <tr>
                                 <td>Religion :</td>
@@ -261,149 +261,140 @@
                     </t>
                 </section>
                 <br/><br/>
-                <section name="print_detail" style="width: 80%;">
-                    <div class="row">
-                        <div class="col-2">
+                <section name="print_detail" style="width: 100%;">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Date : </span>
                         </div>
-                        <div class="col-4">
-                            <t t-esc="datetime.date.today()"/>
+                        <div class="col-3">
+                            <t t-esc="datetime.date.today().strftime('%d-%m-%Y')"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>Master Donee No. : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.primary_registration_id"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Name : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.name"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>Mobile : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.mobile"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>CNIC No. : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.cnic_no"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>City : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.city"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Branch : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.analytic_account_id.name"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Gender : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-if="docs.gender" t-esc="docs.gender.title()"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>DOB : </span>
                         </div>
-                        <div class="col-4">
-                            <t t-esc="docs.date_of_birth"/>
+                        <div class="col-3">
+                            <t t-esc="docs.date_of_birth and docs.date_of_birth.strftime('%d-%m-%Y') or ''"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Religion : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-if="docs.religion" t-esc="docs.religion.title()"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>Next Kin : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.next_kin"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Address : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.street"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>Nearest Land Mark : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.nearest_land_mark"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Father Name : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.father_name"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>Surname : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.surname"/>
                         </div>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Married Status : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-if="docs.martial_status" t-esc="docs.martial_status.title()"/>
                         </div>
                         <t t-if="docs.martial_status == 'married'">
-                            <div class="col-2">
+                            <div class="col-3 fw-bold">
                                 <span>Spouse Name : </span>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <t t-esc="docs.spouse_name"/>
                             </div>
                         </t>
                     </div>
-                    <br/>
-                    <div class="row">
-                        <div class="col-2">
+                    <div class="row" style="margin-bottom: 10px;">
+                        <div class="col-3 fw-bold">
                             <span>Bank / Wallet Account : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.bank_wallet_account"/>
                         </div>
-                        <div class="col-2">
+                        <div class="col-3 fw-bold">
                             <span>Details : </span>
                         </div>
-                        <div class="col-4">
+                        <div class="col-3">
                             <t t-esc="docs.details"/>
                         </div>
                     </div>

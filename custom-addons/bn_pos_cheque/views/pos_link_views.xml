@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_cheque_view_tree_pos_link" model="ir.ui.view">
+        <field name="name">pos.cheque.tree.pos.link</field>
+        <field name="model">pos.cheque</field>
+        <field name="inherit_id" ref="bn_pos_cheque.pos_cheque_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="pos_config_id" optional="show"/>
+                <field name="pos_session_id" optional="show"/>
+                <field name="pos_order_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

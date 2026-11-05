@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_purchase_request" model="ir.module.category">
+        <field name="name">Purchase Request</field>
+        <field name="sequence">62</field>
+    </record>
+
     <record id="purchase_hod_group" model="res.groups">
-        <field name="name">Purchase / HOD</field>
+        <field name="name">HOD</field>
+        <field name="category_id" ref="module_purchase_request"/>
     </record>
     
     <record id="purchase_cxo_group" model="res.groups">
-        <field name="name">Purchase / CXO</field>
+        <field name="name">CXO</field>
+        <field name="category_id" ref="module_purchase_request"/>
     </record>
 
     <record id="purchase_request_confirm_group" model="res.groups">
-        <field name="name">Purchase / Confirm Purchase Request</field>
+        <field name="name">Confirm Purchase Request</field>
+        <field name="category_id" ref="module_purchase_request"/>
     </record>
 
 </odoo>

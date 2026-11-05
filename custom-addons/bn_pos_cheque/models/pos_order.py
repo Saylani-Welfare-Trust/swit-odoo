@@ -14,7 +14,7 @@ class POSOrder(models.Model):
     cheque_number = fields.Char('Cheque No')
     qr_code = fields.Char('QR Code No.')
     
-    cheque_date = fields.Date('Date')
+    cheque_date = fields.Date('Cheque Date')
 
     bounce_count = fields.Integer(related='pos_cheque_id.bounce_count', string="Bounce Count", store=True)
     
@@ -48,6 +48,9 @@ class POSOrder(models.Model):
                 'bank_name': ui_order.get('bank_name') or False,
                 'name': cheque_number,
                 'date': parsed_date,
+                # where it was taken; the order itself is linked once saved
+                'pos_reference': ui_order.get('name') or False,
+                'pos_session_id': ui_order.get('pos_session_id') or False,
             })
             # created for the cashier: POS users have no rights on pos.cheque
             res['pos_cheque_id'] = self.env['pos.cheque'].sudo().create(cheque_vals).id
@@ -140,3 +143,6 @@ class POSOrder(models.Model):
         except (UserError, AccessError) as e:
             return {"status": "error", "body": str(e)}
         return {"status": "success", "body": _("Cheque Status has been updated successfully.")}
+
+    def _bn_pos_documents(self, extra_data):
+        return super()._bn_pos_documents(extra_data) + [self.pos_cheque_id]

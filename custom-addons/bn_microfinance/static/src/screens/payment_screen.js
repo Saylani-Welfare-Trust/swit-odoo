@@ -61,6 +61,9 @@ patch(PaymentScreen.prototype, {
             cheque_date: order.cheque_date || false,
             donee_id: order.get_partner()?.id || false,
             state: 'paid',
+            // the POS order (saved just before) and its session / POS
+            pos_reference: order.name,
+            pos_session_id: this.pos.pos_session.id,
         };
     },
 

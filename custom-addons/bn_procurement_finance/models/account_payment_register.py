@@ -13,7 +13,7 @@ class AccountPaymentRegister(models.TransientModel):
     # The amount of the wizard stays the tax-included one, so the bill is settled for all of it;
     # the payment is created for what is left after the tax (see account.payment).
     payment_tax_id = fields.Many2one(
-        'account.tax', string='Tax', check_company=True, domain="[('type_tax_use', '=', 'purchase')]",
+        'account.tax', string='Payment Tax', check_company=True, domain="[('type_tax_use', '=', 'purchase')]",
         help='Tax deducted from the tax-included amount.')
     payment_tax_amount = fields.Monetary(string='Tax Amount', compute='_compute_payment_tax_amount')
     payment_net_amount = fields.Monetary(string='Net Amount', compute='_compute_payment_tax_amount')

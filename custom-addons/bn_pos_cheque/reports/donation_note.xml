@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Card reference, bank and cheque details of the POS donation notes
+         (the fields are this module's). -->
+
+    <template id="pos_donation_receipt_template_bn_pos_cheque" inherit_id="bn_pos_order.pos_donation_receipt_template">
+        <xpath expr="//div[@name='dn-payment-method']" position="after">
+            <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
+            <div t-if="'Cheque' in payment_method">
+                <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@name='dn-date-time']" position="after">
+            <div t-if="'Cheque' in payment_method">
+                <strong>Cheque Date:</strong>
+                <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
+                <br/>
+                <strong>Cheque No.:</strong> <t t-esc="order.cheque_number or ''"/>
+            </div>
+        </xpath>
+    </template>
+
+    <template id="pos_whatsapp_donation_receipt_template_bn_pos_cheque" inherit_id="bn_pos_order.pos_whatsapp_donation_receipt_template">
+        <xpath expr="//div[@name='dn-payment-method']" position="after">
+            <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
+            <div t-if="'Cheque' in payment_method">
+                <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
+            </div>
+        </xpath>
+        <xpath expr="//div[@name='dn-date-time']" position="after">
+            <div t-if="'Cheque' in payment_method">
+                <strong>Cheque Date:</strong>
+                <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
+                <br/>
+                <strong>Cheque No.:</strong> <t t-esc="order.cheque_number or ''"/>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

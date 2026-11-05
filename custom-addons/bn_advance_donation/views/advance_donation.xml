@@ -27,7 +27,6 @@
                     <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0 or state == 'rejected'"/>
                     <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0 or state == 'rejected'"/>
-                    <!-- <button name="action_apply_manual_payment" string="Apply Manual Payment" type="object" class="btn-primary" invisible="state != 'draft' or manual_payment_amount == 0"/> -->
                     <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1"/>
                     <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_approved" invisible="state != 'approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_1"/>
@@ -90,8 +89,6 @@
                                 invisible="not service_charges"
                                 readonly="state != 'draft'"
                                 force_save="1"/>
-                            <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
-                            <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
                             <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
                         </group>
                     </group>
@@ -118,8 +115,6 @@
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
-                                    <!-- <field name="reserved_welfare_line_id" column_invisible="1"/> -->
-                                    <!-- <field name="reserved_welfare_recurring_line_id" column_invisible="1"/> -->
                                 </tree>
                             </field>
                         </page>

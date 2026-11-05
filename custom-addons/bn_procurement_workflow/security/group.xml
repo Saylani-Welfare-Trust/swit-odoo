@@ -1,19 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
     <record id="group_procurement_manager" model="res.groups">
-        <field name="name">Procurement / Procurement Manager</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
-    </record>
-    <record id="group_hod_procurement" model="res.groups">
-        <field name="name">Procurement / HOD Procurement</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="name">Procurement Manager</field>
+        <field name="category_id" ref="module_procurement"/>
     </record>
     <record id="group_cfo_shariah" model="res.groups">
-        <field name="name">Procurement / CFO-Shariah Fund Transfer</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="name">CFO-Shariah Fund Transfer</field>
+        <field name="category_id" ref="module_procurement"/>
     </record>
     <record id="group_rfq_selection" model="res.groups">
-        <field name="name">Procurement / RFQ Selection</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="name">RFQ Selection</field>
+        <field name="category_id" ref="module_procurement"/>
     </record>
+
+    <!-- These groups are noupdate: an earlier version put them in the hidden
+         Technical category, where they could not be assigned. -->
+    <data noupdate="0">
+        <!-- HOD Procurement: its approval step was dropped from the workflow -->
+        <function model="ir.module.module" name="_bn_remove_records">
+            <value eval="['bn_procurement_workflow.group_hod_procurement']"/>
+        </function>
+        <function model="res.groups" name="write">
+            <value eval="[ref('group_procurement_manager')]"/>
+            <value eval="{'category_id': ref('module_procurement'), 'name': 'Procurement Manager'}"/>
+        </function>
+        <function model="res.groups" name="write">
+            <value eval="[ref('group_cfo_shariah')]"/>
+            <value eval="{'category_id': ref('module_procurement'), 'name': 'CFO-Shariah Fund Transfer'}"/>
+        </function>
+        <function model="res.groups" name="write">
+            <value eval="[ref('group_rfq_selection')]"/>
+            <value eval="{'category_id': ref('module_procurement'), 'name': 'RFQ Selection'}"/>
+        </function>
+    </data>
 </odoo>

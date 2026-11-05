@@ -14,7 +14,7 @@ state_selection = [
 class LivestockSlaughter(models.Model):
     _name = 'livestock.slaugther'
     _description = "Livestock Slaugther"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
 
 
     donee_id = fields.Many2one('res.partner', string="Donee")
@@ -31,11 +31,6 @@ class LivestockSlaughter(models.Model):
         readonly=True,
     )
     material_request_id = fields.Many2one('livestock.cutting.material', string='Material Request', copy=False)
-    material_request_line_ids = fields.One2many(
-        related='material_request_id.livestock_cutting_material_line_ids',
-        string='Material Request Lines',
-        readonly=True,
-    )
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
@@ -59,7 +54,7 @@ class LivestockSlaughter(models.Model):
     is_chicken_depart = fields.Boolean('Is Chicken Department')
     confirm_hide = fields.Boolean('Confirm Hide')
     cutting_hide = fields.Boolean('Cutting Hide')
-    transfer_bool = fields.Boolean('Cutting Hide')
+    transfer_bool = fields.Boolean('Hide Transferred')
 
     # One record per animal: a source line (POS line, Direct Deposit line,
     # donation, API item) gets as many records as animals it paid for, see

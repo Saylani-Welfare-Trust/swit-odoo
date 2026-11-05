@@ -31,7 +31,7 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_pending" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type != 'cheque'"/>
+                    <button name="action_pending" groups="bn_advance_donation.group_adv_don_menu" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type != 'cheque'"/>
                     <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type == 'cheque'"/>
                     <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
                     <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
@@ -72,7 +72,6 @@
                             <field name="product_id" readonly="1"/>
                             <field name="donation_id" options="{'no_create': True, 'no_edit': True}" required="1" readonly="state != 'draft'" invisible="is_donation_id == False"/>
                             <field name="donor_id" required="1" readonly="state != 'draft'"/>
-                            <field name="order_id" readonly="1"/>
                             <field name="amount" required="True" readonly="state != 'draft'" force_save="1"/>
                             <field name="date" required="True" readonly="state != 'draft'"/>
                             <field name="used_amount" readonly="1" force_save="1"/>

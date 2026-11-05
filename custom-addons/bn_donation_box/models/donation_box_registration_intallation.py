@@ -70,7 +70,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     landmark = fields.Char('Landmark', tracking=True)
     block_floor_office_no = fields.Char('Block / Floor / Office No.', tracking=True)
 
-    installation_date = fields.Date('Installation Date', default=fields.Date.context_today, tracking=True)
+    installation_date = fields.Date('Installation Date', default=fields.Date.context_today, tracking=True, index=True)
 
     key_issuance = fields.Boolean('Key Issuance')
 

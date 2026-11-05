@@ -162,3 +162,39 @@ class TestClosedBox(BoxFlowCase):
             'remarks': 'shop shut'})
         line.mark_as_pending()
         self.assertEqual(issuance.state, 'pending')
+
+
+@tagged('post_install', '-at_install')
+class TestBunchOut(BoxFlowCase):
+    """A bunch goes out with a rider as a whole: nothing about one of its
+    boxes changes until every key of the bunch is back."""
+
+    def _issue(self, key):
+        issuance = self.env['key.issuance'].create({
+            'rider_id': self.rider.id, 'key_id': key.id, 'issue_date': fields.Date.today()})
+        issuance.action_issue()
+        return issuance
+
+    def test_change_request_waits_for_the_whole_bunch(self):
+        registration = self._install('L1')
+        # a second box of the same bunch, its key out with the rider
+        other_lot = self.env['stock.lot'].create({'name': 'BOX-OTHER', 'product_id': self.product.id})
+        self.env['stock.quant']._update_available_quantity(
+            self.product, self.warehouse.lot_stock_id, 1, lot_id=other_lot)
+        self.lot, saved_lot = other_lot, self.lot
+        other = self._install('L2')
+        self.lot = saved_lot
+        self.assertEqual(other.key_ids.key_bunch_id, registration.key_ids.key_bunch_id)
+        issuance = self._issue(other.key_ids)
+
+        with self.assertRaisesRegex(ValidationError, 'bunch'):
+            registration.action_change_request()
+        complaint = self._complaint(registration)
+        complaint.action_process()
+        with self.assertRaises(ValidationError):
+            complaint.action_resolve()   # its bunch is still out
+
+        issuance._bn_write({'state': 'donation_receive'})
+        issuance.action_return()
+        registration.action_change_request()
+        self.assertEqual(registration.status, 'change_request')

@@ -79,7 +79,7 @@ class ResPartner(models.Model):
     religion = fields.Selection(selection=religion_selection, string="Religion", tracking=True)
     martial_status = fields.Selection(selection=martial_status_selection, string="Martial Status", tracking=True)
     has_cnic = fields.Selection(selection=general_selection, string="Has CNIC", default='yes', tracking=True)
-    state = fields.Selection(selection=state_selection, string="State", default='draft', tracking=True)
+    state = fields.Selection(selection=state_selection, string='Status', default='draft', tracking=True)
     
     area = fields.Many2one('area', string="Area", tracking=True)
     # No size=: a size silently truncates longer input (03001234567 was

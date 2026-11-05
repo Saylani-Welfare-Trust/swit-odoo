@@ -65,8 +65,8 @@
                                     <h1 class="text-transform" style="font-size: 12px;">
                                         Saylani Welfare International Trust
                                         <br/>
-                                        <t t-if="order.session_id.config_id.analytic_account_id">
-                                            (<t t-esc="order.session_id.config_id.analytic_account_id.name"/>)
+                                        <t t-if="order.session_id.analytic_account_id">
+                                            (<t t-esc="order.session_id.analytic_account_id.name"/>)
                                         </t>
                                     </h1>
                                 </div>
@@ -84,24 +84,14 @@
                                         <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/>
                                     </div>
-                                    <div name="custom-donor"/>
+                                    <div name="custom-donor"><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="order.partner_id.cnic_no or '-'"/></div>
-                                    <div><strong>Payment Method:</strong> <t t-esc="payment_method"/></div>
-                                    <div t-if="payment_method == 'Credit Card'"><strong>Reference No.:</strong> <t t-esc="order.qr_code or ''"/></div>
-                                    <div t-if="'Cheque' in payment_method">
-                                        <strong>Bank Name:</strong> <t t-esc="order.bank_name or ''"/>
-                                    </div>
+                                    <div name="dn-payment-method"><strong>Payment Method:</strong> <t t-esc="payment_method"/></div>
                                 </div>
                                 <div class="col-6">
-                                    <div>
+                                    <div name="dn-date-time">
                                         <strong>Date &amp; Time:</strong>
                                          <t t-esc="(order.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if order.create_date and not isinstance(order.create_date, str) else (order.create_date or '--')"/>
-                                    </div>
-                                    <div t-if="'Cheque' in payment_method">
-                                        <strong>Cheque Date:</strong>
-                                        <t t-esc="order.cheque_date.strftime('%d-%m-%Y %H:%M') if order.cheque_date else '--'"/>
-                                        <br/>
-                                        <strong>Cheque No.:</strong> <t t-esc="order.cheque_number or ''"/>
                                     </div>
                                     <div>
                                         <strong>Contact No.:</strong>
@@ -144,7 +134,7 @@
                             <!-- ===== TOTALS ===== -->
                             <table style="width:100%; margin-top:10px; font-size:10px;">
                                 <tr>
-                                    <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="order.user_id.employee_id.name"/></strong></td>
+                                    <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="order.user_id.employee_id.name or order.user_id.name"/></strong></td>
                                     <td style="text-align:right; padding:0;">Total Amount: <strong>Rs <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/></strong></td>
                                 </tr>
                             </table>
@@ -160,7 +150,7 @@
                                         <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                                         <t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/>
                                     </div>
-                                    <div name="footer-custom-donor"></div>
+                                    <div name="footer-custom-donor"><strong>Donor Name:</strong> <t t-esc="order.partner_id.name or '-'"/></div>
                                     <div>   
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
@@ -175,7 +165,7 @@
                                         <strong>Date &amp; Time:</strong>
                                          <t t-esc="(order.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if order.create_date and not isinstance(order.create_date, str) else (order.create_date or '--')"/>
                                     </div>
-                                    <div><strong>Entered by: </strong> <t t-esc="order.user_id.employee_id.name"/></div>
+                                    <div><strong>Entered by: </strong> <t t-esc="order.user_id.employee_id.name or order.user_id.name"/></div>
                                 </div>
                             </div>
                             <div style="text-align: center; font-size: 12px;">

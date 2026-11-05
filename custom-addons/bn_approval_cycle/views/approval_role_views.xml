@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_approval_role_list" model="ir.ui.view">
+        <field name="name">approval.role.list</field>
+        <field name="model">approval.role</field>
+        <field name="arch" type="xml">
+            <list string="Approval Roles">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="approver_type"/>
+                <field name="user_ids" widget="many2many_tags"/>
+                <field name="group_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+    <record id="view_approval_role_form" model="ir.ui.view">
+        <field name="name">approval.role.form</field>
+        <field name="model">approval.role</field>
+        <field name="arch" type="xml">
+            <form string="Approval Role">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="COO" class="oe_inline" required="1" /></h1>
+                    </div>
+                    <group>
+                        <group name="approval_role_col_1">
+                            <field name="code"/>
+                            <field name="approver_type"/>
+                            <field name="escalate_to_parents" invisible="approver_type != 'department_manager'"/>
+                            <field name="user_ids" widget="many2many_tags" invisible="approver_type != 'users'"/>
+                            <field name="group_id" invisible="approver_type != 'group'"/>
+                            <field name="department_wise_enabled" invisible="1"/>
+                            <field name="same_department_only" invisible="not department_wise_enabled or approver_type == 'department_manager'"/>
+                        </group>
+                        <group name="approval_role_col_2">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes" name="notes">
+                            <field name="description" placeholder="What this role is responsible for"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+    <record id="view_approval_role_search" model="ir.ui.view">
+        <field name="name">approval.role.search</field>
+        <field name="model">approval.role</field>
+        <field name="arch" type="xml">
+            <search string="Approval Roles">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="user_ids"/>
+                <field name="group_id"/>
+                <separator/>
+                <filter name="department_manager" string="Department Manager"
+                        domain="[('approver_type', '=', 'department_manager')]"/>
+                <filter name="specific_users" string="Specific Users"
+                        domain="[('approver_type', '=', 'users')]"/>
+                <filter name="security_group" string="Security Group"
+                        domain="[('approver_type', '=', 'group')]"/>
+                <separator/>
+                <filter name="include_parents" string="Includes Parent Managers"
+                        domain="[('approver_type', '=', 'department_manager'), ('escalate_to_parents', '=', True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_type" string="Approver Type" context="{'group_by': 'approver_type'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_approval_role" model="ir.actions.act_window">
+        <field name="name">Approval Roles</field>
+        <field name="res_model">approval.role</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_approval_role_search"/>
+    </record>
+</odoo>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="direct_deposit_view_form_pos_link" model="ir.ui.view">
+        <field name="name">direct.deposit.form.pos.link</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.direct_deposit_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Point of Sale" name="bn_pos_link" invisible="not pos_session_id and not pos_order_id">
+                    <group>
+                        <field name="pos_config_id" options="{'no_create': True}"/>
+                        <field name="pos_session_id" options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="pos_order_id" options="{'no_create': True}"/>
+                        <field name="pos_reference"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

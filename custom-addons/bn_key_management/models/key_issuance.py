@@ -39,7 +39,7 @@ class KeyIssuance(models.Model):
         string="Donation Box Registration / Installation", store=True)
 
     name = fields.Char('Key Name', default="New")
-    key_name = fields.Char(related='key_id.name', string="Key Name", store=True)
+    key_name = fields.Char(related='key_id.name', string='Key Label', store=True)
 
     issued_on = fields.Datetime('Issued On', default=fields.Datetime.now)
     issue_date = fields.Date('Issued Date', default=fields.Date.today)
@@ -136,6 +136,7 @@ class KeyIssuance(models.Model):
         self._bn_write({'state': 'returned', 'returned_on': fields.Datetime.now()})
 
     def action_donation_receive(self):
+        self._bn_require_group(KEY_USER_GROUP)
         self._bn_check_state('state', ('issued', 'overdue', 'pending'), _('Donation Received'))
         for rec in self:
             rec._bn_write({'state': 'donation_receive'})
@@ -143,12 +144,13 @@ class KeyIssuance(models.Model):
 
     def action_overdue(self):
         self._bn_require_group(KEY_USER_GROUP)
+        self._bn_check_state('state', ('issued',), _('Overdue'))
         for rec in self:
-            if rec.state == 'issued':
-                rec._bn_write({'state': 'overdue'})
+            rec._bn_write({'state': 'overdue'})
         return True
 
     def action_pending(self):
+        self._bn_require_group(KEY_USER_GROUP)
         self._bn_check_state('state', ('issued', 'overdue'), _('Mark Pending'))
         for rec in self:
             rec.key_id._bn_lock()

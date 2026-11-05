@@ -1,4 +1,3 @@
-import pprint
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -17,14 +16,14 @@ status_selection = [
 
 class DonationHomeService(models.Model):
     _name = 'donation.home.service'
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
     _description = "Donation Home Service"
 
 
     donor_id = fields.Many2one('res.partner', string="Donor")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
-    second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
+    second_picking_id = fields.Many2one('stock.picking', string='Second Stock Picking')
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
 
     name = fields.Char('Name', default="New")
@@ -172,6 +171,7 @@ class DonationHomeService(models.Model):
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
                 'origin': record.name,
+                'bn_source_ref': '%s,%s' % (record._name, record.id),
                 'dhs_id': record.id,
                 'state': 'draft',
             })
@@ -246,6 +246,7 @@ class DonationHomeService(models.Model):
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
                 'origin': record.name,
+                'bn_source_ref': '%s,%s' % (record._name, record.id),
                 'dhs_id': record.id,
                 'state': 'draft',
             })
@@ -309,6 +310,8 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create_dhs_record(self, data):
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(bn_pos_create=True)
         # -------------------------
         # 1. Prepare Line Items
         # -------------------------

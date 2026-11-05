@@ -3,7 +3,7 @@
 
     <data>
         <!-- ===================== -->
-        <!-- Non Cash Receipt -->
+        <!-- Advance Donation Receipt -->
         <!-- ===================== -->
         <template id="report_advance_donation_receipt">
             <t t-call="web.basic_layout">
@@ -63,8 +63,8 @@
                             <!-- ===== COMPANY BANNER ===== -->
                             <!-- Try dn_image first (if exists), then fallback to logo -->
                             <img t-if="receipt.env.company.dn_image" t-att-src="image_data_uri(receipt.env.company.dn_image)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
-                            <img t-elif="receipt.env.company.logo" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
-                            <img t-elif="receipt.env.company.logo_web" t-att-src="'data:image/png;base64,%s' % receipt.env.company.logo_web" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img t-elif="receipt.env.company.logo" t-att-src="image_data_uri(receipt.env.company.logo)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img t-elif="receipt.env.company.logo_web" t-att-src="image_data_uri(receipt.env.company.logo_web)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
                             <!-- ===== WATERMARK ===== -->
                             <div t-if="receipt.state == 'draft'" class="watermark">Draft</div>
                             <div t-if="receipt.state == 'pending'" class="watermark">Pending</div>
@@ -73,7 +73,7 @@
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <h1>Non Cash Receipt</h1>
+                                    <h1>Advance Donation Receipt</h1>
                                 </div>
                                 <div class="col-6 text-end">
                                     <h1>
@@ -280,14 +280,14 @@
         <!-- Report Action -->
         <!-- ===================== -->
         <record id="action_report_advance_donation_receipt" model="ir.actions.report">
-            <field name="name">Non Cash Receipt</field>
+            <field name="name">Advance Donation Receipt</field>
             <field name="model">advance.donation.receipt</field>
             <field name="report_type">qweb-pdf</field>
             <field name="report_name">bn_advance_donation.report_advance_donation_receipt</field>
             <field name="report_file">bn_advance_donation.report_advance_donation_receipt</field>
             <field name="binding_model_id" ref="model_advance_donation_receipt"/>
             <field name="binding_type">report</field>
-            <field name="print_report_name">'Non Cash Receipt - %s' % (object.name)</field>
+            <field name="print_report_name">'Advance Donation Receipt - %s' % (object.name)</field>
             <field name="paperformat_id" ref="report_advance_donation_receipt_paperformat"/>
         </record>
 

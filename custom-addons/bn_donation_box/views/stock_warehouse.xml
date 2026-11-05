@@ -10,7 +10,7 @@
                 <label for="donation_box_picking_type_id" groups="stock.group_stock_manager"/>
                 <div class="d-flex" groups="stock.group_stock_manager">
                     <field name="donation_box_picking_type_id" class="oe_inline" options="{'no_create': True}"/>
-                    <button name="action_create_donation_box_picking_type" type="object" class="btn btn-link"
+                    <button name="action_create_donation_box_picking_type" groups="stock.group_stock_manager" type="object" class="btn btn-link"
                             string="Create Donation Box Operation Type"
                             invisible="donation_box_picking_type_id or not id"/>
                 </div>

@@ -18,6 +18,7 @@
         'views/journal_transfer.xml',
 
         'data/upgrade_hooks.xml',
+        'views/pos_link_views.xml',
     ],
     'auto_install': False,
     'application': False,

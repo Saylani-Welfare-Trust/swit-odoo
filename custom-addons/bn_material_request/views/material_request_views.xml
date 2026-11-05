@@ -37,8 +37,6 @@
                     <field name="is_current_user_hod" invisible="1"/>
                     <button string="HOD Approve" name="action_hod_approve" type="object"
                             class="oe_highlight" invisible="state!='hod_approval' or not is_current_user_hod"/>
-                            <!-- <button string="Move to Committee Approval" name="action_committee_approve" type="object"
-                                class="oe_highlight" invisible="is_in_budget or state != 'committee_approval'"/> -->
                             <button string="CFO Approve" name="action_cfo_approve" type="object"
                                 class="oe_highlight" invisible="state != 'committee_approval' or cfo_approved"
                                 groups="bn_material_request.menu_group_material_request_cfo"/>
@@ -80,6 +78,18 @@
                                 invisible="purchase_requisition_count == 0">
                             <field name="purchase_requisition_count" widget="statinfo" string="Purchase Requests"/>
                         </button>
+                        <button name="action_view_purchase_orders" type="object" class="oe_stat_button" icon="fa-shopping-cart"
+                                invisible="purchase_order_count == 0">
+                            <field name="purchase_order_count" widget="statinfo" string="Purchase Orders"/>
+                        </button>
+                        <button name="action_view_purchase_receipts" type="object" class="oe_stat_button" icon="fa-truck"
+                                invisible="purchase_receipt_count == 0">
+                            <field name="purchase_receipt_count" widget="statinfo" string="Receipts"/>
+                        </button>
+                        <button name="action_view_vendor_bills" type="object" class="oe_stat_button" icon="fa-pencil-square-o"
+                                invisible="vendor_bill_count == 0">
+                            <field name="vendor_bill_count" widget="statinfo" string="Vendor Bills"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <label for="name" string="Reference"/>
@@ -100,8 +110,6 @@
                             readonly="state != 'draft'"
                             domain="[('id','in',allowed_location_ids)]"/>
                            
-                            <!-- <field name="dest_location_domain" invisible="1"/>
-                            <field name="dest_location_id" required="request_type == 'internal'" invisible="request_type == 'purchase_request'" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'" domain="dest_location_domain"/> -->
                         </group>
                         <group name="budget_info">
                             <field name="user_id"/>
@@ -137,10 +145,6 @@
                         </page>
                         <page string="Remarks" name="remarks">
                             <group>
-                                <!-- <field name="committee_remarks" 
-                                    readonly="state == 'done'" 
-                                    required="state == 'committee_approval'" 
-                                    placeholder="Enter any remarks..." /> -->
                                 <field name="cfo_remarks" 
                                     readonly="state == 'done'" 
                                     placeholder="Enter any remarks..."/>

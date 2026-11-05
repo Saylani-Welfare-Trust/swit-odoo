@@ -13,6 +13,7 @@ status_selection = [
 
 class JournalTransfer(models.Model):
     _name = "journal.transfer"
+    _inherit = ['bn.pos.link.mixin']
     _description = "Journal Transfer"
 
 
@@ -26,14 +27,14 @@ class JournalTransfer(models.Model):
     user_id = fields.Many2one('res.users', string="User")
     move_id = fields.Many2one('account.move', string="Account Move")
 
-    date = fields.Date('Transfer Date')
+    date = fields.Date('Transfer Date', index=True)
     accounting_date = fields.Date('Accounting Date')
     
     source_journal_id = fields.Many2one('account.journal', string="Source Journal")
     dest_journal_id = fields.Many2one('account.journal', string="Destination Journal")
     currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.company.currency_id)
     remarks = fields.Char('Remarks')
-    pos_move_id = fields.Many2one('account.move', string="Account Move")
+    pos_move_id = fields.Many2one('account.move', string='POS Session Entry')
 
     analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
     reference = fields.Char('Reference')
@@ -43,6 +44,15 @@ class JournalTransfer(models.Model):
     
 
     @api.constrains('source_journal_id','dest_journal_id')
+    def init(self):
+        # transfers pulled before the link existed: the session of their POS entry
+        self.env.cr.execute("""
+            UPDATE journal_transfer t SET pos_session_id = s.id
+              FROM pos_session s
+             WHERE s.move_id = t.pos_move_id AND t.pos_session_id IS NULL
+        """)
+        super().init()
+
     def _check_journals(self):
         for rec in self:
             if rec.source_journal_id == rec.dest_journal_id:
@@ -79,7 +89,7 @@ class JournalTransfer(models.Model):
                 'ref': f'Transfer {rec.amount} from {rec.source_journal_id.name} to {rec.dest_journal_id.name}'
             }
 
-            move = rec.env['account.move'].create(move_vals)
+            move = rec.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (rec._name, rec.id)).create(move_vals)
             rec.move_id = move.id
             move.action_post()
 
@@ -140,7 +150,8 @@ class JournalTransfer(models.Model):
             moves = moves.filtered(lambda m: m.id not in existing_move_ids and m.state == 'posted')
 
         for move in moves:
-            pos_session = self.env['pos.session'].search([('name', '=', move.ref)])
+            pos_session = self.env['pos.session'].search([('move_id', '=', move.id)], limit=1) \
+                or self.env['pos.session'].search([('name', '=', move.ref)], limit=1)
         
             debit_lines = move.line_ids.filtered(
                 lambda l: l.debit > 0 and l.account_id.account_type in ['asset_receivable', 'asset_cash']
@@ -171,6 +182,7 @@ class JournalTransfer(models.Model):
                     'date': line.date,
                     'amount': line.debit - line.credit,
                     'user_id': pos_session.user_id.id if pos_session else False,
+                    'pos_session_id': pos_session.id,
                 })
         
         if records:

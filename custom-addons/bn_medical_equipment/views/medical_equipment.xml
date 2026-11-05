@@ -153,7 +153,6 @@
                             <field name="medical_equipment_line_ids" readonly="state == 'closed' or state not in ['draft', 'inquiry', 'completed','send_for_inquiry','ceo_approval']">
                                 <tree editable="bottom">
                                     <!-- Remove this line - state doesn't exist in line model -->
-                                    <!-- <field name="state" invisible="1"/> -->
                                     
                                     <field name="currency_id" column_invisible="1"/>
 

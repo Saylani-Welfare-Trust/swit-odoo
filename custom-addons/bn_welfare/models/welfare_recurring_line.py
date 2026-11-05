@@ -28,12 +28,14 @@ payment_type_selection = [
 class WelfareRecurringLine(models.Model):
 
     _name = 'welfare.recurring.line'
+
+    _inherit = ['bn.pos.link.mixin']
     _description = "Welfare Recurring Line"
 
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
     name = fields.Char('Name', compute='_compute_name', store=True)
-    employee_category_id_officer = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id)
+    employee_category_id_officer = fields.Many2one('hr.employee.category', string='Officer Employee Category', default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id)
         
     donee_id = fields.Many2one('res.partner', string="Donee", related='welfare_id.donee_id', store=True)
     product_id = fields.Many2one('product.product', string="Product")
@@ -42,8 +44,6 @@ class WelfareRecurringLine(models.Model):
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     disbursement_application_type_id = fields.Many2one('disbursement.application.type', string="Disbursement Application Type")
-    # warehouse_id = fields.Many2one('stock.warehouse', string="Warehouse")
-    # warehouse_domain = fields.Char('Warehouse Domain', compute='_compute_warehouse_domain', default="[]", store=True)
     bill_id = fields.Many2one('account.move', string="Bill", readonly=True)
 
     collection_point = fields.Selection(selection=collection_point_selection, string="Collection Point")
@@ -156,7 +156,7 @@ class WelfareRecurringLine(models.Model):
             'recurring_line_id': self.id,
         }
         
-        bill = self.env['account.move'].create(bill_vals)
+        bill = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
         self.bill_id = bill.id
         
         # Auto-post the bill
@@ -271,12 +271,6 @@ class WelfareRecurringLine(models.Model):
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
                 
-                # Use warehouse from welfare recurring line, fallback to default
-                # if self.warehouse_id:
-                #     warehouse = self.warehouse_id
-                #     picking_type = warehouse.out_type_id
-                #     location_src = warehouse.lot_stock_id
-                # else:
                 picking_type, location_src, location_dest = self.env['welfare.line']._get_delivery_locations()
                 
                 picking_vals = {
@@ -285,6 +279,7 @@ class WelfareRecurringLine(models.Model):
                     'location_id': location_src.id if location_src else False,
                     'location_dest_id': location_dest.id if location_dest else False,
                     'origin': self.name,
+                    'bn_source_ref': '%s,%s' % (self._name, self.id),
                     'recurring_line_id': self.id,
                 }
                 picking = StockPicking.create(picking_vals)

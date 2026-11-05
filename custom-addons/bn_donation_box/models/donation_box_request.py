@@ -229,6 +229,7 @@ class DonationBoxRequest(models.Model):
             'location_id': self.source_location_id.id,
             'location_dest_id': self.destination_location_id.id,
             'origin': self.name,
+            'bn_source_ref': '%s,%s' % (self._name, self.id),
         })
 
         # One move (with its own move line and serial) per box.

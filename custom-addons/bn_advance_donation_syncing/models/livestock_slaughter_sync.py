@@ -1,4 +1,4 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, _
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -16,7 +16,7 @@ class LivestockSlaughterSync(models.Model):
     )
     advance_donation_line_id = fields.Many2one(
         'advance.donation.lines',
-        string="Advance Donation Line",
+        string='Advance Donation Line',
         ondelete='set null',
         copy=False,
     )

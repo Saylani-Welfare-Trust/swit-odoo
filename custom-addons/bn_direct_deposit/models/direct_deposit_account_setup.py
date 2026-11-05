@@ -1,5 +1,4 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import AccessError
+from odoo import models, fields, api
 
 
 class DirectDepositAccountSetup(models.Model):

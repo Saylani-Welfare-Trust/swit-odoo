@@ -114,20 +114,24 @@ class DonationBoxDashboard(models.TransientModel):
         Complain = self.env['donation.box.complain.center']
         Collection = self.env['rider.collection']
 
-        draft_boxes = Registration.search_count(reg_domain + [('status', '=', 'draft')])
-        available = Registration.search_count(reg_domain + [('status', '=', 'available')])
-        installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
-        closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
-        
-        draft_complaints = Complain.search_count(comp_domain + [('status', '=', 'draft')])
-        process_complaints = Complain.search_count(comp_domain + [('status', '=', 'process')])
-        resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
+        # one grouped query per model instead of one count per status
+        reg_by_status = dict(Registration._read_group(reg_domain, ['status'], ['__count']))
+        draft_boxes = reg_by_status.get('draft', 0)
+        available = reg_by_status.get('available', 0)
+        installed = reg_by_status.get('installed', 0)
+        closed = reg_by_status.get('close', 0)
 
-        collections = Collection.search(col_domain)
-        total_collection = sum([c.amount for c in collections if c.state in ['donation_submit', 'pending', 'paid']])
-        not_collected_count = Collection.search_count(col_domain + [('state', '=', 'donation_not_collected')])
-        pending_count = Collection.search_count(col_domain + [('state', '=', 'pending')])
-        paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
+        comp_by_status = dict(Complain._read_group(comp_domain, ['status'], ['__count']))
+        draft_complaints = comp_by_status.get('draft', 0)
+        process_complaints = comp_by_status.get('process', 0)
+        resolved_complaints = comp_by_status.get('resolved', 0)
+
+        col_by_state = {state: (count, amount) for state, count, amount in
+                        Collection._read_group(col_domain, ['state'], ['__count', 'amount:sum'])}
+        total_collection = sum(col_by_state.get(state, (0, 0.0))[1] for state in ('donation_submit', 'pending', 'paid'))
+        not_collected_count = col_by_state.get('donation_not_collected', (0, 0.0))[0]
+        pending_count = col_by_state.get('pending', (0, 0.0))[0]
+        paid_count = col_by_state.get('paid', (0, 0.0))[0]
 
         today = date.today()
         start_3m = (today - relativedelta(months=2)).replace(day=1)
@@ -136,19 +140,15 @@ class DonationBoxDashboard(models.TransientModel):
         start_prev_3m = (start_3m - relativedelta(months=3)).replace(day=1)
         end_prev_3m = start_3m - relativedelta(days=1)
 
-        current_3m_cols = Collection.search(base_col_domain + restriction_col_dom + [
-            ('date', '>=', start_3m.strftime('%Y-%m-%d')),
-            ('date', '<=', end_3m.strftime('%Y-%m-%d')),
-            ('state', 'in', ['donation_submit', 'pending', 'paid'])
-        ])
-        current_3m_sum = sum(current_3m_cols.mapped('amount'))
+        def collected(start, end):
+            [(amount,)] = Collection._read_group(base_col_domain + restriction_col_dom + [
+                ('date', '>=', start.strftime('%Y-%m-%d')), ('date', '<=', end.strftime('%Y-%m-%d')),
+                ('state', 'in', ['donation_submit', 'pending', 'paid']),
+            ], [], ['amount:sum'])
+            return amount or 0.0
 
-        prev_3m_cols = Collection.search(base_col_domain + restriction_col_dom + [
-            ('date', '>=', start_prev_3m.strftime('%Y-%m-%d')),
-            ('date', '<=', end_prev_3m.strftime('%Y-%m-%d')),
-            ('state', 'in', ['donation_submit', 'pending', 'paid'])
-        ])
-        prev_3m_sum = sum(prev_3m_cols.mapped('amount'))
+        current_3m_sum = collected(start_3m, end_3m)
+        prev_3m_sum = collected(start_prev_3m, end_prev_3m)
 
         diff_pct = 0
         if prev_3m_sum > 0:
@@ -157,18 +157,14 @@ class DonationBoxDashboard(models.TransientModel):
             diff_pct = 100
 
         today_chart = date.today()
-        months = []
-        counts = []
-        for i in range(5, -1, -1):
-            d = today_chart - relativedelta(months=i)
-            month_start = d.replace(day=1)
-            month_end = d.replace(day=calendar.monthrange(d.year, d.month)[1])
-            months.append(d.strftime('%b %Y'))
-            count = Registration.search_count(reg_domain + [
-                ('installation_date', '>=', month_start.strftime('%Y-%m-%d')),
-                ('installation_date', '<=', month_end.strftime('%Y-%m-%d'))
-            ])
-            counts.append(count)
+        first_month = (today_chart - relativedelta(months=5)).replace(day=1)
+        installs = dict(
+            (month.strftime('%b %Y'), count) for month, count in Registration._read_group(
+                reg_domain + [('installation_date', '>=', first_month.strftime('%Y-%m-%d')),
+                              ('installation_date', '<=', today_chart.strftime('%Y-%m-%d'))],
+                ['installation_date:month'], ['__count']) if month)
+        months = [(today_chart - relativedelta(months=i)).strftime('%b %Y') for i in range(5, -1, -1)]
+        counts = [installs.get(month, 0) for month in months]
 
         installs_by_month = {'labels': months, 'data': counts}
 

@@ -107,10 +107,10 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(o.total_amount) or 0) or 0"/>
                                     </div>
-                                    <div>
-                                        <strong>Remarks:</strong>
+                                    <div t-if="o.donation_home_service_line_ids.filtered('remarks')">
+                                        <strong>Item Remarks:</strong>
                                         <t t-set="count" t-value="1"/>
-                                        <t t-foreach="o.donation_home_service_line_ids" t-as="l">
+                                        <t t-foreach="o.donation_home_service_line_ids.filtered('remarks')" t-as="l">
                                             <t t-esc="count"/>. <t t-esc="l.remarks"/>
                                             <t t-set="count" t-value="count + 1"/>
                                         </t>
@@ -149,7 +149,7 @@
                             </table>
                             <table style="width:100%; margin-top:10px; font-size:10px;">
                                 <tr>
-                                    <td style="text-align:left; padding:0;">Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges) or 0.0)"/></strong></td>
+                                    <td style="text-align:left; padding:0;">Service Charges: <strong> Rs <t t-esc="'{:,}'.format(int(o.service_charges or 0))"/></strong></td>
                                     <td style="text-align:right; padding:0;">Total Amount: <strong> Rs <t t-esc="'{:,}'.format(int(o.total_amount) or 0)"/></strong></td>
                                 </tr>
                             </table>

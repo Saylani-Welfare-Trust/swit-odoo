@@ -46,8 +46,69 @@ def _declared_ids(module):
     return {i.split('.', 1)[1] if i.startswith(module + '.') else i for i in ids if '.' not in i or i.startswith(module + '.')}
 
 
+# Releases that merged modules which are their own modules again: the owner, the
+# version it was installed at, and the modules it had taken over.
+MERGED_BY = {
+    'bn_master_setup': {'17.0.1.3.0': ['bn_res_company', 'bn_res_users', 'bn_res_currency',
+                                       'bn_report_customization']},
+    'bn_pos_cheque': {'17.0.1.3.0': ['bn_pos_payment_method', 'bn_journal_transfer']},
+    'bn_procurement_finance': {'17.0.1.2.0': ['bn_payment_customization']},
+    'bn_procurement_workflow': {'17.0.1.2.0': ['bn_purchase_audit']},
+}
+
+
 class IrModuleModule(models.Model):
     _inherit = 'ir.module.module'
+
+    @api.model
+    def _bn_remove_records(self, xmlids):
+        """Remove records a module no longer declares but that Odoo keeps
+        because they were loaded as noupdate (e.g. a dropped group)."""
+        for xmlid in xmlids:
+            record = self.env.ref(xmlid, raise_if_not_found=False)
+            if record:
+                record.sudo().unlink()
+                _logger.info("Removed %s (no longer used)", xmlid)
+
+    @api.model
+    def _bn_release_merged_modules(self):
+        """Database updated with a release that merged modules which are now
+        their own modules again (MERGED_BY): give each its records back and
+        install it again. Runs first in bn_master_setup, before the owners are
+        updated (their installed version is still the merging one). A module
+        uninstalled on purpose is left alone: only one the owner took over is
+        installed again."""
+        cr = self.env.cr
+        released = []
+        for owner, by_version in MERGED_BY.items():
+            cr.execute("SELECT latest_version FROM ir_module_module WHERE name = %s AND state != 'uninstalled'", [owner])
+            row = cr.fetchone()
+            olds = by_version.get(row[0]) if row else None
+            for old in olds or []:
+                cr.execute("SELECT state FROM ir_module_module WHERE name = %s", [old])
+                state = cr.fetchone()
+                if not state or state[0] != 'uninstalled' or not get_module_path(old):
+                    continue
+                # the records the owner took over carry the owner's module name
+                names = _declared_ids(old)
+                if names:
+                    cr.execute("""SELECT id, model, res_id FROM ir_model_data
+                                   WHERE module = %s AND name IN %s""", [owner, tuple(names)])
+                    for data_id, model, res_id in cr.fetchall():
+                        if model == 'ir.ui.view':
+                            # its fields are back only once the module is installed:
+                            # the view is loaded again from its data file
+                            with cr.savepoint():
+                                self.env['ir.ui.view'].sudo().browse(res_id).exists().unlink()
+                            cr.execute("DELETE FROM ir_model_data WHERE id = %s", [data_id])
+                        else:
+                            cr.execute("UPDATE ir_model_data SET module = %s WHERE id = %s", [old, data_id])
+                self.search([('name', '=', old)]).button_install()
+                released.append(old)
+                _logger.info("Module %s, merged into %s by version %s, is installed again", old, owner, row[0])
+        if released:
+            self.env.registry.clear_cache()
+        return released
 
     @api.model
     def _bn_absorb_modules(self, new, olds):

@@ -1,4 +1,4 @@
-from odoo import fields, models, _
+from odoo import fields, models
 
 class ShariahLawPerson(models.Model):
     _name = 'shariah.law.person'

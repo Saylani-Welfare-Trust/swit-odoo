@@ -43,28 +43,18 @@
                             <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
                         <div name="custom-donor">
-
+                            <strong>Donor Name:</strong> <t t-esc="partner.name or '-'"/>
                         </div>
                         <div>
                             <strong>CNIC No.:</strong>
                             <t t-if="partner.cnic_no"><t t-esc="partner.cnic_no"/></t>
                             <t t-else="">-</t>
                         </div>
-                        <div>
+                        <div name="receipt-payment-method">
                             <strong>Payment Method:</strong>
                             <t t-if="payment.name"><t t-esc="payment.name"/></t>
                             <t t-else="">-</t>
                         </div>
-                        <t t-if="!order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                            <div t-if="order.qr_code">
-                                <div><strong>Reference No:</strong> <t t-esc="order.qr_code"/></div>
-                            </div>
-                        </t>
-                        <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                            <div t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind &amp;&amp; order.bank_name">
-                                <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
-                            </div>
-                        </t>
                         <div name="custom-remarks">
                             <strong>Remarks:</strong>
                             <t t-set="count" t-value="1"/>
@@ -78,7 +68,7 @@
                         </div>
                     </div>
                     <div class="col-6">
-                        <div>
+                        <div name="receipt-date-time">
                             <strong>Date Time:</strong>
                             <t t-set="dateObj" t-value="new Date(date_format)"/>
                             <t t-set="day" t-value="dateObj.getDate()"/>
@@ -92,22 +82,6 @@
                                     (hours &lt; 10 ? '0' : '') + hours + ':' +
                                     (minutes &lt; 10 ? '0' : '') + minutes"/>
                         </div>
-                        <t t-if="order.is_bank &amp;&amp; !order.is_donation_in_kind">
-                            <div t-if="order.cheque_date">
-                                <strong>Cheque Date:</strong>
-                                <t t-set="dateObj" t-value="new Date(order.cheque_date)"/>
-                                <t t-set="day" t-value="dateObj.getDate()"/>
-                                <t t-set="month" t-value="dateObj.getMonth() + 1"/>
-                                <t t-set="year" t-value="dateObj.getFullYear()"/>
-                                <t t-set="hours" t-value="dateObj.getHours()"/>
-                                <t t-set="minutes" t-value="dateObj.getMinutes()"/>
-                                <t t-set="seconds" t-value="dateObj.getSeconds()"/>
-                                <t t-esc="(day &lt; 10 ? '0' : '') + day + '-' +
-                                        (month &lt; 10 ? '0' : '') + month + '-' + year"/>
-                                <br/>
-                                <strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/>
-                            </div>
-                        </t>
                         <div>
                             <strong>Contact No:</strong>
                             <t t-if="partner.mobile">
@@ -180,7 +154,7 @@
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
-                        <div name="footer-custom-donor"></div>
+                        <div name="footer-custom-donor"><strong>Donor Name:</strong> <t t-esc="partner.name or '-'"/></div>
                         <div>
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>

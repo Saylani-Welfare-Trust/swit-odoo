@@ -25,6 +25,7 @@ state_selection = [
 
 class MicrofinanceInstallment(models.Model):
     _name = 'microfinance.installment'
+    _inherit = ['bn.pos.link.mixin']
     _description = "Microfinance Installment"
 
 

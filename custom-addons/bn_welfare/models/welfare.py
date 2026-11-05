@@ -1,4 +1,4 @@
-from odoo import models, fields, _, api, tools
+from odoo import models, fields, _, api
 from odoo.exceptions import AccessError, ValidationError, UserError
 
 import requests
@@ -90,7 +90,7 @@ class Welfare(models.Model):
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
     employee_category_id_officer = fields.Many2one(
         'hr.employee.category', 
-        string="Employee Category", 
+        string='Officer Employee Category', 
         default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
     )
     document_image_ids = fields.One2many(
@@ -188,38 +188,38 @@ class Welfare(models.Model):
     application_form_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
-        string='Application Forms',
+        string='Application Form Images',
     )
 
     frc_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
-        string='FRC Documents',
+        string='FRC Images',
     )
 
     electricity_bill_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
-        string='Electricity Bills',
+        string='Electricity Bill Images',
     )
 
     gas_bill_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
-        string='Gas Bills',
+        string='Gas Bill Images',
     )
 
     family_cnic_images = fields.Many2many(
         'welfare.document.image',
         compute='_compute_filtered_images',
-        string='Family CNICs',
+        string='Family CNIC Images',
     )
     # Computed Html fields for display only — never written by the form
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
     welfare_line_ids = fields.One2many('welfare.line', 'welfare_id', string="Welfare Lines")
-    welfare_recurring_line_ids = fields.One2many('welfare.recurring.line', 'welfare_id', string="Welfare Lines")
+    welfare_recurring_line_ids = fields.One2many('welfare.recurring.line', 'welfare_id', string='Welfare Recurring Lines')
 
     # Portal Details
     portal_application_id = fields.Char('Portal Application ID')
@@ -301,10 +301,6 @@ class Welfare(models.Model):
     # Request Details
     # loan_request_amount = fields.Float('Loan Request Amount')
 
-    # loan_request_amount = fields.Float(
-    #     'Loan Request Amount',
-    #     required=True
-    # )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     def _save_portal_images_to_document_model(self):
         field_config = {
@@ -608,7 +604,6 @@ class Welfare(models.Model):
         return str(value).lower() == 'yes' if value else False
 
 
-
     def _check_count_values(self, vals):
         """Readable error instead of a crash when text reaches the numeric count fields
         (e.g. from a browser tab opened while they were still text fields)"""
@@ -729,8 +724,6 @@ class Welfare(models.Model):
                 }    
             _logger.info(f"Donee checking query peremeters: {data}")
             result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}','POST', data) # type: ignore
-            # _logger.info(f"Donee found in portal: {result}")
-            # raise UserError(str(result))
             return result
         except Exception as e:
             _logger.info(f"Donee not found in portal: {str(e)}")
@@ -762,8 +755,6 @@ class Welfare(models.Model):
                 stack.extend(value)
 
         return None
-
-
 
 
     def _iter_portal_document_values(self, value):
@@ -938,10 +929,6 @@ class Welfare(models.Model):
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
             if app.get('odooId') == self.id and app.get('department') == "welfare":
                 return app
-            # # Match by name and WhatsApp
-            # if (app.get('name') == self.donee_id.name and 
-            #     app.get('whatsapp') == self.donee_id.mobile):
-            #     return app
         return None
     
     def _search_portal_applications(self):
@@ -978,14 +965,6 @@ class Welfare(models.Model):
         # Mark application as synced in portal
         synced_application = self._mark_application_synced()
         
-        # Update disbursement record with portal information
-        # self.write({
-        #     'portal_application_id': portal_application.get('id'),
-        #     'portal_donee_id': portal_application.get('doneeId', ''),
-        #     'is_synced': True,
-        #     'last_sync_date': fields.Datetime.now(),
-        #     # 'portal_review_notes': portal_application.get('reviewNotes', '') or portal_application.get('notes', '')
-        # })
         
         return {
             'action': 'linked_existing',
@@ -1342,8 +1321,6 @@ class Welfare(models.Model):
         if self.welfare_recurring_line_ids:
             raise UserError(_('The recurring orders of %s were already created.') % self.name)
         for line in self.welfare_line_ids:
-            # if line.order_type != 'recurring':
-            #     raise ValidationError('This request does not belong to recurring order.')
             if self.order_type != 'recurring':
                 raise ValidationError('This request does not belong to recurring order.')
             

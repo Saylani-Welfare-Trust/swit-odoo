@@ -21,7 +21,7 @@
                     </tree>
                 </field>
                 <footer>
-                    <button string="Transfer Budget" name="action_confirm" type="object" class="oe_highlight"/>
+                    <button string="Transfer Budget" name="action_confirm" groups="bn_material_request.menu_group_material_request_cfo" type="object" class="oe_highlight"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

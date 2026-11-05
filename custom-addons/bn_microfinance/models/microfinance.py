@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime, time, timedelta
 
 import base64
-from io import StringIO, BytesIO
+from io import BytesIO
 import openpyxl
 
 
@@ -167,7 +167,7 @@ class Microfinance(models.Model):
     mem_remarks = fields.Text('Member Remarks')
     cfo_right_of_remarks = fields.Text('CFO Remarks')
     recovery_remarks = fields.Text('Recovery Remarks')
-    member_right_of_remarks = fields.Text('Member Remarks')
+    member_right_of_remarks = fields.Text('Member Right-of Remarks')
 
     in_recovery = fields.Boolean('In Recovery')
 
@@ -276,46 +276,6 @@ class Microfinance(models.Model):
             'domain': [('id', 'in', self.bill_ids.ids)],
             'target': 'current',
         }
-    # @api.depends('advance_donation_id', 'security_deposit')
-    # def _compute_advance_donation_amount(self):
-    #     for rec in self:
-    #         # 1️⃣ Rollback previous disbursement
-    #         if rec.used_advance_donation_line_id and rec.advance_donation_amount:
-    #             rec.used_advance_donation_line_id.disbursed_amount -= rec.advance_donation_amount
-
-    #         advance_donation_amount = 0
-    #         used_line = False
-
-    #         if rec.advance_donation_id:
-    #             eligible_lines = rec.advance_donation_id.advance_donation_lines.filtered(
-    #                 lambda l: l.state == 'paid' and not l.is_disbursed
-    #             )
-
-    #             if eligible_lines:
-    #                 used_line = eligible_lines[0]
-    #                 advance_donation_amount = used_line.paid_amount - used_line.disbursed_amount
-
-    #         # 2️⃣ Apply security deposit logic
-    #         final_contribution = (
-    #             advance_donation_amount - rec.security_deposit
-    #             if advance_donation_amount > rec.security_deposit
-    #             else advance_donation_amount
-    #         )
-
-    #         # 3️⃣ Set computed fields
-    #         rec.advance_donation_amount = final_contribution
-    #         rec.used_advance_donation_line_id = used_line
-
-
-    # @api.onchange('advance_donation_id')
-    # def _onchange_advance_donation_id(self):
-    #     for rec in self:
-    #         # reset previous used line
-    #         if rec.used_advance_donation_line_id:
-    #             # rec.used_advance_donation_line_id.disbursed_amount = 0
-    #             # rec.used_advance_donation_line_id.is_disbursed = False
-    #             rec.used_advance_donation_line_id = False
-    #             rec.advance_donation_amount = 0
 
   
     @api.depends('state', 'asset_type', 'product_id', 'in_recovery', 'asset_availability')
@@ -550,7 +510,7 @@ class Microfinance(models.Model):
                 ]
             }
 
-            move = self.env['account.move'].create(move_vals)
+            move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self._name, self.id)).create(move_vals)
             move.action_post()
     
     # ------------------------------------------------------------------
@@ -594,11 +554,6 @@ class Microfinance(models.Model):
             if rec.installment_domain and not rec.no_of_installment_id:
                 raise ValidationError(_('%s: please select the No. of Installments.') % rec.name)
         self._mf_set_state('hod_approve')
-        # self.used_advance_donation_line_id.is_disbursed = True
-        # 4️⃣ Apply new disbursement
-        # if self.used_advance_donation_line_id and self.advance_donation_amount:
-        #     # raise ValidationError(self.advance_donation_amount)
-        #     self.used_advance_donation_line_id.disbursed_amount += self.advance_donation_amount
 
     def action_send_to_recovery(self):
         self._mf_check(_('Send for Recovery'), ('done',), USER)
@@ -645,11 +600,6 @@ class Microfinance(models.Model):
         if self.state == 'hod_approve':
             if not self.hod_remarks:
                 raise ValidationError('Please provide HOD Remarks.')
-            # if self.used_advance_donation_line_id and self.advance_donation_amount:
-            #     self.used_advance_donation_line_id.disbursed_amount -= self.advance_donation_amount
-            #     self.used_advance_donation_line_id = False
-            #     self.advance_donation_amount = 0
-            #     self.advance_donation_id = False
             self._mf_set_state('draft')
         elif self.state == 'mem_approve':
             if not self.mem_remarks:
@@ -694,21 +644,13 @@ class Microfinance(models.Model):
         }
         # Accounting document created as superuser: the Microfinance group
         # checked above is the gate.
-        bill = self.env['account.move'].sudo().create(move_vals)
+        bill = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (self._name, self.id)).sudo().create(move_vals)
         # Optionally, you can post the bill automatically:
         # bill.action_post()
 
         self._mf_set_state('treasury')
         self.bill_ids = [(4, bill.id)]
 
-        # return {
-        #     'type': 'ir.actions.act_window',
-        #     'name': 'Vendor Bill',
-        #     'res_model': 'account.move',
-        #     'view_mode': 'form',
-        #     'res_id': bill.id,
-        #     'target': 'current',
-        # }
 
     def action_proceed(self):
         self._mf_check(_('Proceed'), ('approve',), USER)
@@ -869,7 +811,8 @@ class Microfinance(models.Model):
             'picking_type_id': self.env['stock.warehouse']._bn_get_program_type(
                 'microfinance_delivery', self.env['stock.location'].browse(location_id)).id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
-            'origin': self.name
+            'origin': self.name,
+            'bn_source_ref': '%s,%s' % (self._name, self.id),
         })
         
         # Confirm and assign the picking (but don't validate - that's manual)

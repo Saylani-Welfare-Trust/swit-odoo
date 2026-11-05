@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from datetime import datetime, timedelta
+from odoo import models, api
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import calendar
 
@@ -20,82 +20,65 @@ class DonationInflowDashboard(models.TransientModel):
             import_domain.append(('date', '<=', date_to))
             api_domain.append(('created_at', '<=', date_to + ' 23:59:59'))
             
-        imports = self.env['donation'].search(import_domain)
-        api_donations = self.env['api.donation'].search(api_domain)
-        
-        file_donations = imports.filtered(lambda d: not d.is_fee)
-        fee_collections = imports.filtered(lambda d: d.is_fee)
-        
-        total_file_amount = sum(file_donations.mapped('amount'))
-        total_fee_amount = sum(fee_collections.mapped('amount'))
-        
-        total_api_amount = 0.0
-        for d in api_donations:
+        # Records read through the ORM in batches, then one pass over plain values
+        imports = [{'date': d.date, 'name': d.name, 'donor_id': d.donor_id.id, 'amount': d.amount,
+                    'state': d.state, 'is_fee': d.is_fee}
+                   for d in self.env['donation'].search(import_domain, order='id desc')]
+        api_donations = [{'created_at': d.created_at, 'dn_number': d.dn_number, 'import_id': d.import_id,
+                          'name': d.name, 'donor': d.donor, 'donor_id': d.donor_id.id,
+                          'total_amount_local': d.total_amount_local, 'total_amount': d.total_amount}
+                         for d in self.env['api.donation'].search(api_domain, order='id desc')]
+
+        def api_amount(d):
             try:
-                amt = float(d.total_amount_local or d.total_amount or 0.0)
-                total_api_amount += amt
-            except ValueError:
-                pass
-                
+                return float(d['total_amount_local'] or d['total_amount'] or 0.0)
+            except (TypeError, ValueError):
+                return 0.0
+
+        file_donations = [d for d in imports if not d['is_fee']]
+        fee_collections = [d for d in imports if d['is_fee']]
+        total_file_amount = sum(d['amount'] for d in file_donations)
+        total_fee_amount = sum(d['amount'] for d in fee_collections)
+        total_api_amount = sum(api_amount(d) for d in api_donations)
+
         total_amount = total_file_amount + total_fee_amount + total_api_amount
-        total_records = len(file_donations) + len(fee_collections) + len(api_donations)
-        
-        donor_ids = set()
-        donor_ids.update(file_donations.mapped('donor_id').ids)
-        donor_ids.update(fee_collections.mapped('donor_id').ids)
-        donor_ids.update(api_donations.mapped('donor_id').ids)
-        unique_donors = len(donor_ids)
-        
+        total_records = len(imports) + len(api_donations)
+        unique_donors = len({d['donor_id'] for d in imports + api_donations if d['donor_id']})
+
         # Chart by source
         chart_source = {
             'labels': ['File Donations', 'Fee Collections', 'API Donations'],
             'data': [total_file_amount, total_fee_amount, total_api_amount]
         }
-        
-        # Monthly Trend (last 12 months)
+
+        # Monthly Trend (last 12 months): each record added to its month
         today = datetime.today()
-        monthly_labels = []
-        monthly_amounts = []
-        for i in range(11, -1, -1):
-            md = today - relativedelta(months=i)
-            m_start = md.replace(day=1, hour=0, minute=0, second=0)
-            m_end = (m_start + relativedelta(months=1)) - timedelta(seconds=1)
-            monthly_labels.append(md.strftime('%b %Y'))
-            
-            m_start_str = m_start.strftime('%Y-%m-%d')
-            m_end_str = m_end.strftime('%Y-%m-%d')
-            
-            m_amount = 0.0
-            for d in imports:
-                if d.date and m_start_str <= d.date <= m_end_str:
-                    m_amount += d.amount
-            for d in api_donations:
-                if d.created_at:
-                    d_str = d.created_at.strftime('%Y-%m-%d')
-                    if m_start_str <= d_str <= m_end_str:
-                        try:
-                            m_amount += float(d.total_amount_local or d.total_amount or 0.0)
-                        except ValueError:
-                            pass
-            monthly_amounts.append(m_amount)
-            
+        month_keys = [(today - relativedelta(months=i)).strftime('%Y-%m') for i in range(11, -1, -1)]
+        by_month = dict.fromkeys(month_keys, 0.0)
+        for d in imports:
+            key = (d['date'] or '')[:7]
+            if key in by_month:
+                by_month[key] += d['amount']
+        for d in api_donations:
+            key = d['created_at'].strftime('%Y-%m') if d['created_at'] else ''
+            if key in by_month:
+                by_month[key] += api_amount(d)
         chart_monthly = {
-            'labels': monthly_labels,
-            'data': monthly_amounts
+            'labels': [datetime.strptime(k, '%Y-%m').strftime('%b %Y') for k in month_keys],
+            'data': [by_month[k] for k in month_keys],
         }
-        
-        # Recent combined records
+
+        # Recent combined records (names looked up for these only)
+        shown = {d['donor_id'] for d in file_donations[:20] + fee_collections[:20] if d['donor_id']}
+        donor_names = {p.id: p.name for p in self.env['res.partner'].browse(list(shown))}
         recent = []
         for d in file_donations[:20]:
-            recent.append({'date': d.date or '', 'name': d.name or '', 'donor': d.donor_id.name or d.name or '', 'type': 'File Donation', 'amount': d.amount, 'state': d.state})
+            recent.append({'date': d['date'] or '', 'name': d['name'] or '', 'donor': donor_names.get(d['donor_id']) or d['name'] or '', 'type': 'File Donation', 'amount': d['amount'], 'state': d['state']})
         for d in fee_collections[:20]:
-            recent.append({'date': d.date or '', 'name': d.name or '', 'donor': d.donor_id.name or d.name or '', 'type': 'Fee Collection', 'amount': d.amount, 'state': d.state})
+            recent.append({'date': d['date'] or '', 'name': d['name'] or '', 'donor': donor_names.get(d['donor_id']) or d['name'] or '', 'type': 'Fee Collection', 'amount': d['amount'], 'state': d['state']})
         for d in api_donations[:20]:
-            amt = 0.0
-            try: amt = float(d.total_amount_local or d.total_amount or 0.0)
-            except ValueError: pass
-            recent.append({'date': d.created_at.strftime('%Y-%m-%d') if d.created_at else '', 'name': d.dn_number or d.import_id or '', 'donor': d.name or d.donor or '', 'type': 'API Donation', 'amount': amt, 'state': 'posted'})
-            
+            recent.append({'date': d['created_at'].strftime('%Y-%m-%d') if d['created_at'] else '', 'name': d['dn_number'] or d['import_id'] or '', 'donor': d['name'] or d['donor'] or '', 'type': 'API Donation', 'amount': api_amount(d), 'state': 'posted'})
+
         recent.sort(key=lambda x: x['date'] or '', reverse=True)
         recent = recent[:20]
         

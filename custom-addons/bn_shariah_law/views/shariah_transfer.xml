@@ -22,7 +22,7 @@
                         class="btn-primary" invisible="state != 'draft'"/>
                 <button name="action_send_for_approval" string="Send for Approval" type="object" icon="fa-paper-plane" 
                         class="btn-warning" invisible="state != 'draft' or requires_approval == False"/>
-                <button name="action_member_post" string="Approve" type="object" icon="fa-thumbs-up" 
+                <button name="action_member_post" groups="bn_shariah_law.group_member_approval" string="Approve" type="object" icon="fa-thumbs-up" 
                         class="btn-success" invisible="state != 'member_approval'"/>
             </tree>
         </field>

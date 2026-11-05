@@ -1,5 +1,4 @@
 from odoo import models
-from odoo.exceptions import UserError 
 
 class AccountRegisterPayments(models.TransientModel):
     _inherit = 'account.payment.register'

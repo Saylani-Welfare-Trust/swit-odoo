@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError
+from odoo.tools.sql import column_exists
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -7,14 +8,22 @@ _logger = logging.getLogger(__name__)
 
 class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
+    _inherit = ['bn.pos.link.mixin']
     _description = "Advance Donation Receipt"
+
+    def init(self):
+        # receipts from before the POS link: their order was kept in order_id
+        if column_exists(self.env.cr, self._table, 'order_id'):
+            self.env.cr.execute(
+                "UPDATE advance_donation_receipt SET pos_order_id = order_id"
+                " WHERE pos_order_id IS NULL AND order_id IS NOT NULL")
+        super().init()
 
 
     category_id = fields.Many2one('product.category', string='Category')    
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     is_donation_id = fields.Boolean('Donation ID?')
     donation_id = fields.Many2one('advance.donation', string='Donation ID')
-    order_id = fields.Many2one('pos.order', string='POS Order')
     donor_id = fields.Many2one('res.partner', string='Donor')
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id.id)
     amount = fields.Monetary('Amount', currency_field='currency_id')
@@ -26,11 +35,6 @@ class DonationReceipt(models.Model):
     cheque_number = fields.Char(string='Cheque Number')
     cheque_date = fields.Date(string='Cheque Date')
     bounced_reason = fields.Html(string='Reason')
-    mobile_number = fields.Char(string='Mobile Number')
-       # POS related fields
-    pos_session_id = fields.Many2one('pos.session', string='POS Session')
-    pos_order_id = fields.Many2one('pos.order', string='POS Order')
-    pos_reference = fields.Char(string='POS Order Reference', copy=False, readonly=True)
     remarks = fields.Text(string='Remarks') 
     product_name = fields.Char(string='Product Name')  # If you want a separate text field
     payment_type = fields.Selection([
@@ -97,7 +101,7 @@ class DonationReceipt(models.Model):
             line = {'name': rec.name, 'partner_id': rec.donor_id.id,
                     'currency_id': rec.currency_id.id if rec.currency_id else None}
             # the deposit entry is part of the receipt, not an accounting task
-            move = self.env['account.move'].sudo().create({
+            move = self.env['account.move'].with_context(default_bn_source_ref='%s,%s' % (rec._name, rec.id)).sudo().create({
                 'ref': rec.name,
                 'partner_id': rec.donor_id.id,
                 'line_ids': [
@@ -191,7 +195,7 @@ class DonationReceipt(models.Model):
     def _get_pos_source_record(self):
         """Return the POS record this receipt was created from, if any."""
         self.ensure_one()
-        order = self.order_id or self.pos_order_id
+        order = self.pos_order_id
         if not order and self.name:
             # Cash receipts are created from the payment screen before the
             # order reaches the backend - the order keeps the receipt number.

@@ -2,7 +2,7 @@
 <odoo>
     <!-- Category (This creates the Header/Title in the user settings) -->
     <record id="module_category_bn_dashboard" model="ir.module.category">
-        <field name="name">Dashboard</field>
+        <field name="name">Management Dashboards</field>
         <field name="description">Access to the specific Dashboards</field>
         <field name="sequence">10</field>
     </record>

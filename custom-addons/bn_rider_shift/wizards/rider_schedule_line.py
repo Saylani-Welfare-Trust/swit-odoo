@@ -117,7 +117,7 @@ class RiderScheduleLine(models.TransientModel):
 
         # Goes through the guarded workflow method (checks state, keeps key.state in
         # sync with the issuance) instead of writing .state directly on both records.
-        key_issuance.action_pending()
+        key_issuance.sudo().action_pending()
     
     def mark_as_submit(self):
         if self.amount < 0:

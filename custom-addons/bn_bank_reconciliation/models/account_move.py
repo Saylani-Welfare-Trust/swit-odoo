@@ -16,10 +16,6 @@ class AccountMove(models.Model):
         string='Bank Reconciliation',
         compute='_compute_bank_reconciliation'
     )
-    bank_reconciliation_ids = fields.Many2many(
-        'bank.reconciliation.master',
-        string='Bank Reconciliations'
-    )
     bank_reconciliation_created_id = fields.Many2one(
         'bank.reconciliation.master',
         string='Created by Bank Reconciliation',

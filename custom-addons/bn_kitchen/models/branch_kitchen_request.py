@@ -52,7 +52,7 @@ class BranchKitchenRequest(models.Model):
     is_daily_request = fields.Boolean('Is daily Request')
 
     branch_kitchen_request_line_ids = fields.One2many('branch.kitchen.request.line', 'branch_kitchen_request_id', string="Branch Kitchen Request Line")
-    daily_branch_kitchen_request_line_ids = fields.One2many('daily.branch.kitchen.request.line', 'branch_kitchen_request_id', string="Branch Kitchen Request Line")
+    daily_branch_kitchen_request_line_ids = fields.One2many('daily.branch.kitchen.request.line', 'branch_kitchen_request_id', string='Daily Branch Kitchen Request Lines')
 
 
     def action_approve(self):
