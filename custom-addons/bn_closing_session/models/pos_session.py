@@ -431,16 +431,15 @@ class PosSession(models.Model):
 
             try:
                 with self.env.cr.savepoint():
-                    # if lines and any(lines.values()):
-                    #     data = self.with_company(self.company_id).with_context(
-                    #         check_move_validity=False, skip_invoice_sync=True
-                    #     )._create_account_move_with_split_receivables(
-                    #         balancing_account, amount_to_balance, bank_payment_method_diffs, lines
-                    #     )
-                    # else:
-                    #     _logger.warning("No split lines – using standard accounting")
-                    #     data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
-                    data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
+                    if lines and any(lines.values()):
+                        data = self.with_company(self.company_id).with_context(
+                            check_move_validity=False, skip_invoice_sync=True
+                        )._create_account_move_with_split_receivables(
+                            balancing_account, amount_to_balance, bank_payment_method_diffs, lines
+                        )
+                    else:
+                        _logger.warning("No split lines – using standard accounting")
+                        data = super()._create_account_move(balancing_account, amount_to_balance, bank_payment_method_diffs)
             except AccessError as e:
                 if sudo:
                     if lines and any(lines.values()):
