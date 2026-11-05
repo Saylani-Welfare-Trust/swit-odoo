@@ -8,7 +8,6 @@
     'depends': ['base', 'web', 'account', 'bn_pos_cheque','bn_donation_box','bn_profile_management','hr',],
     'data': [
         'security/dashboard_security.xml',
-        # 'security/dashboard_configurator_groups.xml',
         'security/ir.model.access.csv',
         'views/treasury_dashboard_views.xml',
         'views/donation_box_dashboard_views.xml',
@@ -16,7 +15,6 @@
         'views/pos_order_views.xml',
         'views/donation_in_kind_dashboard_views.xml',
         'views/donation_inflow_dashboard_views.xml',
-        # 'views/dashboard_configurator_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
