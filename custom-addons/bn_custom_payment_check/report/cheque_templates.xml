@@ -98,32 +98,27 @@
         <t t-call="web.html_container">
             <style>
                 html, body { margin: 0 !important; padding: 0 !important; }
+                /* A4 PORTRAIT: 210mm Wide, 297mm High */
                 .page { position: relative; width: 210mm; height: 297mm; page-break-after: always; font-family: Arial, sans-serif; }
                 .date-box span { display: inline-block; width: 4mm; text-align: center; font-weight: bold; }
             </style>
 
             <t t-foreach="docs" t-as="o">
-                <!-- ⚡ THIS IS THE MAGIC: Renders a new page for every 2 records -->
-                <t t-if="o_index % 2 == 0">
-                    <t t-set="double_cfg" t-value="o.env['bank.double.cheque.config'].browse(o.env.context.get('double_cheque_config_id'))"/>
-                    
-                    <div class="page">
-                        <!-- TOP CHEQUE (Current Record) -->
-                        <t t-call="bn_custom_payment_check.cheque_block_double">
-                            <t t-set="record" t-value="o"/>
-                            <t t-set="top_offset" t-value="double_cfg.cheque_margin_top or 0"/>
-                        </t>
+                <t t-set="double_cfg" t-value="o.env['bank.double.cheque.config'].browse(o.env.context.get('double_cheque_config_id'))"/>
+                
+                <div class="page">
+                    <!-- ⚡ TOP CHEQUE (Company Copy) -->
+                    <t t-call="bn_custom_payment_check.cheque_block_double">
+                        <t t-set="record" t-value="o"/>
+                        <t t-set="top_offset" t-value="double_cfg.cheque_margin_top or 0"/>
+                    </t>
 
-                        <!-- BOTTOM CHEQUE (Next Record) -->
-                        <!-- ⚡ ESCAPED < AS &lt; -->
-                        <t t-if="o_index + 1 &lt; len(docs)">
-                            <t t-call="bn_custom_payment_check.cheque_block_double">
-                                <t t-set="record" t-value="docs[o_index + 1]"/>
-                                <t t-set="top_offset" t-value="(double_cfg.cheque_margin_top or 0) + (double_cfg.second_cheque_offset or 148)"/>
-                            </t>
-                        </t>
-                    </div>
-                </t>
+                    <!-- ⚡ BOTTOM CHEQUE (Client Copy - Prints the exact same record) -->
+                    <t t-call="bn_custom_payment_check.cheque_block_double">
+                        <t t-set="record" t-value="o"/>
+                        <t t-set="top_offset" t-value="(double_cfg.cheque_margin_top or 0) + (double_cfg.second_cheque_offset or 148)"/>
+                    </t>
+                </div>
             </t>
         </t>
     </template>
