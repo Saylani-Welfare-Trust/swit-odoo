@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_category_bn_dashboard_configurator" model="ir.module.category">
+        <field name="name">Dashboard Configurator</field>
+        <field name="description">Which dashboard configurator each user can edit</field>
+        <field name="sequence">11</field>
+    </record>
+
+    <record id="group_treasury_configurator" model="res.groups">
+        <field name="name">Configurator / Treasury</field>
+        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
+    </record>
+
+    <record id="group_donation_box_configurator" model="res.groups">
+        <field name="name">Configurator / Donation Box</field>
+        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
+    </record>
+
+    <record id="group_pos_order_configurator" model="res.groups">
+        <field name="name">Configurator / POS Order</field>
+        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
+    </record>
+
+    <record id="group_din_configurator" model="res.groups">
+        <field name="name">Configurator / Donation In Kind</field>
+        <field name="category_id" ref="module_category_bn_dashboard_configurator"/>
+    </record>
+
+</odoo>

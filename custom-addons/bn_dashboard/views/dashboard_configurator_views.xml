@@ -88,16 +88,21 @@
 
     <!-- Menu -->
     <menuitem id="menu_dashboard_configurations"
-              name="⚙️ Configurations"
-              parent="menu_dashboard_root"
-              sequence="90"
-              groups="base.group_system"/>
+            name="⚙️ Configurations"
+            parent="menu_dashboard_root"
+            sequence="90"
+            groups="base.group_system,
+                    group_treasury_configurator,
+                    group_donation_box_configurator,
+                    group_pos_order_configurator,
+                    group_din_configurator"/>
 
     <menuitem id="menu_treasury_configurator"
-              name="Treasury Configurator"
-              parent="menu_dashboard_configurations"
-              action="action_treasury_configurator"
-              sequence="1"/>
+            name="Treasury Configurator"
+            parent="menu_dashboard_configurations"
+            action="action_treasury_configurator"
+            sequence="1"
+            groups="base.group_system,group_treasury_configurator"/>
 
     <record id="action_pos_order_configurator" model="ir.actions.act_window">
         <field name="name">POS Order Configurator</field>
@@ -109,10 +114,11 @@
 
     <!-- POS Order Configurator Menu (under the ⚙️ Configurations folder) -->
     <menuitem id="menu_pos_order_configurator"
-              name="POS Order Configurator"
-              parent="menu_dashboard_configurations"
-              action="action_pos_order_configurator"
-              sequence="2"/>
+          name="POS Order Configurator"
+          parent="menu_dashboard_configurations"
+          action="action_pos_order_configurator"
+          sequence="3"
+          groups="base.group_system,group_pos_order_configurator"/>
 
     <!-- Donation Box Configurator Action -->
     <record id="action_donation_box_configurator" model="ir.actions.act_window">
@@ -125,9 +131,10 @@
 
     <!-- Donation Box Configurator Menu -->
     <menuitem id="menu_donation_box_configurator"
-              name="Donation Box Configurator"
-              parent="menu_dashboard_configurations"
-              action="action_donation_box_configurator"
-              sequence="3"/>
+          name="Donation Box Configurator"
+          parent="menu_dashboard_configurations"
+          action="action_donation_box_configurator"
+          sequence="2"
+          groups="base.group_system,group_donation_box_configurator"/>
 
 </odoo>
