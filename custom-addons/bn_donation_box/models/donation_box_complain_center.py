@@ -19,7 +19,7 @@ status_selection = [
     ('resolved', 'Resolved'),
 ]
 
-RESOLVE_GROUP = 'bn_donation_box.donation_box_complain_center_resolve_group'
+RESOLVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 
 # Complaint kinds a user can raise (``repaired`` is only ever a *result* of a repair).
 RAISABLE_BOX_STATUS = ('missing', 'broken', 'robbery', 'return')
