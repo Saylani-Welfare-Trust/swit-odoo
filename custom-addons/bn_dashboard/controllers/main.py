@@ -7,32 +7,15 @@ _logger = logging.getLogger(__name__)
 class TreasuryDashboardController(http.Controller):
 
     def _get_location_hierarchy(self):
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-        
-        # 1. Provinces (Filtered)
-        province_domain = [('parent_id', '=', False), ('plan_id.name', '=', 'Location')]
-        if restriction and restriction['provinces']:
-            province_domain.append(('id', 'in', restriction['provinces']))
-        provinces = request.env['account.analytic.account'].search(province_domain)
 
-        # 2. Cities (Filtered)
-        city_domain = [('parent_id', 'in', provinces.ids)]
-        if restriction and restriction['analytic_ids']:
-            city_domain.append('|')
-            city_domain.append(('id', 'in', restriction['analytic_ids']))
-            city_domain.append(('parent_id', 'in', restriction['provinces']))
-        cities = request.env['account.analytic.account'].search(city_domain)
-
-        # 3. Zones (Filtered)
-        zone_domain = [('parent_id', 'in', cities.ids)]
-        if restriction and restriction['analytic_ids']:
-            zone_domain.append('|')
-            zone_domain.append(('id', 'in', restriction['analytic_ids']))
-            zone_domain.append(('parent_id', 'in', restriction['analytic_ids']))
-        zones = request.env['account.analytic.account'].search(zone_domain)
-
-        # 4. Segments (Unrestricted for Treasury)
+        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+
+        
+
+        cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
+        zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
+        
         seg_l2 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
         seg_l3 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
         seg_l4 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
@@ -48,19 +31,15 @@ class TreasuryDashboardController(http.Controller):
         )
 
     def _get_analytic_accounts(self):
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
         ids = set()
-        
         for model_name in ['pos.cheque', 'direct.deposit', 'journal.transfer']:
             if model_name in request.env:
                 Model = request.env[model_name]
                 if 'analytic_account_id' in Model._fields:
-                    domain = [('analytic_account_id', '!=', False)]
-                    if restriction and restriction['analytic_ids']:
-                        domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
-                    ids.update(Model.search(domain).mapped('analytic_account_id').ids)
+                    ids.update(Model.search([('analytic_account_id', '!=', False)]).mapped('analytic_account_id').ids)
         
-        if not ids: return []
+        if not ids:
+            return []
         
         accounts = request.env['account.analytic.account'].browse(list(ids))
         res = []
@@ -95,13 +74,7 @@ class TreasuryDashboardController(http.Controller):
         if date_field:
             if date_from: base_domain.append((date_field, '>=', date_from))
             if date_to: base_domain.append((date_field, '<=', date_to))
-
-        # === APPLY RESTRICTION ===
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-        if restriction and restriction['analytic_ids'] and 'analytic_account_id' in Model._fields:
-            base_domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
-
-        # Apply UI dropdown filters
+       
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except: pass
@@ -113,6 +86,9 @@ class TreasuryDashboardController(http.Controller):
             except: pass
         if zone_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', 'child_of', int(zone_id)))
+            except: pass
+        if segment_id and 'analytic_account_id' in Model._fields:
+            try: base_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
             except: pass
 
         has_amount = amount_field in Model._fields
@@ -144,17 +120,59 @@ class TreasuryDashboardController(http.Controller):
     def get_dashboard_data(self, **kwargs):
         currency = request.env.company.currency_id
         p, c, z, s1, s2, s3, s4 = self._get_location_hierarchy()
-        
-        # Send restriction to frontend so dropdowns can hide/auto-select
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
 
         return {
             'currency': {'symbol': currency.symbol, 'position': currency.position},
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': p, 'cities': c, 'zones': z,
             'segments_l1': s1, 'segments_l2': s2, 'segments_l3': s3, 'segments_l4': s4,
-            'restriction': restriction,
             'cheques':   self._get_custom_model_stats('pos.cheque', 'amount', 'state', **kwargs),
             'deposits':  self._get_custom_model_stats('direct.deposit', 'amount', 'state', **kwargs),
             'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status', **kwargs),
         }
+        
+    @http.route('/treasury/dashboard/comparison', type='json', auth='user', methods=['POST'], csrf=False)
+    def get_comparison_data(self, mode='month', period1=None, period2=None, **kwargs):
+        from datetime import date
+        import calendar
+
+        def _parse(ps):
+            if not ps: return None, None
+            try:
+                if mode == 'month':
+                    y, m = map(int, ps.split('-'))
+                    start, end = date(y, m, 1), date(y, m, calendar.monthrange(y, m)[1])
+                else:
+                    y = int(ps)
+                    start, end = date(y, 1, 1), date(y, 12, 31)
+            except: return None, None
+            return start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d')
+
+        p1s, p1e = _parse(period1)
+        p2s, p2e = _parse(period2)
+        if not p1s or not p2s: return {'models': {}}
+
+        def _sum(model_name, start, end):
+            if model_name not in request.env: return 0.0
+            Model = request.env[model_name]
+            date_field = next((f for f in ['date', 'transfer_date', 'deposit_date', 'create_date'] if f in Model._fields), None)
+            if not date_field: return 0.0
+
+            domain = [(date_field, '>=', start), (date_field, '<=', end)]
+
+            for k, v in kwargs.items():
+                if v and k in Model._fields:
+                    try: domain.append((k, 'child_of' if 'id' in k else '=', int(v)))
+                    except: pass
+
+            try: return sum(Model.search(domain).mapped('amount'))
+            except: return 0.0
+
+        result = {}
+        for key, model in [('cheques', 'pos.cheque'), ('deposits', 'direct.deposit'), ('transfers', 'journal.transfer')]:
+            p1, p2 = _sum(model, p1s, p1e), _sum(model, p2s, p2e)
+            diff = p2 - p1
+            pct = (diff / p1 * 100) if p1 > 0 else (100.0 if p2 > 0 else 0.0)
+            result[key] = {'p1_sum': p1, 'p2_sum': p2, 'diff': diff, 'pct': pct, 'is_positive': diff >= 0}
+
+        return {'models': result}
