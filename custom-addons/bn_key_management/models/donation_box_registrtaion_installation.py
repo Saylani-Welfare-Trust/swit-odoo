@@ -70,7 +70,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         # the key leaves its bunch for this one: neither may be out with a rider
         self._bn_raise_if_out(_(
             'Box "%s" cannot be approved while its key bunch, or the bunch it moves to, '
-            'is out with a rider. Return these keys first:') % self.lot_id.display_name,
+            'is out with a rider. Return these keys first:') % self.sudo().lot_id.display_name,
             bunches=self.key_bunch_id)
         for key in keys:
             key._bn_lock()
@@ -81,7 +81,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.ensure_one()
         self._bn_raise_if_out(_(
             'A change cannot be requested for box "%s" while its key bunch is out with a '
-            'rider. The whole bunch must be returned first:') % self.lot_id.display_name)
+            'rider. The whole bunch must be returned first:') % self.sudo().lot_id.display_name)
         return True
 
     def _bn_key_close(self):
@@ -95,7 +95,7 @@ class DonationBoxRegistrationInstallation(models.Model):
         self.ensure_one()
         self._bn_raise_if_out(_(
             'Box "%s" cannot be returned while its key bunch is out with a rider. '
-            'Return these keys first:') % self.lot_id.display_name)
+            'Return these keys first:') % self.sudo().lot_id.display_name)
         return True
 
     def _bn_unreturned_key_messages(self):

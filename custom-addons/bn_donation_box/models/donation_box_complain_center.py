@@ -28,7 +28,8 @@ RAISABLE_BOX_STATUS = ('missing', 'broken', 'robbery', 'return')
 class DonationBoxComplain(models.Model):
     _name = 'donation.box.complain.center'
     _description = 'Donation Box Complain Center'
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _bn_step_field = 'status'
     _bn_guarded_fields = ('status',)
 
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
@@ -293,7 +294,7 @@ class DonationBoxComplain(models.Model):
         if scrap.state != 'done':
             raise UserError(_(
                 'The scrap of box "%s" could not be validated. Please check the stock of the box.'
-            ) % self.lot_id.display_name)
+            ) % self.sudo().lot_id.display_name)
 
         self._bn_close_registration(registration)
         registration._bn_key_close()

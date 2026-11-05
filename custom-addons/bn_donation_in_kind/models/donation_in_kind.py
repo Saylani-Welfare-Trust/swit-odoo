@@ -28,7 +28,7 @@ type_selection = [
 class DonationInKind(models.Model):
     _name = 'donation.in.kind'
     _description = "Donation In Kind"
-    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
 
     
     def default_set_value(self, name):
@@ -575,8 +575,28 @@ May Allah bless you!
                 record.write({
                     'account_move_id': account_move.id
                 })
-            
+
             record.state = 'box_validate'
+            record._send_receipt_notification()
+
+    def _send_receipt_notification(self):
+        """Donation receipt to the donor once the items are received:
+        WhatsApp first, SMS fallback (bn.donor.notifier). A failed message
+        never stops the validation."""
+        self.ensure_one()
+        items = ', '.join('%s x %g' % (line.product_id.display_name, line.quantity)
+                          for line in self.donation_in_kind_line_ids)
+        message = (f"Dear {self.donor_id.name},\n\nThank you for your donation in kind!\n\n"
+                   f"Reference: {self.name}\nItems: {items or '-'}\n\nMay Allah bless you!\n\n- SWIT")
+        try:
+            return self.env['bn.donor.notifier']._send(
+                self, self.donor_id,
+                lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
+                report_name='bn_donation_in_kind.donation_in_kind_whatsapp_report',
+                filename=f"Receipt_{self.name.replace('/', '_')}.pdf")
+        except Exception as e:  # noqa: BLE001
+            _logger.error('DIN %s: receipt message failed: %s', self.name, e)
+            return {'status': 'error', 'message': str(e)}
 
     def action_operations_type_receipts(self):
         for record in self:

@@ -76,7 +76,7 @@ class RiderScheduleLine(models.TransientModel):
             raise ValidationError(_('This line has no rider collection.'))
         if open_only and collection.state not in OPEN_COLLECTION_STATES:
             raise ValidationError(_('Collection of box "%s" was already submitted or marked pending.')
-                                  % self.lot_id.display_name)
+                                  % self.sudo().lot_id.display_name)
         return collection
 
     def mark_as_done(self):
@@ -106,7 +106,7 @@ class RiderScheduleLine(models.TransientModel):
             ('state', '!=', 'closed'),
         ], order='id desc', limit=1)
         if not key:
-            raise ValidationError('No key in service found for box "%s".' % self.lot_id.display_name)
+            raise ValidationError('No key in service found for box "%s".' % self.sudo().lot_id.display_name)
 
         key_issuance = self.env['key.issuance'].sudo().search([
             ('issue_date', '=', self.date), ('lot_id', '=', self.lot_id.id),

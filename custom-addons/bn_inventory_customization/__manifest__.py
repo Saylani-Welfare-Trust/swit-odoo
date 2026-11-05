@@ -38,6 +38,7 @@
         
         'wizards/receive_by_weight.xml',
         'wizards/receipt_reason_wizard.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': False,

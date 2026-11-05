@@ -503,3 +503,9 @@ class PurchaseOrder(models.Model):
             requisition.message_post(body=_(
                 'Closed - Purchase Order %(order)s confirmed. %(count)s other RFQ(s) cancelled.'
             ) % {'order': order.display_name, 'count': len(other_rfqs)})
+
+
+class PurchaseOrderStepActivity(models.Model):
+    """Activity for whoever has to act next (bn.step.activity.mixin)."""
+    _name = 'purchase.order'
+    _inherit = ['bn.step.activity.mixin', 'purchase.order']

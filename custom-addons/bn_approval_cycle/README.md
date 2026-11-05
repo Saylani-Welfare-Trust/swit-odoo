@@ -1,8 +1,8 @@
-# Approval Cycle for Odoo 18
+# Approval Cycle for Odoo 17
 
 One module covers every Odoo model. A rule names the model and the button to protect. Sales, purchase, expenses, time off, manufacturing, repairs, and custom models all use the same setup.
 
-> Exercised against a live Odoo 18 database. Install this module and turn on the master switch.
+> Exercised against a live Odoo 17 database. Install this module and turn on the master switch.
 
 ## Setup
 1. *Settings > Approval Cycle*: turn on the master switch. Turn on Department-wise Approval when HOD should follow the department tree.

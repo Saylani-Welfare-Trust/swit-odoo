@@ -51,7 +51,7 @@ case_type_selection = [
 class MedicalEquipment(models.Model):
     _name = 'medical.equipment'
     _description = "Medical Equipment"
-    _inherit = ["mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
+    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", 'bn.pos.link.mixin']
 
 
 

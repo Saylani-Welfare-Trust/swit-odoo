@@ -79,7 +79,7 @@ order_type_selection = [
 class Welfare(models.Model):
     _name = 'welfare'
     _description = "Welfare"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin"]
 
     order_type = fields.Selection(order_type_selection, string="Order Type")
 

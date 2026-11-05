@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_advance_donation" model="ir.ui.view">
+        <field name="name">advance.donation.search.bn</field>
+        <field name="model">advance.donation</field>
+        <field name="inherit_id" ref="bn_advance_donation.advance_donation_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="service_charge_product_id"/>
+                <field name="advance_donation_lines" string="Line Product" filter_domain="['|', ('advance_donation_lines.product_id', 'ilike', self), ('disbursement_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_service_charge_product_id" string="Service Charge Product" context="{'group_by': 'service_charge_product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_advance_donation_category" model="ir.ui.view">
+        <field name="name">advance.donation.category.search.bn</field>
+        <field name="model">advance.donation.category</field>
+        <field name="arch" type="xml">
+            <search string="Advance Donation Category">
+                <field name="name"/>
+                <field name="category_lines" string="Line Product" filter_domain="[('category_lines.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_advance_donation_receipt" model="ir.ui.view">
+        <field name="name">advance.donation.receipt.search.bn</field>
+        <field name="model">advance.donation.receipt</field>
+        <field name="inherit_id" ref="bn_advance_donation.view_advance_donation_receipt_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Date" date="date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

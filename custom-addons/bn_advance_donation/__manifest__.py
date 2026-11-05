@@ -39,6 +39,7 @@
         
         'wizard/partial_payment.xml',
         'views/pos_link_views.xml',
+        'views/bn_search_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

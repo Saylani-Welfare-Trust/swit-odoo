@@ -70,6 +70,7 @@ class Microfinance(models.Model):
 
     _name = 'microfinance'
     _description = "Microfinance"
+    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
 
 
     name = fields.Char('Name', default="NEW")

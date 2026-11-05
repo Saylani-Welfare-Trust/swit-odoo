@@ -33,6 +33,7 @@
         'views/pos_menu.xml',
         'data/bn_program_types.xml',
         'views/pos_link_views.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_segment_transfer_rule" model="ir.ui.view">
+        <field name="name">segment.transfer.rule.search.bn</field>
+        <field name="model">segment.transfer.rule</field>
+        <field name="arch" type="xml">
+            <search string="Segment Transfer Rules">
+                <field name="source_segment_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <separator/>
+                <filter name="bn_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_source_segment_id" string="Source Segment" context="{'group_by': 'source_segment_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_daily_balance" model="ir.ui.view">
+        <field name="name">shariah.daily.balance.search.bn</field>
+        <field name="model">shariah.daily.balance</field>
+        <field name="inherit_id" ref="bn_shariah_law.view_shariah_daily_balance_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Date" date="date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_law" model="ir.ui.view">
+        <field name="name">shariah.law.search.bn</field>
+        <field name="model">shariah.law</field>
+        <field name="inherit_id" ref="bn_shariah_law.shariah_law_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Date" date="date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_law_blocker" model="ir.ui.view">
+        <field name="name">shariah.law.blocker.search.bn</field>
+        <field name="model">shariah.law.blocker</field>
+        <field name="arch" type="xml">
+            <search string="Shariah Law Blocker">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_law_config" model="ir.ui.view">
+        <field name="name">shariah.law.config.search.bn</field>
+        <field name="model">shariah.law.config</field>
+        <field name="arch" type="xml">
+            <search string="Shariah Law Configuration">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_law_person" model="ir.ui.view">
+        <field name="name">shariah.law.person.search.bn</field>
+        <field name="model">shariah.law.person</field>
+        <field name="arch" type="xml">
+            <search string="Shariah Law Person">
+                <field name="name"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_law_sync_log" model="ir.ui.view">
+        <field name="name">shariah.law.sync.log.search.bn</field>
+        <field name="model">shariah.law.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Shariah Law Sync Log">
+                <separator/>
+                <filter name="bn_status_success" string="Success" domain="[('status', '=', 'success')]"/>
+                <filter name="bn_status_error" string="Error" domain="[('status', '=', 'error')]"/>
+                <filter name="bn_status_skipped" string="Skipped" domain="[('status', '=', 'skipped')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_status" string="Status" context="{'group_by': 'status'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_shariah_transfer" model="ir.ui.view">
+        <field name="name">shariah.transfer.search.bn</field>
+        <field name="model">shariah.transfer</field>
+        <field name="inherit_id" ref="bn_shariah_law.view_shariah_transfer_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="member_approval_user_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Transfer Date" date="date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_member_approval_user_id" string="Approved By" context="{'group_by': 'member_approval_user_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

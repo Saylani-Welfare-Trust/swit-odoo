@@ -25,6 +25,7 @@
         'views/menu.xml',
 
         'wizards/wizard_view.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

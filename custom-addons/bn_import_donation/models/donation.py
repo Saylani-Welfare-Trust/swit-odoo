@@ -1,7 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
-import base64
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -64,111 +63,18 @@ May Allah bless you!
 
 - SWIT"""
 
-    def _generate_donation_receipt_pdf(self):
-        try:
-            pdf_data = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_import_donation.donation_form',
-                [self.id]
-            )[0]
-            return pdf_data
-        except Exception as e:
-            _logger.error('Donation receipt PDF error: %s', str(e))
-            return None
-
-    def _save_donation_receipt_attachment(self, pdf_data):
-        self.ensure_one()
-        safe_name = self.name.replace('/', '_')
-        filename = f"Receipt_{safe_name}.pdf"
-
-        old = self.env['ir.attachment'].search([
-            ('res_model', '=', 'donation'),
-            ('res_id', '=', self.id),
-            ('name', '=', filename)
-        ])
-        old.sudo().unlink()
-
-        attachment = self.env['ir.attachment'].sudo().create({
-            'name': filename,
-            'type': 'binary',
-            'datas': base64.b64encode(pdf_data),
-            'res_model': 'donation',
-            'res_id': self.id,
-            'mimetype': 'application/pdf',
-            'public': True,
-        })
-        attachment.generate_access_token()
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
-
-        return attachment, pdf_url
-
     def _send_donation_notification(self):
-        """Send WhatsApp (with PDF receipt) and/or SMS to the donor of an
-        imported (wallet) donation. Mirrors pos.order.send_whatsapp_after_payment
-        but is driven off this record's own donor instead of a POS order."""
+        """Donation receipt to the donor of an imported / online donation:
+        WhatsApp first, SMS fallback (bn.donor.notifier of bn_sms_whatsapp)."""
         self.ensure_one()
-        donor = self.donor_id
-        if not donor:
-            _logger.warning('Donation %s has no donor_id set - skipping notification', self.name)
-            return {'status': 'error', 'message': 'No donor on this donation'}
-
+        if 'bn.donor.notifier' not in self.env:
+            return {'status': 'error', 'message': 'The WhatsApp / SMS module is not installed'}
         message = self._build_donation_receipt_message()
-
-        whatsapp_ok = False
-        sms_ok = False
-        whatsapp_error = None
-        sms_error = None
-
-        whatsapp = 'whatsapp' in donor._fields and donor.whatsapp
-        if whatsapp:
-            try:
-                pdf_data = self._generate_donation_receipt_pdf()
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
-
-                attachment, pdf_url = self._save_donation_receipt_attachment(pdf_data)
-                _logger.info('Donation receipt PDF URL: %s', pdf_url)
-
-                if 'whatsapp.service' not in self.env:
-                    raise Exception("The WhatsApp module is not installed")
-                self.env['whatsapp.service'].send_template_message(
-                    whatsapp,
-                    pdf_url,
-                    attachment.name
-                )
-                whatsapp_ok = True
-                _logger.info('Donation WhatsApp sent successfully for %s', self.name)
-            except Exception as e:
-                whatsapp_error = str(e)
-                _logger.error('Donation WhatsApp failed for %s: %s', self.name, whatsapp_error)
-        else:
-            whatsapp_error = "No WhatsApp number"
-
-        mobile = donor.mobile or donor.phone
-        if mobile:
-            try:
-                if 'sms.service' not in self.env:
-                    raise Exception("The SMS module is not installed")
-                self.env['sms.service'].send_sms(mobile, message)
-                sms_ok = True
-                _logger.info('Donation SMS sent successfully for %s', self.name)
-            except Exception as e:
-                sms_error = str(e)
-                _logger.error('Donation SMS failed for %s: %s', self.name, sms_error)
-        else:
-            sms_error = "No contact number"
-
-        if whatsapp_ok and sms_ok:
-            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
-        if whatsapp_ok:
-            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
-        if sms_ok:
-            return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
-        return {
-            'status': 'error',
-            'message': f'WhatsApp failed: {whatsapp_error}. SMS failed: {sms_error}'
-        }
+        return self.env['bn.donor.notifier']._send(
+            self, self.donor_id,
+            lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
+            report_name='bn_import_donation.donation_form',
+            filename=f"Receipt_{self.name.replace('/', '_')}.pdf")
 
     @api.model
     def _cron_send_donation_notifications(self, limit=30):

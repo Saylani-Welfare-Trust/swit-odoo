@@ -4,14 +4,14 @@
         <field name="name">approval.rule.list</field>
         <field name="model">approval.rule</field>
         <field name="arch" type="xml">
-            <list string="Approval Rules">
+            <tree string="Approval Rules">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="model_id"/>
                 <field name="method_name"/>
                 <field name="company_id" groups="base.group_multi_company"/>
                 <field name="active"/>
-            </list>
+            </tree>
         </field>
     </record>
     <record id="view_approval_rule_form" model="ir.ui.view">
@@ -63,7 +63,7 @@
                                 Amount Threshold is the only place to set a minimum or maximum for that role on this rule.
                             </div>
                             <field name="line_ids">
-                                <list editable="bottom">
+                                <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="role_id"/>
                                     <field name="required_approvals"/>
@@ -73,7 +73,7 @@
                                     <field name="maximum_amount" invisible="condition_type != 'amount'"/>
                                     <field name="allow_requester"/>
                                     <field name="note"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                         <page string="Conditions" name="conditions" invisible="not model_name">
@@ -81,7 +81,11 @@
                         </page>
                     </notebook>
                 </sheet>
-                <chatter/>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -145,7 +149,7 @@
     <record id="action_approval_rule" model="ir.actions.act_window">
         <field name="name">Approval Rules</field>
         <field name="res_model">approval.rule</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_approval_rule_search"/>
     </record>
 </odoo>

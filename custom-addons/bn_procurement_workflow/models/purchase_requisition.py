@@ -458,3 +458,9 @@ class PurchaseRequisition(models.Model):
         # if it ran once the PO has closed it.
         self.action_in_progress()
         self.selected_rfq_id.button_confirm()
+
+
+class PurchaseRequisitionStepActivity(models.Model):
+    """Activity for whoever has to act next (bn.step.activity.mixin)."""
+    _name = 'purchase.requisition'
+    _inherit = ['bn.step.activity.mixin', 'purchase.requisition']

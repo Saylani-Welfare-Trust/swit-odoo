@@ -2,7 +2,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 import re
-import base64
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -20,7 +19,7 @@ status_selection = [
 
 class DirectDeposit(models.Model):
     _name = 'direct.deposit'
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin', 'bn.pos.link.mixin']
     _description = "Direct Deposit"
     _order = "id desc"
 
@@ -85,105 +84,16 @@ May Allah bless you!
 
 - SWIT"""
 
-    def _generate_dd_receipt_pdf(self):
-        try:
-            pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_direct_deposit.report_direct_deposit_dn',
-                [self.id]
-            )
-            return pdf_data
-        except Exception as e:
-            _logger.error('DD receipt PDF error: %s', str(e))
-            return None
-
-    def _save_dd_receipt_attachment(self, pdf_data):
-        self.ensure_one()
-        safe_name = self.name.replace('/', '_')
-        filename = f"Receipt_{safe_name}.pdf"
-
-        Attachment = self.env['ir.attachment'].sudo()
-        Attachment.search([
-            ('res_model', '=', 'direct.deposit'),
-            ('res_id', '=', self.id),
-            ('name', '=', filename)
-        ]).unlink()
-
-        # not public: the link below carries its own access token
-        attachment = Attachment.create({
-            'name': filename,
-            'type': 'binary',
-            'datas': base64.b64encode(pdf_data),
-            'res_model': 'direct.deposit',
-            'res_id': self.id,
-            'mimetype': 'application/pdf',
-        })
-        attachment.generate_access_token()
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
-
-        return attachment, pdf_url
-
     def _send_clear_notification(self):
-        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when a
-        direct deposit is cleared. Mirrors pos.order.send_whatsapp_after_payment
-        but is driven off this record's own donor/lines instead of a POS order."""
+        """Donation receipt to the donor when the direct deposit is cleared:
+        WhatsApp first, SMS fallback (bn.donor.notifier)."""
         self.ensure_one()
-        donor = self.donor_id
-        if not donor:
-            _logger.warning('DD %s cleared with no donor_id set - skipping notification', self.name)
-            return {'status': 'error', 'message': 'No donor on this deposit'}
-
         message = self._build_dd_receipt_message()
-
-        whatsapp_ok = False
-        sms_ok = False
-        whatsapp_error = None
-        sms_error = None
-
-        if donor.whatsapp:
-            try:
-                pdf_data = self._generate_dd_receipt_pdf()
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
-
-                attachment, pdf_url = self._save_dd_receipt_attachment(pdf_data)
-
-                self.env['whatsapp.service'].send_template_message(
-                    donor.whatsapp,
-                    pdf_url,
-                    f"Receipt_{self.name}.pdf"
-                )
-                whatsapp_ok = True
-                _logger.info('DD WhatsApp sent successfully for %s', self.name)
-            except Exception as e:
-                whatsapp_error = str(e)
-                _logger.error('DD WhatsApp failed for %s: %s', self.name, whatsapp_error)
-        else:
-            whatsapp_error = "No WhatsApp number"
-
-        mobile = donor.mobile or donor.phone
-        if mobile:
-            try:
-                self.env['sms.service'].send_sms(mobile, message)
-                sms_ok = True
-                _logger.info('DD SMS sent successfully for %s', self.name)
-            except Exception as e:
-                sms_error = str(e)
-                _logger.error('DD SMS failed for %s: %s', self.name, sms_error)
-        else:
-            sms_error = "No contact number"
-
-        if whatsapp_ok and sms_ok:
-            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
-        if whatsapp_ok:
-            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
-        if sms_ok:
-            return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
-        return {
-            'status': 'error',
-            'message': f'WhatsApp failed: {whatsapp_error}. SMS failed: {sms_error}'
-        }
+        return self.env['bn.donor.notifier']._send(
+            self, self.donor_id,
+            lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
+            report_name='bn_direct_deposit.report_direct_deposit_dn',
+            filename=f"Receipt_{self.name.replace('/', '_')}.pdf")
 
     def _get_donor_account_lines(self):
         """Lines paid into the donor's advance donation account."""

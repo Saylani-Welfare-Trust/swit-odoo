@@ -204,7 +204,7 @@ class DonationBoxRequestLine(models.Model):
         if request.status != 'approved':
             raise UserError(_('Only boxes of an approved request can be returned.'))
         if self.is_returned:
-            raise UserError(_('Box "%s" has already been returned.') % self.lot_id.display_name)
+            raise UserError(_('Box "%s" has already been returned.') % self.sudo().lot_id.display_name)
 
         # sudo: requests are not limited by city, so neither is returning their boxes.
         registrations = self.env['donation.box.registration.installation'].sudo().search([
@@ -220,9 +220,9 @@ class DonationBoxRequestLine(models.Model):
             raise ValidationError(_(
                 'Cannot return box "%s" because it is already installed. '
                 'Use the Complain Center to return an installed box.'
-            ) % self.lot_id.display_name)
+            ) % self.sudo().lot_id.display_name)
         if registration.complain_center_ids.filtered(lambda c: c.status in ('draft', 'process')):
-            raise ValidationError(_('Box "%s" has an open complaint.') % self.lot_id.display_name)
+            raise ValidationError(_('Box "%s" has an open complaint.') % self.sudo().lot_id.display_name)
         registration._bn_check_can_release()
 
         picking = request._bn_find_done_picking(request)
@@ -236,4 +236,4 @@ class DonationBoxRequestLine(models.Model):
             self.lot_id.sudo().write({'lot_consume': False})
             self.write({'is_returned': True, 'return_picking_id': return_picking.id})
         request._message_log(body=_('Box %(lot)s returned to stock (%(picking)s).') % {
-            'lot': self.lot_id.display_name, 'picking': return_picking.display_name})
+            'lot': self.sudo().lot_id.display_name, 'picking': return_picking.display_name})

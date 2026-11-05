@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_journal_transfer" model="ir.ui.view">
+        <field name="name">journal.transfer.search.bn</field>
+        <field name="model">journal.transfer</field>
+        <field name="arch" type="xml">
+            <search string="Journal Transfer">
+                <field name="name"/>
+                <field name="reference"/>
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <field name="user_id"/>
+                <field name="analytic_account_id"/>
+                <separator/>
+                <filter name="bn_state_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="bn_state_posted" string="Posted" domain="[('state', '=', 'posted')]"/>
+                <filter name="bn_state_cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Transfer Date" date="date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="bn_group_user_id" string="User" context="{'group_by': 'user_id'}"/>
+                    <filter name="bn_group_analytic_account_id" string="Analytci Account" context="{'group_by': 'analytic_account_id'}"/>
+                    <filter name="bn_group_date_month" string="Transfer Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

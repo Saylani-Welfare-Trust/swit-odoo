@@ -6,7 +6,7 @@ class MemberApproval(models.Model):
 
     _name = 'material.request'
     _description = 'Member Approval - Internal Transfer Request'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
     name = fields.Char('Reference', default='New', readonly=True, copy=False, tracking=True)

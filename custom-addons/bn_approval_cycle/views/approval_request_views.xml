@@ -4,7 +4,7 @@
         <field name="name">approval.request.list</field>
         <field name="model">approval.request</field>
         <field name="arch" type="xml">
-            <list string="Approval Requests">
+            <tree string="Approval Requests">
                 <field name="name"/>
                 <field name="document_name"/>
                 <field name="rule_id"/>
@@ -15,7 +15,7 @@
                 <field name="current_stage_id"/>
                 <field name="state"/>
                 <field name="requested_date"/>
-            </list>
+            </tree>
         </field>
     </record>
     <record id="view_approval_request_form" model="ir.ui.view">
@@ -68,7 +68,7 @@
                     <notebook>
                         <page string="Stages" name="stages">
                             <field name="stage_ids" readonly="1">
-                                <list>
+                                <tree>
                                     <field name="sequence"/>
                                     <field name="role_id"/>
                                     <field name="approver_ids" widget="many2many_tags"/>
@@ -80,7 +80,7 @@
                                     <field name="decision_user_id"/>
                                     <field name="decision_date"/>
                                     <field name="comments"/>
-                                </list>
+                                </tree>
                             </field>
                         </page>
                         <page string="Details" name="details">
@@ -98,7 +98,11 @@
                         </page>
                     </notebook>
                 </sheet>
-                <chatter/>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -185,7 +189,7 @@
     <record id="action_approval_request" model="ir.actions.act_window">
         <field name="name">Approval Requests</field>
         <field name="res_model">approval.request</field>
-        <field name="view_mode">list,form</field>
+        <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_approval_request_search"/>
         <field name="context">{'search_default_awaiting_me': 1}</field>
     </record>

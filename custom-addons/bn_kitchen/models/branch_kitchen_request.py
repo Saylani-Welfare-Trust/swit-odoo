@@ -32,6 +32,7 @@ state_selection = [
 class BranchKitchenRequest(models.Model):
     _name = 'branch.kitchen.request'
     _description = "Branch Kitchen Request"
+    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
 
 
     branch_id = fields.Many2one('stock.location', string="Branch")

@@ -28,6 +28,7 @@
         'wizard/import_monthly_planning_wizard_views.xml',
         'wizard/purchase_request_wizard.xml',
         'data/bn_program_types.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

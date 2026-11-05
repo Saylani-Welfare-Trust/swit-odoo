@@ -144,7 +144,7 @@ class TestImportDonation(TransactionCase):
 
         managed = batch.with_user(self.manager)
         managed.action_confirm()
-        move = managed.journal_entry_id
+        move = managed.journal_entry_id.sudo()  # the manager has no accounting rights
         self.assertEqual(move.state, 'draft')
         self.assertAlmostEqual(sum(move.line_ids.mapped('debit')), 1650)
         self.assertAlmostEqual(sum(move.line_ids.mapped('credit')), 1650)

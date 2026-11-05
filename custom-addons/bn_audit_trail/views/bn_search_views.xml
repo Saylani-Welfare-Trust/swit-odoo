@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_audit_trail_exclusion" model="ir.ui.view">
+        <field name="name">audit.trail.exclusion.search.bn</field>
+        <field name="model">audit.trail.exclusion</field>
+        <field name="arch" type="xml">
+            <search string="Audit Trail Exclusion">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <separator/>
+                <filter name="bn_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_audit_trail_log" model="ir.ui.view">
+        <field name="name">audit.trail.log.search.bn</field>
+        <field name="model">audit.trail.log</field>
+        <field name="inherit_id" ref="bn_audit_trail.view_audit_trail_log_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('user_id', '=', uid)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

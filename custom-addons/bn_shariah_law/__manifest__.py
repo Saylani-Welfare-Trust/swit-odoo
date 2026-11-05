@@ -45,6 +45,7 @@
         'views/account_analytic_account.xml',
         
         'wizards/transfer_wizard.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

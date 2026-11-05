@@ -1,7 +1,7 @@
 {
     "name": "Approval Cycle",
     "summary": "Configurable sequential approval workflows for Odoo",
-    "version": "18.0.2.9.0",
+    "version": "17.0.2.9.0",
     "category": "BytesNode",
     "author": "Syed Owais Noor",
     "website": "https://bytesnode.com/",
@@ -16,7 +16,8 @@
         "views/approval_rule_views.xml",
         "views/approval_request_views.xml",
         "wizard/approval_reject_wizard_views.xml",
-        "views/approval_menus.xml"
+        "views/approval_menus.xml",
+        "views/bn_search_views.xml",
     ],
     "application": True,
     "installable": True

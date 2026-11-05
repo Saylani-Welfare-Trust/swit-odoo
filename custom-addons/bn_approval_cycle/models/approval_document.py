@@ -63,8 +63,8 @@ class Base(models.AbstractModel):
             })
         else:
             action.update({
-                "view_mode": "list,form",
-                "views": [(False, "list"), (False, "form")],
+                "view_mode": "tree,form",
+                "views": [(False, "tree"), (False, "form")],
             })
         return action
 

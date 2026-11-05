@@ -114,7 +114,8 @@ class ApprovalRequest(models.Model):
         record = Model.sudo().browse(self.res_id).exists()
         if not record:
             raise UserError(_("The target document no longer exists."))
-        if not record.with_user(self.env.user).has_access("read"):
+        as_user = record.with_user(self.env.user)
+        if not as_user.check_access_rights("read", raise_exception=False) or not self._can_read(as_user):
             raise UserError(_(
                 "You cannot open %(document)s. Your user needs read access on %(model)s.",
                 document=self.document_name or record.display_name,
@@ -129,6 +130,14 @@ class ApprovalRequest(models.Model):
             "views": [(False, "form")],
             "target": "current",
         }
+
+    @staticmethod
+    def _can_read(record):
+        try:
+            record.check_access_rule("read")
+        except AccessError:
+            return False
+        return True
 
     # ------------------------------------------------------------------
     # Decisions

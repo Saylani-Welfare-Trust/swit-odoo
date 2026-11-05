@@ -41,6 +41,7 @@
         'views/stock_picking_views.xml',
         'data/bn_program_types.xml',
         'wizards/material_request_revert_wizard_views.xml',
+        'views/bn_search_views.xml',
     ],
     'installable': True,
     'application': True,

@@ -14,7 +14,8 @@ APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 class DonationBoxRequest(models.Model):
     _name = 'donation.box.request'
     _description = "Donation Box Request"
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _bn_step_field = 'status'
     _order = 'id desc'
     _bn_guarded_fields = ('status',)
 

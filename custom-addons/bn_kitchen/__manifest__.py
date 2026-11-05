@@ -23,6 +23,7 @@
         'views/branch_kitchen_request.xml',
         'views/product_template.xml',
         'data/bn_program_types.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

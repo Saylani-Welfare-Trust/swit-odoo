@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_monthly_planning" model="ir.ui.view">
+        <field name="name">monthly.planning.search.bn</field>
+        <field name="model">monthly.planning</field>
+        <field name="inherit_id" ref="bn_planning.view_monthly_planning_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="created_by"/>
+                <field name="source_location_id"/>
+                <field name="food_line_ids" string="Line Product" filter_domain="['|', '|', '|', ('food_line_ids.product_id', 'ilike', self), ('kitchen_line_ids.product_id', 'ilike', self), ('livestock_line_ids.product_id', 'ilike', self), ('madaris_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_from_date" string="From Date" date="from_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_created_by" string="Created By" context="{'group_by': 'created_by'}"/>
+                    <filter name="bn_group_source_location_id" string="Source Location" context="{'group_by': 'source_location_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_planning_type" model="ir.ui.view">
+        <field name="name">planning.type.search.bn</field>
+        <field name="model">planning.type</field>
+        <field name="arch" type="xml">
+            <search string="Planning Type">
+                <field name="name"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_report_monthly_planning_line" model="ir.ui.view">
+        <field name="name">report.monthly.planning.line.search.bn</field>
+        <field name="model">report.monthly.planning.line</field>
+        <field name="inherit_id" ref="bn_planning.report_monthly_planning_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="location_id"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Date" date="date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_location_id" string="Location" context="{'group_by': 'location_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

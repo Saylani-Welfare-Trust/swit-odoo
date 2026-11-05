@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_distribution_center" model="ir.ui.view">
+        <field name="name">distribution.center.search.bn</field>
+        <field name="model">distribution.center</field>
+        <field name="arch" type="xml">
+            <search string="distribution.center">
+                <field name="name"/>
+                <field name="donee_id"/>
+                <field name="distribution_center_line_ids" string="Line Product" filter_domain="[('distribution_center_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_state_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="bn_state_item_selected" string="Items Selected" domain="[('state', '=', 'item_selected')]"/>
+                <filter name="bn_state_welfare_approved" string="Welfare Approved" domain="[('state', '=', 'welfare_approved')]"/>
+                <filter name="bn_state_purchase_requisition" string="Purchase Requisition" domain="[('state', '=', 'purchase_requisition')]"/>
+                <filter name="bn_state_delivery_note" string="Delivery Note" domain="[('state', '=', 'delivery_note')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_request_date" string="Request Date" date="request_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_donee_id" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="bn_group_request_date_month" string="Request Date" context="{'group_by': 'request_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_livestock_cutting_material" model="ir.ui.view">
+        <field name="name">livestock.cutting.material.search.bn</field>
+        <field name="model">livestock.cutting.material</field>
+        <field name="arch" type="xml">
+            <search string="Livestock Cutting Material">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="product_id"/>
+                <field name="livestock_cutting_material_line_ids" string="Line Product" filter_domain="[('livestock_cutting_material_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_state_not_received" string="Not Received" domain="[('state', '=', 'not_received')]"/>
+                <filter name="bn_state_received" string="Received" domain="[('state', '=', 'received')]"/>
+                <filter name="bn_state_in_progress" string="In Progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter name="bn_state_done" string="Done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_livestock_requisition" model="ir.ui.view">
+        <field name="name">livestock.requisition.search.bn</field>
+        <field name="model">livestock.requisition</field>
+        <field name="arch" type="xml">
+            <search string="Livestock Requisition">
+                <field name="source_location_id"/>
+                <field name="destination_location_id"/>
+                <field name="livestock_requisition_line_ids" string="Line Product" filter_domain="[('livestock_requisition_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Date" date="date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_source_location_id" string="Source Location" context="{'group_by': 'source_location_id'}"/>
+                    <filter name="bn_group_destination_location_id" string="Destination Location" context="{'group_by': 'destination_location_id'}"/>
+                    <filter name="bn_group_date_month" string="Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_livestock_slaugther" model="ir.ui.view">
+        <field name="name">livestock.slaugther.search.bn</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="arch" type="xml">
+            <search string="Livestock Slaugther">
+                <field name="name"/>
+                <field name="ref"/>
+                <field name="code"/>
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <field name="donee_id"/>
+                <field name="product_id"/>
+                <field name="transfer_location"/>
+                <field name="source_location_id"/>
+                <field name="cutting_line_ids" string="Line Product" filter_domain="[('cutting_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_state_not_received" string="Draft" domain="[('state', '=', 'not_received')]"/>
+                <filter name="bn_state_received" string="Received" domain="[('state', '=', 'received')]"/>
+                <filter name="bn_state_cutting" string="Cutting" domain="[('state', '=', 'cutting')]"/>
+                <filter name="bn_state_material_request" string="Material Request" domain="[('state', '=', 'material_request')]"/>
+                <filter name="bn_state_done" string="Done" domain="[('state', '=', 'done')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="bn_group_donee_id" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="bn_group_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_transfer_location" string="Destination Location" context="{'group_by': 'transfer_location'}"/>
+                    <filter name="bn_group_source_location_id" string="Source Location" context="{'group_by': 'source_location_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_meat_management" model="ir.ui.view">
+        <field name="name">meat.management.search.bn</field>
+        <field name="model">meat.management</field>
+        <field name="arch" type="xml">
+            <search string="Meat Management">
+                <field name="name"/>
+                <field name="livestock_meat_management_line_ids" string="Line Product" filter_domain="[('livestock_meat_management_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

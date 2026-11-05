@@ -13,6 +13,7 @@
         'account',
     ],
     'data': [
+        'data/mail_activity_type.xml',
         'data/bn_release.xml',
         'data/ir_module_category.xml',
         'security/group.xml',
@@ -22,6 +23,7 @@
         'views/bank.xml',
         'views/area.xml',
         'views/source_document.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

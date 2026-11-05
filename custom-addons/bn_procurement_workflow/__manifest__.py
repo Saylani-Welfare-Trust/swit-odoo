@@ -32,6 +32,7 @@
         'views/stock_picking_views.xml',
         'views/rfq_price_wizard_views.xml',
         'views/master_cxo_approver_views.xml',
+        'views/bn_search_views.xml',
     ],
     'installable': True,
     'auto_install': False,

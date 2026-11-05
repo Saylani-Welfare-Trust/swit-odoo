@@ -26,7 +26,7 @@ SLIP_TYPES = {1: 'restricted', 2: 'unrestricted', 0: 'neutral'}
 
 class POSCheque(models.Model):
     _name = 'pos.cheque'
-    _inherit = ['bn.pos.link.mixin']
+    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin', 'bn.pos.link.mixin']
     _description = "POS Cheque"
     _order = 'id desc'
 

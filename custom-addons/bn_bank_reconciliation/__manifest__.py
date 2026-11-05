@@ -28,6 +28,7 @@
         'wizards/reconcile_wizard.xml',
         'wizards/multi_match_wizard.xml',
         'wizards/import_bank_statement.xml',
+        'views/bn_search_views.xml',
     ],
     'auto_install': False,
     'application': True,

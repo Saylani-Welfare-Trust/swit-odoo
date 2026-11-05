@@ -13,8 +13,9 @@
     ],
     'data': [
         'security/ir.model.access.csv',
-        
+        'data/ir_cron.xml',
         'views/res_partner.xml',
+        'views/pos_order.xml',
     ],
     'assets': {
         'point_of_sale._assets_pos': [  

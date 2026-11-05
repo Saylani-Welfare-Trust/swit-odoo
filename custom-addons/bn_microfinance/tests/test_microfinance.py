@@ -120,7 +120,7 @@ class TestMicrofinance(TransactionCase):
         self.assertEqual(result['status'], 'success')
         loan.sd_slip_id = result['deposit_id']
         loan.action_move_to_treasury()
-        bill = loan.bill_ids
+        bill = loan.sudo().bill_ids  # the loan officer has no accounting rights
         self.assertEqual(bill.amount_total, loan.total_amount, 'no tax on the loan amount')
 
         bill = bill.with_user(self.accountant)

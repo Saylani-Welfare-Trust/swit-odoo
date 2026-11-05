@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_chand_raat" model="ir.ui.view">
+        <field name="name">chand.raat.search.bn</field>
+        <field name="model">chand.raat</field>
+        <field name="arch" type="xml">
+            <search string="Chand Raat">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_city_schedule" model="ir.ui.view">
+        <field name="name">city.schedule.search.bn</field>
+        <field name="model">city.schedule</field>
+        <field name="arch" type="xml">
+            <search string="City Schedule">
+                <field name="name"/>
+                <field name="location_id"/>
+                <field name="inventory_product_id"/>
+                <field name="slaughter_location_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_location_id" string="City" context="{'group_by': 'location_id'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_distribution_schedule" model="ir.ui.view">
+        <field name="name">distribution.schedule.search.bn</field>
+        <field name="model">distribution.schedule</field>
+        <field name="arch" type="xml">
+            <search string="Distribution Schedule">
+                <field name="inventory_product_id"/>
+                <field name="slaughter_location_id"/>
+                <field name="location_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_location_id" string="Distribution Location" context="{'group_by': 'location_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_fetch_qurbani_log" model="ir.ui.view">
+        <field name="name">fetch.qurbani.log.search.bn</field>
+        <field name="model">fetch.qurbani.log</field>
+        <field name="arch" type="xml">
+            <search string="Fetch Log">
+                <field name="name"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_hijri" model="ir.ui.view">
+        <field name="name">hijri.search.bn</field>
+        <field name="model">hijri</field>
+        <field name="arch" type="xml">
+            <search string="Hijri">
+                <field name="name"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_city" model="ir.ui.view">
+        <field name="name">qurbani.city.search.bn</field>
+        <field name="model">qurbani.city</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani City">
+                <field name="name"/>
+                <field name="city_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_city_id" string="City" context="{'group_by': 'city_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_city_demand" model="ir.ui.view">
+        <field name="name">qurbani.city.demand.search.bn</field>
+        <field name="model">qurbani.city.demand</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani City Demand">
+                <field name="city_location_id"/>
+                <field name="inventory_product_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_city_location_id" string="City" context="{'group_by': 'city_location_id'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_cow_distribution" model="ir.ui.view">
+        <field name="name">qurbani.cow.distribution.search.bn</field>
+        <field name="model">qurbani.cow.distribution</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani Cow Distribution">
+                <field name="name"/>
+                <field name="inventory_product_id"/>
+                <field name="distribution_location_id"/>
+                <field name="slaughter_location_id"/>
+                <field name="product_id"/>
+                <separator/>
+                <filter name="bn_state_pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="bn_state_delivered" string="Delivered" domain="[('state', '=', 'delivered')]"/>
+                <filter name="bn_state_not_applicable" string="Not Applicable" domain="[('state', '=', 'not_applicable')]"/>
+                <filter name="bn_state_approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_distribution_location_id" string="Distribution Location" context="{'group_by': 'distribution_location_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_cow_slaughter" model="ir.ui.view">
+        <field name="name">qurbani.cow.slaughter.search.bn</field>
+        <field name="model">qurbani.cow.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_cow_slaughter_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="name"/>
+                <field name="inventory_product_id"/>
+                <field name="slaughter_location_id"/>
+                <field name="qurbani_cow_slaughter_line" string="Line Product" filter_domain="[('qurbani_cow_slaughter_line.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_state_available" string="Available" domain="[('state', '=', 'available')]"/>
+                <filter name="bn_state_full" string="Full" domain="[('state', '=', 'full')]"/>
+                <filter name="bn_state_transfer" string="Transfer" domain="[('state', '=', 'transfer')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_day" model="ir.ui.view">
+        <field name="name">qurbani.day.search.bn</field>
+        <field name="model">qurbani.day</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani Day">
+                <field name="name"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_date" string="Date" date="date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_date_month" string="Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_goat_distribution" model="ir.ui.view">
+        <field name="name">qurbani.goat.distribution.search.bn</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_distribution_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="name"/>
+                <field name="inventory_product_id"/>
+                <field name="distribution_location_id"/>
+                <field name="slaughter_location_id"/>
+                <field name="product_id"/>
+                <separator/>
+                <filter name="bn_state_pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="bn_state_delivered" string="Delivered" domain="[('state', '=', 'delivered')]"/>
+                <filter name="bn_state_not_applicable" string="Not Applicable" domain="[('state', '=', 'not_applicable')]"/>
+                <filter name="bn_state_approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_distribution_location_id" string="Distribution Location" context="{'group_by': 'distribution_location_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_goat_slaughter" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.search.bn</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_slaughter_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="name"/>
+                <field name="inventory_product_id"/>
+                <field name="slaughter_location_id"/>
+                <field name="product_id"/>
+                <separator/>
+                <filter name="bn_state_available" string="Available" domain="[('state', '=', 'available')]"/>
+                <filter name="bn_state_full" string="Full" domain="[('state', '=', 'full')]"/>
+                <filter name="bn_state_transfer" string="Transfer" domain="[('state', '=', 'transfer')]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_order" model="ir.ui.view">
+        <field name="name">qurbani.order.search.bn</field>
+        <field name="model">qurbani.order</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani POS Orders">
+                <field name="name"/>
+                <field name="transaction_id"/>
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <field name="donor_id"/>
+                <field name="qurbani_order_line_ids" string="Line Product" filter_domain="[('qurbani_order_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="bn_group_donor_id" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_slaughter_demand" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.demand.search.bn</field>
+        <field name="model">qurbani.slaughter.demand</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani Slaughter Demand">
+                <field name="city_location_id"/>
+                <field name="slaughter_location_id"/>
+                <field name="inventory_product_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_city_location_id" string="City Location" context="{'group_by': 'city_location_id'}"/>
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_qurbani_slaughter_slot_demand" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.slot.demand.search.bn</field>
+        <field name="model">qurbani.slaughter.slot.demand</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani Slaughter Slot Demand">
+                <field name="slaughter_location_id"/>
+                <field name="inventory_product_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_slaughter_location_id" string="Slaughter Location" context="{'group_by': 'slaughter_location_id'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_slaughter_schedule" model="ir.ui.view">
+        <field name="name">slaughter.schedule.search.bn</field>
+        <field name="model">slaughter.schedule</field>
+        <field name="arch" type="xml">
+            <search string="Slaughter Schedule">
+                <field name="name"/>
+                <field name="city_location_id"/>
+                <field name="location_id"/>
+                <field name="inventory_product_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_city_location_id" string="City Location" context="{'group_by': 'city_location_id'}"/>
+                    <filter name="bn_group_location_id" string="Slaughter Location" context="{'group_by': 'location_id'}"/>
+                    <filter name="bn_group_inventory_product_id" string="Inventory Product" context="{'group_by': 'inventory_product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_sync_slaughter_and_distribution" model="ir.ui.view">
+        <field name="name">sync.slaughter.and.distribution.search.bn</field>
+        <field name="model">sync.slaughter.and.distribution</field>
+        <field name="arch" type="xml">
+            <search string="Sync Slaughter And Distribution">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_web_qurbani_distribution_center" model="ir.ui.view">
+        <field name="name">web.qurbani.distribution.center.search.bn</field>
+        <field name="model">web.qurbani.distribution.center</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani Distribution Center">
+                <field name="name"/>
+                <field name="distribution_center_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_distribution_center_id" string="Distribution Center" context="{'group_by': 'distribution_center_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_web_qurbani_slaughter_center" model="ir.ui.view">
+        <field name="name">web.qurbani.slaughter.center.search.bn</field>
+        <field name="model">web.qurbani.slaughter.center</field>
+        <field name="arch" type="xml">
+            <search string="Qurbani Distribution Center">
+                <field name="name"/>
+                <field name="slaughter_center_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_slaughter_center_id" string="Slaughter Center" context="{'group_by': 'slaughter_center_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

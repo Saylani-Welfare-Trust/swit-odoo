@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="bn_search_api_donation" model="ir.ui.view">
+        <field name="name">api.donation.search.bn</field>
+        <field name="model">api.donation</field>
+        <field name="inherit_id" ref="bn_import_donation.api_donation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="transaction_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_donor_id" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_donation" model="ir.ui.view">
+        <field name="name">donation.search.bn</field>
+        <field name="model">donation</field>
+        <field name="inherit_id" ref="bn_import_donation.donation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="reference"/>
+                <field name="product_id"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_fetch_history" model="ir.ui.view">
+        <field name="name">fetch.history.search.bn</field>
+        <field name="model">fetch.history</field>
+        <field name="inherit_id" ref="bn_import_donation.fetch_history_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_fetch_log" model="ir.ui.view">
+        <field name="name">fetch.log.search.bn</field>
+        <field name="model">fetch.log</field>
+        <field name="inherit_id" ref="bn_import_donation.fetch_log_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_search_gateway_config" model="ir.ui.view">
+        <field name="name">gateway.config.search.bn</field>
+        <field name="model">gateway.config</field>
+        <field name="arch" type="xml">
+            <search string="Gateway Config">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="default_partner_id"/>
+                <field name="gateway_config_line_ids" string="Line Product" filter_domain="[('gateway_config_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_product_id" string="Fee Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_group_default_partner_id" string="Default Donor" context="{'group_by': 'default_partner_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_header_type" model="ir.ui.view">
+        <field name="name">header.type.search.bn</field>
+        <field name="model">header.type</field>
+        <field name="arch" type="xml">
+            <search string="Header Type">
+                <field name="name"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="bn_search_import_donation" model="ir.ui.view">
+        <field name="name">import.donation.search.bn</field>
+        <field name="model">import.donation</field>
+        <field name="inherit_id" ref="bn_import_donation.import_donation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="source_location_id"/>
+                <field name="destination_location_id"/>
+                <field name="donation_ids" string="Line Product" filter_domain="[('donation_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="bn_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="bn_filter_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="bn_group_by">
+                    <filter name="bn_group_source_location_id" string="Source Location" context="{'group_by': 'source_location_id'}"/>
+                    <filter name="bn_group_destination_location_id" string="Destination Location" context="{'group_by': 'destination_location_id'}"/>
+                    <filter name="bn_group_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

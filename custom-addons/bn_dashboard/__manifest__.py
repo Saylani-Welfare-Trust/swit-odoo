@@ -21,6 +21,7 @@
         'views/donation_in_kind_dashboard_views.xml',
         'views/donation_inflow_dashboard_views.xml',
         'views/dashboard_configurator_views.xml',
+        'views/bn_search_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

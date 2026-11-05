@@ -14,6 +14,7 @@ APPROVAL_GROUPS = {
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
     _description = "Advance Donation"
+    _inherit = ['bn.step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
     # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))

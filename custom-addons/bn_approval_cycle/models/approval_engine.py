@@ -267,7 +267,7 @@ class ApprovalEngine(models.AbstractModel):
                 "type": "ir.actions.act_window",
                 "name": _("Approval Request"),
                 "res_model": "approval.request",
-                "view_mode": "form" if len(blocked) == 1 else "list,form",
+                "view_mode": "form" if len(blocked) == 1 else "tree,form",
                 "target": "current",
             }
             if len(blocked) == 1:

@@ -41,7 +41,7 @@ ROW_FIELDS = ('transaction_id', 'donor_student_name', 'mobile', 'cnic_no', 'emai
 class ImportDonation(models.Model):
     _name = 'import.donation'
     _description = "Import Donation"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ['bn.step.activity.mixin', "mail.thread", "mail.activity.mixin"]
 
 
     name = fields.Char('Name', tracking=True)
