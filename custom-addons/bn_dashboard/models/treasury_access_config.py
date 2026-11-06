@@ -12,16 +12,22 @@ class TreasuryAccessConfig(models.Model):
         string='All Locations',
         help="Tick to let this user see everything (no restriction).")
     province_ids = fields.Many2many(
-        'account.analytic.account', 'treasury_cfg_province_rel', 'cfg_id', 'acc_id',
+        'account.analytic.account',
+        relation='treasury_access_province_rel',
+        column1='config_id', column2='account_id',
         string='Provinces',
         domain=[('plan_id.name', '=', 'Location'), ('parent_id', '=', False)])
     city_ids = fields.Many2many(
-        'account.analytic.account', 'treasury_cfg_city_rel', 'cfg_id', 'acc_id',
+        'account.analytic.account',
+        relation='treasury_access_city_rel',
+        column1='config_id', column2='account_id',
         string='Cities',
         domain=[('plan_id.name', '=', 'Location'), ('parent_id', '!=', False),
                 ('parent_id.parent_id', '=', False)])
     zone_ids = fields.Many2many(
-        'account.analytic.account', 'treasury_cfg_zone_rel', 'cfg_id', 'acc_id',
+        'account.analytic.account',
+        relation='treasury_access_zone_rel',
+        column1='config_id', column2='account_id',
         string='Zones',
         domain=[('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)])
 
