@@ -4,6 +4,7 @@ from . import sadqa_jariya_line
 from . import sadqa_jariya_recurring_line
 from . import sadqa_jariya_config
 from . import sadqa_jariya_inquiry_report
+from . import sadqa_jariya_committee_line
 from . import sadqa_jariya_masjid
 from . import sadqa_jariya_madrasa
 from . import sadqa_jariya_flood

@@ -128,6 +128,9 @@ class SadqaJariya(models.Model):
     document_ids = fields.One2many('sadqa.jariya.document', 'application_id', string='Documents')
 
     inquiry_report_ids = fields.One2many('sadqa.jariya.inquiry.report', 'application_id', string='Inquiry Reports')
+    committee_line_ids = fields.One2many('sadqa.jariya.committee.line', 'application_id', string='Committee Members')
+    # members already on the tab, left out of the Member dropdown
+    committee_member_ids = fields.Many2many('sadqa.jariya.committee.member', compute='_compute_committee_member_ids')
     masjid_ids = fields.One2many('sadqa.jariya.masjid', 'application_id', string='Masjid Details')
     madrasa_ids = fields.One2many('sadqa.jariya.madrasa', 'application_id', string='Madrasa Details')
     construction_ids = fields.One2many('sadqa.jariya.construction', 'application_id', string='Construction Details')
@@ -157,6 +160,11 @@ class SadqaJariya(models.Model):
         for tags in self._donee_tag_groups():
             domain.append(('category_id', 'in', tags.ids))
         return domain
+
+    @api.depends('committee_line_ids.member_id')
+    def _compute_committee_member_ids(self):
+        for rec in self:
+            rec.committee_member_ids = rec.committee_line_ids.member_id
 
     def _compute_donee_domain(self):
         domain = json.dumps(self._donee_tag_domain())
@@ -247,9 +255,21 @@ class SadqaJariya(models.Model):
 
     def action_committee_approval(self):
         self.write({'state': 'committee_approval'})
+        # Every active committee member decides; members can still be removed / added on the Committee Members tab
+        members = self.env['sadqa.jariya.committee.member'].search([])
+        for record in self:
+            self.env['sadqa.jariya.committee.line'].create([{
+                'application_id': record.id,
+                'member_id': member.id,
+            } for member in members - record.committee_line_ids.member_id])
 
     def action_move_to_hod(self):
         for record in self:
+            if not record.committee_line_ids:
+                raise ValidationError(_('Please add the Committee Members before moving to HOD approval!'))
+            pending = record.committee_line_ids.filtered(lambda l: not l.remarks or not (l.is_approved or l.is_rejected))
+            if pending:
+                raise ValidationError(_('Please enter Remarks and tick Approve or Reject for: %s') % ', '.join(pending.member_id.mapped('name')))
             if not record.committee_remarks:
                 raise ValidationError(_('Please enter Committee Remarks before moving to HOD approval!'))
             if not record.line_ids:

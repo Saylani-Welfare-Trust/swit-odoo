@@ -222,6 +222,18 @@
                         </page>
 
                         <!-- Inquiry forms filled on the Sadqa e Jariya portal, read-only here -->
+                        <!-- Members come from Master Setup at Move to Committee Approval; decided there, read-only after -->
+                        <page name="committee_members_page" string="Committee Members" invisible="state != 'committee_approval' and not committee_line_ids">
+                            <field name="committee_member_ids" invisible="1"/>
+                            <field name="committee_line_ids" readonly="state != 'committee_approval'" required="state == 'committee_approval'">
+                                <tree editable="bottom">
+                                    <field name="member_id" string="Employee" domain="[('id', 'not in', parent.committee_member_ids)]" options="{'no_create': True, 'no_open': True}"/>
+                                    <field name="remarks" widget="text"/>
+                                    <field name="is_approved"/>
+                                    <field name="is_rejected"/>
+                                </tree>
+                            </field>
+                        </page>
                         <page name="masjid_details_page" string="Masjid Details" invisible="institution_category != 'masjid'">
                             <field name="masjid_id" invisible="1"/>
                             <group string="General Information (عمومی معلومات)">

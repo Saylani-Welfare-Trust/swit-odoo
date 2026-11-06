@@ -21,3 +21,6 @@ access_sadqa_jariya_marfat_shift,sadqa.jariya.marfat.shift,model_sadqa_jariya_ma
 access_sadqa_jariya_review_wizard,sadqa.jariya.review.wizard,model_sadqa_jariya_review_wizard,base.group_user,1,1,1,0
 access_sadqa_jariya_area,sadqa.jariya.area,model_sadqa_jariya_area,base.group_user,1,0,0,0
 access_sadqa_jariya_area_master_setup,sadqa.jariya.area master setup,model_sadqa_jariya_area,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_committee_member,sadqa.jariya.committee.member,model_sadqa_jariya_committee_member,base.group_user,1,0,0,0
+access_sadqa_jariya_committee_member_master_setup,sadqa.jariya.committee.member master setup,model_sadqa_jariya_committee_member,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_committee_line,sadqa.jariya.committee.line,model_sadqa_jariya_committee_line,base.group_user,1,1,1,1

@@ -39,6 +39,7 @@ class SadqaJariyaReviewWizard(models.TransientModel):
 
     lines_html = fields.Html('Disbursement Items', compute='_compute_html', sanitize=False)
     inquiry_reports_html = fields.Html('Inquiry Reports', compute='_compute_html', sanitize=False)
+    committee_members_html = fields.Html('Committee Members', compute='_compute_html', sanitize=False)
 
     @api.model
     def default_get(self, fields_list):
@@ -62,6 +63,12 @@ class SadqaJariyaReviewWizard(models.TransientModel):
                 [_('Completed At'), _('Officer'), _('Employee ID'), _('Remarks')],
                 [(r.report_date, r.officer_name, r.officer_employee_code, r.content) for r in app.inquiry_report_ids],
                 _('No inquiry reports'),
+            )
+            rec.committee_members_html = html_table(
+                [_('Member'), _('Decision'), _('Remarks')],
+                [(c.member_id.name, _('Approved') if c.is_approved else _('Rejected') if c.is_rejected else '', c.remarks)
+                 for c in app.committee_line_ids],
+                _('No committee members'),
             )
 
     def action_approve(self):

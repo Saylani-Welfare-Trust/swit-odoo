@@ -22,6 +22,23 @@ class SadqaJariyaArea(models.Model):
     active = fields.Boolean('Active', default=True)
 
 
+class SadqaJariyaCommitteeMember(models.Model):
+    """Committee member (an employee), added to each application that moves to Committee Approval"""
+    _name = 'sadqa.jariya.committee.member'
+    _description = 'Sadqa e Jariya Committee Member'
+    _order = 'name'
+
+    employee_id = fields.Many2one('hr.employee', string='Employee', required=True, ondelete='restrict')
+    name = fields.Char(related='employee_id.name', string='Name', store=True)
+    job_title = fields.Char(related='employee_id.job_title', string='Job Title')
+    department_id = fields.Many2one(related='employee_id.department_id', string='Department')
+    active = fields.Boolean('Active', default=True)
+
+    _sql_constraints = [
+        ('employee_unique', 'unique(employee_id)', 'This employee is already a committee member.'),
+    ]
+
+
 class SadqaJariyaApplicationType(models.Model):
     _name = 'sadqa.jariya.application.type'
     _description = 'Sadqa e Jariya Disbursement Application Type'

@@ -143,4 +143,11 @@
         parent="sadqa_jariya_config_menu"
         sequence="3"/>
 
+    <menuitem
+        id="sadqa_jariya_committee_member_menu"
+        name="Committee Members"
+        action="sadqa_jariya_committee_member_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="4"/>
+
 </odoo>

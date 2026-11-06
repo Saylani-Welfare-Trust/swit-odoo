@@ -18,7 +18,9 @@ class ResPartner(models.Model):
     def _compute_is_sadqa_jariya_donee(self):
         groups = self.env['sadqa.jariya']._donee_tag_groups()
         for partner in self:
-            partner.is_sadqa_jariya_donee = len(groups) == len(DONEE_TAGS) and all(partner.category_id & tags for tags in groups)
+            # _origin: on a donee not saved yet (Record Search popup) the tags are new-record copies of the real tags
+            tags_set = partner.category_id._origin
+            partner.is_sadqa_jariya_donee = len(groups) == len(DONEE_TAGS) and all(tags_set & tags for tags in groups)
 
     @api.model
     def action_sadqa_jariya_donees(self):
