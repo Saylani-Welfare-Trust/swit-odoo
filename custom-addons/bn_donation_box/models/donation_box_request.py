@@ -74,8 +74,8 @@ class DonationBoxRequest(models.Model):
         company = self.env.company
         user = self.env.user
         allowed = Warehouse
-        if 'allowed_warehouse_ids' in user._fields:
-            allowed = user.allowed_warehouse_ids.filtered(lambda w: w.company_id == company)
+        if 'scope_warehouse_ids' in user._fields:
+            allowed = user.scope_warehouse_ids.filtered(lambda w: w.company_id == company)
         warehouse = allowed[:1] or Warehouse.search([('company_id', '=', company.id)], limit=1)
         return warehouse.id
 

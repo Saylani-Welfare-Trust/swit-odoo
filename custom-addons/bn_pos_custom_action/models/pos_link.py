@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.tools.sql import column_exists
 
 
 class PosLinkMixin(models.AbstractModel):
@@ -23,10 +24,14 @@ class PosLinkMixin(models.AbstractModel):
     pos_config_id = fields.Many2one('pos.config', string='Point of Sale', readonly=True, copy=False,
                                     index='btree_not_null')
     pos_reference = fields.Char(string='POS Order Ref.', readonly=True, copy=False)
+    pos_cashier_id = fields.Many2one('res.users', string='Cashier', readonly=True, copy=False,
+                                     index='btree_not_null')
+    pos_employee_id = fields.Many2one('hr.employee', string='Cashier (Employee)', readonly=True, copy=False,
+                                      index='btree_not_null')
 
     def init(self):
         """Install / update of every model using the mixin: records already
-        linked to their order get its session and POS."""
+        linked to their order get its session, POS and cashier."""
         super().init()
         if self._abstract or not self._auto:
             return
@@ -44,6 +49,21 @@ class PosLinkMixin(models.AbstractModel):
               FROM pos_session s
              WHERE t.pos_session_id = s.id AND t.pos_config_id IS NULL
         """.format(table=self._table))
+        # cashier: the order's, else the session's user
+        employee = column_exists(self.env.cr, 'pos_order', 'employee_id')
+        self.env.cr.execute("""
+            UPDATE "{table}" t
+               SET pos_cashier_id = COALESCE(t.pos_cashier_id, o.user_id){employee}
+              FROM pos_order o
+             WHERE t.pos_order_id = o.id AND (t.pos_cashier_id IS NULL{employee_missing})
+        """.format(table=self._table,
+                   employee=', pos_employee_id = COALESCE(t.pos_employee_id, o.employee_id)' if employee else '',
+                   employee_missing=' OR t.pos_employee_id IS NULL' if employee else ''))
+        self.env.cr.execute("""
+            UPDATE "{table}" t SET pos_cashier_id = s.user_id
+              FROM pos_session s
+             WHERE t.pos_session_id = s.id AND t.pos_cashier_id IS NULL
+        """.format(table=self._table))
 
     @api.model
     def _current_pos_session(self):
@@ -56,8 +76,18 @@ class PosLinkMixin(models.AbstractModel):
 
     @api.model
     def _pos_creation_vals(self, session=None):
+        """Made from a POS popup: the user's open session, its POS, and the
+        user at the POS as cashier."""
         session = session or self._current_pos_session()
-        return {'pos_session_id': session.id, 'pos_config_id': session.config_id.id} if session else {}
+        if not session:
+            return {}
+        user = self.env.user
+        return {
+            'pos_session_id': session.id,
+            'pos_config_id': session.config_id.id,
+            'pos_cashier_id': user.id,
+            'pos_employee_id': user.employee_id.id or False,
+        }
 
     @api.model
     def _complete_pos_vals(self, vals):
@@ -71,8 +101,22 @@ class PosLinkMixin(models.AbstractModel):
             vals.setdefault('pos_session_id', order.session_id.id)
             vals.setdefault('pos_config_id', order.config_id.id)
             vals.setdefault('pos_reference', order.pos_reference)
-        elif vals.get('pos_session_id') and not vals.get('pos_config_id'):
-            vals['pos_config_id'] = self.env['pos.session'].sudo().browse(vals['pos_session_id']).config_id.id
+            vals.update({k: v for k, v in self._order_cashier_vals(order).items() if not vals.get(k)})
+        elif vals.get('pos_session_id'):
+            session = self.env['pos.session'].sudo().browse(vals['pos_session_id'])
+            if not vals.get('pos_config_id'):
+                vals['pos_config_id'] = session.config_id.id
+            if not vals.get('pos_cashier_id'):
+                vals['pos_cashier_id'] = session.user_id.id
+        return vals
+
+    @api.model
+    def _order_cashier_vals(self, order):
+        """The cashier who rang up ``order``: its user and, with POS employees
+        (pos_hr), the employee logged in at the till."""
+        vals = {'pos_cashier_id': order.user_id.id}
+        employee = order.employee_id if 'employee_id' in order._fields else self.env['hr.employee']
+        vals['pos_employee_id'] = (employee or order.user_id.employee_id).id or False
         return vals
 
     @api.model_create_multi
@@ -103,6 +147,11 @@ class PosLinkMixin(models.AbstractModel):
                 vals['pos_config_id'] = order.config_id.id
             if not rec.pos_reference:
                 vals['pos_reference'] = order.pos_reference
+            cashier = self._order_cashier_vals(order)
+            if not rec.pos_cashier_id:
+                vals['pos_cashier_id'] = cashier['pos_cashier_id']
+            if not rec.pos_employee_id and cashier['pos_employee_id']:
+                vals['pos_employee_id'] = cashier['pos_employee_id']
             if vals:
                 rec.write(vals)
 

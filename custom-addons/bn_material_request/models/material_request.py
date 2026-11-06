@@ -45,7 +45,7 @@ class MemberApproval(models.Model):
 
     allowed_location_ids = fields.Many2many(
         'stock.location',
-        related='user_id.allowed_location_ids',
+        related='user_id.scope_location_ids',
         string='Allowed Locations',
         readonly=True,
         store=False
@@ -122,10 +122,10 @@ class MemberApproval(models.Model):
             rec.total_amount = sum(line.subtotal for line in rec.line_ids)
 
 
-    @api.depends('user_id.allowed_warehouse_ids')
+    @api.depends('user_id.scope_warehouse_ids')
     def _compute_source_location_domain(self):
         for rec in self:
-            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+            warehouse_ids = rec.user_id.scope_warehouse_ids.ids or self.env.user.scope_warehouse_ids.ids
             
             if warehouse_ids:
                 rec.source_location_domain = str([
@@ -162,10 +162,8 @@ class MemberApproval(models.Model):
         is_in_budget = True
 
         for line in self.line_ids:
-            # Search for analytic account linked to the product
-            analytic = self.env['account.analytic.account'].search([
-                ('product_ids', 'in', [line.product_id.id])
-            ], limit=1)
+            # the analytic account set on the product
+            analytic = line.product_id.analytic_account_id
 
             if not analytic:
                 raise ValidationError(
@@ -628,9 +626,9 @@ class MemberApproval(models.Model):
 
     def _get_default_source_location(self, user):
         """Get the Stock location from the user's allowed warehouses."""
-        if user.allowed_warehouse_ids:
+        if user.scope_warehouse_ids:
             # Take the first allowed warehouse and get its internal stock location
-            warehouse = user.allowed_warehouse_ids[0]
+            warehouse = user.scope_warehouse_ids[0]
             if warehouse.lot_stock_id:
                 return warehouse.lot_stock_id
                 
@@ -641,9 +639,9 @@ class MemberApproval(models.Model):
 
     def _get_default_dest_location(self, user):
         """Get the user's explicitly Allowed Location."""
-        # Check if the user has the allowed_location_ids field populated (from your screenshot)
-        if hasattr(user, 'allowed_location_ids') and user.allowed_location_ids:
-            return user.allowed_location_ids[0]
+        # the first location in the user's scope (allowed + Branch / Zone / City)
+        if hasattr(user, 'scope_location_ids') and user.scope_location_ids:
+            return user.scope_location_ids[0]
             
         # Fallback: the Material Request operation type of the user's warehouse
         picking_type = self._default_program_type(user)

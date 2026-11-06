@@ -21,6 +21,8 @@ class POSOrder(models.Model):
             if result.get('status') == 'success':
                 KeyIssuance._apply_donation_box(collection, issuance, box_data)
                 pos_order._link_rider_collection(collection.id)
+                # the key issuance of the box: same order, session, POS and cashier
+                (issuance or KeyIssuance.search([('rider_collection_id', '=', collection.id)], limit=1))._link_pos(pos_order)
                 # the receipt the donor got for this collection
                 collection.sudo().pos_receipt_number = (
                     box_data.get('receipt_number')

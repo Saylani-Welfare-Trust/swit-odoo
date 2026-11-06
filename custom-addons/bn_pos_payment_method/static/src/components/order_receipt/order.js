@@ -12,7 +12,6 @@ patch(Order.prototype, {
         return {
             ...result,
             is_bank: method?.is_bank,
-            is_donation_in_kind: method?.is_donation_in_kind,
         };
     },
 });

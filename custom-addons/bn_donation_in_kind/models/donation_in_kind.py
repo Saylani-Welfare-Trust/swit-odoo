@@ -738,7 +738,7 @@ class DonationInKindTransferWizard(models.TransientModel):
     # expose user's allowed locations as a related field so the client can evaluate domains safely
     user_allowed_location_ids = fields.Many2many(
         'stock.location',
-        related='user.allowed_location_ids',
+        related='user.scope_location_ids',
         string='User Allowed Locations',
         readonly=True,
     )

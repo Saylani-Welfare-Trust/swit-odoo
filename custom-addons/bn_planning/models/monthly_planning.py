@@ -113,7 +113,7 @@ class MonthlyPlanning(models.Model):
     @api.model
     def _default_location_dest(self):
         """Pick the destination location from the current user, in this order:
-        1. The user's explicitly allowed location (user.allowed_location_ids[0])
+        1. The first location in the user's scope (user.scope_location_ids[0])
         2. A stock.location whose analytic_account_id matches the user's employee branch
         (only if stock.location actually has that field in your DB)
         3. The standard stock location fallback
@@ -121,8 +121,8 @@ class MonthlyPlanning(models.Model):
         user = self.env.user
 
         # 1. Explicitly allowed location on the user
-        if 'allowed_location_ids' in user._fields and user.allowed_location_ids:
-            return user.allowed_location_ids[0].id
+        if 'scope_location_ids' in user._fields and user.scope_location_ids:
+            return user.scope_location_ids[0].id
 
         # 2. Match by the employee's branch — safe only if the field exists
         employee = self.env['hr.employee'].search(

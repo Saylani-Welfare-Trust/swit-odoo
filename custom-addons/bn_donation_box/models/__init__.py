@@ -15,4 +15,3 @@ from . import installation_category
 from . import res_company
 from . import pos_session
 from . import program_types
-from . import hr_employee

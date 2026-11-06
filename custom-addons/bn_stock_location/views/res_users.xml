@@ -11,6 +11,8 @@
                     <div class="text-muted mb-2">
                         The user only sees and uses these warehouses, locations (with their sub-locations) and
                         product categories (with their sub-categories), in every application; nothing set = no access.
+                        The locations whose Analytic Account is the user's Branch, its Zone or its City (employee's Branch)
+                        are added to them, with their warehouses.
                         Settings administrators and "Unrestricted Custom Access" (Access Rights tab, Inventory) see everything.
                     </div>
                     <group>
@@ -20,6 +22,10 @@
                         </group>
                         <group name="inventory_col_1">
                           <field name="allowed_location_ids" widget="many2many_tags" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />  
+                        </group>
+                        <group name="inventory_scope" string="In scope (allowed + Branch / Zone / City)">
+                            <field name="scope_warehouse_ids" widget="many2many_tags" readonly="1"/>
+                            <field name="scope_location_ids" widget="many2many_tags" readonly="1"/>
                         </group>
                     </group>
                 </page>

@@ -31,32 +31,3 @@ class ProductTemplate(models.Model):
         string='Main Attribute',
         help='When set, only this attribute\'s values are used to determine the highest to_kg.'
     )
-
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        records._link_analytic_products()
-        return records
-
-    def write(self, vals):
-        old_accounts = {}
-        if 'analytic_account_id' in vals:
-            old_accounts = {t.id: t.analytic_account_id for t in self}
-        res = super().write(vals)
-        if 'analytic_account_id' in vals:
-            for template in self:
-                old = old_accounts.get(template.id)
-                if old and old != template.analytic_account_id:
-                    old.sudo().product_ids = [(3, pid) for pid in template.product_variant_ids.ids]
-            self._link_analytic_products()
-        return res
-
-    def _link_analytic_products(self):
-        for template in self.filtered('analytic_account_id'):
-            template.analytic_account_id.sudo().product_ids = [(4, pid) for pid in template.product_variant_ids.ids]
-
-    @api.model
-    def _backfill_analytic_products(self):
-        self.with_context(active_test=False).search([('analytic_account_id', '!=', False)])._link_analytic_products()

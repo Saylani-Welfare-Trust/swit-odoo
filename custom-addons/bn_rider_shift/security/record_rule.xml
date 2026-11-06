@@ -7,7 +7,7 @@
     <record id="rider_shift_own_city_rule" model="ir.rule">
         <field name="name">Rider Shift: Own City</field>
         <field name="model_id" ref="bn_rider_shift.model_rider_shift"/>
-        <field name="domain_force">[('schedule_day_ids.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('schedule_day_ids.city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -30,7 +30,7 @@
     <record id="rider_schedule_day_own_city_rule" model="ir.rule">
         <field name="name">Rider Schedule Day: Own City</field>
         <field name="model_id" ref="bn_rider_shift.model_rider_schedule_day"/>
-        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -53,7 +53,7 @@
     <record id="rider_collection_own_city_rule" model="ir.rule">
         <field name="name">Rider Collection: Own City</field>
         <field name="model_id" ref="bn_rider_shift.model_rider_collection"/>
-        <field name="domain_force">[('donation_box_registration_installation_id.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('donation_box_registration_installation_id.city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -76,7 +76,7 @@
     <record id="foreign_currency_own_city_rule" model="ir.rule">
         <field name="name">Foreign Currency: Own City</field>
         <field name="model_id" ref="bn_rider_shift.model_foreign_currency"/>
-        <field name="domain_force">[('lot_id.donation_box_registration_ids.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('lot_id.donation_box_registration_ids.city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -99,7 +99,7 @@
     <record id="counterfeit_notes_own_city_rule" model="ir.rule">
         <field name="name">Counterfeit Notes: Own City</field>
         <field name="model_id" ref="bn_rider_shift.model_counterfeit_notes"/>
-        <field name="domain_force">[('lot_id.donation_box_registration_ids.city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('lot_id.donation_box_registration_ids.city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>

@@ -22,7 +22,7 @@
     <record id="custom_warehouse_rule" model="ir.rule">
         <field name="name">Warehouse: allowed warehouses</field>
         <field name="model_id" ref="stock.model_stock_warehouse"/>
-        <field name="domain_force">[('id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="domain_force">[('id', 'in', user.scope_warehouse_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
@@ -31,7 +31,7 @@
         <field name="name">Location: allowed internal locations</field>
         <field name="model_id" ref="stock.model_stock_location"/>
         <!-- parents too (Odoo reads them for names / putaway); their stock stays hidden -->
-        <field name="domain_force">['|', '|', ('usage', '!=', 'internal'), ('id', 'child_of', user.allowed_location_ids.ids), ('id', 'parent_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', '|', ('usage', '!=', 'internal'), ('id', 'child_of', user.scope_location_ids.ids), ('id', 'parent_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
@@ -39,7 +39,7 @@
     <record id="custom_stock_picking_type_rule" model="ir.rule">
         <field name="name">Operation Type: allowed warehouses</field>
         <field name="model_id" ref="stock.model_stock_picking_type"/>
-        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.scope_warehouse_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
@@ -70,42 +70,42 @@
     <record id="custom_stock_picking_rule" model="ir.rule">
         <field name="name">Transfer: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_picking"/>
-        <field name="domain_force">['|', ('location_id', 'child_of', user.allowed_location_ids.ids), ('location_dest_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_id', 'child_of', user.scope_location_ids.ids), ('location_dest_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_move_rule" model="ir.rule">
         <field name="name">Stock Move: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_move"/>
-        <field name="domain_force">['|', ('location_id', 'child_of', user.allowed_location_ids.ids), ('location_dest_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_id', 'child_of', user.scope_location_ids.ids), ('location_dest_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_move_line_rule" model="ir.rule">
         <field name="name">Stock Move Line: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_move_line"/>
-        <field name="domain_force">['|', ('location_id', 'child_of', user.allowed_location_ids.ids), ('location_dest_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_id', 'child_of', user.scope_location_ids.ids), ('location_dest_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_quant_rule" model="ir.rule">
         <field name="name">Stock Quant: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_quant"/>
-        <field name="domain_force">[('location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">[('location_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_scrap_rule" model="ir.rule">
         <field name="name">Scrap: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_scrap"/>
-        <field name="domain_force">[('location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">[('location_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_warehouse_orderpoint_rule" model="ir.rule">
         <field name="name">Reordering Rule: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_warehouse_orderpoint"/>
-        <field name="domain_force">[('location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">[('location_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
@@ -113,21 +113,21 @@
     <record id="custom_stock_lot_rule" model="ir.rule">
         <field name="name">Lot: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_lot"/>
-        <field name="domain_force">['|', ('location_id', '=', False), ('location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_id', '=', False), ('location_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_quant_package_rule" model="ir.rule">
         <field name="name">Package: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_quant_package"/>
-        <field name="domain_force">['|', ('location_id', '=', False), ('location_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_id', '=', False), ('location_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_putaway_rule_rule" model="ir.rule">
         <field name="name">Putaway Rule: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_putaway_rule"/>
-        <field name="domain_force">['|', ('location_in_id', 'child_of', user.allowed_location_ids.ids), ('location_out_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_in_id', 'child_of', user.scope_location_ids.ids), ('location_out_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
@@ -135,21 +135,21 @@
     <record id="custom_stock_route_rule" model="ir.rule">
         <field name="name">Route: allowed warehouses</field>
         <field name="model_id" ref="stock.model_stock_route"/>
-        <field name="domain_force">['|', '|', ('warehouse_ids', '=', False), ('warehouse_ids', 'in', user.allowed_warehouse_ids.ids), ('supplied_wh_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="domain_force">['|', '|', ('warehouse_ids', '=', False), ('warehouse_ids', 'in', user.scope_warehouse_ids.ids), ('supplied_wh_id', 'in', user.scope_warehouse_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_rule_rule" model="ir.rule">
         <field name="name">Stock Rule: allowed locations</field>
         <field name="model_id" ref="stock.model_stock_rule"/>
-        <field name="domain_force">['|', ('location_src_id', 'child_of', user.allowed_location_ids.ids), ('location_dest_id', 'child_of', user.allowed_location_ids.ids)]</field>
+        <field name="domain_force">['|', ('location_src_id', 'child_of', user.scope_location_ids.ids), ('location_dest_id', 'child_of', user.scope_location_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 
     <record id="custom_stock_valuation_layer_rule" model="ir.rule">
         <field name="name">Valuation: allowed warehouses</field>
         <field name="model_id" ref="stock_account.model_stock_valuation_layer"/>
-        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.allowed_warehouse_ids.ids)]</field>
+        <field name="domain_force">['|', ('warehouse_id', '=', False), ('warehouse_id', 'in', user.scope_warehouse_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 

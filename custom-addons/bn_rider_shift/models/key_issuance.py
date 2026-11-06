@@ -125,3 +125,10 @@ class KeyIssuance(models.Model):
             })
             issuance.key_id._lock_key()
             issuance.key_id._workflow_write({'state': 'available'})
+
+
+class KeyIssuancePosLink(models.Model):
+    """The POS order that received the box's donation, with its session, POS
+    and cashier (pos.link.mixin)."""
+    _name = 'key.issuance'
+    _inherit = ['pos.link.mixin', 'key.issuance']

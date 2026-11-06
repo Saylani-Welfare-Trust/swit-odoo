@@ -11,7 +11,10 @@ class HREmployee(models.Model):
     _inherit = 'hr.employee'
 
 
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)
+    # the employee's Branch; its Zone and City come from the analytic hierarchy
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", tracking=True)
+    zone_id = fields.Many2one(related='analytic_account_id.zone_id', string='Zone', store=True)
+    city_id = fields.Many2one(related='analytic_account_id.city_id', string='City', store=True)
 
     # HR only: a national ID is personal data (not on the public directory).
     cnic_no = fields.Char('CNIC No.', size=15, tracking=True, groups='hr.group_hr_user')
@@ -51,6 +54,13 @@ class HREmployee(models.Model):
             if not self.is_valid_cnic_format(self.cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')
             
+    def write(self, vals):
+        res = super().write(vals)
+        # record rules read the user's Branch / City (rule domains are cached per user)
+        if 'analytic_account_id' in vals or 'user_id' in vals:
+            self.env.registry.clear_cache()
+        return res
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:

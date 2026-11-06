@@ -32,19 +32,13 @@ class CityAccessMixin(models.AbstractModel):
 
     @api.model
     def _user_city_ids(self):
-        """City of the analytic account on the user's employee (the account
-        itself or one of its parents)."""
+        """City of the user's employee (Branch > Zone > City)."""
         return self._user_city_ids_of(self.env.user)
 
     @api.model
     def _user_city_ids_of(self, user):
-        accounts = user.sudo().employee_id.analytic_account_id
-        if not accounts:
-            return self.env['account.analytic.account']
-        return self.env['account.analytic.account'].sudo().search([
-            ('id', 'parent_of', accounts.ids),
-            ('location_option_id.name', '=', 'City'),
-        ])
+        """The City of the user's employee (City of its Branch)."""
+        return user.sudo().employee_id.city_id
 
     # city_id only makes the first onchange of a new record compute the value
     # (fields without dependencies are left empty there).

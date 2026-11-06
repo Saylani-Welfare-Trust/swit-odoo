@@ -158,8 +158,6 @@ class PosOrder(models.Model):
 
                 if 'analytic_account_id' in self.env['product.template']._fields:
                     analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
-                elif 'analytic_account_ids' in self.env['product.template']._fields:
-                    analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
 
                 if analytic_filters:
                     if len(analytic_filters) == 1:
@@ -655,17 +653,6 @@ class PosOrder(models.Model):
         # 1. Join Product's Analytic Account
         if 'analytic_account_id' in self.env['product.template']._fields:
             pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
-        elif 'analytic_account_ids' in self.env['product.template']._fields:
-            pt_acc_join = """
-                LEFT JOIN LATERAL (
-                    SELECT acc.id, acc.name, acc.parent_id
-                    FROM account_analytic_account acc
-                    INNER JOIN product_template_account_analytic_account_rel rel
-                        ON rel.account_analytic_account_id = acc.id
-                    WHERE rel.product_template_id = product_template.id
-                    LIMIT 1
-                ) pt_acc ON true
-            """
         else:
             pt_acc_join = ""
 

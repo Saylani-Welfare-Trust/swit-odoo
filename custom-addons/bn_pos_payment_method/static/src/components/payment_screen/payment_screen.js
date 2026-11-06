@@ -20,10 +20,6 @@ patch(PaymentScreen.prototype, {
             }
         }
 
-        if (paymentMethod.is_donation_in_kind) {
-            this.pos.get_order().donation_in_kind = true;
-        }
-
         return super.addNewPaymentLine(...arguments);
     },
 });

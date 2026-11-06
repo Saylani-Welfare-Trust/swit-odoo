@@ -138,8 +138,8 @@ class StockWarehouse(models.Model):
         if not warehouse:
             user = user or self.env.user
             company = self.env.company
-            if 'allowed_warehouse_ids' in user._fields:
-                warehouse = user.sudo().allowed_warehouse_ids.filtered(lambda w: w.company_id == company)[:1]
+            if 'scope_warehouse_ids' in user._fields:
+                warehouse = user.sudo().scope_warehouse_ids.filtered(lambda w: w.company_id == company)[:1]
         if not warehouse:
             warehouse = self.sudo().search([('company_id', '=', self.env.company.id)], limit=1)
         if not warehouse:

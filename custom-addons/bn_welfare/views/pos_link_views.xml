@@ -9,6 +9,8 @@
             <xpath expr="//tree" position="inside">
                 <field name="pos_config_id" optional="show"/>
                 <field name="pos_session_id" optional="show"/>
+                <field name="pos_cashier_id" optional="show"/>
+                <field name="pos_employee_id" optional="hide"/>
                 <field name="pos_order_id" optional="hide"/>
             </xpath>
         </field>

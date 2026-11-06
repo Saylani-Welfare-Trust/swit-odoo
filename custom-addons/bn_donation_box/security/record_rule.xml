@@ -2,8 +2,7 @@
 <odoo>
 
     <!-- City access (everything except Requests): a user only sees the records of
-         the city of the analytic account on their employee (a branch matches its
-         parent City through parent_of). Records without a City stay hidden.
+         the City of their employee (the City of its Branch). Records without a City stay hidden.
          Create is left out so flows can still create records that get their City later.
          Managers / Admins / Audit see every city (bn_key_management adds its
          Manager / Audit groups to the "All Cities" rules after these set theirs).
@@ -14,7 +13,7 @@
     <record id="donation_box_registration_own_city_rule" model="ir.rule">
         <field name="name">Registration: Own City</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
-        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -37,7 +36,7 @@
     <record id="donation_box_complain_center_own_city_rule" model="ir.rule">
         <field name="name">Complain Center: Own City</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
-        <field name="domain_force">[('city_id', 'parent_of', user.employee_id.analytic_account_id.ids)]</field>
+        <field name="domain_force">[('city_id', 'in', user.employee_id.city_id.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
