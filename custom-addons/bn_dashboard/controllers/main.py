@@ -7,15 +7,18 @@ _logger = logging.getLogger(__name__)
 class TreasuryDashboardController(http.Controller):
 
     def _get_location_hierarchy(self):
+        restriction = self._get_restriction()
 
         provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
-
-        
-
+        if restriction and restriction['provinces']:
+            provinces = provinces.browse(restriction['provinces'])
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
+
         
+
+        
+        seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
         seg_l2 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
         seg_l3 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
         seg_l4 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
@@ -75,6 +78,11 @@ class TreasuryDashboardController(http.Controller):
             if date_from: base_domain.append((date_field, '>=', date_from))
             if date_to: base_domain.append((date_field, '<=', date_to))
        
+        # ⚡ APPLY CONFIGURATOR RESTRICTION
+        restriction = self._get_restriction()
+        if restriction and 'analytic_account_id' in Model._fields:
+            base_domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
+       
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except: pass
@@ -120,12 +128,14 @@ class TreasuryDashboardController(http.Controller):
     def get_dashboard_data(self, **kwargs):
         currency = request.env.company.currency_id
         p, c, z, s1, s2, s3, s4 = self._get_location_hierarchy()
+        restriction = self._get_restriction() # ⚡ Fetch restriction for frontend
 
         return {
             'currency': {'symbol': currency.symbol, 'position': currency.position},
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': p, 'cities': c, 'zones': z,
             'segments_l1': s1, 'segments_l2': s2, 'segments_l3': s3, 'segments_l4': s4,
+            'restriction': restriction, # ⚡ Send to frontend
             'cheques':   self._get_custom_model_stats('pos.cheque', 'amount', 'state', **kwargs),
             'deposits':  self._get_custom_model_stats('direct.deposit', 'amount', 'state', **kwargs),
             'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status', **kwargs),
@@ -176,3 +186,6 @@ class TreasuryDashboardController(http.Controller):
             result[key] = {'p1_sum': p1, 'p2_sum': p2, 'diff': diff, 'pct': pct, 'is_positive': diff >= 0}
 
         return {'models': result}
+    
+    def _get_restriction(self):
+        return request.env['treasury.dashboard.configurator'].get_user_restriction()
