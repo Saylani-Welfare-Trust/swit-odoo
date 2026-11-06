@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_treasury_dashboard_configurator_form" model="ir.ui.view">
-        <field name="name">treasury.dashboard.configurator.form</field>
-        <field name="model">treasury.dashboard.configurator</field>
+    <record id="view_dashboard_configurator_form" model="ir.ui.view">
+        <field name="name">dashboard.configurator.form</field>
+        <field name="model">dashboard.configurator</field>
         <field name="arch" type="xml">
             <form>
                 <sheet>
@@ -11,14 +11,15 @@
                         <h1><field name="name" placeholder="e.g. Karachi Treasury Users"/></h1>
                     </div>
                     <group>
-                        <group>
-                            <field name="user_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                        </group>
-                        <group>
-                            <field name="group_ids" widget="many2many_tags" options="{'no_create': True}"/>
-                        </group>
+                        <field name="dashboard_type"/>
                     </group>
                     <notebook>
+                        <page string="Users / Groups">
+                            <group>
+                                <field name="user_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                                <field name="group_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            </group>
+                        </page>
                         <page string="Allowed Locations">
                             <group>
                                 <group>
@@ -37,16 +38,17 @@
         </field>
     </record>
 
-    <record id="action_treasury_dashboard_configurator" model="ir.actions.act_window">
-        <field name="name">Treasury Dashboard Configurator</field>
-        <field name="res_model">treasury.dashboard.configurator</field>
+    <record id="action_dashboard_configurator" model="ir.actions.act_window">
+        <field name="name">Dashboard Configurator</field>
+        <field name="res_model">dashboard.configurator</field>
         <field name="view_mode">tree,form</field>
     </record>
 
-    <menuitem id="menu_treasury_dashboard_configurator"
-              name="Treasury Dashboard Configurator"
-              parent="account.menu_finance_configuration"
-              action="action_treasury_dashboard_configurator"
+    <!-- Put it under Settings -> Technical for Admins -->
+    <menuitem id="menu_dashboard_configurator"
+              name="Dashboard Configurator"
+              parent="base.menu_custom" 
+              action="action_dashboard_configurator"
               groups="base.group_system"
-              sequence="101"/>
+              sequence="100"/>
 </odoo>
