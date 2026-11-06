@@ -37,7 +37,6 @@
     <!-- ===== Record rules: direct.deposit ===== -->
     <record id="rule_deposit_restricted" model="ir.rule">
         <field name="name">Deposit: allowed locations only</field>
-        <!-- ⚡ FIXED: Added module prefix bn_direct_deposit -->
         <field name="model_id" ref="bn_direct_deposit.model_direct_deposit"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
         <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
@@ -52,7 +51,6 @@
     <!-- ===== Record rules: journal.transfer ===== -->
     <record id="rule_transfer_restricted" model="ir.rule">
         <field name="name">Transfer: allowed locations only</field>
-        <!-- ⚡ FIXED: Added module prefix (change bn_journal_transfer if your module has a different name) -->
         <field name="model_id" ref="bn_journal_transfer.model_journal_transfer"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
         <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
