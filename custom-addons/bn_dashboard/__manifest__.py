@@ -19,6 +19,7 @@
         'views/donation_inflow_dashboard_views.xml',
         'views/treasury_access_views.xml',
         'views/pos_order_access_config_view.xml',
+        'views/donation_box_access_config_views.xml'
     ],
     'assets': {
         'web.assets_backend': [

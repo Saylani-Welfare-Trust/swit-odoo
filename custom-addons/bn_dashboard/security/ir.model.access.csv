@@ -1,6 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_donation_box_dashboard,access.donation.box.dashboard,model_donation_box_dashboard,base.group_user,1,0,0,0
-
 access_treasury_access_admin,treasury.access.config admin,model_treasury_access_config,base.group_erp_manager,1,1,1,1
-
 access_pos_order_access_config_admin,pos.order.access.config.admin,model_pos_order_access_config,base.group_erp_manager,1,1,1,1
+access_donation_box_access_config_admin,donation.box.access.config admin,model_donation_box_access_config,base.group_erp_manager,1,1,1,1

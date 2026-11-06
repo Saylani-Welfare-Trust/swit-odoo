@@ -1,0 +1,35 @@
+<odoo>
+    <record id="view_donation_box_access_config_form" model="ir.ui.view">
+        <field name="name">donation.box.access.config.form</field>
+        <field name="model">donation.box.access.config</field>
+        <field name="arch" type="xml">
+            <form string="Donation Box Access Configuration">
+                <group>
+                    <field name="user_ids" widget="many2many_tags"/>
+                    <field name="analytic_ids" widget="many2many_tags"
+                           options="{'no_create': True}"/>
+                    <field name="operation"/>
+                </group>
+                <footer>
+                    <button name="action_apply" string="Apply"
+                            type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_donation_box_access_config" model="ir.actions.act_window">
+        <field name="name">Donation Box Access Configuration</field>
+        <field name="res_model">donation.box.access.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_donation_box_access_config"
+              name="Access Configuration"
+              parent="donation_box_menu_root"
+              action="action_donation_box_access_config"
+              groups="base.group_erp_manager"
+              sequence="99"/>
+</odoo>
