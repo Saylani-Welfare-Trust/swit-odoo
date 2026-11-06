@@ -11,6 +11,7 @@
                     <group>
                         <field name="pos_config_id" options="{'no_create': True}"/>
                         <field name="pos_session_id" options="{'no_create': True}"/>
+                        <field name="pos_analytic_account_id" options="{'no_create': True, 'no_open': True}"/>
                         <field name="pos_cashier_id" options="{'no_create': True}"/>
                         <field name="pos_employee_id" options="{'no_create': True}"/>
                     </group>
@@ -33,6 +34,7 @@
                     <group>
                         <field name="pos_config_id" options="{'no_create': True}"/>
                         <field name="pos_session_id" options="{'no_create': True}"/>
+                        <field name="pos_analytic_account_id" options="{'no_create': True, 'no_open': True}"/>
                         <field name="pos_cashier_id" options="{'no_create': True}"/>
                         <field name="pos_employee_id" options="{'no_create': True}"/>
                     </group>

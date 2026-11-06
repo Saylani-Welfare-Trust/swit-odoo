@@ -14,6 +14,15 @@ class POSOrder(models.Model):
 
     pos_order_seq = fields.Char('Custom POS Order Seq')
 
+    def _branch(self):
+        """The Branch the order is tagged with: its session's (the shop's)."""
+        self.ensure_one()
+        return self.session_id.analytic_account_id or self.config_id.analytic_account_id
+
+    def _branch_code(self):
+        """Branch code of the DN # and order references: the shop's branch."""
+        return self._branch().code or 'UNK'
+
 
     def _order_fields(self, ui_order):
         """To get the value of field in pos session to pos order"""

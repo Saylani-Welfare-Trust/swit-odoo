@@ -599,7 +599,7 @@ export class PosDashboard extends Component {
                     or_domains.push(['session_id.analytic_account_id', 'child_of', id]);
                     or_domains.push(['analytic_account_id', 'child_of', id]);
                 }
-                or_domains.push(['user_id.employee_id.analytic_account_id', 'child_of', id]);
+                or_domains.push(['config_id.analytic_account_id', 'child_of', id]);
             }
             let op_count = or_domains.length - 1;
             if (op_count > 0) {

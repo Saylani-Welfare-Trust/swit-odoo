@@ -46,7 +46,7 @@ class POSOrder(models.Model):
         [('draft', 'New'), ('cancel', 'Cancelled'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced'), ('refund', 'Refunded'), ('reject', 'Reject')],
         'Status', readonly=True, copy=False, default='draft', index=True)
     
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_employee_branch", store=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", compute="_set_employee_branch", store=True)
     
 
     @api.constrains('mobile')
@@ -108,8 +108,8 @@ class POSOrder(models.Model):
             'target': 'current',
         }
 
-    @api.depends('user_id')
+    @api.depends('session_id')
     def _set_employee_branch(self):
+        """The Branch of the shop the order was taken at (its session's)."""
         for rec in self:
-            if rec.user_id:
-                rec.analytic_account_id = rec.user_id.employee_id.analytic_account_id.id or None
+            rec.analytic_account_id = rec._branch()

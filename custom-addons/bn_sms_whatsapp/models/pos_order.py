@@ -34,7 +34,7 @@ class PosOrder(models.Model):
         def sms_message(link):
             text = (
                 f"Thank you for donation of Rs. {order.amount_total}. "
-                f"{order.user_id.branch_code}-"
+                f"{order._branch_code()}-"
                 f"{order.date_order.year if order.date_order else ''}-"
                 f"{order.pos_order_seq} to Saylani Welfare Trust. "
                 f"Your generosity will make an immediate difference in the lives of needy families."

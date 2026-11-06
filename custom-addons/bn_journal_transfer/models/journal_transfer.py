@@ -36,7 +36,14 @@ class JournalTransfer(models.Model):
     remarks = fields.Char('Remarks')
     pos_move_id = fields.Many2one('account.move', string='POS Session Entry')
 
-    analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
+    # the Branch of the POS shop it was made at; made in the back office: the user's branch
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch",
+                                          compute='_compute_branch', store=True, readonly=True)
+
+    @api.depends('pos_analytic_account_id', 'user_id')
+    def _compute_branch(self):
+        for rec in self:
+            rec.analytic_account_id = rec.pos_analytic_account_id or rec.user_id.employee_id.analytic_account_id
     reference = fields.Char('Reference')
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     

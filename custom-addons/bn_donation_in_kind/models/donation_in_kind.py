@@ -202,7 +202,14 @@ May Allah bless you!
                         if warehouse_obj:
                             record.warehouse_name = warehouse_obj.name
 
-    analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytic_account_id', string='Analytic Account', store=True)
+    # the Branch of the POS shop it was made at; made in the back office: the creator's branch
+    analytical_account_id = fields.Many2one('account.analytic.account', string='Branch',
+                                            compute='_compute_branch', store=True, readonly=True)
+
+    @api.depends('pos_analytic_account_id', 'create_uid')
+    def _compute_branch(self):
+        for rec in self:
+            rec.analytical_account_id = rec.pos_analytic_account_id or rec.create_uid.employee_id.analytic_account_id
 
     donation_in_kind_line_ids = fields.One2many('donation.in.kind.line', 'donation_in_kind_id', string="Donation In Kind Lines")
     valuation_committee_line_ids = fields.One2many('valuation.committee.line', 'donation_in_kind_id', string="Product Valuation Committee Lines")

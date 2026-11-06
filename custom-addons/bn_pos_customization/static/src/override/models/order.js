@@ -21,10 +21,10 @@ patch(Order.prototype, {
                 cnic_no: this.partner ? this.partner.cnic_no : "",
             },
 
-            branch_code: this.cashier.branch_code,
-            
-            // the session's branch is the cashier's (pos.session.analytic_account_id)
-            branch_name: this.cashier.branch_name,
+            // the shop's Branch (pos.config.analytic_account_id); the cashier's
+            // only for a shop that has no Branch yet
+            branch_code: this.pos.config.branch_code || this.cashier.branch_code,
+            branch_name: this.pos.config.branch_name || this.cashier.branch_name,
             
             receive_voucher: this.receive_voucher || false,
             extra_data: this.extra_data || {},

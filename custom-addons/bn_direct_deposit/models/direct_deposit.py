@@ -29,7 +29,14 @@ class DirectDeposit(models.Model):
     donor_id = fields.Many2one('res.partner', string="Donor")
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location", related='user_id.employee_id.analytic_account_id', store=True, readonly=True)
+    # the Branch of the POS shop it was made at; made in the back office: the user's branch
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location",
+                                          compute='_compute_branch', store=True, readonly=True)
+
+    @api.depends('pos_analytic_account_id', 'user_id')
+    def _compute_branch(self):
+        for rec in self:
+            rec.analytic_account_id = rec.pos_analytic_account_id or rec.user_id.employee_id.analytic_account_id
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
     address = fields.Char('Address')

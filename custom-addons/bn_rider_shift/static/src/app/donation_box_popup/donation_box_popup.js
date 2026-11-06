@@ -46,8 +46,9 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
         // 🔹 Add product line to current order
         const current_order = this.pos.get_order();
 
-        const cityCode = current_order.branch_code || 'UNK';
-        const counter = current_order.counter || '0';
+        // the shop's Branch, as on the receipt DN #
+        const cityCode = this.pos.config.branch_code || this.pos.get_cashier()?.branch_code || 'UNK';
+        const counter = current_order.counter || this.pos.config.counter || '0';
         const currentYear = new Date().getFullYear();
         const posOrderSeq = current_order.pos_order_seq || '0000';
 

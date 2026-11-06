@@ -154,7 +154,7 @@ class PosOrder(models.Model):
                 if 'session_id' in self._fields:
                     analytic_filters.append(('session_id.analytic_account_id', 'in', accounts.ids))
                 if 'user_id' in self._fields:
-                    analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
+                    analytic_filters.append(('config_id.analytic_account_id', 'in', accounts.ids))
 
                 if 'analytic_account_id' in self.env['product.template']._fields:
                     analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))

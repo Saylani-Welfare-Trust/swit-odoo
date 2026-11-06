@@ -24,12 +24,12 @@ class POSOrder(models.Model):
     def _get_branch_code(self):
         """Branch code is stored on res.users (the cashier)."""
         self.ensure_one()
-        return self.user_id.branch_code or 'UNK'
+        return self._branch_code()
 
     def _compute_dn_number(self):
         """DN # = {branch_code}-C{counter}-{year}-{pos_order_seq}
 
-        - branch_code:   stored on res.users (cashier)
+        - branch_code:   the shop's Branch (pos.config / session)
         - counter:       stored on pos.config (via the session) - existing field, not redefined here
         - pos_order_seq: stored on this pos.order record
         """

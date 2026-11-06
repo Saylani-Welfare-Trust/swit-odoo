@@ -48,7 +48,7 @@ class POSOrder(models.Model):
             return self.dn_number
         year = fields.Datetime.context_timestamp(self, self.date_order).year
         return '%s-C%s-%s-%s' % (
-            ('branch_code' in self.user_id._fields and self.user_id.branch_code) or 'UNK',
+            self._branch_code(),
             ('counter' in self.config_id._fields and self.config_id.counter) or 0,
             year,
             ('pos_order_seq' in self._fields and self.pos_order_seq) or '0000',

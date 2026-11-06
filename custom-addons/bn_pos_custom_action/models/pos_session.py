@@ -19,9 +19,11 @@ class PosSession(models.Model):
         ]
         return vals
 
-    @api.depends('user_id')
+    @api.depends('config_id')
     def _set_employee_branch(self):
+        """The Branch of the shop, kept as it was when the session opened
+        (changing the shop's Branch later does not retag old sessions). A shop
+        without a Branch falls back to the cashier's."""
         for rec in self:
             rec.analytic_account_id = (
-                rec.user_id.employee_id.analytic_account_id.id if rec.user_id else False
-            )
+                rec.config_id.analytic_account_id or rec.user_id.employee_id.analytic_account_id)

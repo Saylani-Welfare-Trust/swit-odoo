@@ -28,6 +28,18 @@ class PosLinkMixin(models.AbstractModel):
                                      index='btree_not_null')
     pos_employee_id = fields.Many2one('hr.employee', string='Cashier (Employee)', readonly=True, copy=False,
                                       index='btree_not_null')
+    # the Branch of the shop (session) the record was made or paid at
+    pos_analytic_account_id = fields.Many2one(
+        'account.analytic.account', string='Branch (Shop)', compute='_compute_pos_analytic_account_id',
+        store=True, readonly=True, copy=False, index='btree_not_null',
+        help="Branch of the POS shop the record was made or paid at.")
+
+    @api.depends('pos_session_id', 'pos_config_id')
+    def _compute_pos_analytic_account_id(self):
+        # kept as it was at the time: a later change of the shop's Branch does not retag it
+        for rec in self:
+            rec.pos_analytic_account_id = (
+                rec.pos_session_id.analytic_account_id or rec.pos_config_id.analytic_account_id)
 
     def init(self):
         """Install / update of every model using the mixin: records already
