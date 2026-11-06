@@ -4,4 +4,3 @@ from . import pos_order
 from . import donation_in_kind_dashboard
 from . import donation_inflow_dashboard
 
-from . import treasury_dashboard_configurator

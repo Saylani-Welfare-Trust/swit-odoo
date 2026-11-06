@@ -186,10 +186,9 @@ export class TreasuryDashboard extends Component {
         return this.state.segments_l4.filter(s => s.parent_id === pId);
     }
 
-    // Add `restriction: null` to your state initialization at the top.
-
     async fetchData() {
         try {
+            // Determine which segment level is actually selected
             let effective_segment_id = null;
             if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
             else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
@@ -207,59 +206,18 @@ export class TreasuryDashboard extends Component {
                 amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
                 amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
             });
-            
-            this.state.currency = data.currency;
-            this.state.cheques = { ...this.state.cheques, ...data.cheques };
-            this.state.deposits = { ...this.state.deposits, ...data.deposits };
-            this.state.transfers = { ...this.state.transfers, ...data.transfers };
-            
-            this.state.restriction = data.restriction || null;
-            let needsRefresh = false;
-
-            // ⚡ FILTER DROPDOWNS AND AUTO-SELECT
-            let provinces = data.provinces || [];
-            let cities = data.cities || [];
-            let zones = data.zones || [];
-            let analytic_accounts = data.analytic_accounts || [];
-
-            if (this.state.restriction) {
-                const allowedProvs = this.state.restriction.provinces || [];
-                const allowedIds = this.state.restriction.analytic_ids || [];
-
-                if (allowedProvs.length) {
-                    provinces = provinces.filter(p => allowedProvs.includes(p.id));
-                    if (provinces.length === 1 && !this.state.province_id) {
-                        this.state.province_id = provinces[0].id;
-                        needsRefresh = true;
-                    }
-                }
-                if (allowedIds.length) {
-                    cities = cities.filter(c => allowedIds.includes(c.id) || allowedIds.includes(c.province_id));
-                    zones = zones.filter(z => allowedIds.includes(z.id) || allowedIds.includes(z.city_id));
-                    analytic_accounts = analytic_accounts.filter(a => allowedIds.includes(a.id) || allowedIds.includes(a.zone_id));
-                    
-                    // Auto-select city if restricted to exactly 1
-                    if (cities.length === 1 && !this.state.city_id) {
-                        this.state.city_id = cities[0].id;
-                        if (cities[0].province_id) this.state.province_id = cities[0].province_id;
-                        needsRefresh = true;
-                    }
-                }
-            }
-
-            this.state.analytic_accounts = analytic_accounts;
-            this.state.provinces = provinces;
-            this.state.cities = cities;
-            this.state.zones = zones;
+            this.state.analytic_accounts = data.analytic_accounts || [];
+            this.state.provinces = data.provinces || [];
+            this.state.cities = data.cities || [];
+            this.state.zones = data.zones || [];
             this.state.segments_l1 = data.segments_l1 || [];
             this.state.segments_l2 = data.segments_l2 || [];
             this.state.segments_l3 = data.segments_l3 || [];
             this.state.segments_l4 = data.segments_l4 || [];
-
-            if (needsRefresh) {
-                await this.fetchData();
-            }
-            
+            this.state.currency  = data.currency;
+            this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
+            this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
+            this.state.transfers = { ...this.state.transfers, ...data.transfers };
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
