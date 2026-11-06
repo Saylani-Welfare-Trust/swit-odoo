@@ -15,9 +15,29 @@
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
-    <!-- ⚡ FIX: Added back the POS Order User Group -->
     <record id="group_pos_order_dashboard_user" model="res.groups">
         <field name="name">Dashboard / POS Order</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <!-- ⚡ FIX: Added back all the missing dashboard groups -->
+    <record id="group_donation_box_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation Box</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <record id="group_profile_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Profile Management</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <record id="group_din_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation In Kind</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <record id="group_donation_inflow_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation Inflows</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
