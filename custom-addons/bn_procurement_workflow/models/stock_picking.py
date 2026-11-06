@@ -2,7 +2,7 @@
 from odoo import models, _
 from odoo.exceptions import UserError
 
-PROCUREMENT_MANAGER_GROUP = 'bn_procurement_workflow.group_procurement_manager'
+PROCUREMENT_MANAGER_GROUP = 'bn_procurement_workflow.group_confirm_to_bill'
 
 
 class StockPicking(models.Model):
@@ -11,5 +11,5 @@ class StockPicking(models.Model):
     def action_create_bill(self):
         """Creating the vendor bill from a receipt is the Procurement Manager's step."""
         if not self.env.user.has_group(PROCUREMENT_MANAGER_GROUP):
-            raise UserError(_('Only a Procurement Manager can create the bill from a receipt.'))
+            raise UserError(_('Only a user in the "Confirm to Bill" group can create the bill from a receipt.'))
         return super().action_create_bill()
