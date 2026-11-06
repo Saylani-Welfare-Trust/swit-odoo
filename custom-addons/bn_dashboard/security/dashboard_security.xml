@@ -27,6 +27,7 @@
         <field name="name">Cheque: allowed locations only</field>
         <field name="model_id" ref="bn_pos_cheque.model_pos_cheque"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
+        <!-- ⚡ Correct Domain -->
         <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
     </record>
     <record id="rule_cheque_all" model="ir.rule">
@@ -41,9 +42,9 @@
     <!-- ========================================== -->
     <record id="rule_deposit_restricted" model="ir.rule">
         <field name="name">Deposit: allowed locations only</field>
-        <!-- ⚡ Make sure this matches your actual module name for Direct Deposit -->
         <field name="model_id" ref="bn_direct_deposit.model_direct_deposit"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
+        <!-- ⚡ Correct Domain (This was probably set to 'direct.deposit' by mistake) -->
         <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
     </record>
     <record id="rule_deposit_all" model="ir.rule">
