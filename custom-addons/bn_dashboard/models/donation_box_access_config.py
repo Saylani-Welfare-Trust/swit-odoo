@@ -37,11 +37,23 @@ class DonationBoxAccessConfig(models.Model):
         ('user_unique', 'unique(user_id)', 'This user already has a donation box access configuration.'),
     ]
 
+    # ⚡ NEW: Cascade logic for dropdowns
+    @api.onchange('province_ids')
+    def _onchange_province_ids(self):
+        if self.province_ids:
+            return {'domain': {'city_ids': [('parent_id', 'in', self.province_ids.ids)]}}
+        return {'domain': {'city_ids': [('plan_id.name', '=', 'Location'), ('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]}}
+
+    @api.onchange('city_ids')
+    def _onchange_city_ids(self):
+        if self.city_ids:
+            return {'domain': {'zone_ids': [('parent_id', 'in', self.city_ids.ids)]}}
+        return {'domain': {'zone_ids': [('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)]}}
+
     # ---- sync to the user ----
     def _sync_user(self):
         for rec in self:
             user = rec.user_id.sudo()
-            # If full_access is ticked, clear the restrictions (empty list means full access)
             ids = [] if rec.full_access else (rec.province_ids | rec.city_ids | rec.zone_ids).ids
             user.donation_box_analytic_ids = [(6, 0, ids)]
 

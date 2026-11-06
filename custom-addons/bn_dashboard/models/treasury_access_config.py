@@ -35,6 +35,19 @@ class TreasuryAccessConfig(models.Model):
         ('user_unique', 'unique(user_id)', 'This user already has an access configuration.'),
     ]
 
+    # ⚡ NEW: Cascade logic for dropdowns
+    @api.onchange('province_ids')
+    def _onchange_province_ids(self):
+        if self.province_ids:
+            return {'domain': {'city_ids': [('parent_id', 'in', self.province_ids.ids)]}}
+        return {'domain': {'city_ids': [('plan_id.name', '=', 'Location'), ('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]}}
+
+    @api.onchange('city_ids')
+    def _onchange_city_ids(self):
+        if self.city_ids:
+            return {'domain': {'zone_ids': [('parent_id', 'in', self.city_ids.ids)]}}
+        return {'domain': {'zone_ids': [('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)]}}
+
     # ---- sync to the user (record rules read treasury_analytic_ids) ----
     def _sync_user(self):
         manager = self.env.ref('bn_dashboard.group_treasury_dashboard_manager').sudo()
