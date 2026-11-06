@@ -28,6 +28,17 @@
                         </div>
                     </group>
                 </group>
+                <group>
+                    <group name="sadqa_e_jariya_profile_whatsapp" string="Profile Form WhatsApp Template">
+                        <div colspan="2" class="text-muted">
+                            Send Profile Form on a Sadqa e Jariya donee sends their profile form PDF with this approved template
+                            (Document header, fixed "your profile has been registered" text, no parameters). Empty: WhatsApp is not sent, only the email.
+                        </div>
+                        <field name="institution_profile_whatsapp_template" placeholder="e.g. sadqa_profile_registered" />
+                        <field name="institution_profile_whatsapp_namespace" />
+                        <field name="institution_profile_whatsapp_language" />
+                    </group>
+                </group>
             </xpath>
         </field>
     </record>

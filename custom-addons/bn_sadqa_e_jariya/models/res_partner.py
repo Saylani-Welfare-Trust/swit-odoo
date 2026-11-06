@@ -88,14 +88,13 @@ class ResPartner(models.Model):
             return self.env.ref('bn_sadqa_e_jariya.action_report_sadqa_jariya_donee_profile').report_action(self)
         return res
 
-    def _sadqa_profile_form_link(self):
-        """The Sadqa e Jariya profile form as a PDF, behind a link only its access token opens"""
+    def _sadqa_profile_form_attachment(self):
+        """The Sadqa e Jariya profile form as a PDF on the donee, with an access token for its link
+        (earlier ones are kept: the donee's WhatsApp link and the chatter point to them)"""
         self.ensure_one()
         pdf, _type = self.env['ir.actions.report']._render_qweb_pdf('bn_sadqa_e_jariya.action_report_sadqa_jariya_donee_profile', self.ids)
         filename = 'Profile_%s.pdf' % re.sub(r'[^A-Za-z0-9]+', '_', self.primary_registration_id or self.name or str(self.id)).strip('_')
-        Attachment = self.env['ir.attachment'].sudo()
-        Attachment.search([('res_model', '=', 'res.partner'), ('res_id', '=', self.id), ('name', '=', filename)]).unlink()
-        attachment = Attachment.create({
+        attachment = self.env['ir.attachment'].sudo().create({
             'name': filename,
             'type': 'binary',
             'datas': base64.b64encode(pdf),
@@ -104,11 +103,38 @@ class ResPartner(models.Model):
             'mimetype': 'application/pdf',
         })
         attachment.generate_access_token()
+        return attachment
+
+    def _send_sadqa_profile_whatsapp(self, attachment):
+        """The profile form as the document of the approved profile template (the donation receipt one has the wrong text)"""
+        company = self.env.company
+        if not company.institution_profile_whatsapp_template:
+            raise UserError(_("set the Profile Form WhatsApp Template in the Company settings"))
+        number = self.whatsapp or self.mobile
+        if not number:
+            raise UserError(_("no WhatsApp number"))
         base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        return f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true", filename
+        self.env['whatsapp.service'].send_document_template(
+            number,
+            company.institution_profile_whatsapp_template,
+            company.institution_profile_whatsapp_namespace,
+            f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true",
+            attachment.name,
+            language=company.institution_profile_whatsapp_language,
+        )
+
+    def _send_sadqa_profile_email(self, attachment):
+        if not self.email:
+            raise UserError(_("no email address"))
+        template = self.env.ref('bn_sadqa_e_jariya.mail_template_sadqa_jariya_profile_form')
+        mail_id = template.send_mail(self.id, force_send=True, email_values={'attachment_ids': [(4, attachment.id)]})
+        # a sent mail is deleted (auto_delete), a failed one stays with the reason
+        mail = self.env['mail.mail'].sudo().browse(mail_id).exists()
+        if mail.state == 'exception':
+            raise UserError(mail.failure_reason or _("the mail server refused it"))
 
     def action_send_sadqa_profile_form(self):
-        """Draft application for the donee, and their profile form by WhatsApp and SMS
+        """Draft application for the donee, and their profile form by WhatsApp and email
         (the portal login only goes with Send Form / Reset Portal Password on the application)"""
         self.ensure_one()
         Application = self.env['sadqa.jariya']
@@ -119,30 +145,19 @@ class ResPartner(models.Model):
         else:
             message = _("Draft application %s is open.") % application.name
 
-        link, filename = self._sadqa_profile_form_link()
+        attachment = self._sadqa_profile_form_attachment()
         sent, failed = [], []
-        whatsapp = self.whatsapp or self.mobile
-        try:
-            if not whatsapp:
-                raise UserError(_("no WhatsApp number"))
-            self.env['whatsapp.service'].send_template_message(whatsapp, link, filename)
-            sent.append(_('WhatsApp'))
-        except Exception as e:
-            _logger.warning("Sadqa e Jariya donee %s: profile form WhatsApp failed: %s", self.id, e)
-            failed.append(_('WhatsApp (%s)') % (str(e) or e.__class__.__name__))
-        try:
-            if not self.mobile:
-                raise UserError(_("no mobile number"))
-            sms = '\n'.join([_("Assalam-o-Alaikum %s,") % self.name, _("Your Sadqa e Jariya donee profile form:"), link])
-            self.env['sms.service'].send_sms(self.mobile, sms)
-            sent.append(_('SMS'))
-        except Exception as e:
-            _logger.warning("Sadqa e Jariya donee %s: profile form SMS failed: %s", self.id, e)
-            failed.append(_('SMS (%s)') % (str(e) or e.__class__.__name__))
+        for channel, send in ((_('WhatsApp'), self._send_sadqa_profile_whatsapp), (_('Email'), self._send_sadqa_profile_email)):
+            try:
+                send(attachment)
+                sent.append(channel)
+            except Exception as e:
+                _logger.warning("Sadqa e Jariya donee %s: profile form %s failed: %s", self.id, channel, e)
+                failed.append('%s (%s)' % (channel, str(e) or e.__class__.__name__))
 
         if sent:
             message += ' ' + _("Profile form sent by %s.") % _(' and ').join(sent)
-            self.message_post(body=_("📨 Donee profile form sent by %s.") % _(' and ').join(sent))
+            self.message_post(body=_("📨 Donee profile form sent by %s.") % _(' and ').join(sent), attachment_ids=attachment.ids)
         if failed:
             message += ' ' + _("Not sent: %s.") % ', '.join(failed)
         in_popup = self.env.context.get('sadqa_jariya_profile')

@@ -1,4 +1,5 @@
 from odoo import models, fields
+from odoo.addons.bn_sms_whatsapp.models.whatsapp_service import NAMESPACE
 
 
 def portal_setting(name, string, default=False):
@@ -33,6 +34,12 @@ class ResCompany(models.Model):
     institution_login_whatsapp_template = portal_setting('institution_login_whatsapp_template', 'Portal Login WhatsApp Template')
     institution_login_whatsapp_namespace = portal_setting('institution_login_whatsapp_namespace', 'Portal Login WhatsApp Namespace')
     institution_login_whatsapp_language = portal_setting('institution_login_whatsapp_language', 'Portal Login WhatsApp Language', default='en')
+
+    # Approved WhatsApp template the donee's profile form PDF goes with (Send Profile Form):
+    # Document header, fixed "profile registered" body; the namespace is the WhatsApp Business account's
+    institution_profile_whatsapp_template = portal_setting('institution_profile_whatsapp_template', 'Profile Form WhatsApp Template')
+    institution_profile_whatsapp_namespace = portal_setting('institution_profile_whatsapp_namespace', 'Profile Form WhatsApp Namespace', default=NAMESPACE)
+    institution_profile_whatsapp_language = portal_setting('institution_profile_whatsapp_language', 'Profile Form WhatsApp Language', default='en')
 
     # Service product (available in POS) the cashier pays applications with, like Welfare's welfare_product
     sadqa_jariya_pos_product = portal_setting('sadqa_jariya_pos_product', 'Sadqa e Jariya POS Product')

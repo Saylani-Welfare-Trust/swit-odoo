@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- noupdate: the text can be changed in Settings > Technical > Email Templates -->
+    <data noupdate="1">
+
+        <!-- Send Profile Form: the donee's profile form PDF is attached by the button -->
+        <record id="mail_template_sadqa_jariya_profile_form" model="mail.template">
+            <field name="name">Sadqa e Jariya: Donee Profile Registered</field>
+            <field name="model_id" ref="base.model_res_partner"/>
+            <field name="subject">Your profile has been registered - {{ user.company_id.name }}</field>
+            <field name="email_from">{{ user.company_id.email_formatted or user.email_formatted }}</field>
+            <field name="email_to">{{ object.email_formatted }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-size: 13px;">
+    <p>Respected <t t-out="object.name or ''">Donee</t>,</p>
+    <p>Assalamu Alaikum,</p>
+    <p>Your profile has been registered with <t t-out="user.company_id.name or ''">Saylani Welfare International Trust</t>.</p>
+    <p>The PDF file of your profile is attached for your reference.</p>
+    <p>JazakAllah Khair,</p>
+    <p>Regards,<br/><t t-out="user.company_id.name or ''">Saylani Welfare International Trust</t></p>
+</div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+    </data>
+</odoo>
