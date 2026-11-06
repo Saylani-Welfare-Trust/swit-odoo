@@ -30,3 +30,6 @@ class PosPaymentMethod(models.Model):
         # domain=[('reconcile', '=', True),('account_type', '=', 'asset_receivable')],
         help="Account for neutral receivable amounts"
     )
+    
+    def _is_write_forbidden(self, fields):
+        return False
