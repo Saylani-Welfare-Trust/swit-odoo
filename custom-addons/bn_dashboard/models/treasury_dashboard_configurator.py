@@ -9,18 +9,27 @@ class TreasuryDashboardConfigurator(models.Model):
     user_ids = fields.Many2many('res.users', string='Users')
     group_ids = fields.Many2many('res.groups', string='Groups')
 
+    # ⚡ FIX: Explicitly define the relation table and columns for each M2M field
     allowed_province_ids = fields.Many2many(
-        'account.analytic.account', string='Allowed Provinces',
+        'account.analytic.account', 
+        'treasury_cfg_prov_rel', 'config_id', 'account_id',
+        string='Allowed Provinces',
         domain="[('plan_id.name', '=', 'Location'), ('parent_id', '=', False)]"
     )
     allowed_city_ids = fields.Many2many(
-        'account.analytic.account', string='Allowed Cities',
+        'account.analytic.account', 
+        'treasury_cfg_city_rel', 'config_id', 'account_id',
+        string='Allowed Cities',
     )
     allowed_zone_ids = fields.Many2many(
-        'account.analytic.account', string='Allowed Zones',
+        'account.analytic.account', 
+        'treasury_cfg_zone_rel', 'config_id', 'account_id',
+        string='Allowed Zones',
     )
     allowed_branch_ids = fields.Many2many(
-        'account.analytic.account', string='Allowed Branches',
+        'account.analytic.account', 
+        'treasury_cfg_branch_rel', 'config_id', 'account_id',
+        string='Allowed Branches',
     )
 
     @api.model
@@ -31,7 +40,7 @@ class TreasuryDashboardConfigurator(models.Model):
             return None
 
         rule = self.search([
-            '|', ('user_ids', 'in', user.id), ('group_ids', 'in', user.groups_id.ids)
+            '|', ('user_ids', 'in', user.id), ('group_ids', 'in', user.groups_ids.ids)
         ], limit=1)
 
         if not rule:
