@@ -30,6 +30,13 @@
             <field name="image_1920" position="attributes">
                 <attribute name="required">not is_donor and state != 'register' and not is_sadqa_jariya_donee</attribute>
             </field>
+            <!-- the institution's address goes to the portal -->
+            <field name="street" position="attributes">
+                <attribute name="required">is_sadqa_jariya_donee and state != 'register'</attribute>
+            </field>
+            <field name="city" position="attributes">
+                <attribute name="required">(donee_required_fields or is_sadqa_jariya_donee) and state != 'register'</attribute>
+            </field>
             <xpath expr="//group[@name='general_info_col_1']/field[@name='area']" position="attributes">
                 <attribute name="invisible">is_sadqa_jariya_donee</attribute>
             </xpath>
@@ -98,6 +105,7 @@
             <!-- the portal needs the manager's CNIC -->
             <xpath expr="//notebook//field[@name='cnic_no']" position="attributes">
                 <attribute name="invisible">has_cnic == 'no' and not is_sadqa_jariya_donee</attribute>
+                <attribute name="required">(donee_required_fields and has_cnic == 'yes' or is_sadqa_jariya_donee) and state != 'register'</attribute>
             </xpath>
             <xpath expr="//notebook//field[@name='nearest_land_mark']" position="attributes">
                 <attribute name="required">(donee_required_fields or is_sadqa_jariya_donee) and state != 'register'</attribute>
@@ -120,7 +128,7 @@
             </xpath>
             <xpath expr="//header/button[@name='action_print_microfinance_application']" position="after">
                 <field name="is_sadqa_jariya_donee" invisible="1"/>
-                <button string="Email / Whatsapp Credentials" name="action_send_sadqa_portal_credentials" type="object" class="oe_highlight" invisible="state != 'register' or not is_sadqa_jariya_donee"/>
+                <button string="Send Profile Form" name="action_send_sadqa_profile_form" type="object" class="oe_highlight" invisible="state != 'register' or not is_sadqa_jariya_donee"/>
             </xpath>
         </field>
     </record>

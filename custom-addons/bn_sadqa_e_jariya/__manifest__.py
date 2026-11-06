@@ -29,6 +29,7 @@
         'data/server_action_fetch.xml',
 
         'reports/collection_report.xml',
+        'reports/donee_profile_report.xml',
 
         'views/sadqa_jariya.xml',
         'views/sadqa_jariya_line.xml',

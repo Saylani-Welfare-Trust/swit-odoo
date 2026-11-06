@@ -1,7 +1,13 @@
+import base64
+import logging
+import re
+
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 from .sadqa_jariya import DONEE_TAGS
+
+_logger = logging.getLogger(__name__)
 
 
 class ResPartner(models.Model):
@@ -55,7 +61,7 @@ class ResPartner(models.Model):
 
     # required on a Sadqa e Jariya donee before Register
     # (the contact number is the profile's Mobile)
-    _sadqa_required_fields = ('sadqa_contact_person', 'mobile', 'sadqa_area_id', 'nearest_land_mark', 'date_of_birth')
+    _sadqa_required_fields = ('sadqa_contact_person', 'mobile', 'cnic_no', 'street', 'city', 'sadqa_area_id', 'nearest_land_mark', 'date_of_birth')
 
     def action_register(self):
         for partner in self.filtered('is_sadqa_jariya_donee'):
@@ -76,8 +82,34 @@ class ResPartner(models.Model):
             return self._sadqa_profile_popup()
         return res
 
-    def action_send_sadqa_portal_credentials(self):
-        """Draft application for the donee; a new portal password too when they already have a login"""
+    def action_print_info(self):
+        res = super().action_print_info()
+        if len(self) == 1 and self.is_sadqa_jariya_donee:
+            return self.env.ref('bn_sadqa_e_jariya.action_report_sadqa_jariya_donee_profile').report_action(self)
+        return res
+
+    def _sadqa_profile_form_link(self):
+        """The Sadqa e Jariya profile form as a PDF, behind a link only its access token opens"""
+        self.ensure_one()
+        pdf, _type = self.env['ir.actions.report']._render_qweb_pdf('bn_sadqa_e_jariya.action_report_sadqa_jariya_donee_profile', self.ids)
+        filename = 'Profile_%s.pdf' % re.sub(r'[^A-Za-z0-9]+', '_', self.primary_registration_id or self.name or str(self.id)).strip('_')
+        Attachment = self.env['ir.attachment'].sudo()
+        Attachment.search([('res_model', '=', 'res.partner'), ('res_id', '=', self.id), ('name', '=', filename)]).unlink()
+        attachment = Attachment.create({
+            'name': filename,
+            'type': 'binary',
+            'datas': base64.b64encode(pdf),
+            'res_model': 'res.partner',
+            'res_id': self.id,
+            'mimetype': 'application/pdf',
+        })
+        attachment.generate_access_token()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        return f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true", filename
+
+    def action_send_sadqa_profile_form(self):
+        """Draft application for the donee, and their profile form by WhatsApp and SMS
+        (the portal login only goes with Send Form / Reset Portal Password on the application)"""
         self.ensure_one()
         Application = self.env['sadqa.jariya']
         application = Application.search([('donee_id', '=', self.id), ('state', '=', 'draft')], order='id desc', limit=1)
@@ -86,21 +118,42 @@ class ResPartner(models.Model):
             message = _("Draft application %s created.") % application.name
         else:
             message = _("Draft application %s is open.") % application.name
-        if self.sadqa_portal_login:
-            # the portal keeps one login per donee, made with their first application
-            application.action_reset_portal_password()
-            message += ' ' + _("New portal password sent to %s.") % self.mobile
-        else:
-            message += ' ' + _("The portal login is sent with Send Form on the application.")
+
+        link, filename = self._sadqa_profile_form_link()
+        sent, failed = [], []
+        whatsapp = self.whatsapp or self.mobile
+        try:
+            if not whatsapp:
+                raise UserError(_("no WhatsApp number"))
+            self.env['whatsapp.service'].send_template_message(whatsapp, link, filename)
+            sent.append(_('WhatsApp'))
+        except Exception as e:
+            _logger.warning("Sadqa e Jariya donee %s: profile form WhatsApp failed: %s", self.id, e)
+            failed.append(_('WhatsApp (%s)') % (str(e) or e.__class__.__name__))
+        try:
+            if not self.mobile:
+                raise UserError(_("no mobile number"))
+            sms = '\n'.join([_("Assalam-o-Alaikum %s,") % self.name, _("Your Sadqa e Jariya donee profile form:"), link])
+            self.env['sms.service'].send_sms(self.mobile, sms)
+            sent.append(_('SMS'))
+        except Exception as e:
+            _logger.warning("Sadqa e Jariya donee %s: profile form SMS failed: %s", self.id, e)
+            failed.append(_('SMS (%s)') % (str(e) or e.__class__.__name__))
+
+        if sent:
+            message += ' ' + _("Profile form sent by %s.") % _(' and ').join(sent)
+            self.message_post(body=_("📨 Donee profile form sent by %s.") % _(' and ').join(sent))
+        if failed:
+            message += ' ' + _("Not sent: %s.") % ', '.join(failed)
         in_popup = self.env.context.get('sadqa_jariya_profile')
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Email / Whatsapp Credentials'),
+                'title': _('Send Profile Form'),
                 'message': message,
-                'type': 'success',
-                'sticky': False,
+                'type': 'warning' if failed else 'success',
+                'sticky': bool(failed),
                 'next': self._sadqa_profile_popup() if in_popup else {'type': 'ir.actions.client', 'tag': 'reload'},
             },
         }
