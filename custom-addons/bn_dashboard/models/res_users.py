@@ -1,6 +1,5 @@
 from odoo import fields, models
 
-
 class ResUsers(models.Model):
     _inherit = 'res.users'
 
@@ -8,6 +7,14 @@ class ResUsers(models.Model):
         'account.analytic.account',
         'treasury_user_analytic_rel', 'user_id', 'analytic_id',
         string='Allowed Treasury Locations',
+        readonly=True,
+        help="Managed from Dashboard > Access Configuration.",
+    )
+    # ⚡ NEW: POS Allowed Locations
+    pos_analytic_ids = fields.Many2many(
+        'account.analytic.account',
+        'pos_user_analytic_rel', 'user_id', 'analytic_id',
+        string='Allowed POS Locations',
         readonly=True,
         help="Managed from Dashboard > Access Configuration.",
     )

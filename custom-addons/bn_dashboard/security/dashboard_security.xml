@@ -69,4 +69,55 @@
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_manager'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
     </record>
+
+    <!-- ========================================== -->
+    <!-- POS ORDER DASHBOARD RULES                  -->
+    <!-- ========================================== -->
+    <record id="group_pos_order_dashboard_manager" model="res.groups">
+        <field name="name">Dashboard / POS Order (All Locations)</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+        <field name="implied_ids" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+    </record>
+
+    <!-- Restrict POS Orders -->
+    <record id="rule_pos_order_restricted" model="ir.rule">
+        <field name="name">POS Order: allowed locations only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+        <field name="domain_force">['|', '|', ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('session_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
+    </record>
+    <record id="rule_pos_order_all" model="ir.rule">
+        <field name="name">POS Order: all locations</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- Restrict POS Sessions -->
+    <record id="rule_pos_session_restricted" model="ir.rule">
+        <field name="name">POS Session: allowed locations only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_session"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+        <field name="domain_force">['|', ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
+    </record>
+    <record id="rule_pos_session_all" model="ir.rule">
+        <field name="name">POS Session: all locations</field>
+        <field name="model_id" ref="point_of_sale.model_pos_session"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- Restrict POS Configs (Shops) -->
+    <record id="rule_pos_config_restricted" model="ir.rule">
+        <field name="name">POS Config: allowed locations only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_config"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+        <field name="domain_force">[('analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
+    </record>
+    <record id="rule_pos_config_all" model="ir.rule">
+        <field name="name">POS Config: all locations</field>
+        <field name="model_id" ref="point_of_sale.model_pos_config"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
 </odoo>
