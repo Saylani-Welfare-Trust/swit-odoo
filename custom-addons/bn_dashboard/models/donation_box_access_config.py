@@ -1,10 +1,12 @@
-from odoo import api, fields, models
+from odoo import models, fields, api
 
-
-class DonationBoxAccessConfig(models.TransientModel):
+# ⚡ FIX: Changed from TransientModel to Model
+class DonationBoxAccessConfig(models.Model):
     _name = 'donation.box.access.config'
     _description = 'Donation Box Access Configuration'
+    _rec_name = 'name'
 
+    name = fields.Char(string='Rule Name', required=True, default="New Rule")
     user_ids = fields.Many2many(
         'res.users', string='Users', required=True,
     )
@@ -20,15 +22,25 @@ class DonationBoxAccessConfig(models.TransientModel):
 
     def action_apply(self):
         self.ensure_one()
-        cmds = {
-            'add':     lambda a: [(4, a.id)],
-            'remove':  lambda a: [(3, a.id)],
-            'replace': lambda a: [(6, 0, self.analytic_ids.ids)],
-        }[self.operation]
         if self.operation == 'replace':
             for user in self.user_ids:
                 user.donation_box_analytic_ids = [(6, 0, self.analytic_ids.ids)]
         else:
             for user in self.user_ids:
-                user.donation_box_analytic_ids = [cmds(a)[0] for a in self.analytic_ids]
-        return {'type': 'ir.actions.act_window_close'}
+                for a in self.analytic_ids:
+                    if self.operation == 'add':
+                        user.donation_box_analytic_ids = [(4, a.id)]
+                    elif self.operation == 'remove':
+                        user.donation_box_analytic_ids = [(3, a.id)]
+        
+        # ⚡ Optional: Show a success notification
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Success',
+                'message': 'Locations updated successfully for the selected users!',
+                'type': 'success',
+                'sticky': False,
+            }
+        }
