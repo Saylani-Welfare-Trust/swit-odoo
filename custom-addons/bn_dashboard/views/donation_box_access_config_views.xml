@@ -26,10 +26,10 @@
         <field name="target">new</field>
     </record>
 
-    <menuitem id="menu_donation_box_access_config"
-              name="Access Configuration"
-              parent="donation_box_menu_root"
-              action="action_donation_box_access_config"
-              groups="base.group_erp_manager"
-              sequence="99"/>
+    <menuitem id="menu_donation_box_access_config" 
+              name="Donation Box Access" 
+              parent="bn_dashboard.menu_dashboard_root" 
+              action="action_donation_box_access_config" 
+              groups="base.group_erp_manager" 
+              sequence="22"/>
 </odoo>
