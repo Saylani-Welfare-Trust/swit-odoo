@@ -87,8 +87,9 @@ class RecordSearch(models.TransientModel):
                 'default_cnic_no': self.cnic_no,
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
-                # microfinance.scheme only exists with bn_microfinance installed
-                'default_microfinance_scheme_id': self.microfinance_scheme_id.id if 'microfinance.scheme' in self.env else False,
+                # microfinance.scheme comes with bn_microfinance (loaded after this module): without it, and in the
+                # server process that just upgraded modules (until Odoo restarts), the field's model is '_unknown'
+                'default_microfinance_scheme_id': self.microfinance_scheme_id.id if self.microfinance_scheme_id._name == 'microfinance.scheme' else False,
                 'default_category': self.category,
                 # carried on to the profile popup, see action_change_request
                 'from_record_search': True,

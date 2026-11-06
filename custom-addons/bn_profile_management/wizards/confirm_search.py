@@ -55,7 +55,7 @@ class ConfirmSearch(models.TransientModel):
                     'domain': "[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance')]",
                     'res_id': donee.id,
                     'context': {
-                        'microfinance_scheme_id': self.microfinance_scheme_id.id
+                        'microfinance_scheme_id': self.microfinance_scheme_id.id if self.microfinance_scheme_id._name == 'microfinance.scheme' else False
                     },
                     'target': 'new'
                 }
@@ -71,7 +71,7 @@ class ConfirmSearch(models.TransientModel):
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
                         'default_country_code_id': self.country_code_id.id,
-                        'microfinance_scheme_id': self.microfinance_scheme_id.id
+                        'microfinance_scheme_id': self.microfinance_scheme_id.id if self.microfinance_scheme_id._name == 'microfinance.scheme' else False
                     },
                     'target': 'new'
                 }
