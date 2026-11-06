@@ -22,6 +22,4 @@ class ResUsers(models.Model):
         'donation_box_user_analytic_rel', 'user_id', 'analytic_id',
         string='Allowed Donation Box Locations',
         readonly=True,
-        help="Managed from Donation Box > Access Configuration. "
-             "Assigning a province/city auto-includes all descendants.",
     )
