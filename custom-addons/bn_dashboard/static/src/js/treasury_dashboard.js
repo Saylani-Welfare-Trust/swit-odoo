@@ -188,7 +188,6 @@ export class TreasuryDashboard extends Component {
 
     async fetchData() {
         try {
-            // Determine which segment level is actually selected
             let effective_segment_id = null;
             if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
             else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
@@ -206,6 +205,39 @@ export class TreasuryDashboard extends Component {
                 amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
                 amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
             });
+            
+            this.state.currency = data.currency;
+            this.state.cheques = { ...this.state.cheques, ...data.cheques };
+            this.state.deposits = { ...this.state.deposits, ...data.deposits };
+            this.state.transfers = { ...this.state.transfers, ...data.transfers };
+            
+            this.state.restriction = data.restriction || null;
+            let needsRefresh = false;
+
+            // ⚡ AUTO-SELECTION LOGIC
+            if (this.state.restriction) {
+                const allowedProvs = this.state.restriction.provinces || [];
+                const allowedIds = this.state.restriction.analytic_ids || [];
+                
+                // If restricted to exactly 1 province and nothing is selected, auto-select it
+                if (allowedProvs.length === 1 && !this.state.province_id) {
+                    this.state.province_id = allowedProvs[0];
+                    needsRefresh = true;
+                }
+                
+                // If restricted to a specific city (like Karachi) and nothing is selected, auto-select it
+                if (allowedIds.length > 0 && !this.state.city_id) {
+                    const allowedCities = data.cities.filter(c => allowedIds.includes(c.id));
+                    if (allowedCities.length === 1) {
+                        this.state.city_id = allowedCities[0].id;
+                        if (allowedCities[0].province_id) {
+                            this.state.province_id = allowedCities[0].province_id;
+                        }
+                        needsRefresh = true;
+                    }
+                }
+            }
+
             this.state.analytic_accounts = data.analytic_accounts || [];
             this.state.provinces = data.provinces || [];
             this.state.cities = data.cities || [];
@@ -214,10 +246,12 @@ export class TreasuryDashboard extends Component {
             this.state.segments_l2 = data.segments_l2 || [];
             this.state.segments_l3 = data.segments_l3 || [];
             this.state.segments_l4 = data.segments_l4 || [];
-            this.state.currency  = data.currency;
-            this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
-            this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
-            this.state.transfers = { ...this.state.transfers, ...data.transfers };
+
+            // If we auto-selected, fetch data again with the new filter applied
+            if (needsRefresh) {
+                await this.fetchData();
+            }
+            
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
