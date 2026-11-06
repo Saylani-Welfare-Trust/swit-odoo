@@ -10,6 +10,7 @@ class AccountPaymentRegister(models.TransientModel):
         compute='_compute_amount_locked',
         help='The bill of a Purchase Order is paid for what is still due on it: the amount cannot be changed.')
 
+
     # The amount of the wizard stays the tax-included one, so the bill is settled for all of it;
     # the payment is created for what is left after the tax (see account.payment).
     payment_tax_id = fields.Many2one(
