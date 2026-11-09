@@ -798,11 +798,10 @@ class Welfare(models.Model):
     def action_check_portal_status(self):
         self.ensure_one()
 
-        donee_data = self._check_donee_exists_in_portal()
-        if donee_data:
-            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-        else:
-            self._create_donee_in_portal()
+        if not self.is_synced:
+            donee_data = self._check_donee_exists_in_portal()
+            if not donee_data:
+                self._create_donee_in_portal()
 
         application     = self._search_portal_applications()
         app_state       = application.get('status') if application else None
@@ -913,6 +912,26 @@ class Welfare(models.Model):
             message = " | 📋 No applications found"
 
         return self._show_notification('Portal Status Check', message, 'info')
+
+    @api.model
+    def _auto_check_portal_status(self):
+        """Poll the portal for completed inquiries on applications already sent there."""
+        company = self.env.company
+        if not company.welfare_url or not company.odoo_auth_key or not company.search_endpoint:
+            _logger.warning("Welfare portal status check skipped: portal URL, auth key, or search endpoint is missing.")
+            return
+
+        records = self.search([
+            ('state', '=', 'send_for_inquiry'),
+            ('is_synced', '=', True),
+            ('portal_application_id', '!=', False),
+        ])
+        for record in records:
+            try:
+                with self.env.cr.savepoint():
+                    record.action_check_portal_status()
+            except Exception:
+                _logger.exception("Could not check Welfare portal status for %s", record.display_name)
     
     def _find_matching_application(self, applications):
         """Find matching application from portal data"""

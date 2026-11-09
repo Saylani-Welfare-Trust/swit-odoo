@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Imports the forms and inquiries waiting on the portal and acknowledges them -->
+    <!-- Automatically checks for submitted forms and completed inquiries, then imports and acknowledges them -->
     <record id="ir_cron_sadqa_jariya_portal_sync" model="ir.cron">
-        <field name="name">Sadqa e Jariya: Portal Sync</field>
+        <field name="name">Sadqa e Jariya: Auto Check Portal Status</field>
         <field name="model_id" ref="model_sadqa_jariya"/>
         <field name="state">code</field>
         <field name="code">model._sync_portal(from_cron=True)</field>
@@ -11,6 +11,7 @@
         <field name="interval_type">minutes</field>
         <field name="numbercall">-1</field>
         <field name="doall" eval="False"/>
+        <field name="active" eval="True"/>
     </record>
 
     <record id="ir_cron_auto_deliver_sadqa_jariya_line" model="ir.cron">
