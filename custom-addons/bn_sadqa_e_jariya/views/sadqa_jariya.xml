@@ -120,8 +120,8 @@
                             <field name="institute_name" readonly="state not in ['draft', 'completed']"/>
                             <field name="address" readonly="state not in ['draft', 'completed']"/>
                             <field name="applicant_location_link" widget="url" readonly="state not in ['draft', 'completed']"/>
-                            <field name="account_title"/>
-                            <field name="account_number"/>
+                            <field name="account_title" required="state == 'completed'"/>
+                            <field name="account_number" required="state == 'completed'"/>
                         </group>
                     </group>
                     <group string="Portal" invisible="state in ['draft', 'completed']">

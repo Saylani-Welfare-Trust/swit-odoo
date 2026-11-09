@@ -241,6 +241,16 @@ class SadqaJariya(models.Model):
             } for product in new_products])
 
     def action_complete(self):
+        for record in self:
+            missing = [
+                label for field_name, label in (
+                    ('account_title', _('Account Title')),
+                    ('account_number', _('Account Number')),
+                )
+                if not (record[field_name] or '').strip()
+            ]
+            if missing:
+                raise ValidationError(_('Please enter the following before completing the application: %s') % ', '.join(missing))
         # Disbursement Items come once the portal form is in (Form Filled), see action_send_for_inquiry
         self.write({'state': 'completed'})
 
