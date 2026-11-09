@@ -74,16 +74,16 @@ class SadqaJariyaReviewWizard(models.TransientModel):
     def action_approve(self):
         self.ensure_one()
         application = self.application_id
-        if application.state == 'committee_approval':
-            if not self.committee_remarks:
-                raise ValidationError(_('Please enter Committee Remarks before approval.'))
-            application.committee_remarks = self.committee_remarks
-            application.action_move_to_hod()
-        elif application.state == 'hod_approve':
+        if application.state == 'hod_approve':
             if not self.hod_remarks:
                 raise ValidationError(_('Please enter HOD Remarks before approval.'))
             application.hod_remarks = self.hod_remarks
-            application.action_move_to_member()
+            application.action_move_to_committee()
+        elif application.state == 'committee_approval':
+            if not self.committee_remarks:
+                raise ValidationError(_('Please enter Committee Remarks before approval.'))
+            application.committee_remarks = self.committee_remarks
+            application.action_committee_decision()
         else:
             raise ValidationError(_('Cannot approve from state: %s') % application.state)
         return {'type': 'ir.actions.act_window_close'}

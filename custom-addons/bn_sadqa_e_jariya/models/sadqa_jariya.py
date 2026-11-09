@@ -31,9 +31,9 @@ order_type_selection = [
 # the portal contract has no correction / reopening / officer reassignment
 REVERT_STATE = {
     'completed': 'draft',
-    'committee_approval': 'inquiry',
-    'hod_approve': 'committee_approval',
-    'mem_approve': 'hod_approve',
+    'hod_approve': 'inquiry',
+    'committee_approval': 'hod_approve',
+    'mem_approve': 'committee_approval',
 }
 
 # Tags required for a corporate/institute Sadqa e Jariya donee.
@@ -244,34 +244,41 @@ class SadqaJariya(models.Model):
         # Disbursement Items come once the portal form is in (Form Filled), see action_send_for_inquiry
         self.write({'state': 'completed'})
 
-    def action_committee_approval(self):
-        self.write({'state': 'committee_approval'})
-        # Every active committee member decides; members can still be removed / added on the Committee Members tab
-        members = self.env['sadqa.jariya.committee.member'].search([])
+    def action_hod_approval(self):
         for record in self:
-            self.env['sadqa.jariya.committee.line'].create([{
-                'application_id': record.id,
-                'member_id': member.id,
-            } for member in members - record.committee_line_ids.member_id])
-
-    def action_move_to_hod(self):
-        for record in self:
-            if not record.committee_line_ids:
-                raise ValidationError(_('Please add the Committee Members before moving to HOD approval!'))
-            pending = record.committee_line_ids.filtered(lambda l: not l.remarks or not (l.is_approved or l.is_rejected))
-            if pending:
-                raise ValidationError(_('Please enter Remarks and tick Approve or Reject for: %s') % ', '.join(pending.member_id.mapped('name')))
-            if not record.committee_remarks:
-                raise ValidationError(_('Please enter Committee Remarks before moving to HOD approval!'))
+            if record.state != 'inquiry':
+                raise ValidationError(_('Only applications in Inquiry can move to HOD Approval.'))
             record.state = 'hod_approve'
             record._add_hod_lines()
             record.message_post(body=_("Application moved to HOD Approval by %s") % self.env.user.name)
 
-    def action_move_to_member(self):
+    def action_move_to_committee(self):
         for record in self:
+            if record.state != 'hod_approve':
+                raise ValidationError(_('Only applications in HOD Approval can move to Committee Approval.'))
             if not record.hod_remarks:
-                raise ValidationError(_('Please enter HOD Remarks!'))
-            # Within the HOD limit the HOD approves, above it the Member does
+                raise ValidationError(_('Please enter HOD Remarks before moving to Committee Approval!'))
+            record.state = 'committee_approval'
+            # Every active committee member decides; members can still be removed / added on the Committee Members tab.
+            members = self.env['sadqa.jariya.committee.member'].search([])
+            self.env['sadqa.jariya.committee.line'].create([{
+                'application_id': record.id,
+                'member_id': member.id,
+            } for member in members - record.committee_line_ids.member_id])
+            record.message_post(body=_("Application moved to Committee Approval by %s") % self.env.user.name)
+
+    def action_committee_decision(self):
+        for record in self:
+            if record.state != 'committee_approval':
+                raise ValidationError(_('Only applications in Committee Approval can be completed.'))
+            if not record.committee_line_ids:
+                raise ValidationError(_('Please add the Committee Members before completing Committee Approval!'))
+            pending = record.committee_line_ids.filtered(lambda l: not l.remarks or not (l.is_approved or l.is_rejected))
+            if pending:
+                raise ValidationError(_('Please enter Remarks and tick Approve or Reject for: %s') % ', '.join(pending.member_id.mapped('name')))
+            if not record.committee_remarks:
+                raise ValidationError(_('Please enter Committee Remarks before completing Committee Approval!'))
+            # Applications within the HOD limit proceed directly; larger ones need Member approval.
             record.state = (
                 'approve'
                 if record.line_ids and record._check_amount_within_hod_limit()
@@ -285,7 +292,7 @@ class SadqaJariya(models.Model):
             if not record.line_ids:
                 raise ValidationError(_('Please add at least one Disbursement Item before final approval!'))
             record.state = 'approve'
-        # HOD lines may all have been disbursed from POS during Final Approval already
+        # HOD lines may already have been disbursed during Final Approval.
         self._auto_disburse_if_all_lines_delivered()
         return self.env.ref('bn_sadqa_e_jariya.action_report_sadqa_jariya_collection').report_action(self)
 
@@ -335,8 +342,8 @@ class SadqaJariya(models.Model):
 
     def action_open_review_wizard(self):
         self.ensure_one()
-        if self.state not in ['committee_approval', 'hod_approve']:
-            raise ValidationError(_('This option is only available in Committee Approval and HOD Approval states.'))
+        if self.state not in ['hod_approve', 'committee_approval']:
+            raise ValidationError(_('This option is only available in HOD Approval and Committee Approval states.'))
         return {
             'name': _('Review Application'),
             'type': 'ir.actions.act_window',

@@ -6,7 +6,7 @@
         <field name="name">Fetch Institution</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
-    <!-- Sadqa e Jariya user: applications, portal, Move to Committee Approval -->
+    <!-- Sadqa e Jariya user: applications, portal, move to HOD approval -->
     <record id="group_institutional_disbursement" model="res.groups">
         <field name="name">Institutional Disbursement</field>
         <field name="category_id" ref="base.module_category_hidden"/>

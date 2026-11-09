@@ -64,15 +64,15 @@
             <form>
                 <header>
                     <button string="Mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
-                    <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" class="btn btn-sm btn-info" invisible="state not in ['draft', 'hod_approve', 'mem_approve'] or not previous_application_id"/>
-                    <button string="Open View" name="action_open_review_wizard" type="object" class="btn-secondary" invisible="state not in ['committee_approval', 'hod_approve']" groups="bn_sadqa_e_jariya.group_sadqa_jariya_committee,bn_sadqa_e_jariya.group_sadqa_jariya_hod"/>
+                    <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" class="btn btn-sm btn-info" invisible="state not in ['draft', 'hod_approve', 'committee_approval', 'mem_approve'] or not previous_application_id"/>
+                    <button string="Open View" name="action_open_review_wizard" type="object" class="btn-secondary" invisible="state not in ['hod_approve', 'committee_approval']" groups="bn_sadqa_e_jariya.group_sadqa_jariya_committee,bn_sadqa_e_jariya.group_sadqa_jariya_hod"/>
                     <!-- Send Form -> Check Portal Status (form filled) -> Send for Inquiry -> Check Portal Status (inquiry done) -->
                     <button string="Send Form" name="action_send_institution_form" type="object" class="oe_highlight" invisible="state != 'completed'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state not in ['form_sent', 'send_for_inquiry']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'form_filled'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
-                    <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
-                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_committee"/>
-                    <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_hod"/>
+                    <button string="Move to HOD Approval" name="action_hod_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Move to Committee Approval" name="action_move_to_committee" type="object" class="oe_highlight" invisible="state != 'hod_approve'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_hod"/>
+                    <button string="Complete Committee Approval" name="action_committee_decision" type="object" class="oe_highlight" invisible="state != 'committee_approval'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_committee"/>
                     <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_member"/>
                     <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve' or order_type != 'recurring'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
                     <!-- Portal steps can't be undone (no reopening / reassignment on the portal) -->
@@ -80,7 +80,7 @@
                     <button string="Reset Portal Password" name="action_reset_portal_password" type="object" invisible="not portal_login or state in ['draft', 'completed']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['draft', 'disbursed', 'reject']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
                     <button string="Print Info" name="action_print_info" type="object" class="btn-secondary"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,completed,form_sent,form_filled,send_for_inquiry,inquiry,committee_approval,hod_approve,mem_approve,approve,disbursed"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,completed,form_sent,form_filled,send_for_inquiry,inquiry,hod_approve,committee_approval,mem_approve,approve,disbursed"/>
                 </header>
                 <sheet>
                     <div class="alert alert-info" role="alert" invisible="not previous_application_id or state != 'draft'">
@@ -96,7 +96,7 @@
                             <field name="donee_domain" invisible="1"/>
                             <field name="employee_category_id" invisible="1"/>
                             <field name="order_type"
-                                   required="state in ['completed', 'form_sent', 'form_filled', 'send_for_inquiry', 'inquiry', 'committee_approval']"
+                                   required="state in ['completed', 'form_sent', 'form_filled', 'send_for_inquiry', 'inquiry', 'hod_approve', 'committee_approval']"
                                    readonly="state in ['hod_approve', 'mem_approve', 'approve', 'recurring', 'disbursed', 'reject']"/>
                             <field name="donee_id"
                                    domain="donee_domain or '[]'"
@@ -214,7 +214,7 @@
                         </page>
 
                         <!-- Inquiry forms filled on the Sadqa e Jariya portal, read-only here -->
-                        <!-- Members come from Master Setup at Move to Committee Approval; decided there, read-only after -->
+                        <!-- Members come from Master Setup when the application moves from HOD to Committee Approval. -->
                         <page name="committee_members_page" string="Committee Members" invisible="state != 'committee_approval' and not committee_line_ids">
                             <field name="committee_member_ids" invisible="1"/>
                             <field name="committee_line_ids" readonly="state != 'committee_approval'" required="state == 'committee_approval'">
