@@ -99,7 +99,7 @@
                                    required="state in ['completed', 'form_sent', 'form_filled', 'send_for_inquiry', 'inquiry', 'hod_approve', 'committee_approval']"
                                    readonly="state in ['hod_approve', 'mem_approve', 'approve', 'recurring', 'disbursed', 'reject']"/>
                             <field name="donee_id"
-                                   domain="donee_domain or '[]'"
+                                   domain="donee_domain"
                                    options="{'no_create': True}"
                                    readonly="state not in ['draft', 'completed']" required="1"/>
                             <!-- Picked any time before Send for Inquiry -->

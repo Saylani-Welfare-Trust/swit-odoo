@@ -1,9 +1,12 @@
 import json
+import logging
 
 from dateutil.relativedelta import relativedelta
 
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 state_selection = [
     ('draft', 'Draft'),
@@ -141,7 +144,14 @@ class SadqaJariya(models.Model):
     def _donee_tag_domain(self, registered=True):
         """Donees with every Sadqa e Jariya tag (Donee, Corporate / Institute, Sadqa-e-Jaria)"""
         domain = [('state', '=', 'register')] if registered else []
-        for tags in self._donee_tag_groups():
+        tag_groups = self._donee_tag_groups()
+        if len(tag_groups) != len(DONEE_TAGS):
+            _logger.error(
+                "Sadqa e Jariya Donee domain is missing a required partner tag; "
+                "no partners will be eligible."
+            )
+            return [('id', '=', False)]
+        for tags in tag_groups:
             domain.append(('category_id', 'in', tags.ids))
         return domain
 
@@ -154,6 +164,18 @@ class SadqaJariya(models.Model):
         domain = json.dumps(self._donee_tag_domain())
         for rec in self:
             rec.donee_domain = domain
+
+    @api.constrains('donee_id')
+    def _check_donee_tags(self):
+        domain = self._donee_tag_domain()
+        for rec in self:
+            if rec.donee_id and not self.env['res.partner'].search_count(
+                [('id', '=', rec.donee_id.id)] + domain
+            ):
+                raise ValidationError(_(
+                    "Select a registered Donee with the Donee, Coorporate / Institute, "
+                    "and Sadqa-e-Jaria tags."
+                ))
 
     @api.depends('donee_id')
     def _compute_previous_application_id(self):
