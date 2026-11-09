@@ -140,7 +140,8 @@ May Allah bless you!
         whatsapp_error = None
         sms_error = None
 
-        if donor.whatsapp:
+        whatsapp_number = donor.whatsapp or donor.mobile or donor.phone
+        if whatsapp_number:
             try:
                 pdf_data = self._generate_din_receipt_pdf()
                 if not pdf_data or not pdf_data.startswith(b'%PDF'):
@@ -150,7 +151,7 @@ May Allah bless you!
                 _logger.info('DIN receipt PDF URL: %s', pdf_url)
 
                 self.env['whatsapp.service'].send_template_message(
-                    donor.whatsapp,
+                    whatsapp_number,
                     pdf_url,
                     attachment.name
                 )
@@ -610,15 +611,17 @@ May Allah bless you!
             dins |= din
 
         try:
-            dins._send_din_notification()
+            notification = dins._send_din_notification()
         except Exception as e:
-            _logger.error('DIN %s: notification step failed: %s', din.name, str(e))
+            _logger.exception('DIN %s: notification step failed', ', '.join(dins.mapped('name')))
+            notification = {'status': 'error', 'message': str(e)}
 
         return {
             "status": "success",
             "origin": ', '.join(dins.mapped('name')),
             "id": din.id,
             "ids": dins.ids,
+            "notification": notification,
         }
     
     def correct_records(self, records):

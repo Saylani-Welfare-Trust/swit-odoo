@@ -77,9 +77,11 @@ patch(ActionScreen.prototype, {
                 if (data.status === 'success') {
                     order.set_source_document(data.origin);
 
-                    this.notification.add(_t("Operation Successful"), {
-                        type: "info",
-                    });
+                    const notification = data.notification;
+                    this.notification.add(
+                        notification?.message || _t("Operation Successful"),
+                        { type: !notification || notification.status === "success" ? "info" : "warning" }
+                    );
 
                     this.cancel();
 
