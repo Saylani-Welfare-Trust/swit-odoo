@@ -32,11 +32,26 @@ class WhatsAppService(models.Model):
 
         response = requests.post(API_URL, headers=headers, json=payload, timeout=30)
 
-        if response.status_code != 200:
+        if not response.ok:
             _logger.error("WhatsApp API Error: %s", response.text)
             raise Exception(response.text)
 
-        _logger.info("WhatsApp sent successfully")
+        try:
+            result = response.json()
+        except ValueError:
+            result = None
+
+        if isinstance(result, dict):
+            status = str(result.get("status") or "").lower()
+            error = result.get("error")
+            if result.get("success") is False or error or status in {
+                "error", "failed", "failure", "rejected",
+            }:
+                message = result.get("message") or error or result
+                _logger.error("WhatsApp provider rejected the message: %s", message)
+                raise Exception(str(message))
+
+        _logger.info("WhatsApp provider accepted the message (HTTP %s)", response.status_code)
         return True
 
     def send_template_message(self, mobile, document_link, filename):
