@@ -616,8 +616,9 @@ May Allah bless you!
 
         return {
             "status": "success",
-            "origin": din.name,
-            "id": din.id
+            "origin": ', '.join(dins.mapped('name')),
+            "id": din.id,
+            "ids": dins.ids,
         }
     
     def correct_records(self, records):

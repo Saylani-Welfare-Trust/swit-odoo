@@ -83,9 +83,10 @@ patch(ActionScreen.prototype, {
 
                     this.cancel();
 
-                    this.report.doAction("bn_donation_in_kind.action_report_donation_in_kind", [
-                        data.id,
-                    ]);
+                    this.report.doAction(
+                        "bn_donation_in_kind.action_report_donation_in_kind_combined",
+                        data.ids || [data.id]
+                    );
                 }
                 this.pos.removeOrder(order);
                 this.pos.add_new_order();

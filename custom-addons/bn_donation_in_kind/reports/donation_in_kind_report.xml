@@ -7,9 +7,24 @@
         <!-- ===================== -->
         <template id="bn_donation_in_kind.donation_in_kind_report">
             <t t-call="web.basic_layout">
-                <t t-foreach="docs" t-as="o">
+                <t t-foreach="docs" t-as="record">
+                    <t t-set="receipt_docs" t-value="record"/>
+                    <t t-call="bn_donation_in_kind.donation_in_kind_receipt_page"/>
+                </t>
+            </t>
+        </template>
+
+        <template id="bn_donation_in_kind.donation_in_kind_combined_report">
+            <t t-call="web.basic_layout">
+                <t t-set="receipt_docs" t-value="docs"/>
+                <t t-call="bn_donation_in_kind.donation_in_kind_receipt_page"/>
+            </t>
+        </template>
+
+        <template id="bn_donation_in_kind.donation_in_kind_receipt_page">
+            <t t-set="o" t-value="receipt_docs[:1]"/>
                     <!-- PAGE WRAPPER -->
-                    <div class="page" t-attf-style="position:relative;#{'' if o_first else ' page-break-before:always;'}">
+                    <div class="page" style="position:relative;">
 
                             <!-- ===== STYLES ===== -->
                             <style>
@@ -80,18 +95,23 @@
                             <!-- ===== BASIC INFO ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>DIK #:</strong> <t t-esc="', '.join(receipt_docs.mapped('name')) or '--'"/></div>
                                     <div name="donor_name"/>
                                     <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                     <div>
                                         <strong>Remarks:</strong>
-                                        <t t-if="o.remarks">
+                                        <t t-set="remarks" t-value="receipt_docs.filtered('remarks')"/>
+                                        <t t-if="remarks">
                                             <t t-set="count" t-value="1"/>
-                                            <t t-foreach="o.remarks.split('-')" t-as="remark">
-                                                <t t-if="remark">
-                                                    <t t-esc="count"/>. <t t-esc="remark or '-'"/>
-                                                    <br/>
-                                                    <t t-set="count" t-value="count + 1"/>
+                                            <t t-foreach="receipt_docs" t-as="record">
+                                                <t t-if="record.remarks">
+                                                    <t t-foreach="record.remarks.split('-')" t-as="remark">
+                                                        <t t-if="remark">
+                                                            <t t-esc="count"/>. <t t-esc="remark or '-'"/>
+                                                            <br/>
+                                                            <t t-set="count" t-value="count + 1"/>
+                                                        </t>
+                                                    </t>
                                                 </t>
                                             </t>
                                         </t>
@@ -120,11 +140,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <t t-foreach="o.donation_in_kind_line_ids" t-as="line">
-                                        <tr>
-                                            <td><t t-esc="line.product_id.display_name"/></td>
-                                            <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
-                                        </tr>
+                                    <t t-foreach="receipt_docs" t-as="record">
+                                        <t t-foreach="record.donation_in_kind_line_ids" t-as="line">
+                                            <tr>
+                                                <td><t t-esc="line.product_id.display_name"/></td>
+                                                <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
+                                            </tr>
+                                        </t>
                                     </t>
                                 </tbody>
                             </table>
@@ -142,14 +164,16 @@
 
                             <div class="row mb-2">
                                 <div class="col-6">
-                                    <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
+                                    <div><strong>DIK #:</strong> <t t-esc="', '.join(receipt_docs.mapped('name')) or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
                                     <div>
                                         <t t-set="count" t-value="1"/>
                                         <strong>Products:</strong>
-                                        <t t-foreach="o.donation_in_kind_line_ids" t-as="l">
-                                            <div><t t-esc="count"/>. <t t-esc="l.product_id.display_name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
-                                            <t t-set="count" t-value="count + 1"/>
+                                        <t t-foreach="receipt_docs" t-as="record">
+                                            <t t-foreach="record.donation_in_kind_line_ids" t-as="l">
+                                                <div><t t-esc="count"/>. <t t-esc="l.product_id.display_name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
+                                                <t t-set="count" t-value="count + 1"/>
+                                            </t>
                                         </t>
                                     </div>
                                 </div>
@@ -167,8 +191,6 @@
                             </div>
 
                     </div>
-                </t>
-            </t>
         </template>
 
         <record id="report_donation_in_kind_paperformat" model="report.paperformat">
@@ -195,13 +217,23 @@
             <field name="paperformat_id" ref="bn_donation_in_kind.report_donation_in_kind_paperformat"/>
         </record>
 
+        <record id="action_report_donation_in_kind_combined" model="ir.actions.report">
+            <field name="name">Combined Donation In Kind Report</field>
+            <field name="model">donation.in.kind</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">bn_donation_in_kind.donation_in_kind_combined_report</field>
+            <field name="report_file">bn_donation_in_kind.donation_in_kind_combined_report</field>
+            <field name="print_report_name">'Donation In Kind Report - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="bn_donation_in_kind.report_donation_in_kind_paperformat"/>
+        </record>
+
         <!-- ===================== -->
         <!-- Donation In Kind Receipt (WhatsApp) -->
         <!-- ===================== -->
         <!-- Same receipt, but with the company banner on top instead of the blank space left for the pre-printed paper -->
         <template id="bn_donation_in_kind.donation_in_kind_whatsapp_report">
             <t t-set="show_company_header" t-value="True"/>
-            <t t-call="bn_donation_in_kind.donation_in_kind_report"/>
+            <t t-call="bn_donation_in_kind.donation_in_kind_combined_report"/>
         </template>
 
         <record id="report_donation_in_kind_whatsapp_paperformat" model="report.paperformat">
