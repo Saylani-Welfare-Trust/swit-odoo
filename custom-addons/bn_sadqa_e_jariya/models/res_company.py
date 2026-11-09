@@ -40,6 +40,3 @@ class ResCompany(models.Model):
     institution_profile_whatsapp_template = portal_setting('institution_profile_whatsapp_template', 'Profile Form WhatsApp Template')
     institution_profile_whatsapp_namespace = portal_setting('institution_profile_whatsapp_namespace', 'Profile Form WhatsApp Namespace', default=NAMESPACE)
     institution_profile_whatsapp_language = portal_setting('institution_profile_whatsapp_language', 'Profile Form WhatsApp Language', default='en')
-
-    # Service product (available in POS) the cashier pays applications with, like Welfare's welfare_product
-    sadqa_jariya_pos_product = portal_setting('sadqa_jariya_pos_product', 'Sadqa e Jariya POS Product')

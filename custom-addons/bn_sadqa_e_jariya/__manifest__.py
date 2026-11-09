@@ -1,6 +1,6 @@
 {
     'name': 'Sadqa e Jariya',
-    'version': '2.0',
+    'version': '2.1',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',

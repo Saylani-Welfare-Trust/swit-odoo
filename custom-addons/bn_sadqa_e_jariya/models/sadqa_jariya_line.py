@@ -65,7 +65,7 @@ class SadqaJariyaLine(models.Model):
     total_amount = fields.Float('Total Amount', compute='_compute_total_amount', store=True, readonly=False)
     manual_total = fields.Boolean(default=False)
     fixed_amount_check = fields.Boolean('Fixed Amount Check', compute='_compute_fixed_amount_check')
-    is_cash_category = fields.Boolean('Is Cash Category', compute='_compute_is_cash_category')
+    is_bank_category = fields.Boolean('Is Bank Category', compute='_compute_is_bank_category')
     is_collection_point_readonly = fields.Boolean('Is Collection Point Readonly', compute='_compute_is_collection_point_readonly')
     show_deliver_button = fields.Boolean('Show Deliver Button', compute='_compute_show_deliver_button')
 
@@ -125,14 +125,14 @@ class SadqaJariyaLine(models.Model):
             rec.fixed_amount_check = rec.disbursement_category_id.name == "In Kind"
 
     @api.depends('disbursement_category_id')
-    def _compute_is_cash_category(self):
+    def _compute_is_bank_category(self):
         for rec in self:
-            rec.is_cash_category = rec.disbursement_category_id.name == "Cash"
+            rec.is_bank_category = rec.disbursement_category_id.name == "Bank"
 
     @api.depends('disbursement_category_id')
     def _compute_is_collection_point_readonly(self):
         for rec in self:
-            rec.is_collection_point_readonly = rec.disbursement_category_id.name == "In Kind"
+            rec.is_collection_point_readonly = rec.disbursement_category_id.name in ("Bank", "In Kind")
 
     @api.depends('disbursement_category_id', 'state', 'application_id.state', 'application_id.order_type')
     def _compute_show_deliver_button(self):
@@ -159,16 +159,19 @@ class SadqaJariyaLine(models.Model):
 
     @api.onchange('disbursement_category_id')
     def _onchange_disbursement_category_id(self):
-        """Branch collection for In Kind, quantity is read-only for Cash"""
+        """In Kind is delivered from a branch; Bank lines are paid through Accounting."""
         if self.disbursement_category_id.name == 'In Kind':
             self.collection_point = 'branch'
-        if self.disbursement_category_id.name == 'Cash':
+        if self.disbursement_category_id.name == 'Bank':
+            self.collection_point = 'bank'
             self.quantity = 1
 
     def _in_kind_vals(self, vals):
         category = self.env['sadqa.jariya.disbursement.category'].browse(vals.get('disbursement_category_id'))
         if category.name == 'In Kind':
             vals['collection_point'] = 'branch'
+        elif category.name == 'Bank':
+            vals['collection_point'] = 'bank'
         return vals
 
     @api.model_create_multi
@@ -205,12 +208,12 @@ class SadqaJariyaLine(models.Model):
                 _logger.exception("Could not create delivery for Sadqa e Jariya %s line %s", line.application_id.name, line.id)
 
     @api.model
-    def _auto_create_bills_for_cash_bank(self):
-        """Scheduled action: bills for Cash lines collected at the bank on their collection date"""
+    def _auto_create_bank_bills(self):
+        """Scheduled action: bills for Bank lines due on their collection date"""
         lines = self.search([
             ('collection_date', '=', fields.Date.today()),
             ('state', '=', 'draft'),
-            ('disbursement_category_id.name', '=', 'Cash'),
+            ('disbursement_category_id.name', '=', 'Bank'),
             ('collection_point', '=', 'bank'),
             ('bill_id', '=', False),
             ('application_id.state', '=', 'approve'),
@@ -225,7 +228,7 @@ class SadqaJariyaLine(models.Model):
                 _logger.exception("Could not create bill for Sadqa e Jariya line %s", line.id)
 
     def _create_bill(self):
-        """Vendor bill to the donee, paid from Accounting (Cash + Bank collection)"""
+        """Vendor bill to the donee, paid from Accounting."""
         self.ensure_one()
         if not self.application_id.donee_id:
             return

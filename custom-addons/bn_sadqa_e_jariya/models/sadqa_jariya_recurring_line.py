@@ -71,6 +71,8 @@ class SadqaJariyaRecurringLine(models.Model):
     def _onchange_disbursement_category_id(self):
         if self.disbursement_category_id.name == 'In Kind':
             self.collection_point = 'branch'
+        elif self.disbursement_category_id.name == 'Bank':
+            self.collection_point = 'bank'
 
     @api.model
     def _auto_mark_as_delivered_today(self):
@@ -91,12 +93,12 @@ class SadqaJariyaRecurringLine(models.Model):
                 _logger.exception("Could not create delivery for Sadqa e Jariya %s recurring line %s", line.name, line.id)
 
     @api.model
-    def _auto_create_bills_for_cash_bank(self):
-        """Scheduled action: bills for recurring Cash lines collected at the bank on their collection date"""
+    def _auto_create_bank_bills(self):
+        """Scheduled action: bills for recurring Bank lines due on their collection date"""
         lines = self.search([
             ('collection_date', '=', fields.Date.today()),
             ('state', '=', 'draft'),
-            ('disbursement_category_id.name', '=', 'Cash'),
+            ('disbursement_category_id.name', '=', 'Bank'),
             ('collection_point', '=', 'bank'),
             ('bill_id', '=', False),
             # recurring lines exist once Create Recurring Orders moved the application to Recurring

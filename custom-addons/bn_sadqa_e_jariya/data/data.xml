@@ -16,9 +16,9 @@
             <field name="name">Sadqa e Jariya Assigned Officer (Marfat)</field>
         </record>
 
-        <!-- Cash lines are paid at POS (branch) or by bill (bank), In Kind lines are delivered from stock -->
+        <!-- Bank lines are paid through Accounting, In Kind lines are delivered from stock -->
         <record id="disbursement_category_cash" model="sadqa.jariya.disbursement.category">
-            <field name="name">Cash</field>
+            <field name="name">Bank</field>
         </record>
         <record id="disbursement_category_in_kind" model="sadqa.jariya.disbursement.category">
             <field name="name">In Kind</field>

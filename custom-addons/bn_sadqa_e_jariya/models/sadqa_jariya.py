@@ -233,7 +233,7 @@ class SadqaJariya(models.Model):
     def _add_hod_lines(self):
         """Add an HOD line for every HOD product that has none yet (manual lines of the same product are separate)."""
         hod_products = self.env['product.product'].search([('product_tmpl_id.is_sadqa_jariya_hod', '=', True)])
-        cash_category = self.env['sadqa.jariya.disbursement.category'].search([('name', '=', 'Cash')], limit=1)
+        bank_category = self.env['sadqa.jariya.disbursement.category'].search([('name', '=', 'Bank')], limit=1)
         for record in self:
             new_products = hod_products - record.line_ids.filtered('is_hod').product_id
             if not new_products:
@@ -242,9 +242,8 @@ class SadqaJariya(models.Model):
                 'application_id': record.id,
                 'product_id': product.id,
                 'is_hod': True,
-                'disbursement_category_id': cash_category.id,
-                'collection_point': 'branch',
-                # POS only picks lines due this month
+                'disbursement_category_id': bank_category.id,
+                'collection_point': 'bank',
                 'collection_date': fields.Date.context_today(record),
             } for product in new_products])
 
@@ -271,8 +270,6 @@ class SadqaJariya(models.Model):
                 raise ValidationError(_('Please enter Remarks and tick Approve or Reject for: %s') % ', '.join(pending.member_id.mapped('name')))
             if not record.committee_remarks:
                 raise ValidationError(_('Please enter Committee Remarks before moving to HOD approval!'))
-            if not record.line_ids:
-                raise ValidationError(_('Please add at least one Disbursement Item before HOD approval!'))
             record.state = 'hod_approve'
             record._add_hod_lines()
             record.message_post(body=_("Application moved to HOD Approval by %s") % self.env.user.name)
@@ -282,12 +279,18 @@ class SadqaJariya(models.Model):
             if not record.hod_remarks:
                 raise ValidationError(_('Please enter HOD Remarks!'))
             # Within the HOD limit the HOD approves, above it the Member does
-            record.state = 'approve' if record._check_amount_within_hod_limit() else 'mem_approve'
+            record.state = (
+                'approve'
+                if record.line_ids and record._check_amount_within_hod_limit()
+                else 'mem_approve'
+            )
 
     def action_approve(self):
         for record in self:
             if not record.member_remarks:
                 raise ValidationError(_('Please enter Member Remarks!'))
+            if not record.line_ids:
+                raise ValidationError(_('Please add at least one Disbursement Item before final approval!'))
             record.state = 'approve'
         # HOD lines may all have been disbursed from POS during Final Approval already
         self._auto_disburse_if_all_lines_delivered()

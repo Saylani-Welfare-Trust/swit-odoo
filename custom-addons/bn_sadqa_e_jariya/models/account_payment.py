@@ -21,7 +21,7 @@ class AccountPaymentRegister(models.TransientModel):
 
     def action_create_payments(self):
         res = super().action_create_payments()
-        # Cash + Bank lines are disbursed once their bill is paid
+        # Bank lines are disbursed once their bill is paid
         for lines in self._sadqa_jariya_lines():
             lines.filtered(lambda l: l.state == 'delivered').action_disbursed()
         return res

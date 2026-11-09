@@ -7,7 +7,7 @@ class SadqaJariyaDisbursementCategory(models.Model):
     _name = 'sadqa.jariya.disbursement.category'
     _description = 'Sadqa e Jariya Disbursement Category'
 
-    # 'Cash' and 'In Kind' drive the payout (bills / deliveries), matched by name
+    # 'Bank' and 'In Kind' drive the payout (bills / deliveries), matched by name
     name = fields.Char('Name', required=True)
 
 
