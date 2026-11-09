@@ -1,34 +1,28 @@
 from odoo import api, fields, models
 
-from .sadqa_jariya_masjid import SadqaJariyaMasjid
-from .sadqa_jariya_madrasa import SadqaJariyaMadrasa
-from .sadqa_jariya_construction import SadqaJariyaConstruction
-from .sadqa_jariya_flood import SadqaJariyaFlood
+from .sadqa_jariya_form import FIELD_TYPES, FORM_SECTIONS, field_name
 
-# The imported portal form is shown in its category tab as fields of the application
+# The imported portal forms are shown in their tabs as fields of the application
 # (<prefix>_<field>, related to the form record), not as a list to open
 FORM_TABS = {
-    'masjid': SadqaJariyaMasjid,
-    'madrasa': SadqaJariyaMadrasa,
-    'construction': SadqaJariyaConstruction,
-    'flood': SadqaJariyaFlood,
+    'donee_form': ('donee', 'Donee Form'),
+    'officer_form': ('officer', 'Officer Form'),
 }
 
 
 def _form_tab_attrs():
     attrs = {'_inherit': 'sadqa.jariya', '__module__': __name__}
-    for prefix, detail in FORM_TABS.items():
-        attrs[f'{prefix}_id'] = fields.Many2one(detail._name, string=detail._description, compute='_compute_form_tab_ids')
-        form_fields = set(detail._portal_form_fields.values())
-        for name, field in vars(detail).items():
-            if name in form_fields:
-                attrs[f'{prefix}_{name}'] = type(field)(related=f'{prefix}_id.{name}', string=field.args.get('string'))
+    for prefix, (_submission, string) in FORM_TABS.items():
+        attrs[f'{prefix}_id'] = fields.Many2one('sadqa.jariya.form', string=string, compute='_compute_form_tab_ids')
+        for section in FORM_SECTIONS:
+            for key, label, field_type in section:
+                attrs[f'{prefix}_{field_name(key)}'] = FIELD_TYPES[field_type](related=f'{prefix}_id.{field_name(key)}', string=label)
 
-    @api.depends(*(f'{prefix}_ids' for prefix in FORM_TABS))
+    @api.depends('form_ids.submission')
     def _compute_form_tab_ids(self):
         for rec in self:
-            for prefix in FORM_TABS:
-                rec[f'{prefix}_id'] = rec[f'{prefix}_ids'][:1]
+            for prefix, (submission, _string) in FORM_TABS.items():
+                rec[f'{prefix}_id'] = rec.form_ids.filtered(lambda f: f.submission == submission)[:1]
 
     attrs['_compute_form_tab_ids'] = _compute_form_tab_ids
     return attrs

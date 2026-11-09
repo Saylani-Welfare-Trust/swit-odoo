@@ -4,10 +4,7 @@ access_sadqa_jariya_line,sadqa.jariya.line,model_sadqa_jariya_line,base.group_us
 access_sadqa_jariya_recurring_line,sadqa.jariya.recurring.line,model_sadqa_jariya_recurring_line,base.group_user,1,1,1,1
 access_sadqa_jariya_document,sadqa.jariya.document,model_sadqa_jariya_document,base.group_user,1,1,1,1
 access_sadqa_jariya_inquiry_report,sadqa.jariya.inquiry.report,model_sadqa_jariya_inquiry_report,base.group_user,1,1,1,1
-access_sadqa_jariya_masjid,sadqa.jariya.masjid,model_sadqa_jariya_masjid,base.group_user,1,1,1,1
-access_sadqa_jariya_madrasa,sadqa.jariya.madrasa,model_sadqa_jariya_madrasa,base.group_user,1,1,1,1
-access_sadqa_jariya_construction,sadqa.jariya.construction,model_sadqa_jariya_construction,base.group_user,1,1,1,1
-access_sadqa_jariya_flood,sadqa.jariya.flood,model_sadqa_jariya_flood,base.group_user,1,1,1,1
+access_sadqa_jariya_form,sadqa.jariya.form,model_sadqa_jariya_form,base.group_user,1,1,1,1
 access_sadqa_jariya_fetch_log,sadqa.jariya.fetch.log,model_sadqa_jariya_fetch_log,base.group_user,1,1,1,1
 access_sadqa_jariya_disbursement_category,sadqa.jariya.disbursement.category,model_sadqa_jariya_disbursement_category,base.group_user,1,0,0,0
 access_sadqa_jariya_disbursement_category_master_setup,sadqa.jariya.disbursement.category master setup,model_sadqa_jariya_disbursement_category,bn_master_setup.master_setup_group,1,1,1,1

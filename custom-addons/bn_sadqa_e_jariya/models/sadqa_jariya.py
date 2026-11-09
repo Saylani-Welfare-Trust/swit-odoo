@@ -51,21 +51,6 @@ FORM_KINDS = {
     'flood': 'flood-institute',
 }
 
-# Institution name / address keys of each portal form
-FORM_HEADER_KEYS = {
-    'masjid': ('masjidName', 'address'),
-    'madrasa': ('jamiaName', 'fullAddress'),
-    'construction': ('instituteName', 'address'),
-    'flood': ('instituteName', 'address'),
-}
-
-# institution_category -> One2many holding the imported form
-FORM_DETAIL_FIELDS = {
-    'masjid': 'masjid_ids',
-    'madrasa': 'madrasa_ids',
-    'construction': 'construction_ids',
-    'flood': 'flood_ids',
-}
 
 
 class SadqaJariya(models.Model):
@@ -102,6 +87,11 @@ class SadqaJariya(models.Model):
         ('flood', 'Flood Affected'),
     ], string='Institution Category', tracking=True)
     subcategory = fields.Char('Subcategory', help="Assistance type sent to the portal, e.g. masjid-food. Not sent for Flood Affected.")
+    # portal institutionType: the Masjid / Madrasa section of the form, chosen for Construction and Flood Affected
+    institution_type = fields.Selection([
+        ('masjid', 'Masjid'),
+        ('madrasa', 'Madrasa'),
+    ], string='Institution Type', compute='_compute_institution_type', store=True, readonly=False, tracking=True)
 
     # Sent to the portal before Send Form (locked for the donee there), then filled from the form
     institute_name = fields.Char('Institution Name')
@@ -131,10 +121,8 @@ class SadqaJariya(models.Model):
     committee_line_ids = fields.One2many('sadqa.jariya.committee.line', 'application_id', string='Committee Members')
     # members already on the tab, left out of the Member dropdown
     committee_member_ids = fields.Many2many('sadqa.jariya.committee.member', compute='_compute_committee_member_ids')
-    masjid_ids = fields.One2many('sadqa.jariya.masjid', 'application_id', string='Masjid Details')
-    madrasa_ids = fields.One2many('sadqa.jariya.madrasa', 'application_id', string='Madrasa Details')
-    construction_ids = fields.One2many('sadqa.jariya.construction', 'application_id', string='Construction Details')
-    flood_ids = fields.One2many('sadqa.jariya.flood', 'application_id', string='Flood Affected Details')
+    # the donee's portal form and the inquiry officer's own one
+    form_ids = fields.One2many('sadqa.jariya.form', 'application_id', string='Portal Forms')
 
     previous_application_id = fields.Many2one(
         'sadqa.jariya',
@@ -187,11 +175,22 @@ class SadqaJariya(models.Model):
                 vals['name'] = self.env['ir.sequence'].sudo().next_by_code('sadqa.jariya') or _('New')
         return super().create(vals_list)
 
-    def _form_details(self):
-        """Imported portal form of the application's category"""
-        self.ensure_one()
-        field_name = FORM_DETAIL_FIELDS.get(self.institution_category)
-        return self[field_name] if field_name else self.env['sadqa.jariya.masjid']
+    @api.depends('institution_category')
+    def _compute_institution_type(self):
+        for rec in self:
+            if rec.institution_category in ('masjid', 'madrasa'):
+                rec.institution_type = rec.institution_category
+            else:
+                rec.institution_type = rec.institution_type
+
+    @api.onchange('donee_id')
+    def _onchange_donee_id_institution(self):
+        # the donee is the institution: its name / address are sent as the form's locked basics
+        donee = self.donee_id
+        if donee and not self.institute_name:
+            self.institute_name = donee.name
+        if donee and not self.address:
+            self.address = ', '.join(part for part in (donee.street, donee.street2, donee.city) if part) or False
 
     def _show_notification(self, title, message, type='info'):
         return {

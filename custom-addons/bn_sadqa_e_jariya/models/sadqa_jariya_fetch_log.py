@@ -6,7 +6,7 @@ import requests
 from odoo import models, fields, _
 from odoo.exceptions import UserError
 
-from .sadqa_jariya import FORM_KINDS, FORM_HEADER_KEYS, FORM_DETAIL_FIELDS
+from .sadqa_jariya import FORM_KINDS
 
 _logger = logging.getLogger(__name__)
 
@@ -76,9 +76,9 @@ class SadqaJariyaFetchLog(models.Model):
             'target': 'current',
         }
 
-    def _portal_form_vals(self, model_name, form):
-        """Values of a detail model for the form keys it maps in _portal_form_fields, only the keys sent"""
-        Model = self.env[model_name]
+    def _portal_form_vals(self, form):
+        """sadqa.jariya.form values of a portal form (flat camelCase keys), only the keys sent"""
+        Model = self.env['sadqa.jariya.form']
         vals = {}
         for key, field_name in Model._portal_form_fields.items():
             if key not in form:
@@ -98,32 +98,43 @@ class SadqaJariyaFetchLog(models.Model):
             vals[field_name] = value
         return vals
 
+    def _create_portal_form(self, application, submission, form, institution_type, submitted_at):
+        self.env['sadqa.jariya.form'].create(dict(
+            self._portal_form_vals(form),
+            application_id=application.id,
+            submission=submission,
+            institution_type=institution_type if institution_type in ('masjid', 'madrasa') else application.institution_type,
+            submitted_at=self._as_datetime(submitted_at),
+        ))
+
     def _import_form_row(self, application, row):
         """Submitted form of a getSubmittedForms row, True when imported now (False: imported before)"""
         category = FORM_KIND_CATEGORIES.get(row.get('formKind')) or application.institution_category
-        if category not in FORM_DETAIL_FIELDS:
+        if category not in FORM_KINDS:
             raise UserError(_("Unknown form kind %s") % row.get('formKind'))
-        application.institution_category = category
-        if application._form_details():
+        if application.donee_form_id:
             return False
 
         form = row.get('form') or {}
-        name_key, address_key = FORM_HEADER_KEYS[category]
+        base_info = row.get('baseInfo') or {}
         vals = {
+            'institution_category': category,
             'portal_application_id': row.get('id') or application.portal_application_id,
             'portal_status': row.get('status'),
             'subcategory': row.get('subCategory') or application.subcategory,
         }
-        for key, field_name in ((name_key, 'institute_name'), (address_key, 'address'), ('accountTitle', 'account_title'),
+        if row.get('institutionType') in ('masjid', 'madrasa'):
+            vals['institution_type'] = row['institutionType']
+        for key, field_name in (('institutionName', 'institute_name'), ('institutionAddress', 'address'),
                                 ('accountNumber', 'account_number'), ('applicantLocationLink', 'applicant_location_link')):
-            if form.get(key) not in (None, ''):
-                vals[field_name] = str(form[key])
+            value = form.get(key) if form.get(key) not in (None, '') else base_info.get(key)
+            if value not in (None, ''):
+                vals[field_name] = str(value)
         if application.state in ('completed', 'form_sent'):
             vals['state'] = 'form_filled'
         application.write(vals)
 
-        detail_model = application._fields[FORM_DETAIL_FIELDS[category]].comodel_name
-        self.env[detail_model].create(dict(self._portal_form_vals(detail_model, form), application_id=application.id))
+        self._create_portal_form(application, 'donee', form, row.get('institutionType'), row.get('submittedAt'))
         application.message_post(body=_("📝 Form submitted by the donee on the portal (%s), imported.")
                                  % (row.get('submittedAt') or '').replace('T', ' ')[:16])
         self._import_donee_picture(application.donee_id, row)
@@ -169,6 +180,9 @@ class SadqaJariyaFetchLog(models.Model):
             return False
         officer = inquiry.get('officer') or {}
         code = officer.get('employeeId')
+        # the officer's own completed form (null for applications made before the three-section forms)
+        if isinstance(inquiry.get('form'), dict) and not application.officer_form_id:
+            self._create_portal_form(application, 'officer', inquiry['form'], row.get('institutionType'), inquiry.get('completedAt'))
         employee = self.env['hr.employee'].search([('barcode', '=', code)], limit=1) if code else self.env['hr.employee']
         self.env['sadqa.jariya.inquiry.report'].create({
             'application_id': application.id,

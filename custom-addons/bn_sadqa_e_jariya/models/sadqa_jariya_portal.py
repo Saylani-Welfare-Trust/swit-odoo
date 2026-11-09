@@ -9,7 +9,7 @@ import requests
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
-from .sadqa_jariya import FORM_KINDS, FORM_HEADER_KEYS
+from .sadqa_jariya import FORM_KINDS
 
 _logger = logging.getLogger(__name__)
 
@@ -121,14 +121,19 @@ class SadqaJariya(models.Model):
         return vals
 
     def _portal_base_info(self):
-        """Basic information known in Odoo, locked for the donee on the portal"""
-        name_key, address_key = FORM_HEADER_KEYS[self.institution_category]
+        """Basic information known in Odoo, locked for the donee and the officer on the portal
+        (the portal defaults cnicNumber / contactNumber / whatsappNumber from the donee itself)"""
+        donee = self.donee_id
         values = {
-            'date': fields.Date.to_string(self.date) if self.date else False,
-            name_key: self.institute_name,
-            address_key: self.address,
-            'fatherName': self.donee_id.father_name,
-            'phoneNumber': self.donee_id.phone,
+            'requestDate': fields.Date.to_string(self.date) if self.date else False,
+            # the donee is the institution
+            'institutionName': self.institute_name or donee.name,
+            'institutionAddress': self.address or ', '.join(part for part in (donee.street, donee.street2, donee.city) if part),
+            # the portal would default it to the donee name, i.e. the institution's
+            'responsiblePersonName': donee.sadqa_contact_person,
+            'accountNumber': self.account_number,
+            'fatherName': donee.father_name,
+            'phoneNumber': donee.phone,
             'applicantLocationLink': self.applicant_location_link,
         }
         return {key: value for key, value in values.items() if value}
@@ -177,6 +182,8 @@ class SadqaJariya(models.Model):
             raise UserError(_("Only completed applications can be sent the form."))
         if not self.institution_category:
             raise UserError(_("Select the Institution Category first, it decides which form the donee fills."))
+        if not self.institution_type:
+            raise UserError(_("Select the Institution Type (Masjid / Madrasa) first, it decides the institution section of the form."))
         donee = self.donee_id
         donee_vals = self._portal_donee()
         if len(donee_vals['cnic']) != 13:
@@ -195,6 +202,7 @@ class SadqaJariya(models.Model):
             'donee': donee_vals,
             'credentials': {'email': login, 'password': password},
             'formKind': FORM_KINDS[self.institution_category],
+            'institutionType': self.institution_type,
             'baseInfo': self._portal_base_info(),
         }
         # Flood institute is routed as flood-inquiry / institute by the portal
