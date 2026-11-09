@@ -15,7 +15,7 @@ class AccountPayment(models.Model):
     _inherit = "account.payment"
 
     
-    ibft_status = fields.Selection(selection=IBFT_STATUS, string="IBFT Status", default="pending", tracking=True)
+    ibft_status = fields.Selection(selection=IBFT_STATUS, string="Printing Status", default="pending", tracking=True)
 
 
     def action_confirm_ibft(self):
