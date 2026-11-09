@@ -29,13 +29,12 @@
                 <field name="portal_application_id"/>
                 <filter name="masjid" string="Masjid" domain="[('institution_category', '=', 'masjid')]"/>
                 <filter name="madrasa" string="Madrasa" domain="[('institution_category', '=', 'madrasa')]"/>
-                <filter name="flood" string="Flood Affected" domain="[('institution_category', '=', 'flood')]"/>
                 <separator/>
                 <filter name="to_approve" string="Waiting for Approval" domain="[('state', 'in', ['committee_approval', 'hod_approve', 'mem_approve'])]"/>
                 <filter name="to_pay" string="To Disburse" domain="[('state', 'in', ['approve', 'recurring'])]"/>
                 <group expand="0" string="Group By">
                     <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
-                    <filter name="group_category" string="Institution Category" context="{'group_by': 'institution_category'}"/>
+                    <filter name="group_category" string="Institution Type" context="{'group_by': 'institution_category'}"/>
                 </group>
             </search>
         </field>
@@ -106,11 +105,8 @@
                             <!-- Picked any time before Send for Inquiry -->
                             <field name="employee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state not in ['draft', 'completed', 'form_sent', 'form_filled']"/>
                             <field name="institution_category" widget="radio" readonly="state not in ['draft', 'completed']" required="state == 'completed'"/>
-                            <!-- the Masjid / Madrasa section of the portal form: follows Masjid / Madrasa, chosen for Construction / Flood Affected -->
-                            <field name="institution_type" widget="radio" invisible="not institution_category"
-                                   readonly="state not in ['draft', 'completed'] or institution_category in ['masjid', 'madrasa']"
-                                   required="state == 'completed' and institution_category in ['construction', 'flood']"/>
-                            <field name="subcategory" readonly="state not in ['draft', 'completed']" invisible="institution_category == 'flood'"/>
+                            <field name="institution_type" invisible="1"/>
+                            <field name="subcategory" readonly="state not in ['draft', 'completed']"/>
                             <field name="cnic_no"/>
                             <!-- Not required here: Open View saves the form first, the approval buttons check them -->
                             <field name="committee_remarks" readonly="state != 'committee_approval'"/>
@@ -344,12 +340,12 @@
                                     <field name="donee_form_prev_inquiry_date"/>
                                 </group>
                             </group>
-                            <group string="Flood Situation" invisible="institution_category != 'flood'">
+                            <group string="Flood Situation" invisible="not donee_form_short_intro and not donee_form_status_before_flood and not donee_form_status_after_flood">
                                 <field name="donee_form_short_intro"/>
                                 <field name="donee_form_status_before_flood"/>
                                 <field name="donee_form_status_after_flood"/>
                             </group>
-                            <group string="Construction" invisible="institution_category not in ('construction', 'flood')">
+                            <group string="Construction" invisible="not donee_form_total_estimate and not donee_form_cost_iron_steel and not donee_form_cost_cement and not donee_form_cost_labor and not donee_form_current_work and not donee_form_remaining_work">
                                 <group>
                                     <field name="donee_form_total_estimate"/>
                                     <field name="donee_form_cost_iron_steel"/>
@@ -476,12 +472,12 @@
                                     <field name="officer_form_prev_inquiry_date"/>
                                 </group>
                             </group>
-                            <group string="Flood Situation" invisible="institution_category != 'flood'">
+                            <group string="Flood Situation" invisible="not officer_form_short_intro and not officer_form_status_before_flood and not officer_form_status_after_flood">
                                 <field name="officer_form_short_intro"/>
                                 <field name="officer_form_status_before_flood"/>
                                 <field name="officer_form_status_after_flood"/>
                             </group>
-                            <group string="Construction" invisible="institution_category not in ('construction', 'flood')">
+                            <group string="Construction" invisible="not officer_form_total_estimate and not officer_form_cost_iron_steel and not officer_form_cost_cement and not officer_form_cost_labor and not officer_form_current_work and not officer_form_remaining_work">
                                 <group>
                                     <field name="officer_form_total_estimate"/>
                                     <field name="officer_form_cost_iron_steel"/>

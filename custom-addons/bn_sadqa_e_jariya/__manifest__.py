@@ -1,11 +1,11 @@
 {
     'name': 'Sadqa e Jariya',
-    'version': '2.2',
+    'version': '2.3',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Sadqa e Jariya',
-    'summary': 'Institution disbursement (masjid, madrasa, flood affected) with its own portal, approvals and payout',
+    'summary': 'Institution disbursement (masjid and madrasa) with its own portal, approvals and payout',
     'depends': [
         'account',
         'stock',

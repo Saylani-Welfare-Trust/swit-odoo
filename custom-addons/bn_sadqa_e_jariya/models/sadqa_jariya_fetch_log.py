@@ -14,8 +14,9 @@ _logger = logging.getLogger(__name__)
 # (not in the contract yet: profileImage is the old portal's donee photo)
 PICTURE_KEYS = ('contactPersonImage', 'profileImage')
 
-# portal formKind -> institution_category
+# portal formKind -> institution type
 FORM_KIND_CATEGORIES = {form_kind: category for category, form_kind in FORM_KINDS.items()}
+LEGACY_FORM_KINDS = {'construction', 'flood-institute'}
 
 
 class SadqaJariyaFetchLog(models.Model):
@@ -109,7 +110,11 @@ class SadqaJariyaFetchLog(models.Model):
 
     def _import_form_row(self, application, row):
         """Submitted form of a getSubmittedForms row, True when imported now (False: imported before)"""
-        category = FORM_KIND_CATEGORIES.get(row.get('formKind')) or application.institution_category
+        form_kind = row.get('formKind')
+        category = FORM_KIND_CATEGORIES.get(form_kind)
+        if not category and form_kind in LEGACY_FORM_KINDS:
+            category = row.get('institutionType') or application.institution_type
+        category = category or application.institution_category
         if category not in FORM_KINDS:
             raise UserError(_("Unknown form kind %s") % row.get('formKind'))
         if application.donee_form_id:

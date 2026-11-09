@@ -181,9 +181,11 @@ class SadqaJariya(models.Model):
         if self.state != 'completed':
             raise UserError(_("Only completed applications can be sent the form."))
         if not self.institution_category:
-            raise UserError(_("Select the Institution Category first, it decides which form the donee fills."))
+            raise UserError(_("Select the Institution Type first, it decides which form the donee fills."))
         if not self.institution_type:
             raise UserError(_("Select the Institution Type (Masjid / Madrasa) first, it decides the institution section of the form."))
+        if self.institution_category not in FORM_KINDS:
+            raise UserError(_("Assistance type is selected through Disbursement Items; choose Masjid or Madrasa as the Institution Type."))
         donee = self.donee_id
         donee_vals = self._portal_donee()
         if len(donee_vals['cnic']) != 13:
@@ -205,8 +207,7 @@ class SadqaJariya(models.Model):
             'institutionType': self.institution_type,
             'baseInfo': self._portal_base_info(),
         }
-        # Flood institute is routed as flood-inquiry / institute by the portal
-        if self.subcategory and self.institution_category != 'flood':
+        if self.subcategory:
             payload['subCategory'] = self.subcategory
         result = self._portal_call('createApplication', payload) or {}
 

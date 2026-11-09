@@ -30,7 +30,7 @@
                                 </div>
                                 <div class="flex-column">
                                     <div class="flex-row"><div class="flex-label">Institution:</div><div class="flex-value"><t t-esc="application.institute_name"/></div></div>
-                                    <div class="flex-row"><div class="flex-label">Category:</div><div class="flex-value"><span t-field="application.institution_category"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Institution Type:</div><div class="flex-value"><span t-field="application.institution_category"/></div></div>
                                     <div class="flex-row"><div class="flex-label">Order Type:</div><div class="flex-value"><span t-field="application.order_type"/></div></div>
                                     <div class="flex-row"><div class="flex-label">State:</div><div class="flex-value"><span t-field="application.state"/></div></div>
                                 </div>

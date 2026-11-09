@@ -43,12 +43,10 @@ DONEE_TAGS = (
     'bn_sadqa_e_jariya.sadqa_jariya_partner_category',
 )
 
-# institution_category -> portal formKind
+# institution type -> portal formKind
 FORM_KINDS = {
     'masjid': 'masjid',
     'madrasa': 'madrasa',
-    'construction': 'construction',
-    'flood': 'flood-institute',
 }
 
 
@@ -83,11 +81,9 @@ class SadqaJariya(models.Model):
     institution_category = fields.Selection([
         ('masjid', 'Masjid'),
         ('madrasa', 'Madrasa'),
-        ('construction', 'Construction'),
-        ('flood', 'Flood Affected'),
-    ], string='Institution Category', tracking=True)
-    subcategory = fields.Char('Subcategory', help="Assistance type sent to the portal, e.g. masjid-food. Not sent for Flood Affected.")
-    # portal institutionType: the Masjid / Madrasa section of the form, chosen for Construction and Flood Affected
+    ], string='Institution Type', tracking=True)
+    subcategory = fields.Char('Subcategory', help="Assistance type sent to the portal, e.g. masjid-food.")
+    # Portal form section; follows the Masjid / Madrasa institution category.
     institution_type = fields.Selection([
         ('masjid', 'Masjid'),
         ('madrasa', 'Madrasa'),
@@ -178,10 +174,7 @@ class SadqaJariya(models.Model):
     @api.depends('institution_category')
     def _compute_institution_type(self):
         for rec in self:
-            if rec.institution_category in ('masjid', 'madrasa'):
-                rec.institution_type = rec.institution_category
-            else:
-                rec.institution_type = rec.institution_type
+            rec.institution_type = rec.institution_category or False
 
     @api.onchange('donee_id')
     def _onchange_donee_id_institution(self):
