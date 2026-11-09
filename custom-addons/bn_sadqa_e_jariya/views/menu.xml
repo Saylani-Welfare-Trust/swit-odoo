@@ -26,7 +26,7 @@
         id="sadqa_e_jariya_menu"
         name="Sadqa e Jariya"
         web_icon="bn_sadqa_e_jariya,static/description/icon.png"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.group_fetch_institution,bn_sadqa_e_jariya.group_sadqa_jariya_marfat_officer,bn_sadqa_e_jariya.group_sadqa_jariya_all_lines"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.group_fetch_institution,bn_sadqa_e_jariya.group_sadqa_jariya_all_lines"
         sequence="7"/>
 
     <menuitem
@@ -78,14 +78,6 @@
         action="sadqa_jariya_recurring_line_action"
         parent="sadqa_jariya_lines_menu"
         sequence="2"/>
-
-    <menuitem
-        id="sadqa_jariya_marfat_shift_menu"
-        name="Check Assigned Officer Shift"
-        action="sadqa_jariya_marfat_shift_action"
-        groups="bn_sadqa_e_jariya.group_sadqa_jariya_marfat_officer"
-        parent="sadqa_e_jariya_menu"
-        sequence="25"/>
 
     <menuitem
         id="menu_fetch_institution_applications"

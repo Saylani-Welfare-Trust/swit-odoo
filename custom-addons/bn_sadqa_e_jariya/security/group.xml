@@ -28,10 +28,6 @@
         <field name="implied_ids" eval="[(4, ref('group_institutional_disbursement'))]"/>
     </record>
 
-    <record id="group_sadqa_jariya_marfat_officer" model="res.groups">
-        <field name="name">Sadqa e Jariya Marfat Officer</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
-    </record>
     <record id="group_sadqa_jariya_all_lines" model="res.groups">
         <field name="name">Sadqa e Jariya All Lines</field>
         <field name="category_id" ref="base.module_category_hidden"/>

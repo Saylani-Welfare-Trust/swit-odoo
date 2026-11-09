@@ -3,7 +3,7 @@ import logging
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
-from .sadqa_jariya_line import collection_point_selection, payment_type_selection
+from .sadqa_jariya_line import collection_point_selection
 
 _logger = logging.getLogger(__name__)
 
@@ -31,13 +31,6 @@ class SadqaJariyaRecurringLine(models.Model):
     disbursement_category_id = fields.Many2one('sadqa.jariya.disbursement.category', string='Disbursement Category')
     product_id = fields.Many2one('product.product', string='Product')
 
-    employee_category_id_officer = fields.Many2one(
-        'hr.employee.category',
-        string='Marfat Officer Category',
-        default=lambda self: self.env.ref('bn_sadqa_e_jariya.assigned_officer_hr_employee_category', raise_if_not_found=False),
-    )
-    payment_type = fields.Selection(payment_type_selection, string='Payment Type', default='self')
-    assigned_officer_id = fields.Many2one('hr.employee', string='Assigned Officer (Marfat)', domain="[('category_ids', 'in', [employee_category_id_officer])]")
     collection_point = fields.Selection(collection_point_selection, string='Collection Point')
     analytic_account_id = fields.Many2one('account.analytic.account', string='Branch')
     collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
@@ -177,14 +170,14 @@ class SadqaJariyaRecurringLine(models.Model):
             line.state = 'delivered'
 
     def action_disbursed(self):
-        """Paid: disbursed, or collected by the Assigned Officer (Marfat)"""
+        """Mark the recurring line as disbursed."""
         for line in self:
             if line.state not in ['draft', 'delivered']:
                 raise ValidationError(_(
                     "This recurring line cannot be paid again. Current state is '%s'. "
                     "Only Draft or Delivery Created lines can be paid."
                 ) % line.state)
-            line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
+            line.state = 'disbursed'
         self.application_id._auto_disburse_if_all_lines_delivered()
         return True
 
@@ -208,23 +201,6 @@ class SadqaJariyaRecurringLine(models.Model):
             'view_mode': 'form',
             'target': 'new',
         }
-
-    def action_return_to_pos(self, **kwargs):
-        self.ensure_one()
-        if self.payment_type != 'assigned_officer':
-            raise ValidationError(_("Return is only allowed for 'Assigned Officer (Marfat)' payment type."))
-        if self.state != 'pending':
-            raise ValidationError(_(
-                "Return is only allowed for recurring lines in 'Pending' state. Current state: %s."
-            ) % self.state)
-        if not self.donee_id:
-            raise ValidationError(_("No donee associated with this recurring line."))
-        self.write({'state': 'return'})
-        self.application_id.write({'state': 'return'})
-        self.application_id.message_post(body=_(
-            "Recurring line returned from POS. Product: %s, Amount: %s."
-        ) % (self.product_id.name, self.amount))
-        return True
 
     def action_return_to_draft(self):
         """Returned line back to draft, the application back to Recurring"""

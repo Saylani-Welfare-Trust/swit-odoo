@@ -12,9 +12,6 @@ access_sadqa_jariya_application_type,sadqa.jariya.application.type,model_sadqa_j
 access_sadqa_jariya_application_type_master_setup,sadqa.jariya.application.type master setup,model_sadqa_jariya_application_type,bn_master_setup.master_setup_group,1,1,1,1
 access_sadqa_jariya_approval_limit,sadqa.jariya.approval.limit,model_sadqa_jariya_approval_limit,base.group_user,1,0,0,0
 access_sadqa_jariya_approval_limit_master_setup,sadqa.jariya.approval.limit master setup,model_sadqa_jariya_approval_limit,bn_master_setup.master_setup_group,1,1,1,1
-access_sadqa_jariya_line_disbursement_popup,sadqa.jariya.line.disbursement.popup,model_sadqa_jariya_line_disbursement_popup,base.group_user,1,1,1,0
-access_sadqa_jariya_recurring_line_disbursement_popup,sadqa.jariya.recurring.line.disbursement.popup,model_sadqa_jariya_recurring_line_disbursement_popup,base.group_user,1,1,1,0
-access_sadqa_jariya_marfat_shift,sadqa.jariya.marfat.shift,model_sadqa_jariya_marfat_shift,base.group_user,1,1,1,0
 access_sadqa_jariya_review_wizard,sadqa.jariya.review.wizard,model_sadqa_jariya_review_wizard,base.group_user,1,1,1,0
 access_sadqa_jariya_area,sadqa.jariya.area,model_sadqa_jariya_area,base.group_user,1,0,0,0
 access_sadqa_jariya_area_master_setup,sadqa.jariya.area master setup,model_sadqa_jariya_area,bn_master_setup.master_setup_group,1,1,1,1

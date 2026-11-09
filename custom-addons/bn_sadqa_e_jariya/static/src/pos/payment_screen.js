@@ -17,12 +17,11 @@ patch(PaymentScreen.prototype, {
     },
 
     /**
-     * Runs once the payment is valid, before the order is saved: the lines are paid / returned here
+     * Runs once the payment is valid, before the order is saved: the lines are disbursed here
      */
     async _finalizeValidation() {
         const order = this.currentOrder;
         const data = order.extra_data?.sadqa_jariya;
-        const returnData = order.extra_data?.sadqa_jariya_return;
         try {
             if (data && data.disbursement_status === "pending") {
                 const removedHodIds = data.is_recurring ? [] : this._dropDeletedSadqaJariyaHodLines(order, data);
@@ -38,17 +37,6 @@ patch(PaymentScreen.prototype, {
                 order.set_source_document(data.record_number);
                 this.env.services.notification.add(
                     _t("Sadqa e Jariya %s disbursement completed. Amount: %s", data.record_number, data.total_disbursed_amount),
-                    { type: "success" }
-                );
-            }
-            if (returnData && returnData.status === "pending") {
-                for (const id of returnData.line_ids) {
-                    await this.env.services.orm.call(returnData.line_model, "action_return_to_pos", [[id]]);
-                }
-                returnData.status = "completed";
-                order.set_source_document(returnData.record_number);
-                this.env.services.notification.add(
-                    _t("Sadqa e Jariya return processed: %s", returnData.record_number),
                     { type: "success" }
                 );
             }

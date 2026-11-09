@@ -8,12 +8,9 @@
             <field name="name">Sadqa-e-Jaria</field>
         </record>
 
-        <!-- Employees with these tags can be picked as Inquiry Officer / Assigned Officer (Marfat) -->
+        <!-- Inquiry officers are matched by their employee tag -->
         <record id="inquiry_officer_hr_employee_category" model="hr.employee.category">
             <field name="name">Sadqa e Jariya Inquiry Officer</field>
-        </record>
-        <record id="assigned_officer_hr_employee_category" model="hr.employee.category">
-            <field name="name">Sadqa e Jariya Assigned Officer (Marfat)</field>
         </record>
 
         <!-- Bank lines are paid through Accounting, In Kind lines are delivered from stock -->

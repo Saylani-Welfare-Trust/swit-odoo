@@ -13,8 +13,6 @@
                 <field name="application_type_id"/>
                 <field name="product_id"/>
                 <field name="on_hand_qty" optional="hide"/>
-                <field name="payment_type"/>
-                <field name="assigned_officer_id"/>
                 <field name="collection_point"/>
                 <field name="analytic_account_id"/>
                 <field name="collection_date"/>
@@ -34,7 +32,6 @@
                 <field name="application_id"/>
                 <field name="donee_id"/>
                 <field name="product_id"/>
-                <field name="assigned_officer_id"/>
                 <field name="disbursement_category_id"/>
                 <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="disbursed" string="Disbursed" domain="[('state', '=', 'disbursed')]"/>
@@ -62,8 +59,6 @@
                 <field name="donee_id"/>
                 <field name="disbursement_category_id"/>
                 <field name="product_id"/>
-                <field name="payment_type"/>
-                <field name="assigned_officer_id"/>
                 <field name="collection_point"/>
                 <field name="analytic_account_id"/>
                 <field name="collection_date"/>

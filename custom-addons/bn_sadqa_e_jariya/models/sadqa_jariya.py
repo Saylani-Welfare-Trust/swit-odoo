@@ -318,8 +318,6 @@ class SadqaJariya(models.Model):
                     'application_type_id': line.application_type_id.id,
                     'quantity': line.quantity,
                     'collection_point': line.collection_point,
-                    'payment_type': line.payment_type,
-                    'assigned_officer_id': line.assigned_officer_id.id,
                     'amount': line.total_amount,
                 } for month in range(months)])
             rec.state = 'recurring'

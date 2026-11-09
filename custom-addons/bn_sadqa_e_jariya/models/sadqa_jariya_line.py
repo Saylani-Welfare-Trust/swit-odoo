@@ -10,11 +10,6 @@ collection_point_selection = [
     ('branch', 'Branch'),
 ]
 
-payment_type_selection = [
-    ('self', 'Self'),
-    ('assigned_officer', 'Assigned Officer (Marfat)'),
-]
-
 state_selection = [
     ('draft', 'Draft'),
     ('delivered', 'Delivery Created'),
@@ -47,13 +42,6 @@ class SadqaJariyaLine(models.Model):
     on_hand_qty = fields.Float(string='On Hand Quantity', compute='_compute_on_hand_qty')
     is_hod = fields.Boolean('Is HOD', readonly=True, help="Line added automatically at HOD Approval.")
 
-    employee_category_id_officer = fields.Many2one(
-        'hr.employee.category',
-        string='Marfat Officer Category',
-        default=lambda self: self.env.ref('bn_sadqa_e_jariya.assigned_officer_hr_employee_category', raise_if_not_found=False),
-    )
-    payment_type = fields.Selection(payment_type_selection, string='Payment Type', default='self')
-    assigned_officer_id = fields.Many2one('hr.employee', string='Assigned Officer (Marfat)', domain="[('category_ids', 'in', [employee_category_id_officer])]")
     collection_point = fields.Selection(collection_point_selection, string='Collection Point')
     analytic_account_id = fields.Many2one('account.analytic.account', string='Branch')
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
@@ -298,14 +286,14 @@ class SadqaJariyaLine(models.Model):
             line.state = 'delivered'
 
     def action_disbursed(self):
-        """Paid: disbursed, or collected by the Assigned Officer (Marfat)"""
+        """Mark the line as disbursed."""
         for line in self:
             if line.state not in ['draft', 'delivered']:
                 raise ValidationError(_(
                     "This line cannot be paid again. Current state is '%s'. "
                     "Only Draft or Delivery Created lines can be paid."
                 ) % line.state)
-            line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
+            line.state = 'disbursed'
         self.application_id._auto_disburse_if_all_lines_delivered()
         return True
 
@@ -319,94 +307,6 @@ class SadqaJariyaLine(models.Model):
             ))
         lines.write({'state': 'cancel'})
         return True
-
-    def action_mark_pending(self):
-        self.write({'state': 'pending'})
-        return {'type': 'ir.actions.client', 'tag': 'reload'}
-
-    def open_disbursement_popup(self):
-        self.ensure_one()
-        popup = self.env['sadqa.jariya.line.disbursement.popup'].create({
-            'line_id': self.id,
-            'media_ids': [(6, 0, self.media_ids.ids)],
-        })
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Disbursement Details'),
-            'res_model': 'sadqa.jariya.line.disbursement.popup',
-            'res_id': popup.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }
-
-    def action_return_to_pos(self, **kwargs):
-        """Money given to the Assigned Officer (Marfat) comes back to the company"""
-        self.ensure_one()
-        if self.payment_type != 'assigned_officer':
-            raise ValidationError(_("Return is only allowed for 'Assigned Officer (Marfat)' payment type."))
-        if self.state != 'pending':
-            raise ValidationError(_(
-                "Return is only allowed for lines in 'Pending' state. Current state: %s."
-            ) % self.state)
-        if not self.application_id.donee_id:
-            raise ValidationError(_("No donee associated with this line."))
-
-        receipt = self._create_return_receipt()
-        self.write({
-            'state': 'return',
-            'return_date': fields.Datetime.now(),
-            'return_bill_id': receipt.id,
-            'returned_by': self.env.user.id,
-        })
-        self.application_id.state = 'return'
-        self.application_id.message_post(body=_(
-            "💰 Line returned (money received back): %s, %s %s, returned by %s."
-        ) % (self.product_id.name, self.total_amount, self.currency_id.symbol, self.env.user.name))
-        return True
-
-    def _create_return_receipt(self):
-        """Journal entry for the money returned by the donee, cash / bank goes up"""
-        cash_account = self.env['account.account'].search([
-            ('account_type', 'in', ['asset_cash', 'asset_bank']),
-            ('company_id', '=', self.company_id.id),
-        ], limit=1)
-        if not cash_account:
-            raise ValidationError(_("No cash/bank account found to process return."))
-        expense_account = self.product_id.property_account_expense_id or self.product_id.categ_id.property_account_expense_categ_id
-        if not expense_account:
-            expense_account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', self.company_id.id),
-            ], limit=1)
-        journal = self.env['account.journal'].search([
-            ('type', 'in', ['cash', 'bank', 'general']),
-            ('company_id', '=', self.company_id.id),
-        ], limit=1)
-        donee = self.application_id.donee_id
-        move = self.env['account.move'].create({
-            'move_type': 'entry',
-            'journal_id': journal.id,
-            'date': fields.Date.today(),
-            'ref': f"SADQA-RETURN-{self.application_id.name}",
-            'line_ids': [
-                (0, 0, {
-                    'name': f'Return from {donee.name}',
-                    'account_id': cash_account.id,
-                    'debit': self.total_amount,
-                    'credit': 0,
-                    'partner_id': donee.id,
-                }),
-                (0, 0, {
-                    'name': f'Sadqa e Jariya Return - {self.product_id.name}',
-                    'account_id': expense_account.id,
-                    'debit': 0,
-                    'credit': self.total_amount,
-                    'partner_id': donee.id,
-                }),
-            ],
-        })
-        move.action_post()
-        return move
 
     def action_return_to_draft(self):
         """Returned line back to draft, the application back to HOD Approval to be paid again"""

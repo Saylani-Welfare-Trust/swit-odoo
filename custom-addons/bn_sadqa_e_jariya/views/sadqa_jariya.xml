@@ -147,7 +147,6 @@
                                     <field name="product_domain" column_invisible="1"/>
                                     <field name="analytic_account_domain" column_invisible="1"/>
                                     <field name="is_collection_point_readonly" column_invisible="1"/>
-                                    <field name="employee_category_id_officer" column_invisible="1"/>
                                     <field name="is_bank_category" column_invisible="1"/>
                                     <field name="fixed_amount_check" column_invisible="1"/>
                                     <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'"/>
@@ -155,15 +154,12 @@
                                     <field name="application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="product_id" domain="product_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="is_hod" optional="hide"/>
-                                    <field name="payment_type"/>
-                                    <field name="assigned_officer_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'"/>
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
                                     <field name="analytic_account_id" domain="analytic_account_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="collection_point == 'bank'"/>
                                     <field name="collection_date"/>
                                     <field name="quantity" readonly="is_bank_category" force_save="1"/>
                                     <field name="amount" readonly="1" optional="hide"/>
                                     <field name="total_amount" readonly="fixed_amount_check" sum="Total"/>
-                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'"/>
                                 </tree>
                             </field>
@@ -171,18 +167,14 @@
                         <page name="recurring_lines" string="Recurring Details" invisible="state not in ['recurring', 'return', 'disbursed'] or order_type != 'recurring'">
                             <field name="recurring_line_ids" readonly="state != 'return'">
                                 <tree>
-                                    <field name="employee_category_id_officer" column_invisible="1"/>
                                     <field name="disbursement_category_id"/>
                                     <field name="application_type_id"/>
                                     <field name="product_id"/>
-                                    <field name="payment_type"/>
-                                    <field name="assigned_officer_id"/>
                                     <field name="collection_point"/>
                                     <field name="analytic_account_id"/>
                                     <field name="collection_date"/>
                                     <field name="quantity"/>
                                     <field name="amount" sum="Total"/>
-                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'"/>
                                 </tree>
                             </field>

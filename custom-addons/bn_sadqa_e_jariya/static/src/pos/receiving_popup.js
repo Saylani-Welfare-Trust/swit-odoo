@@ -6,11 +6,6 @@ import { _t } from "@web/core/l10n/translation";
 
 patch(ReceivingPopup.prototype, {
     async confirm() {
-        if (this.props.action_type === "sj_return" && this.state.record_number) {
-            this.props.resolve({ confirmed: true, payload: this.state.record_number });
-            this.cancel();
-            return;
-        }
         if (this.props.action_type === "sj" && this.state.record_number) {
             this.notification.add(
                 _t("Sadqa e Jariya disbursements are processed through Bank, not POS."),
