@@ -263,8 +263,6 @@ class SadqaJariya(models.Model):
         if not officer.active:
             raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee before assigning the inquiry.") % officer.name)
         employee_id = (officer.barcode or '').strip()
-        if not employee_id:
-            raise UserError(_("Inquiry Officer %s has no Badge ID, the portal knows officers by it.") % officer.name)
         # The portal only assigns an officer once the imported form is acknowledged
         if not self.form_acknowledged_at:
             self._acknowledge('acknowledgeDoneeForm', 'form_acknowledged_at')
