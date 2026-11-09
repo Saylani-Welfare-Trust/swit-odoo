@@ -108,9 +108,10 @@ class TestAnalyticAccountCustomization(TransactionCase):
         menu = self.env.ref('bn_analytic_account_customization.analytical_accounting_menu')
         root = self.env.ref('bn_analytic_account_customization.analytic_account_customization_root_group')
         self.assertIn(root, menu.groups_id)
+        # the Menu group is assigned explicitly: no tier implies it
         for xmlid in ('user', 'audit', 'manager', 'admin'):
             group = self.env.ref('bn_analytic_account_customization.analytic_account_customization_%s_group' % xmlid)
-            self.assertIn(root, group.trans_implied_ids, xmlid)
+            self.assertNotIn(root, group.trans_implied_ids, xmlid)
 
     def test_reference_data_readable_by_all_employees(self):
         """Sub Zone / Location Option are picked on donation box, key bunch and

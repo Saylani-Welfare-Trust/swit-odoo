@@ -10,6 +10,7 @@
     <record id="pos_cheque_menu_group" model="res.groups">
         <field name="name">Treasury</field>
         <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Treasury &gt; POS Cheque: choose the deposit bank, clear or bounce cheques.</field>
     </record>
 
@@ -17,6 +18,7 @@
     <record id="pos_cheque_pos_action_group" model="res.groups">
         <field name="name">Cheque / POS Action</field>
         <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">POS cashiers: list the cheques of their POS, re-deposit bounced cheques, settle cheques that bounced too often.</field>
     </record>
 

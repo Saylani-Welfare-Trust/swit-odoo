@@ -9,16 +9,19 @@
     <record id="purchase_hod_group" model="res.groups">
         <field name="name">HOD</field>
         <field name="category_id" ref="module_purchase_request"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
     
     <record id="purchase_cxo_group" model="res.groups">
         <field name="name">CXO</field>
         <field name="category_id" ref="module_purchase_request"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
 
     <record id="purchase_request_confirm_group" model="res.groups">
         <field name="name">Confirm Purchase Request</field>
         <field name="category_id" ref="module_purchase_request"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
 
 </odoo>

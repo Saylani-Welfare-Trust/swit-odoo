@@ -11,6 +11,7 @@
     <record id="group_planning_user" model="res.groups">
         <field name="name">Monthly Planning</field>
         <field name="category_id" ref="module_category_planning"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
 
     <!-- 3. Group for Menu 2 (Planning Types) -->
@@ -18,12 +19,13 @@
         <field name="name">Planning Types</field>
         <field name="category_id" ref="module_category_planning"/>
         <!-- Optional: If Managers should also see Monthly Planning, keep this implied_ids -->
-        <field name="implied_ids" eval="[(4, ref('group_planning_user'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_planning_user')])]"/>
     </record>
 
     <!-- 4. Group for Menu 3 (Planning Summary) -->
     <record id="group_planning_report_viewer" model="res.groups">
         <field name="name">Planning Summary Report</field>
         <field name="category_id" ref="module_category_planning"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
 </odoo>

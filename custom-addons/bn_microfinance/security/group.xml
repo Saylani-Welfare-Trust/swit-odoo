@@ -14,72 +14,73 @@
     </record>
 
     <!-- Sole gate on the app menu (xml id kept from the former "Menu" group).
-         Implied by every tier below; not meant to be assigned on its own. -->
+         Assigned explicitly with the role groups (no group implies it). -->
     <record id="microfinance_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_microfinance"/>
-        <field name="comment">Grants visibility of the Microfinance app menu. Assigned automatically by every tier and role below.</field>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Microfinance app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
     <record id="microfinance_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_microfinance"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_group'))]"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Day-to-day staff: create loan applications, send them to the HOD, print SD slips and receipts, proceed approved loans to delivery / treasury, send loans to recovery.</field>
     </record>
 
     <record id="microfinance_manager_group" model="res.groups">
         <field name="name">Manager</field>
         <field name="category_id" ref="module_microfinance"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_user_group')), (4, ref('bn_master_setup.master_setup_root_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_user_group'), ref('bn_master_setup.master_setup_root_group')])]"/>
         <field name="comment">User + the microfinance configuration (schemes, products, installments, security types) under Master Setup.</field>
     </record>
 
     <record id="microfinance_audit_group" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_microfinance"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_group')), (4, ref('bn_master_setup.master_setup_root_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('bn_master_setup.master_setup_root_group')])]"/>
         <field name="comment">Read-only access to loans, installments, receipts and the configuration.</field>
     </record>
 
     <record id="microfinance_admin_group" model="res.groups">
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_microfinance"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_manager_group')), (4, ref('microfinance_audit_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_manager_group'), ref('microfinance_audit_group')])]"/>
         <field name="comment">Everything, including delete.</field>
     </record>
 
     <record id="microfinance_hod_group" model="res.groups">
         <field name="name">HOD</field>
         <field name="category_id" ref="module_microfinance_roles"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_user_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_user_group')])]"/>
         <field name="comment">First approval: send to Member, reject or revert to Draft.</field>
     </record>
 
     <record id="microfinance_member_group" model="res.groups">
         <field name="name">Member</field>
         <field name="category_id" ref="module_microfinance_roles"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_user_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_user_group')])]"/>
         <field name="comment">Final approval: approve, reject or revert to the HOD.</field>
     </record>
 
     <record id="microfinance_recovery_group" model="res.groups">
         <field name="name">Recovery</field>
         <field name="category_id" ref="module_microfinance_roles"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_user_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_user_group')])]"/>
         <field name="comment">Recovery of defaulted loans: temporary / full recovery, recover the asset, request a write off.</field>
     </record>
 
     <record id="microfinance_write_off_approval_1_group" model="res.groups">
         <field name="name">Write Off Approval 1</field>
         <field name="category_id" ref="module_microfinance_roles"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_user_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_user_group')])]"/>
     </record>
 
     <record id="microfinance_write_off_approval_2_group" model="res.groups">
         <field name="name">Write Off Approval 2</field>
         <field name="category_id" ref="module_microfinance_roles"/>
-        <field name="implied_ids" eval="[(4, ref('microfinance_user_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('microfinance_user_group')])]"/>
     </record>
 
     <record id="microfinance_pos_action_group" model="res.groups">

@@ -7,4 +7,5 @@ access_audit_trail_log_line_viewer,audit.trail.log.line.audit,model_audit_trail_
 access_audit_trail_log_line_admin,audit.trail.log.line.admin,model_audit_trail_log_line,group_audit_trail_admin,1,0,0,1
 access_audit_trail_exclusion_audit,audit.trail.exclusion.audit,model_audit_trail_exclusion,group_audit_trail_viewer,1,0,0,0
 access_audit_trail_exclusion_manager,audit.trail.exclusion.manager,model_audit_trail_exclusion,group_audit_trail_manager,1,1,1,1
-access_audit_trail_ir_model_root,ir.model.audit.trail,base.model_ir_model,group_audit_trail_root,1,0,0,0
+access_audit_trail_ir_model_user,ir.model.audit.trail.user,base.model_ir_model,group_audit_trail_user,1,0,0,0
+access_audit_trail_ir_model_viewer,ir.model.audit.trail.audit,base.model_ir_model,group_audit_trail_viewer,1,0,0,0

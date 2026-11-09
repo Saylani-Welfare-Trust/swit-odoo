@@ -4,6 +4,7 @@
     <record id="journal_transfer_group" model="res.groups">
         <field name="name">Journal Transfer / Menu</field>
         <field name="category_id" ref="bn_pos_cheque.module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Treasury &gt; Journal Transfer: move the POS deposit slips to the banks.</field>
     </record>
 

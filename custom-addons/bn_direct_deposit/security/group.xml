@@ -9,6 +9,7 @@
     <record id="direct_deposit_pos_action_group" model="res.groups">
         <field name="name">POS Action</field>
         <field name="category_id" ref="module_direct_deposit"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
 
     <!-- Extend the Treasury group to also imply Direct Deposit menu -->

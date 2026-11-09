@@ -10,20 +10,21 @@
     <record id="menu_group_user" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_material_request"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Basic user access to Member Approval module</field>
     </record>
     
     <record id="menu_group_material_request_cfo" model="res.groups">
         <field name="name">CFO Approval</field>
         <field name="category_id" ref="module_material_request"/>
-        <field name="implied_ids" eval="[(4, ref('menu_group_user'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('menu_group_user')])]"/>
     </record>
     
     
     <record id="menu_group_material_request_coo" model="res.groups">
         <field name="name">COO Approval</field>
         <field name="category_id" ref="module_material_request"/>
-        <field name="implied_ids" eval="[(4, ref('menu_group_user'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('menu_group_user')])]"/>
     </record>
 
     <!-- Member Approval User Group -->

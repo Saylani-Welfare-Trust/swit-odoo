@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Sole gate on the root app menu. Every tier below implies it, so being
-         in ANY tier is enough to see the app; the tiers then decide what you
-         can actually do once inside. Not meant to be assigned on its own. -->
+    <!-- Sole gate on the root app menu. No group implies it: assign it
+         explicitly, together with the tier / role groups, to whoever should
+         see the app; the tiers then decide what they can do once inside. -->
     <record id="profile_management_root_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_profile_management"/>
-        <field name="comment">Grants visibility of the Profile Management app menu. Assigned automatically by every tier below - there is normally no need to assign it directly.</field>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Profile Management app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
     <record id="profile_management_user_group" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_profile_management"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Day-to-day access: create, edit and read contacts. Cannot delete, and cannot change which fields/pages a profile type shows.</field>
     </record>
 
@@ -20,13 +22,13 @@
         <field name="name">Manager</field>
         <field name="category_id" ref="module_profile_management"/>
         <field name="comment">Everything User can do, plus configuring profile types: Area, and which fields/pages each tag shows (Master Setup > Profile Management).</field>
-        <field name="implied_ids" eval="[(4, ref('profile_management_user_group')), (4, ref('bn_master_setup.master_setup_root_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('profile_management_user_group'), ref('bn_master_setup.master_setup_root_group')])]"/>
     </record>
 
     <record id="profile_management_audit_group" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_profile_management"/>
-        <field name="implied_ids" eval="[(4, ref('bn_master_setup.master_setup_root_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('bn_master_setup.master_setup_root_group')])]"/>
         <field name="comment">Read-only oversight of contacts and profile-type configuration (Master Setup > Profile Management), for reporting. No create, write or delete anywhere.</field>
     </record>
 
@@ -34,9 +36,7 @@
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_profile_management"/>
         <field name="comment">Full control, including delete, plus everything Manager can configure.</field>
-        <field name="implied_ids" eval="[
-            (4, ref('profile_management_manager_group')),
-            (4, ref('profile_management_audit_group'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('profile_management_manager_group'), ref('profile_management_audit_group')])]"/>
     </record>
 
 </odoo>

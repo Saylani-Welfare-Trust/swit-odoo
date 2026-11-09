@@ -5,17 +5,20 @@
         <field name="sequence">95</field>
     </record>
 
-    <!-- Sole gate on the root app menu. Every tier below implies it. -->
+    <!-- Sole gate on the root app menu. No group implies it: assign it
+         explicitly, together with the tier / role groups, to whoever should
+         see the app; the tiers then decide what they can do once inside. -->
     <record id="group_audit_trail_root" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_audit_trail"/>
-        <field name="comment">Shows the Audit Trail app menu. Implied by every group below; no need to assign it directly.</field>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the Audit Trail app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
     <record id="group_audit_trail_user" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_audit_trail"/>
-        <field name="implied_ids" eval="[(4, ref('group_audit_trail_root'))]"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Sees only his/her own activity in the log (read-only).</field>
     </record>
 
@@ -23,21 +26,21 @@
     <record id="group_audit_trail_viewer" model="res.groups">
         <field name="name">Audit</field>
         <field name="category_id" ref="module_audit_trail"/>
-        <field name="implied_ids" eval="[(4, ref('group_audit_trail_root'))]"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Sees everybody's activity and the Excluded Models, read-only.</field>
     </record>
 
     <record id="group_audit_trail_manager" model="res.groups">
         <field name="name">Manager</field>
         <field name="category_id" ref="module_audit_trail"/>
-        <field name="implied_ids" eval="[(4, ref('group_audit_trail_viewer'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_audit_trail_viewer')])]"/>
         <field name="comment">Audit + manages the Excluded Models (every change is logged).</field>
     </record>
 
     <record id="group_audit_trail_admin" model="res.groups">
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_audit_trail"/>
-        <field name="implied_ids" eval="[(4, ref('group_audit_trail_manager'))]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_audit_trail_manager')])]"/>
         <field name="comment">Manager + deletes (purges) log entries. Every purge leaves a permanent entry.</field>
     </record>
 
