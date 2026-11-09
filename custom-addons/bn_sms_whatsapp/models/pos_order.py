@@ -23,7 +23,7 @@ class PosOrder(models.Model):
 
         _logger.info('Processing order: %s', order.name)
 
-        whatsapp_ok = False
+        whatsapp_queued = False
         sms_ok = False
         whatsapp_error = None
         sms_error = None
@@ -66,18 +66,30 @@ class PosOrder(models.Model):
         # -------------------------------
         # WhatsApp Flow
         # -------------------------------
-        if order.partner_id.whatsapp:
+        whatsapp_number = order.partner_id.whatsapp or order.partner_id.mobile or order.partner_id.phone
+        if whatsapp_number:
             try:
-                self.env['whatsapp.service'].send_template_message(
-                    order.partner_id.whatsapp,
-                    pdf_url,
-                    f"Receipt_{order.name}.pdf"
-                )
-                whatsapp_ok = True
-                _logger.info('WhatsApp sent successfully')
+                whatsapp_service = self.env['whatsapp.service']
+                filename = f"Receipt_{order.name}.pdf"
+
+                def send_whatsapp_after_commit():
+                    try:
+                        whatsapp_service.send_template_message(
+                            whatsapp_number,
+                            pdf_url,
+                            filename,
+                        )
+                    except Exception:
+                        _logger.exception('WhatsApp failed after commit for POS order %s', order.name)
+                    else:
+                        _logger.info('WhatsApp receipt accepted for POS order %s', order.name)
+
+                self.env.cr.postcommit.add(send_whatsapp_after_commit)
+                whatsapp_queued = True
+                _logger.info('WhatsApp receipt queued until commit for POS order %s', order.name)
             except Exception as e:
                 whatsapp_error = str(e)
-                _logger.error('WhatsApp failed: %s', whatsapp_error)
+                _logger.exception('Could not queue WhatsApp for POS order %s', order.name)
         else:
             whatsapp_error = "No WhatsApp number"
 
@@ -99,10 +111,10 @@ class PosOrder(models.Model):
         # -------------------------------
         # Final result
         # -------------------------------
-        if whatsapp_ok and sms_ok:
-            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
-        if whatsapp_ok:
-            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
+        if whatsapp_queued and sms_ok:
+            return {'status': 'success', 'message': 'WhatsApp queued after commit; SMS sent successfully'}
+        if whatsapp_queued:
+            return {'status': 'success', 'message': f'WhatsApp queued after commit; SMS failed: {sms_error}'}
         if sms_ok:
             return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
 

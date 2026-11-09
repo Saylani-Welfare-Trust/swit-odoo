@@ -131,7 +131,7 @@ May Allah bless you!
 
         message = self._build_din_receipt_message()
 
-        whatsapp_ok = False
+        whatsapp_queued = False
         sms_ok = False
         whatsapp_error = None
         sms_error = None
@@ -146,13 +146,23 @@ May Allah bless you!
                 attachment, pdf_url = self[-1]._save_din_receipt_attachment(pdf_data)
                 _logger.info('DIN receipt PDF URL: %s', pdf_url)
 
-                self.env['whatsapp.service'].send_template_message(
-                    whatsapp_number,
-                    pdf_url,
-                    attachment.name
-                )
-                whatsapp_ok = True
-                _logger.info('DIN WhatsApp sent successfully for %s', names)
+                whatsapp_service = self.env['whatsapp.service']
+
+                def send_whatsapp_after_commit():
+                    try:
+                        whatsapp_service.send_template_message(
+                            whatsapp_number,
+                            pdf_url,
+                            attachment.name,
+                        )
+                    except Exception:
+                        _logger.exception('DIN WhatsApp failed after commit for %s', names)
+                    else:
+                        _logger.info('DIN WhatsApp accepted by provider for %s', names)
+
+                self.env.cr.postcommit.add(send_whatsapp_after_commit)
+                whatsapp_queued = True
+                _logger.info('DIN WhatsApp queued until commit for %s', names)
             except Exception as e:
                 whatsapp_error = str(e)
                 _logger.exception('DIN WhatsApp failed for %s', names)
@@ -171,10 +181,16 @@ May Allah bless you!
         else:
             sms_error = "No contact number"
 
-        if whatsapp_ok and sms_ok:
-            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
-        if whatsapp_ok:
-            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
+        if whatsapp_queued and sms_ok:
+            return {
+                'status': 'warning',
+                'message': 'WhatsApp receipt queued for sending after commit. SMS sent.',
+            }
+        if whatsapp_queued:
+            return {
+                'status': 'warning',
+                'message': f'WhatsApp receipt queued for sending after commit. SMS failed: {sms_error}',
+            }
         if sms_ok:
             return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
         return {
