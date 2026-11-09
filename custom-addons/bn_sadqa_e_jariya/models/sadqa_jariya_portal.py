@@ -260,12 +260,25 @@ class SadqaJariya(models.Model):
         officer = self.employee_id
         if not officer:
             raise UserError(_("Select the Inquiry Officer first."))
-        if not officer.barcode:
+        if not officer.active:
+            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee before assigning the inquiry.") % officer.name)
+        employee_id = (officer.barcode or '').strip()
+        if not employee_id:
             raise UserError(_("Inquiry Officer %s has no Badge ID, the portal knows officers by it.") % officer.name)
         # The portal only assigns an officer once the imported form is acknowledged
         if not self.form_acknowledged_at:
             self._acknowledge('acknowledgeDoneeForm', 'form_acknowledged_at')
-        result = self._portal_call('assignOfficer', {'odooId': self.id, 'employeeId': officer.barcode}) or {}
+        try:
+            result = self._portal_call('assignOfficer', {'odooId': self.id, 'employeeId': employee_id}) or {}
+        except UserError as error:
+            message = str(error).lower()
+            if 'bad_request' in message and 'active inquiry officer' in message and 'employee id' in message:
+                raise UserError(_(
+                    "The portal has no active inquiry officer with employee ID '%(employee_id)s'. "
+                    "Add or activate this officer in the portal using the exact Odoo Badge ID, then retry. "
+                    "The form is already acknowledged; you do not need to resend it."
+                ) % {'employee_id': employee_id}) from error
+            raise
         self.write({
             'state': 'send_for_inquiry',
             'portal_report_id': result.get('reportId'),
