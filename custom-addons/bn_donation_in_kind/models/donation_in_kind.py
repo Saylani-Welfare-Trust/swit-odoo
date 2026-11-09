@@ -136,6 +136,7 @@ May Allah bless you!
         whatsapp_error = None
         sms_error = None
 
+
         whatsapp_number = donor.whatsapp or donor.mobile or donor.phone
         if whatsapp_number:
             try:
