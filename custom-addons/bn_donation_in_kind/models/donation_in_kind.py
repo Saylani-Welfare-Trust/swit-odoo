@@ -84,15 +84,11 @@ May Allah bless you!
 - SWIT"""
 
     def _generate_din_receipt_pdf(self):
-        try:
-            pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_donation_in_kind.donation_in_kind_whatsapp_report',
-                self.ids
-            )
-            return pdf_data
-        except Exception as e:
-            _logger.error('DIN receipt PDF error: %s', str(e))
-            return None
+        pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
+            'bn_donation_in_kind.action_report_donation_in_kind_whatsapp',
+            self.ids
+        )
+        return pdf_data
         
     def _save_din_receipt_attachment(self, pdf_data):
         self.ensure_one()
@@ -159,7 +155,7 @@ May Allah bless you!
                 _logger.info('DIN WhatsApp sent successfully for %s', names)
             except Exception as e:
                 whatsapp_error = str(e)
-                _logger.error('DIN WhatsApp failed for %s: %s', names, whatsapp_error)
+                _logger.exception('DIN WhatsApp failed for %s', names)
         else:
             whatsapp_error = "No WhatsApp number"
 
