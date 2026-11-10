@@ -109,12 +109,18 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_domain(self, config_id=None, date_from=None, date_to=None,
-                          province_id=None, city_id=None, zone_id=None, segment_id=None, segment_type=None):
+                          province_id=None, city_id=None, zone_id=None,
+                          segment_id=None, segment_type=None):
         domain = []
+
+        # ⚡ Enforce user access (city/province/zone from pos.order.access.config)
+        domain.extend(self._get_user_access_domain())
+
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
 
+        # ... rest of the existing method unchanged ...
         if province_id or city_id or zone_id or segment_id or segment_type:
             analytic_domain = []
             if province_id:
@@ -143,18 +149,20 @@ class PosOrder(models.Model):
                     analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
 
                 if 'analytic_account_id' in self.env['product.template']._fields:
-                    analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
+                    analytic_filters.append(
+                        ('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
                 elif 'analytic_account_ids' in self.env['product.template']._fields:
-                    analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
+                    analytic_filters.append(
+                        ('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
 
                 if analytic_filters:
                     if len(analytic_filters) == 1:
                         domain.extend(analytic_filters)
                     else:
-                        or_operators = ['|'] * (len(analytic_filters) - 1)
-                        domain.extend(or_operators + analytic_filters)
+                        domain.extend(['|'] * (len(analytic_filters) - 1) + analytic_filters)
                 else:
                     domain.append(('id', '=', 0))
+
         return domain
 
     def _apply_dashboard_filters(self, domain, category_id=None, amount_min=None, amount_max=None):
@@ -331,6 +339,12 @@ class PosOrder(models.Model):
             session_domain.append(('start_at', '>=', date_from + ' 00:00:00'))
         if date_to:
             session_domain.append(('start_at', '<=', date_to + ' 23:59:59'))
+
+        # ⚡ Respect user access on sessions too
+        user_accounts = self._user_pos_accounts()
+        if user_accounts:
+            session_domain.append(('config_id.analytic_account_id', 'in', user_accounts.ids))
+
         total_session = self.env['pos.session'].search_count(session_domain)
 
         return {
