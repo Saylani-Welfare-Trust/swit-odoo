@@ -295,7 +295,7 @@
     <menuitem
         id="planning_root_menu"
         name="Planning"
-        web_icon="bn_master_setup,static/description/icon.png"
+        web_icon="bn_planning,static/description/icon.png"
         sequence="6"
         groups="bn_planning.group_planning_root"/>
     <menuitem
