@@ -13,7 +13,7 @@ class PosConfig(models.Model):
     # The Branch of the shop: its sessions, orders and every record made or
     # paid at it are tagged with it (not with the cashier's branch).
     analytic_account_id = fields.Many2one(
-        'account.analytic.account', string="Branch", tracking=True, index='btree_not_null',
+        'account.analytic.account', string="Branch", index='btree_not_null',
         domain="[('location_option_id.name', '=', 'Branch')]",
         help="Analytic account (Branch) of this shop: its sessions, orders, receipts (DN #) "
              "and the POS records made at it carry this branch.")

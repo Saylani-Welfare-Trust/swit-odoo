@@ -8,6 +8,7 @@
     'category': 'BytesNode/Profile Management',
     'depends': [
         'bn_pos_customization',
+        'report_xlsx',
     ],
     'data': [
         'data/sequence.xml',
@@ -25,6 +26,7 @@
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
         'reports/profile_management_report.xml',
+        'reports/profile_donation_report.xml',
         # Last: needs the views and the Donor / Donee menus loaded above.
         'data/profile_registration.xml',
     ],
