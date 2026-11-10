@@ -12,6 +12,7 @@
         'security/dashboard_security.xml',
         'security/ir.model.access.csv',
         'views/treasury_dashboard_views.xml',
+        'security/pos_dd_report_rules.xml',
         'views/donation_box_dashboard_views.xml',
         'views/profile_management_dashboard_views.xml',
         'views/pos_order_views.xml',
@@ -21,6 +22,7 @@
         'views/treasury_access_views.xml',
         'views/pos_order_access_config_view.xml',
         'views/donation_box_access_config_views.xml'
+        'views/pos_dd_report_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
