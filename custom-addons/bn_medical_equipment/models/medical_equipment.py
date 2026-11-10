@@ -1158,7 +1158,7 @@ class MedicalEquipment(models.Model):
         for app in applications:
             # Match by CNIC (most reliable)
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
-            if app.get('odooId') == self.id and app.get('department') == "medical":
+            if str(app.get('odooId')) == str(self.id) and app.get('department') == "medical":
                 return app
             # # Match by name and WhatsApp
             # if (app.get('name') == self.donee_id.name and 
@@ -1493,6 +1493,10 @@ class MedicalEquipment(models.Model):
                 if remarks:
                     all_remarks.append(remarks)
         # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
+        if not application:
+            message += f" | ⚠️ Application not found in portal search (odooId {self.id}, department medical)"
+        elif app_state != 'inquiry_complete':
+            message += f" | 📋 Portal status: {app_state} (data is imported only when status is inquiry_complete)"
         if app_state == 'inquiry_complete': # type: ignore
             self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
             self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
