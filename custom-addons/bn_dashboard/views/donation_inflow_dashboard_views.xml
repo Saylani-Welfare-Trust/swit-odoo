@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_donation_inflow_dashboard" model="ir.actions.client">
+        <field name="name">Donation Inflows Dashboard</field>
+        <field name="tag">donation_inflow_dashboard</field>
+    </record>
+
+    <menuitem id="menu_donation_inflow_dashboard"
+              name="Donation Inflows Dashboard"
+              parent="menu_dashboard_root"
+              action="action_donation_inflow_dashboard"
+              groups="bn_dashboard.group_donation_inflow_dashboard_user"
+              sequence="7"/>
+</odoo>

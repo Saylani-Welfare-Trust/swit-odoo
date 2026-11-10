@@ -1,6 +1,21 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_kitchen_menu,access.kitchen.menu,bn_kitchen.model_kitchen_menu,,1,1,1,1
-access_kitchen_menu_line,access.kitchen.menu.line,bn_kitchen.model_kitchen_menu_line,,1,1,1,1
-access_branch_kitchen_request,access.branch.kitchen.request,bn_kitchen.model_branch_kitchen_request,,1,1,1,1
-access_branch_kitchen_request_line,access.branch.kitchen.request.line,bn_kitchen.model_branch_kitchen_request_line,,1,1,1,1
-access_daily_branch_kitchen_request_line,access.daily.branch.kitchen.request.line,bn_kitchen.model_daily_branch_kitchen_request_line,,1,1,1,1
+access_kitchen_menu_user,access.kitchen.menu user,bn_kitchen.model_kitchen_menu,kitchen_user_group,1,0,0,0
+access_kitchen_menu_audit,access.kitchen.menu audit,bn_kitchen.model_kitchen_menu,kitchen_audit_group,1,0,0,0
+access_kitchen_menu_admin,access.kitchen.menu admin,bn_kitchen.model_kitchen_menu,kitchen_admin_group,1,1,1,1
+access_kitchen_menu,access.kitchen.menu,bn_kitchen.model_kitchen_menu,base.group_user,1,0,0,0
+access_kitchen_menu_line_user,access.kitchen.menu.line user,bn_kitchen.model_kitchen_menu_line,kitchen_user_group,1,0,0,0
+access_kitchen_menu_line_audit,access.kitchen.menu.line audit,bn_kitchen.model_kitchen_menu_line,kitchen_audit_group,1,0,0,0
+access_kitchen_menu_line_admin,access.kitchen.menu.line admin,bn_kitchen.model_kitchen_menu_line,kitchen_admin_group,1,1,1,1
+access_kitchen_menu_line,access.kitchen.menu.line,bn_kitchen.model_kitchen_menu_line,base.group_user,1,0,0,0
+access_branch_kitchen_request_user,access.branch.kitchen.request user,bn_kitchen.model_branch_kitchen_request,kitchen_user_group,1,1,1,0
+access_branch_kitchen_request_audit,access.branch.kitchen.request audit,bn_kitchen.model_branch_kitchen_request,kitchen_audit_group,1,0,0,0
+access_branch_kitchen_request_admin,access.branch.kitchen.request admin,bn_kitchen.model_branch_kitchen_request,kitchen_admin_group,1,1,1,1
+access_branch_kitchen_request,access.branch.kitchen.request,bn_kitchen.model_branch_kitchen_request,base.group_user,1,0,0,0
+access_branch_kitchen_request_line_user,access.branch.kitchen.request.line user,bn_kitchen.model_branch_kitchen_request_line,kitchen_user_group,1,1,1,0
+access_branch_kitchen_request_line_audit,access.branch.kitchen.request.line audit,bn_kitchen.model_branch_kitchen_request_line,kitchen_audit_group,1,0,0,0
+access_branch_kitchen_request_line_admin,access.branch.kitchen.request.line admin,bn_kitchen.model_branch_kitchen_request_line,kitchen_admin_group,1,1,1,1
+access_branch_kitchen_request_line,access.branch.kitchen.request.line,bn_kitchen.model_branch_kitchen_request_line,base.group_user,1,0,0,0
+access_daily_branch_kitchen_request_line_user,access.daily.branch.kitchen.request.line user,bn_kitchen.model_daily_branch_kitchen_request_line,kitchen_user_group,1,1,1,0
+access_daily_branch_kitchen_request_line_audit,access.daily.branch.kitchen.request.line audit,bn_kitchen.model_daily_branch_kitchen_request_line,kitchen_audit_group,1,0,0,0
+access_daily_branch_kitchen_request_line_admin,access.daily.branch.kitchen.request.line admin,bn_kitchen.model_daily_branch_kitchen_request_line,kitchen_admin_group,1,1,1,1
+access_daily_branch_kitchen_request_line,access.daily.branch.kitchen.request.line,bn_kitchen.model_daily_branch_kitchen_request_line,base.group_user,1,0,0,0

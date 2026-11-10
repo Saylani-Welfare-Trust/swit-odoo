@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View for Consolidated Cheque List -->
+    <record id="view_microfinance_line_tree" model="ir.ui.view">
+        <field name="name">microfinance.line.tree</field>
+        <field name="model">microfinance.line</field>
+        <field name="arch" type="xml">
+            <tree decoration-danger="state == 'overdue'">
+                <field name="installment_no" />
+                <field name="product_id" />
+                <field name="payment_type" string = "Payment Type"/>
+                <field name="due_date" />
+                <field name="amount" />
+                <field name="paid_amount" />
+                <field name="remaining_amount" />
+                <field name="state" force_save="1" widget="badge" decoration-info="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-danger="state == 'overdue'" decoration-success="state == 'paid'" />
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_microfinance_line_search" model="ir.ui.view">
+        <field name="name">microfinance.line.search</field>
+        <field name="model">microfinance.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Search Fields -->
+                <field name="installment_no"/>
+                <field name="payment_type"/>
+                <field name="due_date"/>
+                <field name="microfinance_id"/>
+                <field name="product_id"/>
+
+                <!-- Quick Filters -->
+                <filter name="filter_unpaid" string="Unpaid"
+                        domain="[('state', '=', 'unpaid')]"/>
+                <filter name="filter_partial" string="Partial"
+                        domain="[('state', '=', 'partial')]"/>
+                <filter name="filter_overdue" string="Overdue"
+                        domain="[('state', '=', 'overdue')]"/>
+                <filter name="filter_paid" string="Paid"
+                        domain="[('state', '=', 'paid')]"/>
+                
+                <separator/>
+                
+                <filter name="filter_cheque" string="Cheque"
+                        domain="[('payment_type', '=', 'cheque')]"/>
+                <filter name="filter_cash" string="Cash"
+                        domain="[('payment_type', '=', 'cash')]"/>
+
+                <separator/>
+
+                <filter name="filter_this_month" string="Due This Month"
+                        domain="[('due_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d')),
+                                 ('due_date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+
+                <separator/>
+
+                <filter name="filter_my_records" string="My Records"
+                        domain="[('create_uid', '=', uid)]"/>
+
+                <!-- Group By -->
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State"
+                            context="{'group_by': 'state'}"/>
+                    <filter name="group_payment_type" string="Payment Type"
+                            context="{'group_by': 'payment_type'}"/>
+                    <filter name="group_microfinance" string="Microfinance"
+                            context="{'group_by': 'microfinance_id'}"/>
+                    <filter name="group_product" string="Product"
+                            context="{'group_by': 'product_id'}"/>
+                    <filter name="group_due_date" string="Due Date"
+                            context="{'group_by': 'due_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+
+    <!-- Action Window -->
+    <record id="action_microfinance_consolidated_lines" model="ir.actions.act_window">
+        <field name="name">Microfinance Consolidated Lines</field>
+        <field name="res_model">microfinance.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No Post-Dated Cheques found.
+            </p>
+            <p>
+                Post-Dated Cheques will appear here once they are added to microfinance records.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_microfinance_consolidated_lines" 
+              name="Installment Lines" 
+              action="action_microfinance_consolidated_lines"
+              parent="microfinance_menu" 
+              sequence="10"/>
+</odoo>

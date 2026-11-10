@@ -2,19 +2,76 @@
 const { Component } = owl;
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
-import { useRef, useState } from "@odoo/owl";
+import { useRef, useState, onMounted } from "@odoo/owl";
 import { BlockUI } from "@web/core/ui/block_ui";
 import { download } from "@web/core/network/download";
 const actionRegistry = registry.category("actions");
 
 class GeneralLedger extends owl.Component {
+
+    formatAmount(value) {
+        const num = Number(value || 0);
+        return num.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    getVisibleGrandTotals() {
+        let debit = 0, credit = 0, opening = 0;
+        for (const acc of this.state.account || []) {
+            debit   += Number(this.getAccountTotalValue(acc, 'total_debit', 0));
+            credit  += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+            opening += Number(this.getAccountTotalValue(acc, 'opening_balance', 0));
+        }
+        return {
+            debit,
+            credit,
+            opening,
+            balance: opening + debit - credit,
+        };
+    }
+
+    getGrandTotalBalance() {
+        return Number(this.state.total_debit || 0) - Number(this.state.total_credit || 0);
+    }
+
+    getPeriodTotals() {
+        let debit = 0, credit = 0;
+        for (const acc of this.state.account || []) {
+            debit  += Number(this.getAccountTotalValue(acc, 'total_debit',  0));
+            credit += Number(this.getAccountTotalValue(acc, 'total_credit', 0));
+        }
+        return {
+            debit,
+            credit,
+            balance: debit - credit,   // no opening balance here
+        };
+    }
+
     setup() {
         super.setup(...arguments);
         this.initial_render = true;
-        this.orm = useService('orm');
+        this.orm    = useService('orm');
         this.action = useService('action');
-        this.tbody = useRef('tbody');
-        this.unfoldButton = useRef('unfoldButton');
+        this.tbody  = useRef('tbody');
+        this.unfoldButton  = useRef('unfoldButton');
+        this.gl_start_date = useRef('gl_start_date');
+        this.gl_end_date   = useRef('gl_end_date');
+
+        // ---- Inherit filters from the action that opened this GL ----
+        const params = (this.props.action && this.props.action.params) || {};
+
+        const incomingDateRange  = params.default_date_range || 'month';
+        const incomingJournals   = Array.isArray(params.default_journal_ids)
+            ? params.default_journal_ids : [];
+        const incomingAccounts   = Array.isArray(params.default_account_names)
+            ? params.default_account_names : [];
+        const incomingOptions    = params.default_options || {};
+        const incomingMethod     = (params.default_method &&
+                                    Object.keys(params.default_method).length)
+            ? { ...params.default_method } : { accrual: true };
+
         this.state = useState({
             account: [],
             account_data: {},
@@ -23,86 +80,156 @@ class GeneralLedger extends owl.Component {
             total_debit: 0,
             total_credit: 0,
             currency: null,
+
             journals: [],
-            selected_journal_list: [],
+            selected_journal_list: [...incomingJournals],
+
             analytics: [],
             selected_analytic_list: [],
             selected_analytic_account_rec: [],
+
+            selected_account_list: [...incomingAccounts],
+            all_accounts: [],
+            account_from: '',
+            account_to: '',
+            account_offset: 0,
+            account_limit: 20,
+            total_accounts: 0,
+            has_more: false,
+            is_loading: false,
+
             title: null,
             filter_applied: null,
             account_list: [],
             account_total_list: {},
-            date_range: 'month',
-            options: {},
-            method: {
-                        'accrual': true
-                    },
+
+            date_range: incomingDateRange,
+            options: { ...incomingOptions },
+            method: { ...incomingMethod },
+
+            search_query: '',
+            account_list_full: [],
+            account_data_full: {},
+            collapsed_accounts: {},
         });
+        this.searchTimeout = null;
+
+        onMounted(() => {
+            // Reflect the inherited date range in the visible inputs
+            if (typeof incomingDateRange === 'object') {
+                if (this.gl_start_date?.el && incomingDateRange.start_date) {
+                    this.gl_start_date.el.value = incomingDateRange.start_date;
+                }
+                if (this.gl_end_date?.el && incomingDateRange.end_date) {
+                    this.gl_end_date.el.value = incomingDateRange.end_date;
+                }
+            }
+        });
+
         this.load_data();
     }
+
+    async _fetchPage({ reset = false } = {}) {
+        if (this.state.is_loading) return;
+        if (!reset && !this.state.has_more) return;
+        this.state.is_loading = true;
+
+        const offset = reset ? 0 : this.state.account_offset;
+
+        let raw = await this.orm.call(
+            "account.general.ledger",
+            "get_filter_values",
+            [
+                this.state.selected_journal_list,
+                this.state.date_range,
+                this.state.options,
+                this.state.selected_analytic_list,
+                this.state.method,
+                true,                              // include_filter_values
+                offset,
+                this.state.account_limit,
+                this.state.search_query || '',
+            ]
+        );
+
+        raw = raw || {};
+        const pageAccounts = raw.account || [];
+        const pageTotals   = raw.account_totals || {};
+
+        if (reset) {
+            this.state.account = [];
+            this.state.account_data = {};
+            this.state.account_total = {};
+            this.state.collapsed_accounts = {};
+        }
+
+        // merge totals
+        this.state.account_total = { ...this.state.account_total, ...pageTotals };
+
+        // merge data + collect keys
+        const merged = [];
+        for (const key of pageAccounts) {
+            merged.push(key);
+            this.state.account_data[key] = raw[key] || [];
+            if (this.state.collapsed_accounts[key] === undefined) {
+                this.state.collapsed_accounts[key] = true;
+            }
+        }
+
+        this.state.account = reset ? merged : [...this.state.account, ...merged];
+        this.state.account_list_full = this.state.account;
+        this.state.all_accounts = this.state.account;
+
+        // metadata
+        this.state.total_accounts  = raw.total_accounts || 0;
+        this.state.has_more        = !!raw.has_more;
+        this.state.account_offset  = offset + pageAccounts.length;
+
+        // filter values (only sent on offset == 0)
+        if (raw.journal_ids && raw.journal_ids.length) {
+            this.state.journals = raw.journal_ids;
+        }
+        if (raw.analytic_ids && raw.analytic_ids.length) {
+            this.state.analytics = raw.analytic_ids;
+        }
+
+        // currency from first total we see
+        if (!this.state.currency) {
+            for (const k of Object.keys(pageTotals)) {
+                const c = pageTotals[k].currency_id;
+                if (c) { this.state.currency = c; break; }
+            }
+        }
+
+        this.state.is_loading = false;
+    }
+
     async load_data() {
-        let account_list = [];
-        let account_totals = {};
-        let totalDebitSum = 0;
-        let totalCreditSum = 0;
-        let currency = null;
-        var self = this;
-        var action_title = self.props.action.display_name;
-        try {
-            const filtered_data = await self.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
-            const raw_data = filtered_data || {};
-            self.state.account_data = raw_data;
-            $.each(raw_data, function (index, value) {
-                if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                    if (Array.isArray(value) || value && typeof value === 'object') {
-                        account_list.push(index);
-                    }
-                } else if (index === 'journal_ids') {
-                    self.state.journals = value || []
-                }
-                else if (index === 'analytic_ids') {
-                    self.state.analytics = value || []
-                }
-                else {
-                    account_totals = value || {}
-                    Object.values(account_totals).forEach(account_list => {
-                        if (account_list && typeof account_list === 'object') {
-                            currency = account_list.currency_id || currency
-                            totalDebitSum += Number(account_list.total_debit || 0);
-                            totalCreditSum += Number(account_list.total_credit || 0);
-                        }
-                    });
-                }
-            })
-            self.state.account = account_list
-            self.state.account_list = account_list
-            self.state.account_data_list = self.state.account_data
-            self.state.account_total_list = account_totals
-            self.state.account_total = account_totals
-            self.state.currency = currency
-            self.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
-            self.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
-            self.state.title = action_title
-        }
-        catch (el) {
-            self.state.account = []
-            self.state.account_data = {}
-            self.state.account_total = {}
-            self.state.currency = null
-            self.state.total_debit = '0.00'
-            self.state.total_credit = '0.00'
-            self.state.title = action_title
-        }
+        // First-ever load uses the state already seeded from action params.
+        this.state.account_offset = 0;
+        await this._fetchPage({ reset: true });
+    }
+
+    async loadMore() {
+        await this._fetchPage({ reset: false });
     }
     async printPdf(ev) {
         ev.preventDefault();
         var self = this;
+        const gt = this.getVisibleGrandTotals();
+        const pt = this.getPeriodTotals();
         let totals = {
-            'total_debit':this.state.total_debit,
-            'total_credit':this.state.total_credit,
-            'currency':this.state.currency,
-        }
-        var action_title = self.props.action.display_name;
+            'total_debit':     gt.debit.toFixed(2),
+            'total_credit':    gt.credit.toFixed(2),
+            'opening_balance': gt.opening.toFixed(2),
+            'currency':        this.state.currency,
+
+            // new — without opening balance
+            'period_debit':    pt.debit.toFixed(2),
+            'period_credit':   pt.credit.toFixed(2),
+            'period_balance':  pt.balance.toFixed(2),
+        };
+        var action_title = self.getActionTitle();
         return self.action.doAction({
             'type': 'ir.actions.report',
             'report_type': 'qweb-pdf',
@@ -114,24 +241,32 @@ class GeneralLedger extends owl.Component {
                     'date_range': self.state.date_range || 'month',
                     'options': self.state.options || {},
                     'analytic_ids': self.state.selected_analytic_list || [],
-                    'method': self.state.method || {'accrual': true},
+                    'method': self.state.method || { 'accrual': true },
                 },
                 'title': action_title,
                 'filters': this.filter(),
                 'grand_total': totals,
-                'report_name': self.props.action.display_name
+                'report_name': action_title
             },
-            'display_name': self.props.action.display_name,
+            'display_name': action_title,
         });
     }
     async print_xlsx() {
         var self = this;
+        const gt = this.getVisibleGrandTotals();
+        const pt = this.getPeriodTotals();
         let totals = {
-            'total_debit':this.state.total_debit,
-            'total_credit':this.state.total_credit,
-            'currency':this.state.currency,
-        }
-        var action_title = self.props.action.display_name;
+            'total_debit':     gt.debit.toFixed(2),
+            'total_credit':    gt.credit.toFixed(2),
+            'opening_balance': gt.opening.toFixed(2),
+            'currency':        this.state.currency,
+
+            // new — without opening balance
+            'period_debit':    pt.debit.toFixed(2),
+            'period_credit':   pt.credit.toFixed(2),
+            'period_balance':  pt.balance.toFixed(2),
+        };
+        var action_title = self.getActionTitle();
         var datas = {
             'account': self.state.account,
             'data': self.state.account_data,
@@ -145,7 +280,7 @@ class GeneralLedger extends owl.Component {
                 'model': 'account.general.ledger',
                 'data': JSON.stringify(datas),
                 'output_format': 'xlsx',
-                'report_action': self.props.action.xml_id,
+                'report_action': self.getActionXmlId(),
                 'report_name': action_title,
             },
         };
@@ -156,6 +291,71 @@ class GeneralLedger extends owl.Component {
             complete: () => unblockUI,
             error: (error) => self.call('crash_manager', 'rpc_error', error),
         });
+    }
+
+    getActionTitle() {
+        const params = (this.props.action && this.props.action.params) || {};
+        return params.default_title
+            || (this.props.action && (this.props.action.display_name || this.props.action.name))
+            || 'General Ledger';
+    }
+
+    /* --------------------------------------------------------------------
+    * Account code range filter (From / To)
+    * ------------------------------------------------------------------ */
+
+    _extractAccountCode(acc) {
+        // Pull the leading numeric code out of the account label.
+        // Handles "1010 Cash", "1010 - Cash", "1010-Cash", "1010".
+        const s = String(acc ?? '').trim();
+        const m = s.match(/^(\d+)/);
+        return m ? m[1] : '';
+    }
+
+    applyAccountRange() {
+        const from = (this.state.account_from || '').trim();
+        const to   = (this.state.account_to   || '').trim();
+
+        if (!from && !to) {
+            return;
+        }
+
+        const inRange = (acc) => {
+            const code = this._extractAccountCode(acc);
+            if (!code) {
+                return false;
+            }
+            // Left-pad so "99" < "101" compares numerically, not lexically
+            const width = Math.max(code.length, from.length, to.length);
+            const pad   = (v) => String(v).padStart(width, '0');
+            const c     = pad(code);
+            if (from && c < pad(from)) { return false; }
+            if (to   && c > pad(to))   { return false; }
+            return true;
+        };
+
+        // ⬇⬇ KEY CHANGE: REPLACE, don't union ⬇⬇
+        const selected = (this.state.all_accounts || []).filter(inRange);
+        this.state.selected_account_list = selected;
+
+        // Sync highlight on every account button in the dropdown
+        document
+            .querySelectorAll(".report-filter-button[data-value='account']")
+            .forEach((btn) => {
+                const id = btn.getAttribute('data-id');
+                btn.classList.toggle('selected-filter', selected.includes(id));
+            });
+
+        // Range narrowing applies to what's already loaded — no server call.
+    }
+
+    clearAccountRange() {
+        this.state.account_from = '';
+        this.state.account_to   = '';
+    }
+    getActionXmlId() {
+        return (this.props.action && this.props.action.xml_id)
+            || 'dynamic_accounts_report.action_general_ledger';
     }
     getAccountTotals(account) {
         if (!this.state.account_total || !this.state.account_total[account]) {
@@ -172,6 +372,15 @@ class GeneralLedger extends owl.Component {
             return [];
         }
         return this.state.account_data[account];
+    }
+    isAccountCollapsed(account) {
+        return !!this.state.collapsed_accounts[account];
+    }
+    toggleAccount(account) {
+        this.state.collapsed_accounts = {
+            ...this.state.collapsed_accounts,
+            [account]: !this.state.collapsed_accounts[account],
+        };
     }
     gotoJournalEntry(ev) {
         return this.action.doAction({
@@ -195,14 +404,8 @@ class GeneralLedger extends owl.Component {
     getDomain() {
         return [];
     }
+
     async applyFilter(val, ev, is_delete = false) {
-        let account_list = []
-        let account_totals = ''
-        let totalDebitSum = 0;
-        let totalCreditSum = 0;
-        this.state.account = null
-        this.state.account_data = null
-        this.state.account_total = null
         this.state.filter_applied = true;
         if (ev) {
             if (ev.input && ev.input.attributes.placeholder.value == 'Account' && !is_delete) {
@@ -248,28 +451,6 @@ class GeneralLedger extends owl.Component {
                     val.target.classList.remove("selected-filter");
                 }
             }
-
-            else if (val.target.attributes["data-value"].value == 'analytic') {
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_analytic_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_analytic_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_analytic_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
-            else if (val.target.attributes["data-value"].value == 'journal') {
-
-                if (!val.target.classList.contains("selected-filter")) {
-                    this.state.selected_journal_list.push(parseInt(val.target.attributes["data-id"].value, 10))
-                    val.target.classList.add("selected-filter");
-                } else {
-                    const updatedList = this.state.selected_journal_list.filter(item => item !== parseInt(val.target.attributes["data-id"].value, 10));
-                    this.state.selected_journal_list = updatedList
-                    val.target.classList.remove("selected-filter");
-                }
-            }
             else if (val.target.attributes["data-value"].value == 'analytic') {
                 if (!val.target.classList.contains("selected-filter")) {
                     this.state.selected_analytic_list.push(parseInt(val.target.attributes["data-id"].value, 10))
@@ -292,7 +473,7 @@ class GeneralLedger extends owl.Component {
                     };
                     val.target.classList.add("selected-filter");
                 }
-            }else if (val.target.attributes["data-value"].value === 'cash-basis') {
+            } else if (val.target.attributes["data-value"].value === 'cash-basis') {
                 if (val.target.classList.contains("selected-filter")) {
                     const { cash, ...updatedAccount } = this.state.method;
                     this.state.method = updatedAccount;
@@ -312,51 +493,150 @@ class GeneralLedger extends owl.Component {
                 }
             }
         }
-        let filtered_data = await this.orm.call("account.general.ledger", "get_filter_values", [this.state.selected_journal_list, this.state.date_range, this.state.options, this.state.selected_analytic_list, this.state.method]);
-        filtered_data = filtered_data || {};
-        $.each(filtered_data, function (index, value) {
-            if (index !== 'account_totals' && index !== 'journal_ids' && index !== 'analytic_ids') {
-                if (Array.isArray(value) || value && typeof value === 'object') {
-                    account_list.push(index)
-                }
-            }
-            else {
-                account_totals = value || {}
-                Object.values(account_totals).forEach(account_list => {
-                        if (account_list && typeof account_list === 'object') {
-                            totalDebitSum += Number(account_list.total_debit || 0);
-                            totalCreditSum += Number(account_list.total_credit || 0);
-                        }
-                    });
-            }
-        })
-        this.state.account = account_list
-        this.state.account_data = filtered_data
-        this.state.account_total = account_totals
-        this.state.total_debit = Number(totalDebitSum || 0).toFixed(2)
-        this.state.total_credit = Number(totalCreditSum || 0).toFixed(2)
-        if (this.unfoldButton && this.unfoldButton.el && $(this.unfoldButton.el.classList).find("selected-filter")) {
-            this.unfoldButton.el.classList.remove("selected-filter")
+        this.state.account_offset = 0;
+        await this._fetchPage({ reset: true });
+
+        if (this.unfoldButton && this.unfoldButton.el) {
+            this.unfoldButton.el.classList.remove("selected-filter");
         }
+    }
+
+    onSearchInput(ev) {
+        this.state.search_query = ev.target.value;
+        clearTimeout(this.searchTimeout);
+        // Server-side search: 400 ms debounce, then reload page 0.
+        this.searchTimeout = setTimeout(async () => {
+            this.state.account_offset = 0;
+            await this._fetchPage({ reset: true });
+        }, 400);
+    }
+
+    applySearch() {
+        const query = (this.state.search_query || '').trim().toLowerCase();
+        const accFilter = this.state.selected_account_list || [];
+
+        // Base accounts: all, or only those picked in the Account dropdown
+        let baseAccounts = this.state.account_list_full;
+        if (accFilter.length) {
+            baseAccounts = baseAccounts.filter((acc) => accFilter.includes(acc));
+        }
+
+        // No search query → return base accounts, all collapsed
+        if (!query) {
+            const filteredData = {};
+            const collapsed = {};
+            baseAccounts.forEach((acc) => {
+                filteredData[acc] = this.state.account_data_full[acc] || [];
+                collapsed[acc] = true;
+            });
+            this.state.account = baseAccounts;
+            this.state.account_data = filteredData;
+            this.state.collapsed_accounts = collapsed;
+            return;
+        }
+
+        // Token-based search
+        const queryTokens = query.split(/\s+/).filter(Boolean);
+        const matchesAllTokens = (haystack) =>
+            queryTokens.every((token) => haystack.includes(token));
+
+        // ---------- Pass 1: match by ACCOUNT NAME ----------
+        const accountNameMatches = baseAccounts.filter((account) =>
+            matchesAllTokens(account.toLowerCase())
+        );
+
+        if (accountNameMatches.length) {
+            const filteredData = {};
+            const collapsed = {};
+            const expandSingle = accountNameMatches.length === 1;
+            for (const account of accountNameMatches) {
+                filteredData[account] = this.state.account_data_full[account] || [];
+                collapsed[account] = !expandSingle;
+            }
+            this.state.account = accountNameMatches;
+            this.state.account_data = filteredData;
+            this.state.collapsed_accounts = collapsed;
+            return;
+        }
+
+        // ---------- Pass 2: match by LINE content (no split_account) ----------
+        const matchedAccounts = [];
+        const filteredData = {};
+        const collapsed = {};
+        for (const account of baseAccounts) {
+            const lines = this.state.account_data_full[account] || [];
+            const matchingLines = lines.filter((line) => {
+                const partner = line.partner_id;
+                const partnerName = Array.isArray(partner) ? partner[1] : '';
+                const haystack = [
+                    line.move_name || '',
+                    line.name || '',
+                    partnerName,
+                    line.ref || '',
+                    line.trx_type || '',
+                    line.location || '',
+                ].join(' ').toLowerCase();
+                return matchesAllTokens(haystack);
+            });
+            if (matchingLines.length) {
+                matchedAccounts.push(account);
+                filteredData[account] = matchingLines;
+                collapsed[account] = true;
+            }
+        }
+        this.state.account = matchedAccounts;
+        this.state.account_data = filteredData;
+        this.state.collapsed_accounts = collapsed;
+    }
+
+    async applyAccountFilter(ev) {
+        const accName = ev.target.attributes["data-id"].value;
+        let selected = [...this.state.selected_account_list];
+
+        if (selected.includes(accName)) {
+            selected = selected.filter((a) => a !== accName);
+            ev.target.classList.remove("selected-filter");
+        } else {
+            selected.push(accName);
+            ev.target.classList.add("selected-filter");
+        }
+        this.state.selected_account_list = selected;
+        // Account-filter selection is applied client-side within loaded pages,
+        // so no server round-trip is needed here.
+    }
+
+    sortAccounts(accounts) {
+        return [...(accounts || [])].sort((a, b) =>
+            String(a ?? '').localeCompare(String(b ?? ''), undefined, {
+                sensitivity: 'base', // case-insensitive: "abc" and "ABC" grouped together
+                numeric: true,       // so "Account 2" comes before "Account 10"
+            })
+        );
+    }
+    async clearAccountFilter() {
+        this.state.selected_account_list = [];
+        this.state.account_from = '';
+        this.state.account_to   = '';
+        document
+            .querySelectorAll(".report-filter-button[data-value='account']")
+            .forEach((btn) => btn.classList.remove("selected-filter"));
+        this.state.account_offset = 0;
+        await this._fetchPage({ reset: true });
     }
     async unfoldAll(ev) {
-        if (!ev.target.classList.contains("selected-filter")) {
-            for (var length = 0; length < this.tbody.el.children.length; length++) {
-                $(this.tbody.el.children[length])[0].classList.add('show')
-            }
-            ev.target.classList.add("selected-filter");
-        } else {
-            for (var length = 0; length < this.tbody.el.children.length; length++) {
-                $(this.tbody.el.children[length])[0].classList.remove('show')
-            }
-            ev.target.classList.remove("selected-filter");
+        const shouldCollapseAll = !ev.target.classList.contains("selected-filter");
+        const updated = {};
+        for (const account of this.state.account || []) {
+            updated[account] = shouldCollapseAll;
         }
+        this.state.collapsed_accounts = updated;
+        ev.target.classList.toggle("selected-filter");
     }
     filter() {
-    var self=this;
-    let startDate, endDate;
-    let startYear, startMonth, startDay, endYear, endMonth, endDay;
-        if (self.state.date_range){
+        var self = this;
+        let startDate, endDate;
+        let startYear, startMonth, startDay, endYear, endMonth, endDay;
+        if (self.state.date_range) {
             const today = new Date();
             if (self.state.date_range === 'year') {
                 startDate = new Date(today.getFullYear(), 0, 1);
@@ -379,33 +659,33 @@ class GeneralLedger extends owl.Component {
                 startDate = new Date(today.getFullYear(), lastQuarter * 3, 1);
                 endDate = new Date(today.getFullYear(), (lastQuarter + 1) * 3, 0);
             }
-            else{
+            else {
                 startDate = new Date(self.state.date_range.start_date);
                 endDate = new Date(self.state.date_range.end_date);
             }
-        // Get the date components for start and end dates
-        if (startDate) {
-        startYear = startDate.getFullYear();
-        startMonth = startDate.getMonth() + 1;
-        startDay = startDate.getDate();
-        }
-        if (endDate) {
-        endYear = endDate.getFullYear();
-        endMonth = endDate.getMonth() + 1;
-        endDay = endDate.getDate();
-        }
+            // Get the date components for start and end dates
+            if (startDate) {
+                startYear = startDate.getFullYear();
+                startMonth = startDate.getMonth() + 1;
+                startDay = startDate.getDate();
+            }
+            if (endDate) {
+                endYear = endDate.getFullYear();
+                endMonth = endDate.getMonth() + 1;
+                endDay = endDate.getDate();
+            }
         }
         const journals = self.state.journals || [];
         const analytics = self.state.analytics || [];
         const selectedJournalIDs = Object.values(self.state.selected_journal_list || []);
         const selectedJournalNames = selectedJournalIDs.map((journalID) => {
-          const journal = journals.find((journal) => journal.id === journalID);
-          return journal ? journal.name : '';
+            const journal = journals.find((journal) => journal.id === journalID);
+            return journal ? journal.name : '';
         });
         const selectedAnalyticIDs = Object.values(self.state.selected_analytic_list || []);
         const selectedAnalyticNames = selectedAnalyticIDs.map((analyticID) => {
-          const analytic = analytics.find((analytic) => analytic.id === analyticID);
-          return analytic ? analytic.name : '';
+            const analytic = analytics.find((analytic) => analytic.id === analyticID);
+            return analytic ? analytic.name : '';
         });
         let filters = {
             'journal': selectedJournalNames,

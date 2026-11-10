@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <record id="module_donation_box" model="ir.module.category">
+        <field name="name">Donation Box</field>
+        <field name="sequence">50</field>
+    </record>
+
+</odoo>

@@ -14,7 +14,7 @@ class WelfareLineDisbursementPopup(models.TransientModel):
     donee_street = fields.Char(string='Street', related='line_id.welfare_id.donee_id.street', readonly=True)
     donee_street2 = fields.Char(string='Street 2', related='line_id.welfare_id.donee_id.street2', readonly=True)
     donee_city = fields.Char(string='City', related='line_id.welfare_id.donee_id.city', readonly=True)
-    donee_state_id = fields.Many2one('res.country.state', string='State', related='line_id.welfare_id.donee_id.state_id', readonly=True)
+    donee_state_id = fields.Many2one('res.country.state', string='Donee State', related='line_id.welfare_id.donee_id.state_id', readonly=True)
     donee_country_id = fields.Many2one('res.country', string='Country', related='line_id.welfare_id.donee_id.country_id', readonly=True)
 
     disbursement_category_id = fields.Many2one('disbursement.category', related='line_id.disbursement_category_id', readonly=True)
@@ -53,6 +53,8 @@ class WelfareLineDisbursementPopup(models.TransientModel):
         }
 
     def action_mark_pending(self):
+        if self.line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Pending."))
         self.line_id.write({
             'media_ids': [(6, 0, self.media_ids.ids)],
             'state': 'pending',
@@ -65,9 +67,10 @@ class WelfareLineDisbursementPopup(models.TransientModel):
                 "Please upload at least one image or video in the Media field "
                 "before marking this line as Done."
             ))
-        self.line_id.write({'media_ids': [(6, 0, self.media_ids.ids)]})
+        if self.line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Done."))
+        self.line_id.write({'media_ids': [(6, 0, self.media_ids.ids)], 'state': 'disbursed'})
         self.welfare_id._auto_disburse_if_all_lines_delivered()
-        self.line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
 
 
@@ -83,7 +86,7 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
     donee_street = fields.Char(string='Street', related='recurring_line_id.welfare_id.donee_id.street', readonly=True)
     donee_street2 = fields.Char(string='Street 2', related='recurring_line_id.welfare_id.donee_id.street2', readonly=True)
     donee_city = fields.Char(string='City', related='recurring_line_id.welfare_id.donee_id.city', readonly=True)
-    donee_state_id = fields.Many2one('res.country.state', string='State', related='recurring_line_id.welfare_id.donee_id.state_id', readonly=True)
+    donee_state_id = fields.Many2one('res.country.state', string='Donee State', related='recurring_line_id.welfare_id.donee_id.state_id', readonly=True)
     donee_country_id = fields.Many2one('res.country', string='Country', related='recurring_line_id.welfare_id.donee_id.country_id', readonly=True)
 
     disbursement_category_id = fields.Many2one('disbursement.category', related='recurring_line_id.disbursement_category_id', readonly=True)
@@ -128,12 +131,15 @@ class WelfareRecurringLineDisbursementPopup(models.TransientModel):
                 "Please upload at least one image or video in the Media field "
                 "before marking this line as Done."
             ))
-        self.recurring_line_id.write({'media_ids': [(6, 0, self.media_ids.ids)]})
+        if self.recurring_line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Done."))
+        self.recurring_line_id.write({'media_ids': [(6, 0, self.media_ids.ids)], 'state': 'disbursed'})
         self.welfare_id._auto_disburse_if_all_lines_delivered()
-        self.recurring_line_id.write({'state': 'disbursed'})
         return self._reopen_wizard_action()
 
     def action_mark_pending(self):
+        if self.recurring_line_id.state not in ('collected', 'pending'):
+            raise UserError(_("Only lines collected by the officer can be marked as Pending."))
         self.recurring_line_id.write({
             'media_ids': [(6, 0, self.media_ids.ids)],
             'state': 'pending',
@@ -146,7 +152,7 @@ class CheckMarfatShift(models.TransientModel):
 
     employee_category_id_officer = fields.Many2one(
         'hr.employee.category',
-        string="Employee Category",
+        string='Officer Employee Category',
         default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id
     )
 

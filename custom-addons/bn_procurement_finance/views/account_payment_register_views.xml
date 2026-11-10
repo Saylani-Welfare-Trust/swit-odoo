@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="account_payment_register_view_form_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">account.payment.register.view.form.inherit.bn.procurement.finance</field>
+        <field name="model">account.payment.register</field>
+        <field name="inherit_id" ref="account.view_account_payment_register_form"/>
+        <field name="arch" type="xml">
+            <!-- The bill of a Purchase Order is paid for what is still due on it, advance already deducted -->
+            <xpath expr="//div[@name='amount_div']/field[@name='amount']" position="attributes">
+                <attribute name="readonly">amount_locked</attribute>
+            </xpath>
+            <xpath expr="//div[@name='amount_div']" position="inside">
+                <field name="amount_locked" invisible="1"/>
+            </xpath>
+
+            <!-- With a tax, the amount is the tax-included one and the payment is made for the net amount -->
+            <xpath expr="//label[@for='amount']" position="attributes">
+                <attribute name="invisible">not can_edit_wizard or can_group_payments and not group_payment or payment_tax_id</attribute>
+            </xpath>
+            <xpath expr="//label[@for='amount']" position="before">
+                <label for="amount" string="Amount (Tax Included)"
+                       invisible="not can_edit_wizard or can_group_payments and not group_payment or not payment_tax_id"/>
+            </xpath>
+            <xpath expr="//div[@name='amount_div']" position="after">
+                <field name="payment_tax_id" options="{'no_create': True}"
+                       invisible="partner_type != 'supplier' or not can_edit_wizard or can_group_payments and not group_payment"/>
+                <field name="payment_tax_amount"
+                       invisible="not payment_tax_id or not can_edit_wizard or can_group_payments and not group_payment"/>
+                <field name="payment_net_amount"
+                       invisible="not payment_tax_id or not can_edit_wizard or can_group_payments and not group_payment"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

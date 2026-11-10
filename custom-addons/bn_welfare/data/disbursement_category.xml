@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <data noupdate="1">
+    
+        <record id="disbursement_category_in_kind" model="disbursement.category">
+            <field name="name">In Kind</field>
+        </record>
+    
+        <record id="disbursement_category_Cash" model="disbursement.category">
+            <field name="name">Cash</field>
+        </record>
+    </data>
+
+    <!-- Databases from before 29 Sep 2026 still have these categories as
+         bn_master_setup data: adopt them (idempotent). -->
+    <function model="disbursement.category" name="_adopt_master_setup_categories"/>
+
+</odoo>

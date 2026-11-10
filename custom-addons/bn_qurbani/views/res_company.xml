@@ -2,14 +2,26 @@
 <odoo>
 
     <record id="bn_res_company_base_view_company_form_inherit_bn_qurbani" model="ir.ui.view">
-        <field name="name">bn.res.company.base.view.company.form.inherit.bn.qurbani</field>
+        <field name="name">res.company.base.view.company.form.inherit.bn.qurbani</field>
         <field name="model">res.company</field>
-        <field name="inherit_id" ref="bn_res_company.base_view_company_form_inherit_bn_res_company"/>
+        <field name="inherit_id" ref="bn_pos_customization.base_view_company_form_inherit_bn_pos_customization"/>
         <field name="arch" type="xml">
             <xpath expr="//page[@name='pos']//group[@name='pos']" position="inside">
                 <field name="first_para_halfnama" />
                 <field name="second_para_halfnama" />
                 <field name="third_para_halfnama" />
+            </xpath>
+        </field>
+    </record>
+
+    <!-- formerly in bn_res_qurbani -->
+    <record id="base_view_company_form_inherit_bn_qurbani_web" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.qurbani.web</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="bn_pos_custom_action.base_view_company_form_inherit_bn_pos_custom_action"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='product_configuration']//group[@name='product_configuration_col_1']" position="inside">
+                <field name="web_no_meat_distribution_location_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
             </xpath>
         </field>
     </record>

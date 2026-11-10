@@ -55,45 +55,37 @@ patch(PaymentScreen.prototype, {
         // ------------------------------------------------
         // ✅ Create Qurbani Record
         // ------------------------------------------------
-        if (hasQurbaniProduct) {
-            const donor_id = currentOrder.partner.id;
-
-            const orderLines = currentOrder.get_orderlines();
+        // the hissa is booked once, and only for an order that can be paid
+        if (hasQurbaniProduct && !currentOrder.qurbani_order_id) {
+            if (!currentOrder.get_partner()) {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Donor Required"),
+                    body: _t("Please select the donor of the Qurbani."),
+                });
+                return;
+            }
+            if (!(await this._isOrderValid(isForceValidate))) {
+                return;
+            }
 
             const payload = {
-                donor_id: donor_id,
-                order_lines: this.prepareOrderLines(orderLines),
+                donor_id: currentOrder.get_partner().id,
+                order_lines: this.prepareOrderLines(currentOrder.get_orderlines()),
             };
 
-            await this.orm.call(
-                'qurbani.order',
-                "create_qurbani_record",
-                [payload]
-            ).then((data) => {
+            const data = await this.orm.call("qurbani.order", "create_qurbani_record", [payload]);
+            if (!data || data.status !== "success") {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: (data && data.body) || _t("The Qurbani could not be booked."),
+                });
+                return;
+            }
 
-                if (data.status === 'error') {
-
-                    this.popup.add(ErrorPopup, {
-                        title: _t("Error"),
-                        body: data.body,
-                    });
-
-                    return;
-                }
-
-                if (data.status === 'success') {
-
-                    currentOrder.set_source_document(data.name);
-                    currentOrder.set_qurbani(true);
-
-                    this.notification.add(
-                        _t("Operation Successful"),
-                        {
-                            type: "info",
-                        }
-                    );
-                }
-            });
+            currentOrder.qurbani_order_id = data.id;
+            currentOrder.set_source_document(data.name);
+            currentOrder.set_qurbani(true);
+            this.notification.add(_t("Operation Successful"), { type: "info" });
         }
 
         // Continue with normal POS flow

@@ -1,6 +1,6 @@
 {
     'name': 'Qurbani',
-    'version': '1.0',
+    'version': '17.0.1.7.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -10,18 +10,20 @@
         'bn_donation_home_service',
         'bn_pos_customization',
         'bn_pos_payment_method',
-        'bn_res_company',
+        'bn_master_setup',
         'bn_pos_order',
         'bn_direct_deposit',
     ],
     'data': [
+        'data/absorb.xml',
+        'security/group.xml',
+        'security/ir.model.access.csv',
+        'security/stock_scope_rule.xml',
+        
         'data/server_action.xml',
         'data/sequence.xml',
         'data/chand_raat.xml',
         'data/qurbani_day.xml',
-        
-        'security/group.xml',
-        'security/ir.model.access.csv',
         
         'reports/duplicate_dn.xml',
         'reports/qurbani_cow_slaughter_report.xml',
@@ -58,7 +60,7 @@
         'views/web_qurbani_distribution.xml',
         'views/web_qurbani_slaughter.xml',
         'views/qurbani_city.xml',
-        'views/res_partner.xml',
+        'views/res_config_settings.xml',
         
         'wizards/generate_qurbani_demand.xml', 
         'wizards/qurbani_schedule.xml',
@@ -67,6 +69,9 @@
         'wizards/transfer_slaughter.xml',
         'wizards/sync_slaughter_and_distribution.xml',
         'wizards/update_qurbani_demand.xml',
+        'data/program_types.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,

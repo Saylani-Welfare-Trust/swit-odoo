@@ -1,8 +1,8 @@
 {
     'name': 'Direct Deposit',
-    'version': '1.0',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Direct Deposit',
     'depends': [
@@ -10,24 +10,32 @@
         'bn_donation_home_service',
         'bn_microfinance',
         'bn_sms_whatsapp',
+        'bn_master_setup',
     ],
     'data': [
-        'data/server_action.xml',
-        'data/sequence.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        
+        'data/server_action.xml',
+        'data/sequence.xml',
+        
         'views/direct_deposit.xml',
         'views/pos_direct_deposit.xml',
+        'views/direct_deposit_account_setup.xml',
+        'data/account_setup.xml',
+        
         'reports/direct_deposit_provisional_report.xml',
         'reports/direct_deposit_duplicate_report.xml',
         'reports/direct_deposit_dn_report.xml',
+        'data/program_types.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_direct_deposit/static/src/app/**/*',
-            # 'bn_direct_deposit/static/src/screens/*',
         ],
     },
-} # type: ignore
+}

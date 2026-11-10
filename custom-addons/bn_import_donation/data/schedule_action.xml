@@ -14,5 +14,29 @@
             <field name="doall" eval="False"/>
         </record>
 
+        <!--        The schedular action for Recurring  Entries-->
+        <record id="sync_fetch_weekly_donations_cron" model="ir.cron">
+            <field name="name">Fetch Weekly Donation Data</field>
+            <field name="model_id" ref="model_api_donation_wizard"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_fetch_weekly_donations()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+        </record>
+
+        <!--        Sends the WhatsApp / SMS queued by a confirmed import-->
+        <record id="send_donation_notification_cron" model="ir.cron">
+            <field name="name">Send Donation WhatsApp / SMS</field>
+            <field name="model_id" ref="model_donation"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_send_donation_notifications()</field>
+            <field name="interval_number">5</field>
+            <field name="interval_type">minutes</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+        </record>
+
     </data>
 </odoo>

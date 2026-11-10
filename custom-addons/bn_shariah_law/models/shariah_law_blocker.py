@@ -13,6 +13,7 @@ class ShariahLawBlocker(models.Model):
     enable_dik = fields.Boolean(string='Donation In Kind', default=True)
     enable_expense = fields.Boolean(string='Expenses', default=True)
     enable_purchase = fields.Boolean(string='Purchase Orders', default=True)
+    enable_material_request = fields.Boolean(string='Material Requests', default=True)
     enable_welfare = fields.Boolean(string='Welfare (Cash)', default=True)
     enable_microfinance = fields.Boolean(string='Microfinance (Cash)', default=True)
     enable_transfer = fields.Boolean(string='Transfers', default=True)
@@ -38,6 +39,7 @@ class ShariahLawBlocker(models.Model):
             'dik': 'enable_dik',
             'expense': 'enable_expense',
             'purchase': 'enable_purchase',
+            'material_request': 'enable_material_request',
             'welfare': 'enable_welfare',
             'microfinance': 'enable_microfinance',
             'transfer': 'enable_transfer',

@@ -9,6 +9,6 @@ patch(ActionButton.prototype, {
     async setup() {
         await super.setup(...arguments);
 
-        this.pos._donationBox = await this.env.services.user.hasGroup('bn_donation_box.donation_box_pos_action_group');
+        this.pos._donationBox = await this.env.services.user.hasGroup('bn_donation_box.donation_box_manager_group');
     }
 });

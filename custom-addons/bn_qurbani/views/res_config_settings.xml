@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<odoo>
+    
+    <record id="pos_res_config_settings_view_form_inherit_bn_qurbani" model="ir.ui.view">
+        <field name="name">pos.res.config.settings.view.form.inherit.bn.qurbani</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="point_of_sale.res_config_settings_view_form" />
+        <field name="arch" type="xml">
+            <block id="pos_interface_section" position="after">
+                
+                <block id="qurbani_config_section" title="Qurbani">
+                    <setting help="Enable qurbani feature in POS.">
+                        <field name="enable_qurbani" string="Enable Qurbani"/>
+                    </setting>
+                </block>
+
+            </block>
+        </field>
+    </record>
+
+</odoo>

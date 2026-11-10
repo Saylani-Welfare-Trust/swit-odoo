@@ -1,3 +1,6 @@
+from . import workflow
+from . import city_access
+from . import stock_warehouse
 from . import donation_box_request
 from . import donation_box_request_line
 from . import donation_box_registration_intallation
@@ -10,3 +13,5 @@ from . import stock_lot
 from . import stock_move
 from . import installation_category
 from . import res_company
+from . import pos_session
+from . import program_types

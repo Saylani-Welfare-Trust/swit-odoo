@@ -13,6 +13,7 @@
                 <field name="enable_dik" widget="boolean_toggle"/>
                 <field name="enable_expense" widget="boolean_toggle"/>
                 <field name="enable_purchase" widget="boolean_toggle"/>
+                <field name="enable_material_request" widget="boolean_toggle"/>
                 <field name="enable_welfare" widget="boolean_toggle"/>
                 <field name="enable_microfinance" widget="boolean_toggle"/>
                 <field name="enable_transfer" widget="boolean_toggle"/>

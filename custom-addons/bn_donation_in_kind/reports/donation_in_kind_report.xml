@@ -3,14 +3,13 @@
 
     <data>
         <!-- ===================== -->
-        <!-- Direct Deposit Receipt -->
+        <!-- Donation In Kind Receipt -->
         <!-- ===================== -->
         <template id="bn_donation_in_kind.donation_in_kind_report">
-            <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
                 <t t-foreach="docs" t-as="o">
-                    <t t-call="web.external_layout">
-                        <!-- PAGE WRAPPER -->
-                        <div class="page" style="position:relative;">
+                    <!-- PAGE WRAPPER -->
+                    <div class="page" t-attf-style="position:relative;#{'' if o_first else ' page-break-before:always;'}">
 
                             <!-- ===== STYLES ===== -->
                             <style>
@@ -55,6 +54,11 @@
                                 }
                             </style>
 
+                            <!-- ===== BANNER ===== -->
+                            <img t-if="show_company_header and o.env.company.dn_image"
+                                t-att-src="image_data_uri(o.env.company.dn_image)"
+                                style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
+
                             <!-- ===== HEADER ===== -->
                             <div class="row mb-2">
                                 <div class="col-6">
@@ -77,7 +81,7 @@
                             <div class="row mb-2">
                                 <div class="col-6">
                                     <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
-                                    <div name="donor_name"/>
+                                    <div name="donor_name"><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
                                     <div><strong>CNIC No.:</strong> <t t-esc="o.donor_id.cnic_no or '-'"/></div>
                                     <div>
                                         <strong>Remarks:</strong>
@@ -99,7 +103,7 @@
                                 <div class="col-6">
                                     <div>
                                         <strong>Date:</strong>
-                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
+                                        <t t-esc="(o.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
                                     </div>
                                     <div>
                                         <strong>Contact No.:</strong>
@@ -128,17 +132,15 @@
                             <hr style="margin:4px 0"/>
 
                             <!-- ===== TOTALS ===== -->
-                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px;">
-                                <div>Entered by: <strong><t t-esc="o.create_uid.name"/></strong></div>
-                            </div>
+                            <table style="width:100%; margin-top:10px; font-size:10px;">
+                                <tr>
+                                    <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="o.create_uid.name"/></strong></td>
+                                </tr>
+                            </table>
 
                             <hr style="margin:4px 0; border-top: solid 5px;"/>
 
                             <div class="row mb-2">
-                                <div style="display: flex; margin-bottom: 5px; font-size: 12px;">
-                                    
-                                </div>
-
                                 <div class="col-6">
                                     <div><strong>DIK #:</strong> <t t-esc="o.name or '--'"/></div>
                                     <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
@@ -154,7 +156,7 @@
                                 <div class="col-6">
                                     <div>
                                         <strong>Date &amp; Time:</strong>
-                                        <t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
+                                        <t t-esc="(o.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/>
                                     </div>
                                     <div><strong>Entered by: </strong> <t t-esc="o.create_uid.name"/></div>
                                 </div>
@@ -164,9 +166,7 @@
                                 Powered by BytesNode
                             </div>
 
-                        </div>
-
-                    </t>
+                    </div>
                 </t>
             </t>
         </template>
@@ -175,7 +175,7 @@
             <field name="name">A5 - Donation In Kind Report</field>
             <field name="format">A5</field>
             <field name="orientation">Portrait</field>
-            <field name="margin_top">0</field>
+            <field name="margin_top">84.5</field>
             <field name="margin_bottom">10</field>
             <field name="margin_left">4</field>
             <field name="margin_right">4</field>
@@ -193,6 +193,37 @@
             <field name="binding_type">report</field>
             <field name="print_report_name">'Donation In Kind Report - %s' % (object.name)</field>
             <field name="paperformat_id" ref="bn_donation_in_kind.report_donation_in_kind_paperformat"/>
+        </record>
+
+        <!-- ===================== -->
+        <!-- Donation In Kind Receipt (WhatsApp) -->
+        <!-- ===================== -->
+        <!-- Same receipt, but with the company banner on top instead of the blank space left for the pre-printed paper -->
+        <template id="bn_donation_in_kind.donation_in_kind_whatsapp_report">
+            <t t-set="show_company_header" t-value="True"/>
+            <t t-call="bn_donation_in_kind.donation_in_kind_report"/>
+        </template>
+
+        <record id="report_donation_in_kind_whatsapp_paperformat" model="report.paperformat">
+            <field name="name">A5 - WhatsApp Donation In Kind Report</field>
+            <field name="format">A5</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">0</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">4</field>
+            <field name="margin_right">4</field>
+            <field name="header_spacing">0</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <record id="action_report_donation_in_kind_whatsapp" model="ir.actions.report">
+            <field name="name">WhatsApp Donation In Kind Report</field>
+            <field name="model">donation.in.kind</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">bn_donation_in_kind.donation_in_kind_whatsapp_report</field>
+            <field name="report_file">bn_donation_in_kind.donation_in_kind_whatsapp_report</field>
+            <field name="print_report_name">'Donation In Kind Report - %s' % (object.name)</field>
+            <field name="paperformat_id" ref="bn_donation_in_kind.report_donation_in_kind_whatsapp_paperformat"/>
         </record>
 
     </data>

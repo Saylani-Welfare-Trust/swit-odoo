@@ -22,15 +22,17 @@
                     </div>
                     <group>
                         <group name="record_search_col_1">
-                            <field name="is_welfare" invisible="1" />
-                            <field name="is_microfinance" invisible="1" />
-
-                            <field name="registration_type" readonly="is_microfinance or is_welfare" />
+                            <field name="program_locked" invisible="1" />
+                            <field name="program_kind" invisible="1" />
+                            <field name="registration_type" readonly="program_locked" />
                         </group>
                         <group name="record_search_col_2">
-                            <field name="donee_registration_type" string="Registration Type" invisible="registration_type != 'donee'" readonly="is_microfinance or is_welfare" />
-                            <field name='category' string='Category' invisible="registration_type != 'donee' or is_microfinance"/>
-                            <!-- <field name="microfinance_scheme_id" invisible="not is_microfinance" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="is_microfinance" /> -->
+                            <!-- the programmes are the tags with a Record Search code (Profile Types) -->
+                            <field name="program_id" invisible="registration_type != 'donee'" readonly="program_locked"
+                                   required="registration_type == 'donee'"
+                                   options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                            <field name='category' string='Category'
+                                   invisible="registration_type != 'donee' or program_kind in ('individual', 'institution')"/>
                         </group>
                     </group>
                 </sheet>
@@ -56,8 +58,8 @@
         <field name="view_mode">form</field>
         <field name="context">{
             'default_registration_type': 'donee',
-            'default_donee_registration_type': 'microfinance',
-            'default_is_microfinance': True,
+            'default_program_code': 'microfinance',
+            'default_program_locked': True,
         }</field>
         <field name="target">new</field>
     </record>
@@ -68,8 +70,8 @@
         <field name="view_mode">form</field>
         <field name="context">{
             'default_registration_type': 'donee',
-            'default_donee_registration_type': 'welfare',
-            'default_is_welfare': True,
+            'default_program_code': 'welfare',
+            'default_program_locked': True,
         }</field>
         <field name="target">new</field>
     </record>

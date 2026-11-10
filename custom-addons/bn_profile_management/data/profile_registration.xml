@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Runs on every install / upgrade. Idempotent: configures the Donor /
+         Donee ID patterns only if empty, records IDs issued earlier. -->
+    <function model="res.partner.category" name="_setup_registration_ids"/>
+    <!-- Record Search programmes offered before they were configurable
+         (Student, Welfare, Microfinance, Medical): set only if not configured -->
+    <function model="res.partner.category" name="_setup_record_search_programs"/>
+</odoo>

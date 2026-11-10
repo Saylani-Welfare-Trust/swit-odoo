@@ -17,12 +17,16 @@
                     <group>
                         <group name="rider_collection_col_1">
                             <field name="donation_box_registration_installation_id" options="{'no_create': True, 'no_edit': True}" />
+                            <field name="dn_number" string="DN #" invisible="state != 'paid'" />
+                            <field name="pos_order_id" options="{'no_create': True, 'no_edit': True}" invisible="not pos_order_id" groups="point_of_sale.group_pos_user" />
                             <field name="date" />
                             <field name="submission_time" />
                             <!-- Readonly for users NOT in group_edit_rider_collection -->
-                            <field name="amount" string="Amount (PKR)" />
+                            <field name="amount" string="Amount (PKR)" readonly="1" groups="!bn_rider_shift.group_edit_rider_collection"/>
+                            <field name="amount" string="Amount (PKR)" readonly="state == 'paid'" groups="bn_rider_shift.group_edit_rider_collection"/>
 
-                            <field name="counterfeit_notes" string="Counterfeit Notes" />
+                            <field name="counterfeit_notes" string="Counterfeit Notes" readonly="1" groups="!bn_rider_shift.group_edit_rider_collection"/>
+                            <field name="counterfeit_notes" string="Counterfeit Notes" readonly="state == 'paid'" groups="bn_rider_shift.group_edit_rider_collection"/>
                             
                             <field name="remarks" />
                         </group>
@@ -39,6 +43,36 @@
         </field>
     </record>
 
+    <record id="rider_collection_view_search" model="ir.ui.view">
+        <field name="name">rider.collection.view.search</field>
+        <field name="model">rider.collection</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="rider_id" />
+                <field name="shop_name" />
+                <field name="lot_id" string="Box No." />
+                <field name="key_bunch_id" />
+                <field name="sub_zone_id" />
+                <separator />
+                <filter string="Not Collected" name="filter_not_collected" domain="[('state', '=', 'donation_not_collected')]" />
+                <filter string="Collected" name="filter_collected" domain="[('state', '=', 'donation_collected')]" />
+                <filter string="Submitted" name="filter_submitted" domain="[('state', '=', 'donation_submit')]" />
+                <filter string="Pending" name="filter_pending" domain="[('state', '=', 'pending')]" />
+                <filter string="Paid" name="filter_paid" domain="[('state', '=', 'paid')]" />
+                <separator />
+                <filter string="Complaint Generated" name="filter_complain_generated" domain="[('is_complain_generated', '=', True)]" />
+                <separator />
+                <filter string="Date" name="filter_date" date="date" />
+                <group string="Group By">
+                    <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}" />
+                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
+                    <filter string="Day" name="group_day" domain="[]" context="{'group_by': 'day'}" />
+                    <filter string="Date" name="group_date" domain="[]" context="{'group_by': 'date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="rider_collection_view_tree" model="ir.ui.view">
         <field name="name">rider.collection.view.tree</field>
         <field name="model">rider.collection</field>
@@ -46,24 +80,24 @@
             <tree editable="bottom" create="0" delete="0" >
                 <field name="is_complain_generated" column_invisible="1" />
 
+                <field name="pos_receipt_number" string="POS Receipt Number" readonly="1" />
                 <field name="rider_id" string="Rider" readonly="1" />
                 <field name="date" readonly="1" />
                 <field name="shop_name" readonly="1" />
                 <field name="lot_id" string="Box No." readonly="1" />
+                <field name="dn_number" string="DN #" readonly="1" invisible="state != 'paid'" />
                 <field name="sub_zone_id" string="Sub Zone" readonly="1" />
                 <field name="contact_person" string="Contact Person" readonly="1" />
                 <field name="contact_number" string="Contact Number" readonly="1" />
-                <!-- Readonly for users NOT in group_edit_rider_collection -->
-                <field name="amount" readonly="1" groups="bn_rider_shift.group_edit_rider_collection"/>
+                <!-- Readonly for users NOT in group_edit_rider_collection (polarity was inverted before) -->
+                <field name="amount" readonly="1" groups="!bn_rider_shift.group_edit_rider_collection"/>
                 <!-- Editable for users IN group_edit_rider_collection -->
-                <field name="amount" groups="!bn_rider_shift.group_edit_rider_collection" readonly="state == 'paid'"/>
-                <!-- <field name="foreign_notes" string="Foreign Notes" /> -->
-                <!-- Readonly for users NOT in group_edit_rider_collection -->
-                <field name="counterfeit_notes" readonly="1" groups="bn_rider_shift.group_edit_rider_collection"/>
+                <field name="amount" groups="bn_rider_shift.group_edit_rider_collection" readonly="state == 'paid'"/>
+                <!-- Readonly for users NOT in group_edit_rider_collection (polarity was inverted before) -->
+                <field name="counterfeit_notes" readonly="1" groups="!bn_rider_shift.group_edit_rider_collection"/>
                 <!-- Editable for users IN group_edit_rider_collection -->
-                <field name="counterfeit_notes" groups="!bn_rider_shift.group_edit_rider_collection" readonly="state == 'paid'"/>
+                <field name="counterfeit_notes" groups="bn_rider_shift.group_edit_rider_collection" readonly="state == 'paid'"/>
                 <field name="remarks"/>
-                <!-- <field name="submission_time" /> -->
                 <field name="state" widget="badge" decoration-info="state == 'donation_collected'" decoration-success="state in ['donation_submit', 'paid']" />
             </tree>
         </field>
@@ -84,7 +118,7 @@
         id="rider_collection_menu"
         name="Collection"
         action="rider_collection_action"
-        groups="bn_rider_shift.rider_shift_collection_menu_group"
+        groups="bn_rider_shift.rider_shift_root_group"
         parent="bn_rider_shift.rider_shift_root_menu"
         sequence="1"/>
 

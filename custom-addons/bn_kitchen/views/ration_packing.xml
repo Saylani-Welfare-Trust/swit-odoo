@@ -18,6 +18,7 @@
     <menuitem
         id="kitchen_menu"
         name="Kitchen"
+        groups="bn_kitchen.kitchen_group"
         web_icon="bn_kitchen,static/description/icon.png"
         sequence="6"/>
 
@@ -26,7 +27,8 @@
         name="Ration Packing"
         action="ration_packing_action"
         parent="bn_kitchen.kitchen_menu"
-        sequence="0"/>
+        sequence="0"
+        groups="bn_kitchen.kitchen_user_group,bn_kitchen.kitchen_audit_group"/>
 
     <record id="view_mrp_bom_form_inherit_on_hand" model="ir.ui.view">
         <field name="name">mrp.bom.form.on.hand</field>

@@ -23,8 +23,8 @@ class QurbaniGoatDistribution(models.Model):
 
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
-    slaughter_start_time = fields.Float('Start Time')
-    slaughter_end_time = fields.Float('End Time')
+    slaughter_start_time = fields.Float('Slaughter Start Time')
+    slaughter_end_time = fields.Float('Slaughter End Time')
 
     name = fields.Char('Name', default="New")
 

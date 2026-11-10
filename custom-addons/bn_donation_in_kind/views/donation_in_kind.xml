@@ -7,9 +7,6 @@
         <field name="type">tree</field>
         <field name="arch" type="xml">
             <tree create="0" delete="0">
-                <!-- <header>
-                    <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight"/>
-                </header> -->
                 <field name="name" readonly="1" />
                 <field name="donor_id" />
                 <field name="truk_number"/>
@@ -18,7 +15,6 @@
                 <field name="analytical_account_id" string="Branch" />
                 <field name="quantity" />
                 <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state in ['approval']" decoration-danger="state == 'cancel'" />
-                <!-- <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight" invisible="state not in ['draft']"/> -->
 
             </tree>
         </field>
@@ -31,14 +27,14 @@
         <field name="arch" type="xml">
             <form create="0" delete="0">
                 <header>
-                    <button name="action_validate" string="Validate" type="object" class="oe_highlight" invisible="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel', 'draft']"/>
-                    <button name="action_cancel" type="object" string="Not Delivered" invisible="state in ['validate', 'box_open','valuation_committee', 'approval', 'box_validate','cancel','draft']" />
-                    <button name="action_box_open" string="Open Box" type="object" class="oe_highlight" invisible="state in ['draft', 'box_open', 'valuation_committee', 'approval', 'box_validate','delivered', 'cancel']" />
-                    <button name="action_check" string="Check Item" type="object" class="oe_highlight" invisible="state != 'box_open' or check_bool in ['yes', 'no']" />
-                    <button name="action_valuation_committee" string="Valuation Committee" type="object" class="oe_highlight" invisible="state in ['draft', 'validate', 'valuation_committee', 'approval', 'box_validate','delivered', 'cancel'] or check_bool in ['default', 'no']"/>
+                    <button name="action_validate" string="Validate" type="object" class="oe_highlight" invisible="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel', 'draft']" groups="bn_donation_in_kind.donation_in_kind_user_group"/>
+                    <button name="action_cancel" type="object" string="Not Delivered" invisible="state in ['validate', 'box_open','valuation_committee', 'approval', 'box_validate','cancel','draft']" groups="bn_donation_in_kind.donation_in_kind_manager_group"/>
+                    <button name="action_box_open" string="Open Box" type="object" class="oe_highlight" groups="bn_donation_in_kind.donation_in_kind_open_box_group" invisible="state in ['draft', 'box_open', 'valuation_committee', 'approval', 'box_validate','delivered', 'cancel']" />
+                    <button name="action_check" string="Check Item" type="object" class="oe_highlight" invisible="state != 'box_open' or check_bool in ['yes', 'no']" groups="bn_donation_in_kind.donation_in_kind_user_group"/>
+                    <button name="action_valuation_committee" string="Valuation Committee" type="object" class="oe_highlight" invisible="state in ['draft', 'validate', 'valuation_committee', 'approval', 'box_validate','delivered', 'cancel'] or check_bool in ['default', 'no']" groups="bn_donation_in_kind.donation_in_kind_user_group"/>
                     <button name="action_approval" string="Approval" type="object" class="oe_highlight" invisible="state in ['draft', 'delivered', 'validate', 'box_open', 'approval', 'box_validate', 'cancel']" groups="bn_donation_in_kind.donation_in_kind_valuation_committee_group" />
-                    <button name="action_box_validate" string="Box Validate" type="object" class="oe_highlight" invisible="state in ['draft', 'delivered', 'validate', 'box_open', 'valuation_committee', 'box_validate', 'cancel']" />
-                    <button name="action_box_validate" string="Box Validate" type="object" class="oe_highlight" invisible="state == 'box_validate' or check_bool in ['default', 'yes']" />
+                    <button name="action_box_validate" string="Box Validate" type="object" class="oe_highlight" groups="bn_donation_in_kind.donation_in_kind_box_validate_group" invisible="state in ['draft', 'delivered', 'validate', 'box_open', 'valuation_committee', 'box_validate', 'cancel']" />
+                    <button name="action_box_validate" string="Box Validate" type="object" class="oe_highlight" groups="bn_donation_in_kind.donation_in_kind_box_validate_group" invisible="state == 'box_validate' or check_bool in ['default', 'yes']" />
                     
                     <field name="state" widget="statusbar" statusbar_visible="draft,delivered,validate,box_open,check_item,valuation_committee,approval,box_validate" />
                 </header>
@@ -53,6 +49,9 @@
                         <button name="action_reversal_operations_type_receipts" type="object" class="oe_stat_button" icon="fa-pencil-square-o" invisible="reversal_picking_id == False">
                             <field name="reversal_picking_id" widget="statinfo"/>
                         </button>
+                        <button name="action_box_return_picking" type="object" class="oe_stat_button" icon="fa-undo" invisible="not box_return_picking_id">
+                            <field name="box_return_picking_id" widget="statinfo"/>
+                        </button>
                     </div>
 
                     <div class="oe_title">
@@ -64,7 +63,7 @@
                         <group>
                             <field name="donor_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="product_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                            <field name="picking_type_id" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="picking_type_id" domain="[('program_type', '=', 'donation_in_kind')]" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="check_bool" invisible="1" />
                         </group>
                         <group>
@@ -125,7 +124,7 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button string="Confirm" type="object" name="action_confirm_transfer" class="btn-primary"/>
+                    <button string="Confirm" type="object" name="action_confirm_transfer" class="btn-primary" groups="bn_donation_in_kind.donation_in_kind_user_group"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -148,6 +147,7 @@
         name="Donation In Kind"
         action="donation_in_kind_action"
         parent="bn_import_donation.import_donation_root_menu"
+        groups="bn_donation_in_kind.donation_in_kind_menu_group"
         sequence="3"/>
 
 </odoo>

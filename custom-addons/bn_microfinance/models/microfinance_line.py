@@ -4,6 +4,7 @@ from odoo import models, fields, api, _
 state_selection = [
     ('unpaid', 'Unpaid'),
     ('partial', 'Partial'),
+    ('overdue', 'Overdue'),
     ('paid', 'Paid')
 ]
 state_cheque_selection = [
@@ -19,6 +20,7 @@ class MicrofinanceLine(models.Model):
 
 
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
+    product_id = fields.Many2one('product.product', related='microfinance_id.product_id', store=True, string="Product")
     
     bank_name = fields.Char('Bank Name')
     cheque_no = fields.Char('Cheque No.')
@@ -38,7 +40,9 @@ class MicrofinanceLine(models.Model):
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id', default=0)
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id', compute='_compute_remaining_amount', store=True)
     donee_id = fields.Many2one('res.partner', string="Donee")
-    currency_id = fields.Many2one(related='microfinance_id.currency_id', string="Currency")
+    # NOTE: duplicate 'currency_id' declaration removed; the stored related
+    # definition (store=True) is the effective one kept here.
+    currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
 
     state = fields.Selection(selection=state_selection, string='State', default="unpaid")
     state_cheque = fields.Selection(selection=state_cheque_selection, string='Cheque Status', default='draft')
@@ -47,7 +51,6 @@ class MicrofinanceLine(models.Model):
     payment_date = fields.Date('Payment Date')
     paid_date = fields.Date('Paid Date')
 
-    currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
     @api.depends('state')
     def _get_payment_status(self):
         for line in self:
@@ -55,6 +58,8 @@ class MicrofinanceLine(models.Model):
                 line.payment_status = 'Fully Paid'
             elif line.state == 'partial':
                 line.payment_status = 'Partially Paid'
+            elif line.state == 'overdue':
+                line.payment_status = 'Overdue'
             else:
                 line.payment_status = 'Unpaid'
     
@@ -62,10 +67,39 @@ class MicrofinanceLine(models.Model):
 
     @api.model
     def create(self, vals):
-        if vals.get('name', _('NEW') == _('NEW')):
+        if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
             vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_line') or ('New')
                 
-        return super(MicrofinanceLine, self).create(vals)
+        res = super(MicrofinanceLine, self).create(vals)
+        res._update_overdue_state()
+        return res
+
+    def _update_overdue_state(self):
+        """Move unpaid/partial lines past their due date to 'overdue', and
+        move overdue lines back to unpaid/partial if the due date is no longer past."""
+        today = fields.Date.context_today(self)
+        to_overdue = self.filtered(
+            lambda l: l.state in ('unpaid', 'partial') and l.due_date and l.due_date < today
+        )
+        not_overdue = self.filtered(
+            lambda l: l.state == 'overdue' and (not l.due_date or l.due_date >= today)
+        )
+        back_to_partial = not_overdue.filtered(lambda l: l.paid_amount > 0)
+        back_to_unpaid = not_overdue - back_to_partial
+        if to_overdue:
+            to_overdue.write({'state': 'overdue'})
+        if back_to_partial:
+            back_to_partial.write({'state': 'partial'})
+        if back_to_unpaid:
+            back_to_unpaid.write({'state': 'unpaid'})
+
+    @api.model
+    def _cron_update_overdue_state(self):
+        self.search([
+            '|',
+            '&', ('state', 'in', ('unpaid', 'partial')), ('due_date', '<', fields.Date.context_today(self)),
+            '&', ('state', '=', 'overdue'), '|', ('due_date', '=', False), ('due_date', '>=', fields.Date.context_today(self)),
+        ])._update_overdue_state()
     
     @api.depends('due_date', 'paid_amount')
     def _compute_remaining_amount(self):
@@ -126,9 +160,12 @@ class MicrofinanceLine(models.Model):
                 if rec.state == 'paid':
                     if rec.state_cheque not in ('cleared', 'bounced'):
                         rec.state_cheque = 'deposited'
-                elif rec.state in ('unpaid', 'partial'):
+                elif rec.state in ('unpaid', 'partial', 'overdue'):
                     if rec.state_cheque == 'deposited':
                         rec.state_cheque = 'draft'
+
+        if 'state' in vals or 'due_date' in vals:
+            self._update_overdue_state()
         
         return res
 

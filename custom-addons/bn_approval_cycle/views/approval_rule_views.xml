@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_approval_rule_list" model="ir.ui.view">
+        <field name="name">approval.rule.list</field>
+        <field name="model">approval.rule</field>
+        <field name="arch" type="xml">
+            <tree string="Approval Rules">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="method_name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_approval_rule_form" model="ir.ui.view">
+        <field name="name">approval.rule.form</field>
+        <field name="model">approval.rule</field>
+        <field name="arch" type="xml">
+            <form string="Approval Rule">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Confirm sales orders" class="oe_inline"/></h1>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        Search the target model by its name, for example Sales Order.
+                        Then pick the button that must wait for approval, for example Confirm.
+                        The last approval runs that same button for the person who submitted the document.
+                        Amount limits are set only on a stage, under Required When = Amount Threshold.
+                    </div>
+                    <group>
+                        <group string="Document">
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="model_name" invisible="1"/>
+                            <field name="model_id"
+                                   context="{'approval_target_model': True}"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Sales Order, Purchase Order, Journal Entry..."/>
+                            <field name="button_id"
+                                   invisible="not model_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="Confirm, Post, Validate..."/>
+                            <field name="method_name"
+                                   readonly="button_id"
+                                   required="model_id and not button_id"
+                                   placeholder="action_confirm"/>
+                            <field name="department_wise_enabled" invisible="1"/>
+                            <field name="department_ids" widget="many2many_tags" invisible="not department_wise_enabled"/>
+                        </group>
+                        <group string="Scope">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="currency_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Stages" name="stages">
+                            <div class="text-muted mb-2">
+                                Stages run in order, one request at a time.
+                                Always asks that role for every amount.
+                                Amount Threshold is the only place to set a minimum or maximum for that role on this rule.
+                            </div>
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="role_id"/>
+                                    <field name="required_approvals"/>
+                                    <field name="condition_type"/>
+                                    <field name="currency_id" column_invisible="1"/>
+                                    <field name="minimum_amount" invisible="condition_type != 'amount'"/>
+                                    <field name="maximum_amount" invisible="condition_type != 'amount'"/>
+                                    <field name="allow_requester"/>
+                                    <field name="note"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Conditions" name="conditions" invisible="not model_name">
+                            <field name="domain" widget="domain" options="{'model': 'model_name'}"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_approval_rule_line_form" model="ir.ui.view">
+        <field name="name">approval.rule.line.form</field>
+        <field name="model">approval.rule.line</field>
+        <field name="arch" type="xml">
+            <form string="Approval Stage" create="0" edit="0" delete="0">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="role_id"/>
+                        <h1><field name="role_id" options="{'no_open': True}"/></h1>
+                    </div>
+                    <group>
+                        <group string="Rule">
+                            <field name="rule_id"/>
+                            <field name="sequence"/>
+                            <field name="required_approvals"/>
+                            <field name="allow_requester"/>
+                        </group>
+                        <group string="Amount">
+                            <field name="condition_type"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="minimum_amount" invisible="condition_type != 'amount'"/>
+                            <field name="maximum_amount" invisible="condition_type != 'amount'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Note" name="note" invisible="not note">
+                            <field name="note"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_approval_rule_search" model="ir.ui.view">
+        <field name="name">approval.rule.search</field>
+        <field name="model">approval.rule</field>
+        <field name="arch" type="xml">
+            <search string="Approval Rules">
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="method_name"/>
+                <field name="button_id"/>
+                <field name="department_ids"/>
+                <separator/>
+                <filter name="has_threshold" string="Has Amount Threshold"
+                        domain="[('line_ids.condition_type', '=', 'amount')]"/>
+                <filter name="always_only" string="Always Required"
+                        domain="[('line_ids.condition_type', '=', 'always')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_model" string="Target Model" context="{'group_by': 'model_id'}"/>
+                    <filter name="group_method" string="Button" context="{'group_by': 'method_name'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                    <filter name="group_currency" string="Currency" context="{'group_by': 'currency_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_approval_rule" model="ir.actions.act_window">
+        <field name="name">Approval Rules</field>
+        <field name="res_model">approval.rule</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_approval_rule_search"/>
+    </record>
+</odoo>

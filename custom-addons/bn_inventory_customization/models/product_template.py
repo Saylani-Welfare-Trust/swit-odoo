@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import api, fields, models
 
 
 class ProductTemplate(models.Model):
@@ -31,5 +31,3 @@ class ProductTemplate(models.Model):
         string='Main Attribute',
         help='When set, only this attribute\'s values are used to determine the highest to_kg.'
     )
-
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)

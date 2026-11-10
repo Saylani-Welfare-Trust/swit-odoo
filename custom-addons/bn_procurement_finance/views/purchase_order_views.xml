@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_order_view_form_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">purchase.order.view.form.inherit.bn.procurement.finance</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="advance_payment_missing" invisible="1"/>
+                <field name="advance_review_required" invisible="1"/>
+                <!-- Normally created on confirmation; this covers orders confirmed before their Payment Term had an advance milestone -->
+                <button string="Create Advance Payment" name="action_create_advance_payments" type="object"
+                        groups="account.group_account_invoice"
+                        invisible="not advance_payment_missing"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="before">
+                <div class="alert alert-warning" role="alert" invisible="not advance_review_required">
+                    <strong>Advance payment under Finance review</strong> - it was not changed automatically.
+                    <field name="advance_review_reason" readonly="1" nolabel="1"/>
+                </div>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_advance_payments" type="object" class="oe_stat_button" icon="fa-money"
+                        invisible="advance_payment_count == 0">
+                    <field name="advance_payment_count" string="Advance Payments" widget="statinfo"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>

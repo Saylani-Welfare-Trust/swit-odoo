@@ -8,6 +8,6 @@ class KitchenMenuLine(models.Model):
 
     kitchen_menu_id = fields.Many2one('kitchen.menu', string="Kitchen Menu")
 
-    product_id = fields.Many2one('product.product', string="Product")
+    product_id = fields.Many2one('product.product', domain=[('is_kitchen', '=', True)], string="Product")
 
     quantity = fields.Float('Quantity', default=1)

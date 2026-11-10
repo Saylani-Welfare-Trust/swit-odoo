@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="stock_view_location_form_inherit_bn_stock_locaiton" model="ir.ui.view">
-        <field name="name">stock.view.location.form.inherit.bn.stock.locaiton</field>
+    <record id="stock_view_location_form_inherit_stock_locaiton" model="ir.ui.view">
+        <field name="name">stock.view.location.form.inherit.bn.stock.location</field>
         <field name="model">stock.location</field>
         <field name="inherit_id" ref="stock.view_location_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='replenish_location']" position="after">
                 <field name="is_slaughter_location" />
                 <field name="is_distribution_location" />
-                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="usage != 'internal'" />
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', 'in', ('City', 'Zone', 'Branch'))]" invisible="usage not in ('internal', 'view')" />
                 <field name="location_option_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </xpath>
         </field>
@@ -21,13 +21,13 @@
         <field name="inherit_id" ref="stock.view_location_tree2"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='complete_name']" position="after">
-                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" invisible="usage != 'internal'" />
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', 'in', ('City', 'Zone', 'Branch'))]" invisible="usage not in ('internal', 'view')" />
             </xpath>
         </field>
     </record>
 
     <record id="stock.menu_action_location_form" model="ir.ui.menu">
-        <field name="groups_id" eval="[(4, ref('bn_stock_location.inventory_location_menu_group'))]"/>
+        <field name="groups_id" eval="[(4, ref('bn_stock_location.stock_location_user_group'))]"/>
     </record>
 
 </odoo>

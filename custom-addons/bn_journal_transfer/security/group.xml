@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Role group of the Treasury (tiers in bn_pos_cheque): journal transfers.
+         Treasury Audit reads them, Treasury Administrator has full control. -->
     <record id="journal_transfer_group" model="res.groups">
-        <field name="name">Journal Transfer / Menu</field>
+        <field name="name">Journal Transfer</field>
+        <field name="category_id" ref="bn_pos_cheque.module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Create and post journal transfers (Treasury > Journal Transfer). Needs the Treasury Menu group to see the menu.</field>
     </record>
 
 </odoo>

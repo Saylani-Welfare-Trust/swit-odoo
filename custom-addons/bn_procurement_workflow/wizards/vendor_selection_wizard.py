@@ -1,18 +1,52 @@
 # -*- coding: utf-8 -*-
-from odoo import models, _
-from odoo.exceptions import ValidationError
+from odoo import models, fields, _
 
 
 class VendorSelectionWizard(models.TransientModel):
     _inherit = 'vendor.selection.wizard'
+    
+    designated_cxo_approver_id = fields.Many2one(
+        'master.cxo.approver', 
+        string='Assigned CXO Approver', 
+        tracking=True,
+        help='If set, ONLY this user can give CXO approval to this RFQ.'
+    )
 
     def action_create_rfqs(self):
         requisition = self.source_requisition_id
-        if requisition and (requisition.state != 'procurement_review' or not requisition.procurement_manager_id):
-            raise ValidationError(
-                _('RFQs can only be created once the Procurement Manager has approved this '
-                  'Purchase Requisition for RFQ.'))
+        requisition._check_rfq_creator()
+        # RFQs can be created on the same Purchase Request more than once (a
+        # batch at a time): the first batch in Procurement Manager Approval,
+        # later ones in RFQ Sent or further along.
+        state_before = requisition.state
         result = super().action_create_rfqs()
+
+        # super() returns the RFQ's form action when it created exactly one
+        # RFQ, and the RFQs themselves otherwise.
+        if isinstance(result, dict):
+            rfqs = self.env['purchase.order'].browse(result['res_id'])
+        else:
+            rfqs = result
+
+        # super() closes a Purchase Request once all its lines are on RFQs, but
+        # here its RFQs still go through winner selection, CXO approval and the
+        # funds check: it closes once their Purchase Orders are confirmed.
+        # It only moves on to RFQ Sent once every line is on an RFQ: until then it
+        # stays in Procurement Manager Approval, so the RFQs for the remaining
+        # products are created from the same button.
         if requisition:
-            requisition.action_mark_rfq_sent()
-        return result
+            if state_before == 'procurement_approval' and not requisition._get_lines_to_rfq():
+                requisition.state = 'rfq_sent'
+            else:
+                requisition.state = state_before
+        # After the state: in RFQ Sent the new RFQs await selection, so the
+        # approver's email is held back until then.
+        rfqs.write({'designated_cxo_approver_id': self.designated_cxo_approver_id.id})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('RFQs Created'),
+            'res_model': 'purchase.order',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', rfqs.ids)],
+            'target': 'current',
+        }

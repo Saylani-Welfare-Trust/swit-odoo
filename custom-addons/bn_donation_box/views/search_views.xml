@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="search_donation_box_complain_center" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.search</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_complain_center_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="donor_id"/>
+                <field name="product_id"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_lot_id" string="Lot" context="{'group_by': 'lot_id'}"/>
+                    <filter name="groupby_zone_id" string="Zone" context="{'group_by': 'zone_id'}"/>
+                    <filter name="groupby_donor_id" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="groupby_product_id" string="Donation Box Category" context="{'group_by': 'product_id'}"/>
+                    <filter name="groupby_date_month" string="Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_donation_box_registration_installation" model="ir.ui.view">
+        <field name="name">donation.box.registration.installation.search</field>
+        <field name="model">donation.box.registration.installation</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="product_id"/>
+                <field name="complain_center_ids" string="Line Product" filter_domain="[('complain_center_ids.product_id', 'ilike', self)]"/>
+                <field name="complain_center_ids" string="Line Lot / Serial Number" filter_domain="[('complain_center_ids.lot_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_lot_id" string="Lot" context="{'group_by': 'lot_id'}"/>
+                    <filter name="groupby_donor_id" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="groupby_product_id" string="Box Category" context="{'group_by': 'product_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_donation_box_request" model="ir.ui.view">
+        <field name="name">donation.box.request.search</field>
+        <field name="model">donation.box.request</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="name"/>
+                <field name="warehouse_id"/>
+                <field name="source_location_id"/>
+                <field name="destination_location_id"/>
+                <field name="donation_box_registration_installation_ids" string="Line Product" filter_domain="['|', ('donation_box_registration_installation_ids.product_id', 'ilike', self), ('donation_box_request_line_ids.product_id', 'ilike', self)]"/>
+                <field name="donation_box_registration_installation_ids" string="Line Lot / Serial Number" filter_domain="['|', ('donation_box_registration_installation_ids.lot_id', 'ilike', self), ('donation_box_request_line_ids.lot_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_source_location_id" string="Source Location" context="{'group_by': 'source_location_id'}"/>
+                    <filter name="groupby_destination_location_id" string="Destination Location" context="{'group_by': 'destination_location_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_donation_product_onhand" model="ir.ui.view">
+        <field name="name">donation.product.onhand.search</field>
+        <field name="model">donation.product.onhand</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_product_onhand_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_installation_category" model="ir.ui.view">
+        <field name="name">installation.category.search</field>
+        <field name="model">installation.category</field>
+        <field name="arch" type="xml">
+            <search string="Installation Category">
+                <field name="name"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

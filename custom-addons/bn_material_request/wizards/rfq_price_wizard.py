@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from collections import defaultdict
+
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 
 class RFQPriceWizardRFQLine(models.TransientModel):
@@ -20,12 +23,14 @@ class RFQPriceWizardRFQLine(models.TransientModel):
     is_selected = fields.Boolean(string='Selected', compute='_compute_checks', store=False)
     select_for_confirm = fields.Boolean(string='Select for Confirmation', default=False, help='Check to confirm this entire RFQ')
 
-    @api.depends('wizard_id.line_ids.price_unit', 'wizard_id.line_ids.product_qty')
+    @api.depends('wizard_id.line_ids.price_unit', 'wizard_id.line_ids.requested_qty')
     def _compute_total_amount(self):
-        """Calculate total amount for this RFQ from all its product lines"""
+        """Calculate total amount for this RFQ from all its product lines, on the
+        requested quantities: the quotes are compared for the same quantities,
+        whatever share of them each vendor is then given."""
         for record in self:
             price_lines = record.wizard_id.line_ids.filtered(lambda l: l.rfq_id == record.rfq_id)
-            record.total_amount = sum(line.price_unit * line.product_qty for line in price_lines)
+            record.total_amount = sum(line.price_unit * line.requested_qty for line in price_lines)
 
     @api.depends('expected_date', 'total_amount', 'wizard_id.rfq_line_ids.expected_date', 'wizard_id.rfq_line_ids.total_amount')
     def _compute_checks(self):
@@ -69,11 +74,23 @@ class RFQPriceWizardLine(models.TransientModel):
     rfq_name = fields.Char(related='rfq_id.name', string='RFQ Reference', readonly=True)
     vendor_id = fields.Many2one(related='rfq_id.partner_id', string='Vendor', readonly=True)
     product_id = fields.Many2one('product.product', string='Product', readonly=True)
-    product_qty = fields.Float(string='Quantity', readonly=True)
+    # Set on the RFQ line once it is selected: a product can be split between
+    # the vendors selected for it.
+    product_qty = fields.Float(
+        string='Quantity', digits='Product Unit of Measure',
+        help='Quantity ordered from this vendor once the line is selected.')
+    requested_qty = fields.Float(
+        related='rfq_line_id.product_qty', string='Requested Qty',
+        help='Quantity the RFQ asks the vendor to quote for.')
     product_uom_id = fields.Many2one('uom.uom', string='UoM', readonly=True)
     price_unit = fields.Float(string='Unit Price', digits='Product Price')
     rfq_line_id = fields.Many2one('purchase.order.line', string='RFQ Line', readonly=True)
     to_confirm = fields.Boolean(string='Confirm', default=False, help='Select this line to confirm in the RFQ')
+
+    def _is_qty_changed(self):
+        self.ensure_one()
+        return float_compare(self.product_qty, self.requested_qty,
+                             precision_rounding=self.product_uom_id.rounding or 0.01) != 0
 
 
 class RFQPriceWizard(models.TransientModel):
@@ -141,7 +158,8 @@ class RFQPriceWizard(models.TransientModel):
         # Build price lines for all RFQ lines
         price_lines = []
         for rfq in rfqs:
-            for order_line in rfq.order_line:
+            # Sections and notes have no price.
+            for order_line in rfq.order_line.filtered(lambda l: not l.display_type):
                 price_lines.append((0, 0, {
                     'rfq_id': rfq.id,
                     'product_id': order_line.product_id.id,
@@ -165,6 +183,13 @@ class RFQPriceWizard(models.TransientModel):
         invalid_lines = self.line_ids.filtered(lambda l: not l.rfq_line_id or not l.rfq_id)
         if invalid_lines:
             raise ValidationError(_('Some price lines are missing required RFQ information. Please refresh the wizard.'))
+
+        changed_lines = self.line_ids.filtered(lambda l: l._is_qty_changed())
+        if changed_lines:
+            raise ValidationError(_(
+                'Quantities are only changed when the winning quotes are selected, with "Confirm Selected Lines". '
+                'Set the quantity back to the requested one to update the prices only: %s',
+                ', '.join('%s (%s)' % (line.product_id.display_name, line.rfq_id.name) for line in changed_lines)))
         
         # Build a mapping of RFQ to expected date
         rfq_date_map = {}
@@ -223,11 +248,48 @@ class RFQPriceWizard(models.TransientModel):
             }
         }
 
-    def _confirm_rfq(self, rfq):
-        """Confirm a single winning RFQ. Kept as its own method so other
-        modules can override the confirmation step (e.g. to route the RFQ
-        through additional approval gates instead of confirming immediately)."""
-        rfq.button_confirm()
+    def _confirm_rfqs(self, rfqs):
+        """Confirm the winning RFQs, all together: several vendors may each win
+        a share of the same product. Kept as its own method so other modules
+        can override the confirmation step (e.g. to route the RFQs through
+        additional approval gates instead of confirming immediately)."""
+        for rfq in rfqs:
+            try:
+                rfq.button_confirm()
+            except Exception as e:
+                raise ValidationError(_('Error confirming RFQ %s: %s') % (rfq.name, str(e)))
+
+    def _check_selected_quantities(self, lines):
+        """Each selected line orders something, and the quantities selected for
+        a product of a Purchase Request, from one vendor or split between
+        several, add up to the quantity its RFQs ask for - neither more nor
+        less. The vendors are asked to quote for the same quantity, so the
+        largest requested one counts."""
+        for line in lines:
+            if float_compare(line.product_qty, 0.0, precision_rounding=line.product_uom_id.rounding or 0.01) <= 0:
+                raise ValidationError(_(
+                    'The quantity of %(product)s on RFQ %(rfq)s must be greater than zero.',
+                    product=line.product_id.display_name, rfq=line.rfq_id.name))
+
+        def product_uom_qty(line, quantity):
+            return line.product_uom_id._compute_quantity(quantity, line.product_id.uom_id) \
+                if line.product_uom_id else quantity
+
+        requested = defaultdict(float)
+        for line in self.line_ids.filtered(lambda l: l.rfq_id.requisition_id and l.product_id):
+            key = (line.rfq_id.requisition_id, line.product_id)
+            requested[key] = max(requested[key], product_uom_qty(line, line.requested_qty))
+        selected = defaultdict(float)
+        for line in lines.filtered(lambda l: l.rfq_id.requisition_id and l.product_id):
+            selected[(line.rfq_id.requisition_id, line.product_id)] += product_uom_qty(line, line.product_qty)
+        for (requisition, product), quantity in selected.items():
+            if float_compare(quantity, requested[(requisition, product)], precision_rounding=product.uom_id.rounding) != 0:
+                raise ValidationError(_(
+                    'The quantities selected for %(product)s add up to %(selected)g %(uom)s, but Purchase Request '
+                    '%(request)s asks for %(requested)g %(uom)s. Split the requested quantity between the selected '
+                    'vendors, neither more nor less.',
+                    product=product.display_name, selected=quantity, requested=requested[(requisition, product)],
+                    uom=product.uom_id.name, request=requisition.name))
 
     def action_confirm_selected(self):
         """Confirm selected lines from RFQs with remarks validation"""
@@ -247,11 +309,13 @@ class RFQPriceWizard(models.TransientModel):
         
         if not all_lines_to_confirm:
             raise ValidationError(_('Please select at least one RFQ or line to confirm.'))
+
+        self._check_selected_quantities(all_lines_to_confirm)
         
         # Check if any non-suggested RFQ is being confirmed - if so, remarks are mandatory
         suggested_rfq_id = self.selected_rfq_id.id if self.selected_rfq_id else False
-                
-        if  not self.remarks:
+
+        if all_lines_to_confirm.rfq_id.filtered(lambda rfq: rfq.id != suggested_rfq_id) and not self.remarks:
             raise ValidationError(_('Remarks are required when confirming non-suggested RFQs.'))
         
         # Group lines by RFQ
@@ -266,7 +330,7 @@ class RFQPriceWizard(models.TransientModel):
             rfqs_to_confirm[line.rfq_id.id]['lines'] |= line
         
         # Process each RFQ
-        confirmed_rfqs = []
+        confirmed_rfqs = self.env['purchase.order']
         
         for rfq_id, data in rfqs_to_confirm.items():
             rfq = data['rfq']
@@ -282,6 +346,10 @@ class RFQPriceWizard(models.TransientModel):
             if not is_entire_rfq:
                 lines_to_remove = all_order_lines.filtered(lambda l: l.id not in selected_order_line_ids)
             
+            # The prices compared above, and each vendor's share of the quantity
+            for wiz_line in selected_lines:
+                wiz_line.rfq_line_id.write({'price_unit': wiz_line.price_unit, 'product_qty': wiz_line.product_qty})
+
             # Save removed lines info BEFORE unlinking
             removed_lines_info = []
             if lines_to_remove:
@@ -318,17 +386,12 @@ class RFQPriceWizard(models.TransientModel):
                 message += f'\nRemarks:\n{self.remarks}'
             
             rfq.message_post(body=message)
-            
-            # Confirm the RFQ
-            try:
-                if hasattr(rfq, 'button_confirm'):
-                    self._confirm_rfq(rfq)
-                    confirmed_rfqs.append(rfq.name)
-            except Exception as e:
-                raise ValidationError(_('Error confirming RFQ %s: %s') % (rfq.name, str(e)))
+            confirmed_rfqs |= rfq
+
+        self._confirm_rfqs(confirmed_rfqs)
         
         # Show success message
-        message = _('Successfully confirmed %d RFQ(s): %s') % (len(confirmed_rfqs), ', '.join(confirmed_rfqs))
+        message = _('Successfully confirmed %d RFQ(s): %s') % (len(confirmed_rfqs), ', '.join(confirmed_rfqs.mapped('name')))
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',

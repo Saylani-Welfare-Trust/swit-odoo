@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import _, models, fields, api
+from odoo.exceptions import AccessError
 
 
 class DistributionSchedule(models.Model):
@@ -31,6 +32,10 @@ class DistributionSchedule(models.Model):
     # --------------------------------
     @api.model
     def get_distribution_details(self, product_id):
+        # POS booking: every city's slots, whatever locations the cashier has
+        if not self.env.user.has_group('point_of_sale.group_pos_user'):
+            raise AccessError(_('Only Point of Sale users can book a Qurbani.'))
+        self = self.sudo()
 
         # ==================================================
         # 1. GET HIJRI

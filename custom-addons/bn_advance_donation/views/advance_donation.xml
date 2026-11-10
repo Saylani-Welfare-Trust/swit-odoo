@@ -24,12 +24,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0"/>
-                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0"/>
-                    <!-- <button name="action_apply_manual_payment" string="Apply Manual Payment" type="object" class="btn-primary" invisible="state != 'draft' or manual_payment_amount == 0"/> -->
-                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1"/>
-                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0 or state == 'rejected'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0 or state == 'rejected'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_advance_donation.group_adv_don_menu"/>
                     <button name="action_approved" invisible="state != 'approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_1"/>
                     <button name="action_approved" invisible="state != 'approval_2'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_2"/>
                     <button name="action_rejected" invisible="state != 'approval_1'" string="Reject" type="object" groups="bn_advance_donation.group_adv_don_approval_1"/>
@@ -81,25 +80,27 @@
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
                             <field name="total_no_of_product" readonly="contract_type in ['frequency','open_contract'] or state != 'draft'" force_save="1" invisible="contract_type == 'open_contract'"/>                            
                             <field name="total_balance" readonly="1" force_save="1"/>
-                            <field name="service_charges" widget="boolean_toggle"/>
+                            <field name="service_charges" widget="boolean_toggle" readonly="state != 'draft'"/>
                             <field name="service_charge_product_id"
                                 invisible="not service_charges"
-                                required="service_charges"/>
+                                required="service_charges"
+                                readonly="state != 'draft'"/>
                             <field name="service_charge_amount"
                                 invisible="not service_charges"
                                 readonly="state != 'draft'"
                                 force_save="1"/>
-                            <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
-                            <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
                             <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Donation Lines">
-                            <field name="advance_donation_lines" force_save="1">
+                            <field name="advance_donation_lines" force_save="1" widget="one2many_selectable" options="{'print_method': 'action_print_line_non_cash_report', 'print_label': 'Print Selected Non-Cash Reports'}">
                                 <tree editable="bottom">
                                     <field name="serial_no" readonly="1"/>
                                     <field name="product_id" readonly="1"/>
+                                    <field name="quantity" readonly="1"/>
+                                    <field name="description"/>
+                                    <field name="comment"/>
                                     <field name="amount" readonly="1"/>
                                     <field name="service_charge_amount" readonly="1"/>
                                     <field name="paid_amount" readonly="1" />
@@ -109,13 +110,11 @@
                                     <field name="disbursed_amount" readonly="1"/>
                                     <field name="is_disbursed" readonly="0"/>
 
-                                    <field name="disbursement_date"/> 
+                                    <field name="disbursement_date" readonly="0"/> 
                                     <button name="action_print_line_non_cash_report" string="Print Non-Cash Report" type="object" class="btn-link" invisible="is_disbursed == False" icon="fa-print"/>
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
-                                    <!-- <field name="reserved_welfare_line_id" column_invisible="1"/> -->
-                                    <!-- <field name="reserved_welfare_recurring_line_id" column_invisible="1"/> -->
                                 </tree>
                             </field>
                         </page>
@@ -160,7 +159,7 @@
                             </group>
                         </page>
                         <page string="Disbursement Lines">
-                            <field name="disbursement_line_ids" readonly="1">
+                            <field name="disbursement_line_ids" readonly="1" widget="one2many_selectable" options="{'print_method': 'action_print_line_non_cash_disbursement_report', 'print_label': 'Print Selected Non-Cash Reports'}">
                                 <tree>
                                     <field name="product_id"/>
                                     <field name="date"/>
@@ -168,9 +167,6 @@
                                     <field name="advance_amount"/>
                                     <field name="disbursed_record"/>
                                     <field name="disbursed_amount"/>
-                                    <field name="welfare_id"/>
-                                    <!-- <field name="recurring_line_id"/> -->
-                                    <field name="microfinance_id" />
                                     <button name="action_print_line_non_cash_disbursement_report" string="Print Non-Cash Report" type="object" class="btn-link" icon="fa-print"/>
 
                                 </tree>
@@ -182,17 +178,58 @@
                                         <field name="advance_amount" readonly="1"/>
                                         <field name="disbursed_amount" readonly="1"/>
                                     </group>
-                                    <group>
-                                        <field name="welfare_id" readonly="1"/>
-                                        <!-- <field name="recurring_line_id" readonly="1"/> -->
-                                        <field name="microfinance_id" readonly="1"/>
-                                    </group>
+                                    <group name="source_links"/>
                                 </form>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+
             </form>
+        </field>
+    </record>
+
+    <record id="advance_donation_search" model="ir.ui.view">
+        <field name="name">advance.donation.search</field>
+        <field name="model">advance.donation</field>
+        <field name="arch" type="xml">
+            <search string="Advance Donation">
+                <field name="name" string="Reference"/>
+                <field name="donor_id" string="Donor"/>
+                <field name="category_id" string="Category"/>
+                <field name="contract_type" string="Contract Type"/>
+                <field name="product_id" string="Product"/>
+                <field name="payment_type" string="Payment Type"/>
+                <field name="state" string="Status"/>
+                <field name="create_date" string="Created On"/>
+                <field name="approved_date" string="Approved On"/>
+
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="approval_1" string="Waiting Approval 1" domain="[('state', '=', 'approval_1')]"/>
+                <filter name="approval_2" string="Waiting Approval 2" domain="[('state', '=', 'approval_2')]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+
+                <separator/>
+
+                <filter name="service_charges" string="With Service Charges" domain="[('service_charges', '=', True)]"/>
+                <filter name="without_service_charges" string="Without Service Charges" domain="[('service_charges', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_by_donor" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="group_by_category" string="Category" context="{'group_by': 'category_id'}"/>
+                    <filter name="group_by_contract_type" string="Contract Type" context="{'group_by': 'contract_type'}"/>
+                    <filter name="group_by_payment_type" string="Payment Type" context="{'group_by': 'payment_type'}"/>
+                    <filter name="group_by_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_by_product" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="group_by_approved_date" string="Approved Date" context="{'group_by': 'approved_date'}"/>
+                </group>
+            </search>
         </field>
     </record>
 

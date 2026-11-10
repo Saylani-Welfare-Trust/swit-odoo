@@ -2,7 +2,7 @@
 <odoo>
 
     <record id="bn_profile_management_profile_management_view_form_inherit_bn_donation_box" model="ir.ui.view">
-        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.donation.box</field>
+        <field name="name">profile.management.profile.management.view.form.inherit.bn.donation.box</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
@@ -16,9 +16,9 @@
                         <field name="contact_person" />
                         <field name="contact_no" />
                         <field name="lot_id" string="Box No." />
-                        <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
+                        <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" decoration-muted="box_status == 'removed'" />
                         <field name="installation_date" />
-                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" decoration-muted="status == 'close'" />
                     </tree>
                 </field>
             </xpath>
@@ -40,9 +40,9 @@
                         <field name="contact_person" />
                         <field name="contact_no" />
                         <field name="lot_id" string="Box No." />
-                        <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" />
+                        <field name="box_status" widget="badge" decoration-info="box_status == 'not_installed'" decoration-success="box_status == 'installed'" decoration-muted="box_status == 'removed'" />
                         <field name="installation_date" />
-                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'approved'" />
+                        <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'installed'" decoration-success="status == 'available'" decoration-muted="status == 'close'" />
                     </tree>
                 </field>
             </xpath>

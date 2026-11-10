@@ -6,7 +6,11 @@
         <field name="model">livestock.slaugther</field>
         <field name="arch" type="xml">
             <tree delete="0">
+                <header>
+                    <button string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
+                </header>
                 <field name="is_meat_depart" column_invisible="1" />
+                <field name="is_chicken_depart" column_invisible="1" />
                 <field name="is_goat_depart" column_invisible="1" />
                 <field name="confirm_hide" column_invisible="1" />
                 <field name="cutting_hide" column_invisible="1" />
@@ -14,12 +18,13 @@
 
                 <field name="product_id" />
                 <field name="on_hand_qty"/>
-                <!-- <field name="code" /> -->
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />
                 <field name="pos_order_id" optional="show" />
                 <field name="source_location_id" />
+                <field name="transfer_location" optional="show" />
+                <field name="transfer_picking_id" optional="hide" />
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
 
@@ -37,6 +42,7 @@
         <field name="arch" type="xml">
             <form>
                 <field name="is_meat_depart" invisible="1" />
+                <field name="is_chicken_depart" invisible="1" />
                 <field name="is_goat_depart" invisible="1" />
                 <field name="confirm_hide" invisible="1" />
                 <field name="cutting_hide" invisible="1" />
@@ -68,17 +74,32 @@
                             <field name="quantity" />
                             <field name="price" />
                             <field name="source_location_id" />
+                            <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
+                            <field name="transfer_picking_id" invisible="not transfer_picking_id" />
+                            <field name="transfer_remarks" readonly="1" invisible="not transfer_remarks" />
                             <field name="start_time" />
                             <field name="end_time" />
                         </group>
                     </group>
 
                     <notebook>
-                        <page name="cutting_details" string="Cutting Details" invisible="state not in ['cutting', 'material_request', 'done']">
+                        <page name="cutting" string="Cutting" invisible="state not in ['received', 'cutting', 'material_request', 'done']">
                             <group>
-                                <field name="start_time"/>
-                                <field name="end_time"/>
+                                <field name="cutting_material_id" readonly="1"/>
+                                <field name="start_time" readonly="1"/>
+                                <field name="end_time" readonly="1"/>
                             </group>
+                        </page>
+                        <page name="material_request" string="Material Request" invisible="state not in ['material_request', 'done']">
+                            <group>
+                                <field name="material_request_id" readonly="1"/>
+                            </group>
+                            <field name="cutting_line_ids" readonly="1">
+                                <tree>
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                </tree>
+                            </field>
                         </page>
                     </notebook>
                 </sheet>
@@ -111,7 +132,6 @@
         <field name="name">Meat Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
         <field name="domain">[('is_meat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_meat_depart': True,
@@ -127,7 +147,6 @@
         <field name="name">Goat Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
         <field name="domain">[('is_goat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_goat_depart': True
@@ -135,6 +154,21 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Let's add a new goat department...
+            </p>
+        </field>
+    </record>
+
+    <record id="chicken_department_action" model="ir.actions.act_window">
+        <field name="name">Chicken Department</field>
+        <field name="res_model">livestock.slaugther</field>
+        <field name="view_mode">tree</field>
+        <field name="domain">[('is_chicken_depart', '=', True)]</field>
+        <field name="context">{
+            'default_is_chicken_depart': True
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's add a new chicken department...
             </p>
         </field>
     </record>
@@ -164,6 +198,13 @@
         name="Goat Department"
         action="goat_department_action"
         parent="livestock_menu"
-        sequence="5"/>
+        sequence="3"/>
+
+    <menuitem
+        id="chicken_department_menu"
+        name="Chicken Department"
+        action="chicken_department_action"
+        parent="livestock_menu"
+        sequence="4"/>
 
 </odoo>

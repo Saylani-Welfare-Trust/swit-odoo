@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 from markupsafe import Markup
 import base64
@@ -28,15 +28,17 @@ type_selection = [
 class DonationInKind(models.Model):
     _name = 'donation.in.kind'
     _description = "Donation In Kind"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin", 'pos.link.mixin']
 
     
     def default_set_value(self, name):
         product_stock_move_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)
+        if name == 'picking_type_id':
+            # the Donation In Kind operation type of the configured location's warehouse
+            return self._din_picking_type(product_stock_move_config.location_id).id
         if product_stock_move_config:
             field_map = {
                 'location_id': product_stock_move_config.location_id.id,
-                'picking_type_id': product_stock_move_config.picking_type_id.id,
                 'journal_id': product_stock_move_config.journal_id.id
             }
             return field_map.get(name, False)
@@ -51,6 +53,8 @@ class DonationInKind(models.Model):
     account_move_id = fields.Many2one('account.move', string='Account Move')
     picking_id = fields.Many2one('stock.picking', string='Stock Picking')
     reversal_picking_id = fields.Many2one('stock.picking', string='Reversal Picking', domain="[('picking_type_id', '=', picking_type_id)]")
+    box_return_picking_id = fields.Many2one('stock.picking', string='Box Return', readonly=True, copy=False,
+                                            help='The box product sent back out once the box is itemised.')
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
     name = fields.Char('Name', default="New")
@@ -67,16 +71,15 @@ class DonationInKind(models.Model):
 
     # ---------- DONATION NOTIFICATION ----------
     def _build_din_receipt_message(self):
-        self.ensure_one()
         donation_items = ""
         for line in self.donation_in_kind_line_ids:
             donation_items += f"{line.quantity} x {line.product_id.name}\n"
 
-        return f"""Dear {self.donor_id.name},
+        return f"""Dear {self.donor_id[:1].name},
 
 Thank you for your donation!
 
-Reference: {self.name}
+Reference: {', '.join(self.mapped('name'))}
 Items:
 {donation_items}
 
@@ -87,8 +90,8 @@ May Allah bless you!
     def _generate_din_receipt_pdf(self):
         try:
             pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_donation_in_kind.donation_in_kind_report',   # <- was 'bn_donation_in_kind.report_donation_in_kind'
-                [self.id]
+                'bn_donation_in_kind.donation_in_kind_whatsapp_report',
+                self.ids
             )
             return pdf_data
         except Exception as e:
@@ -100,7 +103,7 @@ May Allah bless you!
         safe_name = self.name.replace('/', '_')
         filename = f"Receipt_{safe_name}.pdf"
 
-        old = self.env['ir.attachment'].search([
+        old = self.env['ir.attachment'].sudo().search([
             ('res_model', '=', 'donation.in.kind'),
             ('res_id', '=', self.id),
             ('name', '=', filename)
@@ -114,7 +117,6 @@ May Allah bless you!
             'res_model': 'donation.in.kind',
             'res_id': self.id,
             'mimetype': 'application/pdf',
-            'public': True,
         })
         attachment.generate_access_token()
 
@@ -124,12 +126,14 @@ May Allah bless you!
         return attachment, pdf_url
 
     def _send_din_notification(self):
-        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when a
-        Donation In Kind record is created from POS."""
-        self.ensure_one()
-        donor = self.donor_id
+        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when
+        Donation In Kind records are created from POS. A POS order creates
+        one record per order line, so self holds all of them and the donor
+        gets a single message covering the whole order."""
+        names = ', '.join(self.mapped('name'))
+        donor = self.donor_id[:1]
         if not donor:
-            _logger.warning('DIN %s created with no donor_id set - skipping notification', self.name)
+            _logger.warning('DIN %s created with no donor_id set - skipping notification', names)
             return {'status': 'error', 'message': 'No donor on this record'}
 
         message = self._build_din_receipt_message()
@@ -145,19 +149,19 @@ May Allah bless you!
                 if not pdf_data or not pdf_data.startswith(b'%PDF'):
                     raise Exception("Invalid PDF generated")
 
-                attachment, pdf_url = self._save_din_receipt_attachment(pdf_data)
+                attachment, pdf_url = self[-1]._save_din_receipt_attachment(pdf_data)
                 _logger.info('DIN receipt PDF URL: %s', pdf_url)
 
                 self.env['whatsapp.service'].send_template_message(
                     donor.whatsapp,
                     pdf_url,
-                    f"Receipt_{self.name}.pdf"
+                    attachment.name
                 )
                 whatsapp_ok = True
-                _logger.info('DIN WhatsApp sent successfully for %s', self.name)
+                _logger.info('DIN WhatsApp sent successfully for %s', names)
             except Exception as e:
                 whatsapp_error = str(e)
-                _logger.error('DIN WhatsApp failed for %s: %s', self.name, whatsapp_error)
+                _logger.error('DIN WhatsApp failed for %s: %s', names, whatsapp_error)
         else:
             whatsapp_error = "No WhatsApp number"
 
@@ -166,10 +170,10 @@ May Allah bless you!
             try:
                 self.env['sms.service'].send_sms(mobile, message)
                 sms_ok = True
-                _logger.info('DIN SMS sent successfully for %s', self.name)
+                _logger.info('DIN SMS sent successfully for %s', names)
             except Exception as e:
                 sms_error = str(e)
-                _logger.error('DIN SMS failed for %s: %s', self.name, sms_error)
+                _logger.error('DIN SMS failed for %s: %s', names, sms_error)
         else:
             sms_error = "No contact number"
 
@@ -198,7 +202,14 @@ May Allah bless you!
                         if warehouse_obj:
                             record.warehouse_name = warehouse_obj.name
 
-    analytical_account_id = fields.Many2one(related='create_uid.employee_id.analytic_account_id', string='Analytic Account', store=True)
+    # the Branch of the POS shop it was made at; made in the back office: the creator's branch
+    analytical_account_id = fields.Many2one('account.analytic.account', string='Branch',
+                                            compute='_compute_branch', store=True, readonly=True)
+
+    @api.depends('pos_analytic_account_id', 'create_uid')
+    def _compute_branch(self):
+        for rec in self:
+            rec.analytical_account_id = rec.pos_analytic_account_id or rec.create_uid.employee_id.analytic_account_id
 
     donation_in_kind_line_ids = fields.One2many('donation.in.kind.line', 'donation_in_kind_id', string="Donation In Kind Lines")
     valuation_committee_line_ids = fields.One2many('valuation.committee.line', 'donation_in_kind_id', string="Product Valuation Committee Lines")
@@ -226,8 +237,23 @@ May Allah bless you!
             result.append((record.id, name))
         return result
 
+    def _check_din_state(self, allowed, action):
+        labels = dict(status_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
+    @api.model
+    def _din_picking_type(self, location):
+        return self.env['stock.warehouse']._get_program_type('donation_in_kind', location or None)
+
     def action_validate(self):
+        self._check_din_state(('delivered',), _('Validate'))
         for record in self:
+            # the goods arrived where the truck took them: that warehouse's type
+            if record.location_id and record.picking_type_id.warehouse_id != record.location_id.warehouse_id:
+                record.picking_type_id = record._din_picking_type(record.location_id)
             if not record.picking_type_id:
                 raise ValidationError('Please Select Stock Picking Type')
             if record.picking_type_id.default_location_src_id:
@@ -258,6 +284,7 @@ May Allah bless you!
                     'location_id': vendor_location_id,
                     'scheduled_date': fields.Datetime.today(),
                     'origin': record.name,
+                    'source_record_ref': '%s,%s' % (record._name, record.id),
                     'move_ids_without_package': move_ids,
                 }
                 picking_id = self.env['stock.picking'].sudo().create(move_vals)
@@ -269,6 +296,8 @@ May Allah bless you!
             
             record.state = 'validate'
     def action_cancel(self):
+        # "Not Delivered": the truck never brought it
+        self._check_din_state(('delivered',), _('Not Delivered'))
         for record in self:
             previous_location = record.previous_location_id or False
             record.state = 'draft'
@@ -277,6 +306,9 @@ May Allah bless you!
             record.previous_location_id = False
 
     def action_box_open(self):
+        self._check_din_state(('validate',), _('Open Box'))
+        if not self.env.user.has_group('bn_donation_in_kind.donation_in_kind_open_box_group'):
+            raise AccessError(_('Only the Open Box group can open a donation box.'))
         for record in self:
             record.state = 'box_open'
 
@@ -290,6 +322,7 @@ May Allah bless you!
                     raise ValidationError('Quantity is missing or invalid.')
 
     def action_check(self):
+        self._check_din_state(('box_open',), _('Check Item'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -362,6 +395,7 @@ May Allah bless you!
             )
 
     def action_valuation_committee(self):
+        self._check_din_state(('box_open',), _('Valuation Committee'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -403,6 +437,9 @@ May Allah bless you!
             record.state = 'valuation_committee'
 
     def action_approval(self):
+        self._check_din_state(('valuation_committee',), _('Approval'))
+        if not self.env.user.has_group('bn_donation_in_kind.donation_in_kind_valuation_committee_group'):
+            raise AccessError(_('Only the Valuation Committee can approve the valuation.'))
         for record in self:
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
@@ -417,7 +454,8 @@ May Allah bless you!
                     raise ValidationError("The average price is missing. Please ensure all valuation have a price.")
                     break
             for valuation_lines in record.valuation_committee_line_ids:
-                valuation_lines.product_id.write({
+                # the committee sets the price, it need not manage products
+                valuation_lines.product_id.sudo().write({
                     'lst_price': valuation_lines.avg_price
                 })
                 
@@ -430,8 +468,58 @@ May Allah bless you!
             
             record.state = 'approval'
 
+    def _settle_box_stock(self, vendor_location_id):
+        self.ensure_one()
+        net = {}
+        for line in self.donation_in_kind_line_ids:
+            net[line.product_id] = net.get(line.product_id, 0.0) + line.quantity
+        if self.picking_id.state == 'done':
+            for move in self.picking_id.move_ids.filtered(lambda m: m.state == 'done'):
+                net[move.product_id] = net.get(move.product_id, 0.0) - move.quantity
+        incoming = [(product, qty) for product, qty in net.items() if qty > 0]
+        outgoing = [(product, -qty) for product, qty in net.items() if qty < 0]
+        if incoming:
+            self.reversal_picking_id = self._create_din_picking(
+                self.picking_type_id, vendor_location_id, self.location_id.id, incoming)
+        if outgoing:
+            self.box_return_picking_id = self._create_din_picking(
+                self.picking_type_id.return_picking_type_id or self.picking_type_id,
+                self.location_id.id, vendor_location_id, outgoing)
+
+    def _create_din_picking(self, picking_type, location_id, location_dest_id, products):
+        self.ensure_one()
+        picking = self.env['stock.picking'].sudo().create({
+            'partner_id': self.donor_id.id,
+            'picking_type_id': picking_type.id,
+            'location_id': location_id,
+            'location_dest_id': location_dest_id,
+            'scheduled_date': fields.Datetime.now(),
+            'origin': self.name,
+            'source_record_ref': '%s,%s' % (self._name, self.id),
+            'move_ids_without_package': [(0, 0, {
+                'product_id': product.id,
+                'name': product.name,
+                'description_picking': product.name,
+                'product_uom_qty': qty,
+                'product_uom': product.uom_id.id,
+                'location_id': location_id,
+                'location_dest_id': location_dest_id,
+            }) for product, qty in products],
+        })
+        picking.action_confirm()
+        for move in picking.move_ids:
+            move.quantity = move.product_uom_qty
+            move.picked = True
+        picking.button_validate()
+        return picking
+
     def action_box_validate(self):
+        if not self.env.user.has_group('bn_donation_in_kind.donation_in_kind_box_validate_group'):
+            raise AccessError(_('Only the Box Validate group can validate a donation box.'))
         for record in self:
+            # priced items skip the valuation committee
+            if not (record.state == 'approval' or (record.state == 'box_open' and record.check_bool == 'no')):
+                record._check_din_state(('approval',), _('Box Validate'))
             if not record.donation_in_kind_line_ids:
                 raise ValidationError("No product stock move lines to process.")
             if not record.journal_id:
@@ -447,48 +535,19 @@ May Allah bless you!
             if not vendor_location_id:
                 raise ValidationError('Please Select Vendor Location')
             
-            quantity_list = []
-            avg_price_list = []
-            move_ids = []
-            stock_picking = self.env['stock.picking'].sudo().search([('id', '=', record.reversal_picking_id.id), ('picking_type_id', '=', record.picking_type_id.id)])
-            
-            if not stock_picking:
-                for lines in record.donation_in_kind_line_ids:
-                    quantity_list.append(lines.quantity)
-                    avg_price_list.append(lines.avg_price)
-                    move_ids.append((0, 0, {
-                        'product_id': lines.product_id.id,
-                        'description_picking': lines.product_id.name,
-                        'name': lines.product_id.name,
-                        'product_uom_qty': lines.quantity,
-                        'location_dest_id': record.location_id.id,
-                        'location_id': vendor_location_id,
-                    }))
-                
-                move_vals = {
-                    'partner_id': record.donor_id.id,
-                    'picking_type_id': record.picking_type_id.id,
-                    'location_dest_id': record.location_id.id,
-                    'location_id': vendor_location_id,
-                    'scheduled_date': fields.Datetime.today(),
-                    'origin': record.name,
-                    'move_ids_without_package': move_ids,
-                }
-                
-                picking_id = self.env['stock.picking'].sudo().create(move_vals)
-                
-                if picking_id:
-                    record.write({
-                        'reversal_picking_id': picking_id.id,
-                    })
-                    picking_id.button_validate()
-            
+            # The box itself came into stock at Validate; now that it is
+            # opened, stock is corrected to its itemised contents: only the
+            # difference moves (nothing at all when the contents are the box).
+            if not record.reversal_picking_id and not record.box_return_picking_id:
+                record._settle_box_stock(vendor_location_id)
+
             if not record.journal_id:
                 raise ValidationError('Please Select Journal')
             
-            quantity = sum(quantity_list)
-            avg_price = sum(avg_price_list)
-            amount = (quantity * avg_price)
+            # value of the box: each item at its own price
+            amount = sum(line.quantity * line.avg_price for line in record.donation_in_kind_line_ids)
+            if not amount:
+                raise ValidationError(_('The items of %s have no value.') % record.name)
             box_lines = [
                 {
                     'account_id': record.product_id.categ_id.property_stock_valuation_account_id.id,
@@ -516,15 +575,35 @@ May Allah bless you!
                 'line_ids': box_lines_tuples,
             }
             
-            account_move = self.env['account.move'].sudo().create(vals)
+            account_move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (record._name, record.id)).sudo().create(vals)
             
             if account_move:
                 account_move.action_post()
                 record.write({
                     'account_move_id': account_move.id
                 })
-            
+
             record.state = 'box_validate'
+            record._send_receipt_notification()
+
+    def _send_receipt_notification(self):
+        """Donation receipt to the donor once the items are received:
+        WhatsApp first, SMS fallback (donor.notifier). A failed message
+        never stops the validation."""
+        self.ensure_one()
+        items = ', '.join('%s x %g' % (line.product_id.display_name, line.quantity)
+                          for line in self.donation_in_kind_line_ids)
+        message = (f"Dear {self.donor_id.name},\n\nThank you for your donation in kind!\n\n"
+                   f"Reference: {self.name}\nItems: {items or '-'}\n\nMay Allah bless you!\n\n- SWIT")
+        try:
+            return self.env['donor.notifier']._send(
+                self, self.donor_id,
+                lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
+                report_name='bn_donation_in_kind.donation_in_kind_whatsapp_report',
+                filename=f"Receipt_{self.name.replace('/', '_')}.pdf")
+        except Exception as e:  # noqa: BLE001
+            _logger.error('DIN %s: receipt message failed: %s', self.name, e)
+            return {'status': 'error', 'message': str(e)}
 
     def action_operations_type_receipts(self):
         for record in self:
@@ -545,6 +624,16 @@ May Allah bless you!
                 'type': 'ir.actions.act_window',
                 'res_id': record.reversal_picking_id.id,
             }
+
+    def action_box_return_picking(self):
+        self.ensure_one()
+        return {
+            'name': _('Box Return'),
+            'view_mode': 'form',
+            'res_model': 'stock.picking',
+            'type': 'ir.actions.act_window',
+            'res_id': self.box_return_picking_id.id,
+        }
 
     def action_journal_entries(self):
         for record in self:
@@ -584,9 +673,12 @@ May Allah bless you!
 
     @api.model
     def create_din_record(self, data):
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(pos_link_create=True)
         din = None
+        dins = self.browse()
         
-        if not data:
+        if not data or not data.get('order_lines'):
             return {
                 "status": "error",
                 "body": "No data receive."
@@ -600,15 +692,16 @@ May Allah bless you!
                 'donation_in_kind_line_ids': [(0, 0, {
                     'product_id': line['product_id'],
                     'quantity': line['quantity'],
-                    'avg_price': line['quantity'],
-                    'remarks': line['remarks'],
+                    # valued by the valuation committee when it has no cost
+                    'avg_price': self.env['product.product'].browse(line['product_id']).standard_price,
+                    'remarks': line.get('remarks') or '',
                 })]
             })
-
-        din.set_remarks()
+            din.set_remarks()
+            dins |= din
 
         try:
-            din._send_din_notification()
+            dins._send_din_notification()
         except Exception as e:
             _logger.error('DIN %s: notification step failed: %s', din.name, str(e))
 
@@ -624,7 +717,7 @@ May Allah bless you!
                 record.donation_in_kind_line_ids = [(0, 0, {
                     'product_id': record.product_id.id,
                     'quantity': record.quantity,
-                    'avg_price': record.quantity,
+                    'avg_price': record.product_id.standard_price,
                 })]
 
                 product_stock_move_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)
@@ -632,7 +725,7 @@ May Allah bless you!
                 if product_stock_move_config:
                     record.write({
                         'location_id': product_stock_move_config.location_id.id,
-                        'picking_type_id': product_stock_move_config.picking_type_id.id,
+                        'picking_type_id': self._din_picking_type(product_stock_move_config.location_id).id,
                         'journal_id': product_stock_move_config.journal_id.id
                     })
                 
@@ -652,7 +745,7 @@ class DonationInKindTransferWizard(models.TransientModel):
     # expose user's allowed locations as a related field so the client can evaluate domains safely
     user_allowed_location_ids = fields.Many2many(
         'stock.location',
-        related='user.allowed_location_ids',
+        related='user.scope_location_ids',
         string='User Allowed Locations',
         readonly=True,
     )

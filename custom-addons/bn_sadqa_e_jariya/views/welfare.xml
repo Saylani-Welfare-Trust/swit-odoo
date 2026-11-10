@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="welfare_view_tree_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">welfare.view.tree.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.welfare_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='is_individual']" position="after">
+                <field name="institution_category" invisible="is_individual"/>
+                <field name="subcategory" invisible="is_individual"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="welfare_view_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">welfare.view.form.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.welfare_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Institutions: Send Form -> Check Portal Status (form filled) -> Send for Inquiry -> Check Portal Status (inquiry done) -->
+            <xpath expr="//header/button[@name='action_send_for_inquiry']" position="before">
+                <button string="Send Form" name="action_send_institution_form" type="object" class="oe_highlight" invisible="is_individual or state != 'completed'" groups="bn_welfare.group_bn_welfare_user"/>
+            </xpath>
+            <xpath expr="//header/button[@name='action_send_for_inquiry']" position="attributes">
+                <attribute name="invisible">not ((is_individual and state == 'completed') or (not is_individual and state == 'form_filled'))</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_check_portal_status']" position="attributes">
+                <attribute name="invisible">state not in ['send_for_inquiry', 'form_sent']</attribute>
+            </xpath>
+            <xpath expr="//header/field[@name='state']" position="attributes">
+                <attribute name="invisible">not is_individual</attribute>
+            </xpath>
+            <xpath expr="//header/field[@name='state']" position="after">
+                <field name="state" widget="statusbar" statusbar_visible="draft, completed, form_sent, form_filled, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" invisible="is_individual"/>
+            </xpath>
+
+            <!-- Donee: individuals are Welfare donees, institutions Sadqa e Jariya donees -->
+            <xpath expr="//group[@name='welfare_col_1']/field[@name='donee_id']" position="attributes">
+                <attribute name="domain">[('category_id.name', '=', 'Donee'), ('state', '=', 'register'),
+                    ('category_id.name', '=', (is_individual and 'Welfare' or 'Sadqa e Jariya')),
+                    ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]</attribute>
+            </xpath>
+
+            <!-- Institutions pick the Inquiry Officer any time before Send for Inquiry -->
+            <xpath expr="//group[@name='welfare_col_1']/field[@name='employee_id']" position="attributes">
+                <attribute name="readonly">state != 'draft' and (is_individual or state not in ['completed', 'form_sent', 'form_filled'])</attribute>
+            </xpath>
+
+            <xpath expr="//group[@name='welfare_col_1']/field[@name='employee_id']" position="after">
+                <field name="institution_category" widget="radio" invisible="is_individual"/>
+                <field name="subcategory" invisible="is_individual"/>
+            </xpath>
+
+            <xpath expr="//page[@name='employee_info']" position="before">
+                <page name="inquiry_reports_page" string="Inquiry Reports" invisible="is_individual">
+                    <field name="inquiry_report_ids" readonly="1" mode="tree,form">
+                        <tree>
+                            <field name="create_date"/>
+                            <field name="officer_name"/>
+                            <field name="status"/>
+                            <field name="verified" widget="boolean_button"/>
+                            <field name="content" widget="text"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <group>
+                                    <field name="status"/>
+                                    <field name="verified" widget="boolean_button"/>
+                                    <field name="officer_name"/>
+                                    <field name="officer_email"/>
+                                </group>
+                                <group>
+                                    <field name="create_date"/>
+                                    <field name="write_date"/>
+                                    <field name="external_id"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="content" widget="text"/>
+                                <field name="images" widget="text"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+
+                <!-- Institution Specific Pages (Visible only when is_individual=False) -->
+                <page name="committee_members_page" string="Committee Members" invisible="is_individual">
+                    <field name="committee_member_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
+                        <tree editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="designation"/>
+                            <field name="educational_qualification"/>
+                            <field name="cnic"/>
+                            <field name="phone"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <page name="teachers_page" string="Teachers" invisible="is_individual or institution_category != 'madrasa'">
+                    <field name="teacher_ids" readonly="state in ['approve','recurring','disbursed', 'rejected']">
+                        <tree editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="name"/>
+                            <field name="designation"/>
+                            <field name="educational_qualification"/>
+                            <field name="other_degree_name"/>
+                            <field name="cnic"/>
+                            <field name="phone"/>
+                        </tree>
+                    </field>
+                </page>
+
+                <!-- Inquiry forms filled on the Sadqa e Jariya portal, read-only here -->
+                <page name="masjid_details_page" string="Masjid Details" invisible="is_individual or institution_category != 'masjid'">
+                    <field name="masjid_id" mode="tree,form" nolabel="1" readonly="1">
+                        <tree>
+                            <field name="date"/>
+                            <field name="masjid_name"/>
+                            <field name="imam_name"/>
+                            <field name="address"/>
+                        </tree>
+                        <form>
+                            <group string="General Information (عمومی معلومات)">
+                                <group>
+                                    <field name="date"/>
+                                    <field name="masjid_name"/>
+                                    <field name="address" widget="text"/>
+                                    <field name="imam_name"/>
+                                    <field name="imam_contact"/>
+                                    <field name="mutawalli_name"/>
+                                    <field name="mutawalli_contact"/>
+                                </group>
+                                <group>
+                                    <field name="account_title"/>
+                                    <field name="account_number"/>
+                                    <field name="account_cnic" string="CNIC No."/>
+                                </group>
+                            </group>
+                            <group string="Masjid Statistics">
+                                <field name="masjid_area"/>
+                                <field name="constructed_area"/>
+                                <field name="current_support"/>
+                            </group>
+                            <group>
+                                <group string="Number of Worshippers (نمازیوں کی تعداد)">
+                                    <field name="people_in_jamat_fajr" string="Fajr"/>
+                                    <field name="people_in_jamat_zuhr" string="Dhuhr"/>
+                                    <field name="people_in_jamat_asr" string="Asr"/>
+                                    <field name="people_in_jamat_maghrib" string="Maghrib"/>
+                                    <field name="people_in_jamat_isha" string="Isha"/>
+                                    <field name="people_in_jamat_jumma" string="Jumu'ah"/>
+                                </group>
+                                <group string="Education &amp; Dars">
+                                    <field name="dars_schedule"/>
+                                    <field name="book_name"/>
+                                    <field name="participants_count"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Number of Students (تعداد شرکاء)">
+                                    <field name="students_nazra"/>
+                                    <field name="students_hifz"/>
+                                    <field name="students_adults"/>
+                                    <field name="students_total"/>
+                                </group>
+                                <group string="Financial &amp; Miscellaneous">
+                                    <field name="imam_other_engagements"/>
+                                    <field name="other_income_sources"/>
+                                    <field name="monthly_masjid_support"/>
+                                </group>
+                            </group>
+                            <group string="Inquiry Officer Remarks (انکوائری آفیسر کے تاثرات)">
+                                <field name="officer_remarks" nolabel="1" colspan="2"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+
+                <page name="madrasa_details_page" string="Madrasa Details" invisible="is_individual or institution_category != 'madrasa'">
+                    <field name="madrasa_id" mode="tree,form" nolabel="1" readonly="1">
+                        <tree>
+                            <field name="request_date"/>
+                            <field name="md_number"/>
+                            <field name="madarsa_name" string="Jamia Name"/>
+                            <field name="mohtamim_name"/>
+                            <field name="contact_number"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <group string="Administrative">
+                                    <field name="md_number"/>
+                                    <field name="new_code_serial"/>
+                                    <field name="case_number"/>
+                                    <field name="request_date"/>
+                                </group>
+                                <group string="Basic Information">
+                                    <field name="madarsa_name" string="Jamia Name"/>
+                                    <field name="address" string="Full Address" widget="text"/>
+                                    <field name="mohtamim_name"/>
+                                    <field name="contact_number"/>
+                                    <field name="whatsapp_number"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Registry &amp; Infrastructure">
+                                    <field name="registered_trust"/>
+                                    <field name="tanzeem_ilhaaq" string="Organization Affiliation"/>
+                                    <field name="established_since" string="Established Year"/>
+                                    <field name="teaching_rooms"/>
+                                    <field name="residential_rooms"/>
+                                    <field name="area_of_madarsa" string="Total Area"/>
+                                    <field name="account_number"/>
+                                    <field name="account_cnic" string="CNIC No."/>
+                                </group>
+                                <group string="Monthly Expenses (ماہانہ خرچ)">
+                                    <field name="monthly_expense"/>
+                                    <field name="exp_salaries"/>
+                                    <field name="exp_ration"/>
+                                    <field name="exp_utility_bills"/>
+                                    <field name="emergency_contact_if_no_support"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Previous Saylani Support (سیلانی کا سابقہ تعاون)">
+                                    <field name="amount_received_from_saylani" string="Previous Saylani Support"/>
+                                    <field name="support_construction"/>
+                                    <field name="support_meat"/>
+                                    <field name="support_cooked_food"/>
+                                </group>
+                                <group string="Environment">
+                                    <field name="student_standard"/>
+                                    <field name="cleanliness_env"/>
+                                    <field name="committee_members"/>
+                                    <field name="monthly_meetings"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Male Students (طلبہ)">
+                                    <field name="male_aidadiyah" string="Aidadiyah"/>
+                                    <field name="male_aamah_1" string="Aamah 1"/>
+                                    <field name="male_aamah_2" string="Aamah 2"/>
+                                    <field name="male_khassah_1" string="Khassah 1"/>
+                                    <field name="male_khassah_2" string="Khassah 2"/>
+                                    <field name="male_aaliyah_1" string="Aaliyah 1"/>
+                                    <field name="male_aaliyah_2" string="Aaliyah 2"/>
+                                    <field name="male_almiyah_1" string="Almiyah 1"/>
+                                    <field name="male_almiyah_2" string="Almiyah 2"/>
+                                    <field name="male_takhasus_1" string="Takhasus 1"/>
+                                    <field name="male_takhasus_2" string="Takhasus 2"/>
+                                </group>
+                                <group string="Female Students (طالبات)">
+                                    <field name="female_aidadiyah" string="Aidadiyah"/>
+                                    <field name="female_aamah_1" string="Aamah 1"/>
+                                    <field name="female_aamah_2" string="Aamah 2"/>
+                                    <field name="female_khassah_1" string="Khassah 1"/>
+                                    <field name="female_khassah_2" string="Khassah 2"/>
+                                    <field name="female_aaliyah_1" string="Aaliyah 1"/>
+                                    <field name="female_aaliyah_2" string="Aaliyah 2"/>
+                                    <field name="female_almiyah_1" string="Almiyah 1"/>
+                                    <field name="female_almiyah_2" string="Almiyah 2"/>
+                                    <field name="female_takhasus_1" string="Takhasus 1"/>
+                                    <field name="female_takhasus_2" string="Takhasus 2"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Academic Departments &amp; Totals">
+                                    <field name="total_dars_nizami"/>
+                                    <field name="res_dars_nizami"/>
+                                    <field name="non_res_dars_nizami"/>
+                                    <field name="hifz_students"/>
+                                    <field name="nazra_students"/>
+                                    <field name="tajweed_students"/>
+                                    <field name="school_students"/>
+                                    <field name="other_courses"/>
+                                    <field name="resident_students" string="Total Residential"/>
+                                    <field name="non_resident_students" string="Total Non-Residential"/>
+                                    <field name="total_madrasa_students"/>
+                                </group>
+                                <group string="Attendance &amp; Staffing">
+                                    <field name="present_students"/>
+                                    <field name="absent_students"/>
+                                    <field name="staff_dars_nizami"/>
+                                    <field name="staff_hifz_nazra"/>
+                                    <field name="total_non_teaching_staff" string="Non-Teaching Staff"/>
+                                    <field name="total_staff"/>
+                                </group>
+                            </group>
+                            <group string="Performance Metrics">
+                                <group>
+                                    <field name="prev_test_percentage"/>
+                                    <field name="curr_test_percentage"/>
+                                    <field name="org_students_count"/>
+                                </group>
+                                <group>
+                                    <field name="org_student_exam_percentage"/>
+                                    <field name="prev_inquiry_percentage"/>
+                                    <field name="prev_inquiry_date"/>
+                                </group>
+                            </group>
+                            <group string="Reports &amp; Remarks">
+                                <field name="checker_opinion"/>
+                                <field name="construction_explanation"/>
+                                <field name="checker_name_sig"/>
+                                <field name="board_decision"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+
+                <page name="flood_details_page" string="Flood Affected Details" invisible="is_individual or institution_category != 'flood'">
+                    <field name="flood_id" mode="tree,form" nolabel="1" readonly="1">
+                        <tree>
+                            <field name="form_date"/>
+                            <field name="institute_name"/>
+                            <field name="mohtamim_mutawalli"/>
+                            <field name="contact_number"/>
+                            <field name="total_estimate"/>
+                        </tree>
+                        <form>
+                            <group>
+                                <group string="Header">
+                                    <field name="form_date"/>
+                                    <field name="app_date"/>
+                                </group>
+                                <group string="Institute Information (ادارہ و امیدوار کی معلومات)">
+                                    <field name="institute_name"/>
+                                    <field name="address" widget="text"/>
+                                    <field name="mohtamim_mutawalli"/>
+                                    <field name="contact_number"/>
+                                    <field name="short_intro"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Madaris Information (مدارس کی معلومات)">
+                                    <field name="count_oula"/>
+                                    <field name="count_sania"/>
+                                    <field name="count_salisa"/>
+                                    <field name="count_rabia"/>
+                                    <field name="count_khamisa"/>
+                                    <field name="count_sadisa"/>
+                                    <field name="count_dawra"/>
+                                    <field name="count_nazra"/>
+                                    <field name="count_hifz"/>
+                                    <field name="count_tajweed"/>
+                                    <field name="count_others"/>
+                                    <field name="count_residential"/>
+                                    <field name="count_non_residential"/>
+                                    <field name="total_students"/>
+                                </group>
+                                <group string="Masajid Information (مساجد کی معلومات)">
+                                    <field name="attendance_fajr"/>
+                                    <field name="attendance_dhuhr"/>
+                                    <field name="attendance_asr"/>
+                                    <field name="attendance_maghrib"/>
+                                    <field name="attendance_isha"/>
+                                    <field name="attendance_jummah"/>
+                                    <field name="attendance_eidain"/>
+                                </group>
+                            </group>
+                            <group string="Flood Assessment (سیلاب کی تفصیلات)">
+                                <field name="status_before_flood"/>
+                                <field name="status_after_flood"/>
+                            </group>
+                            <group string="Construction Details (تعمیرات کی تفصیلات)">
+                                <group>
+                                    <field name="total_estimate"/>
+                                    <field name="estimate_iron_steel"/>
+                                    <field name="estimate_cement"/>
+                                    <field name="estimate_labor"/>
+                                </group>
+                                <group>
+                                    <field name="current_work"/>
+                                    <field name="remaining_work"/>
+                                </group>
+                            </group>
+                            <group string="Official Inquiry &amp; Decision">
+                                <field name="officer_report"/>
+                                <field name="officer_name"/>
+                                <field name="officer_contact"/>
+                                <field name="final_decision"/>
+                            </group>
+                        </form>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="welfare_action_institution" model="ir.actions.act_window">
+        <field name="name">Institution Disbursement</field>
+        <field name="res_model">welfare</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[("is_individual", "=", False)]</field>
+        <field name="context">{'default_is_individual': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create an Institution Disbursement Request....
+            </p>
+        </field>
+    </record>
+
+</odoo>

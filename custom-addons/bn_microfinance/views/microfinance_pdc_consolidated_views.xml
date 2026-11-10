@@ -19,7 +19,6 @@
                        decoration-warning="state_cheque == 'deposited'" 
                        decoration-danger="state_cheque == 'bounced'"
                        decoration-info="state_cheque == 'draft'"/>
-                <!-- <field name="deposit_date" string="Deposit Date" optional="show"/> -->
                 <!-- Button in each line -->
 
                 <field name="is_deposit" widget = "boolean"/>

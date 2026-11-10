@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_view_company_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="bn_profile_management.base_view_company_form_inherit_bn_profile_management"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_1']" position="inside">
+                <field name="welfare_instituiton_url" />
+                <field name="odoo_auth_institution_key" password="True" />
+            </xpath>
+            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_2']" position="inside">
+                <field name="welfare_institution_endpoint" />
+                <field name="mark_institution_application_endpoint" />
+            </xpath>
+            <xpath expr="//page[@name='welfare_api_auth_endpoints']" position="inside">
+                <group>
+                    <group name="sadqa_e_jariya_portal" string="Sadqa e Jariya Portal">
+                        <field name="institution_portal_login_url" />
+                        <field name="institution_portal_email_domain" placeholder="e.g. saylani.org" />
+                        <field name="create_institution_account_endpoint" />
+                        <field name="institution_application_status_endpoint" />
+                        <field name="assign_institution_inquiry_endpoint" />
+                    </group>
+                    <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template">
+                        <field name="institution_login_whatsapp_template" />
+                        <field name="institution_login_whatsapp_namespace" />
+                        <field name="institution_login_whatsapp_language" />
+                        <div colspan="2" class="text-muted">
+                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} login email, {{4}} password.
+                        </div>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

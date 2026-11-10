@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Orders and Products have no group of their own: they follow the Purchase menu.
+         Configuration stays with the Purchase Administrator. -->
+    <record id="purchase.menu_purchase_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
+    </record>
+
+    <record id="purchase.purchase_report_main" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
+    </record>
+
+    <record id="purchase.purchase_report" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
+    </record>
+</odoo>

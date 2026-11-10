@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- Card reference, bank and cheque details of the POS receipt -->
+    <t t-name="bn_pos_payment_method.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
+        <xpath expr="//div[@name='receipt-payment-method']" position="after">
+            <t t-if="!order.is_bank">
+                <div t-if="order.qr_code">
+                    <div><strong>Reference No:</strong> <t t-esc="order.qr_code"/></div>
+                </div>
+            </t>
+            <t t-if="order.is_bank">
+                <div t-if="order.bank_name">
+                    <div><strong>Bank Name:</strong> <t t-esc="order.bank_name"/></div>
+                </div>
+            </t>
+        </xpath>
+        <xpath expr="//div[@name='receipt-date-time']" position="after">
+            <t t-if="order.is_bank">
+                <div t-if="order.cheque_date">
+                    <strong>Cheque Date:</strong>
+                    <t t-set="chequeDate" t-value="new Date(order.cheque_date)"/>
+                    <t t-esc="(chequeDate.getDate() &lt; 10 ? '0' : '') + chequeDate.getDate() + '-' +
+                            (chequeDate.getMonth() + 1 &lt; 10 ? '0' : '') + (chequeDate.getMonth() + 1) + '-' + chequeDate.getFullYear()"/>
+                    <br/>
+                    <strong>Cheque No.:</strong> <t t-esc="order.cheque_number"/>
+                </div>
+            </t>
+        </xpath>
+    </t>
+
+</templates>

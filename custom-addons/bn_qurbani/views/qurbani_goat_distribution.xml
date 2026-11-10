@@ -30,7 +30,7 @@
                 
                 <field name="max_distribution" column_invisible="1"/>
 
-                <button string="Approve" name="action_approved" type="object" class="oe_highlight" invisible="max_distribution > 2"/>
+                <button string="Approve" name="action_approved" type="object" class="oe_highlight" invisible="max_distribution > 2" groups="bn_qurbani.qurbani_manager_group"/>
             </tree>
         </field>
     </record>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_inherit_approval" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.approval</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app string="Approval Cycle" name="bn_approval_cycle" groups="base.group_system">
+                    <block title="Approval Engine" name="approval_engine">
+                        <setting string="Enable Approval Cycle"
+                                 help="Master switch for the approval engine.">
+                            <field name="approval_enabled"/>
+                        </setting>
+                    </block>
+                    <block title="Departments" name="approval_departments"
+                           invisible="not approval_enabled">
+                        <setting string="Department-wise Approval"
+                                 help="Record the requester's department on every request. Users then see requests from their own department, plus a request they raised or must approve. Rules can be limited to departments, and HOD follows the department manager. When off, a user only sees requests they raised or must approve.">
+                            <field name="approval_department_wise"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

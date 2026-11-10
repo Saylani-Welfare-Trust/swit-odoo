@@ -4,6 +4,7 @@ from odoo import fields, models, api
 class RiderScheduleDay(models.Model):
     _name = 'rider.schedule.day'
     _description = 'Rider Schedule Day'
+    _inherit = ['city.access.mixin']
 
 
     rider_shift_id = fields.Many2one('rider.shift', string="Rider Shift")
@@ -20,13 +21,27 @@ class RiderScheduleDay(models.Model):
     name = fields.Char('Name', compute="_set_name")
 
 
-    @api.depends('rider_shift_id')
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._check_city(vals.get('city_id'))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._check_city(vals.get('city_id'))
+        return super().write(vals)
+
+    @api.depends('rider_shift_id', 'rider_shift_id.name', 'city_id', 'zone_id', 'key_bunch_id', 'sub_zone_id')
     def _set_name(self):
         for record in self:
-            record.name = ''
-
-            if record.rider_shift_id:
-                record.name = record.rider_shift_id.name + ' ' + record.city_id.name + ' ' + record.zone_id.name + ' ' + record.key_bunch_id.name + ' ' + record.sub_zone_id.name
+            parts = [
+                record.rider_shift_id.name if record.rider_shift_id else False,
+                record.city_id.name,
+                record.zone_id.name,
+                record.key_bunch_id.name,
+                record.sub_zone_id.name,
+            ]
+            record.name = ' '.join(p for p in parts if p)
 
     def _set_key_count(self):
         for rec in self:

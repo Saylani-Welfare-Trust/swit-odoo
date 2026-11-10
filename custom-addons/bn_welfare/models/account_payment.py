@@ -1,4 +1,4 @@
-from odoo import models, api, fields
+from odoo import models, api
 # from odoo.exceptions import Warning
 import logging
 
@@ -40,52 +40,6 @@ class AccountRegisterPayments(models.TransientModel):
         
         _logger.info("No bank reference found in onchange")
     
-    # @api.model
-    # def default_get(self, fields_list):
-    #     """Override to set bank_reference from welfare/recurring line donee bank account"""
-    #     res = super().default_get(fields_list)
-        
-    #     _logger.info("=== DEBUG: Payment Register default_get called ===")
-    #     _logger.info(f"Context: {self._context}")
-    #     _logger.info(f"Fields list: {fields_list}")
-        
-    #     # Get the active invoices/bills from context
-    #     if self._context.get('active_model') == 'account.move' and self._context.get('active_ids'):
-    #         bills = self.env['account.move'].browse(self._context.get('active_ids'))
-    #         _logger.info(f"Bills found: {bills}")
-            
-    #         bank_reference = ''
-    #         # Check each bill for welfare or recurring line linkage
-    #         for bill in bills:
-    #             _logger.info(f"Checking bill: {bill.name}")
-    #             _logger.info(f"Has recurring_line_id: {hasattr(bill, 'recurring_line_id')}")
-    #             _logger.info(f"Has welfare_line_id: {hasattr(bill, 'welfare_line_id')}")
-                
-    #             # Check if bill is linked to welfare recurring line
-    #             if hasattr(bill, 'recurring_line_id') and bill.recurring_line_id:
-    #                 _logger.info(f"Recurring line found: {bill.recurring_line_id}")
-    #                 if bill.recurring_line_id.welfare_id and bill.recurring_line_id.welfare_id.donee_id:
-    #                     bank_reference = bill.recurring_line_id.welfare_id.donee_id.bank_wallet_account or ''
-    #                     _logger.info(f"Bank reference from recurring: {bank_reference}")
-    #                     break
-    #             # Check if bill is linked to welfare line
-    #             elif hasattr(bill, 'welfare_line_id') and bill.welfare_line_id:
-    #                 _logger.info(f"Welfare line found: {bill.welfare_line_id}")
-    #                 if bill.welfare_line_id.welfare_id and bill.welfare_line_id.welfare_id.donee_id:
-    #                     bank_reference = bill.welfare_line_id.welfare_id.donee_id.bank_wallet_account or ''
-    #                     _logger.info(f"Bank reference from welfare: {bank_reference}")
-    #                     break
-            
-    #         if bank_reference:
-    #             res['bank_reference'] = bank_reference
-    #             _logger.info(f"Final bank_reference set: {bank_reference}")
-    #         else:
-    #             _logger.info("No bank reference found")
-    #     else:
-    #         _logger.info("No active bills in context")
-        
-    #     _logger.info(f"=== Returning res: {res} ===")
-    #     return res
     
     def action_create_payments(self):
         res = super().action_create_payments()
@@ -104,6 +58,5 @@ class AccountRegisterPayments(models.TransientModel):
                         bill.welfare_line_id.action_disbursed()
 
         return res
-
 
 

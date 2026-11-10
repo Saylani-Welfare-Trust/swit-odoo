@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- one record per animal: the old one-record-per-line constraints go -->
+    <function model="livestock.slaugther" name="_drop_line_unique_constraints"/>
+</odoo>

@@ -1,29 +1,67 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="module_donation_home_service" model="ir.module.category">
+        <field name="name">Donation Home Service</field>
+        <field name="sequence">52</field>
+    </record>
+
+    <!-- Sole gate on the app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see the app. -->
     <record id="donation_home_service_menu_group" model="res.groups">
-        <field name="name">Donation Home Service / Menu</field>
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Donation Home Service app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
-    <!-- Donation Home Service -->
+    <record id="donation_home_service_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Day-to-day access: create and process Home Service requests (Gate Out, Gate In). Cannot cancel or delete.</field>
+    </record>
+
+    <record id="donation_home_service_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_home_service_user_group')])]"/>
+        <field name="comment">Everything User can do, plus cancelling requests.</field>
+    </record>
+
+    <record id="donation_home_service_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of Home Service requests, for reporting. No create, write or delete.</field>
+    </record>
+
     <record id="donation_home_service_admin_group" model="res.groups">
-        <field name="name">Donation Home Service / Admin Access</field>
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_home_service_manager_group'), ref('donation_home_service_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights.</field>
     </record>
 
-    <record id="donation_home_service_create_access_group" model="res.groups">
-        <field name="name">Donation Home Service / Create Access</field>
-    </record>
-    
-    <record id="donation_home_service_read_access_group" model="res.groups">
-        <field name="name">Donation Home Service / Read Access</field>
-    </record>
-
+    <!-- Role groups: one action each, on top of the tiers -->
     <record id="donation_home_service_cancel_group" model="res.groups">
-        <field name="name">Donation Home Service / Cancel Rights</field>
+        <field name="name">Cancel Rights</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">May cancel requests without being Manager.</field>
     </record>
 
     <record id="donation_home_service_pos_action_group" model="res.groups">
-        <field name="name">Donation Home Service / POS Action</field>
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_donation_home_service"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: create Home Service requests from the Point of Sale.</field>
     </record>
+
+    <!-- The former Create / Write Access groups: their users become User -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_donation_home_service.donation_home_service_create_access_group': 'bn_donation_home_service.donation_home_service_user_group',
+        'bn_donation_home_service.donation_home_service_write_access_group': 'bn_donation_home_service.donation_home_service_user_group',
+    }]"/>
 
 </odoo>

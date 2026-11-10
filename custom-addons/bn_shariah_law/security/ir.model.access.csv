@@ -1,10 +1,34 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_shariah_law,access.shariah.law,model_shariah_law,,1,1,1,1
-access_shariah_daily_balance,access.shariah.daily.balance,model_shariah_daily_balance,,1,1,1,1
-access_shariah_transfer,access.shariah.transfer,model_shariah_transfer,,1,1,1,1
-access_shariah_transfer_wizard,access.shariah.transfer.wizard,model_shariah_transfer_wizard,,1,1,1,0
-access_shariah_law_config,access.shariah.law.config,model_shariah_law_config,,1,1,1,1
-access_shariah_law_sync_log,access.shariah.law.sync.log,model_shariah_law_sync_log,,1,1,1,1
-access_shariah_law_person,access.shariah.law.person,model_shariah_law_person,,1,1,1,1
-access_shariah_law_blocker,access.shariah.law.blocker,model_shariah_law_blocker,,1,1,1,1
-access_segment_transfer_rule,access.segment.transfer.rule,model_segment_transfer_rule,,1,1,1,1
+access_shariah_law_user,access.shariah.law user,model_shariah_law,shariah_law_user_group,1,1,1,0
+access_shariah_law_audit,access.shariah.law audit,model_shariah_law,shariah_law_audit_group,1,0,0,0
+access_shariah_law_admin,access.shariah.law admin,model_shariah_law,shariah_law_admin_group,1,1,1,1
+access_shariah_law,access.shariah.law,model_shariah_law,base.group_user,1,1,1,0
+access_shariah_daily_balance_user,access.shariah.daily.balance user,model_shariah_daily_balance,shariah_law_user_group,1,1,1,0
+access_shariah_daily_balance_audit,access.shariah.daily.balance audit,model_shariah_daily_balance,shariah_law_audit_group,1,0,0,0
+access_shariah_daily_balance_admin,access.shariah.daily.balance admin,model_shariah_daily_balance,shariah_law_admin_group,1,1,1,1
+access_shariah_daily_balance,access.shariah.daily.balance,model_shariah_daily_balance,base.group_user,1,1,1,0
+access_shariah_transfer_user,access.shariah.transfer user,model_shariah_transfer,shariah_law_user_group,1,1,1,0
+access_shariah_transfer_audit,access.shariah.transfer audit,model_shariah_transfer,shariah_law_audit_group,1,0,0,0
+access_shariah_transfer_admin,access.shariah.transfer admin,model_shariah_transfer,shariah_law_admin_group,1,1,1,1
+access_shariah_transfer,access.shariah.transfer,model_shariah_transfer,base.group_user,1,1,1,0
+access_shariah_transfer_wizard,access.shariah.transfer.wizard,model_shariah_transfer_wizard,base.group_user,1,1,1,0
+access_shariah_law_config_user,access.shariah.law.config user,model_shariah_law_config,shariah_law_user_group,1,0,0,0
+access_shariah_law_config_audit,access.shariah.law.config audit,model_shariah_law_config,shariah_law_audit_group,1,0,0,0
+access_shariah_law_config_admin,access.shariah.law.config admin,model_shariah_law_config,shariah_law_admin_group,1,1,1,1
+access_shariah_law_config,access.shariah.law.config,model_shariah_law_config,base.group_user,1,0,0,0
+access_shariah_law_sync_log_user,access.shariah.law.sync.log user,model_shariah_law_sync_log,shariah_law_user_group,1,1,1,0
+access_shariah_law_sync_log_audit,access.shariah.law.sync.log audit,model_shariah_law_sync_log,shariah_law_audit_group,1,0,0,0
+access_shariah_law_sync_log_admin,access.shariah.law.sync.log admin,model_shariah_law_sync_log,shariah_law_admin_group,1,1,1,1
+access_shariah_law_sync_log,access.shariah.law.sync.log,model_shariah_law_sync_log,base.group_user,1,1,1,0
+access_shariah_law_person_user,access.shariah.law.person user,model_shariah_law_person,shariah_law_user_group,1,0,0,0
+access_shariah_law_person_audit,access.shariah.law.person audit,model_shariah_law_person,shariah_law_audit_group,1,0,0,0
+access_shariah_law_person_admin,access.shariah.law.person admin,model_shariah_law_person,shariah_law_admin_group,1,1,1,1
+access_shariah_law_person,access.shariah.law.person,model_shariah_law_person,base.group_user,1,0,0,0
+access_shariah_law_blocker_user,access.shariah.law.blocker user,model_shariah_law_blocker,shariah_law_user_group,1,0,0,0
+access_shariah_law_blocker_audit,access.shariah.law.blocker audit,model_shariah_law_blocker,shariah_law_audit_group,1,0,0,0
+access_shariah_law_blocker_admin,access.shariah.law.blocker admin,model_shariah_law_blocker,shariah_law_admin_group,1,1,1,1
+access_shariah_law_blocker,access.shariah.law.blocker,model_shariah_law_blocker,base.group_user,1,0,0,0
+access_segment_transfer_rule_user,access.segment.transfer.rule user,model_segment_transfer_rule,shariah_law_user_group,1,0,0,0
+access_segment_transfer_rule_audit,access.segment.transfer.rule audit,model_segment_transfer_rule,shariah_law_audit_group,1,0,0,0
+access_segment_transfer_rule_admin,access.segment.transfer.rule admin,model_segment_transfer_rule,shariah_law_admin_group,1,1,1,1
+access_segment_transfer_rule,access.segment.transfer.rule,model_segment_transfer_rule,base.group_user,1,0,0,0

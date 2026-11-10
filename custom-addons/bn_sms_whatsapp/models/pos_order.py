@@ -1,11 +1,17 @@
-from odoo import models, api
-import base64
+from datetime import timedelta
 import logging
+
+from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
 class PosOrder(models.Model):
     _inherit = 'pos.order'
+
+    donor_receipt_state = fields.Selection(
+        [('sent', 'Sent'), ('failed', 'Failed'), ('skipped', 'Not Needed')],
+        string='Donor Receipt (WhatsApp / SMS)', copy=False, index='btree_not_null', readonly=True)
+    donor_receipt_result = fields.Char('Donor Receipt Result', copy=False, readonly=True)
 
     @api.model  
     def sms_or_whatsapp_send_receipt(self, order_id):
@@ -13,149 +19,61 @@ class PosOrder(models.Model):
         return self.send_whatsapp_after_payment(order_id)
 
     def send_whatsapp_after_payment(self, order_id):
+        """Donation receipt to the donor: WhatsApp first, SMS fallback
+        (donor.notifier)."""
         if isinstance(order_id, list):
             order_id = order_id[0] if order_id else None
-        order = self.browse(int(order_id)) if order_id else None
+        order = self.browse(int(order_id)).exists() if order_id else None
         if not order:
             return {'status': 'error', 'message': 'Order not found'}
         if not order.partner_id:
             return {'status': 'error', 'message': 'No customer selected'}
+        if order.donor_receipt_state == 'sent':
+            return {'status': 'skipped', 'message': 'The donor receipt was already sent'}
 
-        _logger.info('Processing order: %s', order.name)
-
-        # -------------------------------
-        # Build SMS message
-        # -------------------------------
-        donation_items = ""
-        for line in order.lines:
-            donation_items += f"{line.qty} x {line.product_id.name} = {line.price_subtotal} PKR\n"
-
-        sms_message = f"""Dear {order.partner_id.name},
-
-    Thank you for your donation!
-
-    Amount: {order.amount_total} PKR
-    Items:
-    {donation_items}
-
-    May Allah bless you!
-
-    - SWIT"""
-
-        whatsapp_ok = False
-        sms_ok = False
-        whatsapp_error = None
-        sms_error = None
-
-        # -------------------------------
-        # WhatsApp Flow
-        # -------------------------------
-        if order.partner_id.whatsapp:
-            try:
-                pdf_data = self._generate_pdf_from_report(order)
-
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
-
-                attachment, pdf_url = self._save_as_attachment(order, pdf_data)
-                _logger.info('PDF URL: %s', pdf_url)
-
-                self.env['whatsapp.service'].send_template_message(
-                    order.partner_id.whatsapp,
-                    pdf_url,
-                    f"Receipt_{order.name}.pdf"
-                )
-
-                whatsapp_ok = True
-                _logger.info('WhatsApp sent successfully')
-
-            except Exception as e:
-                whatsapp_error = str(e)
-                _logger.error('WhatsApp failed: %s', whatsapp_error)
-        else:
-            whatsapp_error = "No WhatsApp number"
-
-        # -------------------------------
-        # SMS Flow (always attempted, not just fallback)
-        # -------------------------------
-        mobile = order.partner_id.mobile or order.partner_id.phone
-        if mobile:
-            try:
-                self.env['sms.service'].send_sms(mobile, sms_message)
-                sms_ok = True
-                _logger.info('SMS sent successfully')
-            except Exception as e:
-                sms_error = str(e)
-                _logger.error('SMS failed: %s', sms_error)
-        else:
-            sms_error = "No contact number"
-
-        # -------------------------------
-        # Final result
-        # -------------------------------
-        if whatsapp_ok and sms_ok:
-            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
-        if whatsapp_ok:
-            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
-        if sms_ok:
-            return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
-
-        return {
-            'status': 'error',
-            'message': f'WhatsApp failed: {whatsapp_error}. SMS failed: {sms_error}'
-        }
-
-
-
-
-    # -----------------------------------
-    # Generate PDF
-    # -----------------------------------
-    def _generate_pdf_from_report(self, order):
-        try:
-            pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_pos_order.pos_whatsapp_donation_receipt_template',
-                [order.id]
+        def sms_message(link):
+            text = (
+                f"Thank you for donation of Rs. {order.amount_total}. "
+                f"{order._branch_code()}-"
+                f"{order.date_order.year if order.date_order else ''}-"
+                f"{order.pos_order_seq} to Saylani Welfare Trust. "
+                f"Your generosity will make an immediate difference in the lives of needy families."
             )
-            _logger.info('PDF generated: %s bytes', len(pdf_data))
-            return pdf_data
+            return text + (f"\n\nReceipt: {link}" if link else '')
 
-        except Exception as e:
-            _logger.error('PDF error: %s', str(e))
-            return None
-
-    # -----------------------------------
-    # Save Attachment + Generate URL
-    # -----------------------------------
-    def _save_as_attachment(self, order, pdf_data):
-        safe_name = order.name.replace('/', '_')
-        filename = f"Receipt_{safe_name}.pdf"
-
-        # Delete old
-        old = self.env['ir.attachment'].search([
-            ('res_model', '=', 'pos.order'),
-            ('res_id', '=', order.id),
-            ('name', '=', filename)
-        ])
-        old.unlink()
-
-        # Create new
-        attachment = self.env['ir.attachment'].sudo().create({
-            'name': filename,
-            'type': 'binary',
-            'datas': base64.b64encode(pdf_data),
-            'res_model': 'pos.order',
-            'res_id': order.id,
-            'mimetype': 'application/pdf',
-            'public': True,
+        result = self.env['donor.notifier']._send(
+            order, order.partner_id, sms_message,
+            report_name='bn_pos_order.pos_whatsapp_donation_receipt_template',
+            filename=f"Receipt_{order.name.replace('/', '_')}.pdf")
+        order.sudo().write({
+            'donor_receipt_state': 'failed' if result['status'] == 'error' else 'sent',
+            'donor_receipt_result': result['message'],
         })
+        return result
 
-        # Generate access token
-        attachment.generate_access_token()
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-
-        # ✅ FINAL WORKING URL
-        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
-
-        return attachment, pdf_url
+    @api.model
+    def _cron_send_missing_donor_receipts(self, limit=50):
+        """Safety net: the POS screen asks for the receipt a few seconds after
+        payment. When that call never arrived (screen closed, offline ...),
+        the receipt of a paid donation still goes out from here. Orders the
+        POS holds back (cheque not cleared yet) answer 'skipped' and are not
+        asked again."""
+        now = fields.Datetime.now()
+        orders = self.search([
+            ('donor_receipt_state', '=', False),
+            ('partner_id', '!=', False),
+            ('amount_total', '>', 0),
+            ('state', 'in', ('paid', 'done', 'invoiced')),
+            ('create_date', '<', now - timedelta(minutes=10)),
+            ('create_date', '>', now - timedelta(days=2)),
+        ], order='id', limit=limit)
+        for order in orders:
+            try:
+                with self.env.cr.savepoint():
+                    result = order.sms_or_whatsapp_send_receipt(order.id)
+                    if result.get('status') == 'skipped' and not order.donor_receipt_state:
+                        order.write({'donor_receipt_state': 'skipped',
+                                     'donor_receipt_result': result.get('message')})
+                self.env.cr.commit()
+            except Exception as e:  # noqa: BLE001 - next order
+                _logger.error('POS order %s: donor receipt failed: %s', order.name, e)

@@ -1,8 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="direct_deposit_pos_action_group" model="res.groups">
-        <field name="name">Direct Deposit / POS Action</field>
+    <record id="module_direct_deposit" model="ir.module.category">
+        <field name="name">Direct Deposit</field>
+        <field name="sequence">51</field>
     </record>
+
+    <record id="direct_deposit_pos_action_group" model="res.groups">
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_direct_deposit"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: record bank transfers / direct deposits from the Point of Sale.</field>
+    </record>
+
+    <!-- The Treasury tiers (bn_pos_cheque) manage direct deposits: Treasury
+         User clears them, Audit reads them, Administrator has full control. -->
 
 </odoo>

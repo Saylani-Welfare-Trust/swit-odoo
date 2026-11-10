@@ -10,43 +10,58 @@
                 <attribute name="invisible">1</attribute>
             </xpath>
 
+            <!-- A request from a Material Request is Confirmed only until its last Purchase Order
+                 is: there are no bids to select. Other purchase requisitions keep Odoo's Validate. -->
+            <xpath expr="//button[@name='action_open']" position="attributes">
+                <attribute name="invisible">state != 'in_progress' or material_request_id</attribute>
+            </xpath>
+
             <xpath expr="//field[@name='state']" position="attributes">
-                <attribute name="statusbar_visible">draft,hod_approval,mem_approval,procurement_review,rfq_sent,technical_evaluation,hod_procurement_approval,funds_check,in_progress,open,done</attribute>
+                <attribute name="statusbar_visible">draft,procurement_approval,rfq_sent,vendor_selected,cxo_approved,funds_check,in_progress,done</attribute>
             </xpath>
 
             <xpath expr="//header" position="inside">
-                <button string="Submit to Procurement" name="action_submit_to_procurement" type="object"
-                        class="oe_highlight" invisible="state != 'mem_approval'"/>
-
                 <button string="Procurement Approve" name="action_procurement_approve" type="object"
-                        class="oe_highlight" invisible="state != 'procurement_review'"
+                        class="oe_highlight" invisible="state != 'confirm'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Defer" name="action_open_defer_wizard" type="object"
-                        invisible="state != 'procurement_review'"
+                        invisible="state not in ('draft', 'confirm')"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
                 <button string="Resume from Hold" name="action_procurement_resume" type="object"
                         class="oe_highlight" invisible="state != 'deferred'"
                         groups="bn_procurement_workflow.group_procurement_manager"/>
 
-                <button string="Technical Evaluation: Approve" name="action_technical_evaluate_approve" type="object"
-                        class="oe_highlight" invisible="state != 'technical_evaluation'"/>
-                <button string="Technical Evaluation: Reject" name="action_technical_evaluate_reject" type="object"
-                        invisible="state != 'technical_evaluation'"/>
+                <!-- An open request with lines not yet on an RFQ: more RFQs are created for
+                     them on this same request (Vendor Selection Wizard) -->
+                <button string="Create RFQs for Remaining Products" name="action_create_multi_vendor_rfqs" type="object"
+                        class="oe_highlight" icon="fa-clone"
+                        invisible="state not in ('rfq_sent', 'vendor_selected', 'cxo_approved', 'funds_check', 'in_progress','done') or not has_lines_to_rfq or not is_rfq_creator_allowed"/>
 
-                <button string="HOD Procurement: Approve" name="action_hod_procurement_approve_btn" type="object"
-                        class="oe_highlight" invisible="state != 'hod_procurement_approval'"
-                        groups="bn_procurement_workflow.group_hod_procurement"/>
-                <button string="HOD Procurement: Reject" name="action_hod_procurement_reject_btn" type="object"
-                        invisible="state != 'hod_procurement_approval'"
-                        groups="bn_procurement_workflow.group_hod_procurement"/>
+                <!-- A closed request whose Purchase Order covers only part of its Material Request:
+                     a new Purchase Request is created for what is not on an RFQ yet -->
 
                 <button string="Funds Available" name="action_funds_available" type="object"
-                        class="oe_highlight" invisible="state != 'funds_check'"/>
+                        class="oe_highlight" invisible="state != 'funds_check'"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
                 <button string="Funds Not Available" name="action_funds_unavailable" type="object"
-                        invisible="state != 'funds_check' or funds_available"/>
+                        invisible="state != 'funds_check' or funds_available"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
                 <button string="Confirm Fund Transfer" name="action_cfo_shariah_transfer_confirm" type="object"
                         class="oe_highlight" invisible="state != 'funds_check' or funds_available"
                         groups="bn_procurement_workflow.group_cfo_shariah"/>
+            </xpath>
+
+            <!-- The first RFQs are created in Procurement Manager Approval; later ones, for
+                 lines not yet on an RFQ, through "Create RFQs for Remaining Products".
+                 Once someone is assigned to the request, only they see either button. -->
+            <xpath expr="//button[@name='action_create_multi_vendor_rfqs']" position="attributes">
+                <attribute name="invisible">state not in ('procurement_approval') or not is_rfq_creator_allowed</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="assigned_employee_id" options="{'no_create': True}" readonly="state == 'cancel'"/>
+                <field name="assigned_by_id" invisible="not assigned_by_id"/>
+                <field name="is_rfq_creator_allowed" invisible="1"/>
             </xpath>
 
             <xpath expr="//div[@name='button_box']" position="inside">
@@ -54,6 +69,21 @@
                         invisible="not selected_rfq_id">
                     <field name="selected_rfq_id" widget="statinfo" string="Selected RFQ"/>
                 </button>
+            </xpath>
+
+            <!-- The native "Vendor" field stays empty throughout this workflow
+                 (see selected_vendor_id's definition for why it can't just be
+                 copied there) - show the actual chosen vendor next to it as
+                 soon as one is selected, not just after Funds Check. -->
+            <xpath expr="//field[@name='vendor_id']" position="after">
+                <field name="selected_vendor_id" invisible="not selected_vendor_id"/>
+                <field name="has_pending_rfq_products" invisible="1"/>
+                <field name="has_lines_to_rfq" invisible="1"/>
+            </xpath>
+
+            <!-- Department of the Material Request, next to the request's number (Source Document) -->
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="requesting_department_id" invisible="not requesting_department_id"/>
             </xpath>
 
             <xpath expr="//notebook" position="inside">
@@ -65,25 +95,22 @@
                         <group string="Procurement Manager">
                             <field name="procurement_manager_id" readonly="1"/>
                             <field name="procurement_review_date" readonly="1"/>
-                            <field name="defer_reason" readonly="state != 'procurement_review'"/>
+                            <field name="defer_reason" readonly="state != 'draft'"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="Technical Evaluation">
-                            <field name="technical_evaluation_result" readonly="1"/>
-                            <field name="technical_evaluation_remarks" readonly="state != 'technical_evaluation'"/>
-                            <field name="technical_evaluator_id" readonly="1"/>
-                            <field name="technical_evaluation_date" readonly="1"/>
-                        </group>
-                        <group string="HOD Procurement Approval">
-                            <field name="hod_procurement_result" readonly="1"/>
-                            <field name="hod_procurement_remarks" readonly="state != 'hod_procurement_approval'"/>
-                            <field name="hod_procurement_id" readonly="1"/>
-                            <field name="hod_procurement_date" readonly="1"/>
+                    <group invisible="not selected_rfq_id">
+                        <group string="Approval on the Selected RFQ">
+                            <field name="selected_rfq_id" readonly="1"/>
+                            <field name="selected_rfq_cxo_approved" widget="boolean_toggle" readonly="1"/>
+                            <field name="selected_rfq_cxo_approved_by" readonly="1"/>
+                            <field name="selected_rfq_hod_approved" widget="boolean_toggle" readonly="1"/>
+                            <field name="selected_rfq_hod_approved_by" readonly="1"/>
                         </group>
                     </group>
                     <group>
                         <group string="Funds Availability">
+                            <field name="funds_shariah_ok" string="Shariah Balance Sufficient" widget="boolean_toggle" readonly="1"/>
+                            <field name="funds_shariah_balance" readonly="1"/>
                             <field name="funds_available" widget="boolean_toggle" readonly="1"/>
                             <field name="funds_transfer_remarks" readonly="state != 'funds_check'"/>
                             <field name="funds_gate_approver_id" readonly="1"/>
@@ -91,6 +118,37 @@
                         </group>
                     </group>
                 </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_requisition_view_tree_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.tree.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="assigned_employee_id" optional="show"/>
+                <field name="assigned_by_id" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="purchase_requisition_view_search_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.search.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='user_id']" position="after">
+                <field name="assigned_employee_id"/>
+                <field name="assigned_by_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='my_agreements']" position="after">
+                <filter string="Assigned to Me" name="assigned_to_me" domain="[('assigned_user_id', '=', uid)]"/>
+            </xpath>
+            <xpath expr="//filter[@name='representative']" position="after">
+                <filter string="Assigned To" name="group_assigned_employee" context="{'group_by': 'assigned_employee_id'}"/>
+                <filter string="Assigned By" name="group_assigned_by" context="{'group_by': 'assigned_by_id'}"/>
             </xpath>
         </field>
     </record>

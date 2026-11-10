@@ -39,7 +39,7 @@
     </record>
 
     <record id="bn_profile_management_profile_management_view_form_inherit_bn_import_donation" model="ir.ui.view">
-        <field name="name">bn.profile.management.profile.management.view.form.inherit.bn.import.donation</field>
+        <field name="name">profile.management.profile.management.view.form.inherit.bn.import.donation</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">

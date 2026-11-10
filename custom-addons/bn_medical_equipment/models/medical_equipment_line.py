@@ -28,7 +28,6 @@ class DonationHomeServiceLine(models.Model):
     def _compute_on_hand_qty(self):
         for rec in self:    
             rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
-            
     actual_deposit_percentage = fields.Float(
         string='Actual Deposit Percentage (%)',
         related='medical_equipment_id.actual_deposit_percentage',
@@ -41,11 +40,6 @@ class DonationHomeServiceLine(models.Model):
         store=True
     )
     
-    # allowed_lot_ids = fields.Many2many(
-    #     'stock.lot',
-    #     string="Allowed Lots",
-    #     compute="_compute_allowed_lot_ids",
-    # )
     @api.constrains('lot_ids', 'product_id')
     def _check_lot_ids(self):
         for record in self:

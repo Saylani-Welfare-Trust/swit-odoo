@@ -7,6 +7,48 @@ class MicrofinanceFamily(models.Model):
 
     welfare_id = fields.Many2one('welfare', string="Welfare")
 
+    # Related welfare records linked by CNIC
+    welfare_ids = fields.Many2many(
+        'welfare',
+        'microfinance_family_welfare_rel',
+        'family_id',
+        'welfare_id',
+        string="Related Welfare Records",
+        compute='_compute_welfare_ids',
+        store=False
+    )
+    welfare_count = fields.Integer(
+        string="Welfare Records Count",
+        compute='_compute_welfare_ids',
+        store=False
+    )
+    
+    @api.depends('cnic_no')
+    def _compute_welfare_ids(self):
+        """Search for welfare records with matching CNIC number"""
+        for record in self:
+            if record.cnic_no:
+                # Search for welfare records where cnic_no matches
+                welfare_records = self.env['welfare'].search([
+                    ('cnic_no', '=', record.cnic_no)
+                ])
+                record.welfare_ids =  [(6, 0, welfare_records.ids)]
+                record.welfare_count = len(welfare_records)
+            else:
+                record.welfare_ids = False
+                record.welfare_count = 0
+    
+    def action_open_welfare(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Welfare Records',
+            'res_model': 'welfare',  # your actual model
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.welfare_ids.ids)],
+            'target': 'current',
+        }
+
     def action_view_disbursement_history(self):
         """View all welfare disbursement lines for donee matching this family member's CNIC"""
         self.ensure_one()

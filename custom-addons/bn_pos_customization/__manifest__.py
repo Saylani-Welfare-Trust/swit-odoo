@@ -1,22 +1,22 @@
 {
     'name': 'POS Customization',
-    'version': '1.0',
+    'version': '17.0.1.3.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Customization',
     'depends': [
+        'bn_analytic_account_customization',
         'bn_pos_custom_action',
-        'bn_profile_management',
+        'contacts',
     ],
     'data': [
         'security/group.xml',
         'security/record_rule.xml',
-        'views/pos_config.xml',
-        'views/pos_session.xml',
-        'views/pos_assets_index.xml',
-    ],
 
+        'views/pos_assets_index.xml',
+        'views/res_company.xml',
+    ],
     'auto_install': False,
     'application': False,
     'assets': {

@@ -9,27 +9,21 @@
             <xpath expr="//field[@name='code']" position="after">
                 <field name="location_option_id" string="Location Option" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                 <field name="address" />
+                <field name="zone_id" invisible="not zone_id or location_option_id.name == 'Zone'"/>
+                <field name="city_id" invisible="not city_id or location_option_id.name == 'City'"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button class="oe_stat_button" type="object" name="action_view_products" icon="fa-cubes">
+                    <div class="o_form_field o_stat_info">
+                        <span class="o_stat_text">Products</span>
+                        <span class="o_stat_value"><field name="product_template_count"/></span>
+                    </div>
+                </button>
             </xpath>
 
             <xpath expr="//field[@name='code']" position="attributes">
                 <attribute name="string">Code</attribute>
-            </xpath>
-        </field>
-    </record>
-
-    <record id="base_account_budget_view_account_analytic_account_form_budget_inherit_bn_analytic_account_customization" model="ir.ui.view">
-        <field name="name">base.account.budget.view.account.analytic.account.form.budget.inherit.bn.analytic.account.customization</field>
-        <field name="model">account.analytic.account</field>
-        <field name="inherit_id" ref="base_account_budget.view_account_analytic_account_form_inherit_budget"/>
-        <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page name="analytical_product" string="Line Item">
-                    <field name="analytical_product_line_ids">
-                        <tree editable="bottom">
-                            <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
-                        </tree>
-                    </field>
-                </page>
             </xpath>
         </field>
     </record>
@@ -41,10 +35,84 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="location_option_id" string="Location Option" />
+                <field name="zone_id" optional="hide"/>
+                <field name="city_id" optional="show"/>
             </xpath>
             
             <xpath expr="//field[@name='code']" position="attributes">
                 <attribute name="string">Code</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="analytic_view_account_analytic_account_search_location_levels" model="ir.ui.view">
+        <field name="name">account.analytic.account.search.location.levels</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="city_id"/>
+                <field name="zone_id"/>
+                <field name="location_option_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='inactive']" position="after">
+                <separator/>
+                <filter name="filter_city" string="Cities" domain="[('location_option_id.name', '=', 'City')]"/>
+                <filter name="filter_zone" string="Zones" domain="[('location_option_id.name', '=', 'Zone')]"/>
+                <filter name="filter_branch" string="Branches" domain="[('location_option_id.name', '=', 'Branch')]"/>
+                <group expand="0" string="Group By" name="group_by_location_levels">
+                    <filter name="groupby_city_id" string="City" context="{'group_by': 'city_id'}"/>
+                    <filter name="groupby_zone_id" string="Zone" context="{'group_by': 'zone_id'}"/>
+                    <filter name="groupby_location_option_id" string="Location Option" context="{'group_by': 'location_option_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- every product carries its analytic account (segment) -->
+    <record id="product_template_form_view_analytic_account" model="ir.ui.view">
+        <field name="name">product.template.form.analytic.account</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='detailed_type']" position="after">
+                <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_tree_view_analytic_account" model="ir.ui.view">
+        <field name="name">product.template.tree.analytic.account</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="analytic_account_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_template_search_view_analytic_account" model="ir.ui.view">
+        <field name="name">product.template.search.analytic.account</field>
+        <field name="model">product.template</field>
+        <field name="inherit_id" ref="product.product_template_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="analytic_account_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='categ_id']" position="after">
+                <filter name="groupby_analytic_account_id" string="Analytic Account" context="{'group_by': 'analytic_account_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="product_product_search_view_analytic_account" model="ir.ui.view">
+        <field name="name">product.product.search.analytic.account</field>
+        <field name="model">product.product</field>
+        <field name="inherit_id" ref="product.product_search_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="analytic_account_id"/>
             </xpath>
         </field>
     </record>

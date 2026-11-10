@@ -14,6 +14,75 @@
         </field>
     </record>
 
+    <!-- Receipts: replace Validate with Receive Product, then Create Bill -->
+    <record id="view_picking_form_inherit_receive_product_create_bill" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.receive.product.create.bill</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='button_validate'][hasclass('oe_highlight')]" position="attributes">
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')</attribute>
+            </xpath>
+            <!-- An internal transfer only gets Validate once Mark as Todo has been pressed -->
+            <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="attributes">
+                <attribute name="invisible">picking_type_code == 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel') or (picking_type_code == 'internal' and state == 'draft')</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='button_validate'][hasclass('o_btn_validate')]" position="after">
+                <button name="button_validate"
+                        type="object"
+                        string="Receive Product"
+                        class="oe_highlight"
+                        groups="stock.group_stock_user"
+                        invisible="picking_type_code != 'incoming' or state in ('draft', 'confirmed', 'done', 'cancel')"
+                        data-hotkey="v"/>
+                <button name="button_validate"
+                        type="object"
+                        string="Receive Product"
+                        groups="stock.group_stock_user"
+                        invisible="picking_type_code != 'incoming' or state in ('waiting', 'assigned', 'done', 'cancel')"
+                        data-hotkey="v"/>
+                <field name="show_create_bill" invisible="1"/>
+                <button name="action_create_bill"
+                        type="object"
+                        string="Confirm to Bill"
+                        class="oe_highlight"
+                        invisible="not show_create_bill"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Cancelling a Purchase Order's receipt asks for the reason first -->
+    <record id="view_picking_form_inherit_receipt_cancel_reason" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.receipt.cancel.reason</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_cancel']" position="attributes">
+                <attribute name="invisible">state not in ('assigned', 'confirmed', 'draft', 'waiting') or (picking_type_code == 'incoming' and purchase_id)</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_cancel']" position="after">
+                <field name="purchase_id" invisible="1"/>
+                <button name="action_open_receipt_cancel_reason" type="object" string="Cancel"
+                        groups="base.group_user"
+                        invisible="state not in ('assigned', 'confirmed', 'draft', 'waiting') or not (picking_type_code == 'incoming' and purchase_id)"/>
+            </xpath>
+            <!-- Why this receipt was closed without a backorder, or cancelled -->
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Reasons" name="receipt_reasons" invisible="not receipt_reason_ids">
+                    <field name="receipt_reason_ids" readonly="1">
+                        <tree create="0" edit="0" delete="0">
+                            <field name="date"/>
+                            <field name="order_id"/>
+                            <field name="reason_type"/>
+                            <field name="reason"/>
+                            <field name="user_id"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Add Receive by Weight button to stock picking form -->
     <record id="stock_view_picking_form_inherit_bn_inventory_customization" model="ir.ui.view">
         <field name="name">stock.view.picking.form.inherit.bn.inventory.customization</field>

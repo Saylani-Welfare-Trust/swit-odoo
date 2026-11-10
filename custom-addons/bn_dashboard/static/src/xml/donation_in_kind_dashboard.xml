@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="DonationDashboard">
+        <div class="pos-dash-v2">
+
+            <div class="oh-page-header d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1"><i class="fa fa-gift me-2 text-primary"/>Donation In Kind Dashboard</h2>
+                    <p>Overview of Donations In Kind</p>
+                </div>
+            </div>
+
+            <!-- Filter bar -->
+            <div class="card oh-filter-card mb-4">
+                <div class="card-body p-3">
+                    
+                    <!-- Row 1: Dates -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" t-model="state.date_from" t-on-change="onchange_filter"/>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" t-model="state.date_to" t-on-change="onchange_filter"/>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">State</label>
+                            <select class="form-select" t-model="state.state_filter" t-on-change="onchange_filter">
+                                <option value="">All States</option>
+                                <option value="draft">Draft</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="validate">Validate</option>
+                                <option value="box_open">Open Box</option>
+                                <option value="valuation_committee">Valuation Committee</option>
+                                <option value="approval">Approval</option>
+                                <option value="box_validate">Box Validate</option>
+                                <option value="cancel">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Min Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control"
+                                   t-model="state.amount_min" t-on-change="onchange_filter" placeholder="0"/>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Max Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control"
+                                   t-model="state.amount_max" t-on-change="onchange_filter" placeholder="0"/>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Segments -->
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Segment L1</label>
+                            <select class="form-select" t-model="state.segment_l1" t-on-change="onchange_segment_l1">
+                                <option value="">All</option>
+                                <t t-foreach="state.segments_l1" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Segment L2</label>
+                            <select class="form-select" t-model="state.segment_l2" t-on-change="onchange_segment_l2" t-att-disabled="!state.segment_l1">
+                                <option value="">All</option>
+                                <t t-foreach="filteredSegmentsL2" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Segment L3</label>
+                            <select class="form-select" t-model="state.segment_l3" t-on-change="onchange_segment_l3" t-att-disabled="!state.segment_l2">
+                                <option value="">All</option>
+                                <t t-foreach="filteredSegmentsL3" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="col-xl-2 col-lg-3 col-md-4">
+                            <label class="form-label">Segment L4</label>
+                            <select class="form-select" t-model="state.segment_l4" t-on-change="onchange_filter" t-att-disabled="!state.segment_l3">
+                                <option value="">All</option>
+                                <t t-foreach="filteredSegmentsL4" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-primary" t-on-click="refresh">
+                                    <i class="fa fa-refresh me-1"/>Refresh Data
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" t-on-click="clear_filter">
+                                    <i class="fa fa-times me-1"/>Clear Filters
+                                </button>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('today')">Today</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('this_month')">This Month</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('last_month')">Last Month</button>
+                                <button class="oh-quick-btn" t-on-click="() => this.set_quick_date('this_year')">This Year</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KPI tiles -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-blue" t-on-click="() => this.open_donation_list()" style="cursor:pointer;">
+                        <i class="fa fa-list oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Total Records</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.total_records"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-purple" t-on-click="() => this.open_donation_list()" style="cursor:pointer;">
+                        <i class="fa fa-cubes oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Total Quantity</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.total_quantity"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-green" t-on-click="() => this.open_donation_list()" style="cursor:pointer;">
+                        <i class="fa fa-money oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Total Value</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.total_value"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-orange" t-on-click="() => this.open_donation_list()" style="cursor:pointer;">
+                        <i class="fa fa-users oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Unique Donors</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.unique_donors"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-amber" t-on-click="() => this.open_donation_list('draft')" style="cursor:pointer;">
+                        <i class="fa fa-edit oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Drafts</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.state_counts.draft || 0"/></div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <div class="oh-kpi-card oh-kpi-red" t-on-click="() => this.open_donation_list('cancel')" style="cursor:pointer;">
+                        <i class="fa fa-times oh-kpi-icon"/>
+                        <div class="oh-kpi-label">Cancelled</div>
+                        <div class="oh-kpi-value"><t t-esc="state.kpi.state_counts.cancel || 0"/></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart row 1 -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-line-chart me-2 text-primary"/>Monthly Donations Trend</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap"><canvas id="din_chart_monthly"/></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-pie-chart me-2 text-primary"/>Donations by State</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap"><canvas id="din_chart_states"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart row 2 -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-users me-2 text-primary"/>Top Donors by Value</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap"><canvas id="din_chart_top_donors"/></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-cube me-2 text-primary"/>Top Products by Value</h4>
+                        </div>
+                        <div class="oh-card-body">
+                            <div class="oh-chart-wrap"><canvas id="din_chart_top_products"/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top products table -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-list-alt me-2 text-primary"/>Top Products</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="max-height: 340px; overflow-y:auto;">
+                            <table class="table oh-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.top_products" t-as="p" t-key="p_index">
+                                        <tr>
+                                            <td><t t-esc="p.name"/></td>
+                                            <td class="text-end"><t t-esc="p.qty.toFixed(2)"/></td>
+                                            <td class="text-end fw-semibold"><t t-esc="p.value.toLocaleString('en-US', {minimumFractionDigits:2})"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.top_products.length">
+                                        <tr><td colspan="3" class="oh-empty"><i class="fa fa-box"/>No product data</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Group Time Series -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-calendar me-2 text-primary"/>Category Group Time Series</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="overflow-x:auto;">
+                            <table class="table oh-table mb-0 text-nowrap">
+                                <thead>
+                                    <tr style="background-color:#f8f9fa;">
+                                        <th style="min-width:200px;">Category</th>
+                                        <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                            <th class="text-end"><t t-esc="col"/></th>
+                                        </t>
+                                        <th class="text-end border-start fw-bold">TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.category_time_series.rows" t-as="row" t-key="row_index">
+                                        <tr>
+                                            <td class="ps-3"><t t-esc="row.name"/></td>
+                                            <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                                <td class="text-end"><t t-esc="row.months[col]"/></td>
+                                            </t>
+                                            <td class="text-end fw-semibold border-start"><t t-esc="row.total"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.category_time_series.rows.length">
+                                        <tr><td t-attf-colspan="#{2 + (state.category_time_series.columns ? state.category_time_series.columns.length : 0)}" class="oh-empty"><i class="fa fa-calendar"/>No data</td></tr>
+                                    </t>
+                                    <t t-if="state.category_time_series.rows.length">
+                                        <tr style="background-color:#d1e7dd;">
+                                            <td class="fw-bold">GRAND TOTAL</td>
+                                            <t t-foreach="state.category_time_series.columns" t-as="col" t-key="col_index">
+                                                <td class="text-end fw-bold"><t t-esc="state.category_time_series.col_totals[col]"/></td>
+                                            </t>
+                                            <td class="text-end fw-bold border-start"><t t-esc="state.category_time_series.grand_total"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent donations table -->
+            <div class="row g-3 mb-4">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-history me-2 text-primary"/>Recent Donations</h4>
+                        </div>
+                        <div class="oh-card-body p-0" style="max-height: 380px; overflow-y:auto; overflow-x:auto;">
+                            <table class="table oh-table mb-0 text-nowrap">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Reference</th>
+                                        <th>Donor</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Value</th>
+                                        <th class="text-end">State</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="state.recent" t-as="r" t-key="r.id">
+                                        <tr t-on-click="() => this.open_donation(r.id)" style="cursor:pointer;">
+                                            <td><t t-esc="r.date"/></td>
+                                            <td class="fw-bold"><t t-esc="r.name"/></td>
+                                            <td><t t-esc="r.donor"/></td>
+                                            <td class="text-end"><t t-esc="r.qty.toFixed(2)"/></td>
+                                            <td class="text-end fw-semibold"><t t-esc="r.value.toLocaleString('en-US', {minimumFractionDigits:2})"/></td>
+                                            <td class="text-end"><span class="badge bg-info"><t t-esc="r.state_label"/></span></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="!state.recent.length">
+                                        <tr><td colspan="6" class="oh-empty"><i class="fa fa-gift"/>No donations found</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison -->
+            <div class="row g-3">
+                <div class="col-lg-12">
+                    <div class="card oh-section-card shadow-sm">
+                        <div class="oh-card-header">
+                            <h4><i class="fa fa-balance-scale me-2 text-primary"/>Comparison Analysis</h4>
+                        </div>
+                        <div class="oh-card-body p-4 bg-light">
+                            <div class="row g-3 align-items-end mb-4">
+                                <div class="col-md-2">
+                                    <label class="form-label fw-bold">Compare By</label>
+                                    <select class="form-select" t-model="state.comparison_mode" t-on-change="onchange_comparison_mode">
+                                        <option value="month">Month</option>
+                                        <option value="year">Year</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Period 1 <span class="text-muted fw-normal">(Base)</span></label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comparison_period1" t-on-change="fetch_comparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comparison_period1" t-on-change="fetch_comparison" placeholder="2024"/>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Period 2 <span class="text-muted fw-normal">(Compare to)</span></label>
+                                    <input t-if="state.comparison_mode === 'month'" type="month" class="form-control"
+                                           t-model="state.comparison_period2" t-on-change="fetch_comparison"/>
+                                    <input t-if="state.comparison_mode === 'year'" type="number" min="2000" max="2100" class="form-control"
+                                           t-model="state.comparison_period2" t-on-change="fetch_comparison" placeholder="2025"/>
+                                </div>
+                                <div class="col-md-2">
+                                    <button class="btn btn-primary w-100" t-on-click="fetch_comparison">
+                                        <i class="fa fa-refresh me-1"/> Compare
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table oh-table mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th class="text-end">Period 1</th>
+                                            <th class="text-end">Period 2</th>
+                                            <th class="text-end">Difference</th>
+                                            <th class="text-end">% Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-set="cmp" t-value="state.comparison_result"/>
+                                        <t t-foreach="[
+                                            ['records',  'Total Records',  'fa-list text-primary',   'count'],
+                                            ['donors',   'Unique Donors',  'fa-users text-info',     'count'],
+                                            ['quantity', 'Total Quantity', 'fa-cubes text-warning',  'count'],
+                                            ['value',    'Total Value',    'fa-money text-success',  'money']
+                                        ]" t-as="row" t-key="row_index">
+                                            <tr>
+                                                <td class="fw-bold">
+                                                    <i t-attf-class="fa {{ row[2] }} me-2"/>
+                                                    <t t-esc="row[1]"/>
+                                                </td>
+                                                <td class="text-end fs-5 fw-semibold">
+                                                    <t t-if="row[3] === 'money'">
+                                                        <t t-esc="(((cmp.p1 || {})[row[0]] || 0)).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="(((cmp.p1 || {})[row[0]] || 0)).toLocaleString('en-US', {maximumFractionDigits:2})"/>
+                                                    </t>
+                                                </td>
+                                                <td class="text-end fs-5 fw-semibold">
+                                                    <t t-if="row[3] === 'money'">
+                                                        <t t-esc="(((cmp.p2 || {})[row[0]] || 0)).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="(((cmp.p2 || {})[row[0]] || 0)).toLocaleString('en-US', {maximumFractionDigits:2})"/>
+                                                    </t>
+                                                </td>
+                                                <td t-attf-class="text-end fw-bold {{ ((cmp.diffs || {})[row[0]] || {}).is_positive ? 'text-success' : 'text-danger' }}">
+                                                    <t t-if="row[3] === 'money'">
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff > 0 ? '+' : ''"/>
+                                                        <t t-esc="((((cmp.diffs || {})[row[0]] || {}).diff || 0)).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <t t-esc="((cmp.diffs || {})[row[0]] || {}).diff > 0 ? '+' : ''"/>
+                                                        <t t-esc="((((cmp.diffs || {})[row[0]] || {}).diff || 0)).toLocaleString('en-US', {maximumFractionDigits:2})"/>
+                                                    </t>
+                                                </td>
+                                                <td t-attf-class="text-end fw-bold {{ ((cmp.diffs || {})[row[0]] || {}).is_positive ? 'text-success' : 'text-danger' }}">
+                                                    <t t-esc="((cmp.diffs || {})[row[0]] || {}).pct > 0 ? '+' : ''"/>
+                                                    <t t-esc="(((cmp.diffs || {})[row[0]] || {}).pct || 0).toFixed(1)"/>%
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </t>
+</templates>

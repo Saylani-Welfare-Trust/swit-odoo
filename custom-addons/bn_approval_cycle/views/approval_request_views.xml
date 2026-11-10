@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_approval_request_list" model="ir.ui.view">
+        <field name="name">approval.request.list</field>
+        <field name="model">approval.request</field>
+        <field name="arch" type="xml">
+            <tree string="Approval Requests">
+                <field name="name"/>
+                <field name="document_name"/>
+                <field name="rule_id"/>
+                <field name="requester_id"/>
+                <field name="amount"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="current_stage_id"/>
+                <field name="state"/>
+                <field name="requested_date"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_approval_request_form" model="ir.ui.view">
+        <field name="name">approval.request.form</field>
+        <field name="model">approval.request</field>
+        <field name="arch" type="xml">
+            <form string="Approval Request" create="0" edit="0" delete="0">
+                <header>
+                    <field name="can_decide" invisible="1"/>
+                    <button name="action_approve" type="object" string="Approve"
+                            class="btn-primary"
+                            invisible="not can_decide"/>
+                    <button name="action_reject" type="object" string="Reject"
+                            invisible="not can_decide"/>
+                    <button name="action_cancel" type="object" string="Cancel"
+                            invisible="state != 'pending'"/>
+                    <button name="action_resubmit" type="object" string="Resubmit"
+                            invisible="state not in ['rejected', 'cancelled']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,approved,rejected,cancelled"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_document" type="object" class="oe_stat_button" icon="fa-external-link">
+                            <div class="o_stat_info"><span class="o_stat_text">Open Document</span></div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Approval Request" class="oe_inline" required="1" /></h1>
+                    </div>   
+                    <group>
+                        <group name="approval_request_col_1" string="Document">
+                            <field name="document_name"/>
+                            <field name="rule_id"/>
+                            <field name="requester_id"/>
+                            <field name="department_wise_enabled" invisible="1"/>
+                            <field name="department_id" invisible="not department_wise_enabled"/>
+                            <field name="approval_department_id" invisible="not approval_department_id"/>
+                            <field name="current_stage_id" options="{'no_create': True}"/>
+                        </group>
+                        <group name="approval_request_col_2" string="Amount">
+                            <field name="amount"/>
+                            <field name="currency_id"/>
+                            <field name="company_id"/>
+                            <field name="requested_date"/>
+                            <field name="completed_date"/>
+                            <field name="executed"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Stages" name="stages">
+                            <field name="stage_ids" readonly="1">
+                                <tree>
+                                    <field name="sequence"/>
+                                    <field name="role_id"/>
+                                    <field name="approver_ids" widget="many2many_tags"/>
+                                    <field name="approved_user_ids" widget="many2many_tags"/>
+                                    <field name="state" widget="badge"
+                                           decoration-info="state == 'pending'"
+                                           decoration-success="state == 'approved'"
+                                           decoration-danger="state == 'rejected'"/>
+                                    <field name="decision_user_id"/>
+                                    <field name="decision_date"/>
+                                    <field name="comments"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Details" name="details">
+                            <group>
+                                <group>
+                                    <field name="previous_request_id" invisible="not previous_request_id"/>
+                                    <field name="method_name"/>
+                                    <field name="model_name" groups="base.group_no_one"/>
+                                    <field name="res_id" groups="base.group_no_one"/>
+                                </group>
+                                <group>
+                                    <field name="rejection_reason" invisible="not rejection_reason"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+    <record id="view_approval_request_stage_form" model="ir.ui.view">
+        <field name="name">approval.request.stage.form</field>
+        <field name="model">approval.request.stage</field>
+        <field name="arch" type="xml">
+            <form string="Approval Stage" create="0" edit="0" delete="0">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="role_id"/>
+                        <h1><field name="role_id" options="{'no_open': True}"/></h1>
+                    </div>
+                    <group>
+                        <group string="Request">
+                            <field name="request_id"/>
+                            <field name="state"/>
+                            <field name="sequence"/>
+                            <field name="rule_line_id" options="{'no_create': True}"/>
+                        </group>
+                        <group string="Decision">
+                            <field name="required_approvals"/>
+                            <field name="allow_requester"/>
+                            <field name="decision_user_id"/>
+                            <field name="decision_date"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Approvers" name="approvers">
+                            <group>
+                                <field name="approver_ids" widget="many2many_tags"/>
+                                <field name="approved_user_ids" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="Comments" name="comments" invisible="not comments">
+                            <field name="comments"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="view_approval_request_search" model="ir.ui.view">
+        <field name="name">approval.request.search</field>
+        <field name="model">approval.request</field>
+        <field name="arch" type="xml">
+            <search string="Approval Requests">
+                <field name="name"/>
+                <field name="document_name"/>
+                <field name="requester_id"/>
+                <field name="rule_id"/>
+                <field name="method_name"/>
+                <field name="department_id"/>
+                <field name="approval_department_id"/>
+                <separator/>
+                <filter name="awaiting_me" string="Awaiting My Approval"
+                        domain="[('state', '=', 'pending'), ('current_stage_id.approver_ids', 'in', [uid])]"/>
+                <filter name="my_requests" string="My Requests" domain="[('requester_id', '=', uid)]"/>
+                <filter name="my_department" string="My Department"
+                        domain="[('department_id.member_ids.user_id', '=', uid)]"/>
+                <separator/>
+                <filter name="pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="approved" string="Approved" domain="[('state', '=', 'approved')]"/>
+                <filter name="approved_not_run" string="Approved, Button Not Run"
+                        domain="[('state', '=', 'approved'), ('executed', '=', False)]"/>
+                <filter name="rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                <filter name="cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+                <separator/>
+                <filter name="requested_today" string="Requested Today"
+                        domain="[('requested_date', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)).to_utc().strftime('%Y-%m-%d %H:%M:%S')), ('requested_date', '&lt;', datetime.datetime.combine(context_today() + relativedelta(days=1), datetime.time(0, 0, 0)).to_utc().strftime('%Y-%m-%d %H:%M:%S'))]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_rule" string="Rule" context="{'group_by': 'rule_id'}"/>
+                    <filter name="group_requester" string="Requester" context="{'group_by': 'requester_id'}"/>
+                    <filter name="group_department" string="Department" context="{'group_by': 'department_id'}"/>
+                    <filter name="group_approval_department" string="Approving Department" context="{'group_by': 'approval_department_id'}"/>
+                    <filter name="group_method" string="Button" context="{'group_by': 'method_name'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                    <filter name="group_requested" string="Request Date" context="{'group_by': 'requested_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+    <record id="action_approval_request" model="ir.actions.act_window">
+        <field name="name">Approval Requests</field>
+        <field name="res_model">approval.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_approval_request_search"/>
+        <field name="context">{'search_default_awaiting_me': 1}</field>
+    </record>
+</odoo>

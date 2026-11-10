@@ -1,8 +1,8 @@
 {
     'name': 'Microfinance',
-    'version': '1.0',
+    'version': '17.0.1.5.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Microfinance',
     'depends': [
@@ -10,11 +10,24 @@
         'bn_profile_management',
         'bn_pos_order',
         'bn_advance_donation',
+        'bn_pos_custom_action',
+        'bn_pos_cheque',
+        'sale_stock',
+        'report_xlsx',
     ],
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
+        
         'data/sequence.xml',
+        'data/ir_cron.xml',
+        
+        'reports/microfinance_pdc_template_report.xml',
+        'reports/microfinance_receipt_report.xml',
+        'reports/microfinance_security_deposit_report.xml',
+        'reports/microfinance_installment_plan_report.xml',
+        'reports/microfinance_approval_certificate_report.xml',
+        
         'views/microfinance.xml',
         'views/microfinance_installment.xml',
         'views/product_product.xml',
@@ -22,19 +35,26 @@
         'views/res_partner.xml',
         'views/record_search.xml',
         'views/microfinance_pdc_consolidated_views.xml',
+        'views/consolidate_installment_lines.xml',
+        'views/microfinance_scheme.xml',
         'views/security_offered.xml',
+        
         'wizards/return_microfinance_product.xml',
-        'reports/microfinance_pdc_template_report.xml',
-        'reports/microfinance_receipt_report.xml',
-        'reports/microfinance_security_deposit_report.xml',
-        'reports/microfinance_installment_plan_report.xml',
-        'reports/microfinance_approval_certificate_report.xml',
+        'wizards/microfinance_application_wizard.xml',
+        'reports/microfinance_application_report.xml',
+        'views/res_partner_profile.xml',
+        'views/res_company.xml',
+        'views/advance_donation.xml',
+        'data/program_types.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_microfinance/static/src/app/**/*',
+            'bn_microfinance/static/src/screens/**/*',
         ],
     }
 } # type: ignore

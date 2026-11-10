@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_purchase_audit" model="ir.module.category">
+        <field name="name">Purchase Audit</field>
+        <field name="sequence">64</field>
+    </record>
+
+    <record id="group_purchase_audit" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_purchase_audit"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight across the Purchase app: Purchase Requests / Blanket Orders, RFQs, Purchase Orders, Vendors, Products and Reporting, with the bills, receipts and advance payments of the orders. No Configuration, and no create, write or delete anywhere. Give it instead of Purchase User / Administrator, whose rights would add to it.</field>
+    </record>
+
+</odoo>

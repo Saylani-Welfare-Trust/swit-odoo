@@ -1,6 +1,5 @@
-import pprint
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 import re
 
@@ -17,14 +16,14 @@ status_selection = [
 
 class DonationHomeService(models.Model):
     _name = 'donation.home.service'
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
     _description = "Donation Home Service"
 
 
     donor_id = fields.Many2one('res.partner', string="Donor")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
-    second_picking_id = fields.Many2one('stock.picking', string="Stock Picking")
+    second_picking_id = fields.Many2one('stock.picking', string='Second Stock Picking')
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True)
 
     name = fields.Char('Name', default="New")
@@ -117,23 +116,34 @@ class DonationHomeService(models.Model):
 
             return_picking.button_validate()
 
-        for picking in [self.picking_id, self.second_picking_id]:
-            if picking:
-                if picking.state == 'done':
-                    _create_return_for_picking(picking)
-                elif picking.state not in ['cancel', 'done']:
-                    picking.action_cancel()
+        self._check_dhs_state(('draft', 'gate_out', 'gate_in'), _('Cancel'))
+        for record in self:
+            for picking in [record.picking_id, record.second_picking_id]:
+                if picking:
+                    if picking.state == 'done':
+                        _create_return_for_picking(picking)
+                    elif picking.state not in ['cancel', 'done']:
+                        picking.action_cancel()
 
         self.state = 'cancel'
+
+    def _check_dhs_state(self, allowed, action):
+        labels = dict(status_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
 
     def action_gate_out(self):
         """Confirm donation and create stock picking if stockable product lines exist."""
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
-        StockLocation = self.env.ref('stock.stock_location_stock')
+        # the DHS Gate Out operation type of the user's warehouse: from its stock
+        PickingType = self.env['stock.warehouse']._get_program_type('dhs_gate_out')
+        StockLocation = PickingType.default_location_src_id
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
-        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_out_stock_picking_type')
 
+        self._check_dhs_state(('draft',), _('Gate Out'))
         for record in self:
 
             # tag number is mandatory
@@ -161,6 +171,7 @@ class DonationHomeService(models.Model):
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
                 'origin': record.name,
+                'source_record_ref': '%s,%s' % (record._name, record.id),
                 'dhs_id': record.id,
                 'state': 'draft',
             })
@@ -208,12 +219,14 @@ class DonationHomeService(models.Model):
         StockMove = self.env['stock.move']
         StockLocation = self.env.ref('bn_donation_home_service.gate_out_location')
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_in_location')
-        PickingType = self.env.ref('bn_donation_home_service.donation_home_service_in_stock_picking_type')
+        PickingType = self.env['stock.warehouse']._get_program_type('dhs_gate_in')
 
+        self._check_dhs_state(('gate_out',), _('Gate In'))
         for record in self:
 
             # Skip if picking already exists
             if record.second_picking_id:
+                record.state = 'gate_in'
                 continue
 
             # Only NON-service product lines
@@ -223,7 +236,7 @@ class DonationHomeService(models.Model):
 
             # If NO stockable products → do NOT create picking
             if not stockable_lines:
-                record.state = 'gate_out'   # or 'paid' if you prefer
+                record.state = 'gate_in'
                 continue
 
             # -----------------------------------------
@@ -233,6 +246,7 @@ class DonationHomeService(models.Model):
                 'partner_id': record.donor_id.id,
                 'picking_type_id': PickingType.id,
                 'origin': record.name,
+                'source_record_ref': '%s,%s' % (record._name, record.id),
                 'dhs_id': record.id,
                 'state': 'draft',
             })
@@ -296,6 +310,8 @@ class DonationHomeService(models.Model):
 
     @api.model
     def create_dhs_record(self, data):
+        # records made here carry the POS session / POS they come from
+        self = self.with_context(pos_link_create=True)
         # -------------------------
         # 1. Prepare Line Items
         # -------------------------

@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models, fields
 
 
 class POSOrder(models.Model):
@@ -14,6 +14,15 @@ class POSOrder(models.Model):
 
     pos_order_seq = fields.Char('Custom POS Order Seq')
 
+    def _branch(self):
+        """The Branch the order is tagged with: its session's (the shop's)."""
+        self.ensure_one()
+        return self.session_id.analytic_account_id or self.config_id.analytic_account_id
+
+    def _branch_code(self):
+        """Branch code of the DN # and order references: the shop's branch."""
+        return self._branch().code or 'UNK'
+
 
     def _order_fields(self, ui_order):
         """To get the value of field in pos session to pos order"""
@@ -26,3 +35,7 @@ class POSOrder(models.Model):
         res['qurbani'] = ui_order.get('qurbani') or False
 
         return res
+
+    def set_new_pos_order_seq(self, pos_order_data):
+        config_id = self.env['pos.config'].browse(pos_order_data[0].get('config_id'))
+        config_id.sequence = pos_order_data[0].get('pos_order_seq') if pos_order_data[0].get('pos_order_seq') != 0 else config_id.counter

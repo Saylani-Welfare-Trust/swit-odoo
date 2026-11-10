@@ -26,7 +26,7 @@ class WelfareConsolidatedLine(models.Model):
     quantity = fields.Float(string='Quantity')
     amount = fields.Float(string='Amount')
     total_amount = fields.Float(string='Total Amount')
-    advance_donation_amount = fields.Float(string='Advance Donation Amount')
+    advance_donation_amount = fields.Float(string='Donor Acc')
     state = fields.Selection([
         ('draft', 'Draft'),
         ('pending', 'Pending'),

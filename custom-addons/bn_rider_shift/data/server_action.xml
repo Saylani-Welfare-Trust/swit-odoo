@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Rider Collection list > Action: fill the DN # of collections paid from the POS
+         before the POS order was kept on them (see rider.collection). -->
+    <record id="rider_collection_fill_dn_number_server_action" model="ir.actions.server">
+        <field name="name">Find DN # from POS</field>
+        <field name="model_id" ref="bn_rider_shift.model_rider_collection"/>
+        <field name="binding_model_id" ref="bn_rider_shift.model_rider_collection"/>
+        <field name="binding_view_types">list</field>
+        <field name="groups_id" eval="[(4, ref('bn_donation_box.donation_box_manager_group'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = records.action_fill_dn_number_from_pos()</field>
+    </record>
+
+</odoo>

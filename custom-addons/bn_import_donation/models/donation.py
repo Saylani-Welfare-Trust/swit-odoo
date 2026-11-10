@@ -1,9 +1,19 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
+
+import logging
+
+_logger = logging.getLogger(__name__)
 
 state_selection = [
     ('draft', 'Draft'),
     ('posted', 'Posted')
+]
+
+notification_selection = [
+    ('pending', 'Pending'),
+    ('sent', 'Sent'),
+    ('failed', 'Failed')
 ]
 
 
@@ -26,87 +36,112 @@ class Donation(models.Model):
 
     reference = fields.Text('Reference/Remarks', tracking=True)
     
-    date = fields.Char('Date', tracking=True)
+    date = fields.Char('Date', tracking=True, index=True)
 
     amount = fields.Monetary('Amount', tracking=True)
 
     is_fee = fields.Boolean('Is Fee', tracking=True)
 
-    state = fields.Selection(selection=state_selection, string="State", default="draft", tracking=True)
+    state = fields.Selection(selection=state_selection, string="State", default="draft", tracking=True, index=True)
+    notification_state = fields.Selection(selection=notification_selection, string="WhatsApp / SMS", copy=False)
+    notification_result = fields.Char('WhatsApp / SMS Result', copy=False)
 
+    # ---------- DONATION NOTIFICATION ----------
+    def _build_donation_receipt_message(self):
+        self.ensure_one()
+
+        return f"""Dear {self.donor_id.name},
+
+Thank you for your donation!
+
+Reference: {self.name}
+Transaction ID: {self.transaction_id or '-'}
+Amount: {self.amount:,.2f} {self.currency_id.name or 'PKR'}
+Purpose: {self.product_id.name or '-'}
+
+May Allah bless you!
+
+- SWIT"""
+
+    def _send_donation_notification(self):
+        """Donation receipt to the donor of an imported / online donation:
+        WhatsApp first, SMS fallback (donor.notifier of bn_sms_whatsapp)."""
+        self.ensure_one()
+        if 'donor.notifier' not in self.env:
+            return {'status': 'error', 'message': 'The WhatsApp / SMS module is not installed'}
+        message = self._build_donation_receipt_message()
+        return self.env['donor.notifier']._send(
+            self, self.donor_id,
+            lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
+            report_name='bn_import_donation.donation_form',
+            filename=f"Receipt_{self.name.replace('/', '_')}.pdf")
 
     @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('import_donation') or ('New')
+    def _cron_send_donation_notifications(self, limit=30):
+        """An import can hold hundreds of donations, so the messages go out
+        from this cron instead of the import's Confirm button."""
+        donations = self.search([('notification_state', '=', 'pending')], order='id', limit=limit)
 
-        return super(Donation, self).create(vals)
-    
+        for donation in donations:
+            # Taken out of the queue before sending: if the worker dies half
+            # way, the donor is never messaged again on the next run.
+            donation.write({
+                'notification_state': 'failed',
+                'notification_result': 'Interrupted while sending',
+            })
+            self.env.cr.commit()
+
+            try:
+                result = donation._send_donation_notification()
+                donation.write({
+                    'notification_state': 'failed' if result['status'] == 'error' else 'sent',
+                    'notification_result': result['message'],
+                })
+                self.env.cr.commit()
+            except Exception as e:
+                self.env.cr.rollback()
+                _logger.error('Donation %s: notification step failed: %s', donation.name, str(e))
+
+        if self.search_count([('notification_state', '=', 'pending')]):
+            self.env.ref('bn_import_donation.send_donation_notification_cron')._trigger()
+
+
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == 'New':
+                vals['name'] = self.env['ir.sequence'].next_by_code('import_donation') or 'New'
+        return super().create(vals_list)
+
+    def _check_standalone(self, action):
+        for rec in self:
+            if rec.import_donation_id:
+                raise UserError(_(
+                    '"%(donation)s" belongs to the import "%(batch)s": its status follows the import '
+                    '(Confirm posts all of its donations).'
+                ) % {'donation': rec.display_name, 'batch': rec.import_donation_id.display_name})
+
     def action_confirm(self):
+        self._check_standalone(_('Confirm'))
+        for rec in self:
+            if rec.state != 'draft':
+                raise ValidationError(_('"%s" is already posted.') % rec.display_name)
         self.state = 'posted'
-    
+
     def action_draft(self):
+        self._check_standalone(_('Reset to Draft'))
+        for rec in self:
+            if rec.state != 'posted':
+                raise ValidationError(_('"%s" is already in Draft.') % rec.display_name)
         self.state = 'draft'
 
-    def action_sync_existing_donors(self):
-        if not self:
-            raise ValidationError(_("No donation records selected. Please select one or more donations first."))
-
-        Partner = self.env['res.partner']
-        donor_category = self.env.ref('bn_profile_management.donor_partner_category')
-        donee_category = self.env.ref('bn_profile_management.donee_partner_category')
-        individual_category = self.env.ref('bn_profile_management.individual_partner_category')
-
-        linked_count = 0
-        created_count = 0
-        skipped_count = 0
-
-        for donation in self:
-            source_line = self.env['valid.import.donation'].search([
-                ('import_donation_id', '=', donation.import_donation_id.id),
-                ('transaction_id', '=', donation.transaction_id),
-            ], limit=1)
-
-            if not source_line or not source_line.donor_student_name:
-                skipped_count += 1
-                continue
-
-            name = source_line.donor_student_name
-
-            partner = Partner.search([('name', '=', name)], limit=1)
-
-            if not partner:
-                partner = Partner.create({
-                    'name': name,
-                    'mobile': source_line.mobile,
-                    'cnic_no': source_line.cnic_no,
-                    'email': source_line.email,
-                    'category_id': [(6, 0, [
-                        donee_category.id if source_line.is_student else donor_category.id,
-                        individual_category.id,
-                    ])],
-                })
-                created_count += 1
-
-            donation.donor_id = partner.id  # overwrite even if already set
-            linked_count += 1
-
-        if linked_count == 0:
-            raise ValidationError(
-                _("No donations could be linked. This usually means no matching "
-                "'Valid Import Donation' line was found (missing import_donation_id, "
-                "transaction_id, or donor_student_name). %s record(s) were skipped.") % skipped_count
-            )
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Donor Synchronization'),
-                'message': _(
-                    '%s donation(s) linked, %s partner(s) created, %s skipped.'
-                ) % (linked_count, created_count, skipped_count),
-                'type': 'success',
-                'sticky': False,
-            },
-        }
+    def unlink(self):
+        if not self.env.su:
+            for rec in self:
+                if rec.state == 'posted':
+                    raise UserError(_('"%s" is posted and cannot be deleted.') % rec.display_name)
+                if rec.import_donation_id:
+                    raise UserError(_('Reset the import "%s" to Draft to remove its donations.')
+                                    % rec.import_donation_id.display_name)
+        return super().unlink()

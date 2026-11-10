@@ -8,14 +8,15 @@
                     <h1>Qurbani Booking</h1>
                 </t>
                 <t t-else="">
-                    <h1 t-if="order.receive_voucher">Receipt Voucher</h1>
-                    <h1 t-if="!order.receive_voucher">Donation Receipt</h1>
+                    <h1 t-if="order.is_provisional">Provisional Receipt</h1>
+                    <h1 t-elif="order.receive_voucher">Receipt Voucher</h1>
+                    <h1 t-else="">Donation Receipt</h1>
                 </t>
             </div>
         </xpath>
         
-        <xpath expr="//div[@name='custom-donor']" position="after">
-            <div name="custom-favor">
+        <xpath expr="//div[@name='custom-donor']" position="replace">
+            <div name="custom-donor">
                 <strong>Donor Name:</strong>
                 <t t-if="order.favor"><t t-esc="order.favor"/></t>
                 <t t-else=""><t t-esc="partner.name"/></t>
@@ -84,8 +85,8 @@
                         <tr>
                             <th>Product</th>
                             <th>Quantity</th>
-                            <th t-if="!order.is_donation_in_kind">Rate</th>
-                            <th t-if="!order.is_donation_in_kind">Amount</th>
+                            <th>Rate</th>
+                            <th>Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,8 +94,8 @@
                             <tr>
                                 <td><t t-if="line.productName"><t t-esc="line.productName"/></t><t t-else="">-</t></td>
                                 <td class="text-end"><t t-if="line.qty"><t t-esc="line.qty"/></t><t t-else="">-</t></td>
-                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.unitPrice || 0"/></td>
-                                <td class="text-end" t-if="!order.is_donation_in_kind"><t t-esc="line.price || 0"/></td>
+                                <td class="text-end"><t t-esc="line.unitPrice || 0"/></td>
+                                <td class="text-end"><t t-esc="line.price || 0"/></td>
                             </tr>
                         </t>
                     </tbody>
@@ -118,11 +119,16 @@
                         <div>
                             <strong>DN #:</strong>
                             <t t-set="city_code" t-value="order.branch_code or 'UNK'"/>
+                            <t t-set="counter" t-value="order.counter or '0'"/>
                             <t t-set="current_year" t-value="new Date().getFullYear()"/>
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
-                            <span class="fw-medium"><t t-esc="city_code"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
+                            <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
-                        <div><strong>Donor Name:</strong> <t t-esc="partner.name || '-'"/></div>
+                        <div>
+                            <strong>Donor Name:</strong>
+                            <t t-if="order.favor"><t t-esc="order.favor"/></t>
+                            <t t-else=""><t t-esc="partner.name"/></t>
+                        </div>
                         <div>
                             <strong>Products:</strong>
                             <t t-set="count" t-value="1"/>

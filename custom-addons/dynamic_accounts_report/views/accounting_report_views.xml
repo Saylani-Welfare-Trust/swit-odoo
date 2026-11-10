@@ -41,6 +41,10 @@
         <field name="name">Aged Receivable</field>
         <field name="tag">age_r</field>
     </record>
+    <record id="action_period_balance" model="ir.actions.client">
+        <field name="name">Period Balance</field>
+        <field name="tag">prd_b</field>
+    </record>
     <!--    All menus are defined-->
     <menuitem id="dynamic_report_accounting" sequence="19"
               name="Dynamic Financial Reports"
@@ -76,5 +80,10 @@
     <menuitem id="tax_report_menu"
               action="action_tax_report"
               name="Tax Report" sequence="10"
+              parent="dynamic_report_accounting"/>
+    <menuitem id="menu_period_balance"
+              action="action_period_balance"
+              name="Period Balance"
+              sequence="8"
               parent="dynamic_report_accounting"/>
 </odoo>

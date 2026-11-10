@@ -11,7 +11,7 @@ class ValidImportDonation(models.Model):
 
     import_donation_id = fields.Many2one('import.donation', string="Import Donation")
 
-    transaction_id = fields.Char('Transacetion ID')
+    transaction_id = fields.Char('Transaction ID')
     donor_student_name = fields.Char('Donor / Student Name')
     mobile = fields.Char('Mobile No.', size=10)
     cnic_no = fields.Char('CNIC No.')

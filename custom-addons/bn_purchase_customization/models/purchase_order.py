@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError
 
 
 class PurchaseOrder(models.Model):
@@ -7,6 +7,46 @@ class PurchaseOrder(models.Model):
 
 
     comparative_count = fields.Integer('Comparative Count', compute="_set_comparative_count")
+
+    cxo_approved = fields.Boolean('CXO Approved', copy=False, tracking=True)
+    cxo_approved_by = fields.Many2one('res.users', string='CXO Approved By', readonly=True, copy=False)
+    cxo_approved_date = fields.Datetime(string='CXO Approved On', readonly=True, copy=False)
+
+    hod_approved = fields.Boolean('HOD Approved', copy=False, tracking=True)
+    hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False)
+    hod_approved_date = fields.Datetime(string='HOD Approved On', readonly=True, copy=False)
+
+    def _check_po_approval(self, group, label):
+        if not self.env.user.has_group(group):
+            raise UserError(_('You are not allowed to give %s.') % label)
+        for order in self:
+            if order.state not in ('draft', 'sent'):
+                raise UserError(_('%(label)s is only possible on an RFQ, not on %(name)s.') % {
+                    'label': label, 'name': order.display_name})
+
+    def action_cxo_approve_po(self):
+        self._check_po_approval('bn_purchase_customization.purchase_cxo_group', _('CXO Approval'))
+        for order in self:
+            if order.cxo_approved:
+                raise UserError(_('RFQ %s is already CXO approved.') % order.display_name)
+            order.write({
+                'cxo_approved': True,
+                'cxo_approved_by': self.env.user.id,
+                'cxo_approved_date': fields.Datetime.now(),
+            })
+
+    def action_hod_approve_po(self):
+        self._check_po_approval('bn_purchase_customization.purchase_hod_group', _('HOD Approval'))
+        for order in self:
+            if order.hod_approved:
+                raise UserError(_('RFQ %s is already HOD approved.') % order.display_name)
+            if not order.cxo_approved:
+                raise UserError(_('CXO approval is required before HOD approval.'))
+            order.write({
+                'hod_approved': True,
+                'hod_approved_by': self.env.user.id,
+                'hod_approved_date': fields.Datetime.now(),
+            })
 
 
     def _set_comparative_count(self):
@@ -32,6 +72,34 @@ class PurchaseOrder(models.Model):
             }
         }
         
+    @api.model
+    def create(self, vals):
+        # Don't assign the PO sequence when creating an RFQ
+        vals['name'] = '/'
+        return super().create(vals)
+
+    def button_confirm(self):
+        for order in self:
+            if not (order.cxo_approved and order.hod_approved):
+                raise UserError(_(
+                    'Purchase order %s cannot be confirmed until it has both CXO approval '
+                    'and HOD approval.'
+                ) % (order.name if order.name != '/' else order.display_name))
+            if order.name == '/':
+                order.name = self.env['ir.sequence'].next_by_code(
+                    'purchase.order'
+                ) or '/'
+        return super().button_confirm()
+
+    def button_approve(self, force=False):
+        """A confirmed order is locked straight away, whatever the company's
+        "Lock Confirmed Orders" setting: nothing on it can be edited any more
+        unless a Purchase Administrator unlocks it."""
+        pending = self.filtered(lambda order: order.state not in ('purchase', 'done'))
+        res = super().button_approve(force=force)
+        pending.filtered(lambda order: order.state == 'purchase').write({'state': 'done'})
+        return res
+
 class PurchaseOrderLine(models.Model):
     _inherit = 'purchase.order.line'
 
@@ -44,6 +112,7 @@ class PurchaseOrderLine(models.Model):
         string="Last Purchase Amount",
         compute='_compute_last_purchase_amount'
     )
+
 
     @api.depends('product_id')
     def _compute_on_hand_qty(self):
@@ -59,7 +128,7 @@ class PurchaseOrderLine(models.Model):
                 continue
 
             domain = [
-                ('state', '=', 'purchase'),
+                ('state', 'in', ('purchase', 'done')),
                 ('order_line.product_id', '=', line.product_id.id),
             ]
 

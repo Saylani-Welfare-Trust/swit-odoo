@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="stock_picking_form_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.bn.procurement.workflow</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="bn_inventory_customization.view_picking_form_inherit_receive_product_create_bill"/>
+        <field name="arch" type="xml">
+            <!-- The vendor bill is created from the receipt by the Procurement Manager only -->
+            <xpath expr="//button[@name='action_create_bill']" position="attributes">
+                <attribute name="groups">bn_procurement_workflow.group_procurement_manager</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

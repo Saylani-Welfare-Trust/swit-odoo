@@ -8,7 +8,6 @@
         <field name="arch" type="xml">
             <field name="qty" position="after">
                 <field name="on_hand_qty" readonly="1"/>
-                <!-- <field name="on_hand_packages" readonly="1"/> -->
             </field>
         </field>
     </record>
@@ -20,7 +19,6 @@
         <field name="arch" type="xml">
             <field name="qty" position="after">
                 <field name="on_hand_qty" readonly="1"/>
-                <!-- <field name="on_hand_packages" readonly="1"/> -->
             </field>
         </field>
     </record>

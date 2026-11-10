@@ -1,38 +1,49 @@
 {
     'name': 'Medical Equipment',
-    'version': '1.0',
+    'version': '17.0.1.3.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Medical Equipment',
     'depends': [
         'bn_profile_management',
         'bn_pos_custom_action',
+        'bn_pos_cheque',
+        'bn_direct_deposit',
         'bn_donation_box',
         'bn_master_setup',
         'stock',
         'product',
     ],
     'data': [
+        
         'security/group.xml',
-        'security/access_right.xml',
         'security/ir.model.access.csv',
+        
         'data/sequence.xml',
-        'views/product_template.xml',
-        'views/product_product.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
+        
+        'views/product_template.xml',
+        'views/product_product.xml',
         'views/medical_equipment.xml',
         'views/medical_equipment_reference.xml',
         'views/medical_security_deposit.xml',
         'views/res_partner.xml',
+        'views/medical_equipment_category.xml',
+        'views/medical_record_search_views.xml',
+        
         'wizards/medical_equipment_donation.xml',
+        'data/program_types.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_medical_equipment/static/src/app/**/*',
+            'bn_medical_equipment/static/src/screens/**/*',
         ],
     },
 }

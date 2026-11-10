@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ==== FORM: add the "Select Advance Donation" button + info fields ==== -->
+    <record id="view_livestock_slaughter_form_adv_donation" model="ir.ui.view">
+        <field name="name">livestock.slaugther.form.adv.donation</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_slaugther_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Button in the statusbar header, after "Transfer" -->
+            <xpath expr="//header/button[@name='action_open_wizard']" position="after">
+                <button name="action_select_advance_donation"
+                        type="object"
+                        string="Select Advance Donation"
+                        class="btn-primary"
+                        invisible="state != 'not_received'"/>
+            </xpath>
+
+            <!-- Info fields inside the first group, after pos_order_id -->
+            <xpath expr="//group[@name='livestock_slaugther_col_1']/field[@name='pos_order_id']" position="after">
+                <field name="advance_donation_id" readonly="1"
+                       invisible="not advance_donation_id"/>
+                <field name="advance_donation_line_id" readonly="1"
+                       invisible="not advance_donation_line_id"/>
+                <field name="advance_donation_amount" readonly="1"
+                       invisible="not advance_donation_amount"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ==== TREE: show Advance Donation column ==== -->
+    <record id="view_livestock_slaughter_tree_adv_donation" model="ir.ui.view">
+        <field name="name">livestock.slaugther.tree.adv.donation</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_slaugther_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='pos_order_id']" position="after">
+                <field name="advance_donation_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

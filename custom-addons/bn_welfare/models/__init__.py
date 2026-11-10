@@ -6,16 +6,19 @@ from . import microfinance_family
 from . import microfinance_guarantor
 from . import product_product
 from . import product_template
-from . import welfare_institute_fetch
 from . import stock_picking
 from . import account_move
 from . import account_payment
-from . import welfare_committee_member
-from . import welfare_teacher
-from . import welfare_inquiry_report
-from . import welfare_masjid
-from . import welfare_madarsa
 from . import hr_employee
 from . import welfare_limit
 from . import welfare_consolidated_lines
 from . import welfare_document
+from . import disbursement_category
+from . import disbursement_application_type
+from . import advance_donation_disbursement
+from . import res_partner
+from . import pos_cheque
+from . import direct_deposit
+from . import program_types
+
+from . import pos_order

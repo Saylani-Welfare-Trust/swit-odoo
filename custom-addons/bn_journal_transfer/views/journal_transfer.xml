@@ -7,23 +7,24 @@
         <field name="arch" type="xml">
             <tree editable="bottom" create="0">
                 <header>
-                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" groups="bn_journal_transfer.journal_transfer_group"/>
                 </header>
 
                 <field name="accounting_date" readonly="1" />
-                <!-- <field name="name" readonly="1" /> -->
-                <field name="descripiton" />
-                <field name="reference" />
-                <field name="source_journal_id" />
-                <field name="dest_journal_id" />
-                <field name="date" />
-                <field name="remarks"/>
+                <field name="session" readonly="state != 'draft'" />
+                <field name="category" readonly="state != 'draft'" />
+                <field name="deposit_slip_no" readonly="state != 'draft'" />
+                <field name="analytic_account_id" string="Branch"/>
+                <field name="reference" readonly="state != 'draft'" />
+                <field name="source_journal_id" optional="hide" readonly="state != 'draft'"/>
+                <field name="dest_journal_id" readonly="state != 'draft'" />
+                <field name="date" readonly="state != 'draft'" />
+                <field name="remarks" readonly="state != 'draft'"/>
                 <field name="user_id" string="POS Owner" readonly="1" />
                 <field name="amount" readonly="1" />
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
 
-                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
-                <!-- <button string="Cancel" name="action_cancel" type="object"/> -->
+                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_journal_transfer.journal_transfer_group"/>
             </tree>
         </field>
     </record>
@@ -34,8 +35,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="Cancel" name="action_cancel" type="object" invisible="state != 'draft'"/>
+                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_journal_transfer.journal_transfer_group"/>
+                    <button string="Cancel" name="action_cancel" type="object" invisible="state != 'draft'" groups="bn_journal_transfer.journal_transfer_group,bn_pos_cheque.pos_cheque_manager_group"/>
                    
                     <field name="state" widget="statusbar" statusbar_visible="draft, posted" /> 
                 </header>
@@ -70,7 +71,6 @@
         <field name="name">Journal Transfer</field>
         <field name="res_model">journal.transfer</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Waiting for a new record...
@@ -81,9 +81,9 @@
     <menuitem
         id="journal_transfer_menu"
         name="Journal Transfer"
-        action="journal_transfer_action"
-        groups="journal_transfer_group"
+        action="journal_transfer_action"  
         parent="bn_pos_cheque.treasury_menu"
-        sequence="3"/>
+        sequence="3"
+        groups="bn_journal_transfer.journal_transfer_group,bn_pos_cheque.pos_cheque_audit_group"/>
 
 </odoo>

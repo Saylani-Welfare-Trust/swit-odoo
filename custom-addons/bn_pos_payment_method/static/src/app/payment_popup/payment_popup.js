@@ -23,11 +23,15 @@ export class PaymentPopup extends AbstractAwaitablePopup {
         
         this.label = `${this.props.label} Number`;
         this.is_bank = this.props.is_bank;
-        
+
+        // A cheque return ("Settle Order" in POS Cheques) hands back the
+        // bounced cheque itself: start from its details
+        const returnCheque = (this.is_bank && this.pos.get_order().get_return_cheque()) || {};
+
         this.state = useState({
-            bank_name: this.props.bank_name || "",
-            number: this.props.number || "",
-            date: this.props.date || "",
+            bank_name: this.props.bank_name || returnCheque.bank_name || "",
+            number: this.props.number || returnCheque.cheque_number || "",
+            date: this.props.date || returnCheque.cheque_date || "",
             banks: [],
             selected_bank_id: null,
         });
@@ -51,17 +55,29 @@ export class PaymentPopup extends AbstractAwaitablePopup {
 
     async loadBanks() {
         try {
-            const banks = await this.orm.call(
-                "bank",
-                "get_banks",
-                []
-            );
+            const banks = await this.orm.call("bank", "get_banks", []);
             this.state.banks = banks;
+            // Save a local copy for offline use
+            try {
+                localStorage.setItem("pos_bank_list", JSON.stringify(banks));
+            } catch (e) {
+                // ignore storage quota errors
+            }
         } catch (error) {
-            this.notification.add(
-                _t("Failed to load banks"),
-                { type: "danger" }
-            );
+            // Offline or request failed — fall back to the last saved list
+            const cached = localStorage.getItem("pos_bank_list");
+            if (cached) {
+                this.state.banks = JSON.parse(cached);
+                this.notification.add(
+                    _t("You're offline — showing the last saved bank list."),
+                    { type: "warning" }
+                );
+            } else {
+                this.notification.add(
+                    _t("Failed to load banks and no offline copy is available."),
+                    { type: "danger" }
+                );
+            }
         }
     }
 

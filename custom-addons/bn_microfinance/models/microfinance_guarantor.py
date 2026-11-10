@@ -17,10 +17,8 @@ class MicrofinanceGuarantor(models.Model):
     address = fields.Char('Address')
     cnic_no = fields.Char('CNIC No.', size=15)
     mobile = fields.Char('Mobile No.', size=10)
-    phone_code_id = fields.Many2one('res.country', string="Phone Code")
 
     relation = fields.Char('Relation')
-    occupation = fields.Char('Occupation')
 
 
     @api.constrains('mobile')

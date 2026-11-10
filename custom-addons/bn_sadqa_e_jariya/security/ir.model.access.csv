@@ -1,0 +1,22 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_welfare_institution_fetch_log,welfare.institution.fetch.log,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,base.group_user,1,1,1,0
+access_welfare_institution_fetch_log_audit,welfare.institution.fetch.log audit,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_institution_fetch_log_admin,welfare.institution.fetch.log admin,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,sadqa_e_jariya_admin_group,1,1,1,1
+access_welfare_committee_member,welfare.committee.member,bn_sadqa_e_jariya.model_welfare_committee_member,base.group_user,1,1,1,0
+access_welfare_committee_member_audit,welfare.committee.member audit,bn_sadqa_e_jariya.model_welfare_committee_member,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_committee_member_admin,welfare.committee.member admin,bn_sadqa_e_jariya.model_welfare_committee_member,sadqa_e_jariya_admin_group,1,1,1,1
+access_welfare_inquiry_report,welfare.inquiry.report,bn_sadqa_e_jariya.model_welfare_inquiry_report,base.group_user,1,1,1,0
+access_welfare_inquiry_report_audit,welfare.inquiry.report audit,bn_sadqa_e_jariya.model_welfare_inquiry_report,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_inquiry_report_admin,welfare.inquiry.report admin,bn_sadqa_e_jariya.model_welfare_inquiry_report,sadqa_e_jariya_admin_group,1,1,1,1
+access_welfare_madrasa,welfare.madrasa,bn_sadqa_e_jariya.model_welfare_madrasa,base.group_user,1,1,1,0
+access_welfare_madrasa_audit,welfare.madrasa audit,bn_sadqa_e_jariya.model_welfare_madrasa,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_madrasa_admin,welfare.madrasa admin,bn_sadqa_e_jariya.model_welfare_madrasa,sadqa_e_jariya_admin_group,1,1,1,1
+access_welfare_masjid,welfare.masjid,bn_sadqa_e_jariya.model_welfare_masjid,base.group_user,1,1,1,0
+access_welfare_masjid_audit,welfare.masjid audit,bn_sadqa_e_jariya.model_welfare_masjid,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_masjid_admin,welfare.masjid admin,bn_sadqa_e_jariya.model_welfare_masjid,sadqa_e_jariya_admin_group,1,1,1,1
+access_welfare_teacher,welfare.teacher,bn_sadqa_e_jariya.model_welfare_teacher,base.group_user,1,1,1,0
+access_welfare_teacher_audit,welfare.teacher audit,bn_sadqa_e_jariya.model_welfare_teacher,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_teacher_admin,welfare.teacher admin,bn_sadqa_e_jariya.model_welfare_teacher,sadqa_e_jariya_admin_group,1,1,1,1
+access_welfare_flood,welfare.flood,bn_sadqa_e_jariya.model_welfare_flood,base.group_user,1,1,1,0
+access_welfare_flood_audit,welfare.flood audit,bn_sadqa_e_jariya.model_welfare_flood,sadqa_e_jariya_audit_group,1,0,0,0
+access_welfare_flood_admin,welfare.flood admin,bn_sadqa_e_jariya.model_welfare_flood,sadqa_e_jariya_admin_group,1,1,1,1

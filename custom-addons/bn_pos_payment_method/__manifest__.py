@@ -1,8 +1,8 @@
 {
     'name': 'POS Payment Method Customization',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Payment Method Customization',
     'depends': [
@@ -16,6 +16,7 @@
     'application': False,
     'assets': {
         'point_of_sale._assets_pos': [
+            'bn_pos_payment_method/static/src/app/payment_popup/pos_store_patch.js',
             'bn_pos_payment_method/static/src/app/payment_popup/payment_popup.js',
             'bn_pos_payment_method/static/src/app/payment_popup/payment_popup.xml',
             'bn_pos_payment_method/static/src/components/**/*',

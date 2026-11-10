@@ -1,19 +1,29 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '1.0',
+    'version': '17.0.1.6.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Livestock Slaugther',
     'depends': [
+        'bn_stock_location',
         'bn_donation_home_service',
+        'bn_pos_cheque',
+        'bn_direct_deposit',
+        'bn_import_donation',
+        'mrp',
         'mail',
+        'purchase_requisition',
     ],
     'data': [
+        'security/ir.model.access.csv',
+        'security/stock_scope_rule.xml',
+        
         'data/sequence.xml',
         'data/stock_location.xml',
-        'data/operation_type_livestock.xml',
-        'security/ir.model.access.csv',
+        
+        'reports/livestock_bulk_transfer_report.xml',
+        
         'views/livestock_slaugther.xml',
         'views/livestock_requisition.xml',
         'views/livestock_cutting.xml',
@@ -22,7 +32,12 @@
         'views/package_type.xml',
         'views/meat_management.xml',
         'views/distribution_center.xml',
+        
         'wizards/livestock_slaugther.xml',
+        'data/program_types.xml',
+        'data/upgrade_hooks.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,

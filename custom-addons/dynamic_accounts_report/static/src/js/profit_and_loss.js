@@ -12,23 +12,26 @@ class ProfitAndLoss extends owl.Component {
     async setup() {
         super.setup(...arguments);
         this.initial_render = true;
-        this.orm = useService('orm');
-        this.action = useService('action');
-        this.tbody = useRef('tbody');
-        this.posted = useRef('posted');
-        this.period = useRef('periods');
-        this.period_year = useRef('period_year');
-        this.draft = useRef('draft');
+        this.orm = useService("orm");
+        this.action = useService("action");
+        this.tbody = useRef("tbody");
+        this.posted = useRef("posted");
+        this.period = useRef("periods");
+        this.period_year = useRef("period_year");
+        this.draft = useRef("draft");
         this.state = useState({
             data: null,
             filter_data: null,
-            year : [now.getFullYear()],
+            year: [now.getFullYear()],
             comparison: false,
             comparison_type: null,
         });
-        this.wizard_id = await this.orm.call("dynamic.balance.sheet.report", "create", [{}]) | null;
-        this.load_data(self.initial_render = true);
+        this.wizard_id = await this.orm.call(
+            "dynamic.balance.sheet.report", "create", [{}]
+        );
+        await this.load_data(this.initial_render);   // await it
     }
+
     async load_data() {
         /**
          * Loads the data for the profit and loss report.

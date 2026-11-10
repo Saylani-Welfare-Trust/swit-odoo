@@ -62,7 +62,7 @@
                 <field name="remaining_hissa" readonly="1"/>
 
                 <button string="History" name="action_open_chatter" type="object" class="oe_highlight"/>
-                <button string="Update Demand" name="update_demand" type="object" class="oe_highlight"/>
+                <button string="Update Demand" name="update_demand" type="object" class="oe_highlight" groups="bn_qurbani.demand_menu_group,bn_qurbani.qurbani_manager_group"/>
             </tree>
         </field>
     </record>

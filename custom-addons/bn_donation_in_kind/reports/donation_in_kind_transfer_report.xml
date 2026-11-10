@@ -26,7 +26,7 @@
                                     <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.truk_number or '-'"/></td>
                                     <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.location_id.display_name or '-'"/></td>
                                     <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.warehouse_name or '-'"/></td>
-                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/></td>
+                                    <td style="padding:6px; border:1px solid #ddd;"><t t-esc="(o.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/></td>
                                 </tr>
                                 <t t-set="counter" t-value="counter + 1"/>
                             </t>
@@ -36,40 +36,53 @@
             </t>
             <t t-else="">
                 <t t-foreach="docs" t-as="o">
-                    <div class="page">
-                        <h2>Donation In Kind Transfer Report</h2>
-                        <p><strong>DIK #:</strong> <span t-esc="o.name"/></p>
-                        <p><strong>Donor Name:</strong> <span t-esc="o.donor_id.name"/></p>
-                        <p><strong>Location:</strong> <span t-esc="o.location_id.display_name"/></p>
-                        <p><strong>Warehouse:</strong> <span t-esc="o.warehouse_name"/></p>
-                        <p><strong>Truck Number:</strong> <span t-esc="o.truk_number"/></p>
-                        <p><strong>Date:</strong> <span t-esc="o.create_date.strftime('%d-%m-%Y %H:%M') if o.create_date else '--'"/></p>
-                        <p><strong>Contact No.:</strong> <span t-esc="o.donor_id.mobile"/></p>
-                        <p><strong>Status:</strong> <span t-esc="dict(o.fields_get(allfields=['state'])['state']['selection'])[o.state]"/></p>
-
-                        <br/>
-                        <h4>Donation Details</h4>
-                        <table class="table table-sm table-bordered">
+                    <div class="page" style="font-family: Arial, sans-serif; font-size: 12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #999; padding-bottom:6px; margin-bottom:10px;">
+                            <h4 style="margin:0; font-weight:bold;">Donation In Kind Transfer</h4>
+                            <h5 style="margin:0; font-weight:bold;">Saylani Welfare International Trust</h5>
+                        </div>
+                        <table style="width:100%; border:1px solid #999; margin-bottom:12px;">
+                            <tr>
+                                <td style="width:50%; padding:8px; vertical-align:top;">
+                                    <div><strong>DIK #:</strong> <t t-esc="o.name or '-'"/></div>
+                                    <div><strong>Donor Name:</strong> <t t-esc="o.donor_id.name or '-'"/></div>
+                                    <div><strong>Contact No.:</strong> <t t-esc="o.donor_id.mobile or '-'"/></div>
+                                    <div><strong>Status:</strong> <span t-field="o.state"/></div>
+                                </td>
+                                <td style="width:50%; padding:8px; vertical-align:top;">
+                                    <div><strong>Date &amp; Time:</strong> <t t-esc="(o.create_date + datetime.timedelta(hours=5)).strftime('%d-%m-%Y %H:%M') if o.create_date else '-'"/></div>
+                                    <div><strong>Warehouse:</strong> <t t-esc="o.warehouse_name or '-'"/></div>
+                                    <div><strong>Location:</strong> <t t-esc="o.location_id.display_name or '-'"/></div>
+                                    <div><strong>Truck Number:</strong> <t t-esc="o.truk_number or '-'"/></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <table class="table table-sm table-bordered" style="width:100%;">
                             <thead>
-                                <tr>
+                                <tr style="background:#f2f2f2;">
+                                    <th style="width:8%;" class="text-center">#</th>
                                     <th>Product</th>
-                                    <th>Qty</th>
+                                    <th style="width:20%;" class="text-end">Quantity</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="o.donation_in_kind_line_ids" t-as="line">
-                                    <tr>
-                                        <td><span t-esc="line.product_id.display_name"/></td>
-                                        <td><span t-esc="'{:,}'.format(int(line.quantity) or 0)"/></td>
-                                    </tr>
-                                </t>
+                                <tr t-foreach="o.donation_in_kind_line_ids" t-as="line">
+                                    <td class="text-center"><t t-esc="line_index + 1"/></td>
+                                    <td><t t-esc="line.product_id.display_name"/></td>
+                                    <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0)"/></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" class="text-end"><strong>Total Quantity</strong></td>
+                                    <td class="text-end"><strong t-esc="'{:,}'.format(int(sum(o.donation_in_kind_line_ids.mapped('quantity'))))"/></td>
+                                </tr>
                             </tbody>
                         </table>
-
-                        <br/>
-                        <p><strong>Entered by:</strong> <span t-esc="o.create_uid.name"/></p>
-
-                        <hr/>
+                        <table style="width:100%; margin-top:40px;">
+                            <tr>
+                                <td style="width:50%;">Entered by: <strong t-esc="o.create_uid.name"/></td>
+                                <td style="width:50%; text-align:right;"><div style="display:inline-block; width:180px; border-top:1px solid #333; text-align:center; padding-top:4px;">Received By (Store)</div></td>
+                            </tr>
+                        </table>
                     </div>
                 </t>
             </t>

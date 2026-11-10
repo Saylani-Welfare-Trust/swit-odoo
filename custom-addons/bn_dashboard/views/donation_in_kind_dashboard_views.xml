@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_donation_dashboard" model="ir.actions.client">
+        <field name="name">Donation In Kind Dashboard</field>
+        <field name="tag">donation_dashboard</field>
+    </record>
+
+    <menuitem id="menu_donation_dashboard"
+              name="Donation In Kind Dashboard"
+              parent="menu_dashboard_root"
+              action="action_donation_dashboard"
+              groups="bn_dashboard.group_din_dashboard_user"
+              sequence="6"/>
+</odoo>

@@ -1,5 +1,4 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo import models, fields, _
 
 
 class SecurityOffered(models.Model):
@@ -32,7 +31,7 @@ class SecurityOffered(models.Model):
             'name': _('Microfinance Applications'),
             'res_model': 'microfinance',
             'view_mode': 'tree,form',
-            'domain': [('security_offered_id    ', '=', self.id)],
+            'domain': [('security_offered_id', '=', self.id)],
             'context': {'create': False},
         }
     

@@ -1,38 +1,55 @@
 {
     'name': 'Advance Donation',
-    'version': '1.0',
+    'version': '17.0.1.4.0',
     'description': "",
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',
     'category': 'BytesNode/Advance Donation',
     'depends': [
         'account',
+        'point_of_sale',
         'bn_import_donation',
-        # 'bn_master_setup',
+        'dynamic_accounts_report',
+        'bn_master_setup',
+        'bn_pos_custom_action',
+        'bn_pos_cheque',
     ],
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
 
         'data/sequences.xml',
+        'data/sync_pos_donation_receipts_action.xml',
+
         'reports/advance_donation_report.xml',
         'reports/non_cash_advance_donation_report.xml',
         'reports/non_cash_disbursement_report.xml',
-        'reports/report_advance_donation_receipt.xml',  # <-- ADD THIS LINE
-        'wizard/partial_payment.xml',
+        'reports/report_advance_donation_receipt.xml',
+        'reports/advance_donation_statement_report.xml',
+        
+        
         'views/advance_donation.xml',
         'views/donation_receipt.xml',
         'views/product_template.xml',
         'views/product_product.xml',
+        'views/advance_donation_category.xml',
         'views/menu.xml',
+        'views/advance_donation_statement_action.xml',
+        'views/res_partner.xml',
+        
+        'wizard/partial_payment.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'assets': {
-        'point_of_sale._assets_pos': [
-            'bn_advance_donation/static/src/**/*.js',
-            'bn_advance_donation/static/src/**/*.xml',
+        'web.assets_backend': [
+            'bn_advance_donation/static/src/js/advance_donation_statement.js',
+            'bn_advance_donation/static/src/xml/advance_donation_statement.xml',
+            'bn_advance_donation/static/src/js/x2many_selectable.js',
+            'bn_advance_donation/static/src/xml/x2many_selectable.xml',
         ],
     },
     'license': 'AGPL-3',
     'installable': True,
     'application': False
-} # type: ignore
+}
