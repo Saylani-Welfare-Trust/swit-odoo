@@ -71,10 +71,3 @@ class Key(models.Model):
 
     def _close_key(self):
         self._workflow_write({'state': 'closed', 'key_bunch_id': False})
-
-    def action_available(self):
-        """Kept for backward compatibility. Keys can no longer be made available by hand:
-        that skipped the approval of the donation box registration."""
-        raise UserError(_(
-            'A key becomes available when its Donation Box registration is approved '
-            '(Registration / Installation > Approved).'))

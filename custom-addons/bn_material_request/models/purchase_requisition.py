@@ -169,28 +169,6 @@ class PurchaseRequisition(models.Model):
             ('id', '>', self._origin.id),
         ], limit=1))
 
-    def _create_remaining_request(self):
-        """Create the requisition for what the source Material Request still
-        needs purchased, and return it. It is a requisition of its own; this
-        one is left as it is."""
-        self.ensure_one()
-        reference = self._get_request_reference()
-        # sudo: like the first requisition of a Material Request, it may be
-        # created by someone who is not a purchase user.
-        return self.env['purchase.requisition'].sudo().create({
-            'origin': self.origin,
-            'material_request_id': self.material_request_id.id,
-            'user_id': self.user_id.id,
-            'type_id': self.type_id.id,
-            'company_id': self.company_id.id,
-            'line_ids': [(0, 0, {
-                'product_id': product.id,
-                'product_uom_id': product.uom_id.id,
-                'product_qty': quantity,
-                'product_description_variants': reference[product][1],
-            }) for product, quantity in self._get_request_shortfall().items()],
-        }).sudo(False)
-
     deleted_line_count = fields.Integer(
         string='Deleted Lines', compute='_compute_deleted_line_count',
         help='How many of this Purchase Request\'s lines were deleted, and by whom - see the deletion log.')
@@ -229,27 +207,6 @@ class PurchaseRequisition(models.Model):
                 continue
             if requisition.line_ids and all(line.is_locked for line in requisition.line_ids):
                 requisition.state = 'done'
-
-    def _get_pending_rfq_line_quantities(self):
-        """{requisition line: quantity still to send out for quotation, in the
-        line's unit}: what the line asks for, less what the confirmed Purchase
-        Orders of this requisition already cover. A requisition without a
-        Material Request always sends all its lines in full."""
-        self.ensure_one()
-        if not self.material_request_id:
-            return {line: line.product_qty for line in self.line_ids}
-        ordered = self._get_ordered_quantities([('requisition_id', '=', self.id)])
-        pending = {}
-        for line in self.line_ids:
-            uom = line.product_id.uom_id
-            line_uom = line.product_uom_id or uom
-            requested = line_uom._compute_quantity(line.product_qty, uom)
-            # An ordered quantity is taken off the lines of its product one after the other.
-            covered = min(requested, ordered[line.product_id.id])
-            ordered[line.product_id.id] -= covered
-            if float_compare(requested - covered, 0.0, precision_rounding=uom.rounding) > 0:
-                pending[line] = uom._compute_quantity(requested - covered, line_uom)
-        return pending
 
     def action_view_material_request(self):
         """View the source Material Request"""

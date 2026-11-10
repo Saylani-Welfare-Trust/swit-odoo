@@ -20,7 +20,6 @@
         'security/ir.model.access.csv',
         'security/stock_scope_rule.xml',
         
-        'data/server_action.xml',
         'data/sequence.xml',
         'data/chand_raat.xml',
         'data/qurbani_day.xml',

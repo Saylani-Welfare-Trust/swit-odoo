@@ -47,12 +47,6 @@ class StockPicking(models.Model):
                 move.product_id.check_stock for move in picking.move_ids if move.product_id
             )
 
-    def action_recieve_by_weight(self):
-        """
-        Deprecated method name - kept for backward compatibility.
-        """
-        return self.open_receive_by_weight_wizard()
-
     def open_receive_by_weight_wizard(self):
         """
         Open the receive-by-weight wizard for this picking.

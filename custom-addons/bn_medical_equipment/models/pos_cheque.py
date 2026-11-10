@@ -62,19 +62,6 @@ class POSCheque(models.Model):
         else:
             _logger.warning("No security deposit found for cheque %s", self.name)
 
-    def action_view_security_deposit(self):
-        """View the linked security deposit"""
-        self.ensure_one()
-        if self.medical_security_deposit_id:
-            return {
-                'name': 'Security Deposit',
-                'type': 'ir.actions.act_window',
-                'res_model': 'medical.security.deposit',
-                'view_mode': 'form',
-                'res_id': self.medical_security_deposit_id.id,
-                'target': 'new',
-            }
-
     def action_clear(self):
         res = super().action_clear()
         for rec in self.filtered(lambda c: c.source_model == 'medical_equipment'):

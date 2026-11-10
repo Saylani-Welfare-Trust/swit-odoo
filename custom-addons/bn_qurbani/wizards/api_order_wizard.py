@@ -85,7 +85,7 @@ class APIDonationWizard(models.TransientModel):
                 }
             }
 
-        except ValidationError as e:
+        except ValidationError:
             # Savepoint already rolled back everything — just re-raise so
             # Odoo shows the error dialog to the user. Nothing was committed.
             raise

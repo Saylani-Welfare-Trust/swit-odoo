@@ -251,16 +251,3 @@ class CheckMarfatShift(models.TransientModel):
             'view_mode': 'form',
             'target': 'new',
         }
-
-    def mark_selected_as_collected(self):
-        """Mark all selected disbursement lines as collected"""
-        for line in self.disbursement_line_ids:
-            if line.state != 'collected':
-                line.write({'state': 'collected'})
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': self._name,
-            'res_id': self.id,
-            'view_mode': 'form',
-            'target': 'new',
-        }

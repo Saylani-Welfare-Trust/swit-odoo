@@ -73,9 +73,6 @@ class DonationHomeService(models.Model):
     def calculate_service_charges(self):
         self.total_amount = self.amount + self.service_charges
 
-    def calculate_total_amount(self):
-        self.total_amount = self.amount + self.service_charges
-    
     def action_cancel(self):
         def _create_return_for_picking(picking):
             ReturnWizard = self.env['stock.return.picking']
@@ -374,66 +371,3 @@ class DonationHomeService(models.Model):
             "id": dhs.id,
         }
     
-    @api.model
-    def get_dhs_record(self, data):
-        """Fetch DHS record by name and return product information"""
-        # Search for the DHS record
-        dhs = self.sudo().search([('name', '=', data['name']), ('state', '!=', 'paid')], limit=1)
-        
-        if not dhs:
-            return {
-                "status": "error",
-                "body": f"Donation Home Service record with reference {data['name']} not found."
-            }
-        
-        if dhs.state not in ['gate_pass', 'gate_in']:
-            return {
-                "status": "error",
-                "body": f"Current status of {data['name']} is in a {dhs.state.capitalize()}."
-            }
-        
-        # Prepare product data for POS
-        products_data = []
-        
-        # Add regular product lines
-        for line in dhs.donation_home_service_line_ids:
-            product = line.product_id
-            products_data.append({
-                'product_id': product.id,
-                'name': product.name,
-                'quantity': line.quantity,
-                'price': product.lst_price,
-                'default_code': product.default_code,
-                'category': product.categ_id.name if product.categ_id else ''
-            })
-        
-        # Add delivery charges if applicable
-        service_charges = getattr(dhs, 'service_charges', 0.0)
-        
-        if service_charges and float(service_charges) > 0:
-            service_product = self.env['product.product'].search([
-                ('name', '=', 'Donation Home Service Charges'),
-                ('detailed_type', '=', 'service'),
-                ('available_in_pos', '=', True)
-            ], limit=1)
-            
-            if service_product:
-                products_data.append({
-                    'product_id': service_product.id,
-                    'name': service_product.name,
-                    'quantity': 1,
-                    'price': float(service_charges),
-                    'default_code': service_product.default_code or 'DELIVERY',
-                    'category': service_product.categ_id.name if service_product.categ_id else 'Services',
-                    'is_delivery_charge': True
-                })
-        
-        return {
-            'id': dhs.id,
-            'name': dhs.name,
-            'donor_id': dhs.donor_id.id if dhs.donor_id else False,
-            'donor_name': dhs.donor_id.name if dhs.donor_id else '',
-            'service_charges': float(service_charges),
-            'products': products_data,
-            'success': True
-        }

@@ -38,17 +38,6 @@ class MicrofinanceFamily(models.Model):
                 record.welfare_ids = False
                 record.welfare_count = 0
     
-    def action_open_welfare(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'name': 'Welfare Records',
-            'res_model': 'welfare',  # your actual model
-            'view_mode': 'tree,form',
-            'domain': [('id', 'in', self.welfare_ids.ids)],
-            'target': 'current',
-        }
-
     def action_view_disbursement_history(self):
         """View all welfare disbursement lines for donee matching this family member's CNIC"""
         self.ensure_one()

@@ -147,6 +147,21 @@ class PosLinkMixin(models.AbstractModel):
             vals = self._complete_pos_vals(dict(vals))
         return super().write(vals)
 
+    def _pos_link_vals(self):
+        """This record's POS link, for the records it creates later (e.g. the
+        receipts, installments or requests of a cleared direct deposit): they
+        carry the same order, session, POS and cashier."""
+        self.ensure_one()
+        rec = self.sudo()
+        return {key: value for key, value in {
+            'pos_order_id': rec.pos_order_id.id,
+            'pos_session_id': rec.pos_session_id.id,
+            'pos_config_id': rec.pos_config_id.id,
+            'pos_reference': rec.pos_reference,
+            'pos_cashier_id': rec.pos_cashier_id.id,
+            'pos_employee_id': rec.pos_employee_id.id,
+        }.items() if value}
+
     def _link_pos(self, order):
         """Link the records to ``order`` (paid by it); a link already set is kept."""
         order = order.sudo()

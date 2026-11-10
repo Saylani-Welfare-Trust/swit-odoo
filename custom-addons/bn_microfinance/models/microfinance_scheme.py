@@ -16,8 +16,6 @@ class MicrofinanceScheme(models.Model):
     name = fields.Char('Name', tracking=True)
     prefix = fields.Char('Prefix', tracking=True)
     
-    is_created = fields.Boolean('Is Created', tracking=True)
-
     installment_type = fields.Selection(selection=installment_selection, string='Installment Type', default='daily', tracking=True)
 
     daily_recovery_days = fields.Integer('Daily Recovery Days', default=0, tracking=True)
@@ -27,7 +25,6 @@ class MicrofinanceScheme(models.Model):
 
     @api.model
     def create(self, vals):
-        # vals['is_created'] = True
         record = super(MicrofinanceScheme, self).create(vals)
 
         self.env['ir.sequence'].create({

@@ -50,7 +50,6 @@ class JournalTransfer(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
     
 
-    @api.constrains('source_journal_id','dest_journal_id')
     def init(self):
         # transfers pulled before the link existed: the session of their POS entry
         self.env.cr.execute("""
@@ -60,15 +59,13 @@ class JournalTransfer(models.Model):
         """)
         super().init()
 
-    def _check_journals(self):
-        for rec in self:
-            if rec.source_journal_id == rec.dest_journal_id:
-                raise UserError("Source and Destination journals must be different.")
-
     def action_transfer(self):
         for rec in self:
             if rec.state != 'draft':
                 raise UserError(_('Only draft transfers can be posted (%s).') % rec.name)
+            # (lines pulled without a bank journal start with the same journal on both sides)
+            if rec.source_journal_id == rec.dest_journal_id:
+                raise UserError(_('Set a destination journal different from the source on %s.') % rec.name)
             if not rec.source_journal_id.default_account_id or not rec.dest_journal_id.default_account_id:
                 raise UserError(_('Both journals of %s need a default account.') % rec.name)
 

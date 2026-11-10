@@ -59,12 +59,6 @@ class AdvanceDonationLine(models.Model):
         help='Date when the disbursement is made'
     )
 
-    date_visibility = fields.Boolean(
-        string='Date Visibility',
-        help='Controls the visibility of the date field in the tree view. It is set to True if the contract type is frequency based, otherwise False.',
-        compute='_compute_date_visibility'
-    )
-
     def _auto_init(self):
         # disbursement_date used to be recomputed to today on every read. Now that
         # it is stored, lines already disbursed get the date of their last change
@@ -86,13 +80,6 @@ class AdvanceDonationLine(models.Model):
             elif not rec.disbursement_date:
                 # Keep a date entered manually, only default it to today
                 rec.disbursement_date = td.today()
-    
-    @api.depends('advance_donation_id.contract_type')
-    def _compute_date_visibility(self):
-        for rec in self:
-            if rec.advance_donation_id.contract_type == 'frequency':
-                rec.date_visibility = True
-            else: rec.date_visibility = False
     
     @api.depends('paid_amount', 'amount', 'service_charge_amount')
     def _compute_installment_state(self):

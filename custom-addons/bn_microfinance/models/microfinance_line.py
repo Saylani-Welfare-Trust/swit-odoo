@@ -127,23 +127,6 @@ class MicrofinanceLine(models.Model):
 
         return applied_amount
 
-    def action_cheque_deposit(self):
-        if not self.is_cheque_deposit:
-            self.is_cheque_deposit = True
-
-            # microfinance_installment = self.env['microfinance.installment'].create({
-            self.env['microfinance.installment'].create({
-                'payment_type': 'installment',
-                'payment_method': 'cheque',
-                'microfinance_id': self.microfinance_id.id,
-                'amount': self.amount,
-                'currency_id': self.currency_id.id,
-                'bank_name': self.bank_name,
-                'cheque_no': self.cheque_no,
-                'cheque_date': self.cheque_date,
-                'donee_id': self.microfinance_id.donee_id.id,
-            })
-
     def write(self, vals):
         if vals.get('state') == 'paid' and not vals.get('paid_date'):
             vals['paid_date'] = vals.get('payment_date') or fields.Date.today()

@@ -711,26 +711,6 @@ May Allah bless you!
             "id": din.id
         }
     
-    def correct_records(self, records):
-        for record in records:
-            if not record.is_sync:
-                record.donation_in_kind_line_ids = [(0, 0, {
-                    'product_id': record.product_id.id,
-                    'quantity': record.quantity,
-                    'avg_price': record.product_id.standard_price,
-                })]
-
-                product_stock_move_config = self.env['donation.in.kind.config'].sudo().search([], limit=1)
-                
-                if product_stock_move_config:
-                    record.write({
-                        'location_id': product_stock_move_config.location_id.id,
-                        'picking_type_id': self._din_picking_type(product_stock_move_config.location_id).id,
-                        'journal_id': product_stock_move_config.journal_id.id
-                    })
-                
-                record.is_sync = True
-
 
 
 class DonationInKindTransferWizard(models.TransientModel):

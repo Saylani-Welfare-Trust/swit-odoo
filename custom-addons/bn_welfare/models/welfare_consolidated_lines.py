@@ -117,25 +117,3 @@ class WelfareConsolidatedLine(models.Model):
         
         return result
     
-    def action_open_source_record(self):
-        """Open source record"""
-        self.ensure_one()
-        if self.source_model == 'welfare.line':
-            return {
-                'type': 'ir.actions.act_window',
-                'name': 'Welfare Line',
-                'res_model': 'welfare.line',
-                'res_id': self.source_id,
-                'view_mode': 'form',
-                'target': 'current',
-            }
-        elif self.source_model == 'welfare.recurring.line':
-            return {
-                'type': 'ir.actions.act_window',
-                'name': 'Recurring Welfare Line',
-                'res_model': 'welfare.recurring.line',
-                'res_id': self.source_id,
-                'view_mode': 'form',
-                'target': 'current',
-            }
-        return None

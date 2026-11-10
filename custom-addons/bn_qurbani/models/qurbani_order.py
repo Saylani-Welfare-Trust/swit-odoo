@@ -4,7 +4,6 @@ import logging
 import re
 from datetime import datetime
 _logger = logging.getLogger(__name__)
-from datetime import datetime
 
 
 class QurbaniOrder(models.Model):
@@ -494,20 +493,6 @@ class QurbaniOrder(models.Model):
             "name": qurbani_order.name,
             "message": "Web Qurbani Order created with slaughter integration"
         }
-    
-    @staticmethod
-    def _parse_iso_datetime(iso_string):
-        """Parse ISO 8601 datetime string to Odoo datetime format"""
-        if not iso_string:
-            return None
-        try:
-            from datetime import datetime
-            # Parse ISO 8601 format (e.g., '2026-05-04T20:01:19.593Z')
-            dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
-            return dt.replace(tzinfo=None)
-        except Exception as e:
-            _logger.warning(f"Could not parse datetime {iso_string}: {str(e)}")
-            return None
     
     def action_show_pos_order(self):
         self.ensure_one()

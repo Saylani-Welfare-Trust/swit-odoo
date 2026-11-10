@@ -437,83 +437,6 @@ class Microfinance(models.Model):
             if not self.is_valid_cnic_format(self.landlord_cnic_no):
                 raise ValidationError('Invalid CNIC No. format ( acceptable format XXXXX-XXXXXXX-X )')            
 
-    def _create_microfinance_accounting_entries(self):
-            """Create accounting entries for asset, receivable, and income."""
-
-            product = self.product_id
-            company = self.env.company
-
-            asset_cost = product.lst_price
-            receivable_amount = self.total_amount
-            difference = receivable_amount - asset_cost
-
-            # ---- Correct Accounts ----
-
-            # Asset valuation account (must exist)
-            asset_account = (
-                product.categ_id.property_stock_valuation_account_id
-            )
-
-            # Partner (Microfinance / Donee) receivable account
-            receivable_account = self.donee_id.property_account_receivable_id
-
-            # Income account from product category
-            income_account = product.categ_id.property_account_income_categ_id
-
-            if not asset_account:
-                raise ValidationError("Stock valuation account is not set on product category.")
-
-            if not receivable_account:
-                raise ValidationError("Receivable account is not set on donee/partner.")
-
-            if not income_account:
-                raise ValidationError("Income account is not set on product category.")
-
-            # ---- Journal ----
-            journal = self.env['account.journal'].search(
-                [('type', '=', 'sale'), ('company_id', '=', company.id)],
-                limit=1
-            )
-
-            if not journal:
-                raise ValidationError("Sales journal not found.")
-
-            # ---- Journal Entry ----
-            move_vals = {
-                'ref': self.name,
-                'date': fields.Date.context_today(self),
-                'journal_id': journal.id,
-                'line_ids': [
-                    # Credit asset cost
-                    (0, 0, {
-                        'name': f'Asset Cost for {product.display_name}',
-                        'account_id': asset_account.id,
-                        'credit': asset_cost,
-                        'debit': 0.0,
-                    }),
-
-                    # Debit receivable (application amount)
-                    (0, 0, {
-                        'name': f'Receivable from Microfinance for {product.display_name}',
-                        'account_id': receivable_account.id,
-                        'partner_id': self.donee_id.id,
-                        'debit': receivable_amount,
-                        'credit': 0.0,
-                    }),
-
-                    # Difference → Income / Loss
-                    (0, 0, {
-                        'name': f'Microfinance Margin for {product.display_name}',
-                        'account_id': income_account.id,
-                        'credit': difference if difference > 0 else 0.0,
-                        'debit': abs(difference) if difference < 0 else 0.0,
-                    }),
-                ]
-            }
-
-            move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).create(move_vals)
-            move.action_post()
-    
     # ------------------------------------------------------------------
     # Workflow guards
     # ------------------------------------------------------------------
@@ -730,102 +653,6 @@ class Microfinance(models.Model):
 
 
     
-    def _validate_picking(self):
-        """Confirm/assign, mark lines picked, and validate delivery picking(s) to 'done'."""
-        for rec in self:
-            pickings = rec.picking_ids.filtered(lambda p: p.state not in ('done', 'cancel'))
-
-            if not pickings:
-                raise ValidationError(f'{rec.name}: No open delivery picking found to validate.')
-
-            for picking in pickings:
-                if picking.state == 'draft':
-                    picking.action_confirm()
-
-                picking.action_assign()
-
-                if not picking.move_ids:
-                    raise ValidationError(f'{rec.name}: Picking {picking.name} has no stock moves.')
-
-                for move in picking.move_ids:
-                    if not move.move_line_ids:
-                        raise ValidationError(
-                            f'{rec.name}: Move {move.name} could not reserve any quantity '
-                            f'(no move lines). Check stock availability at the source location.'
-                        )
-                    for move_line in move.move_line_ids:
-                        # After action_assign(), move_line.quantity is already the reserved qty.
-                        # Only fall back to product_uom_qty if it's somehow zero.
-                        if not move_line.quantity:
-                            move_line.quantity = move.product_uom_qty
-                        move_line.picked = True
-
-                result = picking.button_validate()
-                if isinstance(result, dict) and result.get('res_model') == 'stock.backorder.confirmation':
-                    wizard = self.env['stock.backorder.confirmation'].with_context(
-                        result.get('context', {})
-                    ).create({})
-                    wizard.process()
-
-                if picking.state != 'done':
-                    raise ValidationError(
-                        f'{rec.name}: Picking {picking.name} is still in state "{picking.state}" '
-                        f'after button_validate() — validation did not complete.'
-                    )
-    def _create_microfinance_picking(self):
-        """Create stock picking for movable asset microfinance - to be validated manually"""
-        if not self.in_recovery:
-            product_quantity = self.product_id.sudo().qty_available
-            
-            if product_quantity <= 0:
-                self.asset_availability = 'not_available'
-                raise ValidationError('Not enough stock available.')
-            
-            if not self.warehouse_location_id:
-                raise ValidationError(_('Please select the Warehouse Location the asset is delivered from.'))
-            available = self.env['stock.quant'].sudo()._get_available_quantity(
-                self.product_id, self.warehouse_location_id)
-
-            if available < 1:
-                raise ValidationError('The requested stock is unavailable at the moment. Kindly initiate a purchase request to replenish it.')
-            
-            location_id = self.warehouse_location_id.id
-        else:
-            # Recovery case - use recovered location
-            location_id = self.recovered_location_id.id
-        
-        # Create stock move
-        move_name = f'Re-Return Product of Loan {self.name}' if self.in_recovery else f'Decrease stock for Loan {self.name}'
-        stock_move = self.env['stock.move'].create({
-            'name': move_name,
-            'product_id': self.product_id.id,
-            'product_uom': self.product_id.uom_id.id,
-            'product_uom_qty': 1,
-            'location_id': location_id,
-            'location_dest_id': self.env.ref('stock.stock_location_customers').id,
-            'state': 'draft',
-        })
-        
-        # Create picking
-        picking = self.env['stock.picking'].create({
-            'partner_id': self.donee_id.id,
-            'picking_type_id': self.env['stock.warehouse']._get_program_type(
-                'microfinance_delivery', self.env['stock.location'].browse(location_id)).id,
-            'move_ids_without_package': [(6, 0, [stock_move.id])],
-            'origin': self.name,
-            'source_record_ref': '%s,%s' % (self._name, self.id),
-        })
-        
-        # Confirm and assign the picking (but don't validate - that's manual)
-        stock_move._action_confirm()
-        stock_move._action_assign()
-        picking.action_confirm()
-        
-        # Store picking reference
-        self.picking_ids = [(4, picking.id)]
-        
-        return picking
-
     def _complete_application(self):
         """Called when the picking is validated to complete the microfinance record"""
         # Compute installments
@@ -956,9 +783,6 @@ class Microfinance(models.Model):
                 'amount': amount
             })
 
-    def download_pdc_template(self):
-        return self.env.ref('bn_microfinance.microfinance_pdc_template_report_action').report_action(self)
-    
     def action_upload_cheques(self):
         if not self.pdc_attachment:
             raise ValidationError("Please Upload PDC file.")
@@ -1044,27 +868,6 @@ class Microfinance(models.Model):
     def action_fully_recovered(self):
         self._mf_check(_('Fully Recovered'), ('recover',), RECOVERY)
         self._mf_set_state('fully_recover')
-
-    def action_move_to_done_serveraction(self):
-        self._mf_check(_('Move to Done'), ('approve', 'wfd'), USER)
-        for rec in self:
-            if rec.asset_type == 'movable_asset':
-                # Create SO + delivery picking only if not already created
-                if not rec.sale_order_id or not rec.picking_ids:
-                    rec._create_microfinance_sale_order()
-
-                # Now validate the delivery to 'done'
-                rec._validate_picking()
-
-            if rec.asset_type != 'cash' and not rec.delivery_date:
-                raise ValidationError('Please select a Delivery Date.')
-
-            if not rec.in_recovery:
-                rec.compute_installment()
-            else:
-                rec.compute_recovery_installment()
-
-            rec._mf_set_state('done')
 
     def action_move_to_done(self):
         # Immovable assets are delivered off-system (Waiting For Delivery); cash

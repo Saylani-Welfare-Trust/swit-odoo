@@ -48,8 +48,6 @@ class BranchKitchenRequest(models.Model):
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
-    mrp_ids = fields.Many2many('mrp.production', string="MRP's")
-
     is_daily_request = fields.Boolean('Is daily Request')
 
     branch_kitchen_request_line_ids = fields.One2many('branch.kitchen.request.line', 'branch_kitchen_request_id', string="Branch Kitchen Request Line")
@@ -101,8 +99,5 @@ class BranchKitchenRequest(models.Model):
                 mo.action_confirm()
 
                 mo_ids.append(mo.id)
-
-        # add all MOs at once
-        self.mrp_ids = [(6, 0, mo_ids)]
 
         self.state = 'done'

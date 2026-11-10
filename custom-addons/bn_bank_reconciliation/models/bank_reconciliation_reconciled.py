@@ -166,30 +166,6 @@ class BankReconciliationReconciled(models.Model):
         for record in self:
             record.amount = (record.debit or 0.0) - (record.credit or 0.0)
 
-    def action_view_move(self):
-        self.ensure_one()
-        if not self.matched_move_id:
-            raise UserError(_('No accounting entry found for this reconciliation.'))
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.move',
-            'res_id': self.matched_move_id.id,
-            'view_mode': 'form',
-            'target': 'current'
-        }
-    
-    def action_view_journal_line(self):
-        self.ensure_one()
-        if not self.journal_line_id:
-            raise UserError(_('No journal line found for this reconciled transaction.'))
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.move.line',
-            'res_id': self.journal_line_id.id,
-            'view_mode': 'form',
-            'target': 'current'
-        }
-
     def action_unreconcile(self):
         self.ensure_one()
         if self.master_id.state == 'completed':

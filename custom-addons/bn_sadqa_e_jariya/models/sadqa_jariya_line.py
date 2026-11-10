@@ -61,7 +61,6 @@ class SadqaJariyaLine(models.Model):
     bill_id = fields.Many2one('account.move', string='Bill', readonly=True)
     return_date = fields.Datetime('Return Date', readonly=True)
     return_bill_id = fields.Many2one('account.move', string='Return Entry', readonly=True)
-    return_reason = fields.Text('Return Reason')
     returned_by = fields.Many2one('res.users', string='Returned By', default=lambda self: self.env.user)
 
     media_ids = fields.Many2many(

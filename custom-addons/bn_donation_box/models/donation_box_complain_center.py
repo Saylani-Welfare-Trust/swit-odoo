@@ -248,14 +248,6 @@ class DonationBoxComplain(models.Model):
         self.lot_id.sudo().write({'lot_consume': False, 'is_not_return': False})
         self._workflow_write({'return_picking_id': return_picking.id})
 
-    def action_scrap(self):
-        """Scrap the selected serial (lot) instead of returning it."""
-        self._require_group(RESOLVE_GROUP)
-        self._check_workflow_state('status', ('process',), _('Scrap'))
-        for rec in self:
-            rec._do_scrap()
-        return True
-
     def _do_scrap(self):
         self.ensure_one()
         if self.scrap_picking_id:

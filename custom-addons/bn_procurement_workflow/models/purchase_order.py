@@ -223,10 +223,6 @@ class PurchaseOrder(models.Model):
             rows.append((analytic, budget, required, available))
         return rows
 
-    def _get_accounting_budget_shortfalls(self):
-        self.ensure_one()
-        return [row for row in self._get_accounting_budget_rows() if row[2] > row[3]]
-
     def _get_budget_check_summary(self):
         self.ensure_one()
         lines = []

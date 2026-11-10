@@ -98,7 +98,6 @@ class ReceiveByWeight(models.TransientModel):
     def action_receive(self):
         StockQuant = self.env['stock.quant']
         ProductTemplate = self.env['product.template']
-        Product = self.env['product.product']
 
         # Sanity: number of wizard lines must equal total picking qty (one line per unit)
         total_picking_qty = sum(self.picking_id.move_ids.mapped('product_uom_qty'))
@@ -145,7 +144,6 @@ class ReceiveByWeight(models.TransientModel):
 
             # Among these templates, inspect their product variants and try to match by attribute value ranges
             matched_variant = None
-            matched_attr_val = None
 
             # STEP 1: Get all attribute values having weight ranges
             all_attr_vals = self.env['product.attribute.value'].search([
