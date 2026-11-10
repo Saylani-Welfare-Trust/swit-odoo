@@ -170,11 +170,12 @@ class ResPartner(models.Model):
         self.ensure_one()
         return any(self.category_id.mapped('is_profile_type'))
 
-    @api.constrains('cnic_no', 'mobile', 'country_code_id', 'category_id', 'active')
+    @api.constrains('cnic_no', 'mobile', 'country_code_id', 'category_id', 'active', 'parent_id')
     def _check_duplicate_person(self):
         """A person has ONE contact; their roles are tags on it. Refuse a
-        second contact with the same CNIC (any contact), or the same mobile +
-        phone code (between profile contacts)."""
+        second contact with the same CNIC, or the same mobile + phone code,
+        whichever module or screen creates it (addresses / child contacts of a
+        company may repeat its number)."""
         for rec in self.filtered('active'):
             existing = self.browse()
             reason = ''
@@ -182,12 +183,11 @@ class ResPartner(models.Model):
                 existing = self.with_context(active_test=True).search(
                     [('cnic_no', '=', rec.cnic_no), ('id', '!=', rec.id)], limit=1)
                 reason = _('CNIC %s') % rec.cnic_no
-            if not existing and rec.mobile and rec._is_profile_contact():
-                candidates = self.search([
+            if not existing and rec.mobile and not rec.parent_id:
+                existing = self.with_context(active_test=True).search([
                     ('mobile', '=', rec.mobile), ('country_code_id', '=', rec.country_code_id.id),
-                    ('id', '!=', rec.id),
-                ])
-                existing = candidates.filtered(lambda p: p._is_profile_contact())[:1]
+                    ('parent_id', '=', False), ('id', '!=', rec.id),
+                ], limit=1)
                 reason = _('mobile %s') % rec.mobile
             if existing:
                 ids = ', '.join(existing.registration_ids.mapped('code')) or existing.primary_registration_id or _('not registered')

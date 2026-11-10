@@ -62,7 +62,7 @@ class ConfirmSearch(models.TransientModel):
             return [('cnic_no', '=', self.cnic_no)]
         if not self.mobile_no:
             raise UserError(_('Please enter the Mobile No. to search for.'))
-        domain = [('mobile', '=', self.mobile_no.strip())]
+        domain = [('mobile', '=', self.env['res.partner']._normalize_mobile(self.mobile_no))]
         if self.country_code_id:
             domain.append(('country_code_id', '=', self.country_code_id.id))
         return domain
@@ -133,7 +133,7 @@ class ConfirmSearch(models.TransientModel):
         if self.cnic_no:
             action['context']['default_cnic_no'] = self.cnic_no
         if self.mobile_no:
-            action['context']['default_mobile'] = self.mobile_no.strip()
+            action['context']['default_mobile'] = self.env['res.partner']._normalize_mobile(self.mobile_no)
         return action
 
     # ------------------------------------------------------------------

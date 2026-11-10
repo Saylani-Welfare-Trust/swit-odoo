@@ -5,6 +5,7 @@ from . import hr_employee_base
 from . import res_partner_registration
 from . import res_partner_views
 from . import res_partner_program
+from . import res_partner_identity
 from . import profile_view_field
 from . import pos_session
 from . import res_company

@@ -120,9 +120,13 @@ class WelfareInstitutionFetchLog(models.Model):
                 formatted_cnic = ''
                 
             cnic = formatted_cnic
-            partner = None
-            if cnic:
-                partner = Partner.search([('cnic_no', '=', cnic)], limit=1)
+            sadqa_tags = (self.env.ref('bn_profile_management.donee_partner_category')
+                          | self.env.ref('bn_profile_management.coorporate_institute_partner_category')
+                          | self.env.ref('bn_sadqa_e_jariya.sadqa_e_jariya_partner_category'))
+            # one contact per person: the existing one (CNIC, else mobile) gets the tags
+            partner = Partner._find_person(
+                cnic=cnic or None, mobile=submitted.get('whatsapp') or submitted.get('phoneNumber'))
+            partner._add_person_tags(sadqa_tags)
             if not partner:
                 # Download CNIC images if available
                 cnic_front_url = submitted.get('cnicFront')
@@ -137,7 +141,7 @@ class WelfareInstitutionFetchLog(models.Model):
                     'image_1920': profile_image,
                     'name': submitted.get('fullname') or rec.get('form', {}).get('applicantInformation', {}).get('name', 'Unknown'),
                     'cnic_no': cnic,
-                    'mobile': submitted.get('whatsapp') or submitted.get('phoneNumber'),
+                    'mobile': Partner._normalize_mobile(submitted.get('whatsapp') or submitted.get('phoneNumber')) or False,
                     'email': submitted.get('email'),
                     'cnic_front_image': cnic_front_image,
                     'cnic_back_image': cnic_back_image,

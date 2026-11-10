@@ -231,13 +231,15 @@ class TestProfileRegistrationIds(ProfileCase):
 
     def test_one_contact_per_person(self):
         self._donee('Original', mobile='3002000005', cnic_no='42101-2000005-1')
-        with self.assertRaisesRegex(ValidationError, 'Original'):
+        # (each refused contact rolled back, as a real request would be)
+        with self.assertRaisesRegex(ValidationError, 'Original'), self.env.cr.savepoint():
             self.Partner.create({'name': 'Copy by CNIC', 'cnic_no': '42101-2000005-1'})
-        with self.assertRaisesRegex(ValidationError, 'Original'):
+        with self.assertRaisesRegex(ValidationError, 'Original'), self.env.cr.savepoint():
             self.Partner.create({'name': 'Copy by mobile', 'mobile': '3002000005',
                                  'category_id': [(6, 0, [self.donor.id])]})
-        # Sharing a mobile with a non-profile contact (e.g. a vendor) is fine.
-        self.Partner.create({'name': 'Vendor same phone', 'mobile': '3002000005'})
+        # Any contact, from any module (e.g. a vendor): the same person is one contact.
+        with self.assertRaisesRegex(ValidationError, 'Original'), self.env.cr.savepoint():
+            self.Partner.create({'name': 'Vendor same phone', 'mobile': '3002000005'})
 
     def test_backfill_of_existing_ids(self):
         legacy = self._donee('Legacy', mobile='3002000006', cnic_no='42101-2000006-1')

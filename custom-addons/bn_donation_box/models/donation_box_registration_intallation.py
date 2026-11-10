@@ -246,22 +246,21 @@ class DonationBoxRegistrationInstallation(models.Model):
 
         donor = Partner
         if self.contact_no:
-            donor = Partner.search([
-                ('mobile', '=', self.contact_no),
-                ('category_id', 'in', categories.ids),
-            ], limit=1)
+            # one contact per person: whoever already has this mobile (any
+            # module) is the donor; it gets the donor tags
+            donor = Partner._find_person(mobile=self.contact_no, country=self.country_id)
+            donor._add_person_tags(categories)
         if not donor:
             # Same shop name, but never re-use a partner that has a different phone number.
             candidates = Partner.search([('name', '=', self.shop_name)])
             donor = candidates.filtered(lambda p: not p.mobile or p.mobile == self.contact_no)[:1]
         if not donor:
-            donor = Partner.create({
+            donor = Partner._find_or_create_person({
                 'name': self.shop_name,
                 'street': self.location,
                 'country_code_id': self.country_id.id,
                 'mobile': self.contact_no,
-                'category_id': [(6, 0, categories.ids)],
-            })
+            }, tags=categories)
         return donor
 
     # ------------------------------------------------------------------
