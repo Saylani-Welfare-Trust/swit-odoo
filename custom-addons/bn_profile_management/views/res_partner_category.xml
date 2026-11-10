@@ -30,6 +30,27 @@
                     <group>
                         <field name="is_profile_type"/>
                     </group>
+                    <separator string="Record Search (registration programme)"/>
+                    <p class="text-muted">
+                        With a code, this tag is a programme of Record Search: each module's Record Search menu passes
+                        its code (e.g. <code>welfare</code>, <code>microfinance</code>, <code>medical</code>). Contacts
+                        found or created by that search get this tag, so the programmes a donee applied to show on the
+                        contact. After the search the profile opens with this tag's form layout (when it is enabled in
+                        Profile Management with Form View fields), and the fields below must be filled to register.
+                    </p>
+                    <group>
+                        <group>
+                            <field name="registration_program_code" placeholder="e.g. welfare"/>
+                            <field name="registration_role" invisible="not registration_program_code"
+                                   required="registration_program_code"/>
+                            <field name="registration_kind" invisible="not registration_program_code or registration_role != 'donee'"/>
+                        </group>
+                        <group>
+                            <field name="registration_required_field_ids" widget="many2many_tags"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   placeholder="e.g. Date of Birth, CNIC No., Father Name..."/>
+                        </group>
+                    </group>
                     <div invisible="not is_profile_type">
                         <separator string="What contacts tagged with this show"/>
                         <p class="text-muted">

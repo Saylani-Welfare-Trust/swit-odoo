@@ -127,15 +127,37 @@ class TestProfileManagement(ProfileCase):
     def test_search_several_matches_and_errors(self):
         self._donee('Same 1', cnic_no='42101-1000010-1')
         self._legacy_duplicate('Same 2', '42101-1000010-1')
-        action = self.env['confirm.search'].create({'registration_type': 'donee', 'search_type': 'cnic_no',
-                                                    'cnic_no': '42101-1000010-1', 'donee_registration_type': 'medical'}).action_confirm()
-        self.assertEqual(action['res_model'], 'res.partner')
-        self.assertEqual(len(action['domain'][0][2]), 2)
+        wizard = self.env['confirm.search'].create({'registration_type': 'donee', 'search_type': 'cnic_no',
+                                                    'cnic_no': '42101-1000010-1', 'donee_registration_type': 'medical'})
+        action = wizard.action_confirm()
+        # the user picks one of them in the wizard
+        self.assertEqual(action['res_model'], 'confirm.search')
+        self.assertEqual(len(wizard.match_ids), 2)
+        # the same person twice (same CNIC): merge them first
+        with self.assertRaises(ValidationError):
+            wizard.match_ids[:1].with_context(confirm_search_id=wizard.id).action_record_search_pick()
         with self.assertRaises(UserError):
             self.env['confirm.search'].create({'registration_type': 'donee', 'search_type': 'cnic_no',
                                                'cnic_no': '42101-1000010-1'}).action_confirm()
         with self.assertRaises(UserError):
             self.env['confirm.search'].create({'registration_type': 'donor', 'search_type': 'registration_id'}).action_confirm()
+
+    def test_search_several_matches_pick_one(self):
+        """The same mobile number in two countries, searched without the
+        country: the contact picked gets the tags, the other does not."""
+        first = self._donee('Family 1', mobile='3001000013', cnic_no='42101-1000013-1',
+                            country_code_id=self.env.ref('base.pk').id)
+        second = self._donee('Family 2', mobile='3001000013', cnic_no='42101-1000014-1',
+                             country_code_id=self.env.ref('base.ae').id)
+        wizard = self.env['confirm.search'].create({
+            'registration_type': 'donee', 'search_type': 'mobile_no', 'mobile_no': '3001000013',
+            'program_id': self.medical.id})
+        self.assertEqual(wizard.action_confirm()['res_model'], 'confirm.search')
+        self.assertEqual(wizard.match_ids, first | second)
+        opened = second.with_context(confirm_search_id=wizard.id).action_record_search_pick()
+        self.assertEqual(opened['res_id'], second.id)
+        self.assertIn(self.medical, second.category_id)
+        self.assertNotIn(self.medical, first.category_id)
 
     def test_new_profile_from_search_is_prefilled(self):
         action = self.env['confirm.search'].create({'registration_type': 'donee', 'search_type': 'cnic_no',

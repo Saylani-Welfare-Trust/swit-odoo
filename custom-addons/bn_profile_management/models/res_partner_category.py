@@ -25,6 +25,8 @@ CURATED_PROFILE_FIELDS = [
     'analytic_account_id', 'details',
     # Registration
     'primary_registration_id', 'secondary_registration_id',
+    # Programmes applied to (Record Search tags) and how many
+    'registered_program_ids', 'registered_program_count',
 ]
 
 
@@ -104,8 +106,56 @@ class ResPartnerCategory(models.Model):
     ], string='Check Digit Rule', default='none', required=True)
     registration_example = fields.Char('Example', compute='_compute_registration_example')
 
+    # Record Search: registering a contact for a programme (Welfare,
+    # Microfinance, Medical ...). Each module's Record Search passes the code.
+    registration_program_code = fields.Char(
+        'Record Search Code', copy=False,
+        help="Makes this tag a programme offered by Record Search. Each module's Record Search "
+             "menu passes this code (e.g. welfare, microfinance, medical). Leave empty for other tags.")
+    registration_role = fields.Selection([('donee', 'Donee'), ('donor', 'Donor')], string='Registers as',
+                                         default='donee')
+    registration_kind = fields.Selection([
+        ('choose', 'Chosen at the search'),
+        ('individual', 'Individual'),
+        ('institution', 'Corporate / Institute'),
+    ], string='Contact Kind', default='choose',
+        help="Individual / Corporate-Institute tag given with the programme.")
+    registration_required_field_ids = fields.Many2many(
+        'ir.model.fields', 'res_partner_category_required_field_rel', 'category_id', 'field_id',
+        string='Required to Register', domain=lambda self: self._profile_field_domain(),
+        help="Fields that must be filled before a contact with this tag can be registered. "
+             "They are shown and required on the profile form until the contact is registered.")
+
+    _sql_constraints = [
+        ('registration_program_code_uniq', 'unique(registration_program_code)',
+         'Another tag already uses this Record Search code.'),
+    ]
+
     profile_action_id = fields.Many2one('ir.actions.act_window', string='Profile Menu Action', readonly=True, copy=False)
     profile_menu_id = fields.Many2one('ir.ui.menu', string='Profile Menu', readonly=True, copy=False)
+
+    @api.model
+    def _record_search_program(self, code):
+        """The programme tag of a Record Search code (empty when unknown)."""
+        if not code:
+            return self.browse()
+        return self.sudo().search([('registration_program_code', '=', code)], limit=1).sudo(False)
+
+    @api.model
+    def _setup_record_search_programs(self):
+        """Run on every install / upgrade: the programmes Record Search
+        offered before they were configurable. Only tags without a code are
+        set, so an administrator's changes are kept."""
+        programmes = {
+            'bn_profile_management.student_partner_category': ('student', 'donee', 'choose'),
+            'bn_profile_management.welfare_partner_category': ('welfare', 'donee', 'choose'),
+            'bn_profile_management.microfinance_partner_category': ('microfinance', 'donee', 'individual'),
+            'bn_profile_management.medical_partner_category': ('medical', 'donee', 'individual'),
+        }
+        for xmlid, (code, role, kind) in programmes.items():
+            tag = self.env.ref(xmlid, raise_if_not_found=False)
+            if tag and not tag.registration_program_code and not self._record_search_program(code):
+                tag.write({'registration_program_code': code, 'registration_role': role, 'registration_kind': kind})
 
     @api.depends('registration_pattern', 'registration_padding', 'registration_check_digit')
     def _compute_registration_example(self):

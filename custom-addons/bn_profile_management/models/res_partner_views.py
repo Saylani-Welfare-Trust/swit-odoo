@@ -23,7 +23,7 @@ PROFILE_VIEWS = {
     'form': 'bn_profile_management.profile_management_view_form',
 }
 # Always on the form: needed to identify and register a profile.
-FORM_ALWAYS_VISIBLE = {'name', 'category_id', 'mobile', 'country_code_id'}
+FORM_ALWAYS_VISIBLE = {'name', 'category_id', 'mobile', 'country_code_id', 'registered_program_ids'}
 # Always in the list / search, whatever the tag selects.
 LIST_FIXED = {'complete_name', 'state'}
 SEARCH_FIXED = {'complete_name', 'registration_ids', 'category_id'}
@@ -116,27 +116,49 @@ class ResPartner(models.Model):
     def _profile_build_form(self, arch):
         """Every selectable field shows only when one of the contact's tags
         selects it; fields the form did not have go to "Other Details"."""
-        condition = "',%s,' not in profile_visible_form_field_names"
+        # shown when a tag selects it, or when a tag requires it to register
+        condition = ("(',%(f)s,' not in profile_visible_form_field_names"
+                     " and ',%(f)s,' not in (profile_required_field_names or ''))")
         present = set()
         for node in arch.xpath('//sheet//field[@name]'):
             name = node.get('name')
             if name not in CURATED_PROFILE_FIELDS or node.xpath('ancestor::field'):
                 continue
             present.add(name)
-            if name in FORM_ALWAYS_VISIBLE or 'profile_visible_form_field_names' in (node.get('invisible') or ''):
+            self._profile_require_by_tag(node, name)
+            if name in FORM_ALWAYS_VISIBLE:
                 continue
-            current = node.get('invisible')
-            visible_rule = condition % name
+            current = node.get('invisible') or ''
+            legacy = "',%s,' not in profile_visible_form_field_names" % name
+            if legacy in current:
+                # the form's own rule: also shown when a tag requires the field
+                node.set('invisible', current.replace(legacy, condition % {'f': name}))
+                continue
+            visible_rule = condition % {'f': name}
             node.set('invisible', '(%s) or %s' % (current, visible_rule) if current else visible_rule)
+        sheet = arch.xpath('//sheet')
+        if sheet and not arch.xpath('//field[@name="profile_required_field_names"]'):
+            etree.SubElement(sheet[0], 'field', name='profile_required_field_names', invisible='1')
         missing = [name for name in CURATED_PROFILE_FIELDS if name not in present and name in self._fields]
         page = arch.xpath('//page[@name="general_info"]')
         if not missing or not page:
             return
         group = etree.SubElement(page[0], 'group', name='profile_other_details', string='Other Details')
         for name in missing:
-            node = etree.SubElement(group, 'field', name=name, invisible=condition % name)
+            node = etree.SubElement(group, 'field', name=name, invisible=condition % {'f': name})
+            self._profile_require_by_tag(node, name)
             if self._fields[name].type == 'many2many':
                 node.set('widget', 'many2many_tags')
+
+    @staticmethod
+    def _profile_require_by_tag(node, name):
+        """Required (until registered) when one of the contact's tags lists the
+        field under "Required to Register", on top of the form's own rule."""
+        rule = "(',%s,' in (profile_required_field_names or '') and state != 'register')" % name
+        current = (node.get('required') or '').strip()
+        if current in ('1', 'True'):
+            return
+        node.set('required', '(%s) or %s' % (current, rule) if current and current not in ('0', 'False') else rule)
 
     def _profile_order_form(self, arch, tag):
         """Lay out the General Information page in the order chosen on the

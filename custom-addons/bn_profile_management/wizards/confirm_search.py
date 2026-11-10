@@ -20,12 +20,9 @@ search_type_selection = [
     ('mobile_no', 'Mobile No.'),
 ]
 
-# Tag added for each donee programme.
-PROGRAM_CATEGORY = {
-    'microfinance': 'bn_profile_management.microfinance_partner_category',
-    'welfare': 'bn_profile_management.welfare_partner_category',
-    'medical': 'bn_profile_management.medical_partner_category',
-    'student': 'bn_profile_management.student_partner_category',
+ROLE_CATEGORY = {
+    'donee': 'bn_profile_management.donee_partner_category',
+    'donor': 'bn_profile_management.donor_partner_category',
 }
 
 
@@ -45,6 +42,9 @@ class ConfirmSearch(models.TransientModel):
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
     category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
+    program_id = fields.Many2one('res.partner.category', string='Register For')
+    # several contacts matched: the user picks one
+    match_ids = fields.Many2many('res.partner', string='Matching Profiles')
 
     # ------------------------------------------------------------------
     # Helpers
@@ -67,17 +67,48 @@ class ConfirmSearch(models.TransientModel):
             domain.append(('country_code_id', '=', self.country_code_id.id))
         return domain
 
-    def _category_ids(self):
-        """Tags of a new profile (and the tags added to an existing one)."""
+    def _program(self):
+        """The programme tag (older callers give the donee registration type)."""
+        return self.program_id or self.env['res.partner.category']._record_search_program(
+            self.donee_registration_type)
+
+    def _kind_tag(self):
         ref = self.env.ref
+        program = self._program()
+        institution = (program.registration_kind == 'institution'
+                       or (program.registration_kind != 'individual' and self.category == 'institution'))
+        return (ref('bn_profile_management.coorporate_institute_partner_category') if institution
+                else ref('bn_profile_management.individual_partner_category'))
+
+    def _search_tags(self):
+        """Role and programme tags: every contact found or created gets them, so
+        the programmes (modules) a donee applied to are on the contact."""
+        tags = self.env.ref(ROLE_CATEGORY[self.registration_type]) | self._program()
+        return tags
+
+    def _category_ids(self):
+        """Tags of a new profile: role, Individual / Corporate-Institute, programme."""
         if self.registration_type == 'donor':
-            return [ref('bn_profile_management.donor_partner_category').id,
-                    ref('bn_profile_management.individual_partner_category').id]
-        kind = (ref('bn_profile_management.individual_partner_category')
-                if self.category == 'individual' or self.donee_registration_type == 'microfinance'
-                else ref('bn_profile_management.coorporate_institute_partner_category'))
-        return [ref('bn_profile_management.donee_partner_category').id, kind.id,
-                ref(PROGRAM_CATEGORY[self.donee_registration_type]).id]
+            return (self._search_tags() | self.env.ref('bn_profile_management.individual_partner_category')).ids
+        return (self._search_tags() | self._kind_tag()).ids
+
+    def _add_search_tags(self, partners):
+        """Existing person taking a new role / programme: ADD the tags, never
+        replace the ones the person already has. A registered contact then
+        shows Register for the new programme."""
+        for partner in partners:
+            missing = self._search_tags() - partner.category_id
+            if missing:
+                partner._profile_write({'category_id': [(4, tag.id) for tag in missing]})
+
+    def _layout_tag(self):
+        """Form layout after the search: the programme's own (its Profile
+        Type form fields, in its order), else the role's."""
+        program = self._program()
+        if program.is_profile_type and program.profile_form_field_ids:
+            return program
+        role = self.env.ref(ROLE_CATEGORY[self.registration_type])
+        return role if role.is_profile_type else self.env['res.partner.category']
 
     def _form_action(self, partner=None):
         action = {
@@ -86,8 +117,12 @@ class ConfirmSearch(models.TransientModel):
             'view_mode': 'form',
             'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
             'target': 'new',
-            'context': {},
+            'context': {'from_record_search': True},
         }
+        layout = self._layout_tag()
+        if layout:
+            # the name must end in _view_ref: the web client keeps it for the views
+            action['context']['profile_tag_view_ref'] = layout.id
         if partner:
             action['res_id'] = partner.id
             return action
@@ -101,39 +136,26 @@ class ConfirmSearch(models.TransientModel):
             action['context']['default_mobile'] = self.mobile_no.strip()
         return action
 
-    def _list_action(self, partners):
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Matching Profiles'),
-            'res_model': 'res.partner',
-            'view_mode': 'tree,form',
-            'views': [(self.env.ref('bn_profile_management.profile_management_view_tree').id, 'tree'),
-                      (self.env.ref('bn_profile_management.profile_management_view_form').id, 'form')],
-            'domain': [('id', 'in', partners.ids)],
-            'target': 'current',
-        }
-
     # ------------------------------------------------------------------
     def action_confirm(self):
         self.ensure_one()
-        if self.registration_type == 'donee' and not self.donee_registration_type:
-            raise UserError(_('Please select the Donee Registration Type (Student, Welfare, Medical or Microfinance).'))
+        if self.registration_type == 'donee' and not self._program():
+            raise UserError(_('Please select what the donee registers for (e.g. Welfare, Microfinance, Medical).'))
         # One contact per person: look at every contact, whatever its tags.
         matches = self.env['res.partner'].search(self._search_domain())
         if len(matches) > 1:
-            # Several contacts share this value: let the user pick one.
-            return self._list_action(matches)
+            # Several contacts share this value: the user picks one, which
+            # then gets the tags of this search.
+            self.match_ids = matches
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Matching Profiles'),
+                'res_model': 'confirm.search',
+                'res_id': self.id,
+                'view_mode': 'form',
+                'view_id': self.env.ref('bn_profile_management.confirm_search_view_pick').id,
+                'target': 'new',
+            }
         if matches:
-            # Existing person taking a new role / programme: ADD the role and
-            # programme tags, never replace the ones the person already has.
-            # A registered contact then shows Register for the new role.
-            ref = self.env.ref
-            if self.registration_type == 'donor':
-                new_tags = [ref('bn_profile_management.donor_partner_category').id]
-            else:
-                new_tags = [ref('bn_profile_management.donee_partner_category').id,
-                            ref(PROGRAM_CATEGORY[self.donee_registration_type]).id]
-            missing = [tid for tid in new_tags if tid not in matches.category_id.ids]
-            if missing:
-                matches._profile_write({'category_id': [(4, tid) for tid in missing]})
+            self._add_search_tags(matches)
         return self._form_action(matches or None)

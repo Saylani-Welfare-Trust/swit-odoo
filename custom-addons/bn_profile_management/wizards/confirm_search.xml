@@ -25,7 +25,8 @@
                             <field name="cnic_no" invisible="search_type != 'cnic_no'" readonly="1" />
                             
                             <field name="category" invisible="registration_type != 'donee'" readonly="1" />
-                            <field name="donee_registration_type" invisible="registration_type != 'donee'" readonly="1" />
+                            <field name="program_id" invisible="registration_type != 'donee'" readonly="1"
+                                   options="{'no_open': True}"/>
                         </group>
                     </group>
                 </sheet>
@@ -33,6 +34,36 @@
                     <button name="action_confirm" type="object" string="Search"
                             class="oe_highlight"/>
                     <button special="cancel" string="Cancel" class="oe_highlight"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Several contacts match the search: pick one; it gets the search's tags -->
+    <record id="confirm_search_view_pick" model="ir.ui.view">
+        <field name="name">confirm.search.view.pick</field>
+        <field name="model">confirm.search</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <h3>Several profiles match this search. Select the person:</h3>
+                    <p class="text-muted">The selected profile gets the role and programme of this search
+                        (<field name="program_id" readonly="1" class="d-inline" options="{'no_open': True}"/>).</p>
+                    <field name="match_ids" readonly="1" context="{'confirm_search_id': id}">
+                        <tree create="0" delete="0">
+                            <field name="primary_registration_id"/>
+                            <field name="name"/>
+                            <field name="cnic_no"/>
+                            <field name="mobile"/>
+                            <field name="category_id" widget="many2many_tags"/>
+                            <field name="state" widget="badge"/>
+                            <button name="action_record_search_pick" type="object" string="Select" class="btn-primary"/>
+                        </tree>
+                    </field>
+                </sheet>
+                <footer>
+                    <button special="cancel" string="Cancel"/>
                 </footer>
             </form>
         </field>

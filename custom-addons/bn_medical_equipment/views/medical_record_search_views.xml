@@ -7,8 +7,8 @@
         <field name="view_mode">form</field>
         <field name="context">{
             'default_registration_type': 'donee',
-            'default_donee_registration_type': 'medical',
-            'default_is_medical': True,
+            'default_program_code': 'medical',
+            'default_program_locked': True,
         }</field>
         <field name="target">new</field>
     </record>

@@ -108,8 +108,12 @@
                 <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Registered" name="filter_register" domain="[('state', '=', 'register')]"/>
                 <filter string="Rejected" name="filter_reject" domain="[('state', '=', 'reject')]"/>
+                <separator/>
+                <filter string="In one programme" name="filter_one_program" domain="[('registered_program_count', '=', 1)]"/>
+                <filter string="In several programmes" name="filter_several_programs" domain="[('registered_program_count', '>', 1)]"/>
                 <group string="Group By">
                     <filter string="Status" name="group_state" domain="[]" context="{'group_by': 'state'}"/>
+                    <filter string="Number of Programmes" name="group_program_count" domain="[]" context="{'group_by': 'registered_program_count'}"/>
                     <filter string="Gender" name="group_gender" domain="[]" context="{'group_by': 'gender'}"/>
                     <filter string="City" name="group_city" domain="[]" context="{'group_by': 'city'}"/>
                 </group>
@@ -146,6 +150,8 @@
                 <field name="analytic_account_id" string="Branch" column_invisible="not context.get('show_list_analytic_account_id')" />
                 <field name="father_name" column_invisible="not context.get('show_list_father_name')" />
                 <field name="area" column_invisible="not context.get('show_list_area')" />
+
+                <field name="registered_program_count" string="Programmes" optional="hide"/>
 
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'validate'" decoration-success="state == 'register'" decoration-danger="state == 'reject'" />
             </tree>
@@ -213,6 +219,8 @@
                                 <field name="zip" placeholder="ZIP" class="o_address_zip" readonly="state == 'register'"/>
                             </div>
                             <field name="category_id" readonly="state == 'register'" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" placeholder="e.g. &quot;Donor&quot;, &quot;Donee&quot;, &quot;Rider&quot;, ..."/>
+                            <field name="registered_program_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_open': True}"
+                                   invisible="not registered_program_ids"/>
                         </group>
                         <group name="profile_management_col_2">
                             <label for="mobile"/>
