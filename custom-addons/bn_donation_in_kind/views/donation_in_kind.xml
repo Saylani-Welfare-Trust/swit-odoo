@@ -146,7 +146,7 @@
         id="donation_in_kind_menu"
         name="Donation In Kind"
         action="donation_in_kind_action"
-        parent="bn_import_donation.import_donation_root_menu"
+        web_icon="bn_donation_in_kind,static/description/icon.png"
         groups="bn_donation_in_kind.donation_in_kind_menu_group"
         sequence="3"/>
 
