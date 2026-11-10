@@ -3,9 +3,10 @@
 
     <data noupdate="1">
 
-        <record id="welfare_institution_sequence" model="ir.sequence">
-            <field name="name">Sadqa e Jariya (Institution Disbursement)</field>
-            <field name="code">welfare_institution_sequence</field>
+        <!-- 2.0 migration renamed it from welfare_institution_sequence, numbering goes on -->
+        <record id="sadqa_jariya_sequence" model="ir.sequence">
+            <field name="name">Sadqa e Jariya</field>
+            <field name="code">sadqa.jariya</field>
             <field name="prefix">INS/%(year)s/</field>
             <field name="padding">4</field>
         </record>

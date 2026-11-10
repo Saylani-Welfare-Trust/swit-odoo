@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="record_search_view_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">record.search.view.form.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">record.search</field>
+        <field name="inherit_id" ref="bn_profile_management.record_search_view_form"/>
+        <field name="arch" type="xml">
+            <field name="is_welfare" position="after">
+                <field name="is_sadqa_e_jariya" invisible="1"/>
+            </field>
+            <field name="registration_type" position="attributes">
+                <attribute name="readonly">is_microfinance or is_welfare or is_medical or is_sadqa_e_jariya</attribute>
+            </field>
+            <field name="donee_registration_type" position="attributes">
+                <attribute name="readonly">is_microfinance or is_welfare or is_medical or is_sadqa_e_jariya</attribute>
+            </field>
+            <!-- Institution only -->
+            <field name="category" position="attributes">
+                <attribute name="readonly">is_welfare or is_sadqa_e_jariya</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="profile_management_view_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
+        <field name="name">profile.management.view.form.inherit.bn.sadqa.e.jariya</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="arch" type="xml">
+            <field name="image_1920" position="attributes">
+                <attribute name="required">not is_donor and state != 'register' and not is_sadqa_jariya_donee</attribute>
+            </field>
+            <!-- the institution's address goes to the portal -->
+            <field name="street" position="attributes">
+                <attribute name="required">is_sadqa_jariya_donee and state != 'register'</attribute>
+            </field>
+            <field name="city" position="attributes">
+                <attribute name="required">(donee_required_fields or is_sadqa_jariya_donee) and state != 'register'</attribute>
+            </field>
+            <xpath expr="//group[@name='general_info_col_1']/field[@name='area']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//group[@name='general_info_col_1']/field[@name='area']" position="after">
+                <field name="sadqa_contact_person" invisible="not is_sadqa_jariya_donee" required="is_sadqa_jariya_donee and state != 'register'" readonly="state == 'register'"/>
+                <field name="sadqa_area_id" invisible="not is_sadqa_jariya_donee" required="is_sadqa_jariya_donee and state != 'register'" readonly="state == 'register'" options="{'no_create': True, 'no_edit': True}"/>
+            </xpath>
+            <!-- Sadqa e Jariya donee: only the fields the institution's profile needs -->
+            <xpath expr="//notebook//field[@name='surname']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='gender']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='religion']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='martial_status']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='has_cnic']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='father_name']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='father_cnic_no']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='next_kin']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='reference_remarks']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='bank_wallet_account']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='old_system_id']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='details']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='spouse_name']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or martial_status == 'un_married'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='cnic_expiration']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or has_cnic == 'no'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='cnic_front_image']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or has_cnic == 'no'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='cnic_back_image']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or has_cnic == 'no'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='head_cnic_no']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or has_cnic == 'yes'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='member_cnic_no']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or has_cnic == 'yes'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='reference_letter_file']" position="attributes">
+                <attribute name="invisible">is_sadqa_jariya_donee or has_cnic == 'yes'</attribute>
+            </xpath>
+            <!-- the portal needs the manager's CNIC -->
+            <xpath expr="//notebook//field[@name='cnic_no']" position="attributes">
+                <attribute name="invisible">has_cnic == 'no' and not is_sadqa_jariya_donee</attribute>
+                <attribute name="required">(donee_required_fields and has_cnic == 'yes' or is_sadqa_jariya_donee) and state != 'register'</attribute>
+            </xpath>
+            <xpath expr="//notebook//field[@name='nearest_land_mark']" position="attributes">
+                <attribute name="required">(donee_required_fields or is_sadqa_jariya_donee) and state != 'register'</attribute>
+            </xpath>
+            <xpath expr="//notebook/page[@name='welfare']" position="attributes">
+                <attribute name="invisible">is_donor or is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook/page[@name='microfinance']" position="attributes">
+                <attribute name="invisible">is_donor or is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//notebook/page[@name='medical']" position="attributes">
+                <attribute name="invisible">is_donor or is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <!-- the manager's age is checked at Register -->
+            <field name="date_of_birth" position="attributes">
+                <attribute name="required">(donee_required_fields or is_sadqa_jariya_donee) and state != 'register'</attribute>
+            </field>
+            <xpath expr="//header/button[@name='action_print_microfinance_application']" position="attributes">
+                <attribute name="invisible">state != 'register' or is_donor or is_sadqa_jariya_donee</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_print_microfinance_application']" position="after">
+                <field name="is_sadqa_jariya_donee" invisible="1"/>
+                <button string="Send Profile Form" name="action_send_sadqa_profile_form" type="object" class="oe_highlight" invisible="state != 'register' or not is_sadqa_jariya_donee"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Profile popup of Sadqa e Jariya's Record Search: Save keeps it open -->
+    <record id="sadqa_jariya_profile_popup_form" model="ir.ui.view">
+        <field name="name">profile.management.view.form.sadqa.jariya.popup</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
+        <field name="mode">primary</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="after">
+                <footer>
+                    <button string="Save" name="action_sadqa_profile_save" type="object" class="btn-primary"/>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

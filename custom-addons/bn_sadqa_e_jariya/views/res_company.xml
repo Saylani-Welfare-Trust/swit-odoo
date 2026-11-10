@@ -4,32 +4,38 @@
     <record id="base_view_company_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
         <field name="name">base.view.company.form.inherit.bn.sadqa.e.jariya</field>
         <field name="model">res.company</field>
-        <field name="inherit_id" ref="bn_profile_management.base_view_company_form_inherit_bn_profile_management"/>
+        <field name="inherit_id" ref="bn_res_company.base_view_company_form_inherit_bn_res_company"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_1']" position="inside">
-                <field name="welfare_instituiton_url" />
-                <field name="odoo_auth_institution_key" password="True" />
-            </xpath>
-            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_2']" position="inside">
-                <field name="welfare_institution_endpoint" />
-                <field name="mark_institution_application_endpoint" />
-            </xpath>
             <xpath expr="//page[@name='welfare_api_auth_endpoints']" position="inside">
                 <group>
                     <group name="sadqa_e_jariya_portal" string="Sadqa e Jariya Portal">
+                        <div colspan="2" class="text-muted">
+                            Calls go to the Welfare Institution URL + /rpc/odoo/institutional/&lt;operation&gt; with the Odoo Auth Institution Key.
+                        </div>
                         <field name="institution_portal_login_url" />
                         <field name="institution_portal_email_domain" placeholder="e.g. saylani.org" />
-                        <field name="create_institution_account_endpoint" />
-                        <field name="institution_application_status_endpoint" />
-                        <field name="assign_institution_inquiry_endpoint" />
                     </group>
-                    <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template">
+                    <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template (optional)">
+                        <div colspan="2" class="text-muted">
+                            Leave empty to send the donee's portal login by SMS. Once a Meta-approved template is set here, it goes on WhatsApp instead.
+                        </div>
                         <field name="institution_login_whatsapp_template" />
                         <field name="institution_login_whatsapp_namespace" />
                         <field name="institution_login_whatsapp_language" />
                         <div colspan="2" class="text-muted">
-                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} login email, {{4}} password.
+                            Template body parameters: {{1}} donee name, {{2}} portal login URL, {{3}} login email, {{4}} password ("Use your existing password" on a donee's later applications).
                         </div>
+                    </group>
+                </group>
+                <group>
+                    <group name="sadqa_e_jariya_profile_whatsapp" string="Profile Form WhatsApp Template">
+                        <div colspan="2" class="text-muted">
+                            Send Profile Form on a Sadqa e Jariya donee sends their profile form PDF with this approved template
+                            (Document header, fixed "your profile has been registered" text, no parameters). Empty: WhatsApp is not sent, only the email.
+                        </div>
+                        <field name="institution_profile_whatsapp_template" placeholder="e.g. sadqa_profile_registered" />
+                        <field name="institution_profile_whatsapp_namespace" />
+                        <field name="institution_profile_whatsapp_language" />
                     </group>
                 </group>
             </xpath>

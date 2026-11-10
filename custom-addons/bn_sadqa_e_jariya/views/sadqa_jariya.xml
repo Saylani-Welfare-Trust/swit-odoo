@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sadqa_jariya_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.view.tree</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="donee_id"/>
+                <field name="institute_name" optional="show"/>
+                <field name="institution_category"/>
+                <field name="subcategory" optional="show"/>
+                <field name="date"/>
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-danger="state == 'reject'" decoration-info="state not in ['draft', 'reject', 'recurring', 'disbursed']" decoration-success="state in ['recurring', 'disbursed']"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.view.search</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="donee_id"/>
+                <field name="cnic_no"/>
+                <field name="institute_name"/>
+                <field name="portal_application_id"/>
+                <filter name="masjid" string="Masjid" domain="[('institution_category', '=', 'masjid')]"/>
+                <filter name="madrasa" string="Madrasa" domain="[('institution_category', '=', 'madrasa')]"/>
+                <separator/>
+                <filter name="to_approve" string="Waiting for Approval" domain="[('state', 'in', ['committee_approval', 'hod_approve', 'mem_approve'])]"/>
+                <filter name="to_pay" string="To Disburse" domain="[('state', 'in', ['approve', 'recurring'])]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_category" string="Institution Type" context="{'group_by': 'institution_category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_document_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.document.view.form</field>
+        <field name="model">sadqa.jariya.document</field>
+        <field name="arch" type="xml">
+            <form string="Document">
+                <sheet>
+                    <group>
+                        <field name="document_type"/>
+                        <field name="image_data" filename="image_filename"/>
+                        <field name="image_filename" invisible="1"/>
+                        <field name="source_url" widget="url"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.view.form</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button string="Mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" class="btn btn-sm btn-info" invisible="state not in ['draft', 'hod_approve', 'committee_approval', 'mem_approve'] or not previous_application_id"/>
+                    <button string="Open View" name="action_open_review_wizard" type="object" class="btn-secondary" invisible="state not in ['hod_approve', 'committee_approval']" groups="bn_sadqa_e_jariya.group_sadqa_jariya_committee,bn_sadqa_e_jariya.group_sadqa_jariya_hod"/>
+                    <!-- Send Form -> Check Portal Status (form filled) -> Send for Inquiry -> Check Portal Status (inquiry done) -->
+                    <button string="Send Form" name="action_send_institution_form" type="object" class="oe_highlight" invisible="state != 'completed'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state not in ['form_sent', 'send_for_inquiry']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'form_filled'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Move to HOD Approval" name="action_hod_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Move to Committee Approval" name="action_move_to_committee" type="object" class="oe_highlight" invisible="state != 'hod_approve'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_hod"/>
+                    <button string="Complete Committee Approval" name="action_committee_decision" type="object" class="oe_highlight" invisible="state != 'committee_approval'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_committee"/>
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" groups="bn_sadqa_e_jariya.group_sadqa_jariya_member"/>
+                    <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve' or order_type != 'recurring'" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <!-- Portal steps can't be undone (no reopening / reassignment on the portal) -->
+                    <button string="Revert" name="action_reverse_state" type="object" invisible="state not in ['completed', 'committee_approval', 'hod_approve', 'mem_approve']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Reset Portal Password" name="action_reset_portal_password" type="object" invisible="not portal_login or state in ['draft', 'completed']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['draft', 'disbursed', 'reject']" groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+                    <button string="Print Info" name="action_print_info" type="object" class="btn-secondary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,completed,form_sent,form_filled,send_for_inquiry,inquiry,hod_approve,committee_approval,mem_approve,approve,disbursed"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert" invisible="not previous_application_id or state != 'draft'">
+                        <strong>Previous Record Available:</strong> This donee has previous applications.
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" string="Name"/>
+                        <h1><field name="name" class="oe_inline" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group name="application_col_1">
+                            <field name="previous_application_id" invisible="1"/>
+                            <field name="donee_domain" invisible="1"/>
+                            <field name="employee_category_id" invisible="1"/>
+                            <field name="order_type"
+                                   required="state in ['completed', 'form_sent', 'form_filled', 'send_for_inquiry', 'inquiry', 'hod_approve', 'committee_approval']"
+                                   readonly="state in ['hod_approve', 'mem_approve', 'approve', 'recurring', 'disbursed', 'reject']"/>
+                            <field name="donee_id"
+                                   domain="donee_domain"
+                                   options="{'no_create': True}"
+                                   readonly="state not in ['draft', 'completed']" required="1"/>
+                            <!-- Picked any time before Send for Inquiry -->
+                            <field name="employee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state not in ['draft', 'completed', 'form_sent', 'form_filled']"/>
+                            <field name="institution_category" widget="radio" readonly="state not in ['draft', 'completed']" required="state == 'completed'"/>
+                            <field name="institution_type" invisible="1"/>
+                            <field name="subcategory" readonly="state not in ['draft', 'completed']"/>
+                            <field name="cnic_no"/>
+                            <!-- Not required here: Open View saves the form first, the approval buttons check them -->
+                            <field name="committee_remarks" readonly="state != 'committee_approval'"/>
+                            <field name="hod_remarks" readonly="state != 'hod_approve'"/>
+                            <field name="member_remarks" readonly="state != 'mem_approve'"/>
+                            <field name="rejection_remarks" readonly="state == 'reject'"/>
+                        </group>
+                        <group name="application_col_2">
+                            <!-- Sent with Send Form, locked for the donee on the portal -->
+                            <field name="date" readonly="state not in ['draft', 'completed']"/>
+                            <field name="institute_name" readonly="state not in ['draft', 'completed']"/>
+                            <field name="address" readonly="state not in ['draft', 'completed']"/>
+                            <field name="applicant_location_link" widget="url" readonly="state not in ['draft', 'completed']"/>
+                            <field name="account_title" required="state == 'completed'"/>
+                            <field name="account_number" required="state == 'completed'"/>
+                        </group>
+                    </group>
+                    <group string="Portal" invisible="state in ['draft', 'completed']">
+                        <group>
+                            <field name="portal_login"/>
+                            <field name="portal_application_id"/>
+                            <field name="portal_status"/>
+                        </group>
+                        <group>
+                            <field name="portal_report_id"/>
+                            <field name="form_acknowledged_at"/>
+                            <field name="inquiry_acknowledged_at"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page name="lines" string="Disbursement Items">
+                            <field name="line_ids" readonly="state in ['approve', 'recurring', 'disbursed', 'reject']" required="state == 'mem_approve'">
+                                <tree editable="bottom">
+                                    <field name="product_domain" column_invisible="1"/>
+                                    <field name="analytic_account_domain" column_invisible="1"/>
+                                    <field name="is_collection_point_readonly" column_invisible="1"/>
+                                    <field name="is_bank_category" column_invisible="1"/>
+                                    <field name="fixed_amount_check" column_invisible="1"/>
+                                    <field name="recurring_duration" column_invisible="parent.order_type != 'recurring'"/>
+                                    <field name="disbursement_category_id" optional="hide" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="product_id" domain="product_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                                    <field name="is_hod" optional="hide"/>
+                                    <field name="collection_point" readonly="is_collection_point_readonly"/>
+                                    <field name="analytic_account_id" domain="analytic_account_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="collection_point == 'bank'"/>
+                                    <field name="collection_date"/>
+                                    <field name="quantity" readonly="is_bank_category" force_save="1"/>
+                                    <field name="amount" readonly="1" optional="hide"/>
+                                    <field name="total_amount" readonly="fixed_amount_check" sum="Total"/>
+                                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="recurring_lines" string="Recurring Details" invisible="state not in ['recurring', 'return', 'disbursed'] or order_type != 'recurring'">
+                            <field name="recurring_line_ids" readonly="state != 'return'">
+                                <tree>
+                                    <field name="disbursement_category_id"/>
+                                    <field name="application_type_id"/>
+                                    <field name="product_id"/>
+                                    <field name="collection_point"/>
+                                    <field name="analytic_account_id"/>
+                                    <field name="collection_date"/>
+                                    <field name="quantity"/>
+                                    <field name="amount" sum="Total"/>
+                                    <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="documents" string="Documents">
+                            <field name="document_ids" nolabel="1">
+                                <tree default_group_by="document_type">
+                                    <field name="document_type"/>
+                                    <field name="image_filename" string="File Name"/>
+                                    <field name="display_image" widget="html"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page name="inquiry_reports_page" string="Inquiry Reports">
+                            <field name="inquiry_report_ids" readonly="1" mode="tree,form">
+                                <tree>
+                                    <field name="report_date"/>
+                                    <field name="officer_name"/>
+                                    <field name="officer_employee_code"/>
+                                    <field name="status"/>
+                                    <field name="content" widget="text"/>
+                                </tree>
+                                <form>
+                                    <group>
+                                        <group>
+                                            <field name="officer_name"/>
+                                            <field name="officer_employee_code"/>
+                                            <field name="officer_id"/>
+                                        </group>
+                                        <group>
+                                            <field name="report_date"/>
+                                            <field name="status"/>
+                                            <field name="external_id"/>
+                                        </group>
+                                    </group>
+                                    <group string="Officer Remarks (انکوائری آفیسر کے تاثرات)">
+                                        <field name="content" nolabel="1" colspan="2"/>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+
+                        <!-- Inquiry forms filled on the Sadqa e Jariya portal, read-only here -->
+                        <!-- Members come from Master Setup when the application moves from HOD to Committee Approval. -->
+                        <page name="committee_members_page" string="Committee Members" invisible="state != 'committee_approval' and not committee_line_ids">
+                            <field name="committee_member_ids" invisible="1"/>
+                            <field name="committee_line_ids" readonly="state != 'committee_approval'" required="state == 'committee_approval'">
+                                <tree editable="bottom">
+                                    <field name="member_id" string="Employee" domain="[('id', 'not in', parent.committee_member_ids)]" options="{'no_create': True, 'no_open': True}"/>
+                                    <field name="remarks" widget="text"/>
+                                    <field name="is_approved"/>
+                                    <field name="is_rejected"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <!-- The donee's completed portal form (getSubmittedForms) -->
+                        <page name="donee_form_page" string="Donee Form" invisible="not donee_form_id">
+                            <field name="donee_form_id" invisible="1"/>
+                            <group string="General">
+                                <group>
+                                    <field name="donee_form_md_number"/>
+                                    <field name="donee_form_new_code_serial"/>
+                                    <field name="donee_form_case_number"/>
+                                    <field name="donee_form_request_date"/>
+                                    <field name="donee_form_institution_name"/>
+                                    <field name="donee_form_institution_address"/>
+                                    <field name="donee_form_responsible_person_name"/>
+                                    <field name="donee_form_contact_number"/>
+                                    <field name="donee_form_whatsapp_number"/>
+                                    <field name="donee_form_registered_trust"/>
+                                    <field name="donee_form_org_affiliation"/>
+                                    <field name="donee_form_established_year"/>
+                                    <field name="donee_form_teaching_rooms"/>
+                                    <field name="donee_form_residential_rooms"/>
+                                    <field name="donee_form_total_area"/>
+                                </group>
+                                <group>
+                                    <field name="donee_form_account_number"/>
+                                    <field name="donee_form_cnic_number"/>
+                                    <field name="donee_form_monthly_expense"/>
+                                    <field name="donee_form_exp_salaries"/>
+                                    <field name="donee_form_exp_ration"/>
+                                    <field name="donee_form_exp_utility_bills"/>
+                                    <field name="donee_form_emergency_contact_if_no_support"/>
+                                    <field name="donee_form_current_saylani_support"/>
+                                    <field name="donee_form_support_construction"/>
+                                    <field name="donee_form_support_meat"/>
+                                    <field name="donee_form_support_cooked_food"/>
+                                    <field name="donee_form_student_standard"/>
+                                    <field name="donee_form_cleanliness_env"/>
+                                    <field name="donee_form_committee_members"/>
+                                    <field name="donee_form_monthly_meetings"/>
+                                </group>
+                            </group>
+                            <group string="Masjid Information" invisible="institution_type != 'masjid'">
+                                <group>
+                                    <field name="donee_form_worshippers_fajr"/>
+                                    <field name="donee_form_worshippers_dhuhr"/>
+                                    <field name="donee_form_worshippers_asr"/>
+                                    <field name="donee_form_worshippers_maghrib"/>
+                                    <field name="donee_form_worshippers_isha"/>
+                                    <field name="donee_form_worshippers_jumuah"/>
+                                </group>
+                                <group>
+                                    <field name="donee_form_dars_schedule"/>
+                                    <field name="donee_form_book_name"/>
+                                    <field name="donee_form_participants_count"/>
+                                    <field name="donee_form_imam_other_engagements"/>
+                                    <field name="donee_form_other_income_sources"/>
+                                    <field name="donee_form_monthly_masjid_support"/>
+                                </group>
+                            </group>
+                            <group string="Madrasa Information" invisible="institution_type != 'madrasa'">
+                                <group string="Male Students">
+                                    <field name="donee_form_male_aidadiyah" string="Aidadiyah"/>
+                                    <field name="donee_form_male_aamah1" string="Aamah, Year 1"/>
+                                    <field name="donee_form_male_aamah2" string="Aamah, Year 2"/>
+                                    <field name="donee_form_male_khassah1" string="Khassah, Year 1"/>
+                                    <field name="donee_form_male_khassah2" string="Khassah, Year 2"/>
+                                    <field name="donee_form_male_aaliyah1" string="Aaliyah, Year 1"/>
+                                    <field name="donee_form_male_aaliyah2" string="Aaliyah, Year 2"/>
+                                    <field name="donee_form_male_almiyah1" string="Almiyah, Year 1"/>
+                                    <field name="donee_form_male_almiyah2" string="Almiyah, Year 2"/>
+                                    <field name="donee_form_male_takhasus1" string="Takhasus, Year 1"/>
+                                    <field name="donee_form_male_takhasus2" string="Takhasus, Year 2"/>
+                                </group>
+                                <group string="Female Students">
+                                    <field name="donee_form_female_aidadiyah" string="Aidadiyah"/>
+                                    <field name="donee_form_female_aamah1" string="Aamah, Year 1"/>
+                                    <field name="donee_form_female_aamah2" string="Aamah, Year 2"/>
+                                    <field name="donee_form_female_khassah1" string="Khassah, Year 1"/>
+                                    <field name="donee_form_female_khassah2" string="Khassah, Year 2"/>
+                                    <field name="donee_form_female_aaliyah1" string="Aaliyah, Year 1"/>
+                                    <field name="donee_form_female_aaliyah2" string="Aaliyah, Year 2"/>
+                                    <field name="donee_form_female_almiyah1" string="Almiyah, Year 1"/>
+                                    <field name="donee_form_female_almiyah2" string="Almiyah, Year 2"/>
+                                    <field name="donee_form_female_takhasus1" string="Takhasus, Year 1"/>
+                                    <field name="donee_form_female_takhasus2" string="Takhasus, Year 2"/>
+                                </group>
+                            </group>
+                            <group invisible="institution_type != 'madrasa'">
+                                <group>
+                                    <field name="donee_form_total_dars_nizami"/>
+                                    <field name="donee_form_res_dars_nizami"/>
+                                    <field name="donee_form_non_res_dars_nizami"/>
+                                    <field name="donee_form_hifz_students"/>
+                                    <field name="donee_form_nazra_students"/>
+                                    <field name="donee_form_tajweed_students"/>
+                                    <field name="donee_form_school_students"/>
+                                    <field name="donee_form_other_courses"/>
+                                    <field name="donee_form_total_residential"/>
+                                    <field name="donee_form_total_non_residential"/>
+                                    <field name="donee_form_total_madrasa_students"/>
+                                    <field name="donee_form_present_students"/>
+                                </group>
+                                <group>
+                                    <field name="donee_form_absent_students"/>
+                                    <field name="donee_form_staff_dars_nizami"/>
+                                    <field name="donee_form_staff_hifz_nazra"/>
+                                    <field name="donee_form_staff_non_teaching"/>
+                                    <field name="donee_form_total_staff"/>
+                                    <field name="donee_form_prev_test_percentage"/>
+                                    <field name="donee_form_curr_test_percentage"/>
+                                    <field name="donee_form_org_students_count"/>
+                                    <field name="donee_form_org_student_exam_percentage"/>
+                                    <field name="donee_form_prev_inquiry_percentage"/>
+                                    <field name="donee_form_prev_inquiry_date"/>
+                                </group>
+                            </group>
+                            <group string="Flood Situation" invisible="not donee_form_short_intro and not donee_form_status_before_flood and not donee_form_status_after_flood">
+                                <field name="donee_form_short_intro"/>
+                                <field name="donee_form_status_before_flood"/>
+                                <field name="donee_form_status_after_flood"/>
+                            </group>
+                            <group string="Construction" invisible="not donee_form_total_estimate and not donee_form_cost_iron_steel and not donee_form_cost_cement and not donee_form_cost_labor and not donee_form_current_work and not donee_form_remaining_work">
+                                <group>
+                                    <field name="donee_form_total_estimate"/>
+                                    <field name="donee_form_cost_iron_steel"/>
+                                    <field name="donee_form_cost_cement"/>
+                                    <field name="donee_form_cost_labor"/>
+                                </group>
+                                <group>
+                                    <field name="donee_form_current_work"/>
+                                    <field name="donee_form_remaining_work"/>
+                                </group>
+                            </group>
+                        </page>
+                        <!-- The inquiry officer's own completed form (getCompletedInquiries inquiry.form) -->
+                        <page name="officer_form_page" string="Officer Form" invisible="not officer_form_id">
+                            <field name="officer_form_id" invisible="1"/>
+                            <group string="General">
+                                <group>
+                                    <field name="officer_form_md_number"/>
+                                    <field name="officer_form_new_code_serial"/>
+                                    <field name="officer_form_case_number"/>
+                                    <field name="officer_form_request_date"/>
+                                    <field name="officer_form_institution_name"/>
+                                    <field name="officer_form_institution_address"/>
+                                    <field name="officer_form_responsible_person_name"/>
+                                    <field name="officer_form_contact_number"/>
+                                    <field name="officer_form_whatsapp_number"/>
+                                    <field name="officer_form_registered_trust"/>
+                                    <field name="officer_form_org_affiliation"/>
+                                    <field name="officer_form_established_year"/>
+                                    <field name="officer_form_teaching_rooms"/>
+                                    <field name="officer_form_residential_rooms"/>
+                                    <field name="officer_form_total_area"/>
+                                </group>
+                                <group>
+                                    <field name="officer_form_account_number"/>
+                                    <field name="officer_form_cnic_number"/>
+                                    <field name="officer_form_monthly_expense"/>
+                                    <field name="officer_form_exp_salaries"/>
+                                    <field name="officer_form_exp_ration"/>
+                                    <field name="officer_form_exp_utility_bills"/>
+                                    <field name="officer_form_emergency_contact_if_no_support"/>
+                                    <field name="officer_form_current_saylani_support"/>
+                                    <field name="officer_form_support_construction"/>
+                                    <field name="officer_form_support_meat"/>
+                                    <field name="officer_form_support_cooked_food"/>
+                                    <field name="officer_form_student_standard"/>
+                                    <field name="officer_form_cleanliness_env"/>
+                                    <field name="officer_form_committee_members"/>
+                                    <field name="officer_form_monthly_meetings"/>
+                                </group>
+                            </group>
+                            <group string="Masjid Information" invisible="institution_type != 'masjid'">
+                                <group>
+                                    <field name="officer_form_worshippers_fajr"/>
+                                    <field name="officer_form_worshippers_dhuhr"/>
+                                    <field name="officer_form_worshippers_asr"/>
+                                    <field name="officer_form_worshippers_maghrib"/>
+                                    <field name="officer_form_worshippers_isha"/>
+                                    <field name="officer_form_worshippers_jumuah"/>
+                                </group>
+                                <group>
+                                    <field name="officer_form_dars_schedule"/>
+                                    <field name="officer_form_book_name"/>
+                                    <field name="officer_form_participants_count"/>
+                                    <field name="officer_form_imam_other_engagements"/>
+                                    <field name="officer_form_other_income_sources"/>
+                                    <field name="officer_form_monthly_masjid_support"/>
+                                </group>
+                            </group>
+                            <group string="Madrasa Information" invisible="institution_type != 'madrasa'">
+                                <group string="Male Students">
+                                    <field name="officer_form_male_aidadiyah" string="Aidadiyah"/>
+                                    <field name="officer_form_male_aamah1" string="Aamah, Year 1"/>
+                                    <field name="officer_form_male_aamah2" string="Aamah, Year 2"/>
+                                    <field name="officer_form_male_khassah1" string="Khassah, Year 1"/>
+                                    <field name="officer_form_male_khassah2" string="Khassah, Year 2"/>
+                                    <field name="officer_form_male_aaliyah1" string="Aaliyah, Year 1"/>
+                                    <field name="officer_form_male_aaliyah2" string="Aaliyah, Year 2"/>
+                                    <field name="officer_form_male_almiyah1" string="Almiyah, Year 1"/>
+                                    <field name="officer_form_male_almiyah2" string="Almiyah, Year 2"/>
+                                    <field name="officer_form_male_takhasus1" string="Takhasus, Year 1"/>
+                                    <field name="officer_form_male_takhasus2" string="Takhasus, Year 2"/>
+                                </group>
+                                <group string="Female Students">
+                                    <field name="officer_form_female_aidadiyah" string="Aidadiyah"/>
+                                    <field name="officer_form_female_aamah1" string="Aamah, Year 1"/>
+                                    <field name="officer_form_female_aamah2" string="Aamah, Year 2"/>
+                                    <field name="officer_form_female_khassah1" string="Khassah, Year 1"/>
+                                    <field name="officer_form_female_khassah2" string="Khassah, Year 2"/>
+                                    <field name="officer_form_female_aaliyah1" string="Aaliyah, Year 1"/>
+                                    <field name="officer_form_female_aaliyah2" string="Aaliyah, Year 2"/>
+                                    <field name="officer_form_female_almiyah1" string="Almiyah, Year 1"/>
+                                    <field name="officer_form_female_almiyah2" string="Almiyah, Year 2"/>
+                                    <field name="officer_form_female_takhasus1" string="Takhasus, Year 1"/>
+                                    <field name="officer_form_female_takhasus2" string="Takhasus, Year 2"/>
+                                </group>
+                            </group>
+                            <group invisible="institution_type != 'madrasa'">
+                                <group>
+                                    <field name="officer_form_total_dars_nizami"/>
+                                    <field name="officer_form_res_dars_nizami"/>
+                                    <field name="officer_form_non_res_dars_nizami"/>
+                                    <field name="officer_form_hifz_students"/>
+                                    <field name="officer_form_nazra_students"/>
+                                    <field name="officer_form_tajweed_students"/>
+                                    <field name="officer_form_school_students"/>
+                                    <field name="officer_form_other_courses"/>
+                                    <field name="officer_form_total_residential"/>
+                                    <field name="officer_form_total_non_residential"/>
+                                    <field name="officer_form_total_madrasa_students"/>
+                                    <field name="officer_form_present_students"/>
+                                </group>
+                                <group>
+                                    <field name="officer_form_absent_students"/>
+                                    <field name="officer_form_staff_dars_nizami"/>
+                                    <field name="officer_form_staff_hifz_nazra"/>
+                                    <field name="officer_form_staff_non_teaching"/>
+                                    <field name="officer_form_total_staff"/>
+                                    <field name="officer_form_prev_test_percentage"/>
+                                    <field name="officer_form_curr_test_percentage"/>
+                                    <field name="officer_form_org_students_count"/>
+                                    <field name="officer_form_org_student_exam_percentage"/>
+                                    <field name="officer_form_prev_inquiry_percentage"/>
+                                    <field name="officer_form_prev_inquiry_date"/>
+                                </group>
+                            </group>
+                            <group string="Flood Situation" invisible="not officer_form_short_intro and not officer_form_status_before_flood and not officer_form_status_after_flood">
+                                <field name="officer_form_short_intro"/>
+                                <field name="officer_form_status_before_flood"/>
+                                <field name="officer_form_status_after_flood"/>
+                            </group>
+                            <group string="Construction" invisible="not officer_form_total_estimate and not officer_form_cost_iron_steel and not officer_form_cost_cement and not officer_form_cost_labor and not officer_form_current_work and not officer_form_remaining_work">
+                                <group>
+                                    <field name="officer_form_total_estimate"/>
+                                    <field name="officer_form_cost_iron_steel"/>
+                                    <field name="officer_form_cost_cement"/>
+                                    <field name="officer_form_cost_labor"/>
+                                </group>
+                                <group>
+                                    <field name="officer_form_current_work"/>
+                                    <field name="officer_form_remaining_work"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_action" model="ir.actions.act_window">
+        <field name="name">Institution Disbursement</field>
+        <field name="res_model">sadqa.jariya</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="sadqa_jariya_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Let's create an Institution Disbursement Request....
+            </p>
+        </field>
+    </record>
+
+</odoo>

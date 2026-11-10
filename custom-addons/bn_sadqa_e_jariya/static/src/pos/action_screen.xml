@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_sadqa_e_jariya.SadqaJariyaButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
+        <xpath expr="//main" position="inside">
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-if="sadqaJariyaAccess" t-on-click="() => this.clickRecordSJ()">
+                <i class="fa fa-building me-1 text-success" role="img" aria-label="Sadqa e Jariya" title="Sadqa e Jariya"/>
+                Sadqa e Jariya
+            </button>
+        </xpath>
+    </t>
+
+</templates>

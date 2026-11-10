@@ -1,22 +1,20 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_welfare_institution_fetch_log,welfare.institution.fetch.log,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,base.group_user,1,1,1,0
-access_welfare_institution_fetch_log_audit,welfare.institution.fetch.log audit,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_institution_fetch_log_admin,welfare.institution.fetch.log admin,bn_sadqa_e_jariya.model_welfare_institution_fetch_log,sadqa_e_jariya_admin_group,1,1,1,1
-access_welfare_committee_member,welfare.committee.member,bn_sadqa_e_jariya.model_welfare_committee_member,base.group_user,1,1,1,0
-access_welfare_committee_member_audit,welfare.committee.member audit,bn_sadqa_e_jariya.model_welfare_committee_member,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_committee_member_admin,welfare.committee.member admin,bn_sadqa_e_jariya.model_welfare_committee_member,sadqa_e_jariya_admin_group,1,1,1,1
-access_welfare_inquiry_report,welfare.inquiry.report,bn_sadqa_e_jariya.model_welfare_inquiry_report,base.group_user,1,1,1,0
-access_welfare_inquiry_report_audit,welfare.inquiry.report audit,bn_sadqa_e_jariya.model_welfare_inquiry_report,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_inquiry_report_admin,welfare.inquiry.report admin,bn_sadqa_e_jariya.model_welfare_inquiry_report,sadqa_e_jariya_admin_group,1,1,1,1
-access_welfare_madrasa,welfare.madrasa,bn_sadqa_e_jariya.model_welfare_madrasa,base.group_user,1,1,1,0
-access_welfare_madrasa_audit,welfare.madrasa audit,bn_sadqa_e_jariya.model_welfare_madrasa,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_madrasa_admin,welfare.madrasa admin,bn_sadqa_e_jariya.model_welfare_madrasa,sadqa_e_jariya_admin_group,1,1,1,1
-access_welfare_masjid,welfare.masjid,bn_sadqa_e_jariya.model_welfare_masjid,base.group_user,1,1,1,0
-access_welfare_masjid_audit,welfare.masjid audit,bn_sadqa_e_jariya.model_welfare_masjid,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_masjid_admin,welfare.masjid admin,bn_sadqa_e_jariya.model_welfare_masjid,sadqa_e_jariya_admin_group,1,1,1,1
-access_welfare_teacher,welfare.teacher,bn_sadqa_e_jariya.model_welfare_teacher,base.group_user,1,1,1,0
-access_welfare_teacher_audit,welfare.teacher audit,bn_sadqa_e_jariya.model_welfare_teacher,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_teacher_admin,welfare.teacher admin,bn_sadqa_e_jariya.model_welfare_teacher,sadqa_e_jariya_admin_group,1,1,1,1
-access_welfare_flood,welfare.flood,bn_sadqa_e_jariya.model_welfare_flood,base.group_user,1,1,1,0
-access_welfare_flood_audit,welfare.flood audit,bn_sadqa_e_jariya.model_welfare_flood,sadqa_e_jariya_audit_group,1,0,0,0
-access_welfare_flood_admin,welfare.flood admin,bn_sadqa_e_jariya.model_welfare_flood,sadqa_e_jariya_admin_group,1,1,1,1
+access_sadqa_jariya,sadqa.jariya,model_sadqa_jariya,base.group_user,1,1,1,1
+access_sadqa_jariya_line,sadqa.jariya.line,model_sadqa_jariya_line,base.group_user,1,1,1,1
+access_sadqa_jariya_recurring_line,sadqa.jariya.recurring.line,model_sadqa_jariya_recurring_line,base.group_user,1,1,1,1
+access_sadqa_jariya_document,sadqa.jariya.document,model_sadqa_jariya_document,base.group_user,1,1,1,1
+access_sadqa_jariya_inquiry_report,sadqa.jariya.inquiry.report,model_sadqa_jariya_inquiry_report,base.group_user,1,1,1,1
+access_sadqa_jariya_form,sadqa.jariya.form,model_sadqa_jariya_form,base.group_user,1,1,1,1
+access_sadqa_jariya_fetch_log,sadqa.jariya.fetch.log,model_sadqa_jariya_fetch_log,base.group_user,1,1,1,1
+access_sadqa_jariya_disbursement_category,sadqa.jariya.disbursement.category,model_sadqa_jariya_disbursement_category,base.group_user,1,0,0,0
+access_sadqa_jariya_disbursement_category_master_setup,sadqa.jariya.disbursement.category master setup,model_sadqa_jariya_disbursement_category,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_application_type,sadqa.jariya.application.type,model_sadqa_jariya_application_type,base.group_user,1,0,0,0
+access_sadqa_jariya_application_type_master_setup,sadqa.jariya.application.type master setup,model_sadqa_jariya_application_type,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_approval_limit,sadqa.jariya.approval.limit,model_sadqa_jariya_approval_limit,base.group_user,1,0,0,0
+access_sadqa_jariya_approval_limit_master_setup,sadqa.jariya.approval.limit master setup,model_sadqa_jariya_approval_limit,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_review_wizard,sadqa.jariya.review.wizard,model_sadqa_jariya_review_wizard,base.group_user,1,1,1,0
+access_sadqa_jariya_area,sadqa.jariya.area,model_sadqa_jariya_area,base.group_user,1,0,0,0
+access_sadqa_jariya_area_master_setup,sadqa.jariya.area master setup,model_sadqa_jariya_area,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_committee_member,sadqa.jariya.committee.member,model_sadqa_jariya_committee_member,base.group_user,1,0,0,0
+access_sadqa_jariya_committee_member_master_setup,sadqa.jariya.committee.member master setup,model_sadqa_jariya_committee_member,bn_master_setup.master_setup_group,1,1,1,1
+access_sadqa_jariya_committee_line,sadqa.jariya.committee.line,model_sadqa_jariya_committee_line,base.group_user,1,1,1,1
