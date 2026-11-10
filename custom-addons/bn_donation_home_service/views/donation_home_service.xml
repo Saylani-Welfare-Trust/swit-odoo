@@ -100,10 +100,10 @@
 
     <menuitem
         id="donation_home_service_menu"
+        web_icon="bn_donation_home_service,static/description/icon.png"
         groups="bn_donation_home_service.donation_home_service_menu_group"
         name="Donation Home Service"
         action="donation_home_service_action"
-        parent="bn_import_donation.import_donation_root_menu"
         sequence="2"/>
 
 </odoo>
