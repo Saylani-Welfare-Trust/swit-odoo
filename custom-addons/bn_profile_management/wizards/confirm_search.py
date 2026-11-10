@@ -5,7 +5,7 @@ from odoo.exceptions import ValidationError
 donee_registration_selection = [
     ('student', 'Student'),
     ('welfare', 'Welfare'),
-    ('medical', 'Medical'),
+    ('medical', 'Medical Equipment'),
     ('microfinance', 'Microfinance'),
 ]
 

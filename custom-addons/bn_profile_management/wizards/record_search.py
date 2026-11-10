@@ -10,7 +10,7 @@ donee_registration_selection = [
     ('student', 'Student'),
     ('welfare', 'Welfare'),
     ('microfinance', 'Microfinance'),
-    ('medical', 'Medical'),
+    ('medical', 'Medical Equipment'),
 ]
 
 registration_type_selection = [

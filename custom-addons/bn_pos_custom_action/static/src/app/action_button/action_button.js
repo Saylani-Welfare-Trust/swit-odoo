@@ -20,6 +20,7 @@ export class ActionButton extends Component {
         this.pos._medicalEquipment = await this.env.services.user.hasGroup('bn_medical_equipment.medical_equipment_pos_action_group')
         this.pos._medicalEquipmentSettleOrder = await this.env.services.user.hasGroup('bn_medical_equipment.medical_equipment_pos_settle_action_group')
         this.pos._medicalEquipmentSecurityDeposit = await this.env.services.user.hasGroup('bn_medical_equipment.medical_equipment_pos_security_deposit_action_group')
+        this.pos._medicalPatientRegistration = await this.env.services.user.hasGroup('bn_medical_equipment.medical_patient_pos_action_group')
         this.pos._advanceDonation = await this.env.services.user.hasGroup('bn_advance_donation.advance_donation_pos_action_group')
     }
 

@@ -176,7 +176,7 @@ class ResPartner(models.Model):
             # if 'Donee' in category_names and 'Individual' in category_names:
             #     rec.donee_required_fields = True
 
-            if 'Welfare' in category_names or 'Medical' in category_names:
+            if 'Welfare' in category_names or 'Medical Equipment' in category_names:
                 rec.donee_required_fields = True
     
     @api.depends('name', 'category_id')
