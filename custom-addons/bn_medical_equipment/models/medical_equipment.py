@@ -1578,7 +1578,7 @@ class MedicalEquipment(models.Model):
                 }
             }
         }
-        # raise UserError(str(data))
+        raise UserError(str(data))
         result = self._make_sadqa_api_call(
             self.env.company.create_application_endpoint,  # endpoint from res.company
             'POST',
