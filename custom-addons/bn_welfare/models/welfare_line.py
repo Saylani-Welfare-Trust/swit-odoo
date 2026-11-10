@@ -144,7 +144,7 @@ class WelfareLine(models.Model):
             rec.media_count = len(rec.media_ids)
 
     def _get_pending_welfare_extra_vals(self, welfare):
-        """Extra values copied from welfare by action_set_pending, extended in bn_sadqa_e_jariya."""
+        """Extra values copied from welfare by action_set_pending (hook for other modules)."""
         return {}
 
     def action_set_pending(self, create_return_line=True):

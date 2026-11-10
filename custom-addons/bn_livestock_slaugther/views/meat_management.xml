@@ -89,6 +89,7 @@
 
     <menuitem
         id="meat_management_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Meat Management"
         action="meat_management_action"
         parent="bn_livestock_slaugther.livestock_menu"

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
-from odoo.tools.sql import column_exists
+from odoo.tools.sql import column_exists, table_exists
 
 
 class PosLinkMixin(models.AbstractModel):
@@ -45,7 +45,8 @@ class PosLinkMixin(models.AbstractModel):
         """Install / update of every model using the mixin: records already
         linked to their order get its session, POS and cashier."""
         super().init()
-        if self._abstract or not self._auto:
+        # (a table not made yet: a module whose code is newer than its database)
+        if self._abstract or not self._auto or not table_exists(self.env.cr, self._table):
             return
         self.env.cr.execute("""
             UPDATE "{table}" t

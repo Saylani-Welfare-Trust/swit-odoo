@@ -55,7 +55,8 @@ class ResPartner(models.Model):
         arch, view = super()._get_view(view_id, view_type, **options)
         profile_view = self.env.ref(PROFILE_VIEWS.get(view_type, ''), raise_if_not_found=False) \
             if view_type in PROFILE_VIEWS else None
-        if not profile_view or view != profile_view:
+        # the profile form itself, or a form derived from it (e.g. a module's profile popup)
+        if not profile_view or (view != profile_view and view.inherit_id != profile_view):
             return arch, view
         tag = self._profile_view_tag()
         if view_type == 'form':

@@ -37,8 +37,8 @@
                     </group>
                 </sheet>
                 <footer>
-                    <button name="action_do_transfer" string="Fetch" type="object" class="oe_highlight" invisible="is_bulk"/>
-                    <button name="action_do_transfer" string="Transfer &amp; Print" type="object" class="oe_highlight" invisible="not is_bulk"/>
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" name="action_do_transfer" string="Fetch" type="object" class="oe_highlight" invisible="is_bulk"/>
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" name="action_do_transfer" string="Transfer &amp; Print" type="object" class="oe_highlight" invisible="not is_bulk"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

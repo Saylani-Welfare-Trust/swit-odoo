@@ -6,46 +6,31 @@
         <field name="res_model">record.search</field>
         <field name="view_mode">form</field>
         <field name="context">{
-            'default_registration_type': 'donee',
             'default_program_code': 'sadqa_e_jariya',
             'default_program_locked': True,
         }</field>
         <field name="target">new</field>
     </record>
 
-    <record id="sadqa_e_jariya_donee_action" model="ir.actions.act_window">
+    <!-- tags matched when the menu opens, also by name: see res.partner.action_sadqa_jariya_donees -->
+    <record id="sadqa_e_jariya_donee_server_action" model="ir.actions.server">
         <field name="name">Donee</field>
-        <field name="res_model">res.partner</field>
-        <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Sadqa e Jariya')]</field>
-        <field name="context">{
-            'create': 0,
-            'delete': 0,
-        }</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Waiting for Sadqa e Jariya Donee's....
-            </p>
-        </field>
-        <field name="view_ids"
-            eval="[(5, 0, 0),
-                    (0, 0, {'view_mode': 'kanban', 'view_id': ref('bn_profile_management.profile_management_view_kanban')}),
-                    (0, 0, {'view_mode': 'tree', 'view_id': ref('bn_profile_management.profile_management_view_tree')}),
-                    (0, 0, {'view_mode': 'form', 'view_id': ref('bn_profile_management.profile_management_view_form')})]"/>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_sadqa_jariya_donees()</field>
     </record>
 
-    <!-- Users who had Institution Disbursement / Fetch Institution under Welfare keep their access here -->
     <menuitem
         id="sadqa_e_jariya_menu"
         name="Sadqa e Jariya"
         web_icon="bn_sadqa_e_jariya,static/description/icon.png"
-        groups="bn_sadqa_e_jariya.sadqa_e_jariya_root_group"
-        sequence="7"/>
+        sequence="7"
+        groups="bn_sadqa_e_jariya.sadqa_e_jariya_root_group"/>
 
     <menuitem
         id="sadqa_e_jariya_institution_disbursement_menu"
         name="Institution Disbursement"
-        action="welfare_action_institution"
+        action="sadqa_jariya_action"
         parent="sadqa_e_jariya_menu"
         sequence="1"
         groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
@@ -62,35 +47,100 @@
         name="Record Search"
         action="sadqa_e_jariya_record_search_action"
         parent="sadqa_e_jariya_profile_menu"
-        sequence="0"/>
+        sequence="0"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
 
     <menuitem
         id="sadqa_e_jariya_donee_menu"
         name="Donee"
-        action="sadqa_e_jariya_donee_action"
+        action="sadqa_e_jariya_donee_server_action"
         parent="sadqa_e_jariya_profile_menu"
         sequence="1"/>
 
     <menuitem
-        id="menu_fetch_institution_applications"
-        name="Fetch Institution Applications"
-        groups="bn_sadqa_e_jariya.group_fetch_institution"
+        id="sadqa_jariya_lines_menu"
+        name="All Lines"
         parent="sadqa_e_jariya_menu"
-        sequence="100"/>
+        sequence="4"
+        groups="bn_sadqa_e_jariya.group_sadqa_jariya_all_lines,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
+
+    <menuitem
+        id="sadqa_jariya_line_menu"
+        name="All Disbursement Lines"
+        action="sadqa_jariya_line_action"
+        parent="sadqa_jariya_lines_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="sadqa_jariya_recurring_line_menu"
+        name="All Recurring Lines"
+        action="sadqa_jariya_recurring_line_action"
+        parent="sadqa_jariya_lines_menu"
+        sequence="2"/>
+
+    <menuitem
+        id="menu_fetch_institution_applications"
+        name="Portal Sync"
+        parent="sadqa_e_jariya_menu"
+        sequence="100"
+        groups="bn_sadqa_e_jariya.group_fetch_institution,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
 
     <menuitem
         id="fetch_institution_applications"
-        name="Fetch"
+        name="Sync Now"
         parent="menu_fetch_institution_applications"
-        groups="bn_sadqa_e_jariya.group_fetch_institution"
         action="action_fetch_institution_applications"
-        sequence="100"/>
+        sequence="100"
+        groups="bn_sadqa_e_jariya.group_fetch_institution"/>
 
-    <menuitem id="menu_welfare_institution_fetch_log"
+    <menuitem
+        id="menu_sadqa_jariya_fetch_log"
         name="Logs"
         parent="menu_fetch_institution_applications"
-        groups="bn_sadqa_e_jariya.group_fetch_institution"
-        action="action_welfare_institution_fetch_log"
+        action="sadqa_jariya_fetch_log_action"
         sequence="99"/>
+
+    <!-- Configuration lives in Master Setup, like Welfare's -->
+    <menuitem
+        id="sadqa_jariya_config_menu"
+        name="Sadqa e Jariya"
+        parent="bn_master_setup.master_setup_menu"
+        sequence="5"
+        groups="bn_sadqa_e_jariya.sadqa_e_jariya_admin_group"/>
+
+    <menuitem
+        id="sadqa_jariya_area_menu"
+        name="Areas"
+        action="sadqa_jariya_area_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="0"/>
+
+    <menuitem
+        id="sadqa_jariya_application_type_menu"
+        name="Disbursement Application Types"
+        action="sadqa_jariya_application_type_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="1"/>
+
+    <menuitem
+        id="sadqa_jariya_disbursement_category_menu"
+        name="Disbursement Categories"
+        action="sadqa_jariya_disbursement_category_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="2"/>
+
+    <menuitem
+        id="sadqa_jariya_approval_limit_menu"
+        name="Approval Limits"
+        action="sadqa_jariya_approval_limit_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="3"/>
+
+    <menuitem
+        id="sadqa_jariya_committee_member_menu"
+        name="Committee Members"
+        action="sadqa_jariya_committee_member_action"
+        parent="sadqa_jariya_config_menu"
+        sequence="4"/>
 
 </odoo>

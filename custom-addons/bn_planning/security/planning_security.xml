@@ -44,7 +44,7 @@
 
     <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="group_planning_report_viewer" model="res.groups">
-        <field name="name">Planning Summary Report</field>
+        <field name="name">Planning Summary Report (Inventory)</field>
         <field name="category_id" ref="module_category_planning"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">Inventory &gt; Reporting &gt; Planning Summary.</field>

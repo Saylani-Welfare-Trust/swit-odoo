@@ -23,8 +23,8 @@
                 <header>
                     <field name="is_picking" invisible="1"/>
 
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state == 'received'"/>
-                    <button string="Validate Picking" name="action_validate_picking" type="object" class="oe_highlight" invisible="is_picking"/>
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state == 'received'"/>
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Validate Picking" name="action_validate_picking" type="object" class="oe_highlight" invisible="is_picking"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received"/>
                 </header>
@@ -69,6 +69,7 @@
 
     <menuitem
         id="cutting_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Cutting"
         action="livestock_cutting_action"
         parent="bn_livestock_slaugther.livestock_menu"

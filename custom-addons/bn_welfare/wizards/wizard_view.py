@@ -113,8 +113,6 @@ class WelfareFieldsWizard(models.TransientModel):
     dependent_person = fields.Integer('No. of Dependents')
     household_member = fields.Integer('Household members')
 
-    # Institution Details: see bn_sadqa_e_jariya
-
     currency_id = fields.Many2one('res.currency', 'Currency')
     
     # Binary Fields (Attachments)

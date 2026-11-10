@@ -79,6 +79,34 @@ class WhatsAppService(models.Model):
 
         return self._post_template(payload)
 
+    def send_document_template(self, mobile, template_name, namespace, document_link, filename, language='en'):
+        """Send an approved template with a Document header and a fixed body (no placeholders)"""
+        formatted_mobile = self.format_number(mobile)
+
+        payload = {
+            "toNumber": formatted_mobile,
+            "messageType": "template",
+            "name": template_name,
+            "language": language or "en",
+            "namespace": namespace or self._get_param('whatsapp_namespace'),
+            "header": {
+                "parameters": [
+                    {
+                        "type": "document",
+                        "document": {
+                            "link": document_link,
+                            "fileName": filename
+                        }
+                    }
+                ]
+            }
+        }
+
+        # the link is not logged, its access token opens the document
+        _logger.info("Sending WhatsApp template %s to: %s", template_name, formatted_mobile)
+
+        return self._post_template(payload)
+
     def send_text_template(self, mobile, template_name, namespace, body_parameters, language='en'):
         """Send an approved template whose body has {{1}}, {{2}}, ... text placeholders"""
         formatted_mobile = self.format_number(mobile)

@@ -1,16 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
 
-    <!-- Moved from bn_welfare (bn_welfare 1.2 migration keeps their users) -->
-
-    <!--Fetch institution Group-->
-    <record id ="group_fetch_institution" model="res.groups">
+    <!-- Fetch Institution and Institutional Disbursement came from bn_welfare (its 1.2 migration kept their users) -->
+    <record id="group_fetch_institution" model="res.groups">
         <field name="name">Fetch Institution</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
-    <!--Institutional Disbursement Group-->
-    <record id ="group_institutional_disbursement" model="res.groups">
+    <!-- Sadqa e Jariya user: applications, portal, move to HOD approval -->
+    <record id="group_institutional_disbursement" model="res.groups">
         <field name="name">Institutional Disbursement</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
+
+    <record id="group_sadqa_jariya_committee" model="res.groups">
+        <field name="name">Sadqa e Jariya Committee</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="implied_ids" eval="[(4, ref('group_institutional_disbursement'))]"/>
+    </record>
+    <record id="group_sadqa_jariya_hod" model="res.groups">
+        <field name="name">Sadqa e Jariya HOD</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="implied_ids" eval="[(4, ref('group_institutional_disbursement'))]"/>
+    </record>
+    <record id="group_sadqa_jariya_member" model="res.groups">
+        <field name="name">Sadqa e Jariya Member</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="implied_ids" eval="[(4, ref('group_institutional_disbursement'))]"/>
+    </record>
+
+    <record id="group_sadqa_jariya_all_lines" model="res.groups">
+        <field name="name">Sadqa e Jariya All Lines</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+    <record id="group_sadqa_jariya_pos_action" model="res.groups">
+        <field name="name">Sadqa e Jariya / POS Action</field>
+        <field name="category_id" ref="base.module_category_hidden"/>
+    </record>
+
 </odoo>

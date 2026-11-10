@@ -377,8 +377,6 @@ class Welfare(models.Model):
 
     family_line_ids = fields.One2many('microfinance.family', 'welfare_id', string='Family Lines')
 
-    # Institution fields (category, masjid / madrasa details, ...): see bn_sadqa_e_jariya
-
     # Inquiry Committee Questions Tab
     applicant_occupation = fields.Char('Applicant Occupation / Source of Income', tracking=True)
     residence_ownership = fields.Selection([

@@ -19,10 +19,10 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="Welfare" name="action_welfare_approve" type="object" class="oe_highlight" invisible="state != 'item_selected' or type != 'jahaiz'" />
-                    <button string="Issue Purchase Requisition" name="action_issue_purchase_requisition" type="object" class="oe_highlight" invisible="state not in ['item_selected', 'welfare_approved']" />
-                    <button string="Issue Delivery Note" name="action_issue_delivery_note" type="object" class="oe_highlight" invisible="state != 'purchase_requisition'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_welfare_approval_group" string="Welfare" name="action_welfare_approve" type="object" class="oe_highlight" invisible="state != 'item_selected' or type != 'jahaiz'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_manager_group" string="Issue Purchase Requisition" name="action_issue_purchase_requisition" type="object" class="oe_highlight" invisible="state not in ['item_selected', 'welfare_approved']" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_manager_group" string="Issue Delivery Note" name="action_issue_delivery_note" type="object" class="oe_highlight" invisible="state != 'purchase_requisition'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, item_selected, purchase_requisition, delivery_note"/>
                 </header>
@@ -86,6 +86,7 @@
 
     <menuitem
         id="distribution_center_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Distribution Center"
         action="distribution_center_action"
         parent="bn_livestock_slaugther.livestock_menu"

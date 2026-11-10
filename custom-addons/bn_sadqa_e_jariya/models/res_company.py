@@ -1,4 +1,7 @@
 from odoo import models, fields
+from odoo.addons.bn_sms_whatsapp.models.whatsapp_service import WHATSAPP_DEFAULTS
+
+NAMESPACE = WHATSAPP_DEFAULTS['whatsapp_namespace']
 
 
 def portal_setting(name, string, default=False):
@@ -23,22 +26,22 @@ def portal_setting(name, string, default=False):
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    # Welfare Institution API (the donee API settings are in bn_profile_management)
+    # Institution portal: operations are POSTed to welfare_instituiton_url + /rpc/odoo/institutional/<operation>
+    # (existing columns, kept with their names so the saved URL and key stay)
     welfare_instituiton_url = fields.Char('Welfare Institution URL', tracking=True)
     odoo_auth_institution_key = fields.Char('Odoo Auth Institution Key')
-    welfare_institution_endpoint = fields.Char('Welfare Institution Endpoint')
-    mark_institution_application_endpoint = fields.Char('Mark Institution Application Endpoint')
-
-    # Institution portal: Send Form / Check Portal Status / Send for Inquiry
-    # (endpoints are appended to welfare_instituiton_url)
     institution_portal_login_url = portal_setting('institution_portal_login_url', 'Institution Portal Login URL')
-    # Donee logins are <donee name>.<form number>@<this domain>
+    # A donee's permanent login, made on their first application: <donee name>.<form number>@<this domain>
     institution_portal_email_domain = portal_setting('institution_portal_email_domain', 'Portal Login Email Domain')
-    create_institution_account_endpoint = portal_setting('create_institution_account_endpoint', 'Create Institution Account Endpoint')
-    institution_application_status_endpoint = portal_setting('institution_application_status_endpoint', 'Institution Application Status Endpoint')
-    assign_institution_inquiry_endpoint = portal_setting('assign_institution_inquiry_endpoint', 'Assign Institution Inquiry Officer Endpoint')
 
-    # Approved WhatsApp template, body: {{1}} donee name, {{2}} portal link, {{3}} login email, {{4}} password
+    # Optional approved WhatsApp template for the portal login (SMS without it),
+    # body: {{1}} donee name, {{2}} portal link, {{3}} login email, {{4}} password
     institution_login_whatsapp_template = portal_setting('institution_login_whatsapp_template', 'Portal Login WhatsApp Template')
     institution_login_whatsapp_namespace = portal_setting('institution_login_whatsapp_namespace', 'Portal Login WhatsApp Namespace')
     institution_login_whatsapp_language = portal_setting('institution_login_whatsapp_language', 'Portal Login WhatsApp Language', default='en')
+
+    # Approved WhatsApp template the donee's profile form PDF goes with (Send Profile Form):
+    # Document header, fixed "profile registered" body; the namespace is the WhatsApp Business account's
+    institution_profile_whatsapp_template = portal_setting('institution_profile_whatsapp_template', 'Profile Form WhatsApp Template')
+    institution_profile_whatsapp_namespace = portal_setting('institution_profile_whatsapp_namespace', 'Profile Form WhatsApp Namespace', default=NAMESPACE)
+    institution_profile_whatsapp_language = portal_setting('institution_profile_whatsapp_language', 'Profile Form WhatsApp Language', default='en')
