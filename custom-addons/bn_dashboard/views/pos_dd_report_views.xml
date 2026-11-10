@@ -13,7 +13,7 @@
 
                 <!-- ⚡ hidden fields required by decorations -->
                 <field name="is_refund" invisible="1"/>
-                <field name="state"    invisible="1"/>
+                <field name="state" invisible="1"/>
                 <field name="source_model" invisible="1"/>
 
                 <!-- visible columns -->
@@ -34,7 +34,6 @@
                 <field name="amount" sum="Total"/>
                 <field name="amount_paid" optional="hide" sum="Paid"/>
 
-                <!-- visible state badge (field is already declared above) -->
                 <field name="state" widget="badge"
                        decoration-success="state in ('paid', 'done', 'invoiced', 'clear')"
                        decoration-warning="state in ('draft', 'transferred')"
@@ -44,6 +43,43 @@
                         string="Open" icon="fa-external-link"
                         help="Open source record"/>
             </tree>
+        </field>
+    </record>
+
+    <!-- ============ PIVOT ("Excel" view) ============ -->
+    <record id="view_pos_dd_report_pivot" model="ir.ui.view">
+        <field name="name">pos.dd.report.pivot</field>
+        <field name="model">pos.dd.report</field>
+        <field name="arch" type="xml">
+            <pivot sample="1" display_quantity="true">
+                <!-- default rows -->
+                <field name="source_model" type="row"/>
+                <!-- available-to-drag rows (not shown until user adds them) -->
+                <field name="config_id" type="row" invisible="1"/>
+                <field name="bank_id" type="row" invisible="1"/>
+                <field name="partner_id" type="row" invisible="1"/>
+                <field name="state" type="row" invisible="1"/>
+                <field name="user_id" type="row" invisible="1"/>
+
+                <!-- default column: date grouped by month -->
+                <field name="date" type="col" interval="month"/>
+
+                <!-- measures -->
+                <field name="amount" type="measure"/>
+                <field name="amount_paid" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ============ GRAPH ============ -->
+    <record id="view_pos_dd_report_graph" model="ir.ui.view">
+        <field name="name">pos.dd.report.graph</field>
+        <field name="model">pos.dd.report</field>
+        <field name="arch" type="xml">
+            <graph type="bar" sample="1">
+                <field name="source_model"/>
+                <field name="amount" type="measure"/>
+            </graph>
         </field>
     </record>
 
@@ -139,6 +175,14 @@
                     <filter name="group_month" string="Month"
                             context="{'group_by': 'date:month'}"/>
                 </group>
+                <group expand="0" string="Measures">
+                    <filter name="measure_amount" string="Amount"
+                            context="{'pivot_measures': ['amount']}"/>
+                    <filter name="measure_amount_paid" string="Paid Amount"
+                            context="{'pivot_measures': ['amount_paid']}"/>
+                    <filter name="measure_both" string="Amount + Paid"
+                            context="{'pivot_measures': ['amount', 'amount_paid']}"/>
+                </group>
             </search>
         </field>
     </record>
@@ -147,7 +191,7 @@
     <record id="action_pos_dd_report" model="ir.actions.act_window">
         <field name="name">Reporting</field>
         <field name="res_model">pos.dd.report</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">pivot,graph,tree,form</field>
         <field name="search_view_id" ref="view_pos_dd_report_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No transactions yet</p>
@@ -155,7 +199,7 @@
         </field>
     </record>
 
-    <!-- ============ MENU (top-level "Reporting" under the dashboard root) ============ -->
+    <!-- ============ MENU ============ -->
     <menuitem id="menu_pos_dd_reporting_root"
               name="Reporting"
               parent="bn_dashboard.menu_dashboard_root"
