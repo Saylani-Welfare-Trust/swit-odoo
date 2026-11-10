@@ -1528,10 +1528,14 @@ class MedicalEquipment(models.Model):
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
         # self.ensure_one()
+        officer_code = (self.employee_id.barcode or '').strip()
+        if not officer_code:
+            raise UserError(_("Inquiry Officer %s has no Badge ID (barcode); the portal needs it.")
+                            % (self.employee_id.name or ''))
         data_list = []
         for line in self.medical_equipment_line_ids:
             data_list.append({
-                "medicalEquipmentCategoryId": line.medical_equipment_category_id,
+                "medicalEquipmentCategoryId": line.medical_equipment_category_id.id or None,
                 "productId": line.product_id.display_name,
                 "quantity": line.quantity,
                 "baseSecurityDeposit": line.base_security_deposit,
@@ -1544,7 +1548,7 @@ class MedicalEquipment(models.Model):
                 "applicationData": {
                     "odooId": self.id,
                     "doneeOdooId": self.donee_id.id,
-                    "inquiryOfficerOdooId": self.employee_id.id,
+                    "inquiryOfficerEmployeeId": officer_code,
                     "department": "medical",
                     "form": {
                         "category": "medical",
