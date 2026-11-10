@@ -10,6 +10,13 @@
                   decoration-danger="is_refund"
                   decoration-muted="state in ('cancel', 'not_clear')"
                   decoration-info="source_model == 'direct.deposit'">
+
+                <!-- ⚡ hidden fields required by decorations -->
+                <field name="is_refund" invisible="1"/>
+                <field name="state"    invisible="1"/>
+                <field name="source_model" invisible="1"/>
+
+                <!-- visible columns -->
                 <field name="date"/>
                 <field name="source_model" widget="badge"
                        decoration-success="source_model == 'pos.order'"
@@ -26,10 +33,13 @@
                 <field name="currency_id" invisible="1"/>
                 <field name="amount" sum="Total"/>
                 <field name="amount_paid" optional="hide" sum="Paid"/>
+
+                <!-- visible state badge (field is already declared above) -->
                 <field name="state" widget="badge"
                        decoration-success="state in ('paid', 'done', 'invoiced', 'clear')"
                        decoration-warning="state in ('draft', 'transferred')"
                        decoration-danger="state in ('cancel', 'not_clear')"/>
+
                 <button name="action_open_source" type="object"
                         string="Open" icon="fa-external-link"
                         help="Open source record"/>
