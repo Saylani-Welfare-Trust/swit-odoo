@@ -31,20 +31,35 @@ class ProfileDonationReportData(models.AbstractModel):
     # form layout
     # ------------------------------------------------------------------
     @api.model
-    def _profile_form_arch(self):
+    def _profile_form_arch(self, tag=None):
+        """The profile form as dynamic profiling builds it: the fields every
+        Profile Type may select, shown by the contact's tags, laid out in the
+        order chosen on ``tag`` (as in that Profile Type's menu)."""
         view = self.env.ref(PROFILE_FORM)
-        arch, _view = self.env['res.partner'].sudo().with_context(lang=self.env.lang)._get_view(
+        context = {'lang': self.env.lang}
+        if tag:
+            context['profile_tag_view_ref'] = tag.id
+        arch, _view = self.env['res.partner'].sudo().with_context(**context)._get_view(
             view_id=view.id, view_type='form')
         return arch
+
+    @api.model
+    def _profile_tag(self, partner):
+        """The contact's Profile Type whose form layout the report follows:
+        the first of its tags that orders form fields, else its first
+        Profile Type."""
+        types = partner.sudo().category_id.filtered('is_profile_type')
+        return types.filtered('profile_form_field_ids')[:1] or types[:1]
 
     def _allowed(self, node):
         groups = node.get('groups')
         return not groups or self.env.user.user_has_groups(groups)
 
     @api.model
-    def _layout(self):
-        """(detail field nodes, donation tabs [(title, one2many field node)])."""
-        arch = self._profile_form_arch()
+    def _layout(self, tag=None):
+        """(detail field nodes, donation tabs [(title, one2many field node,
+        [page nodes it sits in])])."""
+        arch = self._profile_form_arch(tag)
         sheet = arch.find('.//sheet')
         notebook = sheet.find('.//notebook')
         general = arch.find(".//page[@name='general_info']")
@@ -63,7 +78,8 @@ class ProfileDonationReportData(models.AbstractModel):
                     continue
                 for node in page.iter('field'):
                     if node.find('tree') is not None:
-                        tabs.append((page.get('string') or page.get('name'), node))
+                        pages = [p for p in node.iterancestors('page')]
+                        tabs.append((page.get('string') or page.get('name'), node, pages))
                         break
         return details, tabs
 
@@ -159,7 +175,7 @@ class ProfileDonationReportData(models.AbstractModel):
         """{'partner', 'details': [(label, text, value)], 'tabs': [tab]} where a
         tab is {'title', 'columns': [label], 'numeric': [bool], 'rows':
         [[(text, value)]], 'totals': [text or '']} - tabs without records left out."""
-        details_nodes, tab_nodes = self._layout()
+        details_nodes, tab_nodes = self._layout(self._profile_tag(partner))
         seen, details = set(), []
         for node in details_nodes:
             fname = node.get('name')
@@ -174,7 +190,10 @@ class ProfileDonationReportData(models.AbstractModel):
                 continue
             details.append((self._label(partner, node), text, value))
         tabs = []
-        for title, node in tab_nodes:
+        for title, node, pages in tab_nodes:
+            # the Donation page (and the tab) as the contact's Profile Types show them
+            if not all(self._visible(partner, page.get('invisible')) for page in pages):
+                continue
             fname = node.get('name')
             field = partner._fields.get(fname)
             if not field or field.type not in ('one2many', 'many2many'):
@@ -219,6 +238,8 @@ class ProfileDonationReportData(models.AbstractModel):
                 'numeric': [c[2] for c in columns],
                 'rows': rows,
                 'totals': total_texts if any(c[3] for c in columns) else [],
+                # the first amount column, for the summary on the first page
+                'summary_total': next((t for t in total_texts if t), ''),
                 'total_values': [totals[i] if c[3] else None for i, c in enumerate(columns)],
             })
         return {'partner': partner, 'details': details, 'tabs': tabs}

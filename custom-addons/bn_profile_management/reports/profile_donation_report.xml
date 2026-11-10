@@ -49,7 +49,7 @@
                             <tr t-foreach="contact['tabs']" t-as="tab">
                                 <td t-out="tab['title']"/>
                                 <td class="num" t-out="len(tab['rows'])"/>
-                                <td class="num" t-out="next((t for t in tab['totals'] if t), '')"/>
+                                <td class="num" t-out="tab['summary_total']"/>
                             </tr>
                         </tbody>
                     </table>
