@@ -1529,8 +1529,17 @@ class MedicalEquipment(models.Model):
         if matching_app:
             return matching_app, ''
         medical_ids = [a.get('odooId') for a in applications if isinstance(a, dict) and a.get('department') == 'medical']
+        departments = {}
+        for a in applications:
+            if isinstance(a, dict):
+                dept = repr(a.get('department'))
+                departments[dept] = departments.get(dept, 0) + 1
+        sample = applications[0] if applications and isinstance(applications[0], dict) else {}
         return None, (f"portal returned {len(applications)} application(s); "
-                      f"medical odooIds in it: {medical_ids or 'none'}")
+                      f"medical odooIds in it: {medical_ids or 'none'}; "
+                      f"departments: {departments}; "
+                      f"first item keys: {sorted(sample.keys())}; "
+                      f"first item odooId/department/status: {sample.get('odooId')!r}/{sample.get('department')!r}/{sample.get('status')!r}")
 
 
     def create_portal_application(self):
