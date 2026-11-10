@@ -47,7 +47,7 @@
     </record>
 
     <menuitem id="menu_treasury_access"
-              name="Access Configuration"
+              name="Treasury Access Configuration"
               parent="bn_dashboard.menu_dashboard_root"
               action="action_treasury_access"
               groups="base.group_erp_manager"
