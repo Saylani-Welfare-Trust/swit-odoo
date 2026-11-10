@@ -57,6 +57,7 @@ class MedicalEquipment(models.Model):
 
 
 
+
     donee_id = fields.Many2one('res.partner', string="Donee")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
