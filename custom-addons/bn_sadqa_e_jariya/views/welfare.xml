@@ -35,6 +35,13 @@
                 <field name="state" widget="statusbar" statusbar_visible="draft, completed, form_sent, form_filled, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" invisible="is_individual"/>
             </xpath>
 
+            <!-- Donee: individuals are Welfare donees, institutions Sadqa e Jariya donees -->
+            <xpath expr="//group[@name='welfare_col_1']/field[@name='donee_id']" position="attributes">
+                <attribute name="domain">[('category_id.name', '=', 'Donee'), ('state', '=', 'register'),
+                    ('category_id.name', '=', (is_individual and 'Welfare' or 'Sadqa e Jariya')),
+                    ('category_id.name', '=', (is_individual and 'Individual' or 'Coorporate / Institute'))]</attribute>
+            </xpath>
+
             <!-- Institutions pick the Inquiry Officer any time before Send for Inquiry -->
             <xpath expr="//group[@name='welfare_col_1']/field[@name='employee_id']" position="attributes">
                 <attribute name="readonly">state != 'draft' and (is_individual or state not in ['completed', 'form_sent', 'form_filled'])</attribute>

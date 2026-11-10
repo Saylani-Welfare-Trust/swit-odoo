@@ -141,9 +141,10 @@ class WelfareInstitutionFetchLog(models.Model):
                     'email': submitted.get('email'),
                     'cnic_front_image': cnic_front_image,
                     'cnic_back_image': cnic_back_image,
-                    'category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id]), 
-                                    (6, 0, [self.env.ref('bn_profile_management.welfare_partner_category').id])
-                                    ],
+                    # a Sadqa e Jariya donee: Donee, Corporate / Institute and its programme tag
+                    'category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id,
+                                            self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
+                                            self.env.ref('bn_sadqa_e_jariya.sadqa_e_jariya_partner_category').id])],
                 }
                 partner = Partner.create(partner_vals)
 

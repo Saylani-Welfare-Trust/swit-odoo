@@ -17,6 +17,7 @@
         'security/ir.model.access.csv',
 
         'data/sequence.xml',
+        'data/res_partner_category.xml',
         'data/server_action_fetch_welfare.xml',
 
         'views/welfare.xml',

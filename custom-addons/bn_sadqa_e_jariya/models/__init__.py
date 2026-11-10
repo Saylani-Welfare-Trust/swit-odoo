@@ -9,3 +9,4 @@ from . import welfare_inquiry_report
 from . import welfare_masjid
 from . import welfare_madarsa
 from . import welfare_flood
+from . import res_partner
