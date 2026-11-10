@@ -1412,11 +1412,12 @@ class MedicalEquipment(models.Model):
 
             
         if donee_data:
-            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
+                message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
+
         else:
-            self._create_donee_in_portal()
-            message = "✅ Donee created in portal"
-                                                                                                                                                                                                                                            # Check for applications
+            donee_in_portal = self._create_donee_in_portal()
+            # message = "✅ Donee created in portal"  # Add this line
+        # Check for applications
         application = self._search_portal_applications()
         # _logger.info(f"Applications found: {application}")    
         app_state = application.get('status') if application else None
@@ -1433,12 +1434,6 @@ class MedicalEquipment(models.Model):
                 if remarks:
                     all_remarks.append(remarks)
         # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
-        if not application:
-            message += (f" | ⚠️ No medical application found in portal for this record (odooId {self.id}). "
-                        "Send it for inquiry first, or check the portal search endpoint.")
-        elif app_state != 'inquiry_complete':
-            message += (f" | 📋 Application {application.get('id')} status: {app_state} "
-                        "— inquiry not completed yet, nothing to import.")
         if app_state == 'inquiry_complete': # type: ignore
             self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
             self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
