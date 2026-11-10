@@ -53,7 +53,7 @@ class PosDdReport(models.Model):
                     po.date_order                                         AS date,
                     po.partner_id                                         AS partner_id,
                     po.user_id                                            AS user_id,
-                    po.currency_id                                        AS currency_id,
+                    ps.currency_id                                        AS currency_id,   -- ⚡ from session
                     po.amount_total                                       AS amount,
                     po.amount_paid                                        AS amount_paid,
                     (po.amount_total < 0)                                 AS is_refund,
@@ -73,8 +73,8 @@ class PosDdReport(models.Model):
                     NULL::text                                            AS remarks,
                     aa.id                                                 AS analytic_account_id
                 FROM pos_order po
-                LEFT JOIN pos_config pc
-                       ON pc.id = po.config_id
+                LEFT JOIN pos_config  pc ON pc.id = po.config_id
+                LEFT JOIN pos_session ps ON ps.id = po.session_id         -- ⚡ new join
                 LEFT JOIN account_analytic_account aa
                        ON aa.id = pc.analytic_account_id
 
@@ -95,7 +95,7 @@ class PosDdReport(models.Model):
                     dd.state                                              AS state,
                     NULL::integer                                         AS config_id,
                     NULL::integer                                         AS session_id,
-                    NULL::varchar                                         AS payment_methods,
+                    NULL::text                                            AS payment_methods,   -- ⚡ text, not varchar
                     dd.bank_id                                            AS bank_id,
                     dd.payment_type                                       AS payment_type,
                     dd.transaction_ref                                    AS transaction_ref,
