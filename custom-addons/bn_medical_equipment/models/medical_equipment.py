@@ -1477,8 +1477,8 @@ class MedicalEquipment(models.Model):
             donee_in_portal = self._create_donee_in_portal()
             # message = "✅ Donee created in portal"  # Add this line
         # Check for applications
-        application = self._search_portal_applications()
-        # _logger.info(f"Applications found: {application}")    
+        application, search_note = self._search_portal_applications()
+        # _logger.info(f"Applications found: {application}")
         app_state = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
         all_media = []
@@ -1494,7 +1494,7 @@ class MedicalEquipment(models.Model):
                     all_remarks.append(remarks)
         # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
         if not application:
-            message += f" | ⚠️ Application not found in portal search (odooId {self.id}, department medical)"
+            message += f" | ⚠️ Application not found in portal search (odooId {self.id}, department medical): {search_note}"
         elif app_state != 'inquiry_complete':
             message += f" | 📋 Portal status: {app_state} (data is imported only when status is inquiry_complete)"
         if app_state == 'inquiry_complete': # type: ignore
@@ -1513,21 +1513,24 @@ class MedicalEquipment(models.Model):
     
     def _search_portal_applications(self):
         """Search for matching applications in portal"""
+        """Returns (application or None, note explaining why nothing matched)"""
+        endpoint = self.env.company.search_endpoint
         try:
-            result = self._make_sadqa_api_call(self.env.company.search_endpoint)
-            applications = result
-            # raise ValidationError(str(applications))
-            if applications:
-                _logger.info(f"Unsynced applications found: {applications}")
-                # Find matching application based on donee information
-                matching_app = self._find_matching_application(applications)
-                return matching_app
-            return None
-            
+            applications = self._make_sadqa_api_call(endpoint)
         except Exception as e:
-            # raise ValidationError(str(e))
             _logger.warning(f"Error occurred while searching portal applications: {str(e)}")
-            return None
+            if 'Portal API Error' in str(e):
+                return None, f"portal search ({endpoint}) returned no applications"
+            return None, f"portal search ({endpoint}) failed: {e}"
+        _logger.info(f"Unsynced applications found: {applications}")
+        if not isinstance(applications, list):
+            return None, f"portal search ({endpoint}) returned unexpected data: {str(applications)[:300]}"
+        matching_app = self._find_matching_application(applications)
+        if matching_app:
+            return matching_app, ''
+        medical_ids = [a.get('odooId') for a in applications if isinstance(a, dict) and a.get('department') == 'medical']
+        return None, (f"portal returned {len(applications)} application(s); "
+                      f"medical odooIds in it: {medical_ids or 'none'}")
 
 
     def create_portal_application(self):
