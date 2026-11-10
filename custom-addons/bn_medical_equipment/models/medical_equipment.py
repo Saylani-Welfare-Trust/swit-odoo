@@ -1314,7 +1314,8 @@ class MedicalEquipment(models.Model):
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
             'is_synced': True,
             'last_sync_date': fields.Datetime.now(),
-            'portal_application_id': portal_application_id
+            'portal_application_id': portal_application_id,
+            'welfare_portal_id': portal_application_id,
         }
         
         self.write(update_vals)
