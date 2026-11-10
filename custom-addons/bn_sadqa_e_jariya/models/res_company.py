@@ -1,5 +1,7 @@
 from odoo import models, fields
-from odoo.addons.bn_sms_whatsapp.models.whatsapp_service import NAMESPACE
+from odoo.addons.bn_sms_whatsapp.models.whatsapp_service import WHATSAPP_DEFAULTS
+
+NAMESPACE = WHATSAPP_DEFAULTS['whatsapp_namespace']
 
 
 def portal_setting(name, string, default=False):
@@ -25,6 +27,9 @@ class ResCompany(models.Model):
     _inherit = 'res.company'
 
     # Institution portal: operations are POSTed to welfare_instituiton_url + /rpc/odoo/institutional/<operation>
+    # (existing columns, kept with their names so the saved URL and key stay)
+    welfare_instituiton_url = fields.Char('Welfare Institution URL', tracking=True)
+    odoo_auth_institution_key = fields.Char('Odoo Auth Institution Key')
     institution_portal_login_url = portal_setting('institution_portal_login_url', 'Institution Portal Login URL')
     # A donee's permanent login, made on their first application: <donee name>.<form number>@<this domain>
     institution_portal_email_domain = portal_setting('institution_portal_email_domain', 'Portal Login Email Domain')

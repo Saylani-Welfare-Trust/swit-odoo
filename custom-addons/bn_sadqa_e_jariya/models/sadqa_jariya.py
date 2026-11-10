@@ -57,7 +57,7 @@ FORM_KINDS = {
 class SadqaJariya(models.Model):
     _name = 'sadqa.jariya'
     _description = 'Sadqa e Jariya Application'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
     name = fields.Char('Name', default='New', copy=False, readonly=True)
@@ -90,7 +90,7 @@ class SadqaJariya(models.Model):
     institution_type = fields.Selection([
         ('masjid', 'Masjid'),
         ('madrasa', 'Madrasa'),
-    ], string='Institution Type', compute='_compute_institution_type', store=True, readonly=False, tracking=True)
+    ], string='Portal Form Section', compute='_compute_institution_type', store=True, readonly=False, tracking=True)
 
     # Sent to the portal before Send Form (locked for the donee there), then filled from the form
     institute_name = fields.Char('Institution Name')
@@ -284,7 +284,14 @@ class SadqaJariya(models.Model):
             record._add_hod_lines()
             record.message_post(body=_("Application moved to HOD Approval by %s") % self.env.user.name)
 
+    def _check_role(self, group, role):
+        """A role step (HOD, Committee, Member) is done by that role only: the
+        view hides the button, this also refuses it over RPC."""
+        if not self.env.su and not self.env.user.has_group(group):
+            raise UserError(_('Only the %s can do this step.') % role)
+
     def action_move_to_committee(self):
+        self._check_role('bn_sadqa_e_jariya.group_sadqa_jariya_hod', _('HOD'))
         for record in self:
             if record.state != 'hod_approve':
                 raise ValidationError(_('Only applications in HOD Approval can move to Committee Approval.'))
@@ -300,6 +307,7 @@ class SadqaJariya(models.Model):
             record.message_post(body=_("Application moved to Committee Approval by %s") % self.env.user.name)
 
     def action_committee_decision(self):
+        self._check_role('bn_sadqa_e_jariya.group_sadqa_jariya_committee', _('Committee'))
         for record in self:
             if record.state != 'committee_approval':
                 raise ValidationError(_('Only applications in Committee Approval can be completed.'))
@@ -318,6 +326,7 @@ class SadqaJariya(models.Model):
             )
 
     def action_approve(self):
+        self._check_role('bn_sadqa_e_jariya.group_sadqa_jariya_member', _('Member'))
         for record in self:
             if not record.member_remarks:
                 raise ValidationError(_('Please enter Member Remarks!'))

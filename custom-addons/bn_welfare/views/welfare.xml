@@ -410,6 +410,4 @@
         groups="bn_welfare.group_individual_disbursement,bn_welfare.group_welfare_audit"
         action="welfare_action_individual"
         sequence="1"/>
-
-    <!-- Institution Disbursement and Fetch Institution Applications live in their own app, see bn_sadqa_e_jariya -->
 </odoo>
