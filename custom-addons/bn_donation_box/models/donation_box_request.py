@@ -210,10 +210,6 @@ class DonationBoxRequest(models.Model):
             'key_tag_assign': True,
         })
 
-    def generate_records(self):
-        """Kept for backward compatibility. The approval now does this itself."""
-        raise UserError(_('Records are generated automatically when the request is approved.'))
-
     # ------------------------------------------------------------------
     # Stock helpers
     # ------------------------------------------------------------------

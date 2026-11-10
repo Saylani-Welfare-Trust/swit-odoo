@@ -109,16 +109,4 @@
         </field>
     </record>
 
-    <record id="action_reconcile_wizard" model="ir.actions.act_window">
-        <field name="name">Reconcile</field>
-        <field name="res_model">reconcile.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Select accounting entries to reconcile with bank transactions.
-            </p>
-        </field>
-    </record>
-
 </odoo>

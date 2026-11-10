@@ -53,11 +53,4 @@
         </field>
     </record>
 
-    <record id="action_advance_donation_wizard" model="ir.actions.act_window">
-        <field name="name">Select Advance Donation Line</field>
-        <field name="type">ir.actions.act_window</field>
-        <field name="res_model">advance.donation.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-    </record>
 </odoo>

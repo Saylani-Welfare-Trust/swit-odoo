@@ -116,11 +116,12 @@ class WelfareRecurringLine(models.Model):
         
         for line in lines:
             try:
-                line._create_bill()
-                line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
-            except Exception as e:
-                # Log error but continue processing other lines
-                pass
+                with self.env.cr.savepoint():
+                    line._create_bill()
+                    line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
+            except Exception:
+                # the other lines still get their bill
+                _logger.exception("Could not create the bill of welfare %s recurring line %s", line.welfare_id.name, line.id)
     
     def _create_bill(self):
         """Create vendor bill for Cash + Bank collection"""

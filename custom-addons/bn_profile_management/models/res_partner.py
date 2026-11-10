@@ -166,9 +166,6 @@ class ResPartner(models.Model):
     # ------------------------------------------------------------------
     # One contact per person
     # ------------------------------------------------------------------
-    def _is_profile_contact(self):
-        self.ensure_one()
-        return any(self.category_id.mapped('is_profile_type'))
 
     @api.constrains('cnic_no', 'mobile', 'country_code_id', 'category_id', 'active', 'parent_id')
     def _check_duplicate_person(self):

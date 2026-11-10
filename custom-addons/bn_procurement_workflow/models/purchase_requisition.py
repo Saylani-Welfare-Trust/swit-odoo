@@ -230,15 +230,6 @@ class PurchaseRequisition(models.Model):
             raise ValidationError(_('Only a Procurement Manager can resume this request.'))
         self.state = 'confirm'
 
-    def action_mark_rfq_sent(self):
-        """Called once RFQs have been created for this requisition."""
-        self.ensure_one()
-        if self.state != 'procurement_approval':
-            raise ValidationError(_('This request is not in Procurement Manager Approval state.'))
-        if not self.procurement_manager_id:
-            raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
-        self.state = 'rfq_sent'
-
     @api.depends('material_request_id', 'state', 'purchase_ids.state',
                  'purchase_ids.order_line.product_id', 'purchase_ids.order_line.product_qty',
                  'line_ids.product_id', 'line_ids.product_qty')
@@ -267,45 +258,6 @@ class PurchaseRequisition(models.Model):
         if not any(line.locked_qty for line in self.line_ids):
             return self.line_ids.browse()
         return self.line_ids.filtered(lambda line: not line.is_locked)
-
-    def action_create_remaining_request(self):
-        """A closed request whose Purchase Order covers only part of its Material
-        Request: create a new Purchase Request for the products and quantities
-        that are not on an RFQ yet. This one is left as it is. While a request
-        is open, its remaining products get their RFQs on it instead. The new
-        one starts in Procurement Manager Approval, ready for RFQs: the
-        Procurement Manager creating it is the one who would approve it."""
-        self.ensure_one()
-        if self.state != 'done':
-            raise ValidationError(_(
-                'This request is still open: create the RFQs for its remaining products on it instead.'))
-        if not self.material_request_id:
-            raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
-        if self._has_newer_request():
-            raise ValidationError(_('A more recent Purchase Request already exists for this Material Request.'))
-        shortfall = self._get_request_shortfall()
-        if not shortfall:
-            raise ValidationError(_('Every product and quantity of the Material Request is already on an RFQ.'))
-        new_request = self._create_remaining_request()
-        new_request.action_procurement_approve()
-        products = ', '.join(
-            '%s (%g %s)' % (product.display_name, quantity, product.uom_id.name)
-            for product, quantity in shortfall.items())
-        self.message_post(body=_(
-            '%(user)s created %(request)s for what is not on an RFQ yet: %(products)s.',
-            user=self.env.user.display_name,
-            request=new_request._get_html_link(), products=products))
-        new_request.message_post(body=_(
-            'Created from %(request)s for what the Material Request still needs: %(products)s.',
-            request=self._get_html_link(), products=products))
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Purchase Request'),
-            'res_model': 'purchase.requisition',
-            'res_id': new_request.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
 
     def _is_selecting_rfqs(self):
         """Whether a winning quote can be selected for this requisition. Each

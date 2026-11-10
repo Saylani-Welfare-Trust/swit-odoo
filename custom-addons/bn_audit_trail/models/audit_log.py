@@ -72,8 +72,6 @@ class AuditTrailLog(models.Model):
     operation_log_ids = fields.Many2many(
         'audit.trail.log', compute='_compute_operation_log_ids',
         string='Whole Operation')
-    is_root = fields.Boolean(compute='_compute_is_root', search='_search_is_root',
-                             string='Top-Level')
 
     # ---------------------------------------------------------------
     # Computes
@@ -90,15 +88,6 @@ class AuditTrailLog(models.Model):
         for log in self:
             log.operation_log_ids = others.filtered(
                 lambda o: o.operation_ref == log.operation_ref and o != log) if log.operation_ref else False
-
-    @api.depends('parent_id')
-    def _compute_is_root(self):
-        for log in self:
-            log.is_root = not log.parent_id
-
-    def _search_is_root(self, operator, value):
-        positive = (operator == '=') == bool(value)
-        return [('parent_id', '=' if positive else '!=', False)]
 
     # ---------------------------------------------------------------
     # Helpers

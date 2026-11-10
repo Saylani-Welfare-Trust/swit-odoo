@@ -40,6 +40,8 @@ class DirectDeposit(models.Model):
                     'product_id': line.product_id.id,
                     'donee_id': deposit.donor_id.id,
                     'ref': deposit.name,
+                    # the POS session / POS the deposit was made at
+                    **deposit._pos_link_vals(),
                 }
                 vals.update(deposit._get_livestock_department_vals(line.product_id))
                 # line.amount is the unit price

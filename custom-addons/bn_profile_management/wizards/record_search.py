@@ -50,7 +50,6 @@ class RecordSearch(models.TransientModel):
     program_locked = fields.Boolean('Programme set by the menu')
 
     is_welfare = fields.Boolean('Is Welfare')
-    is_medical = fields.Boolean('Is Medical')
     is_microfinance = fields.Boolean('Is Microfinance')
     category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
 

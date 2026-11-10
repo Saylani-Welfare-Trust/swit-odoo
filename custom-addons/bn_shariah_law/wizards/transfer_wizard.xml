@@ -123,32 +123,4 @@
         </field>
     </record>
 
-    <record id="action_transfer_wizard" model="ir.actions.act_window">
-        <field name="name">Fund Transfer</field>
-        <field name="res_model">shariah.transfer.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="context">{}</field>
-        <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Transfer funds between Shariah-compliant segments.
-            </p>
-            <p>
-                <strong>How it works:</strong><br/>
-                1. Select Source and Destination segments<br/>
-                2. Enter the amount to transfer<br/>
-                3. Review the balance information<br/>
-                4. Preview the transfer (optional)<br/>
-                5. Click Transfer to complete
-            </p>
-            <p>
-                <strong>Rules:</strong><br/>
-                - Transfers are governed by configured rules<br/>
-                - Some transfers may require approval<br/>
-                - Maximum transfer limits apply<br/>
-                - Source must have sufficient balance
-            </p>
-        </field>
-    </record>
-
 </odoo>

@@ -79,12 +79,6 @@ class PosOrder(models.Model):
             'segments_l4': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l4],
         }
 
-    def _shop_id(self, config_id):
-        try:
-            return int(config_id) if config_id else None
-        except (ValueError, TypeError):
-            return None
-
     def _validate_date(self, d):
         if not d:
             return None

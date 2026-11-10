@@ -179,7 +179,6 @@ class AdvanceDonationStatementWizard(models.TransientModel):
         """
         payload = json.loads(data)
         lines        = payload.get("lines", [])
-        currency     = payload.get("currency", "")
         date_from    = payload.get("date_from", "")
         date_to      = payload.get("date_to", "")
         search       = payload.get("search", "")

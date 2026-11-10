@@ -147,7 +147,6 @@ class MedicalEquipment(models.Model):
 
     is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
 
-    approval_count = fields.Integer('Approval Count')
     approval_button_check = fields.Boolean('Approval Button Check', compute='_compute_approval_button_check')
 
     move_id = fields.Many2one('account.move', string="Account Move")
@@ -176,12 +175,10 @@ class MedicalEquipment(models.Model):
     )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     
-    refund_approval_count = fields.Integer('Refund Approval Count', default=0, copy=False)
     refund_remarks_approval1 = fields.Text('Refund Approval (1) Remarks')
     refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By (1)', readonly=True, copy=False)
     refund_approved_by_2 = fields.Many2one('res.users', string='Refund Approved By (2)', readonly=True, copy=False)
     refund_approved_date_1 = fields.Datetime('Refund Approved On (1)', readonly=True, copy=False)
-    refund_approved_date_2 = fields.Datetime('Refund Approved On (2)', readonly=True, copy=False)
 
     def _inverse_mobile(self):
         for rec in self:
@@ -730,76 +727,8 @@ class MedicalEquipment(models.Model):
             
         else:
             raise ValidationError('This record has already been approved or is in an invalid state.')
-        
-        self.approval_count += 1
+
     
-    def action_sync_welfare_portal(self):
-        """
-        Sync Below 50% cases to welfare portal - follows welfare.py pattern
-        """
-        if not self:
-            raise UserError("Please select at least one record.")
-        
-        invalid = self.filtered(lambda r: r.case_type != 'below_50_percent')
-        if invalid:
-            raise UserError("Only Below 50% cases can be synced to welfare portal.")
-        # self.state = 'inquiry'
-        
-        success_msgs = []
-        error_msgs = []
-        
-        for rec in self:
-            if not rec.donee_id or not rec.donee_id.name:
-                error_msgs.append(f"[{rec.display_name}] Donee is required.")
-                continue
-            if not rec.cnic_no and not rec.donee_id.mobile:
-                error_msgs.append(f"[{rec.display_name}] CNIC or Mobile is required.")
-                continue
-            
-            try:
-                # Step 1: Check if donee exists in portal
-                donee_exists = rec._check_donee_exists_in_portal()  
-                
-                # Step 2: Create donee if needed
-                if not donee_exists:
-                    donee_data = rec._create_donee_in_portal()
-                    portal_donee_id = donee_data.get('id')
-                else:
-                    portal_donee_id = donee_exists.get('id')
-                
-                # Step 3: Create application in portal
-                portal_application = rec._create_me_portal_application()
-                portal_application_id = portal_application.get('id')
-                
-                # Step 4: Mark as synced in portal
-                # rec._mark_me_application_synced()
-                
-                # Step 5: Update record with portal information (like welfare does)
-                rec.write({
-                    'welfare_portal_id': portal_application_id,
-                    # 'Portal_acknowledgment': True,
-                    'last_sync_date': self.last_sync_date,
-                    'state': 'send_for_inquiry',
-
-                })
-                
-                result_message = f"✅ Successfully synced to Welfare Portal. Application ID: {portal_application_id}"
-                success_msgs.append(f"[{rec.display_name}] {result_message}")
-                
-            except Exception as e:
-                error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
-                error_msgs.append(error_message)
-        
-        summary = ""
-        if success_msgs:
-            summary += "<b>Success:</b><br/>" + "<br/>".join(success_msgs) + "<br/>"
-        if error_msgs:
-            summary += "<b>Errors:</b><br/>" + "<br/>".join(error_msgs)
-        if not summary:
-            summary = "No records processed."
-        
-        return self._show_notification('Welfare Portal Sync Results', summary, 'info')
-
     def _create_donee_in_portal(self):
         """Create donee in welfare portal"""
         try:
@@ -884,17 +813,6 @@ class MedicalEquipment(models.Model):
             }
         }
     
-    def action_acknowledge_welfare_portal(self):
-        """
-        Mark welfare portal acknowledgment received for Below 50% cases
-        """
-        self.ensure_one()
-        
-        if self.case_type != 'below_50_percent':
-            raise ValidationError('Only Below 50% cases can receive welfare acknowledgment.')
-        
-        self.write({'Portal_acknowledgment': True})
-        
     def action_show_picking(self):
         return {
             'type': 'ir.actions.act_window',
@@ -989,104 +907,6 @@ class MedicalEquipment(models.Model):
             'target': 'current',
         }
 
-    @api.model
-    def create_me_record(self, data):
-        # records made here carry the POS session / POS they come from
-        self = self.with_context(pos_link_create=True)
-        product_lines = []
-
-        for line in data['order_lines']:
-            # Assuming 'product_id' is a valid product ID
-            product_lines.append((0, 0, {
-                'product_id': line['product_id'],
-                'quantity': line['quantity'],
-            }))
-        
-        me = self.env['medical.equipment'].create({
-            'donee_id': data['donee_id'],
-            'medical_equipment_line_ids': product_lines
-        })
-
-        for line in me.medical_equipment_line_ids:
-            base_price = line.product_id.lst_price
-            taxes = line.product_id.taxes_id
-
-            total_price_incl_tax = base_price
-
-            for tax in taxes:
-                if tax.amount_type == 'percent':
-                    tax_amount = base_price * (tax.amount / 100)
-
-                    total_price_incl_tax += tax_amount
-                else:
-                    total_price_incl_tax += tax.amount
-
-            line.security_deposit = total_price_incl_tax * line.quantity
-
-        me.calculate_amount()
-       
-        return{
-            "status": "success",
-            "id": me.id
-        }
-    
-    @api.model
-    def get_me_record(self, data):
-        """Fetch ME record by name and return product information"""
-        # Strip spaces just in case the barcode scanner added some
-        me_name = str(data.get('name', '')).strip()
-        
-        # Search for the ME record
-        me = self.sudo().search([('name', '=', me_name)], limit=1)
-        
-        if not me:
-            return {
-                "status": "error",
-                "body": f"Medical Equipment record with reference {me_name} not found."
-            }
-        
-        # Block settlement only if the record is already closed, cancelled, or refunded
-        if me.state in ['closed', 'cancel', 'refund']:
-            return {
-                "status": "error",
-                "body": f"Current status of {me_name} is {me.state.capitalize()}. It cannot be settled."
-            }
-        
-        # Prepare product data for POS
-        products_data = []
-        
-        # Add regular product lines
-        for line in me.medical_equipment_line_ids:
-            # Skip lines that don't have a valid product linked
-            if not line.product_id:
-                continue
-                
-            product = line.product_id
-            products_data.append({
-                'product_id': product.id,
-                'name': product.name,
-                'quantity': line.quantity,
-                'price': product.lst_price,
-                'default_code': product.default_code,
-                'category': product.categ_id.name if product.categ_id else ''
-            })
-            
-        # If the list is still empty, return a very clear error message
-        if not products_data:
-            return {
-                "status": "error",
-                "body": f"No valid products found in {me_name}. Please open the record in the backend and ensure the 'Items' tab has products assigned."
-            }
-        
-        return {
-            'id': me.id,
-            'name': me.name,
-            'donee_id': me.donee_id.id if me.donee_id else False,
-            'donor_name': me.donee_id.name if me.donee_id else '',
-            'products': products_data,
-            'success': True
-        }
-    
     def action_recovery(self):
         """
         Automatically create recovery picking and update state
@@ -1159,10 +979,8 @@ class MedicalEquipment(models.Model):
             'state': 'refund',
             'refund_approved_by_1': self.env.user.id,
             'refund_approved_date_1': fields.Datetime.now(),
-            'refund_approval_count': self.refund_approval_count + 1,
             # Optional: Fill the second approval fields with the same user for record keeping
             'refund_approved_by_2': self.env.user.id,
-            'refund_approved_date_2': fields.Datetime.now(),
         })
 
         return True
@@ -1247,7 +1065,7 @@ class MedicalEquipment(models.Model):
     def _handle_existing_application(self, portal_application):
             """Handle existing application found in portal"""
             # Mark application as synced in portal
-            synced_application = self._mark_application_synced()
+            self._mark_application_synced()
             
             return {
             'action': 'linked_existing',
@@ -1503,8 +1321,7 @@ class MedicalEquipment(models.Model):
                 message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
 
         else:
-            donee_in_portal = self._create_donee_in_portal()
-            # message = "✅ Donee created in portal"  # Add this line
+            self._create_donee_in_portal()
         # Check for applications
         application = self._search_portal_applications()
         # _logger.info(f"Applications found: {application}")    

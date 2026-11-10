@@ -181,3 +181,23 @@ class TestSadqaEJariya(TransactionCase):
         self.assertTrue(hod.has_group('bn_sadqa_e_jariya.group_institutional_disbursement'), 'HOD implies User')
         application.with_user(hod).action_move_to_committee()
         self.assertEqual(application.state, 'committee_approval')
+
+    def test_pos_documents_of_session_and_shop(self):
+        """A record made at a POS session shows on that session and on its POS
+        (POS Documents), and opens from there."""
+        config = self.env['pos.config'].create({'name': 'Sadqa Test Shop'})
+        session = self.env['pos.session'].create({'config_id': config.id})
+        application = self.env['sadqa.jariya'].create({'donee_id': self._institution('POS Masjid').id})
+        line = self.env['sadqa.jariya.line'].create({'application_id': application.id, 'pos_session_id': session.id})
+        self.assertEqual(line.pos_config_id, config)
+        self.assertEqual(session.pos_document_count, 1)
+        self.assertEqual(config.pos_document_count, 1)
+        action = config.action_view_pos_documents()
+        rows = self.env['pos.document'].search(action['domain'])
+        self.assertEqual((rows.res_model, rows.res_id, rows.link), ('sadqa.jariya.line', line.id, 'session'))
+        self.assertIn(application.name, rows.name)
+        self.assertEqual(rows.action_open_document()['res_id'], line.id)
+        for model, xmlid in (('pos.session', 'point_of_sale.view_pos_session_form'),
+                             ('pos.config', 'point_of_sale.pos_config_view_form')):
+            arch = self.env[model].get_views([(self.env.ref(xmlid).id, 'form')])['views']['form']['arch']
+            self.assertIn('action_view_pos_documents', arch, model)

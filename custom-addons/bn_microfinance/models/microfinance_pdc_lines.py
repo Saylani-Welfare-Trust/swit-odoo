@@ -49,16 +49,6 @@ class MicrofinancePDCLine(models.Model):
                 vals['microfinance_line_id'] = microfinance_line.id
 
         return super(MicrofinancePDCLine, self).create(vals)
-    def _compute_donee_id(self):
-        for rec in self:
-            # Try to get donee from microfinance_line_id first
-            if rec.microfinance_line_id:
-                rec.donee_id = rec.microfinance_line_id.donee_id.id
-            # Fallback to microfinance_id
-            elif rec.microfinance_id:
-                rec.donee_id = rec.microfinance_id.donee_id.id
-            else:
-                rec.donee_id = False
 
 
     def action_deposit (self):

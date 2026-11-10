@@ -24,20 +24,6 @@ class SourceDocumentMixin(models.AbstractModel):
         return [(model.model, model.name) for model in self.env['ir.model'].sudo().search(
             [('model', 'not like', 'ir.%'), ('transient', '=', False)])]
 
-    def action_open_source(self):
-        self.ensure_one()
-        record = self.source_record_ref
-        if not record:
-            return False
-        return {'type': 'ir.actions.act_window', 'res_model': record._name, 'res_id': record.id,
-                'view_mode': 'form', 'target': 'current'}
-
-    @api.model
-    def _source_vals(self, record):
-        """Values linking a new transfer / entry to ``record``."""
-        record = record[:1]
-        return {'source_record_ref': '%s,%s' % (record._name, record.id)} if record else {}
-
 
 class StockPicking(models.Model):
     _name = 'stock.picking'

@@ -284,12 +284,8 @@ class QurbaniSlaughterSlotDemand(models.Model):
                 required_distribution = demand.total_hissa or 0
 
                 # ==================================================
-                # SPLIT USED / FREE DISTRIBUTION
+                # FREE DISTRIBUTION
                 # ==================================================
-                used_distribution_records = distribution_records.filtered(
-                    lambda r: r.qurbani_order_no
-                )
-
                 free_distribution_records = distribution_records.filtered(
                     lambda r: not r.qurbani_order_no
                 )

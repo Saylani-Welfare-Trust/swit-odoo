@@ -144,6 +144,3 @@ class ForeignCurrency(models.Model):
                 'sticky': False,
             }
         }
-    def action_create_donation_box_request(self):
-        """Compatibility wrapper for legacy donation-box button calls."""
-        return self.action_create_pos_record()

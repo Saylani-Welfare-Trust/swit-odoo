@@ -1,6 +1,6 @@
 {
     'name': 'POS Custom Button',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.5.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -10,12 +10,14 @@
         'bn_analytic_account_customization',
     ],
     'data': [
+        'security/ir.model.access.csv',
         'data/sequence.xml',
         'views/pos_config.xml',
         'views/pos_session.xml',
         'views/pos_order.xml',
         'views/res_company.xml',
         'views/res_config_setting.xml',
+        'views/pos_document.xml',
     ],
     'auto_install': False,
     'application': False,

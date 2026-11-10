@@ -1059,11 +1059,6 @@ class ShariahLaw(models.Model):
                 shariah_record[analytic_id][key] += value
                 daily_changes[analytic_id][key] += value
 
-    def _get_analytic_account_from_product(self, product_id):
-        """Get analytic account from product."""
-        analytics = self.env['product.product'].browse(product_id).analytic_account_id
-        return analytics[:1] if analytics else False
-
     def _update_cumulative_totals_with_hierarchy(self, shariah_record):
         """
         Update cumulative totals in shariah.law with hierarchy support.

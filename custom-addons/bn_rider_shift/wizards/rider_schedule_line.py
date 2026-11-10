@@ -155,7 +155,7 @@ class RiderScheduleLine(models.TransientModel):
 
         # Donation Box record: created as superuser (rider checked above); it
         # waits in Draft for the Complain Center.
-        complaint = self.env['donation.box.complain.center'].sudo().create({
+        self.env['donation.box.complain.center'].sudo().create({
             'donation_box_registration_installation_id': self.donation_box_registration_installation_id.id,
             'rider_id': self.rider_id.id,
             'lot_id': self.lot_id.id,

@@ -18,12 +18,4 @@
         </field>
     </record>
 
-    <record id="action_microfinance_application_wizard" model="ir.actions.act_window">
-        <field name="name">Select Microfinance Scheme</field>
-        <field name="res_model">microfinance.application.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="view_id" ref="microfinance_application_wizard_form"/>
-        <field name="target">new</field>
-    </record>
-
 </odoo>

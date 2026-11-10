@@ -97,16 +97,6 @@ class RiderCollection(models.Model):
                 )
         return super().write(vals)
     
-    def action_mark_cfb_paid(self):
-        """Mark all linked counterfeit notes as paid"""
-        for collection in self:
-            if collection.state not in ('donation_submit', 'pending'):
-                raise UserError("Only a submitted collection can be marked as paid.")
-            if collection.remarks == 'CFB' and collection.counterfeit_note_ids:
-                collection.counterfeit_note_ids.write({'state': 'payment_received'})
-                collection.state = 'paid'
-        return True
-
     def action_fill_dn_number_from_pos(self):
         """Server action "Find DN # from POS": link Paid collections paid before the POS
         order was kept on them. Only a collection with exactly one matching POS order

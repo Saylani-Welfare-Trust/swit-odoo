@@ -306,7 +306,6 @@ class WelfareFieldsWizard(models.TransientModel):
                 raise ValidationError('Please enter Committee Remarks before approval.')
             welfare.write({'committee_remarks': self.committee_remarks})
             welfare.action_move_to_hod()  # This moves to hod_approve
-            message = 'Application approved by Committee and sent to HOD'
             
         elif welfare.state == 'hod_approve':
             # Check HOD remarks
@@ -314,7 +313,6 @@ class WelfareFieldsWizard(models.TransientModel):
                 raise ValidationError('Please enter HOD Remarks before approval.')
             welfare.write({'hod_remarks': self.hod_remarks})
             welfare.action_move_to_member()  # This moves to mem_approve
-            message = 'Application approved by HOD and sent to Member'
             
             
         else:
@@ -324,41 +322,6 @@ class WelfareFieldsWizard(models.TransientModel):
             'type': 'ir.actions.act_window_close',
             'context': self.env.context,
         }
-    
-    def action_save_and_close(self):
-        self.ensure_one()
-        welfare = self.welfare_id
-        
-        fields_to_copy = [
-            'name', 'cnic_no', 'father_name', 'father_cnic_no', 'old_system_id',
-            'applicantLocationLink', 'date', 'cnic_expiration_date', 'hod_remarks',
-            'member_remarks', 'committee_remarks', 'rejection_remarks', 'designation',
-            'company_name', 'company_phone', 'company_address', 'service_duration',
-            'monthly_salary', 'residence_type', 'home_phone_no', 'landlord_cnic_no',
-            'landlord_mobile', 'landlord_name', 'rental_shared_duration', 'per_month_rent',
-            'gas_bill', 'electricity_bill', 'home_other_info', 'monthly_income',
-            'outstanding_amount', 'monthly_household_expense', 'bank_account',
-            'bank_name', 'account_no', 'institute_name', 'other_loan',
-            'aid_from_other_organization', 'have_applied_swit', 'details_1', 'details_2',
-            'driving_license', 'loan_request_amount', 'loan_tenure_expected',
-            'security_offered', 'dependent_person', 'household_member',
-            'currency_id', 'order_type', 'is_individual',
-            'portal_application_id', 'portal_donee_id', 'last_sync_date', 'is_synced',
-            'portal_sync_status', 'portal_last_sync_message', 'portal_review_notes', 'inquiry_media',
-            'application_form', 'application_form_name', 'frc', 'frc_name',
-            'electricity_bill_file', 'electricity_bill_name', 'gas_bill_file', 'gas_bill_name',
-            'family_cnic', 'family_cnic_name'
-        ]
-        
-        update_vals = {}
-        for field in fields_to_copy:
-            if hasattr(self, field):
-                update_vals[field] = getattr(self, field)
-        
-        if update_vals:
-            welfare.write(update_vals)
-        
-        return {'type': 'ir.actions.act_window_close'}
     
     def action_cancel(self):
         return {'type': 'ir.actions.act_window_close'}

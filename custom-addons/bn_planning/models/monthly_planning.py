@@ -336,22 +336,6 @@ class MonthlyPlanning(models.Model):
                 )
 
     # ─── Helpers ──────────────────────────────────────────
-    def _get_line_commands_for_days(self):
-        self.ensure_one()
-        commands = []
-        if not self.from_date or not self.to_date:
-            return commands
-        delta = (self.to_date - self.from_date).days
-        for i in range(delta + 1):
-            date_obj = self.from_date + timedelta(days=i)
-            commands.append((0, 0, {'date': date_obj, 'quantity': 0.0}))
-        return commands
-
-    def is_date_in_range(self, date_val):
-        self.ensure_one()
-        if not date_val or not self.from_date or not self.to_date:
-            return False
-        return self.from_date <= date_val <= self.to_date
 
     # ─── Actions ──────────────────────────────────────────
     def action_open_import_wizard(self):
@@ -437,11 +421,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
     )
 
 
-    min_line_date = fields.Date(
-        string='Earliest Allowed Date',
-        compute='_compute_min_line_date', store=False,
-    )
-
     planned_qty = fields.Float(
         string='Planned Qty', readonly=True, copy=False,
         help='Snapshot of Quantity taken when the plan was activated. '
@@ -492,13 +471,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
     def _compute_transferred(self):
         for rec in self:
             rec.transferred = bool(rec.transfer_picking_id)
-
-    @api.depends('monthly_planning_id', 'monthly_planning_id.from_date')
-    def _compute_min_line_date(self):
-        today = fields.Date.today()
-        for rec in self:
-            plan_from = rec.monthly_planning_id.from_date
-            rec.min_line_date = plan_from if (plan_from and plan_from > today) else today
 
     @api.model
     def _default_line_date(self):

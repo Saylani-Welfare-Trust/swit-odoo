@@ -528,14 +528,6 @@ class WelfareLine(models.Model):
             line._check_welfare_payable()
         return True
 
-    def can_disburse(self):
-        """Check if line can be disbursed (not already collected/returned/disbursed)"""
-        return self.state not in ['collected', 'return', 'disbursed']
-
-    def can_return(self):
-        """Check if line can be returned"""
-        return self.payment_type == 'assigned_officer' and self.state == 'pending'            
-       
     def action_disbursed(self):
         """
         Mark as disbursed or collected based on payment type

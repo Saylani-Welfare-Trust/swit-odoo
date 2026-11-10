@@ -127,51 +127,6 @@ class Welfare(models.Model):
     
     gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
-        # Separate document image fields for each document type
-    application_form_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Application Forms',
-        domain=[('document_type', '=', 'application_form')]
-    )
-    
-    frc_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id', 
-        string='FRC Documents',
-        domain=[('document_type', '=', 'frc')]
-    )
-    
-    electricity_bill_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Electricity Bills',
-        domain=[('document_type', '=', 'electricity_bill')]
-    )
-    
-    gas_bill_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Gas Bills',
-        domain=[('document_type', '=', 'gas_bill')]
-    )
-    
-    family_cnic_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Family CNICs',
-        domain=[('document_type', '=', 'family_cnic')]
-    )
-
-
-    
-
-    # NOTE: the *_ids document One2many fields (application_form_ids, frc_ids,
-    # electricity_bill_ids, gas_bill_ids, family_cnic_ids) are defined once
-    # above. The duplicated second set (app_form_ids / elec_bill_ids and the
-    # re-declared frc_ids / gas_bill_ids / family_cnic_ids) was removed: in
-    # Python only the last assignment survived, silently overriding the first
-    # definitions with different labels.
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # Store raw URLs (never touched by sanitizer)
@@ -185,35 +140,7 @@ class Welfare(models.Model):
     # is required and the ORM never calls a compute on x2many), so these were
     # broken no-op declarations. Replaced with the equivalent Many2many fields
     # computed from document_image_ids in _compute_filtered_images below.
-    application_form_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Application Form Images',
-    )
 
-    frc_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='FRC Images',
-    )
-
-    electricity_bill_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Electricity Bill Images',
-    )
-
-    gas_bill_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Gas Bill Images',
-    )
-
-    family_cnic_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Family CNIC Images',
-    )
     # Computed Html fields for display only — never written by the form
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
@@ -236,10 +163,6 @@ class Welfare(models.Model):
         string="Inquiry Media",
         sanitize=False,   # IMPORTANT
     )
-    required_approval_for_limit = fields.Selection([
-        ('hod', 'HOD Approval Required'),
-        ('member', 'Member Approval Required')
-    ], string="Required Approval Based on Amount", compute="_compute_required_approval", store=False)
     previous_welfare_source_id = fields.Many2one(
         'welfare', 
         string="Previous Welfare Source",
@@ -340,24 +263,6 @@ class Welfare(models.Model):
                 except Exception as e:
                     _logger.error("Failed saving image from %s: %s", url, str(e))
     
-    @api.depends('document_image_ids')
-    def _compute_filtered_images(self):
-        for record in self:
-            record.application_form_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'application_form'
-            )
-            record.frc_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'frc'
-            )
-            record.electricity_bill_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'electricity_bill'
-            )
-            record.gas_bill_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'gas_bill'
-            )
-            record.family_cnic_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'family_cnic'
-            )                    
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
         default=0.0
@@ -386,19 +291,8 @@ class Welfare(models.Model):
     ], string='Residence Ownership', tracking=True)
     total_children = fields.Integer('Total Number of Children', tracking=True)
     boys_count = fields.Integer('Number of Boys', tracking=True)
-    girls_count = fields.Integer('Number of Girls', tracking=True)
-    children_education_status = fields.Text('Children Education Status', tracking=True, 
-        help="Specify whether children are studying in school, college, or university")
-    main_issue = fields.Text('Main Issue/Problem', tracking=True, 
-        help="Describe the main issue or problem being faced by the applicant or their family")
     
     # Previous Disbursements for same Donee
-    previous_welfare_ids = fields.One2many(
-        compute='_compute_previous_welfare_ids',
-        comodel_name='welfare',
-        string='Previous Disbursements to This Donee',
-        store=False
-    )
     
     previous_disbursement_id = fields.Many2one(
         compute='_compute_previous_disbursement_id',
@@ -440,12 +334,6 @@ class Welfare(models.Model):
         string="Donee Issues", 
         help="What are the issues/concerns related to the donee?"
     )
-    def _compute_required_approval(self):
-        for rec in self:
-            if rec._check_amount_within_hod_limit():
-                rec.required_approval_for_limit = 'hod'
-            else:
-                rec.required_approval_for_limit = 'member'
     @api.depends('donee_id.area', 'employee_category_id')
     def _compute_employee_domain(self):
         for record in self:
@@ -458,22 +346,6 @@ class Welfare(models.Model):
                 domain.append(('area', '=', record.donee_id.area.id))
 
             record.employee_domain = json.dumps(domain)
-    @api.depends('donee_id')
-    def _compute_previous_welfare_ids(self):
-        """Compute previous welfare disbursements for the same donee"""
-        for rec in self:
-            if rec.donee_id:
-                domain = [
-                    ('donee_id', '=', rec.donee_id.id),
-                    ('state', 'in', ['disbursed', 'recurring'])
-                ]
-                # Only exclude current record if it has a real integer ID (saved record)
-                if rec.id and isinstance(rec.id, int) and rec.id > 0:
-                    domain.append(('id', '!=', rec.id))
-                previous = self.search(domain, order='date desc')
-                rec.previous_welfare_ids = previous
-            else:
-                rec.previous_welfare_ids = False
 
     def _get_previous_welfare(self):
         """Most recent other application of the same donee that is past draft"""
@@ -504,9 +376,6 @@ class Welfare(models.Model):
             self.residence_ownership = previous_welfare.residence_ownership
             self.total_children = previous_welfare.total_children
             self.boys_count = previous_welfare.boys_count
-            self.girls_count = previous_welfare.girls_count
-            self.children_education_status = previous_welfare.children_education_status
-            self.main_issue = previous_welfare.main_issue
             self.residence_type = previous_welfare.residence_type
             self.home_phone_no = previous_welfare.home_phone_no
             self.landlord_name = previous_welfare.landlord_name
@@ -582,24 +451,6 @@ class Welfare(models.Model):
             else:
                 # Show ONLY in approve state
                 rec.show_disburse_button = rec.state == 'approve'
-
-    def _to_float(self, value):
-        """Convert string to float safely"""
-        try:
-            return float(value) if value else 0.0
-        except:
-            return 0.0
-    
-    def _to_int(self, value):
-        """Convert string to int safely"""
-        try:
-            return int(float(value)) if value else 0
-        except:
-            return 0
-    
-    def _to_bool(self, value):
-        """Convert Yes/No string to boolean"""
-        return str(value).lower() == 'yes' if value else False
 
 
     def _check_count_values(self, vals):
@@ -727,79 +578,6 @@ class Welfare(models.Model):
             _logger.info(f"Donee not found in portal: {str(e)}")
             return None
 
-    def _get_portal_document_value(self, payload, portal_fields):
-        """Find a document value anywhere in a nested portal payload."""
-        if not payload:
-            return None
-
-        field_names = set(portal_fields)
-        stack = [payload]
-        while stack:
-            value = stack.pop()
-            if isinstance(value, dict):
-                for field_name in field_names:
-                    field_value = value.get(field_name)
-                    if field_value:
-                        return field_value
-
-                document_key = value.get('field') or value.get('key') or value.get('name')
-                if document_key in field_names:
-                    for url_key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data'):
-                        if value.get(url_key):
-                            return value.get(url_key)
-
-                stack.extend(value.values())
-            elif isinstance(value, list):
-                stack.extend(value)
-
-        return None
-
-
-    def _iter_portal_document_values(self, value):
-        if isinstance(value, str):
-            cleaned_value = value.strip()
-            if cleaned_value:
-                yield cleaned_value
-        elif isinstance(value, list):
-            for item in value:
-                yield from self._iter_portal_document_values(item)
-        elif isinstance(value, dict):
-            for key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data', 'base64'):
-                if value.get(key):
-                    yield from self._iter_portal_document_values(value.get(key))
-
-    def _portal_document_filename(self, portal_field, value):
-        if isinstance(value, str) and value.startswith('http'):
-            filename = urlparse(value).path.rsplit('/', 1)[-1]
-            if filename:
-                return filename
-        return f"{portal_field}.jpg"
-
-    def _download_portal_document(self, portal_field, document_value):
-        """Return a base64 string and filename for portal document payloads."""
-        for value in self._iter_portal_document_values(document_value):
-            try:
-                if value.startswith('data:') and ',' in value:
-                    return value.split(',', 1)[1], self._portal_document_filename(portal_field, value)
-
-                if value.startswith('http'):
-                    response = requests.get(value, timeout=10)
-                    if response.status_code == 200:
-                        return base64.b64encode(response.content).decode('utf-8'), self._portal_document_filename(portal_field, value)
-                    _logger.warning(
-                        f"Failed to download {portal_field}: HTTP {response.status_code}"
-                    )
-                    continue
-
-                # Some portal payloads already contain plain base64 without a data URL prefix.
-                base64.b64decode(value, validate=True)
-                return value, self._portal_document_filename(portal_field, value)
-            except Exception as e:
-                _logger.error(
-                    f"Error processing {portal_field} document value {value}: {str(e)}"
-                )
-
-        return None, None
 
     def action_check_portal_status(self):
         self.ensure_one()
@@ -823,14 +601,6 @@ class Welfare(models.Model):
             'electricityBillImages': 'electricity_bill_urls',
             'gasBillImages':         'gas_bill_urls',
             'familyCnicImages':      'family_cnic_urls',
-        }
-
-        document_labels = {
-            'applicationFormImages': 'Application Form',
-            'frcImages':             'FRC',
-            'electricityBillImages': 'Electricity Bill',
-            'gasBillImages':         'Gas Bill',
-            'familyCnicImages':      'Family CNIC',
         }
 
         document_aliases = {
@@ -878,7 +648,6 @@ class Welfare(models.Model):
             }
 
             for portal_field, html_field in portal_to_html_field.items():
-                label      = document_labels[portal_field]
                 raw_values = []
 
                 for source in document_sources:
@@ -961,7 +730,7 @@ class Welfare(models.Model):
     def _handle_existing_application(self, portal_application):
         """Handle existing application found in portal"""
         # Mark application as synced in portal
-        synced_application = self._mark_application_synced()
+        self._mark_application_synced()
         
         
         return {

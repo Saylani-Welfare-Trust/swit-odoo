@@ -3,7 +3,7 @@
 
       <menuitem id="main_menu_advance_donation"
             name="Advance Donation"
-            web_icon="bn_advance_donation,static/description/icon2.png"
+            web_icon="bn_advance_donation,static/description/icon.png"
             groups="bn_advance_donation.group_adv_don_root"/>
 
       <menuitem id="menu_advance_donation"

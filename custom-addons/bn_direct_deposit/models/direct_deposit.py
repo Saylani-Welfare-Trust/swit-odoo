@@ -139,6 +139,8 @@ May Allah bless you!
                 'direct_deposit_id': self.id,
                 'remarks': _('Auto-created from Direct Deposit %s') % self.name,
                 'state': 'paid',
+                # made at the POS session / POS of the deposit
+                **self._pos_link_vals(),
             })
             created |= receipt
 
@@ -441,6 +443,7 @@ May Allah bless you!
                 'date': fields.Date.today(),
                 'state': 'paid',
                 'microfinance_line_id': line.id,
+                **self._pos_link_vals(),
             })
 
             applied_any = True
@@ -528,6 +531,7 @@ May Allah bless you!
                 'donor_id': self.donor_id.id,
                 'amount': sum(line.amount * line.quantity for line in lines),
                 'direct_deposit_id': self.id,
+                **self._pos_link_vals(),
             }))
             for line in lines:
                 DHSLine.create({

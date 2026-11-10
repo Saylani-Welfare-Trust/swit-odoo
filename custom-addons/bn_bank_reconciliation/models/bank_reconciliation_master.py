@@ -502,25 +502,5 @@ class BankReconciliationMaster(models.Model):
             'target': 'current',
         }
 
-    def action_view_transactions(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'bank.reconciliation.transaction',
-            'view_mode': 'tree,form',
-            'domain': [('master_id', '=', self.id)],
-            'context': {'default_master_id': self.id}
-        }
-
-    def action_view_reconciled(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'bank.reconciliation.reconciled',
-            'view_mode': 'tree,form',
-            'domain': [('master_id', '=', self.id)],
-            'context': {'default_master_id': self.id}
-        }
-
     def unlink(self):
         raise UserError(_('You cannot delete a bank reconciliation.'))

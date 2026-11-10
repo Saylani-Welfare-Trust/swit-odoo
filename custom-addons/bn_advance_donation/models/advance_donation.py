@@ -416,8 +416,6 @@ class AdvanceDonation(models.Model):
             sorted_receipts = self.donation_slip_ids.sorted(lambda x: (x.date, x.id))
             remaining_to_allocate = total_disbursed_amount
             
-            # Track how much we've allocated from each receipt in this operation
-            allocated_per_receipt = {}
             
             for receipt in sorted_receipts:
                 if remaining_to_allocate <= 0:
@@ -471,9 +469,7 @@ class AdvanceDonation(models.Model):
                 ], limit=1).id,
             }
             
-            payment = self.env['account.payment'].create(payment_vals)
-            # Optionally post the payment automatically
-            # payment.action_post()
+            self.env['account.payment'].create(payment_vals)
         
         # Reload the form view
         return {
@@ -583,17 +579,6 @@ class AdvanceDonation(models.Model):
         
         return receipts_to_use
     
-    def get_used_receipts_data(self):
-        """Get data for used donation receipts"""
-        usage_lines = self.donation_slip_usage_lines
-        return [{
-            'receipt_name': line.donation_slip_id.name,
-            'receipt_amount': line.donation_slip_id.amount,
-            'used_amount': line.usage_amount,
-            'receipt_date': line.donation_slip_id.date,
-            'payment_type': line.donation_slip_id.payment_type,
-        } for line in usage_lines]
-
 
     def _compute_fully_paid(self):
         for rec in self:
