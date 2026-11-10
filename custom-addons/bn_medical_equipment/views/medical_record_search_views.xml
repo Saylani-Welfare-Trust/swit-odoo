@@ -18,5 +18,6 @@
               name="Record Search"
               action="record_search_medical_action"
               parent="medical_equipment_menu"
-              sequence="0"/>
+              sequence="0"
+        groups="bn_medical_equipment.medical_equipment_user_group"/>
 </odoo>

@@ -1,21 +1,45 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-
-access_monthly_planning_user,monthly.planning.user,model_monthly_planning,base.group_user,1,1,1,1
-access_monthly_planning_kitchen_user,monthly.planning.kitchen.user,model_monthly_planning_kitchen,base.group_user,1,1,1,1
-access_monthly_planning_madaris_user,monthly.planning.madaris.user,model_monthly_planning_madaris,base.group_user,1,1,1,1
-access_monthly_planning_medical_user,monthly.planning.medical.user,model_monthly_planning_medical,base.group_user,1,1,1,1
-access_monthly_planning_livestock_user,monthly.planning.livestock.user,model_monthly_planning_livestock,base.group_user,1,1,1,1
-
-access_monthly_planning_food_user,monthly.planning.food.user,model_monthly_planning_food,base.group_user,1,1,1,1
-access_monthly_planning_ration_user,monthly.planning.ration.user,model_monthly_planning_ration,base.group_user,1,1,1,1
-access_monthly_planning_meat_user,monthly.planning.meat.user,model_monthly_planning_meat,base.group_user,1,1,1,1
-
+access_monthly_planning_user_user,monthly.planning.user user,model_monthly_planning,group_planning_user,1,1,1,0
+access_monthly_planning_user_audit,monthly.planning.user audit,model_monthly_planning,group_planning_audit,1,0,0,0
+access_monthly_planning_user_admin,monthly.planning.user admin,model_monthly_planning,group_planning_admin,1,1,1,1
+access_monthly_planning_user,monthly.planning.user,model_monthly_planning,base.group_user,1,0,0,0
+access_monthly_planning_kitchen_user_user,monthly.planning.kitchen.user user,model_monthly_planning_kitchen,group_planning_user,1,1,1,0
+access_monthly_planning_kitchen_user_audit,monthly.planning.kitchen.user audit,model_monthly_planning_kitchen,group_planning_audit,1,0,0,0
+access_monthly_planning_kitchen_user_admin,monthly.planning.kitchen.user admin,model_monthly_planning_kitchen,group_planning_admin,1,1,1,1
+access_monthly_planning_kitchen_user,monthly.planning.kitchen.user,model_monthly_planning_kitchen,base.group_user,1,0,0,0
+access_monthly_planning_madaris_user_user,monthly.planning.madaris.user user,model_monthly_planning_madaris,group_planning_user,1,1,1,0
+access_monthly_planning_madaris_user_audit,monthly.planning.madaris.user audit,model_monthly_planning_madaris,group_planning_audit,1,0,0,0
+access_monthly_planning_madaris_user_admin,monthly.planning.madaris.user admin,model_monthly_planning_madaris,group_planning_admin,1,1,1,1
+access_monthly_planning_madaris_user,monthly.planning.madaris.user,model_monthly_planning_madaris,base.group_user,1,0,0,0
+access_monthly_planning_medical_user_user,monthly.planning.medical.user user,model_monthly_planning_medical,group_planning_user,1,1,1,0
+access_monthly_planning_medical_user_audit,monthly.planning.medical.user audit,model_monthly_planning_medical,group_planning_audit,1,0,0,0
+access_monthly_planning_medical_user_admin,monthly.planning.medical.user admin,model_monthly_planning_medical,group_planning_admin,1,1,1,1
+access_monthly_planning_medical_user,monthly.planning.medical.user,model_monthly_planning_medical,base.group_user,1,0,0,0
+access_monthly_planning_livestock_user_user,monthly.planning.livestock.user user,model_monthly_planning_livestock,group_planning_user,1,1,1,0
+access_monthly_planning_livestock_user_audit,monthly.planning.livestock.user audit,model_monthly_planning_livestock,group_planning_audit,1,0,0,0
+access_monthly_planning_livestock_user_admin,monthly.planning.livestock.user admin,model_monthly_planning_livestock,group_planning_admin,1,1,1,1
+access_monthly_planning_livestock_user,monthly.planning.livestock.user,model_monthly_planning_livestock,base.group_user,1,0,0,0
+access_monthly_planning_food_user_user,monthly.planning.food.user user,model_monthly_planning_food,group_planning_user,1,1,1,0
+access_monthly_planning_food_user_audit,monthly.planning.food.user audit,model_monthly_planning_food,group_planning_audit,1,0,0,0
+access_monthly_planning_food_user_admin,monthly.planning.food.user admin,model_monthly_planning_food,group_planning_admin,1,1,1,1
+access_monthly_planning_food_user,monthly.planning.food.user,model_monthly_planning_food,base.group_user,1,0,0,0
+access_monthly_planning_ration_user_user,monthly.planning.ration.user user,model_monthly_planning_ration,group_planning_user,1,1,1,0
+access_monthly_planning_ration_user_audit,monthly.planning.ration.user audit,model_monthly_planning_ration,group_planning_audit,1,0,0,0
+access_monthly_planning_ration_user_admin,monthly.planning.ration.user admin,model_monthly_planning_ration,group_planning_admin,1,1,1,1
+access_monthly_planning_ration_user,monthly.planning.ration.user,model_monthly_planning_ration,base.group_user,1,0,0,0
+access_monthly_planning_meat_user_user,monthly.planning.meat.user user,model_monthly_planning_meat,group_planning_user,1,1,1,0
+access_monthly_planning_meat_user_audit,monthly.planning.meat.user audit,model_monthly_planning_meat,group_planning_audit,1,0,0,0
+access_monthly_planning_meat_user_admin,monthly.planning.meat.user admin,model_monthly_planning_meat,group_planning_admin,1,1,1,1
+access_monthly_planning_meat_user,monthly.planning.meat.user,model_monthly_planning_meat,base.group_user,1,0,0,0
+access_planning_type_user_user,planning.type.user user,model_planning_type,group_planning_user,1,0,0,0
+access_planning_type_user_audit,planning.type.user audit,model_planning_type,group_planning_audit,1,0,0,0
+access_planning_type_user_admin,planning.type.user admin,model_planning_type,group_planning_admin,1,1,1,1
 access_planning_type_user,planning.type.user,model_planning_type,base.group_user,1,0,0,0
-access_planning_type_manager,planning.type.manager,model_planning_type,base.group_user,1,1,1,1
-
 access_import_monthly_planning_wizard,import.monthly.planning.wizard,model_import_monthly_planning_wizard,base.group_user,1,1,1,1
-
+access_report_monthly_planning_line_user_user,report.monthly.planning.line.user user,model_report_monthly_planning_line,group_planning_user,1,1,1,0
+access_report_monthly_planning_line_user_audit,report.monthly.planning.line.user audit,model_report_monthly_planning_line,group_planning_audit,1,0,0,0
+access_report_monthly_planning_line_user_admin,report.monthly.planning.line.user admin,model_report_monthly_planning_line,group_planning_admin,1,1,1,1
 access_report_monthly_planning_line_user,report.monthly.planning.line.user,model_report_monthly_planning_line,base.group_user,1,0,0,0
-
 access_monthly_planning_pr_wizard,monthly.planning.pr.wizard,model_monthly_planning_pr_wizard,base.group_user,1,1,1,1
 access_monthly_planning_pr_wizard_line_user,monthly.planning.pr.wizard.line user,model_monthly_planning_pr_wizard_line,stock.group_stock_user,1,1,1,1
+access_planning_type_manager,planning.type manager,model_planning_type,group_planning_manager,1,1,1,0

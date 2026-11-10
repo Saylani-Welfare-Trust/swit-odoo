@@ -158,7 +158,8 @@
     <menuitem id="menu_qurbani_order"
         name="Qurbani Order"
         parent="menu_qurbani_root"
-        sequence="1"/>
+        sequence="1"
+        groups="bn_qurbani.qurbani_user_group,bn_qurbani.qurbani_audit_group"/>
 
     <!-- Make POS Qurbani Order the default by giving it the smallest sequence -->
     <menuitem id="menu_pos_qurbani_order"

@@ -29,4 +29,23 @@
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="groups" eval="[(4, ref('bn_material_request.menu_group_material_request_coo'))]"/>
     </record>
+    <!-- Audit reads, Administrator manages every request -->
+    <record id="material_request_rule_audit" model="ir.rule">
+        <field name="name">Material Request: Audit sees all</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.material_request_audit_group'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="material_request_rule_admin" model="ir.rule">
+        <field name="name">Material Request: Administrator sees all</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.material_request_admin_group'))]"/>
+    </record>
+
 </odoo>

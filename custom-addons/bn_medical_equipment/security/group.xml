@@ -6,73 +6,85 @@
         <field name="sequence">55</field>
     </record>
 
+    <!-- Sole gate on the Medical Equipment app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
     <record id="medical_equipment_menu_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_medical_equipment"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Medical Equipment app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
-    <!-- Modical Equipment -->
+    <record id="medical_equipment_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Day-to-day access: create and process provisional orders, security deposits and equipment lines. Cannot approve or delete.</field>
+    </record>
+
+    <record id="medical_equipment_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('medical_equipment_user_group')])]"/>
+        <field name="comment">Everything User can do, plus the operations of returned / recovered equipment.</field>
+    </record>
+
+    <record id="medical_equipment_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of orders, security deposits and equipment, for reporting. No create, write or delete.</field>
+    </record>
+
     <record id="medical_equipment_admin_group" model="res.groups">
-        <field name="name">Administrator Access</field>
+        <field name="name">Administrator</field>
         <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('medical_equipment_manager_group'), ref('medical_equipment_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and the Category / Reference configuration.</field>
     </record>
 
-    <record id="medical_equipment_create_access_group" model="res.groups">
-        <field name="name">Create Access</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-    
-    <record id="medical_equipment_write_access_group" model="res.groups">
-        <field name="name">Write Access</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-
-    <record id="medical_equipment_read_access_group" model="res.groups">
-        <field name="name">Read Access</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-    
-    <record id="medical_equipment_delete_access_group" model="res.groups">
-        <field name="name">Delete Access</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-    
-    <record id="medical_equipment_pos_action_group" model="res.groups">
-        <field name="name">POS Action</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-    
-    <record id="medical_equipment_pos_settle_action_group" model="res.groups">
-        <field name="name">POS Settle Action</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-    
-    <record id="medical_equipment_pos_security_deposit_action_group" model="res.groups">
-        <field name="name">POS Security Deposit Action</field>
-        <field name="category_id" ref="module_medical_equipment"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="medical_equipment_ceo_approval_group" model="res.groups">
         <field name="name">Approval 1</field>
         <field name="category_id" ref="module_medical_equipment"/>
-        <!-- an approver opens the request and writes the decision on it -->
-        <field name="implied_ids" eval="[(6, 0, [ref('medical_equipment_read_access_group'), ref('medical_equipment_write_access_group')])]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('medical_equipment_user_group')])]"/>
+        <field name="comment">First approval (CEO) of provisional orders.</field>
     </record>
 
     <record id="medical_equipment_cfo_approval_group" model="res.groups">
         <field name="name">Approval 2</field>
         <field name="category_id" ref="module_medical_equipment"/>
-        <!-- an approver opens the request and writes the decision on it -->
-        <field name="implied_ids" eval="[(6, 0, [ref('medical_equipment_read_access_group'), ref('medical_equipment_write_access_group')])]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('medical_equipment_user_group')])]"/>
+        <field name="comment">Final approval (CFO) of provisional orders.</field>
     </record>
+
+    <record id="medical_equipment_pos_action_group" model="res.groups">
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: medical equipment orders at the Point of Sale.</field>
+    </record>
+
+    <record id="medical_equipment_pos_settle_action_group" model="res.groups">
+        <field name="name">POS Settle Action</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: settle medical equipment orders at the Point of Sale.</field>
+    </record>
+
+    <record id="medical_equipment_pos_security_deposit_action_group" model="res.groups">
+        <field name="name">POS Security Deposit Action</field>
+        <field name="category_id" ref="module_medical_equipment"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: receive security deposits at the Point of Sale.</field>
+    </record>
+
+    <!-- Retired groups: their users get the group that replaces them -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_medical_equipment.medical_equipment_create_access_group': 'bn_medical_equipment.medical_equipment_user_group',
+        'bn_medical_equipment.medical_equipment_write_access_group': 'bn_medical_equipment.medical_equipment_user_group',
+        'bn_medical_equipment.medical_equipment_read_access_group': 'bn_medical_equipment.medical_equipment_audit_group',
+        'bn_medical_equipment.medical_equipment_delete_access_group': 'bn_medical_equipment.medical_equipment_admin_group',
+    }]"/>
 
 </odoo>

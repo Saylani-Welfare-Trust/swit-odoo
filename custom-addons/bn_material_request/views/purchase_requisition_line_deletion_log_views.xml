@@ -90,6 +90,7 @@
         name="Deleted PR Lines"
         parent="material_request_menu_root"
         action="purchase_requisition_line_deletion_log_action"
-        sequence="20"/>
+        sequence="20"
+        groups="bn_material_request.material_request_manager_group,bn_material_request.material_request_audit_group"/>
 
 </odoo>

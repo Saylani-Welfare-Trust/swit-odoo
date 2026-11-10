@@ -30,7 +30,8 @@
         name="Qurbani"
         action="qurbani_day_action"
         parent="bn_master_setup.master_setup_menu"
-        sequence="10"/>
+        sequence="10"
+        groups="bn_qurbani.qurbani_admin_group"/>
 
     <menuitem
         id="qurbani_day_menu"

@@ -14,9 +14,9 @@
         'purchase_requisition',
     ],
     'data': [
-        'security/ir.model.access.csv',
-        'security/stock_scope_rule.xml',
         'security/planning_security.xml',
+        'security/stock_scope_rule.xml',
+        'security/ir.model.access.csv',
         
         'data/stock_location.xml',
         'data/ir_cron.xml',

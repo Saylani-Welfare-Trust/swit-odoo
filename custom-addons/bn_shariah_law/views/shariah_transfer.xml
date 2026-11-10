@@ -19,9 +19,9 @@
                 
                 <!-- Quick Actions -->
                 <button name="action_post" string="Post" type="object" icon="fa-check" 
-                        class="btn-primary" invisible="state != 'draft'"/>
+                        class="btn-primary" invisible="state != 'draft'" groups="bn_shariah_law.shariah_law_user_group"/>
                 <button name="action_send_for_approval" string="Send for Approval" type="object" icon="fa-paper-plane" 
-                        class="btn-warning" invisible="state != 'draft' or requires_approval == False"/>
+                        class="btn-warning" invisible="state != 'draft' or requires_approval == False" groups="bn_shariah_law.shariah_law_user_group"/>
                 <button name="action_member_post" groups="bn_shariah_law.group_member_approval" string="Approve" type="object" icon="fa-thumbs-up" 
                         class="btn-success" invisible="state != 'member_approval'"/>
             </tree>
@@ -36,16 +36,16 @@
                 <header>
                     <!-- Draft State Buttons -->
                     <button name="action_send_for_approval" string="Send for Approval" type="object" class="btn-primary" 
-                            invisible="state != 'draft' or requires_approval == False"/>
+                            invisible="state != 'draft' or requires_approval == False" groups="bn_shariah_law.shariah_law_user_group"/>
                     <button name="action_post" string="Post" type="object" class="btn-primary" 
-                            invisible="state != 'draft'"/>
+                            invisible="state != 'draft'" groups="bn_shariah_law.shariah_law_user_group"/>
                     
                     <!-- Member Approval State Buttons -->
                     <button name="action_member_post" string="Member Post" type="object" class="btn-success" 
                             invisible="state != 'member_approval'" 
                             groups="bn_shariah_law.group_member_approval"/>
                     <button name="action_reject" string="Reject" type="object" class="btn-danger" 
-                            invisible="state != 'member_approval'"/>
+                            invisible="state != 'member_approval'" groups="bn_shariah_law.shariah_law_manager_group,bn_shariah_law.group_member_approval"/>
                     
                     <field name="state" widget="statusbar" statusbar_visible="draft,member_approval,posted"/>
                 </header>

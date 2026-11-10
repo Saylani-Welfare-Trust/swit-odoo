@@ -19,8 +19,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Submit" name="action_submit" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'to_be_approved'" />
+                    <button string="Submit" name="action_submit" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_kitchen.kitchen_admin_group"/>
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'to_be_approved'" groups="bn_kitchen.kitchen_admin_group"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, to_be_approved, approved"/>
                 </header>
@@ -74,6 +74,7 @@
         name="Menu"
         action="kitchen_menu_action"
         parent="bn_kitchen.kitchen_menu"
-        sequence="2"/>
+        sequence="2"
+        groups="bn_kitchen.kitchen_admin_group"/>
 
 </odoo>

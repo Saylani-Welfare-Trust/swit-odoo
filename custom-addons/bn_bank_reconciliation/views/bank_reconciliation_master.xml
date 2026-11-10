@@ -29,23 +29,23 @@
                 <header>
                     <button name="action_import_statement" string="Import Statement" type="object"
                             class="btn-primary"
-                            invisible="state != 'draft'"/>
+                            invisible="state != 'draft'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <button name="action_process_matching" string="Process Matching" type="object"
                             class="btn-primary"
-                            invisible="state != 'uploaded'"/>
+                            invisible="state != 'uploaded'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <button name="action_master_reconcile" string="Master Reconcile" type="object"
                             class="btn-primary"
                             invisible="state != 'in_progress'"
                             groups="bn_bank_reconciliation.bank_reconciliation_master_reconcile_group"/>
                     <button name="action_open_multi_match" string="Match Multiple Lines" type="object"
                             class="btn-secondary"
-                            invisible="state not in ['uploaded', 'in_progress']"/>
+                            invisible="state not in ['uploaded', 'in_progress']" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <button name="action_validate_reconciliation" string="Validate &amp; Complete" type="object"
                             class="btn-success"
-                            invisible="state != 'in_progress'"/>
+                            invisible="state != 'in_progress'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <button name="action_cancel_reconciliation" string="Cancel" type="object"
                             class="btn-danger"
-                            invisible="state not in ['draft','uploaded','in_progress']"/>
+                            invisible="state not in ['draft','uploaded','in_progress']" groups="bn_bank_reconciliation.bank_reconciliation_manager_group"/>
                     <button name="action_view_matched_moves" string="View Matched Entries" type="object"
                             class="btn-info"
                             invisible="not reconciled_transactions"/>
@@ -105,12 +105,12 @@
                                     <button name="action_accept_match" type="object"
                                             string="Accept &amp; Reconcile" icon="fa-check"
                                             class="btn-success"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
 
                                     <button name="action_accept_and_create_journal" type="object"
                                             string="Accept &amp; Create Journal" icon="fa-check-circle"
                                             class="btn-primary"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_view_related_move" type="object"
                                             string="Original Entry" icon="fa-eye"
                                             invisible="not matched_move_id"/>
@@ -123,7 +123,7 @@
                                             invisible="not matched_move_line_id"/>
                                     <button name="action_manual_match" type="object"
                                             string="Manual Match" icon="fa-hand-pointer-o"
-                                            invisible="state in ['reconciled']"/>
+                                            invisible="state in ['reconciled']" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                 </tree>
                             </field>
                         </page>
@@ -148,11 +148,11 @@
                                     <button name="action_accept_match" type="object"
                                             string="Accept &amp; Reconcile" icon="fa-check"
                                             class="btn-success"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_accept_and_create_journal" type="object"
                                             string="Accept &amp; Create Journal" icon="fa-check-circle"
                                             class="btn-primary"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_view_related_move" type="object"
                                             string="Original Entry" icon="fa-eye"
                                             invisible="not matched_move_id"/>
@@ -161,7 +161,7 @@
                                             invisible="not matched_move_line_id"/>
                                     <button name="action_manual_match" type="object"
                                             string="Manual Match" icon="fa-hand-pointer-o"
-                                            invisible="state in ['reconciled']"/>
+                                            invisible="state in ['reconciled']" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                 </tree>
                             </field>
                         </page>
@@ -191,14 +191,14 @@
                                     <button name="action_accept_match" type="object"
                                             string="Accept &amp; Reconcile" icon="fa-check"
                                             class="btn-success"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_accept_and_create_journal" type="object"
                                             string="Accept &amp; Create Journal" icon="fa-check-circle"
                                             class="btn-primary"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_reject_match" type="object"
                                             string="Reject Match" icon="fa-times"
-                                            invisible="state != 'matched'"/>
+                                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_view_related_move" type="object"
                                             string="Original Entry" icon="fa-eye"
                                             invisible="not matched_move_id"/>
@@ -211,10 +211,10 @@
                                             invisible="not matched_move_line_id"/>
                                     <button name="action_manual_match" type="object"
                                             string="Manual Match" icon="fa-hand-pointer-o"
-                                            invisible="state in ['reconciled']"/>
+                                            invisible="state in ['reconciled']" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                                     <button name="action_unreconcile" type="object"
                                             string="Unreconcile" icon="fa-undo"
-                                            invisible="state != 'reconciled' or parent.state == 'completed'"/>
+                                            invisible="state != 'reconciled' or parent.state == 'completed'" groups="bn_bank_reconciliation.bank_reconciliation_manager_group"/>
                                 </tree>
                             </field>
                         </page>
@@ -314,6 +314,7 @@
               name="Bank Reconciliations" 
               parent="menu_bank_reconciliation_root"
               action="action_bank_reconciliation_master"
-              sequence="10"/>
+              sequence="10"
+        groups="bn_bank_reconciliation.bank_reconciliation_user_group,bn_bank_reconciliation.bank_reconciliation_audit_group"/>
 
 </odoo>

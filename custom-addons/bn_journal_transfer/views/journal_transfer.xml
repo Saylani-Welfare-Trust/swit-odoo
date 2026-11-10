@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree editable="bottom" create="0">
                 <header>
-                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" groups="bn_journal_transfer.journal_transfer_group"/>
                 </header>
 
                 <field name="accounting_date" readonly="1" />
@@ -24,7 +24,7 @@
                 <field name="amount" readonly="1" />
                 <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'posted'" readonly="1" />
 
-                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_journal_transfer.journal_transfer_group"/>
             </tree>
         </field>
     </record>
@@ -35,8 +35,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="Cancel" name="action_cancel" type="object" invisible="state != 'draft'"/>
+                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_journal_transfer.journal_transfer_group"/>
+                    <button string="Cancel" name="action_cancel" type="object" invisible="state != 'draft'" groups="bn_journal_transfer.journal_transfer_group,bn_pos_cheque.pos_cheque_manager_group"/>
                    
                     <field name="state" widget="statusbar" statusbar_visible="draft, posted" /> 
                 </header>
@@ -81,9 +81,9 @@
     <menuitem
         id="journal_transfer_menu"
         name="Journal Transfer"
-        action="journal_transfer_action"
-        groups="journal_transfer_group"  
+        action="journal_transfer_action"  
         parent="bn_pos_cheque.treasury_menu"
-        sequence="3"/>
+        sequence="3"
+        groups="bn_journal_transfer.journal_transfer_group,bn_pos_cheque.pos_cheque_audit_group"/>
 
 </odoo>

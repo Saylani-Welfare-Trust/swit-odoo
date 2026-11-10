@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree>
                 <header>
-                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight"   invisible=" not context.get('default_is_individual')"/>
+                    <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight"   invisible=" not context.get('default_is_individual')" groups="bn_welfare.group_bn_welfare_user"/>
                 </header>
                 <field name="name" />
                 <field name="donee_id" />
@@ -45,22 +45,22 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" groups = "bn_welfare.group_bn_welfare_user" />
+                    <button string="mark as Completed" name="action_complete" type="object" class="oe_highlight" invisible="state != 'draft'" groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="View Most Recent Disbursement" name="action_view_previous_disbursement" type="object" 
                             class="btn btn-sm btn-info"
                             invisible="state not in ['draft', 'hod_approve', 'mem_approve'] or not previous_disbursement_id"/>
                     <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['committee_approval','hod_approve']" groups="bn_welfare.group_bn_welfare_committee, bn_welfare.group_welfare_hod"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" groups = "bn_welfare.group_bn_welfare_user"/>
-                    <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" groups = "bn_welfare.group_bn_welfare_user" />
+                    <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" groups = "bn_welfare.group_bn_welfare_user"/>
-                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" groups = "bn_welfare.group_bn_welfare_committee" />
-                    <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" groups = "bn_welfare.group_welfare_hod" />
-                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" groups = "bn_welfare.group_welfare_member" />
+                    <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" groups = "bn_welfare.group_bn_welfare_committee"/>
+                    <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" groups = "bn_welfare.group_welfare_hod"/>
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'mem_approve'" groups = "bn_welfare.group_welfare_member"/>
                     <button string="Create Recurring Orders" name="action_create_recurring_order" type="object" class="oe_highlight" invisible="state != 'approve' or order_type != 'recurring'" groups = "bn_welfare.group_bn_welfare_user"/>
-                    <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1"  />
-                    <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']"/>
+                    <button string="Disburse" name="action_disburse" type="object" class="oe_highlight" invisible="1" groups="bn_welfare.group_welfare_member"/>
+                    <button string="Revert" name="action_reverse_state" type="object" class="oe_highlight" invisible="state in ['draft','disbursed','reject','recurring','approve']" groups="bn_welfare.group_bn_welfare_user,bn_welfare.group_bn_welfare_committee,bn_welfare.group_welfare_hod,bn_welfare.group_welfare_member"/>
                     <button string="Return" name="action_return_to_pos" type="object" class="oe_highlight"  invisible='1' groups = "bn_welfare.group_bn_welfare_user"/>
-                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']"/>
+                    <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']" groups="bn_welfare.group_bn_welfare_user,bn_welfare.group_bn_welfare_committee,bn_welfare.group_welfare_hod,bn_welfare.group_welfare_member"/>
                     <button string="Print Info" name="action_print_info" type="object" class="btn-secondary"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>   
@@ -153,9 +153,9 @@
                                     <field name="advance_donation_amount" optional="hide" string="Advance Donation Amount" readonly="1"/>
 
                                     <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
+                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" groups="bn_welfare.group_bn_welfare_user"/>
     
-                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
+                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1" groups="bn_welfare.group_bn_welfare_user"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
 
                                 </tree>
@@ -185,9 +185,9 @@
                                     <field name='quantity' />
                                     <field name="amount" />
                                     <field name="show_deliver_button" column_invisible="1"/>
-                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" />
+                                    <button name="action_return_to_draft" string="Return to Draft" type="object" class="btn-secondary" invisible="state != 'return'" groups="bn_welfare.group_bn_welfare_user"/>
 
-                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1"/>
+                                    <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1" groups="bn_welfare.group_bn_welfare_user"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State"/>
                                 </tree>
                             </field>
@@ -407,7 +407,7 @@
         id="disbursement_request_menu_individual"
         name="Individual Disbursement"
         parent="disbursement_request_menu"
-        groups="bn_welfare.group_individual_disbursement"
+        groups="bn_welfare.group_individual_disbursement,bn_welfare.group_welfare_audit"
         action="welfare_action_individual"
         sequence="1"/>
 

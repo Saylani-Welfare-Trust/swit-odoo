@@ -1,51 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Category (This creates the Header/Title in the user settings) -->
+
     <record id="module_category_bn_dashboard" model="ir.module.category">
         <field name="name">Management Dashboards</field>
-        <field name="description">Access to the specific Dashboards</field>
         <field name="sequence">10</field>
     </record>
 
-    <!-- 1. Treasury Dashboard Group -->
+    <!-- Sole gate on the Dashboard app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
+    <record id="group_dashboard_root" model="res.groups">
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Dashboard app menu. Assign it explicitly with the dashboards (role groups): no group implies it.</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="group_treasury_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Treasury</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the Treasury dashboard.</field>
     </record>
 
-    <!-- 2. Donation Box Dashboard Group -->
     <record id="group_donation_box_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Donation Box</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the Donation Box dashboard.</field>
     </record>
 
-    <!-- 3. Profile Management Dashboard Group -->
     <record id="group_profile_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Profile Management</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the Profile Management dashboard.</field>
     </record>
 
-    <!-- 4. POS Order Dashboard Group -->
     <record id="group_pos_order_dashboard_user" model="res.groups">
         <field name="name">Dashboard / POS Order</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the POS Order dashboard.</field>
     </record>
 
-    <!-- 5. Donation In Kind Dashboard Group -->
     <record id="group_din_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Donation In Kind</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the Donation In Kind dashboard.</field>
     </record>
 
-    <!-- 6. Donation Inflows Dashboard Group -->
     <record id="group_donation_inflow_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Donation Inflows</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Shows the Donation Inflows dashboard.</field>
     </record>
+
+    <record id="group_dashboard_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Opens the dashboards given to them (the Dashboard / ... groups).</field>
+    </record>
+
+    <record id="group_dashboard_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_dashboard_user')])]"/>
+        <field name="comment">Everything User can do.</field>
+    </record>
+
+    <record id="group_dashboard_audit" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_treasury_dashboard_user'), ref('group_donation_box_dashboard_user'), ref('group_profile_dashboard_user'), ref('group_pos_order_dashboard_user'), ref('group_din_dashboard_user'), ref('group_donation_inflow_dashboard_user')])]"/>
+        <field name="comment">Read-only oversight: every dashboard.</field>
+    </record>
+
+    <record id="group_dashboard_admin" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_dashboard_manager'), ref('group_dashboard_audit')])]"/>
+        <field name="comment">Full control: every dashboard, plus the dashboard configurations.</field>
+    </record>
+
+    <!-- The dashboards opened the app before the Menu group: on this first
+         upgrade their users get it -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_dashboard.group_treasury_dashboard_user': 'bn_dashboard.group_dashboard_root',
+        'bn_dashboard.group_donation_box_dashboard_user': 'bn_dashboard.group_dashboard_root',
+        'bn_dashboard.group_profile_dashboard_user': 'bn_dashboard.group_dashboard_root',
+        'bn_dashboard.group_pos_order_dashboard_user': 'bn_dashboard.group_dashboard_root',
+        'bn_dashboard.group_din_dashboard_user': 'bn_dashboard.group_dashboard_root',
+        'bn_dashboard.group_donation_inflow_dashboard_user': 'bn_dashboard.group_dashboard_root',
+    }, 'bn_dashboard.tiers']"/>
+
 </odoo>

@@ -6,28 +6,39 @@
         <field name="sequence">70</field>
     </record>
 
+    <!-- Same tiers as every module, on Odoo's Expenses. The Expenses menu is
+         given by Access Right > Expenses Menu (like the other Odoo app menus). -->
     <record id="hr_expense_create_access_group" model="res.groups">
-        <field name="name">Create Access</field>
+        <field name="name">User</field>
         <field name="category_id" ref="module_expense_extra"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Create and update expenses.</field>
     </record>
-    
-    <record id="hr_expense_write_access_group" model="res.groups">
-        <field name="name">Update Access</field>
+
+    <record id="hr_expense_manager_group" model="res.groups">
+        <field name="name">Manager</field>
         <field name="category_id" ref="module_expense_extra"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('hr_expense_create_access_group')])]"/>
+        <field name="comment">Everything User can do.</field>
     </record>
-    
+
     <record id="hr_expense_read_access_group" model="res.groups">
-        <field name="name">Read Access</field>
+        <field name="name">Audit</field>
         <field name="category_id" ref="module_expense_extra"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only access to expenses, for reporting.</field>
     </record>
-    
+
     <record id="hr_expense_delete_access_group" model="res.groups">
-        <field name="name">Delete Access</field>
+        <field name="name">Administrator</field>
         <field name="category_id" ref="module_expense_extra"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('hr_expense_manager_group'), ref('hr_expense_read_access_group')])]"/>
+        <field name="comment">Full control over expenses, including delete.</field>
     </record>
+
+    <!-- "Update Access" is part of User now -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_custom_expense.hr_expense_write_access_group': 'bn_custom_expense.hr_expense_create_access_group',
+    }]"/>
 
 </odoo>

@@ -3,20 +3,56 @@
 
     <record id="module_bank_reconciliation" model="ir.module.category">
         <field name="name">Bank Reconciliation</field>
-        <field name="sequence">60</field>
     </record>
 
+    <!-- Sole gate on the Bank Reconciliation menu menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
     <record id="bank_reconciliation_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_bank_reconciliation"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of Accounting &gt; Bank Reconciliation. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
+    <record id="bank_reconciliation_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_bank_reconciliation"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Import bank statements and reconcile transactions.</field>
+    </record>
+
+    <record id="bank_reconciliation_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_bank_reconciliation"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('bank_reconciliation_user_group')])]"/>
+        <field name="comment">Everything User can do.</field>
+    </record>
+
+    <record id="bank_reconciliation_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_bank_reconciliation"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of bank reconciliations, for reporting.</field>
+    </record>
+
+    <record id="bank_reconciliation_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_bank_reconciliation"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('bank_reconciliation_manager_group'), ref('bank_reconciliation_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and the statement configuration.</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="bank_reconciliation_master_reconcile_group" model="res.groups">
         <field name="name">Master Reconcile</field>
         <field name="category_id" ref="module_bank_reconciliation"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('bank_reconciliation_group')])]"/>
-        <field name="comment">Can accept all matched statement lines of a reconciliation at once with Master Reconcile.</field>
+        <field name="implied_ids" eval="[(6, 0, [ref('bank_reconciliation_user_group')])]"/>
+        <field name="comment">Reconcile the master records.</field>
     </record>
+
+    <!-- Every internal user could reconcile before the tiers: on this first upgrade, the users of its menu become User. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_bank_reconciliation.bank_reconciliation_group': 'bn_bank_reconciliation.bank_reconciliation_user_group',
+    }, 'bn_bank_reconciliation.tiers']"/>
 
 </odoo>

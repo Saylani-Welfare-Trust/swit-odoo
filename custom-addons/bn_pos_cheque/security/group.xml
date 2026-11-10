@@ -2,24 +2,59 @@
 <odoo>
 
     <record id="module_category_pos_cheque" model="ir.module.category">
-        <field name="name">POS Cheque</field>
+        <field name="name">Treasury</field>
         <field name="sequence">30</field>
     </record>
 
-    <!-- Treasury: the Treasury > POS Cheque menu, Deposit to Bank, Clear / Bounce. -->
-    <record id="pos_cheque_menu_group" model="res.groups">
-        <field name="name">Treasury</field>
+    <!-- Sole gate on the Treasury menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
+    <record id="pos_cheque_root_group" model="res.groups">
+        <field name="name">Menu</field>
         <field name="category_id" ref="module_category_pos_cheque"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Treasury &gt; POS Cheque: choose the deposit bank, clear or bounce cheques.</field>
+        <field name="comment">Grants visibility of Accounting &gt; Treasury. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
-    <!-- Cashiers: the POS Cheques screen (re-deposit, settle bounced cheques). -->
+    <record id="pos_cheque_menu_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Treasury desk: POS cheques, bank transfers / direct deposits: deposit to bank, clear, bounce, not clear.</field>
+    </record>
+
+    <record id="pos_cheque_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('pos_cheque_menu_group')])]"/>
+        <field name="comment">Everything User can do.</field>
+    </record>
+
+    <record id="pos_cheque_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of POS cheques, direct deposits and journal transfers, for reporting.</field>
+    </record>
+
+    <record id="pos_cheque_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_category_pos_cheque"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('pos_cheque_manager_group'), ref('pos_cheque_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights.</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="pos_cheque_pos_action_group" model="res.groups">
         <field name="name">Cheque / POS Action</field>
         <field name="category_id" ref="module_category_pos_cheque"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
         <field name="comment">POS cashiers: list the cheques of their POS, re-deposit bounced cheques, settle cheques that bounced too often.</field>
     </record>
+
+    <!-- "Treasury" was also the menu: on this first upgrade its users get the
+         Menu group, so they keep seeing Treasury. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_pos_cheque.pos_cheque_menu_group': 'bn_pos_cheque.pos_cheque_root_group',
+    }, 'bn_pos_cheque.tiers']"/>
 
 </odoo>

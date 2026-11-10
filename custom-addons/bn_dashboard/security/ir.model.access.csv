@@ -3,3 +3,4 @@ access_donation_box_dashboard,access.donation.box.dashboard,model_donation_box_d
 
 access_dashboard_configurator_admin,dashboard.configurator.admin,model_dashboard_configurator,base.group_system,1,1,1,1
 access_dashboard_configurator_read,dashboard.configurator.read,model_dashboard_configurator,base.group_user,1,0,0,0
+access_dashboard_configurator_tier_admin,dashboard.configurator dashboard admin,model_dashboard_configurator,group_dashboard_admin,1,1,1,1

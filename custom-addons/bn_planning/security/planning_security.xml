@@ -1,31 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- 1. The Category (This creates the Header/Title "Monthly Planning") -->
+
     <record id="module_category_planning" model="ir.module.category">
         <field name="name">Planning</field>
-        <field name="description">Access to the specific Planning Menus</field>
-        <field name="sequence">10</field>
     </record>
 
-    <!-- 2. Group for Menu 1 (Monthly Planning) -->
-    <record id="group_planning_user" model="res.groups">
-        <field name="name">Monthly Planning</field>
+    <!-- Sole gate on the Planning app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
+    <record id="group_planning_root" model="res.groups">
+        <field name="name">Menu</field>
         <field name="category_id" ref="module_category_planning"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Planning app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
-    <!-- 3. Group for Menu 2 (Planning Types) -->
-    <record id="group_planning_manager" model="res.groups">
-        <field name="name">Planning Types</field>
+    <record id="group_planning_user" model="res.groups">
+        <field name="name">User</field>
         <field name="category_id" ref="module_category_planning"/>
-        <!-- Optional: If Managers should also see Monthly Planning, keep this implied_ids -->
-        <field name="implied_ids" eval="[(6, 0, [ref('group_planning_user')])]"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Prepare monthly plans and create purchase requests from them.</field>
     </record>
 
-    <!-- 4. Group for Menu 3 (Planning Summary) -->
+    <record id="group_planning_manager" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_category_planning"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_planning_user')])]"/>
+        <field name="comment">Everything User can do, plus the Planning Types configuration.</field>
+    </record>
+
+    <record id="group_planning_audit" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_category_planning"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of monthly plans, for reporting.</field>
+    </record>
+
+    <record id="group_planning_admin" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_category_planning"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_planning_manager'), ref('group_planning_audit')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights.</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="group_planning_report_viewer" model="res.groups">
         <field name="name">Planning Summary Report</field>
         <field name="category_id" ref="module_category_planning"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Inventory &gt; Reporting &gt; Planning Summary.</field>
     </record>
+
+    <!-- "Monthly Planning" was also the menu: on this first upgrade its users get the Menu group. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_planning.group_planning_user': 'bn_planning.group_planning_root',
+    }, 'bn_planning.tiers']"/>
+
 </odoo>

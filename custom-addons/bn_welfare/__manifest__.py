@@ -16,6 +16,7 @@
     'data': [
         'security/group.xml',
         'security/group_category.xml',
+        'security/group_tiers.xml',
         'security/ir.model.access.csv',
         
         'data/sequence.xml',

@@ -1,29 +1,91 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_qurbani_day,qurbani.day,model_qurbani_day,base.group_user,1,1,1,1
-access_hijri,hijri,model_hijri,base.group_user,1,1,1,1
-access_chand_raat,chand.raat,model_chand_raat,base.group_user,1,1,1,1
-access_city_schedule,city.schedule,model_city_schedule,base.group_user,1,1,1,1
-access_slaughter_schedule,slaughter.schedule,model_slaughter_schedule,base.group_user,1,1,1,1
-access_distribution_schedule,distribution.schedule,model_distribution_schedule,base.group_user,1,1,1,1
-access_qurbani_order,qurbani.order,model_qurbani_order,base.group_user,1,1,1,1
-access_qurbani_order_line,qurbani.order.line,model_qurbani_order_line,base.group_user,1,1,1,1
+access_qurbani_day_user,qurbani.day user,model_qurbani_day,qurbani_user_group,1,1,1,0
+access_qurbani_day_audit,qurbani.day audit,model_qurbani_day,qurbani_audit_group,1,0,0,0
+access_qurbani_day_admin,qurbani.day admin,model_qurbani_day,qurbani_admin_group,1,1,1,1
+access_qurbani_day,qurbani.day,model_qurbani_day,base.group_user,1,1,1,0
+access_hijri_user,hijri user,model_hijri,qurbani_user_group,1,1,1,0
+access_hijri_audit,hijri audit,model_hijri,qurbani_audit_group,1,0,0,0
+access_hijri_admin,hijri admin,model_hijri,qurbani_admin_group,1,1,1,1
+access_hijri,hijri,model_hijri,base.group_user,1,1,1,0
+access_chand_raat_user,chand.raat user,model_chand_raat,qurbani_user_group,1,1,1,0
+access_chand_raat_audit,chand.raat audit,model_chand_raat,qurbani_audit_group,1,0,0,0
+access_chand_raat_admin,chand.raat admin,model_chand_raat,qurbani_admin_group,1,1,1,1
+access_chand_raat,chand.raat,model_chand_raat,base.group_user,1,1,1,0
+access_city_schedule_user,city.schedule user,model_city_schedule,qurbani_user_group,1,1,1,0
+access_city_schedule_audit,city.schedule audit,model_city_schedule,qurbani_audit_group,1,0,0,0
+access_city_schedule_admin,city.schedule admin,model_city_schedule,qurbani_admin_group,1,1,1,1
+access_city_schedule,city.schedule,model_city_schedule,base.group_user,1,1,1,0
+access_slaughter_schedule_user,slaughter.schedule user,model_slaughter_schedule,qurbani_user_group,1,1,1,0
+access_slaughter_schedule_audit,slaughter.schedule audit,model_slaughter_schedule,qurbani_audit_group,1,0,0,0
+access_slaughter_schedule_admin,slaughter.schedule admin,model_slaughter_schedule,qurbani_admin_group,1,1,1,1
+access_slaughter_schedule,slaughter.schedule,model_slaughter_schedule,base.group_user,1,1,1,0
+access_distribution_schedule_user,distribution.schedule user,model_distribution_schedule,qurbani_user_group,1,1,1,0
+access_distribution_schedule_audit,distribution.schedule audit,model_distribution_schedule,qurbani_audit_group,1,0,0,0
+access_distribution_schedule_admin,distribution.schedule admin,model_distribution_schedule,qurbani_admin_group,1,1,1,1
+access_distribution_schedule,distribution.schedule,model_distribution_schedule,base.group_user,1,1,1,0
+access_qurbani_order_user,qurbani.order user,model_qurbani_order,qurbani_user_group,1,1,1,0
+access_qurbani_order_audit,qurbani.order audit,model_qurbani_order,qurbani_audit_group,1,0,0,0
+access_qurbani_order_admin,qurbani.order admin,model_qurbani_order,qurbani_admin_group,1,1,1,1
+access_qurbani_order,qurbani.order,model_qurbani_order,base.group_user,1,1,1,0
+access_qurbani_order_line_user,qurbani.order.line user,model_qurbani_order_line,qurbani_user_group,1,1,1,0
+access_qurbani_order_line_audit,qurbani.order.line audit,model_qurbani_order_line,qurbani_audit_group,1,0,0,0
+access_qurbani_order_line_admin,qurbani.order.line admin,model_qurbani_order_line,qurbani_admin_group,1,1,1,1
+access_qurbani_order_line,qurbani.order.line,model_qurbani_order_line,base.group_user,1,1,1,0
 access_qurbani_schedule,qurbani.schedule,model_qurbani_schedule,base.group_user,1,1,1,1
-access_qurbani_city_demand,qurbani.city.demand,model_qurbani_city_demand,base.group_user,1,1,1,1
-access_qurbani_slaughter_demand,qurbani.slaughter.demand,model_qurbani_slaughter_demand,base.group_user,1,1,1,1
-access_qurbani_slaughter_slot_demand,qurbani.slaughter.slot.demand,model_qurbani_slaughter_slot_demand,base.group_user,1,1,1,1
+access_qurbani_city_demand_user,qurbani.city.demand user,model_qurbani_city_demand,qurbani_user_group,1,1,1,0
+access_qurbani_city_demand_audit,qurbani.city.demand audit,model_qurbani_city_demand,qurbani_audit_group,1,0,0,0
+access_qurbani_city_demand_admin,qurbani.city.demand admin,model_qurbani_city_demand,qurbani_admin_group,1,1,1,1
+access_qurbani_city_demand,qurbani.city.demand,model_qurbani_city_demand,base.group_user,1,1,1,0
+access_qurbani_slaughter_demand_user,qurbani.slaughter.demand user,model_qurbani_slaughter_demand,qurbani_user_group,1,1,1,0
+access_qurbani_slaughter_demand_audit,qurbani.slaughter.demand audit,model_qurbani_slaughter_demand,qurbani_audit_group,1,0,0,0
+access_qurbani_slaughter_demand_admin,qurbani.slaughter.demand admin,model_qurbani_slaughter_demand,qurbani_admin_group,1,1,1,1
+access_qurbani_slaughter_demand,qurbani.slaughter.demand,model_qurbani_slaughter_demand,base.group_user,1,1,1,0
+access_qurbani_slaughter_slot_demand_user,qurbani.slaughter.slot.demand user,model_qurbani_slaughter_slot_demand,qurbani_user_group,1,1,1,0
+access_qurbani_slaughter_slot_demand_audit,qurbani.slaughter.slot.demand audit,model_qurbani_slaughter_slot_demand,qurbani_audit_group,1,0,0,0
+access_qurbani_slaughter_slot_demand_admin,qurbani.slaughter.slot.demand admin,model_qurbani_slaughter_slot_demand,qurbani_admin_group,1,1,1,1
+access_qurbani_slaughter_slot_demand,qurbani.slaughter.slot.demand,model_qurbani_slaughter_slot_demand,base.group_user,1,1,1,0
 access_generate_qurbani_demand,generate.qurbani.demand,model_generate_qurbani_demand,base.group_user,1,1,1,1
 access_generate_qurbani_slaughter_and_distribution,generate.qurbani.slaughter.and.distribution,model_generate_qurbani_slaughter_and_distribution,base.group_user,1,1,1,1
-access_qurbani_cow_slaughter,qurbani.cow.slaughter,model_qurbani_cow_slaughter,base.group_user,1,1,1,1
-access_qurbani_cow_slaughter_line,qurbani.cow.slaughter.line,model_qurbani_cow_slaughter_line,base.group_user,1,1,1,1
-access_qurbani_goat_slaughter,qurbani.goat.slaughter,model_qurbani_goat_slaughter,base.group_user,1,1,1,1
-access_qurbani_cow_distribution,qurbani.cow.distribution,model_qurbani_cow_distribution,base.group_user,1,1,1,1
-access_qurbani_goat_distribution,qurbani.goat.distribution,model_qurbani_goat_distribution,base.group_user,1,1,1,1
+access_qurbani_cow_slaughter_user,qurbani.cow.slaughter user,model_qurbani_cow_slaughter,qurbani_user_group,1,1,1,0
+access_qurbani_cow_slaughter_audit,qurbani.cow.slaughter audit,model_qurbani_cow_slaughter,qurbani_audit_group,1,0,0,0
+access_qurbani_cow_slaughter_admin,qurbani.cow.slaughter admin,model_qurbani_cow_slaughter,qurbani_admin_group,1,1,1,1
+access_qurbani_cow_slaughter,qurbani.cow.slaughter,model_qurbani_cow_slaughter,base.group_user,1,1,1,0
+access_qurbani_cow_slaughter_line_user,qurbani.cow.slaughter.line user,model_qurbani_cow_slaughter_line,qurbani_user_group,1,1,1,0
+access_qurbani_cow_slaughter_line_audit,qurbani.cow.slaughter.line audit,model_qurbani_cow_slaughter_line,qurbani_audit_group,1,0,0,0
+access_qurbani_cow_slaughter_line_admin,qurbani.cow.slaughter.line admin,model_qurbani_cow_slaughter_line,qurbani_admin_group,1,1,1,1
+access_qurbani_cow_slaughter_line,qurbani.cow.slaughter.line,model_qurbani_cow_slaughter_line,base.group_user,1,1,1,0
+access_qurbani_goat_slaughter_user,qurbani.goat.slaughter user,model_qurbani_goat_slaughter,qurbani_user_group,1,1,1,0
+access_qurbani_goat_slaughter_audit,qurbani.goat.slaughter audit,model_qurbani_goat_slaughter,qurbani_audit_group,1,0,0,0
+access_qurbani_goat_slaughter_admin,qurbani.goat.slaughter admin,model_qurbani_goat_slaughter,qurbani_admin_group,1,1,1,1
+access_qurbani_goat_slaughter,qurbani.goat.slaughter,model_qurbani_goat_slaughter,base.group_user,1,1,1,0
+access_qurbani_cow_distribution_user,qurbani.cow.distribution user,model_qurbani_cow_distribution,qurbani_user_group,1,1,1,0
+access_qurbani_cow_distribution_audit,qurbani.cow.distribution audit,model_qurbani_cow_distribution,qurbani_audit_group,1,0,0,0
+access_qurbani_cow_distribution_admin,qurbani.cow.distribution admin,model_qurbani_cow_distribution,qurbani_admin_group,1,1,1,1
+access_qurbani_cow_distribution,qurbani.cow.distribution,model_qurbani_cow_distribution,base.group_user,1,1,1,0
+access_qurbani_goat_distribution_user,qurbani.goat.distribution user,model_qurbani_goat_distribution,qurbani_user_group,1,1,1,0
+access_qurbani_goat_distribution_audit,qurbani.goat.distribution audit,model_qurbani_goat_distribution,qurbani_audit_group,1,0,0,0
+access_qurbani_goat_distribution_admin,qurbani.goat.distribution admin,model_qurbani_goat_distribution,qurbani_admin_group,1,1,1,1
+access_qurbani_goat_distribution,qurbani.goat.distribution,model_qurbani_goat_distribution,base.group_user,1,1,1,0
 access_api_qurbani_wizard,api.qurbani.wizard,model_api_qurbani_wizard,base.group_user,1,1,1,1
-access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,base.group_user,1,1,1,1
+access_fetch_qurbani_log_user,fetch.qurbani.log user,model_fetch_qurbani_log,qurbani_user_group,1,1,1,0
+access_fetch_qurbani_log_audit,fetch.qurbani.log audit,model_fetch_qurbani_log,qurbani_audit_group,1,0,0,0
+access_fetch_qurbani_log_admin,fetch.qurbani.log admin,model_fetch_qurbani_log,qurbani_admin_group,1,1,1,1
+access_fetch_qurbani_log,fetch.qurbani.log,model_fetch_qurbani_log,base.group_user,1,1,1,0
 access_transfer_slaughter,access.transfer.slaughter,model_transfer_slaughter,base.group_user,1,1,1,1
-access_sync_slaughter_and_distribution,access.sync.slaughter.and.distribution,model_sync_slaughter_and_distribution,base.group_user,1,1,1,1
-access_web_qurbani_distribution_center,access.web.qurbani.distribution.center,model_web_qurbani_distribution_center,base.group_user,1,1,1,1
-access_web_qurbani_slaughter_center,access.web.qurbani.slaughter.center,model_web_qurbani_slaughter_center,base.group_user,1,1,1,1
-access_qurbani_city,access.qurbani.city,model_qurbani_city,base.group_user,1,1,1,1
+access_sync_slaughter_and_distribution_user,access.sync.slaughter.and.distribution user,model_sync_slaughter_and_distribution,qurbani_user_group,1,1,1,0
+access_sync_slaughter_and_distribution_audit,access.sync.slaughter.and.distribution audit,model_sync_slaughter_and_distribution,qurbani_audit_group,1,0,0,0
+access_sync_slaughter_and_distribution_admin,access.sync.slaughter.and.distribution admin,model_sync_slaughter_and_distribution,qurbani_admin_group,1,1,1,1
+access_sync_slaughter_and_distribution,access.sync.slaughter.and.distribution,model_sync_slaughter_and_distribution,base.group_user,1,1,1,0
+access_web_qurbani_distribution_center_user,access.web.qurbani.distribution.center user,model_web_qurbani_distribution_center,qurbani_user_group,1,1,1,0
+access_web_qurbani_distribution_center_audit,access.web.qurbani.distribution.center audit,model_web_qurbani_distribution_center,qurbani_audit_group,1,0,0,0
+access_web_qurbani_distribution_center_admin,access.web.qurbani.distribution.center admin,model_web_qurbani_distribution_center,qurbani_admin_group,1,1,1,1
+access_web_qurbani_distribution_center,access.web.qurbani.distribution.center,model_web_qurbani_distribution_center,base.group_user,1,1,1,0
+access_web_qurbani_slaughter_center_user,access.web.qurbani.slaughter.center user,model_web_qurbani_slaughter_center,qurbani_user_group,1,1,1,0
+access_web_qurbani_slaughter_center_audit,access.web.qurbani.slaughter.center audit,model_web_qurbani_slaughter_center,qurbani_audit_group,1,0,0,0
+access_web_qurbani_slaughter_center_admin,access.web.qurbani.slaughter.center admin,model_web_qurbani_slaughter_center,qurbani_admin_group,1,1,1,1
+access_web_qurbani_slaughter_center,access.web.qurbani.slaughter.center,model_web_qurbani_slaughter_center,base.group_user,1,1,1,0
+access_qurbani_city_user,access.qurbani.city user,model_qurbani_city,qurbani_user_group,1,1,1,0
+access_qurbani_city_audit,access.qurbani.city audit,model_qurbani_city,qurbani_audit_group,1,0,0,0
+access_qurbani_city_admin,access.qurbani.city admin,model_qurbani_city,qurbani_admin_group,1,1,1,1
+access_qurbani_city,access.qurbani.city,model_qurbani_city,base.group_user,1,1,1,0
 access_update_qurbani_demand,access.update.qurbani.demand,model_update_qurbani_demand,base.group_user,1,1,1,1
-access_hijri_user,hijri.user,model_hijri,base.group_user,1,1,1,1

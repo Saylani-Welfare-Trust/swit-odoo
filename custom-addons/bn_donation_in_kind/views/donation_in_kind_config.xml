@@ -27,7 +27,8 @@
         id="donaiton_in_kind_root_config_menu"
         name="Donation In Kind"
         parent="bn_import_donation.donation_inflow_config_menu"
-        sequence="2"/>
+        sequence="2"
+        groups="bn_donation_in_kind.donation_in_kind_admin_group"/>
     
     <menuitem
         id="donaiton_in_kind_config_menu"

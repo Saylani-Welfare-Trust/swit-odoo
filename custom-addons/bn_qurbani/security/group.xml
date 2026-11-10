@@ -6,21 +6,62 @@
         <field name="sequence">53</field>
     </record>
 
+    <!-- Sole gate on the Qurbani app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
     <record id="qurbani_menu_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_qurbani"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Qurbani app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
-    
+
+    <record id="qurbani_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_qurbani"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Day-to-day access: Qurbani orders, slaughter and distribution.</field>
+    </record>
+
+    <record id="qurbani_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_qurbani"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('qurbani_user_group')])]"/>
+        <field name="comment">Everything User can do, plus syncing slaughter and distribution.</field>
+    </record>
+
+    <record id="qurbani_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_qurbani"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of Qurbani orders, slaughter and distribution, for reporting.</field>
+    </record>
+
+    <record id="qurbani_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_qurbani"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('qurbani_manager_group'), ref('qurbani_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and the Qurbani configuration (days, Hijri dates, Chand Raat, schedules, centres, generators).</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="demand_menu_group" model="res.groups">
         <field name="name">Demand</field>
         <field name="category_id" ref="module_qurbani"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Qurbani demand (city / slaughter / slot demand).</field>
     </record>
-    
+
     <record id="edit_hissa_name_group" model="res.groups">
         <field name="name">Edit Hissa Name</field>
         <field name="category_id" ref="module_qurbani"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">May change the hissa names of an order.</field>
     </record>
+
+    <!-- Every internal user could work in Qurbani before the tiers: on this
+         first upgrade, the users of its menu become User. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_qurbani.qurbani_menu_group': 'bn_qurbani.qurbani_user_group',
+    }, 'bn_qurbani.tiers']"/>
+
 </odoo>

@@ -3,39 +3,63 @@
 
     <record id="module_material_request" model="ir.module.category">
         <field name="name">Material Request</field>
-        <field name="sequence">61</field>
     </record>
-    
-    <!-- Menu Group -->
+
+    <!-- Sole gate on the Material Requests app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
     <record id="menu_group_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_material_request"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Raise material requests; sees own requests and, as department manager (HOD), the department's.</field>
+    </record>
+
+    <record id="material_request_root_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_material_request"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Basic user access to Member Approval module</field>
+        <field name="comment">Grants visibility of the Material Requests app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
-    
+
+    <record id="material_request_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_material_request"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('menu_group_user')])]"/>
+        <field name="comment">Everything User can do.</field>
+    </record>
+
+    <record id="material_request_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_material_request"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of every material request, for reporting.</field>
+    </record>
+
+    <record id="material_request_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_material_request"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('material_request_manager_group'), ref('material_request_audit_group')])]"/>
+        <field name="comment">Full control over every material request, including delete.</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="menu_group_material_request_cfo" model="res.groups">
         <field name="name">CFO Approval</field>
         <field name="category_id" ref="module_material_request"/>
         <field name="implied_ids" eval="[(6, 0, [ref('menu_group_user')])]"/>
+        <field name="comment">Approves out-of-budget and Shariah Hold requests of every department.</field>
     </record>
-    
-    
+
     <record id="menu_group_material_request_coo" model="res.groups">
         <field name="name">COO Approval</field>
         <field name="category_id" ref="module_material_request"/>
         <field name="implied_ids" eval="[(6, 0, [ref('menu_group_user')])]"/>
+        <field name="comment">Approves out-of-budget requests of every department.</field>
     </record>
 
-    <!-- Member Approval User Group -->
+    <!-- The former "Menu" was also the user access: on this first upgrade its users get the Menu group. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_material_request.menu_group_user': 'bn_material_request.material_request_root_group',
+    }, 'bn_material_request.tiers']"/>
 
-    <!-- HOD Group -->
-
-    <!-- CFO Group -->
-
-    <!-- COO Group -->
-
-    <!-- Manager Group -->
-
-    
 </odoo>

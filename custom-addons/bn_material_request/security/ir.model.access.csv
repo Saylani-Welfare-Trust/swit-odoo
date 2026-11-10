@@ -1,6 +1,12 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_material_request,material.request,model_material_request,base.group_user,1,1,1,1
-access_material_request_line,material.request.line,model_material_request_line,base.group_user,1,1,1,1
+access_material_request_user,material.request user,model_material_request,menu_group_user,1,1,1,0
+access_material_request_audit,material.request audit,model_material_request,material_request_audit_group,1,0,0,0
+access_material_request_admin,material.request admin,model_material_request,material_request_admin_group,1,1,1,1
+access_material_request,material.request,model_material_request,base.group_user,1,1,1,0
+access_material_request_line_user,material.request.line user,model_material_request_line,menu_group_user,1,1,1,0
+access_material_request_line_audit,material.request.line audit,model_material_request_line,material_request_audit_group,1,0,0,0
+access_material_request_line_admin,material.request.line admin,model_material_request_line,material_request_admin_group,1,1,1,1
+access_material_request_line,material.request.line,model_material_request_line,base.group_user,1,1,1,0
 access_vendor_selection_wizard,vendor.selection.wizard,model_vendor_selection_wizard,base.group_user,1,1,1,1
 access_rfq_price_wizard,rfq.price.wizard,model_rfq_price_wizard,base.group_user,1,1,1,1
 access_rfq_price_wizard_line,rfq.price.wizard.line,model_rfq_price_wizard_line,base.group_user,1,1,1,1
@@ -8,5 +14,8 @@ access_rfq_price_wizard_rfq_line,rfq.price.wizard.rfq.line,model_rfq_price_wizar
 access_vendor_selection_wizard_source_line,vendor.selection.wizard.source.line,model_vendor_selection_wizard_source_line,base.group_user,1,1,1,1
 access_vendor_selection_wizard_procurement_line,vendor.selection.wizard.procurement.line,model_vendor_selection_wizard_procurement_line,base.group_user,1,1,1,1
 access_vendor_selection_wizard_other_line,vendor.selection.wizard.other.line,model_vendor_selection_wizard_other_line,base.group_user,1,1,1,1
-access_purchase_requisition_line_deletion_log,purchase.requisition.line.deletion.log,model_purchase_requisition_line_deletion_log,base.group_user,1,0,0,0
+access_purchase_requisition_line_deletion_log_user,purchase.requisition.line.deletion.log user,model_purchase_requisition_line_deletion_log,menu_group_user,1,1,1,0
+access_purchase_requisition_line_deletion_log_audit,purchase.requisition.line.deletion.log audit,model_purchase_requisition_line_deletion_log,material_request_audit_group,1,0,0,0
+access_purchase_requisition_line_deletion_log_admin,purchase.requisition.line.deletion.log admin,model_purchase_requisition_line_deletion_log,material_request_admin_group,1,1,1,1
+access_purchase_requisition_line_deletion_log,purchase.requisition.line.deletion.log,model_purchase_requisition_line_deletion_log,base.group_user,1,1,1,0
 access_material_request_revert_wizard,access.material.request.revert.wizard,model_material_request_revert_wizard,base.group_user,1,1,1,1

@@ -24,11 +24,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0 or state == 'rejected'"/>
-                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0 or state == 'rejected'"/>
-                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1"/>
-                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0 or state == 'rejected'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0 or state == 'rejected'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_advance_donation.group_adv_don_menu"/>
                     <button name="action_approved" invisible="state != 'approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_1"/>
                     <button name="action_approved" invisible="state != 'approval_2'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_2"/>
                     <button name="action_rejected" invisible="state != 'approval_1'" string="Reject" type="object" groups="bn_advance_donation.group_adv_don_approval_1"/>

@@ -32,10 +32,10 @@
             <form>
                 <header>
                     <button name="action_pending" groups="bn_advance_donation.group_adv_don_menu" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type != 'cheque'"/>
-                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type == 'cheque'"/>
+                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type == 'cheque'" groups="bn_advance_donation.group_adv_don_menu"/>
                     <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
                     <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
-                    <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="state != 'bounced'"/>
+                    <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="state != 'bounced'" groups="bn_advance_donation.group_adv_don_menu"/>
                 
                     <button name="%(bn_advance_donation.action_report_advance_donation_receipt)d" 
                             string="Print Receipt" 

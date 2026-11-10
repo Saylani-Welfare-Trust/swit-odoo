@@ -9,3 +9,4 @@ from . import approval_request
 from . import approval_request_stage
 from . import approval_engine
 from . import approval_document
+from . import res_groups

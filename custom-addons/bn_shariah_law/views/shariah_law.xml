@@ -31,7 +31,7 @@
                 <!-- Closing Balances -->
                 <field name="closing_balance" sum="Total" widget="monetary"/>
 
-                <button string="Transfer" name="action_transfer" type="object" class="btn-primary"/>
+                <button string="Transfer" name="action_transfer" type="object" class="btn-primary" groups="bn_shariah_law.shariah_law_user_group"/>
             </tree>
         </field>
     </record>

@@ -1,34 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Sole gate on the Donation In Kind menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see it. -->
     <record id="donation_in_kind_menu_group" model="res.groups">
         <field name="name">Menu</field>
         <field name="category_id" ref="module_donation_in_kind"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Donation In Kind menu (under Donation Inflows, whose Menu group is needed too). Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
+    <record id="donation_in_kind_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_donation_in_kind"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Day-to-day access: record donations in kind, deliver them and send them for approval. Cannot delete.</field>
+    </record>
+
+    <record id="donation_in_kind_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_donation_in_kind"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_in_kind_user_group')])]"/>
+        <field name="comment">Everything User can do; the approvals themselves belong to the role groups below (Valuation Committee, Box Validate, Open Box).</field>
+    </record>
+
+    <record id="donation_in_kind_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_donation_in_kind"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of donations in kind, for reporting. No create, write or delete.</field>
+    </record>
+
+    <record id="donation_in_kind_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_donation_in_kind"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_in_kind_manager_group'), ref('donation_in_kind_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and the Donation In Kind configuration.</field>
+    </record>
+
+    <!-- Role groups: one responsibility each, on top of the tiers -->
     <record id="donation_in_kind_valuation_committee_group" model="res.groups">
         <field name="name">Valuation Committee</field>
         <field name="category_id" ref="module_donation_in_kind"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_in_kind_user_group')])]"/>
+        <field name="comment">Values the donated goods (Valuation Committee page and approval).</field>
     </record>
 
     <record id="donation_in_kind_box_validate_group" model="res.groups">
         <field name="name">Box Validate</field>
         <field name="category_id" ref="module_donation_in_kind"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_in_kind_user_group')])]"/>
+        <field name="comment">Validates donation boxes.</field>
     </record>
 
     <record id="donation_in_kind_open_box_group" model="res.groups">
         <field name="name">Open Box</field>
         <field name="category_id" ref="module_donation_in_kind"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('donation_in_kind_user_group')])]"/>
+        <field name="comment">Opens donation boxes.</field>
     </record>
 
     <record id="donation_in_kind_pos_action_group" model="res.groups">
         <field name="name">POS Action</field>
         <field name="category_id" ref="module_donation_in_kind"/>
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: record donations in kind at the Point of Sale.</field>
     </record>
+
+    <!-- Every internal user could create and edit donations in kind before the
+         tiers: on this first upgrade, the users of its menu become User. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_donation_in_kind.donation_in_kind_menu_group': 'bn_donation_in_kind.donation_in_kind_user_group',
+    }, 'bn_donation_in_kind.tiers']"/>
 
 </odoo>

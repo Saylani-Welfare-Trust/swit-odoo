@@ -39,23 +39,23 @@
         id="sadqa_e_jariya_menu"
         name="Sadqa e Jariya"
         web_icon="bn_sadqa_e_jariya,static/description/icon.png"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.group_fetch_institution"
+        groups="bn_sadqa_e_jariya.sadqa_e_jariya_root_group"
         sequence="7"/>
 
     <menuitem
         id="sadqa_e_jariya_institution_disbursement_menu"
         name="Institution Disbursement"
         action="welfare_action_institution"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement"
         parent="sadqa_e_jariya_menu"
-        sequence="1"/>
+        sequence="1"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
 
     <menuitem
         id="sadqa_e_jariya_profile_menu"
         name="Profile"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement"
         parent="sadqa_e_jariya_menu"
-        sequence="2"/>
+        sequence="2"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
 
     <menuitem
         id="sadqa_e_jariya_record_search_menu"

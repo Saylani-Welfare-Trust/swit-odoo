@@ -19,8 +19,8 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'draft'" />
-                    <button string="Manufacture" name="action_manufacture" type="object" class="oe_highlight" invisible="state != 'approve'" />
+                    <button string="Approve" name="action_approve" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_kitchen.kitchen_manager_group"/>
+                    <button string="Manufacture" name="action_manufacture" type="object" class="oe_highlight" invisible="state != 'approve'" groups="bn_kitchen.kitchen_user_group"/>
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, approve, done"/>
                 </header>
@@ -89,6 +89,7 @@
         name="Branch Kitchen Request"
         action="branch_kitchen_request_action"
         parent="bn_kitchen.kitchen_menu"
-        sequence="3"/>
+        sequence="3"
+        groups="bn_kitchen.kitchen_user_group,bn_kitchen.kitchen_audit_group"/>
 
 </odoo>

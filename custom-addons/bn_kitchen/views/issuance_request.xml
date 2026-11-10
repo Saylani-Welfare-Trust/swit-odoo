@@ -21,6 +21,7 @@
         name="Issuance Request"
         action="issuance_request_action"
         parent="bn_kitchen.kitchen_menu"
-        sequence="1"/>
+        sequence="1"
+        groups="bn_kitchen.kitchen_user_group,bn_kitchen.kitchen_audit_group"/>
 
 </odoo>
