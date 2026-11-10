@@ -17,6 +17,7 @@
         'views/pos_order_views.xml',
         'views/donation_in_kind_dashboard_views.xml',
         'views/donation_inflow_dashboard_views.xml',
+        'views/dashboard_configuration_menu.xml',
         'views/treasury_access_views.xml',
         'views/pos_order_access_config_view.xml',
         'views/donation_box_access_config_views.xml'

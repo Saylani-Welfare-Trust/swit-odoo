@@ -48,9 +48,9 @@
     </record>
 
     <menuitem id="menu_donation_box_access"
-              name="Donation Box Access Configuration"
-              parent="bn_dashboard.menu_dashboard_root"
-              action="action_donation_box_access"
-              groups="base.group_erp_manager"
-              sequence="22"/>
+          name="Donation Box Access"
+          parent="bn_dashboard.menu_dashboard_configuration_root"
+          action="action_donation_box_access"
+          groups="bn_dashboard.group_dashboard_configuration"
+          sequence="30"/>
 </odoo>
