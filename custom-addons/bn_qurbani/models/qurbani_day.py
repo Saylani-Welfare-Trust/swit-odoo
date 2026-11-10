@@ -5,12 +5,9 @@ class QurbaniDay(models.Model):
     _name = 'qurbani.day'
     _description = 'Qurbani Day'
 
-
     name = fields.Char('Day')
     web_qurbani_day = fields.Char('Web Qurbani Day')
-
     date = fields.Date('Date')
-
 
     @api.model
     def validate_qurbani_day(self, day_id):
@@ -22,12 +19,24 @@ class QurbaniDay(models.Model):
                 'message': 'Selected Qurbani day not found.'
             }
 
-        if day.date and day.date < fields.Date.today():
+        if not day.date:
             return {
                 'valid': False,
-                'message': 'Selected Qurbani day has already passed.'
+                'message': f"No date configured for {day.name or 'the selected Qurbani day'}."
+            }
+
+        today = fields.Date.today()
+
+        if day.date <= today:
+            return {
+                'valid': False,
+                'message': (
+                    f"Booking is not allowed for {day.name or 'the selected Qurbani day'}. "
+                    f"Today date must be before the Eid day date ({day.date})."
+                )
             }
 
         return {
-            'valid': True
+            'valid': True,
+            'message': 'Qurbani booking date is valid.'
         }

@@ -76,122 +76,45 @@
                     <br/>
                     <br/>
                     <t t-if="account">
-                        <t t-foreach="account"
-                           t-as="accounts"
-                           t-key="accounts_index">
-                            <table class="table table-sm table-reports">
-                                <thead style="background:#808080;">
+                        <table class="table table-sm table-reports">
+                            <thead style="background:#808080;">
+                                <tr>
+                                    <th colspan="6"/>
+                                    <th>Date</th>
+                                    <th>Communication</th>
+                                    <th>Partner</th>
+                                    <th>Debit</th>
+                                    <th>Credit</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody style="font-size:11px;font-weight:100;">
+                                <t t-foreach="account" t-as="accounts" t-key="accounts_index">
                                     <tr>
-                                        <th style="width:10%" colspan="6"/>
-                                        <th style="width:10%">Date</th>
-                                        <th style="width:10%">Communication
+                                        <th colspan="6" style="background:#D3D3D3;">
+                                            <t t-esc="accounts if accounts != 'false' else 'Unknown Account'"/>
                                         </th>
-                                        <th style="width:10%">Partner</th>
-                                        <th style="width:10%">Debit</th>
-                                        <th style="width:10%">Credit</th>
-                                        <th style="width:10%">Balance</th>
+                                        <th colspan="3" style="background:#D3D3D3;"/>
+                                        <th style="background:#D3D3D3;"><t t-esc="total[accounts].get('currency_id', '')"/> <t t-esc="total[accounts].get('total_debit', 0)"/></th>
+                                        <th style="background:#D3D3D3;"><t t-esc="total[accounts].get('currency_id', '')"/> <t t-esc="total[accounts].get('total_credit', 0)"/></th>
+                                        <th style="background:#D3D3D3;"><t t-esc="total[accounts].get('currency_id', '')"/> <t t-esc="total[accounts].get('total_debit', 0) - total[accounts].get('total_credit', 0)"/></th>
                                     </tr>
-                                </thead>
-                                <tbody style="font-size:11px;font-weight:100;">
-                                    <tr class="border-bottom"
-                                        style="background:#D3D3D3;">
-                                        <th colspan="6">
-                                            <div class="ms-3">
-                                                <span class="fw-bolder">
-                                                    <t t-if="accounts != 'false'">
-                                                        <strong>
-                                                            <b>
-                                                                <t t-esc="accounts"/>
-                                                            </b>
-                                                        </strong>
-                                                    </t>
-                                                    <t t-else="">
-                                                        <span>Unknown
-                                                            Account
-                                                        </span>
-                                                    </t>
-                                                </span>
-                                            </div>
-                                        </th>
-                                        <th style="width:10% border:0px solid transparent;"/>
-                                        <th style="width:10% border:0px solid transparent;"/>
-                                        <th style="width:10% border:0px solid transparent;"/>
-                                        <th style="width:10% border:0px solid transparent;">
-                                            <strong>
-                                                <span>
-                                                    <t t-if="total[accounts]['total_debit']"
-                                                       t-esc="total[accounts]['currency_id']"/>
-                                                    <t t-if="total[accounts]['total_debit']"
-                                                       t-esc="total[accounts]['total_debit']"/>
-                                                </span>
-                                            </strong>
-                                        </th>
-                                        <th style="width:10% border:0px solid transparent;">
-                                            <strong>
-                                                <span>
-                                                    <t t-if="total[accounts]['total_credit']"
-                                                       t-esc="total[accounts]['currency_id']"/>
-                                                    <t t-if="total[accounts]['total_credit']"
-                                                       t-esc="total[accounts]['total_credit']"/>
-                                                </span>
-                                            </strong>
-                                        </th>
-                                        <th style="width:10% border:0px solid transparent;border-right: thin solid #dee2e6;">
-                                            <strong>
-                                                <span class="fw-bolder">
-                                                    <t t-esc="total[accounts]['currency_id']"/>
-                                                    <t t-esc="total[accounts]['total_debit'] - total[accounts]['total_credit']"/>
-                                                </span>
-                                            </strong>
-                                        </th>
-                                    </tr>
-                                    <t t-foreach="data[accounts]"
-                                       t-as="valuelist"
-                                       t-key="valuelist_index">
+                                    <t t-foreach="data.get(accounts, [])" t-as="valuelist" t-key="valuelist_index">
                                         <tr class="border-bottom">
-                                            <th colspan="6" style="width:10%">
-                                                <span>
-                                                    <t t-esc="valuelist[0]['move_name']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-esc="valuelist[0]['date']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-esc="valuelist[0]['name']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-if="valuelist[0]['partner_id']"
-                                                       t-esc="valuelist[0]['partner_id'][1]"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-if="valuelist[0]['debit']"
-                                                       t-esc="total[accounts]['currency_id']"/>
-                                                    <t t-if="valuelist[0]['debit']"
-                                                       t-esc="valuelist[0]['debit']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%">
-                                                <span>
-                                                    <t t-if="valuelist[0]['credit']"
-                                                       t-esc="total[accounts]['currency_id']"/>
-                                                    <t t-if="valuelist[0]['credit']"
-                                                       t-esc="valuelist[0]['credit']"/>
-                                                </span>
-                                            </th>
-                                            <th style="width:10%"/>
+                                        <th colspan="6">
+                                            <t t-esc="valuelist.get('move_name', '')"/>
+                                        </th>
+                                        <th><t t-esc="valuelist.get('date', '')"/></th>
+                                        <th><t t-esc="valuelist.get('name', '')"/></th>
+                                        <th><t t-if="valuelist.get('partner_id')" t-esc="valuelist['partner_id'][1]"/></th>
+                                        <th><t t-if="valuelist.get('debit')" t-esc="valuelist.get('debit', 0)"/></th>
+                                        <th><t t-if="valuelist.get('credit')" t-esc="valuelist.get('credit', 0)"/></th>
+                                        <th/>
                                         </tr>
                                     </t>
-                                </tbody>
-                            </table>
-                        </t>
+                                </t>
+                            </tbody>
+                        </table>
                     </t>
                     <table class="table table-sm table-reports">
                         <tbody>

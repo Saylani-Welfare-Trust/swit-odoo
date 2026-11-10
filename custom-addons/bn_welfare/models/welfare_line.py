@@ -86,7 +86,17 @@ class WelfareLine(models.Model):
     #     compute='_compute_net_amount',
     #     store=True
     # )
+    
+    on_hand_qty = fields.Float(
+        string='On Hand Quantity',
+        compute='_compute_on_hand_qty'
+    )
 
+    @api.depends('product_id')
+    def _compute_on_hand_qty(self):
+        for rec in self:
+            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
+    
     # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
         'res.company',

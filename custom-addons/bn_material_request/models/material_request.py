@@ -145,8 +145,7 @@ class MemberApproval(models.Model):
     #             )
     #         else:
     #             rec.source_location_domain = "[('usage','=','internal')]"
-
- 
+    
 
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
@@ -156,52 +155,60 @@ class MemberApproval(models.Model):
             raise ValidationError(_('Please add at least one product line.'))
 
         today = fields.Date.today()
-
-        # Budget check per line (analytic + budget)
         total_available_budget = 0.0
         is_in_budget = True
 
         for line in self.line_ids:
-            # Search for analytic account linked to the product
-            analytic = self.env['account.analytic.account'].search([
-                ('product_ids', 'in', [line.product_id.id])
-            ], limit=1)
-
+            # Use the analytic account from the line (set by onchange/create)
+            analytic = line.analytic_account_id
+            # Fallback: if line's analytic is missing, try to get it from product
+            if not analytic and line.product_id:
+                analytic = line.product_id.analytic_account_id
+                if analytic:
+                    line.analytic_account_id = analytic  # fix the line
             if not analytic:
                 raise ValidationError(
-                    _('Product "%s" is not linked to any Analytic Account.')
+                    _('Product "%s" has no Analytic Account set. Please configure it on the product.')
                     % line.product_id.display_name
                 )
 
             budget = line.budget_id
-            # if not budget:
-            #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
-            
+            if not budget:
+                # Try to get default budget from the analytic account
+                if analytic.default_budget_id:
+                    line.budget_id = analytic.default_budget_id
+                    budget = line.budget_id
+                else:
+                    raise ValidationError(
+                        _('No Budgetary Position for product "%s". Please set a default budget on its Analytic Account.')
+                        % line.product_id.display_name
+                    )
+
+            # Search budget lines for the current period
             budget_lines = self.env['budget.lines'].search([
-                ('analytic_account_id', '=', analytic.id),  # Use analytic.id directly
+                ('analytic_account_id', '=', analytic.id),
                 ('budget_id', '=', budget.id),
                 ('date_from', '<=', today),
                 ('date_to', '>=', today),
             ])
-            
-            # if not budget_lines:
-            #     raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
-            
-            available_budget = sum(
-                abs(l.practical_amount)
-                for l in budget_lines
-            )
+
+            if not budget_lines:
+                raise ValidationError(
+                    _('No active budget line found for Analytic Account "%s" and Budget "%s".')
+                    % (analytic.display_name, budget.display_name)
+                )
+
+            available_budget = sum(abs(l.practical_amount) for l in budget_lines)
             total_available_budget += available_budget
-            
+
             if line.subtotal > available_budget:
                 is_in_budget = False
 
-        # Set state for approval cycle
-        next_state = 'hod_approval'
+        # Update state
         self.write({
             'budget_amount': total_available_budget,
             'is_in_budget': is_in_budget,
-            'state': next_state,
+            'state': 'hod_approval',
         })
         return True
 

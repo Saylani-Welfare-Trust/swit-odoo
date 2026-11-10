@@ -105,6 +105,24 @@ class Microfinance(models.Model):
         currency_field='currency_id',
         store=True
     )
+    asset_availability = fields.Selection(selection=assest_availability_selection, compute='_compute_asset_availablity', string='Asset Availability')
+    
+    on_hand_qty = fields.Float(
+        string='On Hand Quantity',
+        compute='_compute_on_hand_qty'
+    )
+    
+    @api.depends('product_id', 'warehouse_location_id')
+    def _compute_on_hand_qty(self):
+        for rec in self:
+            if rec.product_id and rec.warehouse_location_id:
+                rec.on_hand_qty = rec.product_id.with_context(
+                    location=rec.warehouse_location_id.id
+                ).qty_available
+            elif rec.product_id:
+                rec.on_hand_qty = rec.product_id.qty_available
+            else:
+                rec.on_hand_qty = 0.0
        
     total_amount = fields.Monetary('Total Amount', compute="_set_total_amount", store=True, currency_field='currency_id')
     installment_amount = fields.Monetary('Installment Amount', compute="_set_installment_amount", store=True, currency_field='currency_id')

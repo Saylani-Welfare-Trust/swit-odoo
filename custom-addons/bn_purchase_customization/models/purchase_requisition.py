@@ -1,4 +1,4 @@
-from odoo import models, fields
+from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
 
@@ -7,6 +7,12 @@ PURCHASE_REQUISITION_STATES = [
     ('ongoing', 'Ongoing'),
     ('hod_approval', 'HOD Approval'),
     ('mem_approval', 'Member Approval'),
+    ('procurement_review', 'Procurement Manager Review'),
+    ('deferred', 'Deferred / On Hold'),
+    ('rfq_sent', 'RFQ Sent'),
+    ('technical_evaluation', 'Technical Evaluation'),
+    ('hod_procurement_approval', 'HOD Procurement Approval'),
+    ('funds_check', 'Funds Availability Check'),
     ('in_progress', 'Confirmed'),
     ('open', 'Bid Selection'),
     ('done', 'Closed'),
@@ -35,3 +41,16 @@ class PurchaseRequisition(models.Model):
 
     def action_mem_approval(self):
         self.state = 'mem_approval'
+        
+class PurchaseRequisitionLine(models.Model):
+    _inherit = 'purchase.requisition.line'
+
+    on_hand_qty = fields.Float(
+        string='On Hand',
+        compute='_compute_on_hand_qty'
+    )
+
+    @api.depends('product_id')
+    def _compute_on_hand_qty(self):
+        for line in self:
+            line.on_hand_qty = line.product_id.qty_available if line.product_id else 0.0

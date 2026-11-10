@@ -19,6 +19,16 @@ class DonationHomeServiceLine(models.Model):
         related='medical_equipment_category_id.security_deposit',
         readonly=True
     )
+    on_hand_qty = fields.Float(
+        string='On Hand Quantity',
+        compute='_compute_on_hand_qty'
+    )
+    
+    @api.depends('product_id')
+    def _compute_on_hand_qty(self):
+        for rec in self:    
+            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
+            
     actual_deposit_percentage = fields.Float(
         string='Actual Deposit Percentage (%)',
         related='medical_equipment_id.actual_deposit_percentage',

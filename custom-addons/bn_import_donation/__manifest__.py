@@ -10,11 +10,14 @@
         'product',
         'base_accounting_kit',
         'bn_profile_management',
+        'bn_pos_customization',
     ],
     'data': [
         'data/sequence.xml',
         'data/schedule_action.xml',
+        'data/server_action.xml',
         'data/ir_module_category.xml',
+        
         
         'security/group.xml',
         'security/access_right.xml',

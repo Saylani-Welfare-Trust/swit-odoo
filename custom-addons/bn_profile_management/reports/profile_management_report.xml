@@ -24,13 +24,13 @@
                 <br/><br/>
                 <section name="print_detail" style="width: 80%;">
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Date : </span>
                         </div>
                         <div class="col-4">
                             <t t-esc="datetime.date.today()"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Master Donee No. : </span>
                         </div>
                         <div class="col-4">
@@ -39,13 +39,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Name : </span>
                         </div>
                         <div class="col-4">
                             <t t-esc="docs.name"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Mobile : </span>
                         </div>
                         <div class="col-4">
@@ -54,13 +54,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>CNIC No. : </span>
                         </div>
                         <div class="col-4">
                             <t t-esc="docs.cnic_no"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>City : </span>
                         </div>
                         <div class="col-4">
@@ -69,7 +69,7 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Branch : </span>
                         </div>
                         <div class="col-4">
@@ -78,13 +78,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Gender : </span>
                         </div>
                         <div class="col-4">
                             <t t-if="docs.gender" t-esc="docs.gender.title()"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>DOB : </span>
                         </div>
                         <div class="col-4">
@@ -93,13 +93,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Religion : </span>
                         </div>
                         <div class="col-4">
                             <t t-if="docs.religion" t-esc="docs.religion.title()"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Next Kin : </span>
                         </div>
                         <div class="col-4">
@@ -108,13 +108,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Address : </span>
                         </div>
                         <div class="col-4">
                             <t t-esc="docs.street"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Nearest Land Mark : </span>
                         </div>
                         <div class="col-4">
@@ -123,13 +123,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Father Name : </span>
                         </div>
                         <div class="col-4">
                             <t t-esc="docs.father_name"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Surname : </span>
                         </div>
                         <div class="col-4">
@@ -138,14 +138,14 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Married Status : </span>
                         </div>
                         <div class="col-4">
                             <t t-if="docs.martial_status" t-esc="docs.martial_status.title()"/>
                         </div>
                         <t t-if="docs.martial_status == 'married'">
-                            <div class="col-4">
+                            <div class="col-2">
                                 <span>Spouse Name : </span>
                             </div>
                             <div class="col-4">
@@ -155,13 +155,13 @@
                     </div>
                     <br/>
                     <div class="row">
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Bank / Wallet Account : </span>
                         </div>
                         <div class="col-4">
                             <t t-esc="docs.bank_wallet_account"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-2">
                             <span>Details : </span>
                         </div>
                         <div class="col-4">

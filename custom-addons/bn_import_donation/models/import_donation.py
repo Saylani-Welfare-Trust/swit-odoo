@@ -180,6 +180,9 @@ class ImportDonation(models.Model):
             raise ValidationError("No valid records.")
 
         Donation = self.env['donation']
+        Partner = self.env['res.partner']
+        cats = self._get_category_refs()
+        partner_cache = {}
 
         donation_vals = []
 
@@ -191,10 +194,35 @@ class ImportDonation(models.Model):
 
             product = config_line.product_id if config_line else False
 
+            partner_key = line.mobile or line.cnic_no or line.email or line.donor_student_name
+            partner = partner_cache.get(partner_key)
+            if not partner:
+                partner = False
+                if line.mobile:
+                    partner = Partner.search([('mobile', '=', line.mobile)], limit=1)
+                if not partner and line.cnic_no:
+                    partner = Partner.search([('cnic_no', '=', line.cnic_no)], limit=1)
+                if not partner and line.email:
+                    partner = Partner.search([('email', '=', line.email)], limit=1)
+                if not partner and line.donor_student_name:
+                    partner = Partner.search([('name', '=', line.donor_student_name)], limit=1)
+                if not partner:
+                    partner = Partner.create({
+                        'name': line.donor_student_name or f"Undefined {line.mobile}",
+                        'mobile': line.mobile,
+                        'cnic_no': line.cnic_no,
+                        'email': line.email,
+                        'category_id': [(6, 0, [
+                            cats['donee'] if line.is_student else cats['donor'],
+                            cats['individual'],
+                        ])],
+                    })
+                partner_cache[partner_key] = partner
+
             donation_vals.append({
                 'import_donation_id': self.id,
                 'transaction_id': line.transaction_id,
-                'donor_id': False,  # NOT LINKED HERE
+                'donor_id': partner.id,
                 'product_id': product.id if product else False,
                 'date': line.date,
                 'amount': line.amount,
@@ -372,3 +400,62 @@ class ImportDonation(models.Model):
             'view_mode': 'form',
             'res_id': self.picking_id.id
         }
+
+    # =========================================================
+    # FETCH DONOR NAME FROM EXCEL (match by transaction_id / Id)
+    # =========================================================
+    @staticmethod
+    def _norm_id(val):
+        """Normalize an Id value so '41933352497' and 41933352497.0 match."""
+        if val is None:
+            return ''
+        if isinstance(val, float) and val.is_integer():
+            return str(int(val))
+        return str(val).strip()
+
+    def action_fetch_donor_name_from_excel(self):
+        for rec in self:
+            if not rec.import_file:
+                raise ValidationError(f"{rec.name}: No file uploaded.")
+
+            data = base64.b64decode(rec.import_file)
+            stream = BytesIO(data)
+
+            if data[:4] == b'PK\x03\x04':
+                workbook = openpyxl.load_workbook(stream)
+                sheet = workbook.active
+                headers = [c.value for c in next(sheet.iter_rows(min_row=1, max_row=1))]
+                rows = sheet.iter_rows(min_row=2, values_only=True)
+            elif data[:4] == b'\xD0\xCF\x11\xE0':
+                workbook = xlrd.open_workbook(file_contents=data)
+                sheet = workbook.sheet_by_index(0)
+                headers = sheet.row_values(0)
+                rows = (sheet.row_values(i) for i in range(1, sheet.nrows))
+            else:
+                raise ValidationError(f"{rec.name}: Unsupported file format.")
+
+            try:
+                id_idx = headers.index('Id')
+                name_idx = headers.index('From name')
+            except ValueError:
+                raise ValidationError(
+                    f"{rec.name}: Could not find 'Id' or 'From name' columns in the file."
+                )
+
+            name_map = {}
+            for row in rows:
+                txn_id = self._norm_id(row[id_idx])
+                from_name = row[name_idx]
+                if txn_id:
+                    name_map[txn_id] = from_name
+
+            updated = 0
+            for lines in (rec.valid_import_donation_ids, rec.invalid_import_donation_ids):
+                for line in lines:
+                    key = self._norm_id(line.transaction_id)
+                    match_name = name_map.get(key)
+                    if match_name and match_name != line.donor_student_name:
+                        line.donor_student_name = match_name
+                        updated += 1
+
+            rec.message_post(body=f"Fetched donor/student names from Excel for {updated} line(s).")

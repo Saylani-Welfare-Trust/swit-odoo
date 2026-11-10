@@ -87,14 +87,14 @@ May Allah bless you!
     def _generate_din_receipt_pdf(self):
         try:
             pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_donation_in_kind.report_donation_in_kind',  # <- swap for your actual receipt report xml id
+                'bn_donation_in_kind.donation_in_kind_report',   # <- was 'bn_donation_in_kind.report_donation_in_kind'
                 [self.id]
             )
             return pdf_data
         except Exception as e:
             _logger.error('DIN receipt PDF error: %s', str(e))
             return None
-
+        
     def _save_din_receipt_attachment(self, pdf_data):
         self.ensure_one()
         safe_name = self.name.replace('/', '_')

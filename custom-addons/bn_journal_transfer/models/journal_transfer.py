@@ -26,7 +26,7 @@ class JournalTransfer(models.TransientModel):
     source_journal_id = fields.Many2one('account.journal', string="Source Journal")
     dest_journal_id = fields.Many2one('account.journal', string="Destination Journal")
     currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.company.currency_id)
-
+    remarks = fields.Char('Remarks')
     pos_move_id = fields.Many2one('account.move', string="Account Move")
     analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
     reference = fields.Char('Reference')

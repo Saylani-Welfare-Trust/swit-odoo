@@ -16,6 +16,7 @@
         'views/pos_session.xml',
         'views/pos_assets_index.xml',
     ],
+
     'auto_install': False,
     'application': False,
     'assets': {

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="purchase_requisition_view_form_inherit_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.form.inherit.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition.view_purchase_requisition_form"/>
+        <field name="arch" type="xml">
+            <!-- The native Confirm button is superseded by the Procurement gate chain -->
+            <xpath expr="//button[@name='action_in_progress']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+
+            <xpath expr="//field[@name='state']" position="attributes">
+                <attribute name="statusbar_visible">draft,hod_approval,mem_approval,procurement_review,rfq_sent,technical_evaluation,hod_procurement_approval,funds_check,in_progress,open,done</attribute>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button string="Submit to Procurement" name="action_submit_to_procurement" type="object"
+                        class="oe_highlight" invisible="state != 'mem_approval'"/>
+
+                <button string="Procurement Approve" name="action_procurement_approve" type="object"
+                        class="oe_highlight" invisible="state != 'procurement_review'"
+                        groups="bn_procurement_workflow.group_procurement_manager"/>
+                <button string="Defer" name="action_open_defer_wizard" type="object"
+                        invisible="state != 'procurement_review'"
+                        groups="bn_procurement_workflow.group_procurement_manager"/>
+                <button string="Resume from Hold" name="action_procurement_resume" type="object"
+                        class="oe_highlight" invisible="state != 'deferred'"
+                        groups="bn_procurement_workflow.group_procurement_manager"/>
+
+                <button string="Technical Evaluation: Approve" name="action_technical_evaluate_approve" type="object"
+                        class="oe_highlight" invisible="state != 'technical_evaluation'"/>
+                <button string="Technical Evaluation: Reject" name="action_technical_evaluate_reject" type="object"
+                        invisible="state != 'technical_evaluation'"/>
+
+                <button string="HOD Procurement: Approve" name="action_hod_procurement_approve_btn" type="object"
+                        class="oe_highlight" invisible="state != 'hod_procurement_approval'"
+                        groups="bn_procurement_workflow.group_hod_procurement"/>
+                <button string="HOD Procurement: Reject" name="action_hod_procurement_reject_btn" type="object"
+                        invisible="state != 'hod_procurement_approval'"
+                        groups="bn_procurement_workflow.group_hod_procurement"/>
+
+                <button string="Funds Available" name="action_funds_available" type="object"
+                        class="oe_highlight" invisible="state != 'funds_check'"/>
+                <button string="Funds Not Available" name="action_funds_unavailable" type="object"
+                        invisible="state != 'funds_check' or funds_available"/>
+                <button string="Confirm Fund Transfer" name="action_cfo_shariah_transfer_confirm" type="object"
+                        class="oe_highlight" invisible="state != 'funds_check' or funds_available"
+                        groups="bn_procurement_workflow.group_cfo_shariah"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_selected_rfq" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                        invisible="not selected_rfq_id">
+                    <field name="selected_rfq_id" widget="statinfo" string="Selected RFQ"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Procurement Approval Trail" name="procurement_approval_trail">
+                    <group>
+                        <group string="Requesting Department">
+                            <field name="requesting_department_id" readonly="1"/>
+                        </group>
+                        <group string="Procurement Manager">
+                            <field name="procurement_manager_id" readonly="1"/>
+                            <field name="procurement_review_date" readonly="1"/>
+                            <field name="defer_reason" readonly="state != 'procurement_review'"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Technical Evaluation">
+                            <field name="technical_evaluation_result" readonly="1"/>
+                            <field name="technical_evaluation_remarks" readonly="state != 'technical_evaluation'"/>
+                            <field name="technical_evaluator_id" readonly="1"/>
+                            <field name="technical_evaluation_date" readonly="1"/>
+                        </group>
+                        <group string="HOD Procurement Approval">
+                            <field name="hod_procurement_result" readonly="1"/>
+                            <field name="hod_procurement_remarks" readonly="state != 'hod_procurement_approval'"/>
+                            <field name="hod_procurement_id" readonly="1"/>
+                            <field name="hod_procurement_date" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Funds Availability">
+                            <field name="funds_available" widget="boolean_toggle" readonly="1"/>
+                            <field name="funds_transfer_remarks" readonly="state != 'funds_check'"/>
+                            <field name="funds_gate_approver_id" readonly="1"/>
+                            <field name="funds_gate_date" readonly="1"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

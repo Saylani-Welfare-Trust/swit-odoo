@@ -12,3 +12,5 @@ from . import medical_meat_management
 from . import livestock_meat_management
 from . import distribution_center
 from . import distribution_center_line
+from . import product_packaging
+from . import stock_picking

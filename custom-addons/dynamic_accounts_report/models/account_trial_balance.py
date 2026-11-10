@@ -22,6 +22,7 @@
 import calendar
 import io
 import json
+from collections import defaultdict
 from datetime import datetime
 import xlsxwriter
 from odoo import api, fields, models
@@ -45,26 +46,36 @@ class AccountTrialBalance(models.TransientModel):
         :return: List of dictionaries representing the trial balance report.
         :rtype: list
         """
-        account_ids = self.env['account.move.line'].search([]).mapped(
-            'account_id')
         today = fields.Date.today()
+        first_day, last_day = get_month(today)
+
+        move_lines = self.env['account.move.line'].search_read(
+            [('parent_state', '=', 'posted')],
+            ['date', 'account_id', 'debit', 'credit']
+        )
+
+        account_totals = defaultdict(lambda: {'initial_total_debit': 0.0, 'initial_total_credit': 0.0, 'total_debit': 0.0, 'total_credit': 0.0})
+        account_display_names = {}
+
+        for line in move_lines:
+            account_id = line.get('account_id')
+            if not account_id:
+                continue
+            account_id = account_id[0]
+            account_display_names.setdefault(account_id, self.env['account.account'].browse(account_id).display_name)
+            if line.get('date') and line['date'] < first_day:
+                account_totals[account_id]['initial_total_debit'] += line.get('debit') or 0.0
+                account_totals[account_id]['initial_total_credit'] += line.get('credit') or 0.0
+            elif line.get('date') and first_day <= line['date'] <= last_day:
+                account_totals[account_id]['total_debit'] += line.get('debit') or 0.0
+                account_totals[account_id]['total_credit'] += line.get('credit') or 0.0
+
         move_line_list = []
-        for account_id in account_ids:
-            initial_move_line_ids = self.env['account.move.line'].search(
-                [('date', '<', get_month(today)[0]),
-                 ('account_id', '=', account_id.id),
-                 ('parent_state', '=', 'posted')])
-            initial_total_debit = round(
-                sum(initial_move_line_ids.mapped('debit')), 2)
-            initial_total_credit = round(
-                sum(initial_move_line_ids.mapped('credit')), 2)
-            move_line_ids = self.env['account.move.line'].search(
-                [('date', '>=', get_month(today)[0]),
-                 ('account_id', '=', account_id.id),
-                 ('date', '<=', get_month(today)[1]),
-                 ('parent_state', '=', 'posted')])
-            total_debit = round(sum(move_line_ids.mapped('debit')), 2)
-            total_credit = round(sum(move_line_ids.mapped('credit')), 2)
+        for account_id, values in account_totals.items():
+            initial_total_debit = round(values['initial_total_debit'], 2)
+            initial_total_credit = round(values['initial_total_credit'], 2)
+            total_debit = round(values['total_debit'], 2)
+            total_credit = round(values['total_credit'], 2)
             sum_debit = initial_total_debit + total_debit
             sum_credit = initial_total_credit + total_credit
             diff_credit_debit = sum_debit - sum_credit
@@ -74,19 +85,17 @@ class AccountTrialBalance(models.TransientModel):
             else:
                 end_total_debit = 0.0
                 end_total_credit = abs(diff_credit_debit)
-            data = {
-                'account': account_id.display_name,
-                'account_id': account_id.id,
-                'journal_ids': self.env['account.journal'].search_read([], [
-                    'name']),
+            move_line_list.append({
+                'account': account_display_names.get(account_id),
+                'account_id': account_id,
+                'journal_ids': self.env['account.journal'].search_read([], ['name']),
                 'initial_total_debit': initial_total_debit,
                 'initial_total_credit': initial_total_credit,
                 'total_debit': total_debit,
                 'total_credit': total_credit,
                 'end_total_debit': end_total_debit,
-                'end_total_credit': end_total_credit
-            }
-            move_line_list.append(data)
+                'end_total_credit': end_total_credit,
+            })
         return move_line_list
 
     @api.model

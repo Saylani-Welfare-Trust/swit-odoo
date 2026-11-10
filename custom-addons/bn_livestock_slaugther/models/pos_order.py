@@ -1,8 +1,47 @@
-from odoo import api, models
+from psycopg2 import IntegrityError
+from odoo import api, models, fields
 
 
 class POSOrder(models.Model):
     _inherit = 'pos.order'
+
+    pos_order_seq = fields.Char(string='POS Order Sequence', help="Sequential number from POS")
+    dn_number = fields.Char(string='DN Number', copy=False)
+
+    @api.model
+    def _process_order(self, order_data, draft=False, existing_order=False):
+        if order_data.get('data'):
+            data = order_data['data']
+            if data.get('pos_order_seq'):
+                self.pos_order_seq = data['pos_order_seq']
+        order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
+        order = self.browse(order_id)
+        if order and not order.dn_number:
+            dn_number = order._compute_dn_number()
+            order.write({
+                'dn_number': dn_number,
+                'source_document': dn_number,
+            })
+        return order_id
+
+    def _get_branch_code(self):
+        """Branch code is stored on res.users (the cashier)."""
+        self.ensure_one()
+        return self.user_id.branch_code or 'UNK'
+
+    def _compute_dn_number(self):
+        """DN # = {branch_code}-C{counter}-{year}-{pos_order_seq}
+
+        - branch_code:   stored on res.users (cashier)
+        - counter:       stored on pos.config (via the session) - existing field, not redefined here
+        - pos_order_seq: stored on this pos.order record
+        """
+        self.ensure_one()
+        city_code = self._get_branch_code()
+        counter = self.session_id.config_id.counter or 0
+        current_year = fields.Date.context_today(self).year
+        pos_order_seq = self.pos_order_seq or '0000'
+        return f"{city_code}-C{counter}-{current_year}-{pos_order_seq}"
 
     def _get_livestock_department_vals(self, product):
         product_markers = ' '.join(filter(None, [
@@ -28,15 +67,26 @@ class POSOrder(models.Model):
             livestock_lines = order.lines.filtered(
                 lambda line: line.product_id.is_livestock and line.qty > 0
             )
+            if not livestock_lines:
+                continue
+
+            existing_line_ids = set(slaughter_obj.search([
+                ('pos_order_line_id', 'in', livestock_lines.ids),
+            ]).mapped('pos_order_line_id').ids)
+
+            if not order.dn_number:
+                dn_number = order._compute_dn_number()
+                order.write({
+                    'dn_number': dn_number,
+                    'source_document': dn_number,
+                })
+
+            reference = order.source_document or order.dn_number
 
             for line in livestock_lines:
-                existing_record = slaughter_obj.search([
-                    ('pos_order_line_id', '=', line.id),
-                ], limit=1)
-                if existing_record:
+                if line.id in existing_line_ids:
                     continue
 
-                reference = order.source_document or order.pos_reference or order.name
                 price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
 
                 slaughter_vals = {
@@ -50,7 +100,11 @@ class POSOrder(models.Model):
                 }
                 slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
 
-                slaughter_obj.create(slaughter_vals)
+                try:
+                    with self.env.cr.savepoint():
+                        slaughter_obj.create(slaughter_vals)
+                except IntegrityError:
+                    continue
 
     @api.model_create_multi
     def create(self, vals_list):

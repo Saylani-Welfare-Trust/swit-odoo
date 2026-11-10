@@ -36,6 +36,15 @@ class LivestockCuttingMaterial(models.Model):
 
     livestock_cutting_material_line_ids = fields.One2many('livestock.cutting.material.line', 'livestock_cutting_material_id', string='Livestock Cutting Material Lines')
 
+    on_hand_qty = fields.Float(
+        string='On Hand',
+        compute='_compute_on_hand_qty'
+    )
+
+    @api.depends('product_id')
+    def _compute_on_hand_qty(self):
+        for line in self:
+            line.on_hand_qty = line.product_id.qty_available if line.product_id else 0.0
 
     @api.depends('start_time', 'end_time')
     def _compute_total_time(self):

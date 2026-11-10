@@ -143,6 +143,7 @@
                                     <field name="disbursement_category_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="disbursement_application_type_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="product_id" domain="product_domain" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="on_hand_qty"/>
                                     <field name="payment_type" />
                                     <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>

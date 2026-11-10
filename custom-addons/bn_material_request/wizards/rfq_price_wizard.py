@@ -223,6 +223,12 @@ class RFQPriceWizard(models.TransientModel):
             }
         }
 
+    def _confirm_rfq(self, rfq):
+        """Confirm a single winning RFQ. Kept as its own method so other
+        modules can override the confirmation step (e.g. to route the RFQ
+        through additional approval gates instead of confirming immediately)."""
+        rfq.button_confirm()
+
     def action_confirm_selected(self):
         """Confirm selected lines from RFQs with remarks validation"""
         self.ensure_one()
@@ -316,7 +322,7 @@ class RFQPriceWizard(models.TransientModel):
             # Confirm the RFQ
             try:
                 if hasattr(rfq, 'button_confirm'):
-                    rfq.button_confirm()
+                    self._confirm_rfq(rfq)
                     confirmed_rfqs.append(rfq.name)
             except Exception as e:
                 raise ValidationError(_('Error confirming RFQ %s: %s') % (rfq.name, str(e)))
