@@ -22,12 +22,12 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'not_received'" />
-                    <button string="Update Inventory" name="action_update_inventory" type="object" invisible="state != 'not_received'" />
-                    <button string="Send to Goat &amp; Meat" name="action_send_to_goat_and_meat" type="object" invisible="state != 'not_received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'not_received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Update Inventory" name="action_update_inventory" type="object" invisible="state != 'not_received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Send to Goat &amp; Meat" name="action_send_to_goat_and_meat" type="object" invisible="state != 'not_received'" />
 
-                    <button string="Start Cutting" name="action_start_cutting" type="object" invisible="state != 'received'" />
-                    <button string="End Cutting" name="action_end_cutting" type="object" invisible="state != 'in_progress'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Start Cutting" name="action_start_cutting" type="object" invisible="state != 'received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="End Cutting" name="action_end_cutting" type="object" invisible="state != 'in_progress'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received, in_progress, done"/>
                 </header>
@@ -84,6 +84,7 @@
 
     <menuitem
         id="livestock_cutting_material_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Material Request"
         action="livestock_cutting_material_action"
         parent="bn_livestock_slaugther.livestock_menu"

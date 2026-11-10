@@ -1,6 +1,6 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '17.0.1.6.0',
+    'version': '17.0.1.7.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -16,6 +16,7 @@
         'purchase_requisition',
     ],
     'data': [
+        'security/group.xml',
         'security/ir.model.access.csv',
         'security/stock_scope_rule.xml',
         

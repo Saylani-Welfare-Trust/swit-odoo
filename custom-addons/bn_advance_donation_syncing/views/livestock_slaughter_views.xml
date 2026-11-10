@@ -10,7 +10,7 @@
 
             <!-- Button in the statusbar header, after "Transfer" -->
             <xpath expr="//header/button[@name='action_open_wizard']" position="after">
-                <button name="action_select_advance_donation"
+                <button name="action_select_advance_donation" groups="bn_livestock_slaugther.livestock_slaugther_user_group"
                         type="object"
                         string="Select Advance Donation"
                         class="btn-primary"

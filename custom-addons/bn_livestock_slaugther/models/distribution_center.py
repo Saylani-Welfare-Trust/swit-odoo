@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 from dateutil.relativedelta import relativedelta
 
@@ -67,14 +67,21 @@ class DistributionCenter(models.Model):
         
         self.state = 'item_selected'
 
+    def _check_livestock_group(self, xmlid, role):
+        """Manager / role steps: the view hides the button, this also refuses it over RPC."""
+        if not self.env.su and not self.env.user.has_group(xmlid):
+            raise UserError(_('Only the Livestock %s can do this step.') % role)
+
     def action_welfare_approve(self):
         self.ensure_one()
+        self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_welfare_approval_group', _('Welfare Approval'))
 
         self.state = 'welfare_approved'
 
     def action_issue_purchase_requisition(self):
         """Purchase Requisition to Supply Chain Dept for all distribution lines."""
         self.ensure_one()
+        self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_manager_group', _('Manager'))
 
         PurchaseRequisition = self.env['purchase.requisition']
 
@@ -106,6 +113,7 @@ class DistributionCenter(models.Model):
     def action_issue_delivery_note(self):
         """Manually create and confirm the outgoing Delivery Note."""
         self.ensure_one()
+        self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_manager_group', _('Manager'))
 
         purchase_order = self.purchase_requisition_id.purchase_ids.filtered(lambda x: x.state in ['purchase', 'done'])
 

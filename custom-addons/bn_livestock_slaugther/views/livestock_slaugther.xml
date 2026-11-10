@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree delete="0">
                 <header>
-                    <button string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
                 </header>
                 <field name="is_meat_depart" column_invisible="1" />
                 <field name="is_chicken_depart" column_invisible="1" />
@@ -28,10 +28,10 @@
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
 
-                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
-                <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
-                <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
-                <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
             </tree>
         </field>
     </record>
@@ -49,11 +49,11 @@
                 <field name="transfer_bool" invisible="1" />
 
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
-                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
-                    <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
-                    <button string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
-                    <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received, cutting, material_request, done"/>
                 </header>
@@ -175,12 +175,14 @@
 
     <menuitem
         id="livestock_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_menu_group"
         name="Livestock"
         web_icon="bn_livestock_slaugther,static/description/icon.png"
         sequence="7"/>
 
     <menuitem
         id="slaugther_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Slaugther"
         action="livestock_slaugther_action"
         parent="livestock_menu"
@@ -188,6 +190,7 @@
 
     <menuitem
         id="meat_department_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Meat Department"
         action="meat_department_action"
         parent="livestock_menu"
@@ -195,6 +198,7 @@
 
     <menuitem
         id="goat_department_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Goat Department"
         action="goat_department_action"
         parent="livestock_menu"
@@ -202,6 +206,7 @@
 
     <menuitem
         id="chicken_department_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Chicken Department"
         action="chicken_department_action"
         parent="livestock_menu"
