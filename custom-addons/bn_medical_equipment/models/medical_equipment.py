@@ -1158,7 +1158,17 @@ class MedicalEquipment(models.Model):
         for app in applications:
             # Match by CNIC (most reliable)
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
-            if str(app.get('odooId')) == str(self.id) and app.get('department') == "medical":
+            if app.get('department') != "medical":
+                continue
+            # Results are already filtered by the inquiry officer's employee ID; pick this record by
+            # the portal application ID saved at sync time, else by the donee's CNIC
+            portal_ids = {str(i) for i in (self.portal_application_id, self.welfare_portal_id) if i}
+            if portal_ids and str(app.get('id')) in portal_ids:
+                return app
+        cnic = (self.cnic_no or '').replace('-', '')
+        for app in applications:
+            if (cnic and app.get('department') == "medical"
+                    and str(app.get('cnicNo') or '').replace('-', '') == cnic):
                 return app
             # # Match by name and WhatsApp
             # if (app.get('name') == self.donee_id.name and 
@@ -1494,7 +1504,7 @@ class MedicalEquipment(models.Model):
                     all_remarks.append(remarks)
         # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
         if not application:
-            message += f" | ⚠️ Application not found in portal search (odooId {self.id}, department medical): {search_note}"
+            message += f" | ⚠️ Application not found in portal search (officer {self.employee_id.barcode}, CNIC {self.cnic_no}, department medical): {search_note}"
         elif app_state != 'inquiry_complete':
             message += f" | 📋 Portal status: {app_state} (data is imported only when status is inquiry_complete)"
         if app_state == 'inquiry_complete': # type: ignore
@@ -1515,8 +1525,12 @@ class MedicalEquipment(models.Model):
         """Search for matching applications in portal"""
         """Returns (application or None, note explaining why nothing matched)"""
         endpoint = self.env.company.search_endpoint
+        officer_code = (self.employee_id.barcode or '').strip()
+        if not officer_code:
+            return None, f"Inquiry Officer {self.employee_id.name or ''} has no Badge ID (barcode)"
         try:
-            applications = self._make_sadqa_api_call(endpoint)
+            # Search by the inquiry officer's employee ID, so the 50-item limit only covers that officer's applications
+            applications = self._make_sadqa_api_call(endpoint, 'POST', {"json": {"employeeId": officer_code}})
         except Exception as e:
             _logger.warning(f"Error occurred while searching portal applications: {str(e)}")
             if 'Portal API Error' in str(e):
@@ -1528,7 +1542,7 @@ class MedicalEquipment(models.Model):
         matching_app = self._find_matching_application(applications)
         if matching_app:
             return matching_app, ''
-        medical_ids = [a.get('odooId') for a in applications if isinstance(a, dict) and a.get('department') == 'medical']
+        medical_ids = [(a.get('id'), a.get('cnicNo')) for a in applications if isinstance(a, dict) and a.get('department') == 'medical']
         departments = {}
         for a in applications:
             if isinstance(a, dict):
@@ -1536,7 +1550,7 @@ class MedicalEquipment(models.Model):
                 departments[dept] = departments.get(dept, 0) + 1
         sample = applications[0] if applications and isinstance(applications[0], dict) else {}
         return None, (f"portal returned {len(applications)} application(s); "
-                      f"medical odooIds in it: {medical_ids or 'none'}; "
+                      f"medical (portal id, CNIC) in it: {medical_ids or 'none'}; "
                       f"departments: {departments}; "
                       f"first item keys: {sorted(sample.keys())}; "
                       f"first item odooId/department/status: {sample.get('odooId')!r}/{sample.get('department')!r}/{sample.get('status')!r}")
