@@ -192,12 +192,18 @@ class ConfirmSearch(models.TransientModel):
             if self.search_type == 'registration_id':
                 donee_obj = self.env['res.partner'].search([('primary_registration_id', '=', self.registration_id), ('category_id.name', 'in', ['Donee'])])
 
+                if len(donee_obj) >= 1:
+                    raise ValidationError("Multiple donee records found with the same mobile number. Please refine your search.")
+
                 if donee_obj:
                     return self.return_donee_form(donee_obj)
                 else:
                     return self.return_donee_form()
             elif self.search_type == 'cnic_no':
                 donee_obj = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donee'])])
+
+                if len(donee_obj) >= 1:
+                    raise ValidationError("Multiple donee records found with the same mobile number. Please refine your search.")
 
                 if donee_obj:
                     return self.return_donee_form(donee_obj)
@@ -206,6 +212,9 @@ class ConfirmSearch(models.TransientModel):
             elif self.search_type == 'mobile_no':
                 donee_obj = self.env['res.partner'].search([('country_code_id', '=', self.country_code_id.id), ('mobile', '=', self.mobile_no), ('category_id.name', 'in', ['Donee'])])
 
+                if len(donee_obj) >= 1:
+                    raise ValidationError("Multiple donee records found with the same mobile number. Please refine your search.")
+
                 if donee_obj:
                     return self.return_donee_form(donee_obj)
                 else:
@@ -213,6 +222,9 @@ class ConfirmSearch(models.TransientModel):
         else:
             if self.search_type == 'registration_id':
                 donor_obj = self.env['res.partner'].search([('primary_registration_id', '=', self.registration_id), ('category_id.name', 'in', ['Donor'])])
+
+                if len(donor_obj) >= 1:
+                    raise ValidationError("Multiple donor records found with the same registration ID. Please refine your search.")
 
                 if donor_obj:
                     return {
@@ -239,6 +251,9 @@ class ConfirmSearch(models.TransientModel):
             elif self.search_type == 'cnic_no':
                 donor_obj = self.env['res.partner'].search([('cnic_no', '=', self.cnic_no), ('category_id.name', 'in', ['Donor'])])
 
+                if len(donor_obj) >= 1:
+                    raise ValidationError("Multiple donor records found with the same registration ID. Please refine your search.")
+                
                 if donor_obj:
                     return {
                         'type': 'ir.actions.act_window',
@@ -265,6 +280,9 @@ class ConfirmSearch(models.TransientModel):
             elif self.search_type == 'mobile_no':
                 donor_obj = self.env['res.partner'].search([('phone_code_id', '=', self.phone_code_id.id), ('mobile', '=', self.mobile_no), ('category_id.name', 'in', ['Donor'])])
 
+                if len(donor_obj) >= 1:
+                    raise ValidationError("Multiple donor records found with the same registration ID. Please refine your search.")
+                
                 if donor_obj:
                     return {
                         'type': 'ir.actions.act_window',
