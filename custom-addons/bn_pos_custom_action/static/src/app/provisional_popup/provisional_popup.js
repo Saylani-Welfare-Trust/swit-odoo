@@ -264,10 +264,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         "Please enter a Medical Equipment Request No.",
                         { type: 'warning' }
                     );
-                    this.state.is_processing = false; // Unlock before returning
+                    this.state.is_processing = false;
                     return;
                 }
-
+                // ... (rest of ME code remains the same)
                 const payload = {
                     medical_equipment_request_no: this.state.medical_equipment_request_no,
                     amount: this.state.amount,
@@ -289,7 +289,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         title: _t("Error"),
                         body: data.body,
                     });
-                    this.state.is_processing = false; // Unlock
+                    this.state.is_processing = false;
                     return;
                 }
                 
@@ -311,7 +311,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                             title: _t("Error"),
                             body: _t("Medical Equipment Request not found."),
                         });
-                        this.state.is_processing = false; // Unlock
+                        this.state.is_processing = false;
                         return;
                     }
 
@@ -322,27 +322,21 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                             title: _t("Error"),
                             body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${requestState}).`),
                         });
-                        this.state.is_processing = false; // Unlock
+                        this.state.is_processing = false;
                         return;
                     }
                     if (data.state === 'paid') {
-                        this.notification.add(_t("Security deposit already paid"), {
-                            type: "info",
-                        });
+                        this.notification.add(_t("Security deposit already paid"), { type: "info" });
                         this.cancel();
                         return;
                     }
 
                     if (data.deposit_exists) {
-                        this.notification.add(_t("Existing deposit found"), {
-                            type: "info",
-                        });
+                        this.notification.add(_t("Existing deposit found"), { type: "info" });
                         this.cancel();
                         return;
                     } else {
-                        this.notification.add(_t("Security deposit will be created upon payment"), {
-                            type: "info",
-                        });
+                        this.notification.add(_t("Security deposit will be created upon payment"), { type: "info" });
                     }
                     
                     if (data.donee_id) {
@@ -373,7 +367,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                             title: _t("Error"),
                             body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
                         });
-                        this.state.is_processing = false; // Unlock
+                        this.state.is_processing = false;
                         return;
                     }
                     
@@ -394,10 +388,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         "Please enter a Microfinance Request No.",
                         { type: 'warning' }
                     );
-                    this.state.is_processing = false; // Unlock
+                    this.state.is_processing = false;
                     return;
                 }
-
+                // ... (rest of MF code remains the same)
                 const payload = {
                     microfinance_request_no: this.state.microfinance_request_no,
                     amount: this.state.amount,
@@ -419,7 +413,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         title: _t("Error"),
                         body: data.body,
                     });
-                    this.state.is_processing = false; // Unlock
+                    this.state.is_processing = false;
                     return;
                 }
                 
@@ -430,21 +424,15 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                     payload.amount = data.amount;
 
                     if (data.state === 'paid') {
-                        this.notification.add(_t("Security deposit already paid"), {
-                            type: "info",
-                        });
+                        this.notification.add(_t("Security deposit already paid"), { type: "info" });
                         this.cancel();
                         return;
                     }
 
                     if (data.deposit_exists) {
-                        this.notification.add(_t("Existing deposit found"), {
-                            type: "info",
-                        });
+                        this.notification.add(_t("Existing deposit found"), { type: "info" });
                     } else {
-                        this.notification.add(_t("Security deposit will be created upon payment"), {
-                            type: "info",
-                        });
+                        this.notification.add(_t("Security deposit will be created upon payment"), { type: "info" });
                     }
                     
                     if (data.donee_id) {
@@ -475,7 +463,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                             title: _t("Error"),
                             body: _t(`${this.pos.company.microfinance_security_depsoit_product} product not loaded in POS session.`),
                         });
-                        this.state.is_processing = false; // Unlock
+                        this.state.is_processing = false;
                         return;
                     }
                     
@@ -491,6 +479,17 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
             // Direct Deposit
             if (this.action_type === 'dd') {
+                
+                // ✅ NEW MANDATORY CHECK: Transaction Reference
+                if (!this.state.transaction_ref || this.state.transaction_ref.trim() === '') {
+                    this.notification.add(
+                        "Transaction Reference is mandatory for Direct Deposit.",
+                        { type: 'warning' }
+                    );
+                    this.state.is_processing = false; // Unlock the button
+                    return; // Stop the execution here
+                }
+
                 const userId = this.pos.user ? this.pos.user.id : false;
                 const payload = {
                     'donor_id': this.donor_id,
@@ -515,7 +514,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
                         title: _t("Error"),
                         body: data.body,
                     });
-                    this.state.is_processing = false; // Unlock
+                    this.state.is_processing = false;
                     return;
                 }
 
