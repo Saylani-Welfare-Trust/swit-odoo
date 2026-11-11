@@ -13,4 +13,21 @@
     <record id="purchase.purchase_report" model="ir.ui.menu">
         <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
     </record>
+
+    <!-- Material Requests: the app and its Transfer Requests (read-only, see ir_rule.xml) -->
+    <record id="bn_material_request.material_request_menu_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
+    </record>
+
+    <!-- Accounting: the app, of which the auditor sees the Vendors menu only (bills,
+         refunds, payments, PO advance payments, products, vendors). Customers has no group
+         of its own, so it is given the groups that open Accounting otherwise
+         (Billing / Show Accounting Features - Readonly); the other menus already have one. -->
+    <record id="account.menu_finance" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
+    </record>
+
+    <record id="account.menu_finance_receivables" model="ir.ui.menu">
+        <field name="groups_id" eval="[(4, ref('account.group_account_invoice')), (4, ref('account.group_account_readonly'))]"/>
+    </record>
 </odoo>

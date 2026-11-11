@@ -13,4 +13,53 @@
     <record id="bn_procurement_finance.purchase_user_po_advance_payment_move_rule" model="ir.rule">
         <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
     </record>
+
+    <!-- Material Requests: the auditor sees every request, of every department.
+         Their access rights are global (create/write/delete for everyone), so read-only
+         is enforced here: the second rule lets the auditor write, create or delete none.
+         Rules of different groups are OR-ed, so a user who is also Material Request / Menu
+         keeps the rights of that group on their own requests. -->
+    <record id="material_request_rule_audit_read" model="ir.rule">
+        <field name="name">Material Request: Purchase Audit reads all</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="material_request_rule_audit_no_write" model="ir.rule">
+        <field name="name">Material Request: Purchase Audit writes none</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="material_request_line_rule_audit_read" model="ir.rule">
+        <field name="name">Material Request Line: Purchase Audit reads all</field>
+        <field name="model_id" ref="bn_material_request.model_material_request_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="material_request_line_rule_audit_no_write" model="ir.rule">
+        <field name="name">Material Request Line: Purchase Audit writes none</field>
+        <field name="model_id" ref="bn_material_request.model_material_request_line"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_purchase_audit.group_purchase_audit'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
 </odoo>
