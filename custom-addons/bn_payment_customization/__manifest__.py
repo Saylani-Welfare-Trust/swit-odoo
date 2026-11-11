@@ -9,6 +9,7 @@
         'account'
     ],
     'data': [
+        'security/group.xml',
         'security/ir.model.access.csv',
         'views/account_payment.xml',
         'data/ibft_sequence.xml',

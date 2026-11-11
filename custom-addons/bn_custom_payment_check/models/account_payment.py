@@ -54,6 +54,8 @@ class AccountPayment(models.Model):
 
     def _print_with_reason(self, print_type):
         self.ensure_one()
+        if not self.env.user.has_group('bn_custom_payment_check.group_cheque_reprint'):
+            raise UserError(_("Only a user with the Cheque Reprint right can reprint a cheque."))
         # Already printed once: ask for a reason first
         if self.cheque_first_printed_by:
             return {

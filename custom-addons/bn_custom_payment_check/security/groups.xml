@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo> 
+ <record id="group_cheque_reprint" model="res.groups">
+        <field name="name">Reprint Cheque</field>
+        <field name="category_id" ref="module_category_cheque_reprint"/>
+    </record>
+</odoo>

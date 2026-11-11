@@ -31,6 +31,8 @@ class AccountPayment(models.Model):
 
         # Already confirmed before: ask for a reason first
         if batch_nos:
+            if not self.env.user.has_group('bn_payment_customization.group_ibft_reprint'):
+                raise UserError(_("Only a user with the IBFT Reprint right can reprint an IBFT batch."))
             return {
                 'type': 'ir.actions.act_window',
                 'name': _('Reprint IBFT'),
