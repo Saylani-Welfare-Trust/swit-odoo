@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_medical_prescription.ApprovePrescriptionPopup">
+        <div class="popup popup-selection">
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title">Approve Prescription</h4>
+            </div>
+            <main class="modal-body text-start">
+                <div class="mb-3">
+                    <div class="fw-bold fs-5" t-esc="partner.name"/>
+                    <div class="d-flex flex-wrap gap-3 small text-muted">
+                        <span t-if="partner.primary_registration_id"><i class="fa fa-hashtag me-1"/><t t-esc="partner.primary_registration_id"/></span>
+                        <span t-if="partner.cnic_no"><i class="fa fa-id-card-o me-1"/><t t-esc="partner.cnic_no"/></span>
+                        <span t-if="partner.mobile"><i class="fa fa-phone me-1"/><t t-esc="partner.mobile"/></span>
+                    </div>
+                </div>
+
+                <div class="overflow-auto mb-3" style="max-height: 35vh;">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Amount</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="lines" t-as="line" t-key="line.id">
+                                <td>
+                                    <t t-esc="line.name"/>
+                                    <div t-if="line.note" class="small text-muted"><i class="fa fa-sticky-note-o me-1"/><t t-esc="line.note"/></div>
+                                </td>
+                                <td class="text-end text-nowrap"><t t-esc="line.qty"/> <t t-esc="line.unit"/></td>
+                                <td class="text-end text-nowrap" t-esc="line.amount"/>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold"><td colspan="2">Total</td><td class="text-end text-nowrap" t-esc="total"/></tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="row mb-2 align-items-center">
+                    <label class="col-4 fw-semibold" for="prescription_doctor">Doctor</label>
+                    <div class="col-8">
+                        <input id="prescription_doctor" t-ref="doctorInput" type="text" class="form-control"
+                               t-model="state.doctor_name" placeholder="Optional"/>
+                    </div>
+                </div>
+                <div class="row align-items-center">
+                    <label class="col-4 fw-semibold" for="prescription_note">Remarks</label>
+                    <div class="col-8">
+                        <textarea id="prescription_note" class="form-control" rows="2"
+                                  t-model="state.note" placeholder="Optional"/>
+                    </div>
+                </div>
+            </main>
+            <footer class="footer modal-footer">
+                <button type="button" class="button confirm btn btn-lg btn-primary" t-on-click="confirm">
+                    <i class="fa fa-check me-1"/>Approve
+                </button>
+                <button type="button" class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Back</button>
+            </footer>
+        </div>
+    </t>
+
+</templates>

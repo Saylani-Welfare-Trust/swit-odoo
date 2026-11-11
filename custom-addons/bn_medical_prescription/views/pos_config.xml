@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_config_view_form_inherit_bn_medical_prescription" model="ir.ui.view">
+        <field name="name">pos.config.view.form.inherit.bn.medical.prescription</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="bn_medical_pos.pos_config_view_form_inherit_bn_medical_pos"/>
+        <field name="arch" type="xml">
+            <xpath expr="//setting[@id='is_medical_pos']" position="after">
+                <setting id="medical_pos_role" string="Medical Counter" invisible="not is_medical_pos"
+                         help="Prescription Desk: add the prescribed products for a patient and approve them (no payment). Billing Counter: select the patient to load and bill the approved products.">
+                    <field name="medical_pos_role" readonly="has_active_session"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

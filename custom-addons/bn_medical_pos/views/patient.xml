@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="mh_patient_view_tree" model="ir.ui.view">
+        <field name="name">mh.patient.view.tree</field>
+        <field name="model">mh.patient</field>
+        <field name="arch" type="xml">
+            <tree string="Patients" create="0" delete="0" edit="0">
+                <header>
+                    <button name="%(action_mh_patient_register_wizard)d" type="action" string="Register Patient"
+                            class="btn-primary" display="always"/>
+                </header>
+                <field name="registration_id"/>
+                <field name="name"/>
+                <field name="cnic_no"/>
+                <field name="mobile"/>
+                <field name="date_of_birth"/>
+                <field name="registered_on" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="mh_patient_view_form" model="ir.ui.view">
+        <field name="name">mh.patient.view.form</field>
+        <field name="model">mh.patient</field>
+        <field name="arch" type="xml">
+            <form string="Patient" create="0" edit="0" delete="0">
+                <sheet>
+                    <div class="oe_button_box" name="button_box"/>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                        <h3><field name="registration_id"/></h3>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="cnic_no"/>
+                            <field name="mobile"/>
+                        </group>
+                        <group>
+                            <field name="date_of_birth"/>
+                            <field name="registered_on"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="mh_patient_view_search" model="ir.ui.view">
+        <field name="name">mh.patient.view.search</field>
+        <field name="model">mh.patient</field>
+        <field name="arch" type="xml">
+            <search string="Patients">
+                <field name="name" string="Patient"
+                       filter_domain="['|', '|', '|', ('name', 'ilike', self), ('registration_id', 'ilike', self), ('cnic_no', 'ilike', self), ('mobile', 'ilike', self)]"/>
+                <field name="registration_id"/>
+                <field name="cnic_no"/>
+                <field name="mobile"/>
+                <filter name="filter_registered_on" string="Registered On" date="registered_on"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mh_patients" model="ir.actions.act_window">
+        <field name="name">Patients</field>
+        <field name="res_model">mh.patient</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="mh_patient_view_search"/>
+        <field name="domain" eval="False"/>
+        <field name="context">{}</field>
+        <field name="view_ids" eval="[(5, 0, 0)]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No patient registered yet</p>
+            <p>Patients are registered at the Medical &amp; Health counters, or here with "Register Patient".</p>
+        </field>
+    </record>
+
+</odoo>

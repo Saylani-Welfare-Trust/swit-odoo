@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="mh_patient_register_wizard_view_form" model="ir.ui.view">
+        <field name="name">mh.patient.register.wizard.view.form</field>
+        <field name="model">mh.patient.register.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Register Patient">
+                <group>
+                    <field name="name" placeholder="Patient name"/>
+                    <field name="mobile" placeholder="3001234567"/>
+                    <field name="cnic_no" placeholder="XXXXX-XXXXXXX-X"/>
+                    <field name="date_of_birth" options="{'max_date': 'today'}"/>
+                </group>
+                <footer>
+                    <button name="action_register" type="object" string="Register" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mh_patient_register_wizard" model="ir.actions.act_window">
+        <field name="name">Register Patient</field>
+        <field name="res_model">mh.patient.register.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

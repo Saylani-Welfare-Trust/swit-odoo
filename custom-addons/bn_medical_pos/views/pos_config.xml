@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="pos_config_view_form_inherit_bn_medical_pos" model="ir.ui.view">
+        <field name="name">pos.config.view.form.inherit.bn.medical.pos</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='restaurant_on_create']" position="after">
+                <h2 invisible="context.get('pos_config_create_mode', False)">Medical &amp; Health</h2>
+                <div id="medical_pos_settings" class="row mt16 o_settings_container" invisible="context.get('pos_config_create_mode', False)">
+                    <setting id="is_medical_pos" help="Patients (donees tagged Medical) are the customers instead of donors; new patients are registered from the customer screen">
+                        <field name="is_medical_pos" readonly="has_active_session"/>
+                    </setting>
+                    <setting id="medical_pos_categories" string="Product Categories"
+                             help="Only the products of these POS categories are shown in this POS"
+                             invisible="not is_medical_pos">
+                        <field name="limit_categories" readonly="has_active_session"/>
+                        <div class="content-group mt16" invisible="not limit_categories">
+                            <field name="iface_available_categ_ids" widget="many2many_tags" readonly="has_active_session"
+                                   options="{'no_create': True}"/>
+                        </div>
+                    </setting>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

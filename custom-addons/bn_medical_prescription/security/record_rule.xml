@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="medical_prescription_company_rule" model="ir.rule">
+        <field name="name">Medical Prescription: multi-company</field>
+        <field name="model_id" ref="model_medical_prescription"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="medical_prescription_line_company_rule" model="ir.rule">
+        <field name="name">Medical Prescription Line: multi-company</field>
+        <field name="model_id" ref="model_medical_prescription_line"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+</odoo>

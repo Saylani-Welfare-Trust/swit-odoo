@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Medical & Health POS counters: open their sessions from here -->
+    <record id="action_mh_counters" model="ir.actions.act_window">
+        <field name="name">Counters</field>
+        <field name="res_model">pos.config</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">[('is_medical_pos', '=', True)]</field>
+        <field name="context">{'default_is_medical_pos': True}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('point_of_sale.view_pos_config_kanban')}),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('point_of_sale.view_pos_config_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('point_of_sale.pos_config_view_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No Medical &amp; Health counter yet</p>
+            <p>Create a point of sale and tick "Medical &amp; Health POS" in its settings.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_medical_root" name="Medical &amp; Health" sequence="7"
+              web_icon="bn_medical_pos,static/description/icon.png"
+              groups="bn_medical_pos.group_medical_user"/>
+
+    <menuitem id="menu_medical_counters" name="Counters" parent="menu_medical_root"
+              action="action_mh_counters" sequence="1"/>
+
+    <menuitem id="menu_medical_patients" name="Patients" parent="menu_medical_root" sequence="10"/>
+    <menuitem id="menu_medical_patients_list" name="Patients" parent="menu_medical_patients"
+              action="action_mh_patients" sequence="1"/>
+    <menuitem id="menu_medical_patient_register" name="Register Patient" parent="menu_medical_patients"
+              action="action_mh_patient_register_wizard" sequence="2"/>
+
+    <menuitem id="menu_medical_config" name="Configuration" parent="menu_medical_root" sequence="100"
+              groups="bn_medical_pos.group_medical_manager"/>
+    <menuitem id="menu_medical_config_counters" name="Counters" parent="menu_medical_config"
+              action="action_mh_counters" sequence="1"/>
+    <menuitem id="menu_medical_config_categories" name="POS Product Categories" parent="menu_medical_config"
+              action="point_of_sale.product_pos_category_action" sequence="10"/>
+    <menuitem id="menu_medical_config_products" name="Products" parent="menu_medical_config"
+              action="point_of_sale.product_template_action_pos_product" sequence="20"/>
+
+</odoo>

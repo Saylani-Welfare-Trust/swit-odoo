@@ -226,7 +226,8 @@
                      (pos_sale, pos_loyalty, pos_restaurant, l10n_*_pos) can inject
                      into //Orderline without breaking the asset bundle compile. -->
                 <div style="display:none;" aria-hidden="true">
-                    <t t-foreach="lines" t-as="line" t-key="line.id">
+                    <!-- receipt lines have no id: keyed on it, 2+ lines share the key undefined and the receipt never renders -->
+                    <t t-foreach="lines" t-as="line" t-key="line_index">
                         <Orderline line="line"/>
                     </t>
                 </div>

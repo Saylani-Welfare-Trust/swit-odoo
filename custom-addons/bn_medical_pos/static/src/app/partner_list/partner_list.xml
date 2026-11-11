@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_medical_pos.PartnerListScreen" t-inherit="point_of_sale.PartnerListScreen" t-inherit-mode="extension">
+        <xpath expr="//input[@t-ref='search-word-input-partner']" position="attributes">
+            <attribute name="placeholder"/>
+            <attribute name="t-att-placeholder">isMedicalPos ? 'Search patients by name, mobile, CNIC or registration no.' : 'Search Customers...'</attribute>
+        </xpath>
+        <xpath expr="//button[hasclass('new-customer')]/t[@t-else='']" position="replace">
+            <t t-else="">
+                <t t-if="isMedicalPos"> Register Patient</t>
+                <t t-else=""> Create</t>
+            </t>
+        </xpath>
+    </t>
+
+    <t t-name="bn_medical_pos.PartnerLine" t-inherit="point_of_sale.PartnerLine" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('company-field')]" position="after">
+            <div t-if="pos.config.is_medical_pos" class="d-flex flex-wrap gap-3 small text-muted">
+                <span t-if="props.partner.primary_registration_id">
+                    <i class="fa fa-hashtag me-1"/><t t-esc="props.partner.primary_registration_id"/>
+                </span>
+                <span t-if="props.partner.cnic_no">
+                    <i class="fa fa-id-card-o me-1"/><t t-esc="props.partner.cnic_no"/>
+                </span>
+            </div>
+        </xpath>
+    </t>
+
+</templates>
