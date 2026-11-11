@@ -4,3 +4,4 @@ access_bank_cheque_config_manager,bank.cheque.config manager,model_bank_cheque_c
 
 access_bank_double_cheque_config_user,bank.double.cheque.config.user,model_bank_double_cheque_config,account.group_account_user,1,0,0,0
 access_bank_double_cheque_config_manager,bank.double.cheque.config.manager,model_bank_double_cheque_config,account.group_account_manager,1,1,1,1
+access_cheque_reprint_wizard,cheque.reprint.wizard,model_cheque_reprint_wizard,account.group_account_invoice,1,1,1,1
