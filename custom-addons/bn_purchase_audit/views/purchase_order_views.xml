@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Receipt (GRN) smart button of the Purchase Order: purchase_stock shows it to
+         Inventory users only; the auditor sees it too (read access on stock.picking is
+         given in ir.model.access.csv) -->
+    <record id="purchase_order_view_form_audit" model="ir.ui.view">
+        <field name="name">purchase.order.form.audit</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase_stock.purchase_order_view_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_button_box')]/button[@name='action_view_picking']" position="attributes">
+                <attribute name="groups">stock.group_stock_user,bn_purchase_audit.group_purchase_audit</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

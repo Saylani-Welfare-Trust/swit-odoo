@@ -1,6 +1,6 @@
 {
     'name': 'Purchase Audit',
-    'version': '1.0',
+    'version': '1.1',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -21,6 +21,7 @@
         'security/ir_rule.xml',
 
         'views/menu.xml',
+        'views/purchase_order_views.xml',
     ],
     'installable': True,
     'auto_install': False,
