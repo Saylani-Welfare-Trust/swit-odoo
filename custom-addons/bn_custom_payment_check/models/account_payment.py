@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
+from markupsafe import Markup
+
 
 
 class AccountPayment(models.Model):
@@ -163,12 +165,12 @@ class ChequeReprintWizard(models.TransientModel):
         self.ensure_one()
         payment = self.payment_id
         action = payment._get_print_action(self.print_type)
-        payment.message_post(body=_(
-            "Cheque reprinted by %(user)s.<br/>"
-            "Reason: %(reason)s<br/>"
-            "First printed by %(first_user)s on %(date)s.",
-            user=self.env.user.name,
-            reason=self.reason,
-            first_user=payment.cheque_first_printed_by.name,
-            date=fields.Datetime.to_string(payment.cheque_first_printed_date)))
+        payment.message_post(body=Markup(
+            "Cheque reprinted by %s.<br/>Reason: %s<br/>First printed by %s on %s."
+        ) % (
+            self.env.user.name,
+            self.reason,
+            payment.cheque_first_printed_by.name,
+            fields.Datetime.to_string(payment.cheque_first_printed_date),
+        ))
         return action
