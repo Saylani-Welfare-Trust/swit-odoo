@@ -1,4 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_donation_box_dashboard,access.donation.box.dashboard,model_donation_box_dashboard,base.group_user,1,0,0,0
+access_treasury_access_config,treasury.access.config,model_treasury_access_config,base.group_erp_manager,1,1,1,1
+access_pos_order_access_config,pos.order.access.config,model_pos_order_access_config,base.group_erp_manager,1,1,1,1
+access_donation_box_access_config,donation.box.access.config,model_donation_box_access_config,base.group_erp_manager,1,1,1,1
 
-access_dashboard_configurator,dashboard.configurator,model_dashboard_configurator,group_dashboard_configurator_all,1,1,1,1
+
+access_pos_dd_report_user,pos.dd.report.user,model_pos_dd_report,bn_dashboard.group_pos_order_dashboard_user,1,0,0,0
+access_pos_dd_report_manager,pos.dd.report.manager,model_pos_dd_report,bn_dashboard.group_pos_order_dashboard_manager,1,0,0,0

@@ -9,32 +9,39 @@ class DonationBoxDashboard(models.TransientModel):
 
     @api.model
     def get_location_hierarchy(self):
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('donation_box')
+        allowed_ids, visible_ids = self._get_allowed_location_ids()
 
-        provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        if restriction and restriction['provinces']:
-            provinces = provinces.browse(restriction['provinces'])
+        provinces = self.env['account.analytic.account'].search(
+            [('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        cities = self.env['account.analytic.account'].search(
+            [('parent_id', 'in', provinces.ids)])
+        zones = self.env['account.analytic.account'].search(
+            [('parent_id', 'in', cities.ids)])
 
-        cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
-        
+        if visible_ids is not None:
+            provinces = provinces.filtered(lambda p: p.id in visible_ids)
+            cities    = cities.filtered(lambda c: c.id in visible_ids)
+            zones     = zones.filtered(lambda z: z.id in visible_ids)
+
         bunches = self.env['key.bunch'].search([])
-        schedule_days = self.env['rider.schedule.day'].search([('zone_id', '!=', False), ('key_bunch_id', '!=', False)])
-        
-        # Apply restriction to Bunches
-        if restriction and restriction['analytic_ids']:
-            allowed_ids = restriction['analytic_ids']
-            allowed_zones = self.env['account.analytic.account'].search([('id', 'child_of', allowed_ids)])
-            schedule_days = schedule_days.filtered(lambda sd: sd.zone_id.id in allowed_zones.ids)
-
+        schedule_days = self.env['rider.schedule.day'].search(
+            [('zone_id', '!=', False), ('key_bunch_id', '!=', False)])
         bunch_zone_map = {sd.key_bunch_id.id: sd.zone_id.id for sd in schedule_days}
-        bunch_data = [{'id': b.id, 'name': b.name, 'zone_id': bunch_zone_map.get(b.id, False)} for b in bunches if b.id in bunch_zone_map]
-        
+
+        bunch_data = []
+        for b in bunches:
+            zid = bunch_zone_map.get(b.id)
+            if not zid:
+                continue
+            if allowed_ids is not None and zid not in allowed_ids:
+                continue
+            bunch_data.append({'id': b.id, 'name': b.name, 'zone_id': zid})
+
         return {
             'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
-            'cities': [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
-            'zones': [{'id': z.id, 'name': z.name, 'city_id': z.parent_id.id} for z in zones],
-            'bunches': bunch_data,
+            'cities':    [{'id': c.id, 'name': c.name, 'province_id': c.parent_id.id} for c in cities],
+            'zones':     [{'id': z.id, 'name': z.name, 'city_id':    z.parent_id.id} for z in zones],
+            'bunches':   bunch_data,
         }
 
     @api.model
@@ -61,18 +68,7 @@ class DonationBoxDashboard(models.TransientModel):
             reg_domain.append(('installation_date', '<=', date_to))
             comp_domain.append(('date', '<=', date_to))
             
-        # --- Dashboard Configurator Restriction ---
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('donation_box')
-        restriction_reg_dom = []
-        restriction_col_dom = []
-        if restriction and restriction['analytic_ids']:
-            allowed_ids = restriction['analytic_ids']
-            restriction_reg_dom = ['|', ('city_id', 'child_of', allowed_ids), ('zone_id', 'child_of', allowed_ids)]
-            restriction_col_dom = ['|', ('donation_box_registration_installation_id.city_id', 'child_of', allowed_ids), ('donation_box_registration_installation_id.zone_id', 'child_of', allowed_ids)]
-            reg_domain.extend(restriction_reg_dom)
-            comp_domain.extend(restriction_col_dom)
-            col_domain.extend(restriction_col_dom)
-        # ------------------------------------------
+
 
         # --- Registration domain (direct fields) ---
         reg_location_domain = []
@@ -106,9 +102,14 @@ class DonationBoxDashboard(models.TransientModel):
             
         col_domain = list(base_col_domain)
         if date_from: col_domain.append(('date', '>=', date_from))
-        if date_to: col_domain.append(('date', '<=', date_to))
-        if restriction and restriction['analytic_ids']:
-            col_domain.extend(restriction_col_dom)
+        if date_to:   col_domain.append(('date', '<=', date_to))
+
+        # 🔒 Per-user Donation Box restriction (also covers base_col_domain
+        #    used by the "current / previous 3m" KPIs)
+        reg_domain      += self._location_security_domain()
+        comp_domain     += self._location_security_domain('donation_box_registration_installation_id')
+        col_domain      += self._location_security_domain('donation_box_registration_installation_id')
+        base_col_domain += self._location_security_domain('donation_box_registration_installation_id')
 
         Registration = self.env['donation.box.registration.installation']
         Complain = self.env['donation.box.complain.center']
@@ -136,14 +137,14 @@ class DonationBoxDashboard(models.TransientModel):
         start_prev_3m = (start_3m - relativedelta(months=3)).replace(day=1)
         end_prev_3m = start_3m - relativedelta(days=1)
 
-        current_3m_cols = Collection.search(base_col_domain + restriction_col_dom + [
+        current_3m_cols = Collection.search(base_col_domain  + [
             ('date', '>=', start_3m.strftime('%Y-%m-%d')),
             ('date', '<=', end_3m.strftime('%Y-%m-%d')),
             ('state', 'in', ['donation_submit', 'pending', 'paid'])
         ])
         current_3m_sum = sum(current_3m_cols.mapped('amount'))
 
-        prev_3m_cols = Collection.search(base_col_domain + restriction_col_dom + [
+        prev_3m_cols = Collection.search(base_col_domain + [
             ('date', '>=', start_prev_3m.strftime('%Y-%m-%d')),
             ('date', '<=', end_prev_3m.strftime('%Y-%m-%d')),
             ('state', 'in', ['donation_submit', 'pending', 'paid'])
@@ -264,14 +265,10 @@ class DonationBoxDashboard(models.TransientModel):
         if city_id: reg_base.append(('city_id', '=', int(city_id)))
         if zone_id: reg_base.append(('zone_id', '=', int(zone_id)))
         if bunch_id: reg_base.append(('key_bunch_id', '=', int(bunch_id)))
+        
+        reg_base += self._location_security_domain()
+        col_base += self._location_security_domain('donation_box_registration_installation_id')
 
-        # --- Configurator Restriction ---
-        restriction = self.env['dashboard.configurator'].get_user_restrictions('donation_box')
-        if restriction and restriction['analytic_ids']:
-            allowed_ids = restriction['analytic_ids']
-            col_base.extend(['|', ('donation_box_registration_installation_id.city_id', 'child_of', allowed_ids), ('donation_box_registration_installation_id.zone_id', 'child_of', allowed_ids)])
-            reg_base.extend(['|', ('city_id', 'child_of', allowed_ids), ('zone_id', 'child_of', allowed_ids)])
-        # -------------------------------
 
         Collection = self.env['rider.collection']
         Registration = self.env['donation.box.registration.installation']
@@ -301,3 +298,42 @@ class DonationBoxDashboard(models.TransientModel):
             diffs[key] = {'diff': diff, 'pct': pct, 'is_positive': diff >= 0}
 
         return {'p1': p1, 'p2': p2, 'diffs': diffs, 'mode': mode, 'period1': period1, 'period2': period2}
+
+    @api.model
+    def _get_allowed_location_ids(self):
+        """Return (allowed_ids, visible_ids) or (None, None) if unrestricted."""
+        locations = self.env.user.donation_box_analytic_ids
+        if not locations:
+            return None, None
+        allowed = set()
+        def _walk(node):
+            allowed.add(node.id)
+            for child in node.child_ids:
+                _walk(child)
+        for loc in locations:
+            _walk(loc)
+        ancestors = set()
+        for loc in locations:
+            p = loc.parent_id
+            while p:
+                ancestors.add(p.id)
+                p = p.parent_id
+        return allowed, allowed | ancestors
+
+
+    @api.model
+    def _location_security_domain(self, prefix=''):
+        """[] when unrestricted, else a domain on zone/city/province."""
+        allowed, _ = self._get_allowed_location_ids()
+        if allowed is None:
+            return []
+        ids = list(allowed)
+        if prefix:
+            return ['|', '|',
+                    (f'{prefix}.zone_id',            'in', ids),
+                    (f'{prefix}.city_id',            'in', ids),
+                    (f'{prefix}.city_id.parent_id',  'in', ids)]
+        return ['|', '|',
+                ('zone_id',           'in', ids),
+                ('city_id',           'in', ids),
+                ('city_id.parent_id', 'in', ids)]
