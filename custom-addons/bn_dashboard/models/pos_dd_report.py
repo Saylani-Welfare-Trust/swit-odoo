@@ -46,28 +46,143 @@ class PosDdReport(models.Model):
     # ------------------------------------------------------------------
     def init(self):
         tools.drop_view_if_exists(self._cr, 'pos_dd_report')
-        
-        # Automatically create a System Product & Category for Direct Deposits
-        # This prevents them from showing up as "None" in Pivot/Graph views
-        prod = self.env['product.product'].with_context(active_test=False).search([('default_code', '=', 'DIRECT_DEPOSIT')], limit=1)
-        if not prod:
-            categ = self.env['product.category'].search([('name', '=', 'Direct Deposits')], limit=1)
-            if not categ:
-                categ = self.env['product.category'].create({'name': 'Direct Deposits'})
-            prod = self.env['product.product'].create({
-                'name': 'Direct Deposit',
-                'default_code': 'DIRECT_DEPOSIT',
-                'categ_id': categ.id,
-                'type': 'service',
-                'sale_ok': False,
-                'purchase_ok': False,
-            })
-        
-        dd_prod_id = prod.id
-        dd_categ_id = prod.categ_id.id
 
+        # ─────────────────────────────────────────────────────────────
+        # 1. Auto-detect the direct.deposit line model
+        # ─────────────────────────────────────────────────────────────
+        DD = self.env['direct.deposit']
+        dd_line_model = None
+        dd_fk_field   = None
+        dd_prod_field = None
+        dd_amt_field  = None
+
+        # Prefer these common names when multiple one2many fields exist
+        preferred = ['line_ids', 'lines', 'deposit_line_ids',
+                     'order_line', 'product_line_ids']
+
+        candidates = [f for f in preferred if f in DD._fields] + \
+                     [f for f in DD._fields if f not in preferred]
+
+        for fname in candidates:
+            f = DD._fields[fname]
+            if f.type != 'one2many':
+                continue
+            LineModel = self.env[f.comodel_name]
+            if 'product_id' not in LineModel._fields:
+                continue
+
+            dd_line_model = LineModel
+            # Find the FK back to direct.deposit
+            for ln, lf in LineModel._fields.items():
+                if lf.type == 'many2one' and lf.comodel_name == 'direct.deposit':
+                    dd_fk_field = ln
+                    break
+
+            dd_prod_field = 'product_id'
+            # Find the amount field
+            for cand in ('amount', 'price_subtotal', 'price_total',
+                         'subtotal', 'line_amount'):
+                if cand in LineModel._fields:
+                    dd_amt_field = cand
+                    break
+            # Fallback: use price_unit * qty
+            if not dd_amt_field and 'price_unit' in LineModel._fields:
+                for qty in ('quantity', 'qty', 'product_uom_qty'):
+                    if qty in LineModel._fields:
+                        dd_amt_field = f"({dd_prod_field and 'price_unit'} * {qty})"
+                        dd_amt_field = None  # handled below
+                        break
+
+            _logger = __import__('logging').getLogger(__name__)
+            _logger.info(
+                "pos.dd.report: detected DD line model=%s | fk=%s | product=%s | amount=%s",
+                dd_line_model._name, dd_fk_field, dd_prod_field, dd_amt_field,
+            )
+            break
+
+        # ─────────────────────────────────────────────────────────────
+        # 2. Build the Direct Deposit SELECT fragment
+        # ─────────────────────────────────────────────────────────────
+        if dd_line_model and dd_fk_field and dd_amt_field:
+            dd_table = dd_line_model._table
+            dd_select = f"""
+                SELECT
+                    (ddl.id * 2 + 1)::integer AS id,
+                    dd.id AS source_id,
+                    'direct.deposit'::varchar AS source_model,
+                    dd.name AS reference,
+                    dd.create_date AS date,
+                    dd.donor_id AS partner_id,
+                    dd.user_id AS user_id,
+                    dd.currency_id AS currency_id,
+                    COALESCE(ddl.{dd_amt_field}, 0)::numeric AS amount,
+                    COALESCE(ddl.{dd_amt_field}, 0)::numeric AS amount_paid,
+                    FALSE AS is_refund,
+                    dd.state AS state,
+                    NULL::integer AS config_id,
+                    NULL::integer AS session_id,
+                    NULL::text AS payment_methods,
+                    dd.bank_id AS bank_id,
+                    dd.payment_type AS payment_type,
+                    dd.transaction_ref AS transaction_ref,
+                    dd.remarks AS remarks,
+                    dd.analytic_account_id AS analytic_account_id,
+                    zone.id AS zone_id,
+                    city.id AS city_id,
+                    province.id AS province_id,
+                    ddl.{dd_prod_field}::integer AS product_id,
+                    pt.categ_id::integer AS category_id
+                FROM {dd_table} ddl
+                INNER JOIN direct_deposit dd ON dd.id = ddl.{dd_fk_field}
+                LEFT JOIN product_product pp ON pp.id = ddl.{dd_prod_field}
+                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
+                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
+                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
+                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
+            """
+        else:
+            # Fallback: header-only (will still show "None" for product)
+            dd_select = """
+                SELECT
+                    (dd.id * 2 + 1)::integer AS id,
+                    dd.id AS source_id,
+                    'direct.deposit'::varchar AS source_model,
+                    dd.name AS reference,
+                    dd.create_date AS date,
+                    dd.donor_id AS partner_id,
+                    dd.user_id AS user_id,
+                    dd.currency_id AS currency_id,
+                    dd.amount AS amount,
+                    dd.amount AS amount_paid,
+                    FALSE AS is_refund,
+                    dd.state AS state,
+                    NULL::integer AS config_id,
+                    NULL::integer AS session_id,
+                    NULL::text AS payment_methods,
+                    dd.bank_id AS bank_id,
+                    dd.payment_type AS payment_type,
+                    dd.transaction_ref AS transaction_ref,
+                    dd.remarks AS remarks,
+                    dd.analytic_account_id AS analytic_account_id,
+                    zone.id AS zone_id,
+                    city.id AS city_id,
+                    province.id AS province_id,
+                    NULL::integer AS product_id,
+                    NULL::integer AS category_id
+                FROM direct_deposit dd
+                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
+                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
+                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
+                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
+            """
+
+        # ─────────────────────────────────────────────────────────────
+        # 3. Build the full view
+        # ─────────────────────────────────────────────────────────────
         self._cr.execute(f"""
             CREATE OR REPLACE VIEW pos_dd_report AS (
+                -- POS order lines
                 SELECT
                     (pol.id * 2)::integer AS id,
                     po.id AS source_id,
@@ -115,37 +230,8 @@ class PosDdReport(models.Model):
 
                 UNION ALL
 
-                SELECT
-                    (dd.id * 2 + 1)::integer AS id,
-                    dd.id AS source_id,
-                    'direct.deposit'::varchar AS source_model,
-                    dd.name AS reference,
-                    dd.create_date AS date,
-                    dd.donor_id AS partner_id,
-                    dd.user_id AS user_id,
-                    dd.currency_id AS currency_id,
-                    dd.amount AS amount,
-                    dd.amount AS amount_paid,
-                    FALSE AS is_refund,
-                    dd.state AS state,
-                    NULL::integer AS config_id,
-                    NULL::integer AS session_id,
-                    NULL::text AS payment_methods,
-                    dd.bank_id AS bank_id,
-                    dd.payment_type AS payment_type,
-                    dd.transaction_ref AS transaction_ref,
-                    dd.remarks AS remarks,
-                    dd.analytic_account_id AS analytic_account_id,
-                    zone.id AS zone_id,
-                    city.id AS city_id,
-                    province.id AS province_id,
-                    {dd_prod_id}::integer AS product_id,
-                    {dd_categ_id}::integer AS category_id
-                FROM direct_deposit dd
-                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
-                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
-                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
-                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
+                -- Direct deposit lines (with product + category)
+                {dd_select}
             )
         """)
 
