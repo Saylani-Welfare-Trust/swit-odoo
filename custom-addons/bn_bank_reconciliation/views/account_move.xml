@@ -13,6 +13,12 @@
                         invisible="bank_reconciliation_original_count &lt; 2">
                     <field name="bank_reconciliation_original_count" widget="statinfo" string="Original Entries"/>
                 </button>
+                <!-- Original entry: the reconciliation entries made for its bank statement lines -->
+                <button name="action_view_bank_reconciliation_moves" type="object"
+                        class="oe_stat_button" icon="fa-university"
+                        invisible="not bank_reconciliation_move_count">
+                    <field name="bank_reconciliation_move_count" widget="statinfo" string="Reconciled Entries"/>
+                </button>
             </xpath>
             <xpath expr="//group[@id='header_right_group']" position="inside">
                 <field name="is_bank_reconciled" widget="boolean_toggle" readonly="1" invisible="move_type != 'entry'"/>
