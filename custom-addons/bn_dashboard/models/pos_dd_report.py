@@ -103,7 +103,7 @@ class PosDdReport(models.Model):
                 NULL::varchar AS payment_type,
                 NULL::varchar AS transaction_ref,
                 NULL::text AS remarks,
-                lt.id AS analytic_account_id,
+                pc.analytic_account_id AS analytic_account_id,
                 lt.zone_id AS zone_id,
                 lt.city_id AS city_id,
                 lt.province_id AS province_id,
@@ -129,7 +129,6 @@ class PosDdReport(models.Model):
                 dd.user_id AS user_id,
                 dd.currency_id AS currency_id,
                 (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount,
-                -- Only show amount_paid if the deposit is Clear or Transferred
                 CASE 
                     WHEN dd.state IN ('clear', 'transferred') THEN (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric 
                     ELSE 0 
@@ -143,7 +142,7 @@ class PosDdReport(models.Model):
                 dd.payment_type AS payment_type,
                 dd.transaction_ref AS transaction_ref,
                 ddl.remarks AS remarks,
-                lt.id AS analytic_account_id,
+                dd.analytic_account_id AS analytic_account_id,
                 lt.zone_id AS zone_id,
                 lt.city_id AS city_id,
                 lt.province_id AS province_id,
