@@ -23,12 +23,13 @@
                 </div> -->
 
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
-                    <div class="col-4 fw-semibold">Transaction Ref</div>
+                    <div class="col-4 fw-semibold">Transaction Ref <span class="text-danger">*</span></div>
                     <div class="col-8">
                         <input type="text"
                             class="form-control form-control-sm"
                             t-att-value="this.state.transaction_ref"
                             t-on-change="updateTransactionRef"
+                            required="required"
                             placeholder="Enter transaction reference"/>
                     </div>
                 </div>
