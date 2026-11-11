@@ -1309,6 +1309,7 @@ class MedicalEquipment(models.Model):
         self.message_post(body=message_body)
 
 
+
     def _handle_new_application(self, existing_donee):
         """Handle creation of new application/donee in portal"""
         donee_data = None
