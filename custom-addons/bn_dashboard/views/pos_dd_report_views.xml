@@ -75,7 +75,7 @@
                         </group>
                     </group>
                     <group>
-                        <group string="Location & Branch">
+                        <group string="Location &gt; Branch">
                             <field name="province_id"/>
                             <field name="city_id"/>
                             <field name="zone_id"/>
