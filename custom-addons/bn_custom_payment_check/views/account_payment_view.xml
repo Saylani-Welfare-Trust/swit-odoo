@@ -23,24 +23,4 @@
 
         </field>
     </record>
-
- 
-    <record id="view_cheque_reprint_wizard_form" model="ir.ui.view">
-        <field name="name">cheque.reprint.wizard.form</field>
-        <field name="model">cheque.reprint.wizard</field>
-        <field name="arch" type="xml">
-            <form string="Reprint Cheque">
-                <group>
-                    <field name="payment_id" invisible="1"/>
-                    <field name="print_type" invisible="1"/>
-                    <field name="reason" placeholder="Why is this cheque being reprinted?"/>
-                </group>
-                <footer>
-                    <button string="Print" name="action_confirm" type="object" class="btn-primary" data-hotkey="q"/>
-                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="x"/>
-                </footer>
-            </form>
-        </field>
-    </record>
-    
 </odoo>
