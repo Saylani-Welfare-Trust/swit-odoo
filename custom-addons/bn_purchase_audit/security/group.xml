@@ -3,7 +3,7 @@
 
     <record id="group_purchase_audit" model="res.groups">
         <field name="name">Purchase / Audit</field>
-        <field name="comment">Read-only oversight across the Purchase app: Purchase Requests / Blanket Orders, RFQs, Purchase Orders, Vendors, Products and Reporting, with the bills, receipts and advance payments of the orders. All Material Requests, read-only, and in Accounting the Vendors menu only. No Configuration, and no create, write or delete anywhere. Give it instead of Purchase User / Administrator, whose rights would add to it.</field>
+        <field name="comment">Read-only oversight across the Purchase app: Purchase Requests / Blanket Orders, RFQs, Purchase Orders, Vendors, Products and Reporting, with the bills, receipts (GRN, also all of them under Orders) and advance payments of the orders. All Material Requests, read-only, and in Accounting the Vendors menu only. No Configuration, and no create, write or delete anywhere. Give it instead of Purchase User / Administrator, whose rights would add to it.</field>
     </record>
 
 </odoo>

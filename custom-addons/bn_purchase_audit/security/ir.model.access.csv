@@ -17,3 +17,4 @@ access_account_partial_reconcile_audit,account.partial.reconcile.audit,account.m
 access_account_payment_audit,account.payment.audit,account.model_account_payment,group_purchase_audit,1,0,0,0
 access_account_journal_audit,account.journal.audit,account.model_account_journal,group_purchase_audit,1,0,0,0
 access_account_analytic_line_audit,account.analytic.line.audit,analytic.model_account_analytic_line,group_purchase_audit,1,0,0,0
+access_stock_lot_audit,stock.lot.audit,stock.model_stock_lot,group_purchase_audit,1,0,0,0
