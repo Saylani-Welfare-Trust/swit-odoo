@@ -44,6 +44,7 @@ class PurchaseRequisition(models.Model):
         super(PurchaseRequisition, self).action_in_progress()
 
     def action_confirm(self):
+        self._assign_reference_number()
         self.state = 'confirm'
 
     @api.model
