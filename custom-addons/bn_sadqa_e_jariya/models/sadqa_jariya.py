@@ -160,6 +160,8 @@ class SadqaJariya(models.Model):
         for rec in self:
             rec.committee_member_ids = rec.committee_line_ids.member_id
 
+    # without a dependency the web client gets False on a new application (state always has its default)
+    @api.depends('state')
     def _compute_donee_domain(self):
         domain = json.dumps(self._donee_tag_domain())
         for rec in self:
