@@ -6,8 +6,7 @@
     'license': 'LGPL-3',
     'category': 'BytesNode/Purchase Customization',
     'summary': 'Purchase / Audit group: read-only access to the whole Purchase app '
-               '(except its Configuration) and its Receipts (GRN), to all Material Requests, '
-               'and to the '
+               '(except its Configuration), to all Material Requests, and to the '
                'Vendors menu of Accounting',
     'depends': [
         'purchase_requisition',
@@ -21,7 +20,6 @@
         'security/ir.model.access.csv',
         'security/ir_rule.xml',
 
-        'views/stock_picking_views.xml',
         'views/menu.xml',
     ],
     'installable': True,

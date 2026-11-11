@@ -30,12 +30,4 @@
     <record id="account.menu_finance_receivables" model="ir.ui.menu">
         <field name="groups_id" eval="[(4, ref('account.group_account_invoice')), (4, ref('account.group_account_readonly'))]"/>
     </record>
-
-    <!-- Purchase > Orders > Receipts (GRN): all incoming transfers, read-only -->
-    <menuitem id="menu_purchase_audit_receipts"
-              name="Receipts (GRN)"
-              parent="purchase.menu_procurement_management"
-              action="action_purchase_audit_receipts"
-              groups="group_purchase_audit"
-              sequence="10"/>
 </odoo>
