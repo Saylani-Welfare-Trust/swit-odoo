@@ -68,6 +68,11 @@ class AccountMove(models.Model):
         compute='_compute_bank_reconciliation_moves',
         help='Entries moving the bank statement lines matched with this entry to the Posted Account'
     )
+    bank_reconciliation_move_id = fields.Many2one(
+        'account.move',
+        string='Reconciliation Entry',
+        compute='_compute_bank_reconciliation_moves'
+    )
     bank_reconciliation_move_count = fields.Integer(
         compute='_compute_bank_reconciliation_moves'
     )
@@ -89,22 +94,8 @@ class AccountMove(models.Model):
             # Entries cancelled by unreconciling no longer reconcile anything
             entries = entries.filtered(lambda m: m.state != 'cancel')
             move.bank_reconciliation_move_ids = entries
+            move.bank_reconciliation_move_id = entries if len(entries) == 1 else False
             move.bank_reconciliation_move_count = len(entries)
-
-    def action_view_bank_reconciliation_moves(self):
-        self.ensure_one()
-        entries = self.bank_reconciliation_move_ids
-        action = {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.move',
-            'name': _('Reconciliation Entries'),
-            'target': 'current',
-        }
-        if len(entries) == 1:
-            action.update({'view_mode': 'form', 'res_id': entries.id})
-        else:
-            action.update({'view_mode': 'tree,form', 'domain': [('id', 'in', entries.ids)]})
-        return action
 
     def action_view_bank_reconciliation_original_moves(self):
         self.ensure_one()
