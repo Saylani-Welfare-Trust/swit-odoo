@@ -62,7 +62,9 @@ secuirty_offered_selection = [
 class Microfinance(models.Model):
 
     _name = 'microfinance'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Microfinance"
+    
 
 
     name = fields.Char('Name', default="NEW")
