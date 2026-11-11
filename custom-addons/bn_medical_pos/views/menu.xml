@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Medical & Health POS counters: open their sessions from here -->
+    <!-- The Point of Sale dashboard card, with a Close Session button (the main dashboard is unchanged) -->
+    <record id="mh_pos_config_view_kanban" model="ir.ui.view">
+        <field name="name">pos.config.view.kanban.mh</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_config_kanban"/>
+        <field name="mode">primary</field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='open_ui']" position="after">
+                <button t-if="record.current_session_state.raw_value === 'opened'" class="btn btn-secondary ms-2"
+                        name="mh_close_session_ui" type="object">Close Session</button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Medical & Health POS counters: open and close their sessions from here -->
     <record id="action_mh_counters" model="ir.actions.act_window">
         <field name="name">Counters</field>
         <field name="res_model">pos.config</field>
@@ -9,7 +23,7 @@
         <field name="domain">[('is_medical_pos', '=', True)]</field>
         <field name="context">{'default_is_medical_pos': True}</field>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'kanban', 'view_id': ref('point_of_sale.view_pos_config_kanban')}),
+            (0, 0, {'view_mode': 'kanban', 'view_id': ref('mh_pos_config_view_kanban')}),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('point_of_sale.view_pos_config_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('point_of_sale.pos_config_view_form')})]"/>
         <field name="help" type="html">

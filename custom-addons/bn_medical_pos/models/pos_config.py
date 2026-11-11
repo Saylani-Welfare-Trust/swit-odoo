@@ -33,3 +33,12 @@ class PosConfig(models.Model):
             ],
             [('pos_categ_ids', 'in', categories.ids)],
         ])
+
+    def mh_close_session_ui(self):
+        """Counters card: open the counter on its closing screen (cash count), as its menu > Close Session does"""
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f'/pos/ui?config_id={self.id}&mh_close=1',
+            'target': 'self',
+        }
