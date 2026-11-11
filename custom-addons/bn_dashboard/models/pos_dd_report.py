@@ -47,64 +47,51 @@ class PosDdReport(models.Model):
     def init(self):
         tools.drop_view_if_exists(self._cr, 'pos_dd_report')
 
-        # ─────────────────────────────────────────────────────────────
-        # 1. Auto-detect the direct.deposit line model
-        # ─────────────────────────────────────────────────────────────
+        # 1. Dynamically find the "Direct Deposit Lines" model and fields
         DD = self.env['direct.deposit']
         dd_line_model = None
-        dd_fk_field   = None
+        dd_fk_field = None
         dd_prod_field = None
-        dd_amt_field  = None
+        dd_amt_field = None
 
-        # Prefer these common names when multiple one2many fields exist
-        preferred = ['line_ids', 'lines', 'deposit_line_ids',
-                     'order_line', 'product_line_ids']
-
-        candidates = [f for f in preferred if f in DD._fields] + \
-                     [f for f in DD._fields if f not in preferred]
-
-        for fname in candidates:
-            f = DD._fields[fname]
-            if f.type != 'one2many':
-                continue
-            LineModel = self.env[f.comodel_name]
-            if 'product_id' not in LineModel._fields:
-                continue
-
-            dd_line_model = LineModel
-            # Find the FK back to direct.deposit
-            for ln, lf in LineModel._fields.items():
-                if lf.type == 'many2one' and lf.comodel_name == 'direct.deposit':
-                    dd_fk_field = ln
+        for fname, f in DD._fields.items():
+            if f.type == 'one2many':
+                LineModel = self.env[f.comodel_name]
+                # Look for the line model that has a product_id
+                if 'product_id' in LineModel._fields:
+                    dd_line_model = LineModel
+                    dd_prod_field = 'product_id'
+                    
+                    # Find the Foreign Key back to direct.deposit
+                    for ln, lf in LineModel._fields.items():
+                        if lf.type == 'many2one' and lf.comodel_name == 'direct.deposit':
+                            dd_fk_field = ln
+                            break
+                            
+                    # Find the amount field on the line
+                    for amt_name in ('amount', 'price_subtotal', 'subtotal', 'price_total', 'line_amount'):
+                        if amt_name in LineModel._fields:
+                            dd_amt_field = amt_name
+                            break
+                    
+                    # Fallback to price_unit * quantity if no direct amount field
+                    if not dd_amt_field and 'price_unit' in LineModel._fields and 'quantity' in LineModel._fields:
+                        dd_amt_field = "price_unit * quantity"
+                        
                     break
 
-            dd_prod_field = 'product_id'
-            # Find the amount field
-            for cand in ('amount', 'price_subtotal', 'price_total',
-                         'subtotal', 'line_amount'):
-                if cand in LineModel._fields:
-                    dd_amt_field = cand
-                    break
-            # Fallback: use price_unit * qty
-            if not dd_amt_field and 'price_unit' in LineModel._fields:
-                for qty in ('quantity', 'qty', 'product_uom_qty'):
-                    if qty in LineModel._fields:
-                        dd_amt_field = f"({dd_prod_field and 'price_unit'} * {qty})"
-                        dd_amt_field = None  # handled below
-                        break
-
-            _logger = __import__('logging').getLogger(__name__)
-            _logger.info(
-                "pos.dd.report: detected DD line model=%s | fk=%s | product=%s | amount=%s",
-                dd_line_model._name, dd_fk_field, dd_prod_field, dd_amt_field,
-            )
-            break
-
-        # ─────────────────────────────────────────────────────────────
         # 2. Build the Direct Deposit SELECT fragment
-        # ─────────────────────────────────────────────────────────────
-        if dd_line_model and dd_fk_field and dd_amt_field:
-            dd_table = dd_line_model._table
+        if dd_line_model and dd_fk_field:
+            if dd_amt_field:
+                # If amount field is a formula (price_unit * quantity), we can't use COALESCE directly
+                if '*' in dd_amt_field:
+                    amt_sql = f"COALESCE(ddl.{dd_amt_field.split('*')[0].strip()}, 0) * COALESCE(ddl.{dd_amt_field.split('*')[1].strip()}, 0)"
+                else:
+                    amt_sql = f"COALESCE(ddl.{dd_amt_field}, 0)::numeric"
+            else:
+                # Fallback: If no amount field on line, use the header amount
+                amt_sql = "COALESCE(dd.amount, 0)::numeric"
+
             dd_select = f"""
                 SELECT
                     (ddl.id * 2 + 1)::integer AS id,
@@ -115,8 +102,8 @@ class PosDdReport(models.Model):
                     dd.donor_id AS partner_id,
                     dd.user_id AS user_id,
                     dd.currency_id AS currency_id,
-                    COALESCE(ddl.{dd_amt_field}, 0)::numeric AS amount,
-                    COALESCE(ddl.{dd_amt_field}, 0)::numeric AS amount_paid,
+                    {amt_sql} AS amount,
+                    {amt_sql} AS amount_paid,
                     FALSE AS is_refund,
                     dd.state AS state,
                     NULL::integer AS config_id,
@@ -132,7 +119,7 @@ class PosDdReport(models.Model):
                     province.id AS province_id,
                     ddl.{dd_prod_field}::integer AS product_id,
                     pt.categ_id::integer AS category_id
-                FROM {dd_table} ddl
+                FROM {dd_line_model._table} ddl
                 INNER JOIN direct_deposit dd ON dd.id = ddl.{dd_fk_field}
                 LEFT JOIN product_product pp ON pp.id = ddl.{dd_prod_field}
                 LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
@@ -142,7 +129,7 @@ class PosDdReport(models.Model):
                 LEFT JOIN account_analytic_account province ON province.id = city.parent_id
             """
         else:
-            # Fallback: header-only (will still show "None" for product)
+            # Fallback if absolutely no line model is found
             dd_select = """
                 SELECT
                     (dd.id * 2 + 1)::integer AS id,
@@ -177,9 +164,7 @@ class PosDdReport(models.Model):
                 LEFT JOIN account_analytic_account province ON province.id = city.parent_id
             """
 
-        # ─────────────────────────────────────────────────────────────
-        # 3. Build the full view
-        # ─────────────────────────────────────────────────────────────
+        # 3. Build the final view
         self._cr.execute(f"""
             CREATE OR REPLACE VIEW pos_dd_report AS (
                 -- POS order lines
