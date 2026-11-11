@@ -47,125 +47,7 @@ class PosDdReport(models.Model):
     def init(self):
         tools.drop_view_if_exists(self._cr, 'pos_dd_report')
 
-        # 1. Dynamically find the "Direct Deposit Lines" model and fields
-        DD = self.env['direct.deposit']
-        dd_line_model = None
-        dd_fk_field = None
-        dd_prod_field = None
-        dd_amt_field = None
-
-        for fname, f in DD._fields.items():
-            if f.type == 'one2many':
-                LineModel = self.env[f.comodel_name]
-                # Look for the line model that has a product_id
-                if 'product_id' in LineModel._fields:
-                    dd_line_model = LineModel
-                    dd_prod_field = 'product_id'
-                    
-                    # Find the Foreign Key back to direct.deposit
-                    for ln, lf in LineModel._fields.items():
-                        if lf.type == 'many2one' and lf.comodel_name == 'direct.deposit':
-                            dd_fk_field = ln
-                            break
-                            
-                    # Find the amount field on the line
-                    for amt_name in ('amount', 'price_subtotal', 'subtotal', 'price_total', 'line_amount'):
-                        if amt_name in LineModel._fields:
-                            dd_amt_field = amt_name
-                            break
-                    
-                    # Fallback to price_unit * quantity if no direct amount field
-                    if not dd_amt_field and 'price_unit' in LineModel._fields and 'quantity' in LineModel._fields:
-                        dd_amt_field = "price_unit * quantity"
-                        
-                    break
-
-        # 2. Build the Direct Deposit SELECT fragment
-        if dd_line_model and dd_fk_field:
-            if dd_amt_field:
-                # If amount field is a formula (price_unit * quantity), we can't use COALESCE directly
-                if '*' in dd_amt_field:
-                    amt_sql = f"COALESCE(ddl.{dd_amt_field.split('*')[0].strip()}, 0) * COALESCE(ddl.{dd_amt_field.split('*')[1].strip()}, 0)"
-                else:
-                    amt_sql = f"COALESCE(ddl.{dd_amt_field}, 0)::numeric"
-            else:
-                # Fallback: If no amount field on line, use the header amount
-                amt_sql = "COALESCE(dd.amount, 0)::numeric"
-
-            dd_select = f"""
-                SELECT
-                    (ddl.id * 2 + 1)::integer AS id,
-                    dd.id AS source_id,
-                    'direct.deposit'::varchar AS source_model,
-                    dd.name AS reference,
-                    dd.create_date AS date,
-                    dd.donor_id AS partner_id,
-                    dd.user_id AS user_id,
-                    dd.currency_id AS currency_id,
-                    {amt_sql} AS amount,
-                    {amt_sql} AS amount_paid,
-                    FALSE AS is_refund,
-                    dd.state AS state,
-                    NULL::integer AS config_id,
-                    NULL::integer AS session_id,
-                    NULL::text AS payment_methods,
-                    dd.bank_id AS bank_id,
-                    dd.payment_type AS payment_type,
-                    dd.transaction_ref AS transaction_ref,
-                    dd.remarks AS remarks,
-                    dd.analytic_account_id AS analytic_account_id,
-                    zone.id AS zone_id,
-                    city.id AS city_id,
-                    province.id AS province_id,
-                    ddl.{dd_prod_field}::integer AS product_id,
-                    pt.categ_id::integer AS category_id
-                FROM {dd_line_model._table} ddl
-                INNER JOIN direct_deposit dd ON dd.id = ddl.{dd_fk_field}
-                LEFT JOIN product_product pp ON pp.id = ddl.{dd_prod_field}
-                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
-                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
-                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
-                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
-                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
-            """
-        else:
-            # Fallback if absolutely no line model is found
-            dd_select = """
-                SELECT
-                    (dd.id * 2 + 1)::integer AS id,
-                    dd.id AS source_id,
-                    'direct.deposit'::varchar AS source_model,
-                    dd.name AS reference,
-                    dd.create_date AS date,
-                    dd.donor_id AS partner_id,
-                    dd.user_id AS user_id,
-                    dd.currency_id AS currency_id,
-                    dd.amount AS amount,
-                    dd.amount AS amount_paid,
-                    FALSE AS is_refund,
-                    dd.state AS state,
-                    NULL::integer AS config_id,
-                    NULL::integer AS session_id,
-                    NULL::text AS payment_methods,
-                    dd.bank_id AS bank_id,
-                    dd.payment_type AS payment_type,
-                    dd.transaction_ref AS transaction_ref,
-                    dd.remarks AS remarks,
-                    dd.analytic_account_id AS analytic_account_id,
-                    zone.id AS zone_id,
-                    city.id AS city_id,
-                    province.id AS province_id,
-                    NULL::integer AS product_id,
-                    NULL::integer AS category_id
-                FROM direct_deposit dd
-                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
-                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
-                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
-                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
-            """
-
-        # 3. Build the final view
-        self._cr.execute(f"""
+        self._cr.execute("""
             CREATE OR REPLACE VIEW pos_dd_report AS (
                 -- POS order lines
                 SELECT
@@ -215,8 +97,42 @@ class PosDdReport(models.Model):
 
                 UNION ALL
 
-                -- Direct deposit lines (with product + category)
-                {dd_select}
+                -- Direct deposit lines (exploded to get products)
+                SELECT
+                    (ddl.id * 2 + 1)::integer AS id,
+                    dd.id AS source_id,
+                    'direct.deposit'::varchar AS source_model,
+                    dd.name AS reference,
+                    dd.create_date AS date,
+                    dd.donor_id AS partner_id,
+                    dd.user_id AS user_id,
+                    dd.currency_id AS currency_id,
+                    -- Amount is unit price * quantity
+                    (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount,
+                    (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount_paid,
+                    FALSE AS is_refund,
+                    dd.state AS state,
+                    NULL::integer AS config_id,
+                    NULL::integer AS session_id,
+                    NULL::text AS payment_methods,
+                    dd.bank_id AS bank_id,
+                    dd.payment_type AS payment_type,
+                    dd.transaction_ref AS transaction_ref,
+                    ddl.remarks AS remarks,
+                    dd.analytic_account_id AS analytic_account_id,
+                    zone.id AS zone_id,
+                    city.id AS city_id,
+                    province.id AS province_id,
+                    ddl.product_id::integer AS product_id,
+                    pt.categ_id::integer AS category_id
+                FROM direct_deposit_line ddl
+                INNER JOIN direct_deposit dd ON dd.id = ddl.direct_deposit_id
+                LEFT JOIN product_product pp ON pp.id = ddl.product_id
+                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
+                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
+                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
+                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
             )
         """)
 
