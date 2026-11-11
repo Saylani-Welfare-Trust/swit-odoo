@@ -121,6 +121,10 @@
                                         <strong>Total Amount:</strong>
                                         <t t-esc="'{:,}'.format(int(order.amount_total) or 0)"/>
                                     </div>
+                                    <div t-if="order.has_microfinance_remaining">
+                                        <strong>Remaining Amount:</strong>
+                                        <t t-esc="'{:,}'.format(int(order.microfinance_remaining_amount) or 0)"/>
+                                    </div>
                                 </div>
                             </div>
 
