@@ -696,8 +696,10 @@ class Welfare(models.Model):
             return result.get('json', {})
             
         except requests.exceptions.RequestException as e:
-            _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
-            raise Exception(f"Network error: {str(e)}")
+            # Keep the portal's response body: on a 4xx it says which field was rejected
+            body = e.response.text[:1000] if e.response is not None else ''
+            _logger.error("Sadqa Jaria API Request failed: %s | payload: %s | response: %s", e, data, body)
+            raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
             raise e
