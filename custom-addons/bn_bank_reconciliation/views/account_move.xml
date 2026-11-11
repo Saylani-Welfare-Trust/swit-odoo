@@ -25,6 +25,8 @@
                 <field name="bank_reconciliation_id" readonly="1" invisible="not bank_reconciliation_id"/>
                 <!-- Reconciliation entry: the entry its bank statement line was matched with -->
                 <field name="bank_reconciliation_original_move_id" readonly="1" invisible="not bank_reconciliation_original_move_id"/>
+                <!-- Original entry: numbers of the reconciliation entries made for its bank statement lines -->
+                <field name="bank_reconciliation_move_ids" widget="many2many_tags" readonly="1" invisible="not bank_reconciliation_move_ids"/>
             </xpath>
         </field>
     </record>
