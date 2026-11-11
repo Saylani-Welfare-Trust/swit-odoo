@@ -43,7 +43,12 @@ class ConfirmSearch(models.TransientModel):
     def return_donee_form(self, donee=None):
         if self.donee_registration_type == 'microfinance':
             if donee:
-                donee.category_id = [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.microfinance_partner_category').id])]
+                # FIX: Use (4, id) to ADD tags without removing existing ones (like Welfare)
+                donee.category_id = [
+                    (4, self.env.ref('bn_profile_management.donee_partner_category').id), 
+                    (4, self.env.ref('bn_profile_management.individual_partner_category').id), 
+                    (4, self.env.ref('bn_profile_management.microfinance_partner_category').id)
+                ]
 
                 self.env.cr.commit()
 
@@ -67,6 +72,7 @@ class ConfirmSearch(models.TransientModel):
                     'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
                     'domain': "[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance')]",
                     'context': {
+                        # For new records, (6,0) is fine because there are no existing tags to wipe out
                         'default_category_id': [(6, 0, [self.env.ref('bn_profile_management.donee_partner_category').id, self.env.ref('bn_profile_management.individual_partner_category').id, self.env.ref('bn_profile_management.microfinance_partner_category').id])],
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
@@ -75,14 +81,15 @@ class ConfirmSearch(models.TransientModel):
                     },
                     'target': 'new'
                 }
+                
         elif self.donee_registration_type == 'welfare':
             if donee:
-                donee.category_id = [(6, 0, [
-                                             self.env.ref('bn_profile_management.donee_partner_category').id,
-                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
-                                             self.env.ref('bn_profile_management.welfare_partner_category').id
-                                             ])
-                                    ]
+                # FIX: Use (4, id) to ADD tags
+                donee.category_id = [
+                    (4, self.env.ref('bn_profile_management.donee_partner_category').id),
+                    (4, self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id),
+                    (4, self.env.ref('bn_profile_management.welfare_partner_category').id)
+                ]
 
                 self.env.cr.commit()
 
@@ -112,18 +119,18 @@ class ConfirmSearch(models.TransientModel):
                         'default_cnic_no': self.cnic_no,
                         'default_mobile': self.mobile_no,
                         'default_country_code_id': self.country_code_id.id,
-                        # 'default_scheme_type_ids': [(4, self.scheme_type_id.id)]
                     },
                     'target': 'new'
                 }
+                
         elif self.donee_registration_type == 'medical':
             if donee:
-                donee.category_id = [(6, 0, [
-                                             self.env.ref('bn_profile_management.donee_partner_category').id,
-                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
-                                             self.env.ref('bn_profile_management.medical_partner_category').id
-                                             ])
-                                    ]
+                # FIX: Use (4, id) to ADD tags
+                donee.category_id = [
+                    (4, self.env.ref('bn_profile_management.donee_partner_category').id),
+                    (4, self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id),
+                    (4, self.env.ref('bn_profile_management.medical_partner_category').id)
+                ]
 
                 self.env.cr.commit()
 
@@ -151,14 +158,15 @@ class ConfirmSearch(models.TransientModel):
                     },
                     'target': 'new'
                 }
+                
         elif self.donee_registration_type == 'student':
             if donee:
-                donee.category_id = [(6, 0, [
-                                             self.env.ref('bn_profile_management.donee_partner_category').id,
-                                             self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
-                                             self.env.ref('bn_profile_management.student_partner_category').id
-                                             ])
-                                    ]
+                # FIX: Use (4, id) to ADD tags
+                donee.category_id = [
+                    (4, self.env.ref('bn_profile_management.donee_partner_category').id),
+                    (4, self.env.ref('bn_profile_management.individual_partner_category').id if self.category == 'individual' else self.env.ref('bn_profile_management.coorporate_institute_partner_category').id),
+                    (4, self.env.ref('bn_profile_management.student_partner_category').id)
+                ]
 
                 self.env.cr.commit()
 
@@ -188,6 +196,7 @@ class ConfirmSearch(models.TransientModel):
                 }
 
     def action_confirm(self):
+        # ... (Keep your action_confirm method exactly the same) ...
         if self.registration_type == 'donee':
             if self.search_type == 'registration_id':
                 donee_obj = self.env['res.partner'].search([('primary_registration_id', '=', self.registration_id), ('category_id.name', 'in', ['Donee'])])
