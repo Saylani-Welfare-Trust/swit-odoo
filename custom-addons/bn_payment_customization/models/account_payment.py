@@ -1,4 +1,5 @@
 from odoo import models, fields
+from odoo.exceptions import UserError
 
 import io
 import base64
@@ -16,16 +17,38 @@ class AccountPayment(models.Model):
 
     
     ibft_status = fields.Selection(selection=IBFT_STATUS, string="Printing Status", default="pending", tracking=True)
-
+    ibft_batch_no = fields.Char(string="IBFT Batch No", copy=False, readonly=True, index=True)
 
     def action_confirm_ibft(self):
-
         if not self:
             return False
 
-        # Update all selected payment statuses
+        batch_nos = set(self.filtered('ibft_batch_no').mapped('ibft_batch_no'))
+        if len(batch_nos) > 1:
+            raise UserError(_(
+                "Selected payments belong to different IBFT batches (%s). "
+                "Select payments of one batch only.") % ", ".join(sorted(batch_nos)))
+
+        # Already confirmed before: ask for a reason first
+        if batch_nos:
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Reprint IBFT'),
+                'res_model': 'ibft.reprint.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_batch_no': batch_nos.pop(),
+                    'default_payment_ids': [(6, 0, self.ids)],
+                },
+            }
+        return self._do_confirm_ibft()
+
+    def _do_confirm_ibft(self, batch_no=False):
+        batch_no = batch_no or self.env['ir.sequence'].next_by_code('ibft.batch.number')
         self.write({
-            'ibft_status': 'success'
+            'ibft_status': 'success',
+            'ibft_batch_no': batch_no,
         })
 
         # Generate Excel
@@ -95,7 +118,7 @@ class AccountPayment(models.Model):
 
         # Create Excel attachment
         attachment = self.env['ir.attachment'].create({
-            'name': 'IBFT_Success_Payments.xlsx',
+            'name': 'IBFT_%s.xlsx' % batch_no.replace('/', '_'),
             'type': 'binary',
             'datas': base64.b64encode(output.read()),
             'mimetype': (

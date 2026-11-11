@@ -9,7 +9,11 @@
         'account'
     ],
     'data': [
+        'security/ir.model.access.csv',
         'views/account_payment.xml',
+        'data/ibft_sequence.xml',
+        'wizard/ibft_wizard.xml',
+
     ],
     'auto_install': False,
     'application': False,

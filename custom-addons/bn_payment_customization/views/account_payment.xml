@@ -13,6 +13,22 @@
 
             <xpath expr="//field[@name='state']" position="after">
                 <field name="ibft_status" widget="badge" decoration-info="ibft_status == 'pending'" decoration-success="ibft_status == 'success'"/>
+                <field name="ibft_batch_no" optional="show"/>
+
+            </xpath>
+        </field>
+    </record>
+
+        <record id="view_account_payment_search_inherit_ibft_batch" model="ir.ui.view">
+        <field name="name">account.payment.search.inherit.ibft.batch</field>
+        <field name="model">account.payment</field>
+        <field name="inherit_id" ref="account.view_account_payment_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id']" position="after">
+                <field name="ibft_batch_no"/>
+            </xpath>
+            <xpath expr="//filter[@name='groupby_partner']" position="after">
+                <filter string="IBFT Batch" name="groupby_ibft_batch" context="{'group_by': 'ibft_batch_no'}"/>
             </xpath>
         </field>
     </record>
