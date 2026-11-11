@@ -27,9 +27,7 @@
             <xpath expr="//field[@name='partner_id']" position="after">
                 <field name="ibft_batch_no"/>
             </xpath>
-            <xpath expr="//filter[@name='groupby_partner']" position="after">
-                <filter string="IBFT Batch" name="groupby_ibft_batch" context="{'group_by': 'ibft_batch_no'}"/>
-            </xpath>
+            
         </field>
     </record>
 
