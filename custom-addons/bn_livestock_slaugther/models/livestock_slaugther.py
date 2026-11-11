@@ -47,6 +47,7 @@ class LivestockSlaughter(models.Model):
     ref = fields.Char('Source Document')
 
     quantity = fields.Integer('Quantity', default=1)
+    pos_split_no = fields.Integer('POS Split No', default=1, copy=False)
 
     price = fields.Monetary('Price', currency_field='currency_id', default=0)
 
@@ -64,7 +65,7 @@ class LivestockSlaughter(models.Model):
     _sql_constraints = [
         (
             'unique_pos_order_line_id',
-            'unique(pos_order_line_id)',
+            'unique(pos_order_line_id, pos_split_no)',
             'A livestock slaughter record already exists for this POS order line.',
         ),
         (

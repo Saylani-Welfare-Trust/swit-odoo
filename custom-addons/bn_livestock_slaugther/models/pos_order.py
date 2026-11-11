@@ -97,15 +97,23 @@ class POSOrder(models.Model):
                     continue
 
                 price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
+                qty = int(line.qty)
+                if qty < 1:
+                    continue
+                per_unit_price = order.currency_id.round(price / qty)
 
-                for i in range(int(line.qty)):
+                for i in range(qty):
+                    # the last record takes the rounding difference
+                    unit_price = per_unit_price if i < qty - 1 else order.currency_id.round(
+                        price - per_unit_price * (qty - 1))
                     slaughter_vals = {
                         'product_id': line.product_id.id,
                         'donee_id': order.partner_id.id,
                         'pos_order_id': order.id,
                         'pos_order_line_id': line.id,
+                        'pos_split_no': i + 1,
                         'quantity': 1,
-                        'price': price,
+                        'price': unit_price,
                         'ref': reference,
                     }
                     slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
