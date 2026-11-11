@@ -133,4 +133,6 @@ class AccountPayment(models.Model):
             'type': 'ir.actions.act_url',
             'url': '/web/content/%s?download=true' % attachment.id,
             'target': 'self',
+            'close': True,
+
         }
