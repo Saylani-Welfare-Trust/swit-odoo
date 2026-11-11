@@ -150,8 +150,19 @@
             </main>
 
             <footer class="footer modal-footer">
-                <div class="button btn btn-lg btn-primary" t-on-click="confirm">Confirm</div>
-                <div class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Cancel</div>
+                <!-- Disable the button visually if is_processing is true -->
+                <div class="button btn btn-lg btn-primary" 
+                     t-att-class="{'disabled': state.is_processing}" 
+                     t-att-disabled="state.is_processing"
+                     t-on-click="confirm">
+                    <t t-if="state.is_processing">Processing...</t>
+                    <t t-else="">Confirm</t>
+                </div>
+                <div class="button cancel btn btn-lg btn-secondary" 
+                     t-att-class="{'disabled': state.is_processing}" 
+                     t-on-click="cancel">
+                    Cancel
+                </div>
             </footer>
         </div>
     </t>
