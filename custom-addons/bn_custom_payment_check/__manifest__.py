@@ -9,7 +9,7 @@
     'category': 'BytesNode/Custom Reports',
     'depends': ['account'],
     'data': [
-        'security/group.xml',
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'report/paper_formats.xml',
         'report/cheque_templates.xml',
