@@ -48,92 +48,112 @@ class PosDdReport(models.Model):
         tools.drop_view_if_exists(self._cr, 'pos_dd_report')
 
         self._cr.execute("""
-            CREATE OR REPLACE VIEW pos_dd_report AS (
-                -- POS order lines
-                SELECT
-                    (pol.id * 2)::integer AS id,
-                    po.id AS source_id,
-                    'pos.order'::varchar AS source_model,
-                    po.name AS reference,
-                    po.date_order AS date,
-                    po.partner_id,
-                    po.user_id,
-                    rc.currency_id,
-                    pol.price_subtotal_incl AS amount,
-                    CASE
-                        WHEN po.amount_total = 0 THEN 0
-                        ELSE po.amount_paid * (pol.price_subtotal_incl / po.amount_total)
-                    END AS amount_paid,
-                    (pol.price_subtotal_incl < 0) AS is_refund,
-                    po.state,
-                    po.config_id,
-                    po.session_id,
-                    (
-                        SELECT string_agg(DISTINCT ppm.name->>'en_US', ', ')
-                        FROM pos_payment pp
-                        JOIN pos_payment_method ppm ON ppm.id = pp.payment_method_id
-                        WHERE pp.pos_order_id = po.id
-                    ) AS payment_methods,
-                    NULL::integer AS bank_id,
-                    NULL::varchar AS payment_type,
-                    NULL::varchar AS transaction_ref,
-                    NULL::text AS remarks,
-                    aa.id AS analytic_account_id,
-                    zone.id AS zone_id,
-                    city.id AS city_id,
-                    province.id AS province_id,
-                    pol.product_id AS product_id,
-                    pt.categ_id AS category_id
-                FROM pos_order_line pol
-                INNER JOIN pos_order po ON po.id = pol.order_id
-                LEFT JOIN pos_config pc ON pc.id = po.config_id
-                LEFT JOIN res_company rc ON rc.id = po.company_id
-                LEFT JOIN account_analytic_account aa ON aa.id = pc.analytic_account_id
-                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
-                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
-                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
-                LEFT JOIN product_product pp ON pp.id = pol.product_id
-                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
-
+            CREATE OR REPLACE VIEW pos_dd_report AS
+            WITH RECURSIVE loc_tree AS (
+                -- Base case: Top-level accounts (Provinces)
+                SELECT 
+                    id, 
+                    parent_id, 
+                    1 AS level, 
+                    id AS province_id, 
+                    NULL::int AS city_id, 
+                    NULL::int AS zone_id
+                FROM account_analytic_account
+                WHERE parent_id IS NULL
+                
                 UNION ALL
-
-                -- Direct deposit lines (exploded to get products)
-                SELECT
-                    (ddl.id * 2 + 1)::integer AS id,
-                    dd.id AS source_id,
-                    'direct.deposit'::varchar AS source_model,
-                    dd.name AS reference,
-                    dd.create_date AS date,
-                    dd.donor_id AS partner_id,
-                    dd.user_id AS user_id,
-                    dd.currency_id AS currency_id,
-                    -- Amount is unit price * quantity
-                    (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount,
-                    (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount_paid,
-                    FALSE AS is_refund,
-                    dd.state AS state,
-                    NULL::integer AS config_id,
-                    NULL::integer AS session_id,
-                    NULL::text AS payment_methods,
-                    dd.bank_id AS bank_id,
-                    dd.payment_type AS payment_type,
-                    dd.transaction_ref AS transaction_ref,
-                    ddl.remarks AS remarks,
-                    dd.analytic_account_id AS analytic_account_id,
-                    zone.id AS zone_id,
-                    city.id AS city_id,
-                    province.id AS province_id,
-                    ddl.product_id::integer AS product_id,
-                    pt.categ_id::integer AS category_id
-                FROM direct_deposit_line ddl
-                INNER JOIN direct_deposit dd ON dd.id = ddl.direct_deposit_id
-                LEFT JOIN product_product pp ON pp.id = ddl.product_id
-                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
-                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
-                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
-                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
-                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
+                
+                -- Recursive step: Walk down the tree
+                SELECT 
+                    a.id, 
+                    a.parent_id, 
+                    lt.level + 1,
+                    lt.province_id,
+                    CASE WHEN lt.level + 1 = 2 THEN a.id ELSE lt.city_id END,
+                    CASE WHEN lt.level + 1 = 3 THEN a.id ELSE lt.zone_id END
+                FROM account_analytic_account a
+                JOIN loc_tree lt ON a.parent_id = lt.id
+                WHERE lt.level < 10
             )
+            SELECT
+                (pol.id * 2)::integer AS id,
+                po.id AS source_id,
+                'pos.order'::varchar AS source_model,
+                po.name AS reference,
+                po.date_order AS date,
+                po.partner_id,
+                po.user_id,
+                rc.currency_id,
+                pol.price_subtotal_incl AS amount,
+                CASE
+                    WHEN po.amount_total = 0 THEN 0
+                    ELSE po.amount_paid * (pol.price_subtotal_incl / po.amount_total)
+                END AS amount_paid,
+                (pol.price_subtotal_incl < 0) AS is_refund,
+                po.state,
+                po.config_id,
+                po.session_id,
+                (
+                    SELECT string_agg(DISTINCT ppm.name->>'en_US', ', ')
+                    FROM pos_payment pp
+                    JOIN pos_payment_method ppm ON ppm.id = pp.payment_method_id
+                    WHERE pp.pos_order_id = po.id
+                ) AS payment_methods,
+                NULL::integer AS bank_id,
+                NULL::varchar AS payment_type,
+                NULL::varchar AS transaction_ref,
+                NULL::text AS remarks,
+                lt.id AS analytic_account_id,
+                lt.zone_id AS zone_id,
+                lt.city_id AS city_id,
+                lt.province_id AS province_id,
+                pol.product_id AS product_id,
+                pt.categ_id AS category_id
+            FROM pos_order_line pol
+            INNER JOIN pos_order po ON po.id = pol.order_id
+            LEFT JOIN pos_config pc ON pc.id = po.config_id
+            LEFT JOIN res_company rc ON rc.id = po.company_id
+            LEFT JOIN product_product pp ON pp.id = pol.product_id
+            LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+            LEFT JOIN loc_tree lt ON lt.id = pc.analytic_account_id
+
+            UNION ALL
+
+            SELECT
+                (ddl.id * 2 + 1)::integer AS id,
+                dd.id AS source_id,
+                'direct.deposit'::varchar AS source_model,
+                dd.name AS reference,
+                dd.create_date AS date,
+                dd.donor_id AS partner_id,
+                dd.user_id AS user_id,
+                dd.currency_id AS currency_id,
+                (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount,
+                -- Only show amount_paid if the deposit is Clear or Transferred
+                CASE 
+                    WHEN dd.state IN ('clear', 'transferred') THEN (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric 
+                    ELSE 0 
+                END AS amount_paid,
+                FALSE AS is_refund,
+                dd.state AS state,
+                NULL::integer AS config_id,
+                NULL::integer AS session_id,
+                NULL::text AS payment_methods,
+                dd.bank_id AS bank_id,
+                dd.payment_type AS payment_type,
+                dd.transaction_ref AS transaction_ref,
+                ddl.remarks AS remarks,
+                lt.id AS analytic_account_id,
+                lt.zone_id AS zone_id,
+                lt.city_id AS city_id,
+                lt.province_id AS province_id,
+                ddl.product_id::integer AS product_id,
+                pt.categ_id::integer AS category_id
+            FROM direct_deposit_line ddl
+            INNER JOIN direct_deposit dd ON dd.id = ddl.direct_deposit_id
+            LEFT JOIN product_product pp ON pp.id = ddl.product_id
+            LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+            LEFT JOIN loc_tree lt ON lt.id = dd.analytic_account_id
         """)
 
     # ------------------------------------------------------------------
