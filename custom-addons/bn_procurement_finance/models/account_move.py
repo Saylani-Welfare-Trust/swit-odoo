@@ -85,6 +85,16 @@ class AccountMove(models.Model):
         """The advance of a Purchase Order is deducted from the bill of that order
         automatically (_apply_po_advance_payments), and is never offered on the
         bill of another order or on a bill without one."""
+        if self.env.context.get('bin_size'):
+            # The web client reads with bin_size, and reading a Binary field back with
+            # bin_size gives False (see fields.Binary.compute_value): the widget would
+            # be emptied below. Compute without it and copy the result over.
+            moves = self.with_context(bin_size=False)
+            moves._compute_payments_widget_to_reconcile_info()
+            for move, computed in zip(self, moves):
+                move.invoice_outstanding_credits_debits_widget = computed.invoice_outstanding_credits_debits_widget
+                move.invoice_has_outstanding = computed.invoice_has_outstanding
+            return
         super()._compute_payments_widget_to_reconcile_info()
         for move in self:
             widget = move.invoice_outstanding_credits_debits_widget
