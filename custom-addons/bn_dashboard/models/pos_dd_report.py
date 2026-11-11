@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools
 
-
 class PosDdReport(models.Model):
     _name = 'pos.dd.report'
     _description = 'POS Orders & Direct Deposits Reporting'
@@ -36,9 +35,13 @@ class PosDdReport(models.Model):
     transaction_ref = fields.Char('Transaction Ref', readonly=True)
     remarks = fields.Text('Remarks', readonly=True)
 
-    # ---- access control ----
-    analytic_account_id = fields.Many2one(
-        'account.analytic.account', 'Branch', readonly=True)
+    # ---- Analytics & Product (New filters) ----
+    analytic_account_id = fields.Many2one('account.analytic.account', 'Branch', readonly=True)
+    zone_id = fields.Many2one('account.analytic.account', 'Zone', readonly=True)
+    city_id = fields.Many2one('account.analytic.account', 'City', readonly=True)
+    province_id = fields.Many2one('account.analytic.account', 'Province', readonly=True)
+    product_id = fields.Many2one('product.product', 'Product', readonly=True)
+    category_id = fields.Many2one('product.category', 'Product Category', readonly=True)
 
     # ------------------------------------------------------------------
     def init(self):
@@ -46,62 +49,83 @@ class PosDdReport(models.Model):
         self._cr.execute("""
             CREATE OR REPLACE VIEW pos_dd_report AS (
                 SELECT
-                    (po.id * 2)::integer                                  AS id,
-                    po.id                                                 AS source_id,
-                    'pos.order'::varchar                                  AS source_model,
-                    po.name                                               AS reference,
-                    po.date_order                                         AS date,
-                    po.partner_id                                         AS partner_id,
-                    po.user_id                                            AS user_id,
-                    rc.currency_id                                        AS currency_id,   -- ⚡ company currency
-                    po.amount_total                                       AS amount,
-                    po.amount_paid                                        AS amount_paid,
-                    (po.amount_total < 0)                                 AS is_refund,
-                    po.state                                              AS state,
-                    po.config_id                                          AS config_id,
-                    po.session_id                                         AS session_id,
+                    (pol.id * 2)::integer AS id,
+                    po.id AS source_id,
+                    'pos.order'::varchar AS source_model,
+                    po.name AS reference,
+                    po.date_order AS date,
+                    po.partner_id,
+                    po.user_id,
+                    rc.currency_id,
+                    pol.price_subtotal_incl AS amount,
+                    CASE
+                        WHEN po.amount_total = 0 THEN 0
+                        ELSE po.amount_paid * (pol.price_subtotal_incl / po.amount_total)
+                    END AS amount_paid,
+                    (pol.price_subtotal_incl < 0) AS is_refund,
+                    po.state,
+                    po.config_id,
+                    po.session_id,
                     (
                         SELECT string_agg(DISTINCT ppm.name->>'en_US', ', ')
                         FROM pos_payment pp
-                        JOIN pos_payment_method ppm
-                            ON ppm.id = pp.payment_method_id
+                        JOIN pos_payment_method ppm ON ppm.id = pp.payment_method_id
                         WHERE pp.pos_order_id = po.id
-                    )                                                     AS payment_methods,
-                    NULL::integer                                         AS bank_id,
-                    NULL::varchar                                         AS payment_type,
-                    NULL::varchar                                         AS transaction_ref,
-                    NULL::text                                            AS remarks,
-                    aa.id                                                 AS analytic_account_id
-                FROM pos_order po
-                LEFT JOIN pos_config  pc ON pc.id = po.config_id
-                LEFT JOIN res_company rc ON rc.id = po.company_id         -- ⚡ new join
-                LEFT JOIN account_analytic_account aa
-                       ON aa.id = pc.analytic_account_id
+                    ) AS payment_methods,
+                    NULL::integer AS bank_id,
+                    NULL::varchar AS payment_type,
+                    NULL::varchar AS transaction_ref,
+                    NULL::text AS remarks,
+                    aa.id AS analytic_account_id,
+                    zone.id AS zone_id,
+                    city.id AS city_id,
+                    province.id AS province_id,
+                    pol.product_id AS product_id,
+                    pt.categ_id AS category_id
+                FROM pos_order_line pol
+                INNER JOIN pos_order po ON po.id = pol.order_id
+                LEFT JOIN pos_config pc ON pc.id = po.config_id
+                LEFT JOIN res_company rc ON rc.id = po.company_id
+                LEFT JOIN account_analytic_account aa ON aa.id = pc.analytic_account_id
+                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
+                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
+                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
+                LEFT JOIN product_product pp ON pp.id = pol.product_id
+                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
 
                 UNION ALL
 
                 SELECT
-                    (dd.id * 2 + 1)::integer                              AS id,
-                    dd.id                                                 AS source_id,
-                    'direct.deposit'::varchar                             AS source_model,
-                    dd.name                                               AS reference,
-                    dd.create_date                                        AS date,
-                    dd.donor_id                                           AS partner_id,
-                    dd.user_id                                            AS user_id,
-                    dd.currency_id                                        AS currency_id,
-                    dd.amount                                             AS amount,
-                    dd.amount                                             AS amount_paid,
-                    FALSE                                                 AS is_refund,
-                    dd.state                                              AS state,
-                    NULL::integer                                         AS config_id,
-                    NULL::integer                                         AS session_id,
-                    NULL::text                                            AS payment_methods,
-                    dd.bank_id                                            AS bank_id,
-                    dd.payment_type                                       AS payment_type,
-                    dd.transaction_ref                                    AS transaction_ref,
-                    dd.remarks                                            AS remarks,
-                    dd.analytic_account_id                                AS analytic_account_id
+                    (dd.id * 2 + 1)::integer AS id,
+                    dd.id AS source_id,
+                    'direct.deposit'::varchar AS source_model,
+                    dd.name AS reference,
+                    dd.create_date AS date,
+                    dd.donor_id AS partner_id,
+                    dd.user_id AS user_id,
+                    dd.currency_id AS currency_id,
+                    dd.amount AS amount,
+                    dd.amount AS amount_paid,
+                    FALSE AS is_refund,
+                    dd.state AS state,
+                    NULL::integer AS config_id,
+                    NULL::integer AS session_id,
+                    NULL::text AS payment_methods,
+                    dd.bank_id AS bank_id,
+                    dd.payment_type AS payment_type,
+                    dd.transaction_ref AS transaction_ref,
+                    dd.remarks AS remarks,
+                    dd.analytic_account_id AS analytic_account_id,
+                    zone.id AS zone_id,
+                    city.id AS city_id,
+                    province.id AS province_id,
+                    NULL::integer AS product_id,
+                    NULL::integer AS category_id
                 FROM direct_deposit dd
+                LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
+                LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
+                LEFT JOIN account_analytic_account city ON city.id = zone.parent_id
+                LEFT JOIN account_analytic_account province ON province.id = city.parent_id
             )
         """)
 
