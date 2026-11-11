@@ -50,7 +50,7 @@ class PosDdReport(models.Model):
         self._cr.execute("""
             CREATE OR REPLACE VIEW pos_dd_report AS
             WITH RECURSIVE loc_tree AS (
-                -- Base case: Top-level accounts (Provinces)
+                -- Base case: Top-level accounts (No plan filter)
                 SELECT 
                     id, 
                     parent_id, 
@@ -103,7 +103,7 @@ class PosDdReport(models.Model):
                 NULL::varchar AS payment_type,
                 NULL::varchar AS transaction_ref,
                 NULL::text AS remarks,
-                pc.analytic_account_id AS analytic_account_id,
+                COALESCE(pc.analytic_account_id, ps.analytic_account_id, emp.analytic_account_id) AS analytic_account_id,
                 lt.zone_id AS zone_id,
                 lt.city_id AS city_id,
                 lt.province_id AS province_id,
@@ -112,10 +112,13 @@ class PosDdReport(models.Model):
             FROM pos_order_line pol
             INNER JOIN pos_order po ON po.id = pol.order_id
             LEFT JOIN pos_config pc ON pc.id = po.config_id
+            LEFT JOIN pos_session ps ON ps.id = po.session_id
+            LEFT JOIN hr_employee emp ON emp.user_id = po.user_id
             LEFT JOIN res_company rc ON rc.id = po.company_id
             LEFT JOIN product_product pp ON pp.id = pol.product_id
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
-            LEFT JOIN loc_tree lt ON lt.id = pc.analytic_account_id
+            -- Join using the fallback chain
+            LEFT JOIN loc_tree lt ON lt.id = COALESCE(pc.analytic_account_id, ps.analytic_account_id, emp.analytic_account_id)
 
             UNION ALL
 
