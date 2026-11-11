@@ -12,24 +12,10 @@
                     <setting id="is_medical_pos" help="Patients (donees tagged Medical) are the customers instead of donors; new patients are registered from the customer screen">
                         <field name="is_medical_pos" readonly="has_active_session"/>
                     </setting>
-                    <setting id="medical_pos_categories" string="Product Categories"
-                             help="Only the products of these POS categories are shown in this POS (the Point of Sale Category of the products)"
-                             invisible="not is_medical_pos">
-                        <field name="limit_categories" readonly="has_active_session"/>
-                        <div class="content-group mt16" invisible="not limit_categories">
-                            <field name="iface_available_categ_ids" widget="many2many_tags" readonly="has_active_session"
-                                   options="{'no_create': True}"/>
-                        </div>
-                    </setting>
-                    <setting id="medical_pos_start_category" string="Open on a Category"
-                             help="The products of this category are shown as soon as the POS opens"
-                             invisible="not is_medical_pos">
-                        <field name="start_category" readonly="has_active_session"/>
-                        <div class="content-group mt16" invisible="not start_category">
-                            <field name="iface_start_categ_id" readonly="has_active_session" required="start_category"
-                                   options="{'no_create': True}"
-                                   domain="limit_categories and iface_available_categ_ids and [('id', 'in', iface_available_categ_ids)] or []"/>
-                        </div>
+                    <setting id="medical_pos_categories" string="Product Categories" invisible="not is_medical_pos"
+                             help="The Medical &amp; Health counters show the products of the categories switched on in Medical &amp; Health &gt; Configuration &gt; Categories. Open counters update automatically.">
+                        <button name="%(bn_medical_pos.action_mh_categories)d" type="action" string="Categories"
+                                icon="oi-arrow-right" class="btn-link"/>
                     </setting>
                 </div>
             </xpath>

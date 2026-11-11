@@ -16,6 +16,7 @@
 
         'wizards/patient_register_wizard.xml',
 
+        'views/pos_category.xml',
         'views/pos_config.xml',
         'views/pos_actions.xml',
         'views/patient.xml',

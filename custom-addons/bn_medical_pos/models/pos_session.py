@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from odoo import _, models
 from odoo.exceptions import AccessError
 from odoo.osv import expression
@@ -8,6 +11,32 @@ MEDICAL_PATIENTS_PRELOAD = 200
 
 class PosSession(models.Model):
     _inherit = 'pos.session'
+
+    def _loader_params_pos_category(self):
+        params = super()._loader_params_pos_category()
+        if self.config_id.is_medical_pos:
+            categories = self.config_id._mh_pos_categories()
+            if categories:
+                params['search_params']['domain'] = [('id', 'in', categories.ids)]
+        return params
+
+    def mh_load_catalog(self, stamp=False, stamp_only=False):
+        """Categories and products of an open Medical & Health counter, to refresh it after a change.
+
+        :param stamp: the stamp of what the counter shows: nothing else is returned if it is still the same
+        """
+        self._mh_check_access()
+        category_params = self._loader_params_pos_category()['search_params']
+        categories = self.env['pos.category'].search_read(category_params['domain'], category_params['fields'])
+        products = self.env['product.product'].search_read(
+            self.config_id._get_available_product_domain(), ['pos_categ_ids'], order='id')
+        new_stamp = hashlib.sha1(json.dumps([
+            [(category['id'], category['name'], category['parent_id'] and category['parent_id'][0]) for category in categories],
+            [(product['id'], product['pos_categ_ids']) for product in products],
+        ]).encode()).hexdigest()
+        if stamp_only or stamp == new_stamp:
+            return {'stamp': new_stamp, 'changed': stamp != new_stamp}
+        return {'stamp': new_stamp, 'changed': True, 'categories': categories, 'products': products}
 
     def _loader_params_res_partner(self):
         params = super()._loader_params_res_partner()
