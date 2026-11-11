@@ -46,7 +46,27 @@ class PosDdReport(models.Model):
     # ------------------------------------------------------------------
     def init(self):
         tools.drop_view_if_exists(self._cr, 'pos_dd_report')
-        self._cr.execute("""
+        
+        # Automatically create a System Product & Category for Direct Deposits
+        # This prevents them from showing up as "None" in Pivot/Graph views
+        prod = self.env['product.product'].with_context(active_test=False).search([('default_code', '=', 'DIRECT_DEPOSIT')], limit=1)
+        if not prod:
+            categ = self.env['product.category'].search([('name', '=', 'Direct Deposits')], limit=1)
+            if not categ:
+                categ = self.env['product.category'].create({'name': 'Direct Deposits'})
+            prod = self.env['product.product'].create({
+                'name': 'Direct Deposit',
+                'default_code': 'DIRECT_DEPOSIT',
+                'categ_id': categ.id,
+                'type': 'service',
+                'sale_ok': False,
+                'purchase_ok': False,
+            })
+        
+        dd_prod_id = prod.id
+        dd_categ_id = prod.categ_id.id
+
+        self._cr.execute(f"""
             CREATE OR REPLACE VIEW pos_dd_report AS (
                 SELECT
                     (pol.id * 2)::integer AS id,
@@ -119,8 +139,8 @@ class PosDdReport(models.Model):
                     zone.id AS zone_id,
                     city.id AS city_id,
                     province.id AS province_id,
-                    NULL::integer AS product_id,
-                    NULL::integer AS category_id
+                    {dd_prod_id}::integer AS product_id,
+                    {dd_categ_id}::integer AS category_id
                 FROM direct_deposit dd
                 LEFT JOIN account_analytic_account aa ON aa.id = dd.analytic_account_id
                 LEFT JOIN account_analytic_account zone ON zone.id = aa.parent_id
