@@ -215,7 +215,7 @@
 
                         <!-- Inquiry forms filled on the Sadqa e Jariya portal, read-only here -->
                         <!-- Members come from Master Setup when the application moves from HOD to Committee Approval. -->
-                        <page name="committee_members_page" string="Committee Members" invisible="state != 'committee_approval' and not committee_line_ids">
+                        <page name="committee_members_page" string="Committee Members" invisible="0">
                             <field name="committee_member_ids" invisible="1"/>
                             <field name="committee_line_ids" readonly="state != 'committee_approval'" required="state == 'committee_approval'">
                                 <tree editable="bottom">
