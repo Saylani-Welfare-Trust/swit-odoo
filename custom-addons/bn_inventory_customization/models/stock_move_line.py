@@ -16,8 +16,9 @@ class StockMove(models.Model):
                 move.on_hand_qty = 0.0
                 continue
 
-            # Odoo's built-in method handles child locations automatically
-            move.on_hand_qty = move.product_id.with_context(
-                location=move.location_id.id,
-                company_owned=True
-            ).qty_available
+            quants = self.env['stock.quant'].search([
+                ('product_id', '=', move.product_id.id),
+                ('location_id', 'child_of', move.location_id.id),
+                ('company_id', '=', move.company_id.id),
+            ])
+            move.on_hand_qty = sum(quants.mapped('quantity'))
