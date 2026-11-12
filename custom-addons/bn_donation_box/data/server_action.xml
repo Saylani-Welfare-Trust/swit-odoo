@@ -29,6 +29,74 @@ model.approve_donation_box(records)
 model.populate_lock_no(records)
             </field>
         </record>
+        
+        <record id="correct_closed_box_keys_server_action" model="ir.actions.server">
+            <field name="name">Correct Keys of Closed Boxes | BN</field>
+            <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
+            <field name="state">code</field>
+            <field name="code">
+Reg = env['donation.box.registration.installation'].sudo()
+Key = env['key'].sudo()
+Issuance = env['key.issuance'].sudo()
+now = datetime.datetime.now()
+
+issuance_states = dict(Issuance.fields_get(['state'])['state']['selection'])
+out_states = [s for s in ('issued', 'overdue', 'pending', 'donation_receive') if s in issuance_states]
+has_collection = 'rider_collection_id' in Issuance.fields_get()
+no_money = ('donation_not_collected', 'paid')
+
+boxes = (records.sudo() if records else Reg.search([])).filtered(lambda r: r.status == 'close')
+
+fixed_boxes = 0
+fixed_keys = 0
+returned = Issuance
+kept = Issuance
+for box in boxes:
+    keys = Key.search([('donation_box_registration_installation_id', '=', box.id)])
+    open_issuances = Issuance.search([('key_id', 'in', keys.ids), ('state', 'in', out_states)])
+    bad_keys = keys.filtered(lambda k: k.state != 'closed' or k.key_bunch_id)
+    if not open_issuances and not bad_keys:
+        continue
+    fixed_boxes += 1
+    box_kept = open_issuances.filtered(
+        lambda i: has_collection and i.state != 'donation_receive' and i.rider_collection_id
+        and i.rider_collection_id.state not in no_money)
+    for issuance in open_issuances - box_kept:
+        issuance.write({'state': 'returned', 'returned_on': now})
+        issuance.message_post(body='Returned: box %s was taken out of service.' % (box.lot_id.display_name or box.display_name))
+    returned |= open_issuances - box_kept
+    kept |= box_kept
+    for key in bad_keys:
+        key.write({'state': 'closed', 'key_bunch_id': False})
+    fixed_keys += len(bad_keys)
+    box.message_post(body='Correction: the key of this closed box was closed and removed from its bunch; '
+                          '%s open issuance(s) returned, %s left open with money to settle at the POS.'
+                          % (len(open_issuances - box_kept), len(box_kept)))
+
+# keys closed earlier but still listed in a bunch
+stray = Key.search([('state', '=', 'closed'), ('key_bunch_id', '!=', False)])
+stray.write({'key_bunch_id': False})
+
+if not fixed_boxes and not stray:
+    message = 'Nothing to correct: every closed box already has its key closed.'
+else:
+    message = '%s closed box(es) corrected: %s key(s) closed and removed from their bunch, %s issuance(s) returned.' % (
+        fixed_boxes, fixed_keys, len(returned))
+    if stray:
+        message += ' %s closed key(s) removed from their bunch.' % len(stray)
+    if kept:
+        message += ' Left open, money still to settle at the POS: %s' % ', '.join(
+            '%s (%s)' % (i.name, i.key_id.display_name) for i in kept[:20])
+log(message)
+action = {
+    'type': 'ir.actions.client',
+    'tag': 'display_notification',
+    'params': {'title': 'Closed Box Keys', 'message': message,
+               'type': 'warning' if kept else 'success', 'sticky': bool(kept)},
+}
+
+            </field>
+        </record>
 
     </data>
 
