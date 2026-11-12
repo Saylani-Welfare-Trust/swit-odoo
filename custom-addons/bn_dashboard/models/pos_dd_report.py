@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools
+from odoo.osv import expression
+
 
 class PosDdReport(models.Model):
     _name = 'pos.dd.report'
@@ -35,7 +37,7 @@ class PosDdReport(models.Model):
     transaction_ref = fields.Char('Transaction Ref', readonly=True)
     remarks = fields.Text('Remarks', readonly=True)
 
-    # ---- Analytics & Product (New filters) ----
+    # ---- Analytics & Product ----
     analytic_account_id = fields.Many2one('account.analytic.account', 'Branch', readonly=True)
     zone_id = fields.Many2one('account.analytic.account', 'Zone', readonly=True)
     city_id = fields.Many2one('account.analytic.account', 'City', readonly=True)
@@ -50,24 +52,12 @@ class PosDdReport(models.Model):
         self._cr.execute("""
             CREATE OR REPLACE VIEW pos_dd_report AS
             WITH RECURSIVE loc_tree AS (
-                -- Base case: Top-level accounts (No plan filter)
-                SELECT 
-                    id, 
-                    parent_id, 
-                    1 AS level, 
-                    id AS province_id, 
-                    NULL::int AS city_id, 
-                    NULL::int AS zone_id
+                SELECT id, parent_id, 1 AS level,
+                       id AS province_id, NULL::int AS city_id, NULL::int AS zone_id
                 FROM account_analytic_account
                 WHERE parent_id IS NULL
-                
                 UNION ALL
-                
-                -- Recursive step: Walk down the tree
-                SELECT 
-                    a.id, 
-                    a.parent_id, 
-                    lt.level + 1,
+                SELECT a.id, a.parent_id, lt.level + 1,
                     lt.province_id,
                     CASE WHEN lt.level + 1 = 2 THEN a.id ELSE lt.city_id END,
                     CASE WHEN lt.level + 1 = 3 THEN a.id ELSE lt.zone_id END
@@ -117,7 +107,6 @@ class PosDdReport(models.Model):
             LEFT JOIN res_company rc ON rc.id = po.company_id
             LEFT JOIN product_product pp ON pp.id = pol.product_id
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
-            -- Join using the fallback chain
             LEFT JOIN loc_tree lt ON lt.id = COALESCE(pc.analytic_account_id, ps.analytic_account_id, emp.analytic_account_id)
 
             UNION ALL
@@ -132,9 +121,10 @@ class PosDdReport(models.Model):
                 dd.user_id AS user_id,
                 dd.currency_id AS currency_id,
                 (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount,
-                CASE 
-                    WHEN dd.state IN ('clear', 'transferred') THEN (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric 
-                    ELSE 0 
+                CASE
+                    WHEN dd.state IN ('clear', 'transferred')
+                        THEN (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric
+                    ELSE 0
                 END AS amount_paid,
                 FALSE AS is_refund,
                 dd.state AS state,
@@ -157,6 +147,49 @@ class PosDdReport(models.Model):
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
             LEFT JOIN loc_tree lt ON lt.id = dd.analytic_account_id
         """)
+
+    # ------------------------------------------------------------------
+    # ACCESS HELPERS
+    # ------------------------------------------------------------------
+    @api.model
+    def _get_user_category_domain(self):
+        """
+        Category-restriction domain for the *current* user.
+        Returns [] when the user has no category restriction (full access).
+        """
+        allowed = self.env.user.pos_dd_report_category_ids
+        if not allowed:
+            return []
+        return [('category_id', 'child_of', allowed.ids)]
+
+    @api.model
+    def _get_user_location_domain(self):
+        """Location-restriction domain for the current user ([] = unrestricted)."""
+        allowed = self.env.user.pos_dd_report_analytic_ids
+        if not allowed:
+            return []
+        return [('analytic_account_id', 'child_of', allowed.ids)]
+
+    @api.model
+    def _get_user_access_domain(self):
+        """Combined category + location restriction domain."""
+        return expression.AND([
+            self._get_user_location_domain(),
+            self._get_user_category_domain(),
+        ])
+
+    @api.model
+    def get_available_categories(self):
+        """
+        Return the product categories the current user is allowed to see
+        in the report. Used by the search dropdown / custom widgets.
+        """
+        domain = []
+        allowed = self.env.user.pos_dd_report_category_ids
+        if allowed:
+            domain = [('id', 'child_of', allowed.ids)]
+        return self.env['product.category'].search_read(
+            domain, ['id', 'complete_name'], order='complete_name')
 
     # ------------------------------------------------------------------
     def action_open_source(self):
