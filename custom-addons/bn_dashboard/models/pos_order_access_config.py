@@ -50,7 +50,7 @@ class PosOrderAccessConfig(models.Model):
         manager = self.env.ref('bn_dashboard.group_pos_order_dashboard_manager').sudo()
         user_grp = self.env.ref('bn_dashboard.group_pos_order_dashboard_user').sudo()
         
-        # ✅ NEW: Automatically grant the Single Combined Report Group
+        # ✅ Automatically assign the single combined report group
         report_grp = self.env.ref('bn_dashboard.group_pos_dd_report_user').sudo()
         
         for rec in self:
@@ -88,4 +88,3 @@ class PosOrderAccessConfig(models.Model):
         for u in users.sudo():
             u.pos_analytic_ids = [(5, 0, 0)]
             manager.write({'users': [(3, u.id)]})
-            # Note: We don't remove report_grp here because the user might still have Treasury access
