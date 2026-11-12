@@ -23,6 +23,7 @@
         'views/pos_order_access_config_view.xml',
         'views/donation_box_access_config_views.xml',
         'views/pos_dd_report_views.xml',
+        'views/pos_dd_report_access_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
