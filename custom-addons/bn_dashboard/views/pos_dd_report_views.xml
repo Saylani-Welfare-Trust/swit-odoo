@@ -176,14 +176,14 @@
     <menuitem id="menu_pos_dd_reporting_root"
               name="Reporting"
               parent="bn_dashboard.menu_dashboard_root"
-              groups="bn_dashboard.group_pos_order_dashboard_user,bn_dashboard.group_pos_order_dashboard_manager"
+              groups="bn_dashboard.group_pos_dd_report_user"
               sequence="15"/>
 
     <menuitem id="menu_pos_dd_report"
               name="POS &amp; Direct Deposits"
               parent="menu_pos_dd_reporting_root"
               action="action_pos_dd_report"
-              groups="bn_dashboard.group_pos_order_dashboard_user,bn_dashboard.group_pos_order_dashboard_manager"
+              groups="bn_dashboard.group_pos_dd_report_user"
               sequence="10"/>
 
 </odoo>
