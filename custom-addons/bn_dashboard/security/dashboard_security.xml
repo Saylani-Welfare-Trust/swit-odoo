@@ -22,7 +22,7 @@
 
     <!-- Single Access Right for Combined POS+DD Report -->
     <record id="group_pos_dd_report_user" model="res.groups">
-        <field name="name">Dashboard / POS &amp; Direct Deposits</field>
+        <field name="name">Report / POS &amp; Direct Deposits</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
