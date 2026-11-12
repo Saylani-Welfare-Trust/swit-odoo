@@ -4,13 +4,14 @@
         <field name="name">POS+DD Report: allowed locations only</field>
         <field name="model_id" ref="model_pos_dd_report"/>
         <field name="groups" eval="[(4, ref('bn_dashboard.group_pos_dd_report_user'))]"/>
-        <field name="domain_force">
-            [(1, '=', 1)] if not user.pos_analytic_ids and not user.treasury_analytic_ids
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.pos_analytic_ids and not user.treasury_analytic_ids
             else [
                 '|',
                 ('analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
                 ('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)
             ]
-        </field>
+        )</field>
     </record>
 </odoo>
