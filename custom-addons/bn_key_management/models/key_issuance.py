@@ -81,8 +81,8 @@ class KeyIssuance(models.Model):
         return super().create(vals_list)
 
     def unlink(self):
-        if not self.env.su:
-            raise UserError(_('Key Issuance records cannot be deleted. Return the key instead.'))
+        # if not self.env.su:
+        #     raise UserError(_('Key Issuance records cannot be deleted. Return the key instead.'))
         return super().unlink()
 
     # ------------------------------------------------------------------
