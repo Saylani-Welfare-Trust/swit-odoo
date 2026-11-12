@@ -1,5 +1,5 @@
-from odoo import models, api
-from datetime import datetime
+from odoo import models, fields, api
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import calendar
 
@@ -69,95 +69,104 @@ class DonationInKindDashboard(models.Model):
                                segment_id=None, segment_type=None, state=None,
                                amount_min=None, amount_max=None):
         domain = self._get_din_domain(date_from, date_to, segment_id, segment_type, state)
-        # Read once, as plain data (two queries), then aggregate in one pass.
-        # Records read through the ORM in batches (no per-record queries), then
-        # everything aggregated in one pass.
-        records = self.search(domain, order='id desc')
-        donations = [{'id': d.id, 'name': d.name, 'donor_id': d.donor_id.id, 'state': d.state,
-                      'create_date': d.create_date} for d in records]
-        per_donation, products, categories = {}, {}, {}
-        for l in records.donation_in_kind_line_ids:
-            entry = per_donation.setdefault(l.donation_in_kind_id.id, {'qty': 0.0, 'value': 0.0, 'lines': []})
-            row = {'product_id': l.product_id.id, 'quantity': l.quantity, 'avg_price': l.avg_price}
-            entry['qty'] += l.quantity
-            entry['value'] += l.quantity * l.avg_price
-            entry['lines'].append(row)
-            if l.product_id and l.product_id.id not in products:
-                categ = l.product_id.categ_id
-                products[l.product_id.id] = {'name': l.product_id.name, 'categ_id': categ.id}
-                if categ:
-                    categories[categ.id] = categ.complete_name or categ.name
-        empty = {'qty': 0.0, 'value': 0.0, 'lines': []}
+        donations = self.search(domain, order='id desc')
 
         # Amount range filter
         if amount_min is not None or amount_max is not None:
+            filtered = self.browse()
             amin = float(amount_min) if amount_min is not None else None
             amax = float(amount_max) if amount_max is not None else None
-            donations = [d for d in donations
-                         if (amin is None or per_donation.get(d['id'], empty)['value'] >= amin)
-                         and (amax is None or per_donation.get(d['id'], empty)['value'] <= amax)]
+            for d in donations:
+                v = sum(l.quantity * l.avg_price for l in d.donation_in_kind_line_ids)
+                if amin is not None and v < amin:
+                    continue
+                if amax is not None and v > amax:
+                    continue
+                filtered |= d
+            donations = filtered
+
+        total_qty = 0.0
+        total_value = 0.0
+        for d in donations:
+            for l in d.donation_in_kind_line_ids:
+                total_qty += l.quantity
+                total_value += l.quantity * l.avg_price
+
+        unique_donors = len(set(donations.mapped('donor_id').ids))
 
         state_labels = dict(self._fields['state'].selection)
-        total_qty = total_value = 0.0
-        state_counts, donor_agg, prod_agg, cat_agg = {}, {}, {}, {}
-        today = datetime.today()
-        months = []
-        for i in range(11, -1, -1):
-            m_start = (today - relativedelta(months=i)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            months.append([m_start, m_start + relativedelta(months=1), 0, 0.0])
+        state_counts = {}
         for d in donations:
-            agg = per_donation.get(d['id'], empty)
-            total_qty += agg['qty']
-            total_value += agg['value']
-            state_counts[d['state']] = state_counts.get(d['state'], 0) + 1
-            if d['donor_id']:
-                donor = donor_agg.setdefault(d['donor_id'], {'id': d['donor_id'], 'qty': 0.0, 'value': 0.0, 'count': 0})
-                donor['qty'] += agg['qty']
-                donor['value'] += agg['value']
-                donor['count'] += 1
-            for l in agg['lines']:
-                if not l['product_id']:
+            state_counts[d.state] = state_counts.get(d.state, 0) + 1
+
+        donor_agg = {}
+        for d in donations:
+            if not d.donor_id:
+                continue
+            qty = sum(l.quantity for l in d.donation_in_kind_line_ids)
+            val = sum(l.quantity * l.avg_price for l in d.donation_in_kind_line_ids)
+            did = d.donor_id.id
+            if did not in donor_agg:
+                donor_agg[did] = {'name': d.donor_id.name, 'qty': 0.0,
+                                  'value': 0.0, 'count': 0}
+            donor_agg[did]['qty'] += qty
+            donor_agg[did]['value'] += val
+            donor_agg[did]['count'] += 1
+        top_donors = sorted(donor_agg.values(),
+                            key=lambda x: x['value'], reverse=True)[:10]
+
+        prod_agg = {}
+        for d in donations:
+            for l in d.donation_in_kind_line_ids:
+                if not l.product_id:
                     continue
-                product = products.get(l['product_id'], {})
-                value = l['quantity'] * l['avg_price']
-                prod = prod_agg.setdefault(l['product_id'], {'name': product.get('name') or '', 'qty': 0.0, 'value': 0.0})
-                prod['qty'] += l['quantity']
-                prod['value'] += value
-                if product.get('categ_id'):
-                    cat_name = categories.get(product['categ_id'], '')
-                    cat = cat_agg.setdefault(cat_name, {'name': cat_name, 'qty': 0.0, 'value': 0.0})
-                    cat['qty'] += l['quantity']
-                    cat['value'] += value
-            created = d['create_date']
-            for month in months:
-                if created and month[0] <= created < month[1]:
-                    month[2] += 1
-                    month[3] += agg['value']
-                    break
-        unique_donors = len(donor_agg)
-        top_donors = sorted(donor_agg.values(), key=lambda x: x['value'], reverse=True)[:10]
-        shown = {d['donor_id'] for d in donations[:20] if d['donor_id']} | {d['id'] for d in top_donors}
-        donor_names = {p.id: p.name for p in self.env['res.partner'].browse(list(shown))}
-        for d in top_donors:
-            d['name'] = donor_names.get(d.pop('id'), '')
-        top_products = sorted(prod_agg.values(), key=lambda x: x['value'], reverse=True)[:10]
-        top_categories = sorted(cat_agg.values(), key=lambda x: x['value'], reverse=True)[:10]
-        monthly_labels = [m[0].strftime('%b %Y') for m in months]
-        monthly_counts = [m[2] for m in months]
-        monthly_values = [m[3] for m in months]
+                pid = l.product_id.id
+                if pid not in prod_agg:
+                    prod_agg[pid] = {'name': l.product_id.name, 'qty': 0.0, 'value': 0.0}
+                prod_agg[pid]['qty'] += l.quantity
+                prod_agg[pid]['value'] += l.quantity * l.avg_price
+        top_products = sorted(prod_agg.values(),
+                              key=lambda x: x['value'], reverse=True)[:10]
+
+        cat_agg = {}
+        for d in donations:
+            for l in d.donation_in_kind_line_ids:
+                if not l.product_id or not l.product_id.categ_id:
+                    continue
+                cat_name = l.product_id.categ_id.complete_name or l.product_id.categ_id.name
+                if cat_name not in cat_agg:
+                    cat_agg[cat_name] = {'name': cat_name, 'qty': 0.0, 'value': 0.0}
+                cat_agg[cat_name]['qty'] += l.quantity
+                cat_agg[cat_name]['value'] += l.quantity * l.avg_price
+        top_categories = sorted(cat_agg.values(),
+                                key=lambda x: x['value'], reverse=True)[:10]
+
+        today = datetime.today()
+        monthly_labels, monthly_counts, monthly_values = [], [], []
+        for i in range(11, -1, -1):
+            md = today - relativedelta(months=i)
+            m_start = md.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            m_end = (m_start + relativedelta(months=1)) - timedelta(seconds=1)
+            monthly_labels.append(md.strftime('%b %Y'))
+            m_dons = donations.filtered(lambda d: m_start <= d.create_date <= m_end)
+            monthly_counts.append(len(m_dons))
+            m_val = sum(sum(l.quantity * l.avg_price
+                            for l in d.donation_in_kind_line_ids) for d in m_dons)
+            monthly_values.append(m_val)
 
         recent = []
         for d in donations[:20]:
-            agg = per_donation.get(d['id'], empty)
+            qty = sum(l.quantity for l in d.donation_in_kind_line_ids)
+            val = sum(l.quantity * l.avg_price for l in d.donation_in_kind_line_ids)
             recent.append({
-                'id': d['id'],
-                'name': d['name'],
-                'donor': donor_names.get(d['donor_id'], '') if d['donor_id'] else '',
-                'state': d['state'],
-                'state_label': state_labels.get(d['state'], d['state']),
-                'qty': agg['qty'],
-                'value': agg['value'],
-                'date': d['create_date'].strftime('%Y-%m-%d') if d['create_date'] else '',
+                'id': d.id,
+                'name': d.name,
+                'donor': d.donor_id.name if d.donor_id else '',
+                'state': d.state,
+                'state_label': state_labels.get(d.state, d.state),
+                'qty': qty,
+                'value': val,
+                'date': d.create_date.strftime('%Y-%m-%d') if d.create_date else '',
             })
 
         currency = self.env.company.currency_id
