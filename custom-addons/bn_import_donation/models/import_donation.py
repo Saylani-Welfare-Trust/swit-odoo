@@ -256,6 +256,7 @@ class ImportDonation(models.Model):
                     'gateway_config_id': self.gateway_config_id.id,
                     'is_fee': line.is_student,
                 })
+            
             elif self.gateway_config_id.is_fee_enabled:
                 partner_key = line.mobile or line.cnic_no or line.email or line.donor_student_name
                 partner = partner_cache.get(partner_key)
@@ -289,7 +290,8 @@ class ImportDonation(models.Model):
                     'import_donation_id': self.id,
                     'transaction_id': line.transaction_id,
                     'donor_id': partner.id if partner else False,
-                    'product_id': self.gateway_config_id.product_id.id if product else False,
+                    # FIXED: Directly use the gateway config's product, since we know it exists in this branch
+                    'product_id': self.gateway_config_id.product_id.id, 
                     'date': line.date,
                     'amount': line.amount,
                     'reference': line.reference,
