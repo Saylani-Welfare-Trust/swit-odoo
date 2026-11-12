@@ -1,6 +1,5 @@
 from odoo import models, fields, api
 
-
 class StockMove(models.Model):
     _inherit = 'stock.move'
 
@@ -17,8 +16,8 @@ class StockMove(models.Model):
                 move.on_hand_qty = 0.0
                 continue
 
-            quants = self.env['stock.quant'].search([
-                ('product_id', '=', move.product_id.id),
-                ('location_id', '=', move.location_id.id),
-            ])
-            move.on_hand_qty = sum(quants.mapped('quantity'))
+            # Odoo's built-in method handles child locations automatically
+            move.on_hand_qty = move.product_id.with_context(
+                location=move.location_id.id,
+                company_owned=True
+            ).qty_available
