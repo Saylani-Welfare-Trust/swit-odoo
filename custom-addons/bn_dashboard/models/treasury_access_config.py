@@ -50,13 +50,11 @@ class TreasuryAccessConfig(models.Model):
 
     # ---- sync to the user (record rules read treasury_analytic_ids) ----
     def _sync_user(self):
-        manager = self.env.ref('bn_dashboard.group_treasury_dashboard_manager').sudo()
         user_grp = self.env.ref('bn_dashboard.group_treasury_dashboard_user').sudo()
         for rec in self:
             user = rec.user_id.sudo()
             ids = [] if rec.full_access else (rec.province_ids | rec.city_ids | rec.zone_ids).ids
             user.treasury_analytic_ids = [(6, 0, ids)]
-            manager.write({'users': [(4 if rec.full_access else 3, user.id)]})
             user_grp.write({'users': [(4, user.id)]})
 
     @api.model_create_multi
@@ -80,7 +78,7 @@ class TreasuryAccessConfig(models.Model):
         return res
 
     def _clear_users(self, users):
-        manager = self.env.ref('bn_dashboard.group_treasury_dashboard_manager').sudo()
+        user_grp = self.env.ref('bn_dashboard.group_treasury_dashboard_user').sudo()
         for u in users.sudo():
             u.treasury_analytic_ids = [(5, 0, 0)]
-            manager.write({'users': [(3, u.id)]})
+            user_grp.write({'users': [(3, u.id)]})

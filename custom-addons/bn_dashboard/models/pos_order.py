@@ -1104,8 +1104,7 @@ class PosOrder(models.Model):
     def _user_pos_accounts(self):
         """
         Return the analytic accounts (incl. descendants) the *current* user
-        is allowed to see, per pos.order.access.config / user.pos_analytic_ids.
-        Returns an empty recordset if the user is unrestricted.
+        is allowed to see. Empty recordset == unrestricted.
         """
         user = self.env.user
         if 'pos_analytic_ids' not in user._fields:
@@ -1113,16 +1112,12 @@ class PosOrder(models.Model):
 
         allowed = user.pos_analytic_ids
         if not allowed:
-            # No restriction configured -> unrestricted
+            # Empty list -> unrestricted (full_access tick, or no config)
             return self.env['account.analytic.account']
 
         # Explicit "All Locations" config -> unrestricted
         if self.env['pos.order.access.config'].sudo().search_count(
                 [('user_id', '=', user.id), ('full_access', '=', True)]):
-            return self.env['account.analytic.account']
-
-        # Managers are unrestricted
-        if user.has_group('bn_dashboard.group_pos_order_dashboard_manager'):
             return self.env['account.analytic.account']
 
         # Expand to descendants (city -> zones -> branches)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Category (This creates the Header/Title in the user settings) -->
+    <!-- Category -->
     <record id="module_category_bn_dashboard" model="ir.module.category">
         <field name="name">Dashboard</field>
         <field name="description">Access to the specific Dashboards</field>
@@ -20,7 +20,6 @@
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
-    <!-- ⚡ NEW SINGLE ACCESS RIGHT FOR COMBINED POS+DD REPORT -->
     <record id="group_pos_dd_report_user" model="res.groups">
         <field name="name">Dashboard / POS &amp; Direct Deposits</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
@@ -46,100 +45,56 @@
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
-    <!-- ========================================== -->
-    <!-- 2. MANAGER GROUPS (KEEP THESE)             -->
-    <!-- ========================================== -->
-    <record id="group_treasury_dashboard_manager" model="res.groups">
-        <field name="name">Dashboard / Treasury (All Locations)</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
-    </record>
-
-    <record id="group_pos_order_dashboard_manager" model="res.groups">
-        <field name="name">Dashboard / POS Order (All Locations)</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
-    </record>
+    <!-- Manager groups REMOVED -->
+    <!-- group_treasury_dashboard_manager -->
+    <!-- group_pos_order_dashboard_manager -->
 
     <!-- ========================================== -->
-    <!-- 3. RECORD RULES                            -->
+    <!-- 2. RECORD RULES                            -->
     <!-- ========================================== -->
+
+    <!-- Treasury: one restricted rule (empty list = no restriction) -->
     <record id="rule_cheque_restricted" model="ir.rule">
         <field name="name">Cheque: allowed locations only</field>
         <field name="model_id" ref="bn_pos_cheque.model_pos_cheque"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
-        <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
-    </record>
-    <record id="rule_cheque_all" model="ir.rule">
-        <field name="name">Cheque: all locations</field>
-        <field name="model_id" ref="bn_pos_cheque.model_pos_cheque"/>
-        <field name="groups" eval="[(4, ref('group_treasury_dashboard_manager'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">[(1, '=', 1)] if not user.treasury_analytic_ids else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
     </record>
 
     <record id="rule_deposit_restricted" model="ir.rule">
         <field name="name">Deposit: allowed locations only</field>
         <field name="model_id" ref="bn_direct_deposit.model_direct_deposit"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
-        <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
-    </record>
-    <record id="rule_deposit_all" model="ir.rule">
-        <field name="name">Deposit: all locations</field>
-        <field name="model_id" ref="bn_direct_deposit.model_direct_deposit"/>
-        <field name="groups" eval="[(4, ref('group_treasury_dashboard_manager'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">[(1, '=', 1)] if not user.treasury_analytic_ids else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
     </record>
 
     <record id="rule_transfer_restricted" model="ir.rule">
         <field name="name">Transfer: allowed locations only</field>
         <field name="model_id" ref="bn_journal_transfer.model_journal_transfer"/>
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
-        <field name="domain_force">[('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
-    </record>
-    <record id="rule_transfer_all" model="ir.rule">
-        <field name="name">Transfer: all locations</field>
-        <field name="model_id" ref="bn_journal_transfer.model_journal_transfer"/>
-        <field name="groups" eval="[(4, ref('group_treasury_dashboard_manager'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">[(1, '=', 1)] if not user.treasury_analytic_ids else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]</field>
     </record>
 
+    <!-- POS: one restricted rule per model -->
     <record id="rule_pos_order_restricted" model="ir.rule">
         <field name="name">POS Order: allowed locations only</field>
         <field name="model_id" ref="point_of_sale.model_pos_order"/>
         <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
-        <field name="domain_force">['|', '|', ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('session_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
-    </record>
-    <record id="rule_pos_order_all" model="ir.rule">
-        <field name="name">POS Order: all locations</field>
-        <field name="model_id" ref="point_of_sale.model_pos_order"/>
-        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_manager'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">[(1, '=', 1)] if not user.pos_analytic_ids else ['|', '|', ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('session_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
     </record>
 
     <record id="rule_pos_session_restricted" model="ir.rule">
         <field name="name">POS Session: allowed locations only</field>
         <field name="model_id" ref="point_of_sale.model_pos_session"/>
         <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
-        <field name="domain_force">['|', ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
-    </record>
-    <record id="rule_pos_session_all" model="ir.rule">
-        <field name="name">POS Session: all locations</field>
-        <field name="model_id" ref="point_of_sale.model_pos_session"/>
-        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_manager'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">[(1, '=', 1)] if not user.pos_analytic_ids else ['|', ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids), ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
     </record>
 
     <record id="rule_pos_config_restricted" model="ir.rule">
         <field name="name">POS Config: allowed locations only</field>
         <field name="model_id" ref="point_of_sale.model_pos_config"/>
         <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
-        <field name="domain_force">[('analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
-    </record>
-    <record id="rule_pos_config_all" model="ir.rule">
-        <field name="name">POS Config: all locations</field>
-        <field name="model_id" ref="point_of_sale.model_pos_config"/>
-        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_manager'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">[(1, '=', 1)] if not user.pos_analytic_ids else [('analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]</field>
     </record>
 
     <record id="group_dashboard_configuration" model="res.groups">
@@ -147,5 +102,4 @@
         <field name="category_id" ref="module_category_bn_dashboard"/>
         <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
     </record>
-
 </odoo>
