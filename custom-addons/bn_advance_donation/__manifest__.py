@@ -13,8 +13,8 @@
         'bn_master_setup',
     ],
     'data': [
-        # 'security/adv_don_manager.xml',
         'security/groups.xml',
+        'security/adv_don_manager.xml',
         'security/ir.model.access.csv',
 
         'data/sequences.xml',
