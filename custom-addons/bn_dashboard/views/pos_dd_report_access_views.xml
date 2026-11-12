@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============ LIST ============ -->
+    <record id="view_pos_dd_report_access_list" model="ir.ui.view">
+        <field name="name">pos.dd.report.access.config.tree</field>
+        <field name="model">pos.dd.report.access.config</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="user_id"/>
+                <field name="full_access"/>
+                <field name="province_ids" widget="many2many_tags"/>
+                <field name="city_ids" widget="many2many_tags"/>
+                <field name="zone_ids" widget="many2many_tags"/>
+                <field name="category_ids" widget="many2many_tags"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============ FORM ============ -->
+    <record id="view_pos_dd_report_access_form" model="ir.ui.view">
+        <field name="name">pos.dd.report.access.config.form</field>
+        <field name="model">pos.dd.report.access.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="user_id"/>
+                        <field name="full_access"/>
+                    </group>
+
+                    <group string="Allowed Locations" invisible="full_access">
+                        <field name="province_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="city_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                        <field name="zone_ids" widget="many2many_tags"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <div class="text-muted" invisible="full_access">
+                        Selecting a province gives access to all its cities and zones.
+                        Selecting a city gives access to all its zones and branches.
+                    </div>
+
+                    <group string="Allowed Product Categories">
+                        <field name="category_ids" widget="many2many_tags"
+                               options="{'no_create': True}" colspan="2"/>
+                    </group>
+                    <div class="text-muted">
+                        Restricts the report to these product categories
+                        (child categories are included). Leave empty to allow all.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============ ACTION ============ -->
+    <record id="action_pos_dd_report_access" model="ir.actions.act_window">
+        <field name="name">POS &amp; DD Report Access</field>
+        <field name="res_model">pos.dd.report.access.config</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- ============ MENU ============ -->
+    <menuitem id="menu_pos_dd_report_access"
+              name="POS &amp; DD Report Access"
+              parent="bn_dashboard.menu_dashboard_configuration_root"
+              action="action_pos_dd_report_access"
+              groups="bn_dashboard.group_dashboard_configuration"
+              sequence="25"/>
+
+</odoo>

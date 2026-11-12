@@ -48,14 +48,14 @@ class PosOrderAccessConfig(models.Model):
 
     def _sync_user(self):
         user_grp = self.env.ref('bn_dashboard.group_pos_order_dashboard_user').sudo()
-        report_grp = self.env.ref('bn_dashboard.group_pos_dd_report_user').sudo()
+        # report_grp = self.env.ref('bn_dashboard.group_pos_dd_report_user').sudo()
 
         for rec in self:
             user = rec.user_id.sudo()
             ids = [] if rec.full_access else (rec.province_ids | rec.city_ids | rec.zone_ids).ids
             user.pos_analytic_ids = [(6, 0, ids)]
             user_grp.write({'users': [(4, user.id)]})
-            report_grp.write({'users': [(4, user.id)]})
+            # report_grp.write({'users': [(4, user.id)]})
 
     @api.model_create_multi
     def create(self, vals_list):

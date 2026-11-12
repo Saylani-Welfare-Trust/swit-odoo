@@ -4,3 +4,5 @@ access_pos_order_access_config,pos.order.access.config,model_pos_order_access_co
 access_donation_box_access_config,donation.box.access.config,model_donation_box_access_config,base.group_erp_manager,1,1,1,1
 
 access_pos_dd_report_user,pos.dd.report.user,model_pos_dd_report,bn_dashboard.group_pos_dd_report_user,1,0,0,0
+
+access_pos_dd_report_access_config,pos.dd.report.access.config,model_pos_dd_report_access_config,base.group_erp_manager,1,1,1,1
