@@ -185,6 +185,9 @@ class MonthlyPlanningPrWizard(models.TransientModel):
         Requisition     = self.env['purchase.requisition']
         RequisitionLine = self.env['purchase.requisition.line']
 
+        # ── Dates ─────────────────────────────────────────
+        #   date_start = earliest Required By (or today)
+        #   date_end   = today
         today = fields.Date.today()
         rdates = [l.date_required for l in lines if l.date_required]
         start_d = min(rdates) if rdates else today
