@@ -113,10 +113,81 @@
         </field>
     </record>
 
+    <!-- ========================================== -->
+    <!-- SEARCH VIEW                                -->
+    <!-- ========================================== -->
+    <record id="livestock_slaugther_view_search" model="ir.ui.view">
+        <field name="name">livestock.slaugther.view.search</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="arch" type="xml">
+            <search>
+                <!-- Searchable fields -->
+                <field name="product_id" />
+                <field name="donee_id" />
+                <field name="ref" />
+                <field name="code" />
+                <field name="pos_order_id" />
+                <field name="source_location_id" />
+                <field name="transfer_location" />
+
+                <filter name="filter_my_records" string="My Records"
+                        domain="[('create_uid', '=', uid)]" />
+
+                <separator/>
+
+                <!-- State filters -->
+                <filter name="filter_not_received" string="Not Received"
+                        domain="[('state', '=', 'not_received')]" />
+                <filter name="filter_received" string="Received"
+                        domain="[('state', '=', 'received')]" />
+                <filter name="filter_cutting" string="Cutting"
+                        domain="[('state', '=', 'cutting')]" />
+                <filter name="filter_material_request" string="Material Request"
+                        domain="[('state', '=', 'material_request')]" />
+                <filter name="filter_done" string="Done"
+                        domain="[('state', '=', 'done')]" />
+
+                <separator/>
+
+                <!-- Department filters -->
+                <filter name="filter_meat_depart" string="Meat Department"
+                        domain="[('is_meat_depart', '=', True)]" />
+                <filter name="filter_goat_depart" string="Goat Department"
+                        domain="[('is_goat_depart', '=', True)]" />
+                <filter name="filter_chicken_depart" string="Chicken Department"
+                        domain="[('is_chicken_depart', '=', True)]" />
+
+                <separator/>
+
+                <!-- Date filters -->
+                <filter name="filter_today" string="Today"
+                        domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]" />
+                <filter name="filter_this_month" string="This Month"
+                        domain="[('create_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]" />
+
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State"
+                            context="{'group_by': 'state'}" />
+                    <filter name="group_product" string="Product"
+                            context="{'group_by': 'product_id'}" />
+                    <filter name="group_donee" string="Donee"
+                            context="{'group_by': 'donee_id'}" />
+                    <filter name="group_source_location" string="Source Location"
+                            context="{'group_by': 'source_location_id'}" />
+                    <filter name="group_transfer_location" string="Transfer Location"
+                            context="{'group_by': 'transfer_location'}" />
+                    <filter name="group_create_date" string="Created On"
+                            context="{'group_by': 'create_date:day'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="livestock_slaugther_action" model="ir.actions.act_window">
         <field name="name">Livestock Slaugther</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[]</field>
         <field name="context">{
             'create': 0,
@@ -133,7 +204,7 @@
         <field name="name">Meat Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
+        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[('is_meat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_meat_depart': True,
@@ -149,7 +220,7 @@
         <field name="name">Goat Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
+        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[('is_goat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_goat_depart': True
@@ -165,7 +236,7 @@
         <field name="name">Chicken Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <!-- <field name="view_mode">tree,form</field> -->
+        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[('is_chicken_depart', '=', True)]</field>
         <field name="context">{
             'default_is_chicken_depart': True
