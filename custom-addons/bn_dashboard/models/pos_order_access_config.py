@@ -34,7 +34,6 @@ class PosOrderAccessConfig(models.Model):
         ('user_unique', 'unique(user_id)', 'This user already has a POS access configuration.'),
     ]
 
-    # ⚡ NEW: Cascade logic for dropdowns
     @api.onchange('province_ids')
     def _onchange_province_ids(self):
         if self.province_ids:
@@ -48,14 +47,15 @@ class PosOrderAccessConfig(models.Model):
         return {'domain': {'zone_ids': [('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)]}}
 
     def _sync_user(self):
-        manager = self.env.ref('bn_dashboard.group_pos_order_dashboard_manager').sudo()
         user_grp = self.env.ref('bn_dashboard.group_pos_order_dashboard_user').sudo()
+        report_grp = self.env.ref('bn_dashboard.group_pos_dd_report_user').sudo()
+
         for rec in self:
             user = rec.user_id.sudo()
             ids = [] if rec.full_access else (rec.province_ids | rec.city_ids | rec.zone_ids).ids
             user.pos_analytic_ids = [(6, 0, ids)]
-            manager.write({'users': [(4 if rec.full_access else 3, user.id)]})
             user_grp.write({'users': [(4, user.id)]})
+            report_grp.write({'users': [(4, user.id)]})
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -78,7 +78,7 @@ class PosOrderAccessConfig(models.Model):
         return res
 
     def _clear_users(self, users):
-        manager = self.env.ref('bn_dashboard.group_pos_order_dashboard_manager').sudo()
+        user_grp = self.env.ref('bn_dashboard.group_pos_order_dashboard_user').sudo()
         for u in users.sudo():
             u.pos_analytic_ids = [(5, 0, 0)]
-            manager.write({'users': [(3, u.id)]})
+            user_grp.write({'users': [(3, u.id)]})
