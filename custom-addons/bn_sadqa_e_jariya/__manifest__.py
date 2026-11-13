@@ -1,6 +1,6 @@
 {
     'name': 'Sadqa e Jariya',
-    'version': '17.0.2.6',
+    'version': '2.5',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -13,7 +13,6 @@
         'point_of_sale',
         'base_accounting_kit',
         'bn_master_setup',
-        'bn_stock_location',
         'bn_profile_management',
         'bn_res_company',
         'bn_sms_whatsapp',
@@ -22,11 +21,9 @@
     ],
     'data': [
         'security/group.xml',
-        'security/group_tiers.xml',
         'security/ir.model.access.csv',
 
         'data/sequence.xml',
-        'data/program_types.xml',
         'data/data.xml',
         'data/ir_cron.xml',
         'data/server_action_fetch.xml',

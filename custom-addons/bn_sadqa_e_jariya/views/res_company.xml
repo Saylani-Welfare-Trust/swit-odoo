@@ -4,12 +4,8 @@
     <record id="base_view_company_form_inherit_bn_sadqa_e_jariya" model="ir.ui.view">
         <field name="name">base.view.company.form.inherit.bn.sadqa.e.jariya</field>
         <field name="model">res.company</field>
-        <field name="inherit_id" ref="bn_profile_management.base_view_company_form_inherit_bn_profile_management"/>
+        <field name="inherit_id" ref="bn_res_company.base_view_company_form_inherit_bn_res_company"/>
         <field name="arch" type="xml">
-            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_1']" position="inside">
-                <field name="welfare_instituiton_url" />
-                <field name="odoo_auth_institution_key" password="True" />
-            </xpath>
             <xpath expr="//page[@name='welfare_api_auth_endpoints']" position="inside">
                 <group>
                     <group name="sadqa_e_jariya_portal" string="Sadqa e Jariya Portal">

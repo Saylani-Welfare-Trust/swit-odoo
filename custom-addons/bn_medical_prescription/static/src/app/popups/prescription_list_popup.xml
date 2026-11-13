@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_medical_prescription.PrescriptionListPopup">
+        <div class="popup popup-selection">
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title" t-esc="title"/>
+            </div>
+            <main class="modal-body text-start">
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fa fa-search"/></span>
+                    <input t-ref="searchInput" type="text" class="form-control form-control-lg"
+                           placeholder="Prescription no., patient name, mobile, CNIC or registration no."
+                           t-model="state.term" t-on-input="debouncedSearch" t-on-keydown="onSearchKeydown"/>
+                </div>
+
+                <div t-if="state.searching and !state.prescriptions.length" class="text-muted text-center py-3">
+                    <i class="fa fa-spinner fa-spin me-1"/>Searching...
+                </div>
+                <div t-elif="!state.prescriptions.length and !state.error" class="text-muted text-center py-3">
+                    No approved prescription is waiting for its bill.
+                </div>
+                <div t-else="" class="list-group overflow-auto" style="max-height: 50vh;">
+                    <div t-foreach="state.prescriptions" t-as="prescription" t-key="prescription.id" class="list-group-item py-2">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div class="flex-grow-1 cursor-pointer" t-on-click="() => this.toggleLines(prescription)">
+                                <div class="d-flex flex-wrap gap-2 align-items-baseline">
+                                    <span class="fw-bold" t-esc="prescription.name"/>
+                                    <span t-esc="prescription.partner?.name or ''"/>
+                                    <span class="text-muted small" t-esc="prescription.partner?.primary_registration_id or ''"/>
+                                </div>
+                                <div class="d-flex flex-wrap gap-3 small text-muted">
+                                    <span t-if="prescription.partner?.cnic_no"><i class="fa fa-id-card-o me-1"/><t t-esc="prescription.partner.cnic_no"/></span>
+                                    <span t-if="prescription.approved_date"><i class="fa fa-clock-o me-1"/><t t-esc="prescription.approved_date"/></span>
+                                    <span t-if="prescription.doctor_name"><i class="fa fa-user-md me-1"/><t t-esc="prescription.doctor_name"/></span>
+                                    <span><i class="fa fa-list me-1"/><t t-esc="prescription.lines.length"/> product(s)</span>
+                                    <span class="fw-bold text-body" t-esc="formatCurrency(prescription.amount_total)"/>
+                                </div>
+                            </div>
+                            <button t-if="isDesk" type="button" class="btn btn-outline-danger"
+                                    t-on-click="() => this.cancelPrescription(prescription)">
+                                <i class="fa fa-times me-1"/>Cancel
+                            </button>
+                            <button t-else="" type="button" class="btn btn-primary"
+                                    t-on-click="() => this.bill(prescription)">
+                                <i class="fa fa-file-text-o me-1"/>Bill
+                            </button>
+                        </div>
+                        <table t-if="state.expanded[prescription.id]" class="table table-sm mt-2 mb-0 small">
+                            <tbody>
+                                <tr t-foreach="prescription.lines" t-as="line" t-key="line.id">
+                                    <td>
+                                        <t t-esc="line.product_name"/>
+                                        <span t-if="line.note" class="text-muted"> (<t t-esc="line.note"/>)</span>
+                                    </td>
+                                    <td class="text-end text-nowrap" t-esc="line.qty"/>
+                                    <td class="text-end text-nowrap" t-esc="formatCurrency(line.price_subtotal)"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div t-if="state.error" class="alert alert-danger mt-3 mb-0 py-2" t-esc="state.error"/>
+            </main>
+            <footer class="footer modal-footer">
+                <button t-if="loadedPrescriptionName" type="button" class="button btn btn-lg btn-outline-danger me-auto"
+                        t-on-click="removeLoadedPrescription">
+                    Remove <t t-esc="loadedPrescriptionName"/> from Order
+                </button>
+                <button type="button" class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Close</button>
+            </footer>
+        </div>
+    </t>
+
+</templates>

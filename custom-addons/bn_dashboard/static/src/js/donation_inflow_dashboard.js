@@ -20,7 +20,18 @@ export class DonationInflowDashboard extends Component {
         this.state = useState({
             date_from: savedFilters.date_from || '',
             date_to: savedFilters.date_to || '',
-            
+
+            // Segment filters
+            segment_type: savedFilters.segment_type || '',
+            segment_l1: savedFilters.segment_l1 || null,
+            segment_l2: savedFilters.segment_l2 || null,
+            segment_l3: savedFilters.segment_l3 || null,
+            segment_l4: savedFilters.segment_l4 || null,
+            segments_l1: [],
+            segments_l2: [],
+            segments_l3: [],
+            segments_l4: [],
+
             comparison_mode: savedFilters.comparison_mode || 'month',
             comparison_period1: savedFilters.comparison_period1 || '',
             comparison_period2: savedFilters.comparison_period2 || '',
@@ -36,51 +47,80 @@ export class DonationInflowDashboard extends Component {
         this.is_mounted = false;
 
         onWillStart(async () => {
+            await this.fetch_segments();
             this._init_comparison_periods();
             await this.fetch_data();
             await this.fetch_comparison();
         });
-        
+
         onMounted(() => {
             this.is_mounted = true;
             this.render_charts();
         });
     }
 
+    // ---------- Segment hierarchy ----------
+    async fetch_segments() {
+        try {
+            const hierarchy = await this.orm.call('donation.inflow.dashboard', 'get_segment_hierarchy', []);
+            this.state.segments_l1 = hierarchy.segments_l1 || [];
+            this.state.segments_l2 = hierarchy.segments_l2 || [];
+            this.state.segments_l3 = hierarchy.segments_l3 || [];
+            this.state.segments_l4 = hierarchy.segments_l4 || [];
+        } catch (error) {
+            console.error("Segment Fetch Error:", error);
+        }
+    }
+
+    get filteredSegmentsL2() {
+        if (!this.state.segment_l1) return [];
+        const pId = parseInt(this.state.segment_l1, 10);
+        return this.state.segments_l2.filter(s => s.parent_id === pId);
+    }
+    get filteredSegmentsL3() {
+        if (!this.state.segment_l2) return [];
+        const pId = parseInt(this.state.segment_l2, 10);
+        return this.state.segments_l3.filter(s => s.parent_id === pId);
+    }
+    get filteredSegmentsL4() {
+        if (!this.state.segment_l3) return [];
+        const pId = parseInt(this.state.segment_l3, 10);
+        return this.state.segments_l4.filter(s => s.parent_id === pId);
+    }
+
+    // ---------- Filter persistence ----------
     save_filters() {
         browser.sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
             date_from: this.state.date_from,
             date_to: this.state.date_to,
+            segment_type: this.state.segment_type,
+            segment_l1: this.state.segment_l1,
+            segment_l2: this.state.segment_l2,
+            segment_l3: this.state.segment_l3,
+            segment_l4: this.state.segment_l4,
             comparison_mode: this.state.comparison_mode,
             comparison_period1: this.state.comparison_period1,
             comparison_period2: this.state.comparison_period2,
         }));
     }
 
-    _init_comparison_periods() {
-        const today = new Date();
-        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        if (this.state.comparison_mode === 'year') {
-            if (!this.state.comparison_period1) this.state.comparison_period1 = String(today.getFullYear() - 1);
-            if (!this.state.comparison_period2) this.state.comparison_period2 = String(today.getFullYear());
-        } else {
-            if (!this.state.comparison_period1) this.state.comparison_period1 = fmt(new Date(today.getFullYear(), today.getMonth() - 1, 1));
-            if (!this.state.comparison_period2) this.state.comparison_period2 = fmt(today);
-        }
+    _segment_args() {
+        return [
+            this.state.segment_l1 ? parseInt(this.state.segment_l1, 10) : null,
+            this.state.segment_l2 ? parseInt(this.state.segment_l2, 10) : null,
+            this.state.segment_l3 ? parseInt(this.state.segment_l3, 10) : null,
+            this.state.segment_l4 ? parseInt(this.state.segment_l4, 10) : null,
+            this.state.segment_type || null,
+        ];
     }
 
-    async onchange_comparison_mode() {
-        this.state.comparison_period1 = '';
-        this.state.comparison_period2 = '';
-        this._init_comparison_periods();
-        await this.fetch_comparison();
-    }
-
+    // ---------- Data fetch ----------
     async fetch_data() {
         try {
             const data = await this.orm.call('donation.inflow.dashboard', 'get_dashboard_data', [
                 this.state.date_from || null,
                 this.state.date_to || null,
+                ...this._segment_args(),
             ]);
             this.state.kpi = data.kpi;
             this.state.chart_source = data.chart_source;
@@ -99,6 +139,7 @@ export class DonationInflowDashboard extends Component {
                 this.state.comparison_mode,
                 this.state.comparison_period1,
                 this.state.comparison_period2,
+                ...this._segment_args(),
             ]);
             this.state.comparison_result = data;
         } catch (error) {
@@ -106,6 +147,7 @@ export class DonationInflowDashboard extends Component {
         }
     }
 
+    // ---------- Handlers ----------
     async applyFilter() {
         this.save_filters();
         await this.fetch_data();
@@ -115,8 +157,29 @@ export class DonationInflowDashboard extends Component {
     clearFilter() {
         this.state.date_from = '';
         this.state.date_to = '';
+        this.state.segment_type = '';
+        this.state.segment_l1 = null;
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
         browser.sessionStorage.removeItem(FILTER_STORAGE_KEY);
         this.applyFilter();
+    }
+
+    async onchange_segment_l1() {
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.applyFilter();
+    }
+    async onchange_segment_l2() {
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.applyFilter();
+    }
+    async onchange_segment_l3() {
+        this.state.segment_l4 = null;
+        await this.applyFilter();
     }
 
     setQuickDate(type) {
@@ -142,6 +205,27 @@ export class DonationInflowDashboard extends Component {
         this.applyFilter();
     }
 
+    // ---------- Comparison mode ----------
+    _init_comparison_periods() {
+        const today = new Date();
+        const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (this.state.comparison_mode === 'year') {
+            if (!this.state.comparison_period1) this.state.comparison_period1 = String(today.getFullYear() - 1);
+            if (!this.state.comparison_period2) this.state.comparison_period2 = String(today.getFullYear());
+        } else {
+            if (!this.state.comparison_period1) this.state.comparison_period1 = fmt(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+            if (!this.state.comparison_period2) this.state.comparison_period2 = fmt(today);
+        }
+    }
+
+    async onchange_comparison_mode() {
+        this.state.comparison_period1 = '';
+        this.state.comparison_period2 = '';
+        this._init_comparison_periods();
+        await this.fetch_comparison();
+    }
+
+    // ---------- Charts ----------
     render_charts() {
         const ctx1 = $("#di_chart_monthly");
         if (ctx1.length) {

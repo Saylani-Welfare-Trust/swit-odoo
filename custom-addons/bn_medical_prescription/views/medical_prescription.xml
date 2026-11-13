@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="medical_prescription_view_tree" model="ir.ui.view">
+        <field name="name">medical.prescription.view.tree</field>
+        <field name="model">medical.prescription</field>
+        <field name="arch" type="xml">
+            <tree string="Prescriptions" decoration-info="state == 'approved'" decoration-muted="state == 'cancel'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="registration_id" optional="show"/>
+                <field name="cnic_no" optional="hide"/>
+                <field name="doctor_name" optional="show"/>
+                <field name="approved_date" optional="show"/>
+                <field name="desk_config_id" optional="hide"/>
+                <field name="pos_order_id" optional="show"/>
+                <field name="amount_total" sum="Total"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="state" widget="badge" decoration-info="state == 'approved'" decoration-success="state == 'billed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="medical_prescription_view_form" model="ir.ui.view">
+        <field name="name">medical.prescription.view.form</field>
+        <field name="model">medical.prescription</field>
+        <field name="arch" type="xml">
+            <form string="Prescription">
+                <header>
+                    <button name="action_approve" type="object" string="Approve" class="btn-primary" invisible="state != 'draft'"
+                            groups="bn_medical_pos.group_medical_manager"/>
+                    <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft', 'approved')"
+                            groups="bn_medical_pos.group_medical_manager" confirm="Cancel this prescription?"/>
+                    <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancel'"
+                            groups="bn_medical_pos.group_medical_manager"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,approved,billed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="registration_id"/>
+                            <field name="cnic_no"/>
+                            <field name="mobile"/>
+                            <field name="doctor_name" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="approved_by_id" invisible="not approved_by_id"/>
+                            <field name="approved_date" invisible="not approved_date"/>
+                            <field name="desk_config_id" invisible="not desk_config_id"/>
+                            <field name="pos_order_id" invisible="not pos_order_id"/>
+                            <field name="billing_config_id" invisible="not pos_order_id"/>
+                            <field name="billed_date" invisible="not billed_date"/>
+                            <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Products" name="products">
+                            <field name="line_ids" readonly="state != 'draft'">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id" options="{'no_create': True}"/>
+                                    <field name="note" optional="show"/>
+                                    <field name="qty"/>
+                                    <field name="price_unit"/>
+                                    <field name="discount" optional="hide"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer">
+                                <field name="amount_total"/>
+                            </group>
+                        </page>
+                        <page string="Remarks" name="remarks">
+                            <field name="note" readonly="state != 'draft'" placeholder="Remarks of the prescription desk..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="medical_prescription_view_search" model="ir.ui.view">
+        <field name="name">medical.prescription.view.search</field>
+        <field name="model">medical.prescription</field>
+        <field name="arch" type="xml">
+            <search string="Prescriptions">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="registration_id"/>
+                <field name="cnic_no"/>
+                <field name="mobile"/>
+                <field name="doctor_name"/>
+                <field name="pos_order_id"/>
+                <filter name="filter_approved" string="Waiting for Bill" domain="[('state', '=', 'approved')]"/>
+                <filter name="filter_billed" string="Billed" domain="[('state', '=', 'billed')]"/>
+                <filter name="filter_cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                <separator/>
+                <filter name="filter_approved_date" string="Approved On" date="approved_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_desk" string="Prescription Desk" context="{'group_by': 'desk_config_id'}"/>
+                    <filter name="group_approved_date" string="Approved On" context="{'group_by': 'approved_date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="medical_prescription_action" model="ir.actions.act_window">
+        <field name="name">Prescriptions</field>
+        <field name="res_model">medical.prescription</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="medical_prescription_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No prescription yet</p>
+            <p>Prescriptions are approved for patients at the prescription desk POS and billed at the billing counter POS.</p>
+        </field>
+    </record>
+
+    <!-- Bills: the POS orders of the billing counters -->
+    <record id="action_mh_bills" model="ir.actions.act_window">
+        <field name="name">Bills</field>
+        <field name="res_model">pos.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('medical_prescription_id', '!=', False)]</field>
+        <field name="context">{'create': False}</field>
+        <field name="search_view_id" ref="point_of_sale.view_pos_order_filter"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('point_of_sale.view_pos_order_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('point_of_sale.view_pos_pos_form')})]"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No bill yet</p>
+            <p>Prescriptions paid at a billing counter are listed here.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_medical_prescriptions" name="Prescriptions" parent="bn_medical_pos.menu_medical_root"
+              action="medical_prescription_action" sequence="20"/>
+    <menuitem id="menu_medical_bills" name="Bills" parent="bn_medical_pos.menu_medical_root"
+              action="action_mh_bills" sequence="30"/>
+
+</odoo>

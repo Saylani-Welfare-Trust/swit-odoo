@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_medical_pos.PatientPopup">
+        <div class="popup popup-selection">
+            <div class="modal-header drag-handle">
+                <h4 class="modal-title" t-esc="title"/>
+            </div>
+
+            <main class="modal-body text-start">
+                <!-- Search existing patients -->
+                <t t-if="state.mode === 'search'">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text"><i class="fa fa-search"/></span>
+                        <input t-ref="searchInput" type="text" class="form-control form-control-lg"
+                               placeholder="Name, contact no., CNIC or registration ID"
+                               t-model="state.term" t-on-input="debouncedSearch" t-on-keydown="onSearchKeydown"/>
+                    </div>
+
+                    <div t-if="state.searching and !state.patients.length" class="text-muted text-center py-3">
+                        <i class="fa fa-spinner fa-spin me-1"/>Searching...
+                    </div>
+                    <div t-elif="!state.patients.length and !state.error" class="text-muted text-center py-3">
+                        <t t-if="state.term.trim()">No patient found. Use "Register New Patient" to add one.</t>
+                        <t t-else="">No patients registered yet.</t>
+                    </div>
+                    <div t-else="" class="list-group overflow-auto" style="max-height: 50vh;">
+                        <t t-foreach="state.patients" t-as="patient" t-key="patient.id">
+                            <button type="button" class="list-group-item list-group-item-action py-2"
+                                    t-on-click="() => this.selectPatient(patient)">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <span class="fw-bold" t-esc="patient.name"/>
+                                    <span class="text-muted small" t-esc="patient.primary_registration_id or ''"/>
+                                </div>
+                                <div class="d-flex flex-wrap gap-3 small text-muted">
+                                    <span t-if="patient.mobile"><i class="fa fa-phone me-1"/><t t-esc="patient.mobile"/></span>
+                                    <span t-if="patient.cnic_no"><i class="fa fa-id-card-o me-1"/><t t-esc="patient.cnic_no"/></span>
+                                    <span t-if="patient.date_of_birth"><i class="fa fa-birthday-cake me-1"/><t t-esc="patient.date_of_birth"/></span>
+                                </div>
+                            </button>
+                        </t>
+                    </div>
+                </t>
+
+                <!-- Register a new patient -->
+                <form t-else="" id="mh_patient_form" t-on-submit.prevent="register">
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-4 fw-semibold" for="patient_name">Name</label>
+                        <div class="col-8">
+                            <input id="patient_name" t-ref="formFirstInput" type="text" class="form-control" t-model="state.form.name"
+                                   placeholder="Patient name"/>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-4 fw-semibold" for="patient_mobile">Contact No.</label>
+                        <div class="col-8">
+                            <input id="patient_mobile" type="text" inputmode="numeric" maxlength="11" class="form-control"
+                                   t-att-value="state.form.mobile" t-on-input="onMobileInput" placeholder="3001234567"/>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-4 fw-semibold" for="patient_cnic">CNIC</label>
+                        <div class="col-8">
+                            <input id="patient_cnic" type="text" inputmode="numeric" maxlength="15" class="form-control"
+                                   t-att-value="state.form.cnic_no" t-on-input="onCnicInput" placeholder="XXXXX-XXXXXXX-X"/>
+                        </div>
+                    </div>
+                    <div class="row mb-2 align-items-center">
+                        <label class="col-4 fw-semibold" for="patient_dob">Date of Birth</label>
+                        <div class="col-8">
+                            <input id="patient_dob" type="date" class="form-control" t-att-max="today"
+                                   t-model="state.form.date_of_birth"/>
+                        </div>
+                    </div>
+                </form>
+
+                <div t-if="state.error" class="alert alert-danger mt-3 mb-0 py-2" t-esc="state.error"/>
+            </main>
+
+            <footer class="footer modal-footer">
+                <t t-if="state.mode === 'search'">
+                    <button type="button" class="button btn btn-lg btn-primary" t-on-click="showRegisterForm">
+                        <i class="fa fa-user-plus me-1"/>Register New Patient
+                    </button>
+                </t>
+                <t t-else="">
+                    <button type="submit" form="mh_patient_form" class="button btn btn-lg btn-primary" t-att-disabled="state.saving">
+                        <i t-if="state.saving" class="fa fa-spinner fa-spin me-1"/>Register
+                    </button>
+                    <button type="button" class="button btn btn-lg btn-secondary" t-on-click="showSearch">Back to Search</button>
+                </t>
+                <button type="button" class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Close</button>
+            </footer>
+        </div>
+    </t>
+
+</templates>

@@ -6,8 +6,10 @@
         <field name="res_model">record.search</field>
         <field name="view_mode">form</field>
         <field name="context">{
-            'default_program_code': 'sadqa_e_jariya',
-            'default_program_locked': True,
+            'default_registration_type': 'donee',
+            'default_donee_registration_type': 'sadqa_e_jariya',
+            'default_is_sadqa_e_jariya': True,
+            'default_category': 'institution',
         }</field>
         <field name="target">new</field>
     </record>
@@ -24,31 +26,30 @@
         id="sadqa_e_jariya_menu"
         name="Sadqa e Jariya"
         web_icon="bn_sadqa_e_jariya,static/description/icon.png"
-        sequence="7"
-        groups="bn_sadqa_e_jariya.sadqa_e_jariya_root_group"/>
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.group_fetch_institution,bn_sadqa_e_jariya.group_sadqa_jariya_all_lines"
+        sequence="7"/>
 
     <menuitem
         id="sadqa_e_jariya_institution_disbursement_menu"
         name="Institution Disbursement"
         action="sadqa_jariya_action"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement"
         parent="sadqa_e_jariya_menu"
-        sequence="1"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
+        sequence="1"/>
 
     <menuitem
         id="sadqa_e_jariya_profile_menu"
         name="Profile"
+        groups="bn_sadqa_e_jariya.group_institutional_disbursement"
         parent="sadqa_e_jariya_menu"
-        sequence="2"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
+        sequence="2"/>
 
     <menuitem
         id="sadqa_e_jariya_record_search_menu"
         name="Record Search"
         action="sadqa_e_jariya_record_search_action"
         parent="sadqa_e_jariya_profile_menu"
-        sequence="0"
-        groups="bn_sadqa_e_jariya.group_institutional_disbursement"/>
+        sequence="0"/>
 
     <menuitem
         id="sadqa_e_jariya_donee_menu"
@@ -60,9 +61,9 @@
     <menuitem
         id="sadqa_jariya_lines_menu"
         name="All Lines"
+        groups="bn_sadqa_e_jariya.group_sadqa_jariya_all_lines"
         parent="sadqa_e_jariya_menu"
-        sequence="4"
-        groups="bn_sadqa_e_jariya.group_sadqa_jariya_all_lines,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
+        sequence="4"/>
 
     <menuitem
         id="sadqa_jariya_line_menu"
@@ -81,17 +82,16 @@
     <menuitem
         id="menu_fetch_institution_applications"
         name="Portal Sync"
+        groups="bn_sadqa_e_jariya.group_fetch_institution"
         parent="sadqa_e_jariya_menu"
-        sequence="100"
-        groups="bn_sadqa_e_jariya.group_fetch_institution,bn_sadqa_e_jariya.sadqa_e_jariya_audit_group"/>
+        sequence="100"/>
 
     <menuitem
         id="fetch_institution_applications"
         name="Sync Now"
         parent="menu_fetch_institution_applications"
         action="action_fetch_institution_applications"
-        sequence="100"
-        groups="bn_sadqa_e_jariya.group_fetch_institution"/>
+        sequence="100"/>
 
     <menuitem
         id="menu_sadqa_jariya_fetch_log"
@@ -105,8 +105,7 @@
         id="sadqa_jariya_config_menu"
         name="Sadqa e Jariya"
         parent="bn_master_setup.master_setup_menu"
-        sequence="5"
-        groups="bn_sadqa_e_jariya.sadqa_e_jariya_admin_group"/>
+        sequence="5"/>
 
     <menuitem
         id="sadqa_jariya_area_menu"

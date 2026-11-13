@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_medical_pos.ActionpadWidget" t-inherit="point_of_sale.ActionpadWidget" t-inherit-mode="extension">
+        <xpath expr="//div[@t-else='fw-bolder']" position="replace">
+            <div t-else="" class="fw-bolder">
+                <t t-if="pos.config.is_medical_pos">Patient</t>
+                <t t-else="">Customer</t>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

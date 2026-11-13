@@ -1,100 +1,133 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+    <!-- Category -->
     <record id="module_category_bn_dashboard" model="ir.module.category">
-        <field name="name">Management Dashboards</field>
+        <field name="name">Dashboard</field>
+        <field name="description">Access to the specific Dashboards</field>
         <field name="sequence">10</field>
     </record>
 
-    <!-- Sole gate on the Dashboard app menu. No group implies it: assign it explicitly,
-         together with the tier / role groups, to whoever should see it. -->
-    <record id="group_dashboard_root" model="res.groups">
-        <field name="name">Menu</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Grants visibility of the Dashboard app menu. Assign it explicitly with the dashboards (role groups): no group implies it.</field>
-    </record>
-
-    <!-- Role groups: one responsibility each, on top of the tiers -->
+    <!-- ========================================== -->
+    <!-- 1. BASE USER GROUPS                        -->
+    <!-- ========================================== -->
     <record id="group_treasury_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Treasury</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Shows the Treasury dashboard.</field>
-    </record>
-
-    <record id="group_donation_box_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Donation Box</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Shows the Donation Box dashboard.</field>
-    </record>
-
-    <record id="group_profile_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Profile Management</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Shows the Profile Management dashboard.</field>
     </record>
 
     <record id="group_pos_order_dashboard_user" model="res.groups">
         <field name="name">Dashboard / POS Order</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Shows the POS Order dashboard.</field>
+    </record>
+
+    <record id="group_pos_dd_report_user" model="res.groups">
+        <field name="name">Report / POS &amp; Direct Deposits</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <record id="group_donation_box_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Donation Box</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
+
+    <record id="group_profile_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Profile Management</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_din_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Donation In Kind</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Shows the Donation In Kind dashboard.</field>
     </record>
 
     <record id="group_donation_inflow_dashboard_user" model="res.groups">
         <field name="name">Dashboard / Donation Inflows</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Shows the Donation Inflows dashboard.</field>
     </record>
 
-    <record id="group_dashboard_user" model="res.groups">
-        <field name="name">User</field>
+    <!-- Manager groups REMOVED -->
+
+    <!-- ========================================== -->
+    <!-- 2. RECORD RULES                            -->
+    <!-- ========================================== -->
+    <record id="rule_cheque_restricted" model="ir.rule">
+        <field name="name">Cheque: allowed locations only</field>
+        <field name="model_id" ref="bn_pos_cheque.model_pos_cheque"/>
+        <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.treasury_analytic_ids
+            else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]
+        )</field>
+    </record>
+
+    <record id="rule_deposit_restricted" model="ir.rule">
+        <field name="name">Deposit: allowed locations only</field>
+        <field name="model_id" ref="bn_direct_deposit.model_direct_deposit"/>
+        <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.treasury_analytic_ids
+            else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]
+        )</field>
+    </record>
+
+    <record id="rule_transfer_restricted" model="ir.rule">
+        <field name="name">Transfer: allowed locations only</field>
+        <field name="model_id" ref="bn_journal_transfer.model_journal_transfer"/>
+        <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.treasury_analytic_ids
+            else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]
+        )</field>
+    </record>
+
+    <record id="rule_pos_order_restricted" model="ir.rule">
+        <field name="name">POS Order: allowed locations only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_order"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.pos_analytic_ids
+            else [
+                '|', '|',
+                ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
+                ('session_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
+                ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)
+            ]
+        )</field>
+    </record>
+
+    <record id="rule_pos_session_restricted" model="ir.rule">
+        <field name="name">POS Session: allowed locations only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_session"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.pos_analytic_ids
+            else [
+                '|',
+                ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
+                ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)
+            ]
+        )</field>
+    </record>
+
+    <record id="rule_pos_config_restricted" model="ir.rule">
+        <field name="name">POS Config: allowed locations only</field>
+        <field name="model_id" ref="point_of_sale.model_pos_config"/>
+        <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
+        <field name="domain_force">(
+            [(1, '=', 1)]
+            if not user.pos_analytic_ids
+            else [('analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]
+        )</field>
+    </record>
+
+    <record id="group_dashboard_configuration" model="res.groups">
+        <field name="name">Dashboard / Configuration</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-        <field name="comment">Opens the dashboards given to them (the Dashboard / ... groups).</field>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
     </record>
-
-    <record id="group_dashboard_manager" model="res.groups">
-        <field name="name">Manager</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('group_dashboard_user')])]"/>
-        <field name="comment">Everything User can do.</field>
-    </record>
-
-    <record id="group_dashboard_audit" model="res.groups">
-        <field name="name">Audit</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('group_treasury_dashboard_user'), ref('group_donation_box_dashboard_user'), ref('group_profile_dashboard_user'), ref('group_pos_order_dashboard_user'), ref('group_din_dashboard_user'), ref('group_donation_inflow_dashboard_user')])]"/>
-        <field name="comment">Read-only oversight: every dashboard.</field>
-    </record>
-
-    <record id="group_dashboard_admin" model="res.groups">
-        <field name="name">Administrator</field>
-        <field name="category_id" ref="module_category_bn_dashboard"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('group_dashboard_manager'), ref('group_dashboard_audit')])]"/>
-        <field name="comment">Full control: every dashboard, plus the dashboard configurations.</field>
-    </record>
-
-    <!-- The dashboards opened the app before the Menu group: on this first
-         upgrade their users get it -->
-    <function model="res.groups" name="_move_retired_group_users" eval="[{
-        'bn_dashboard.group_treasury_dashboard_user': 'bn_dashboard.group_dashboard_root',
-        'bn_dashboard.group_donation_box_dashboard_user': 'bn_dashboard.group_dashboard_root',
-        'bn_dashboard.group_profile_dashboard_user': 'bn_dashboard.group_dashboard_root',
-        'bn_dashboard.group_pos_order_dashboard_user': 'bn_dashboard.group_dashboard_root',
-        'bn_dashboard.group_din_dashboard_user': 'bn_dashboard.group_dashboard_root',
-        'bn_dashboard.group_donation_inflow_dashboard_user': 'bn_dashboard.group_dashboard_root',
-    }, 'bn_dashboard.tiers']"/>
-
 </odoo>

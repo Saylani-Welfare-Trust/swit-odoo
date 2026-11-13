@@ -58,7 +58,6 @@ export class PosDashboard extends Component {
             cheque_count: 0,
             deposit_count: 0,
             transfer_count: 0,
-            restriction: null,
         });
 
         // Restore filter state from sessionStorage if it exists
@@ -152,7 +151,6 @@ export class PosDashboard extends Component {
         this.state.segments_l4 = hierarchy.segments_l4 || [];
 
         this.state.categories = await this.orm.call('pos.order', 'get_pos_categories', []);
-        this.state.restriction = await this.orm.call('dashboard.configurator', 'get_user_restrictions', ['pos_order']);
     }
 
     get filteredCities() {
@@ -553,10 +551,6 @@ export class PosDashboard extends Component {
         const domain = [];
         if (this.state.config_id) domain.push(['config_id', '=', parseInt(this.state.config_id, 10)]);
 
-        if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
-            domain.push(['session_id.analytic_account_id', 'child_of', this.state.restriction.analytic_ids]);
-        }
-
         const isSession = model === 'pos.session';
         const dateField = isSession ? 'start_at' : 'date_order';
 
@@ -594,12 +588,12 @@ export class PosDashboard extends Component {
             let or_domains = [];
             for (let id of active_analytic_ids) {
                 // Build the OR domains to match the backend's _get_order_domain logic
-                or_domains.push(['session_id.analytic_account_id', 'child_of', id]);
+                or_domains.push(['config_id.analytic_account_id', 'child_of', id]);
                 if (!isSession) {
                     or_domains.push(['session_id.analytic_account_id', 'child_of', id]);
                     or_domains.push(['analytic_account_id', 'child_of', id]);
                 }
-                or_domains.push(['config_id.analytic_account_id', 'child_of', id]);
+                or_domains.push(['user_id.employee_id.analytic_account_id', 'child_of', id]);
             }
             let op_count = or_domains.length - 1;
             if (op_count > 0) {

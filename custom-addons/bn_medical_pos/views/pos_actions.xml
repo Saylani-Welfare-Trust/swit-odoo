@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The Medical & Health counters are in their own app (Medical & Health > Counters):
+         keep them out of the main Point of Sale dashboard and configuration list.
+         Put back by the uninstall hook. -->
+    <record id="point_of_sale.action_pos_config_kanban" model="ir.actions.act_window">
+        <field name="domain">[('is_medical_pos', '=', False)]</field>
+    </record>
+
+    <record id="point_of_sale.action_pos_config_tree" model="ir.actions.act_window">
+        <field name="domain">[('is_medical_pos', '=', False)]</field>
+    </record>
+
+</odoo>

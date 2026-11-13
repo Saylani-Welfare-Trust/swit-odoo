@@ -7,16 +7,11 @@ _logger = logging.getLogger(__name__)
 class TreasuryDashboardController(http.Controller):
 
     def _get_location_hierarchy(self):
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
 
         provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
 
-        if restriction:
-            if restriction['provinces']:
-                provinces = provinces.browse(restriction['provinces'])
-            if restriction['segment_l1']:
-                seg_l1 = seg_l1.browse(restriction['segment_l1'])
+        
 
         cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
@@ -79,13 +74,7 @@ class TreasuryDashboardController(http.Controller):
         if date_field:
             if date_from: base_domain.append((date_field, '>=', date_from))
             if date_to: base_domain.append((date_field, '<=', date_to))
-
-        # === NEW: Configurator restriction ===
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-        if restriction and 'analytic_account_id' in Model._fields:
-            base_domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
-        # ======================================
-
+       
         if analytic_account_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', '=', int(analytic_account_id)))
             except: pass
@@ -107,27 +96,23 @@ class TreasuryDashboardController(http.Controller):
             if amount_min is not None: base_domain.append((amount_field, '>=', float(amount_min)))
             if amount_max is not None: base_domain.append((amount_field, '<=', float(amount_max)))
 
-        actual_state_field = state_field if state_field in Model._fields else ('status' if 'status' in Model._fields else ('state' if 'state' in Model._fields else None))
-        amount_ok = has_amount and Model._fields[amount_field].store and Model._fields[amount_field].type in ('float', 'monetary', 'integer')
-        aggregates = ['__count'] + (['%s:sum' % amount_field] if amount_ok else [])
         try:
-            # counted and summed by the database, per state (one query)
-            rows = Model._read_group(base_domain, [actual_state_field] if actual_state_field else [], aggregates)
+            records = Model.search(base_domain)
+            count = len(records)
+            total_amount = sum(records.mapped(amount_field)) if has_amount else 0.0
         except Exception as e:
             _logger.error(f"❌ TREASURY ERROR on {model_name}: {str(e)}")
             return empty
 
-        count, total_amount, states, state_amounts = 0, 0.0, {}, {}
-        for row in rows:
-            key = row[0] if actual_state_field else None
-            row_count = row[1] if actual_state_field else row[0]
-            row_amount = (row[-1] or 0.0) if amount_ok else 0.0
-            count += row_count
-            total_amount += row_amount
-            if key:
-                states[key] = row_count
-                if amount_ok:
-                    state_amounts[key] = row_amount
+        actual_state_field = state_field if state_field in Model._fields else ('status' if 'status' in Model._fields else ('state' if 'state' in Model._fields else None))
+        states, state_amounts = {}, {}
+
+        if actual_state_field:
+            for rec in records:
+                key = rec[actual_state_field]
+                if not key: continue
+                states[key] = states.get(key, 0) + 1
+                if has_amount: state_amounts[key] = state_amounts.get(key, 0.0) + (rec[amount_field] or 0.0)
 
         return {'count': count, 'total_amount': total_amount, 'states': states, 'state_amounts': state_amounts}
 
@@ -135,14 +120,12 @@ class TreasuryDashboardController(http.Controller):
     def get_dashboard_data(self, **kwargs):
         currency = request.env.company.currency_id
         p, c, z, s1, s2, s3, s4 = self._get_location_hierarchy()
-        restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
 
         return {
             'currency': {'symbol': currency.symbol, 'position': currency.position},
             'analytic_accounts': self._get_analytic_accounts(),
             'provinces': p, 'cities': c, 'zones': z,
             'segments_l1': s1, 'segments_l2': s2, 'segments_l3': s3, 'segments_l4': s4,
-            'restriction': restriction,  # <--- NEW
             'cheques':   self._get_custom_model_stats('pos.cheque', 'amount', 'state', **kwargs),
             'deposits':  self._get_custom_model_stats('direct.deposit', 'amount', 'state', **kwargs),
             'transfers': self._get_custom_model_stats('journal.transfer', 'amount', 'status', **kwargs),
@@ -176,12 +159,6 @@ class TreasuryDashboardController(http.Controller):
             if not date_field: return 0.0
 
             domain = [(date_field, '>=', start), (date_field, '<=', end)]
-
-            # === NEW: Configurator restriction ===
-            restriction = request.env['dashboard.configurator'].get_user_restrictions('treasury')
-            if restriction and 'analytic_account_id' in Model._fields:
-                domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
-            # ======================================
 
             for k, v in kwargs.items():
                 if v and k in Model._fields:
