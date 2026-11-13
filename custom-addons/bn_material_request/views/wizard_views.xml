@@ -18,7 +18,7 @@
                            placeholder="Select multiple vendors..."/>
                 </group>
                 <div class="alert alert-info" role="alert">
-                    <i class="fa fa-info-circle"/>
+                    <i title="Info" class="fa fa-info-circle"/>
                     One consolidated RFQ is created per selected vendor. Lines for the same
                     product, even from different Purchase Requests, are summed into a single
                     RFQ line. Every line you order here is locked and cannot be selected

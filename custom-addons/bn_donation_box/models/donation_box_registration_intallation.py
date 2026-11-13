@@ -117,6 +117,18 @@ class DonationBoxRegistrationInstallation(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('donation_box') or 'New'
         return super().create(vals_list)
 
+    @api.constrains('lot_id', 'status')
+    def _check_one_open_per_box(self):
+        """A box can have many closed registrations, but only one in service."""
+        for rec in self.filtered(lambda r: r.lot_id and r.status != 'close'):
+            other = self.sudo().search([('lot_id', '=', rec.lot_id.id), ('status', '!=', 'close'),
+                                        ('id', '!=', rec.id)], limit=1)
+            if other:
+                raise ValidationError(_(
+                    'Box "%(lot)s" already has a registration in service (%(name)s). '
+                    'Close it before another one is opened.'
+                ) % {'lot': rec.sudo().lot_id.display_name, 'name': other.name})
+
     def _locked_fields_by_status(self):
         """Business fields that cannot be edited any more, per status.
         (The form already makes them read-only; this enforces it on the server.)"""
@@ -313,4 +325,10 @@ class DonationBoxRegistrationInstallation(models.Model):
             lock_no = lines[:1].lock_no
             if lock_no and lock_no != rec.lock_no:
                 rec._workflow_write({'lock_no': lock_no})
+            if lock_no:
+                rec._sync_key_lock_no(lock_no)
+        return True
+
+    def _sync_key_lock_no(self, lock_no):
+        """The key carries the lock number of its box (bn_key_management)."""
         return True

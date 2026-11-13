@@ -48,7 +48,7 @@
                                  ('from_date','&lt;=', context_today().strftime('%Y-12-31'))]"/>
                 <filter name="filter_this_month" string="This Month"
                         domain="[('from_date','&gt;=', context_today().strftime('%Y-%m-01')),
-                                 ('from_date','&lt;=', context_today().strftime('%Y-%m-31'))]"/>
+                                 ('from_date','&lt;', (context_today() + relativedelta(months=1)).strftime('%Y-%m-01'))]"/>
 
                 <separator/>
 
@@ -83,16 +83,16 @@
                             type="object"
                             class="oe_highlight"
                             invisible="state == 'active' or is_locked"
-                            help="Import monthly planning lines from an Excel file"/>
+                            help="Import monthly planning lines from an Excel file" groups="bn_planning.group_planning_user"/>
                     <button string="Activate"
                             name="action_set_active"
                             type="object"
                             class="oe_highlight"
-                            invisible="state == 'active' or is_locked"/>
+                            invisible="state == 'active' or is_locked" groups="bn_planning.group_planning_user"/>
                     <button string="Set to Draft"
                             name="action_set_draft"
                             type="object"
-                            invisible="state == 'draft' or is_locked"/>
+                            invisible="state == 'draft' or is_locked" groups="bn_planning.group_planning_manager"/>
                 </header>
 
                 <sheet>
@@ -295,15 +295,15 @@
     <menuitem
         id="planning_root_menu"
         name="Planning"
-        web_icon="bn_master_setup,static/description/icon.png"
-        groups="bn_planning.group_planning_user"
-        sequence="6"/>
+        web_icon="bn_planning,static/description/icon.png"
+        sequence="6"
+        groups="bn_planning.group_planning_root"/>
     <menuitem
         id="menu_monthly_planning"
         name="Monthly Planning"
         action="action_monthly_planning"
         parent="planning_root_menu"
-        groups="bn_planning.group_planning_user"
-        sequence="1"/>
+        sequence="1"
+        groups="bn_planning.group_planning_user,bn_planning.group_planning_audit"/>
 
 </odoo>

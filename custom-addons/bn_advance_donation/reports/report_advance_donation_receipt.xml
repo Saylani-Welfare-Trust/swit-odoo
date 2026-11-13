@@ -62,9 +62,9 @@
                             </style>
                             <!-- ===== COMPANY BANNER ===== -->
                             <!-- Try dn_image first (if exists), then fallback to logo -->
-                            <img t-if="receipt.env.company.dn_image" t-att-src="image_data_uri(receipt.env.company.dn_image)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
-                            <img t-elif="receipt.env.company.logo" t-att-src="image_data_uri(receipt.env.company.logo)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
-                            <img t-elif="receipt.env.company.logo_web" t-att-src="image_data_uri(receipt.env.company.logo_web)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img alt="Logo" t-if="receipt.env.company.dn_image" t-att-src="image_data_uri(receipt.env.company.dn_image)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img alt="Logo" t-elif="receipt.env.company.logo" t-att-src="image_data_uri(receipt.env.company.logo)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
+                            <img alt="Logo" t-elif="receipt.env.company.logo_web" t-att-src="image_data_uri(receipt.env.company.logo_web)" style="display:block; width:100%; height:auto; margin-bottom:6px;" class="company-logo"/>
                             <!-- ===== WATERMARK ===== -->
                             <div t-if="receipt.state == 'draft'" class="watermark">Draft</div>
                             <div t-if="receipt.state == 'pending'" class="watermark">Pending</div>

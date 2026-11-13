@@ -14,7 +14,7 @@ class RiderScheduleDay(models.Model):
     city_id = fields.Many2one('account.analytic.account', string="City")
     zone_id = fields.Many2one('account.analytic.account', string="Zone")
     key_bunch_id = fields.Many2one('key.bunch', string="Key Bunch")
-    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
+    sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone")
 
     key_count = fields.Integer('Key Count', compute="_set_key_count")
 

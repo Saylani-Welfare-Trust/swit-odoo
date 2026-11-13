@@ -20,7 +20,7 @@ type_selection = [
 
 class DistributionCenter(models.Model):
     _name = 'distribution.center'
-    _decription = "Distribution Center"
+    _description = "Distribution Center"
 
 
     name = fields.Char('Name', default="New")
@@ -52,12 +52,12 @@ class DistributionCenter(models.Model):
             if rec.request_date and rec.lead_time:
                 rec.delivery_date = rec.request_date + relativedelta(days=rec.lead_time)
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('distribution_center') or ('New')
-        
-        return super(DistributionCenter, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('distribution_center') or ('New')
+        return super().create(vals_list)
     
     def action_confirm(self):
         self.ensure_one()

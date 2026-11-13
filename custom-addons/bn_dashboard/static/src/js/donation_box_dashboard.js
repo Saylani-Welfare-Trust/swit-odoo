@@ -59,6 +59,7 @@ export class DonationBoxDashboard extends Component {
             recent_complaints: [], 
             recent_registrations: [], 
             recent_collections: [],
+            restriction: null,
         });
 
         this._charts = {};
@@ -143,6 +144,7 @@ export class DonationBoxDashboard extends Component {
         this.state.cities = hierarchy.cities || [];
         this.state.zones = hierarchy.zones || [];
         this.state.bunches = hierarchy.bunches || [];
+        this.state.restriction = await this.orm.call('dashboard.configurator', 'get_user_restrictions', ['donation_box']);
     }
 
     get filteredCities() {
@@ -300,7 +302,10 @@ export class DonationBoxDashboard extends Component {
             if (bid) domain.push(['donation_box_registration_installation_id.key_bunch_id', '=', bid]);
             if (this.state.date_from) domain.push(['date', '>=', this.state.date_from]);
             if (this.state.date_to) domain.push(['date', '<=', this.state.date_to]);
-
+            if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
+                const ids = this.state.restriction.analytic_ids;
+                domain.push('|', ['donation_box_registration_installation_id.city_id', 'child_of', ids], ['donation_box_registration_installation_id.zone_id', 'child_of', ids]);
+            }
 
         } else if (model === 'donation.box.registration.installation') {
             // Registrations have the location fields directly on them
@@ -319,7 +324,10 @@ export class DonationBoxDashboard extends Component {
             if (bid) domain.push(['donation_box_registration_installation_id.key_bunch_id', '=', bid]);
             if (this.state.date_from) domain.push(['date', '>=', this.state.date_from]);
             if (this.state.date_to) domain.push(['date', '<=', this.state.date_to]);
-            
+            if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
+                const ids = this.state.restriction.analytic_ids;
+                domain.push('|', ['city_id', 'child_of', ids], ['zone_id', 'child_of', ids]);
+            }
         }
 
         return domain;

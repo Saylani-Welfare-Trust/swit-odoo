@@ -11,12 +11,12 @@ class RiderSchedule(models.TransientModel):
     name = fields.Char('Name', default="NEW")
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('NEW')) == _('NEW'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('rider_schedule') or _('New')
-        
-        return super(RiderSchedule, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('NEW')) == _('NEW'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('rider_schedule') or _('New')
+        return super().create(vals_list)
 
     def action_check_shift(self):
         employee = self.env.user.employee_id

@@ -17,4 +17,18 @@
         <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
     </record>
 
+    <record id="scope_donation_product_onhand_rule" model="ir.rule">
+        <field name="name">Donation Products On-Hand: allowed locations</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_product_onhand"/>
+        <field name="domain_force">[('location_id', 'child_of', user.scope_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_donation_product_onhand_unrestricted_rule" model="ir.rule">
+        <field name="name">Donation Products On-Hand: unrestricted</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_product_onhand"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
 </odoo>

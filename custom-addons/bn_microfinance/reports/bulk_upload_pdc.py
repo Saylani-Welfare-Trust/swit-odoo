@@ -3,8 +3,8 @@ from odoo import models
 
 class MicrofinancePDC(models.AbstractModel):
     _name = 'report.bn_microfinance.bulk_upload_pdc'
+    _description = 'Microfinance PDC Upload Template'
     _inherit = 'report.report_xlsx.abstract'
-
 
     def generate_xlsx_report(self, workbook, data, microfinance):
         bg_yellow_format = workbook.add_format({'bold': True, 'align': 'center', 'bg_color': 'yellow'})

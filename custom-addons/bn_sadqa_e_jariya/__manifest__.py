@@ -13,6 +13,7 @@
         'point_of_sale',
         'base_accounting_kit',
         'bn_master_setup',
+        'bn_stock_location',
         'bn_profile_management',
         'bn_res_company',
         'bn_sms_whatsapp',
@@ -25,6 +26,7 @@
         'security/ir.model.access.csv',
 
         'data/sequence.xml',
+        'data/program_types.xml',
         'data/data.xml',
         'data/ir_cron.xml',
         'data/server_action_fetch.xml',

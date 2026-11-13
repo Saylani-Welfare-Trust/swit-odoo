@@ -53,7 +53,7 @@
                     <!-- Warning Messages -->
                     <div class="alert alert-warning" role="alert" 
                          invisible="requires_approval == False">
-                        <span class="fa fa-exclamation-triangle"/>
+                        <span title="Warning" class="fa fa-exclamation-triangle"/>
                         <b>Approval Required:</b> This transfer requires member approval.
                         <ul>
                             <li>Select a Shariah Law Person</li>
@@ -64,20 +64,20 @@
                     
                     <div class="alert alert-info" role="alert" 
                          invisible="requires_approval == True">
-                        <span class="fa fa-info-circle"/>
+                        <span title="Info" class="fa fa-info-circle"/>
                         <b>No Approval Required:</b> This transfer does not require member approval.
                         You can post it directly.
                     </div>
                     
                     <div class="alert alert-success" role="alert" 
                          invisible="requires_approval == False or member_posted == False">
-                        <span class="fa fa-check-circle"/>
+                        <span title="Done" class="fa fa-check-circle"/>
                         <b>Approved:</b> This transfer has been approved by member.
                     </div>
                     
                     <div class="alert alert-danger" role="alert" 
                          invisible="state != 'rejected'">
-                        <span class="fa fa-times-circle"/>
+                        <span title="Cancelled" class="fa fa-times-circle"/>
                         <b>Rejected:</b> This transfer has been rejected.
                         <field name="rejection_reason" nolabel="1"/>
                     </div>

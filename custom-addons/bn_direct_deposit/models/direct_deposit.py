@@ -1,7 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 
-import re
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -13,7 +12,6 @@ status_selection = [
     ('draft', 'Draft'),
     ('clear', 'Clear'),
     ('not_clear', 'Not Clear'),
-    ('transferred', 'Transferred to DHS')
 ]
 
 
@@ -157,15 +155,6 @@ May Allah bless you!
         return self.sudo().search([
             ('transaction_ref', '=', transaction_ref),
         ], limit=1)
-
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
 
     @api.model_create_multi
     def create(self, vals_list):

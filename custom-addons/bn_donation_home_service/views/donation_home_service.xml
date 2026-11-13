@@ -10,7 +10,7 @@
                 <field name="donor_id"/>
                 <field name="service_charges" sum="1" />
                 <field name="amount" string="Total Amount" sum="1" />
-                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['gate_out', 'gate_in']" decoration-success="state in ['slotter', 'paid']" />
+                <field name="state"  widget="badge" decoration-warning="state == 'draft'" decoration-info="state in ['gate_out', 'gate_in']" decoration-success="state == 'paid'" />
             </tree>
         </field>
     </record>
@@ -25,7 +25,7 @@
                     <button string="Gate In" name="action_gate_in" type="object" class="oe_highlight" invisible="state != 'gate_out'" groups="bn_donation_home_service.donation_home_service_user_group"/>
                     <button string="Cancel" name="action_cancel" type="object" invisible="state in ['gate_out', 'paid', 'cancel']" groups="bn_donation_home_service.donation_home_service_manager_group,bn_donation_home_service.donation_home_service_cancel_group"/>
 
-                    <field name="state" widget="statusbar" statusbar_visible="draft, gate_out, gate_in, paid, slotter" />
+                    <field name="state" widget="statusbar" statusbar_visible="draft,gate_out,gate_in,paid" />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">

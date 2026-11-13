@@ -55,7 +55,7 @@
                             </style>
 
                             <!-- ===== BANNER ===== -->
-                            <img t-if="show_company_header and o.env.company.dn_image"
+                            <img alt="Logo" t-if="show_company_header and o.env.company.dn_image"
                                 t-att-src="image_data_uri(o.env.company.dn_image)"
                                 style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
 

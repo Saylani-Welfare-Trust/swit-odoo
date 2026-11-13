@@ -6,11 +6,11 @@ class StockLocation(models.Model):
 
     # The Branch (or Zone / City) the location belongs to: its users see it
     # (res.users.scope_location_ids).
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", tracking=True)
-    location_option_id = fields.Many2one('location.option', string="Location Option", tracking=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account")
+    location_option_id = fields.Many2one('location.option', string="Location Option")
 
-    is_slaughter_location = fields.Boolean('Is Slaughter Location', tracking=True)
-    is_distribution_location = fields.Boolean('Is Distribution Location', tracking=True)
+    is_slaughter_location = fields.Boolean('Is Slaughter Location')
+    is_distribution_location = fields.Boolean('Is Distribution Location')
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -11,11 +11,11 @@ class ResPartner(models.Model):
     whatsapp = fields.Char(string="WhatsApp")
 
 
-    @api.model
-    def create(self, partner):
+    @api.model_create_multi
+    def create(self, vals_list):
         """Auto copy mobile to whatsapp when partner is created
         from anywhere, including POS"""
-        if partner.get('mobile'):
-            partner['whatsapp'] = partner['mobile']
-        
-        return super().create(partner)
+        for vals in vals_list:
+            if vals.get('mobile'):
+                vals['whatsapp'] = vals['mobile']
+        return super().create(vals_list)

@@ -54,7 +54,15 @@ class APIDonationWizard(models.TransientModel):
         })
         
     @api.model
+    def _api_configured(self):
+        company = self.env.company.sudo()
+        return bool(company.url and company.client_id and company.client_secret)
+
+    @api.model
     def cron_fetch_weekly_donations(self):
+        if not self._api_configured():
+            _logger.info('Weekly donation fetch skipped: the Donation API is not configured.')
+            return True
         today = fields.Date.context_today(self)
 
         # Previous complete week (Monday to Sunday)
@@ -78,6 +86,9 @@ class APIDonationWizard(models.TransientModel):
     def action_fetch_donation(self):
         if not self:
             # Daily cron "Fetch Donation Data": it calls this on the empty model.
+            if not self._api_configured():
+                _logger.info('Donation fetch skipped: the Donation API is not configured.')
+                return True
             return self.create({}).action_fetch_donation()
         self.ensure_one()
         if not self.env.su:
@@ -281,7 +292,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Bulk Data Pre-fetching ----------------------
     def _prefetch_all_data(self, donations_info, gateway_config, company_currency, history):
-        self.create_fetch_log(history.id, f"Start _prefetch_all_data", 'Prefetching', 'Starting to prefetch all required data for processing')
+        self.create_fetch_log(history.id, "Start _prefetch_all_data", 'Prefetching', 'Starting to prefetch all required data for processing')
 
         """Prefetch all required data in bulk to minimize database queries"""
         # Extract all unique values for bulk queries
@@ -393,7 +404,7 @@ class APIDonationWizard(models.TransientModel):
         # Default partner for missing donors
         default_partner_id = gateway_config.default_partner_id.id if gateway_config else False
         
-        self.create_fetch_log(history.id, f"End _prefetch_all_data", 'Prefetching', 'Completed prefetching all required data for processing')
+        self.create_fetch_log(history.id, "End _prefetch_all_data", 'Prefetching', 'Completed prefetching all required data for processing')
 
         return {
             'currency_by_name': currency_by_name,
@@ -418,7 +429,7 @@ class APIDonationWizard(models.TransientModel):
     def _process_donations_bulk(self, donations_info, journal, gateway_config, company_currency, all_data, history):
         self.create_fetch_log(
             history.id,
-            f"Start _process_donations_bulk",
+            "Start _process_donations_bulk",
             "Processing",
             "Starting to process donations in bulk - NO partner creation, just store records"
         )
@@ -573,7 +584,7 @@ class APIDonationWizard(models.TransientModel):
                 history.id,
                 f"Skipping donation at index {info_idx} due to unsuccessful status",
                 'Skipped',
-                f"Donation status is not successful"
+                "Donation status is not successful"
             )
             return None
         
@@ -646,7 +657,7 @@ class APIDonationWizard(models.TransientModel):
                 # -------------------------------------------------------------
                 self.create_fetch_log(
                     history.id,
-                    f"Distribution Data from API",
+                    "Distribution Data from API",
                     "Qurbani",
                     f"Qurbani json {info}"
                 )
@@ -914,7 +925,7 @@ class APIDonationWizard(models.TransientModel):
 
     # ---------------------- Journal Entry Creation ----------------------
     def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history):
-        self.create_fetch_log(history.id, f"Start _create_grouped_journal_move", 'Journal Entry Creation', 'Starting to create grouped journal entry with accumulated lines')
+        self.create_fetch_log(history.id, "Start _create_grouped_journal_move", 'Journal Entry Creation', 'Starting to create grouped journal entry with accumulated lines')
 
         """Create journal entry safely (currency constraint compliant)"""
 
@@ -1018,12 +1029,12 @@ class APIDonationWizard(models.TransientModel):
             'line_ids': lines,
         })
 
-        self.create_fetch_log(history.id, f"End _create_grouped_journal_move", 'Journal Entry Creation', f"Completed creation of journal entry with ID {move.id} and {len(lines)} lines")
+        self.create_fetch_log(history.id, "End _create_grouped_journal_move", 'Journal Entry Creation', f"Completed creation of journal entry with ID {move.id} and {len(lines)} lines")
         # move.action_post()
         return move
 
     def _get_rounding_difference_account(self, journal, history):
-        self.create_fetch_log(history.id, f"Start _get_rounding_difference_account", 'Journal Entry Creation', 'Attempting to find rounding difference account with proper fallbacks')
+        self.create_fetch_log(history.id, "Start _get_rounding_difference_account", 'Journal Entry Creation', 'Attempting to find rounding difference account with proper fallbacks')
 
         """Get rounding difference account with proper fallbacks"""
         # First try journal's default account
@@ -1057,6 +1068,6 @@ class APIDonationWizard(models.TransientModel):
             if not diff_account:
                 self.create_fetch_log(history.id,  f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.", 'Error', f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.")
         
-        self.create_fetch_log(history.id, f"End _get_rounding_difference_account", 'Journal Entry Creation', 'Completed search for rounding difference account')
+        self.create_fetch_log(history.id, "End _get_rounding_difference_account", 'Journal Entry Creation', 'Completed search for rounding difference account')
 
         return diff_account

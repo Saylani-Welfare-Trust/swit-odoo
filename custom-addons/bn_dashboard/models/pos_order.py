@@ -13,7 +13,12 @@ class PosOrder(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_shops(self):
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        
         domain = []
+        if restriction:
+            domain.append(('analytic_account_id', 'child_of', restriction['analytic_ids']))
             
         configs = self.env['pos.config'].search(domain)
         # ==============================================
@@ -46,10 +51,16 @@ class PosOrder(models.Model):
 
     @api.model
     def get_location_hierarchy(self):
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
 
         provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
         seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
 
+        if restriction:
+            if restriction['provinces']:
+                provinces = provinces.browse(restriction['provinces'])
+            if restriction['segment_l1']:
+                seg_l1 = seg_l1.browse(restriction['segment_l1'])
 
         cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
         zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
@@ -67,12 +78,6 @@ class PosOrder(models.Model):
             'segments_l3': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l3],
             'segments_l4': [{'id': s.id, 'name': s.name, 'parent_id': s.parent_id.id} for s in seg_l4],
         }
-
-    def _shop_id(self, config_id):
-        try:
-            return int(config_id) if config_id else None
-        except (ValueError, TypeError):
-            return None
 
     def _validate_date(self, d):
         if not d:
@@ -109,18 +114,17 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_domain(self, config_id=None, date_from=None, date_to=None,
-                          province_id=None, city_id=None, zone_id=None,
-                          segment_id=None, segment_type=None):
+                          province_id=None, city_id=None, zone_id=None, segment_id=None, segment_type=None):
         domain = []
-
-        # ⚡ Enforce user access (city/province/zone from pos.order.access.config)
-        domain.extend(self._get_user_access_domain())
-
         if config_id:
             domain.append(('config_id', '=', int(config_id)))
         domain.extend(self._date_domain(date_from, date_to))
 
-        # ... rest of the existing method unchanged ...
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        if restriction:
+            domain.append(('session_id.analytic_account_id', 'child_of', restriction['analytic_ids']))
+
         if province_id or city_id or zone_id or segment_id or segment_type:
             analytic_domain = []
             if province_id:
@@ -143,26 +147,20 @@ class PosOrder(models.Model):
                     analytic_filters.append(('analytic_account_id', 'in', accounts.ids))
                 if 'session_id' in self._fields:
                     analytic_filters.append(('session_id.analytic_account_id', 'in', accounts.ids))
-                if 'config_id' in self._fields:
-                    analytic_filters.append(('config_id.analytic_account_id', 'in', accounts.ids))
                 if 'user_id' in self._fields:
-                    analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
+                    analytic_filters.append(('config_id.analytic_account_id', 'in', accounts.ids))
 
                 if 'analytic_account_id' in self.env['product.template']._fields:
-                    analytic_filters.append(
-                        ('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
-                elif 'analytic_account_ids' in self.env['product.template']._fields:
-                    analytic_filters.append(
-                        ('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
+                    analytic_filters.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
 
                 if analytic_filters:
                     if len(analytic_filters) == 1:
                         domain.extend(analytic_filters)
                     else:
-                        domain.extend(['|'] * (len(analytic_filters) - 1) + analytic_filters)
+                        or_operators = ['|'] * (len(analytic_filters) - 1)
+                        domain.extend(or_operators + analytic_filters)
                 else:
                     domain.append(('id', '=', 0))
-
         return domain
 
     def _apply_dashboard_filters(self, domain, category_id=None, amount_min=None, amount_max=None):
@@ -175,12 +173,12 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_ids_sql(self, domain):
-        if not domain:
-            return ""
-        orders = self.env['pos.order'].search(domain)
-        if not orders:
-            return " AND 1=0 "
-        return " AND pos_order.id IN (%s) " % ','.join(str(i) for i in orders.ids)
+        """Condition limiting the raw queries below to the orders the user may
+        see (POS record rules) matching the filters: a subquery, so the database
+        filters them without sending the ids back and forth."""
+        query = self.env['pos.order']._search(domain or [])
+        subselect = query.subselect()
+        return " AND pos_order.id IN (%s) " % self.env.cr.mogrify(subselect.code, subselect.params).decode()
 
     # ------------------------------------------------------------------
     # sales chart
@@ -201,11 +199,11 @@ class PosOrder(models.Model):
         if option == 'pos_hourly_sales':
             user_tz = self.env.user.tz if self.env.user.tz else pytz.UTC
             query = (
-                "select EXTRACT(hour FROM date_order at time zone 'utc' at time zone '%s') "
+                "select EXTRACT(hour FROM date_order at time zone 'utc' at time zone %%(tz)s) "
                 "as date_month, sum(amount_total) from pos_order "
                 "where pos_order.company_id = %d %s "
                 "group by date_month order by date_month"
-            ) % (user_tz, company_id, order_sql)
+            ) % (company_id, order_sql.replace('%', '%%'))
             label = 'HOURS'
         elif option == 'pos_monthly_sales':
             query = (
@@ -223,7 +221,10 @@ class PosOrder(models.Model):
             ) % (company_id, order_sql)
             label = 'MONTHS'
 
-        self._cr.execute(query)
+        if option == 'pos_hourly_sales':
+            self._cr.execute(query, {'tz': str(user_tz)})
+        else:
+            self._cr.execute(query)
         docs = self._cr.dictfetchall()
         return [
             [r.get('sum') for r in docs],
@@ -339,12 +340,6 @@ class PosOrder(models.Model):
             session_domain.append(('start_at', '>=', date_from + ' 00:00:00'))
         if date_to:
             session_domain.append(('start_at', '<=', date_to + ' 23:59:59'))
-
-        # ⚡ Respect user access on sessions too
-        user_accounts = self._user_pos_accounts()
-        if user_accounts:
-            session_domain.append(('config_id.analytic_account_id', 'in', user_accounts.ids))
-
         total_session = self.env['pos.session'].search_count(session_domain)
 
         return {
@@ -476,6 +471,10 @@ class PosOrder(models.Model):
         if segment_type:
             analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        if restriction:
+            analytic_domain.append(('id', 'child_of', restriction['analytic_ids']))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -516,6 +515,10 @@ class PosOrder(models.Model):
         if segment_type:
             analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
+        # === NEW: Dashboard Configurator restriction ===
+        restriction = self.env['dashboard.configurator'].get_user_restrictions('pos_order')
+        if restriction:
+            analytic_domain.append(('id', 'child_of', restriction['analytic_ids']))
 
         accounts = self.env['account.analytic.account'].search(analytic_domain) if analytic_domain else None
         analytic_filter = []
@@ -644,17 +647,6 @@ class PosOrder(models.Model):
         # 1. Join Product's Analytic Account
         if 'analytic_account_id' in self.env['product.template']._fields:
             pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
-        elif 'analytic_account_ids' in self.env['product.template']._fields:
-            pt_acc_join = """
-                LEFT JOIN LATERAL (
-                    SELECT acc.id, acc.name, acc.parent_id
-                    FROM account_analytic_account acc
-                    INNER JOIN product_template_account_analytic_account_rel rel
-                        ON rel.account_analytic_account_id = acc.id
-                    WHERE rel.product_template_id = product_template.id
-                    LIMIT 1
-                ) pt_acc ON true
-            """
         else:
             pt_acc_join = ""
 
@@ -724,7 +716,7 @@ class PosOrder(models.Model):
         else:
             pt_city_join = "LEFT JOIN (SELECT NULL AS name) pt_city ON true"
 
-        # 4. Join POS Config's Branch Analytic hierarchy (fallback)
+        # 4. Join the POS session's branch analytic hierarchy (fallback)
         pos_fb_city_join = f"""
             LEFT JOIN LATERAL (
                 SELECT
@@ -738,7 +730,7 @@ class PosOrder(models.Model):
                 LEFT JOIN account_analytic_account c2 ON c2.id = c1.parent_id
                 LEFT JOIN account_analytic_account c3 ON c3.id = c2.parent_id
                 LEFT JOIN account_analytic_account c4 ON c4.id = c3.parent_id
-                WHERE c1.id = pos_config.analytic_account_id
+                WHERE c1.id = pos_session.analytic_account_id
                   AND c1.plan_id IN ({plan_ids_sql})
             ) pos_fb_city ON true
         """
@@ -765,6 +757,7 @@ class PosOrder(models.Model):
             FROM pos_order_line
             INNER JOIN pos_order          ON pos_order.id = pos_order_line.order_id
             LEFT  JOIN pos_config         ON pos_config.id = pos_order.config_id
+            LEFT  JOIN pos_session        ON pos_session.id = pos_order.session_id
             {pos_city_join}
             {pos_fb_city_join}
             INNER JOIN product_product    ON product_product.id = pos_order_line.product_id
@@ -1097,67 +1090,3 @@ class PosOrder(models.Model):
             'p1': p1, 'p2': p2, 'diffs': diffs,
             'mode': mode, 'period1': period1, 'period2': period2,
         }
-        
-    # ------------------------------------------------------------------
-    # User access restriction (from pos.order.access.config)
-    # ------------------------------------------------------------------
-    def _user_pos_accounts(self):
-        """
-        Return the analytic accounts (incl. descendants) the *current* user
-        is allowed to see. Empty recordset == unrestricted.
-        """
-        user = self.env.user
-        if 'pos_analytic_ids' not in user._fields:
-            return self.env['account.analytic.account']
-
-        allowed = user.pos_analytic_ids
-        if not allowed:
-            # Empty list -> unrestricted (full_access tick, or no config)
-            return self.env['account.analytic.account']
-
-        # Explicit "All Locations" config -> unrestricted
-        if self.env['pos.order.access.config'].sudo().search_count(
-                [('user_id', '=', user.id), ('full_access', '=', True)]):
-            return self.env['account.analytic.account']
-
-        # Expand to descendants (city -> zones -> branches)
-        return self.env['account.analytic.account'].search(
-            [('id', 'child_of', allowed.ids)])
-
-    def _get_user_access_domain(self):
-        """
-        Build an OR-domain that restricts pos.order rows to the accounts
-        returned by _user_pos_accounts(). Returns [] when unrestricted.
-        """
-        accounts = self._user_pos_accounts()
-        if not accounts:
-            return []
-
-        or_leaves = []
-        if 'analytic_account_id' in self._fields:
-            or_leaves.append(('analytic_account_id', 'in', accounts.ids))
-        if 'session_id' in self._fields:
-            or_leaves.append(('session_id.analytic_account_id', 'in', accounts.ids))
-        if 'config_id' in self._fields:
-            or_leaves.append(('config_id.analytic_account_id', 'in', accounts.ids))
-        if 'user_id' in self._fields:
-            or_leaves.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
-        # Product analytic link (some setups tie city to the product template)
-        if 'lines' in self._fields:
-            if 'analytic_account_id' in self.env['product.template']._fields:
-                or_leaves.append(
-                    ('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
-            elif 'analytic_account_ids' in self.env['product.template']._fields:
-                or_leaves.append(
-                    ('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
-
-        if not or_leaves:
-            return [('id', '=', 0)]
-        if len(or_leaves) == 1:
-            return or_leaves
-
-        result = []
-        for leaf in or_leaves[:-1]:
-            result.extend(['|', leaf])
-        result.append(or_leaves[-1])
-        return result

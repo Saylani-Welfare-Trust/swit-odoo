@@ -53,12 +53,12 @@ class QurbaniOrder(models.Model):
     is_sync = fields.Boolean('Is Sync')
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order') or ('New')
-
-        return super(QurbaniOrder, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order') or ('New')
+        return super().create(vals_list)
     
     def calculate_amount(self):
         self.amount = sum(line.amount for line in self.qurbani_order_line_ids)
@@ -153,7 +153,7 @@ class QurbaniOrder(models.Model):
             qurbani_fullfilment = line.qurbani_fullfilment 
             if qurbani_fullfilment == "meat" :
                 if  not city: raise ValidationError(f"City is required for meat qurbani fulfillment create city '{line.city}' and try again.")
-                if not branch: raise ValidationError(f"Branch is required for meat qurbani fulfillment, provide branch in line and try again.")
+                if not branch: raise ValidationError("Branch is required for meat qurbani fulfillment, provide branch in line and try again.")
                 distribution_name = (
                     f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
                 )
@@ -176,7 +176,7 @@ class QurbaniOrder(models.Model):
                         )
                     if not slaughter_center.slaughter_center_id:
                         raise ValidationError(
-                            f"Slaughter center record exists but slaughter_center_id is empty"
+                            "Slaughter center record exists but slaughter_center_id is empty"
                         )
             else: 
                 # SLAUGHTER CENTER
@@ -186,11 +186,11 @@ class QurbaniOrder(models.Model):
                 
                 if not slaughter_center:
                     raise ValidationError(
-                        f"No slaughter center mapping found "
+                        "No slaughter center mapping found "
                     )
                 if not slaughter_center.slaughter_center_id:
                     raise ValidationError(
-                        f"Slaughter center record exists but slaughter_center_id is empty"
+                        "Slaughter center record exists but slaughter_center_id is empty"
                     )
                     
                 distribution_id = self.env.company.web_no_meat_distribution_location_id.id 

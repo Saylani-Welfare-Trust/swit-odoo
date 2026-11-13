@@ -81,6 +81,12 @@ class Welfare(models.Model):
     _description = "Welfare"
     _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin"]
 
+    def init(self):
+        super().init()
+        # the former "consolidated lines" model (never used, removed): its table stays
+        # behind when Odoo removes the model on upgrade
+        self.env.cr.execute('DROP TABLE IF EXISTS welfare_consolidated_line CASCADE')
+
     order_type = fields.Selection(order_type_selection, string="Order Type")
 
     donee_id = fields.Many2one('res.partner', string="Donee")
@@ -464,16 +470,17 @@ class Welfare(models.Model):
                     self._fields[fname].string,
                 ))
 
-    @api.model
-    def create(self, vals):
-        self._check_count_values(vals)
-        if not vals.get('name') or vals.get('name') == 'New':
-            seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
-            vals['name'] = seq if seq else _('New')
-
-        record = super().create(vals)
-        record._copy_previous_documents()
-        return record
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._check_count_values(vals)
+            if not vals.get('name') or vals.get('name') == 'New':
+                seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
+                vals['name'] = seq if seq else _('New')
+        records = super().create(vals_list)
+        for record in records:
+            record._copy_previous_documents()
+        return records
 
     def write(self, vals):
         self._check_count_values(vals)

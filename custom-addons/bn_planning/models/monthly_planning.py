@@ -1,6 +1,6 @@
 from odoo import models, fields, api
 from odoo.exceptions import ValidationError
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 
 
@@ -113,7 +113,7 @@ class MonthlyPlanning(models.Model):
     @api.model
     def _default_location_dest(self):
         """Pick the destination location from the current user, in this order:
-        1. The user's explicitly allowed location (user.allowed_location_ids[0])
+        1. The first location in the user's scope (user.scope_location_ids[0])
         2. A stock.location whose analytic_account_id matches the user's employee branch
         (only if stock.location actually has that field in your DB)
         3. The standard stock location fallback
@@ -121,8 +121,8 @@ class MonthlyPlanning(models.Model):
         user = self.env.user
 
         # 1. Explicitly allowed location on the user
-        if 'allowed_location_ids' in user._fields and user.allowed_location_ids:
-            return user.allowed_location_ids[0].id
+        if 'scope_location_ids' in user._fields and user.scope_location_ids:
+            return user.scope_location_ids[0].id
 
         # 2. Match by the employee's branch — safe only if the field exists
         employee = self.env['hr.employee'].search(
@@ -156,13 +156,13 @@ class MonthlyPlanning(models.Model):
              'tagged on the employee linked to the current user.',
     )
 
-    show_kitchen   = fields.Boolean(related='planning_type_id.kitchen',   string='Kitchen',   store=False)
-    show_madaris   = fields.Boolean(related='planning_type_id.madaris',   string='Madaris',   store=False)
-    show_medical   = fields.Boolean(related='planning_type_id.medical',   string='Medical',   store=False)
-    show_livestock = fields.Boolean(related='planning_type_id.livestock', string='Livestock', store=False)
-    show_food      = fields.Boolean(related='planning_type_id.food',      string='Food',      store=False)
-    show_ration    = fields.Boolean(related='planning_type_id.ration',    string='Ration',    store=False)
-    show_meat      = fields.Boolean(related='planning_type_id.meat',      string='Meat',      store=False)
+    show_kitchen   = fields.Boolean(related='planning_type_id.kitchen',   string='Show Kitchen',   store=False)
+    show_madaris   = fields.Boolean(related='planning_type_id.madaris',   string='Show Madaris',   store=False)
+    show_medical   = fields.Boolean(related='planning_type_id.medical',   string='Show Medical',   store=False)
+    show_livestock = fields.Boolean(related='planning_type_id.livestock', string='Show Livestock', store=False)
+    show_food      = fields.Boolean(related='planning_type_id.food',      string='Show Food',      store=False)
+    show_ration    = fields.Boolean(related='planning_type_id.ration',    string='Show Ration',    store=False)
+    show_meat      = fields.Boolean(related='planning_type_id.meat',      string='Show Meat',      store=False)
 
     source_location_id = fields.Many2one(
         'stock.location',
@@ -175,13 +175,10 @@ class MonthlyPlanning(models.Model):
 
     @api.model
     def _default_source_location(self):
-        picking_type = self.env.ref(
-            'stock.picking_type_internal', raise_if_not_found=False
-        )
-        if picking_type and picking_type.default_location_src_id:
-            return picking_type.default_location_src_id.id
-        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
-        return fallback.id if fallback else False
+        # the stock of the user's warehouse
+        warehouse = self.env['stock.warehouse'].sudo().search([], limit=1) and \
+            self.env['stock.warehouse']._warehouse_for()
+        return warehouse.lot_stock_id.id if warehouse else False
     
     # ─── Internal transfer generation ─────────────────────
     def _create_internal_transfer_for_lines(self, line_list, dest_location):
@@ -202,9 +199,9 @@ class MonthlyPlanning(models.Model):
         if not line_list:
             return StockPicking
 
-        picking_type = self.env.ref(
-            'stock.picking_type_internal', raise_if_not_found=False
-        )
+        # the Monthly Planning operation type of the source warehouse
+        picking_type = self.env['stock.warehouse']._get_program_type(
+            'planning', self.source_location_id or None)
         if not picking_type:
             _logger.warning(
                 "Cron: 'stock.picking_type_internal' not found. "
@@ -339,22 +336,6 @@ class MonthlyPlanning(models.Model):
                 )
 
     # ─── Helpers ──────────────────────────────────────────
-    def _get_line_commands_for_days(self):
-        self.ensure_one()
-        commands = []
-        if not self.from_date or not self.to_date:
-            return commands
-        delta = (self.to_date - self.from_date).days
-        for i in range(delta + 1):
-            date_obj = self.from_date + timedelta(days=i)
-            commands.append((0, 0, {'date': date_obj, 'quantity': 0.0}))
-        return commands
-
-    def is_date_in_range(self, date_val):
-        self.ensure_one()
-        if not date_val or not self.from_date or not self.to_date:
-            return False
-        return self.from_date <= date_val <= self.to_date
 
     # ─── Actions ──────────────────────────────────────────
     def action_open_import_wizard(self):
@@ -439,19 +420,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
         default=lambda self: self._default_line_date(),
     )
 
-    plan_from_date = fields.Date(
-        related='monthly_planning_id.from_date',
-        string='Plan From Date', store=False,
-    )
-    plan_to_date = fields.Date(
-        related='monthly_planning_id.to_date',
-        string='Plan To Date', store=False,
-    )
-
-    min_line_date = fields.Date(
-        string='Earliest Allowed Date',
-        compute='_compute_min_line_date', store=False,
-    )
 
     planned_qty = fields.Float(
         string='Planned Qty', readonly=True, copy=False,
@@ -503,13 +471,6 @@ class MonthlyPlanningLineBase(models.AbstractModel):
     def _compute_transferred(self):
         for rec in self:
             rec.transferred = bool(rec.transfer_picking_id)
-
-    @api.depends('monthly_planning_id', 'monthly_planning_id.from_date')
-    def _compute_min_line_date(self):
-        today = fields.Date.today()
-        for rec in self:
-            plan_from = rec.monthly_planning_id.from_date
-            rec.min_line_date = plan_from if (plan_from and plan_from > today) else today
 
     @api.model
     def _default_line_date(self):

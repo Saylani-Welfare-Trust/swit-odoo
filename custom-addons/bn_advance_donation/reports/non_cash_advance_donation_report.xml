@@ -90,7 +90,7 @@
                 <t t-set="branch" t-value="('pos_analytic_account_id' in donation._fields and donation.pos_analytic_account_id.name) or entered_by.employee_id.analytic_account_id.name or user.employee_id.analytic_account_id.name or ''"/>
                 <t t-set="printed_on" t-value="context_timestamp(datetime.datetime.now()).strftime('%d-%m-%Y %I:%M %p')"/>
                 <div class="page dnac" t-att-style="'page-break-after: always;' if not donation_last else ''">
-                    <img t-if="donation.env.company.dn_image"
+                    <img alt="Logo" t-if="donation.env.company.dn_image"
                         t-att-src="image_data_uri(donation.env.company.dn_image)"
                         style="width: 100%; height: auto; display: block;"/>
 

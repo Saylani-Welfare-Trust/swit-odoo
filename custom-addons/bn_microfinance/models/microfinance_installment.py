@@ -52,17 +52,17 @@ class MicrofinanceInstallment(models.Model):
         ondelete='set null'  # Prevents cascade deletion
     )
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
-            payment_type = vals.get('payment_type')
-            
-            if payment_type == 'security':
-                vals['name'] = self.env['ir.sequence'].next_by_code('sd_slip') or ('New')
-            else:
-                vals['name'] = self.env['ir.sequence'].next_by_code('installment_slip') or ('New')
-                
-        return super(MicrofinanceInstallment, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
+                payment_type = vals.get('payment_type')
+
+                if payment_type == 'security':
+                    vals['name'] = self.env['ir.sequence'].next_by_code('sd_slip') or ('New')
+                else:
+                    vals['name'] = self.env['ir.sequence'].next_by_code('installment_slip') or ('New')
+        return super().create(vals_list)
     
     @api.constrains('cnic_no')
     def _check_cnic_format(self):

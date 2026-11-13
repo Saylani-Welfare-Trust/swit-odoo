@@ -26,20 +26,20 @@ class SlaughterSchedule(models.Model):
             if rec.location_id:
                 rec.name = f"{rec.day_id.name} - {rec.hijri_id.name} - {rec.location_id.name} - {rec.start_time} to {rec.end_time}"
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            day = None
-            hijri = None
-            location = None
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                day = None
+                hijri = None
+                location = None
 
-            if vals.get('day_id'):
-                day = self.env['qurbani.day'].browse(vals['day_id']).name
-            if vals.get('hijri_id'):
-                hijri = self.env['hijri'].browse(vals['hijri_id']).name
-            if vals.get('location_id'):
-                location = self.env['stock.location'].browse(vals['location_id']).name
+                if vals.get('day_id'):
+                    day = self.env['qurbani.day'].browse(vals['day_id']).name
+                if vals.get('hijri_id'):
+                    hijri = self.env['hijri'].browse(vals['hijri_id']).name
+                if vals.get('location_id'):
+                    location = self.env['stock.location'].browse(vals['location_id']).name
 
-            vals['name'] = f"{day or ''} - {hijri or ''} - {location or ''} - {vals.get('start_time', '')} to {vals.get('end_time', '')}"
-
-        return super(SlaughterSchedule, self).create(vals)
+                vals['name'] = f"{day or ''} - {hijri or ''} - {location or ''} - {vals.get('start_time', '')} to {vals.get('end_time', '')}"
+        return super().create(vals_list)

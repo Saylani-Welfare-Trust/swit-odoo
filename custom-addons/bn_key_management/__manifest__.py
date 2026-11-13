@@ -1,6 +1,6 @@
 {
     'name': 'Key Management',
-    'version': '17.0.1.5.0',
+    'version': '17.0.1.6.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -19,6 +19,7 @@
         'wizards/bulk_key_issuance.xml',
         'wizards/manual_key_issuance.xml',
         'security/record_rule.xml',
+        'data/server_action.xml',
         'views/key.xml',
         'views/key_bunch.xml',
         'views/key_issuance.xml',

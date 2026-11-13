@@ -41,12 +41,12 @@ class QurbaniGoatDistribution(models.Model):
     max_distribution = fields.Integer('Max Distribution', default=1)
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_distribution') or ('New')
-
-        return super(QurbaniGoatDistribution, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_goat_distribution') or ('New')
+        return super().create(vals_list)
     
     def action_approved(self):
         for rec in self:

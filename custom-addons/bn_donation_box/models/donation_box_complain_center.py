@@ -381,6 +381,7 @@ class DonationBoxComplain(models.Model):
             'location_id': scrap.scrap_location_id.id,
             'location_dest_id': stock_location.id,
             'origin': origin,
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
         move = self.env['stock.move'].sudo().create({
             'name': _('Repair Return: %s') % self.lot_id.name,

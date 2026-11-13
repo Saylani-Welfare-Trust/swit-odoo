@@ -66,6 +66,8 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'note': self.remarks,
             'company_id': self.env.company.id,
         }
+        if len(records) == 1:
+            picking_vals['source_record_ref'] = '%s,%s' % (records._name, records.id)
         picking = self.env['stock.picking'].create(picking_vals)
 
         # Build one move per record

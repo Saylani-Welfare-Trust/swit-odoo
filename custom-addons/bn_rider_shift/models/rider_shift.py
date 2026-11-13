@@ -28,12 +28,12 @@ class RiderShift(models.Model):
     schedule_day_ids = fields.One2many('rider.schedule.day', 'rider_shift_id', string="Schedule Days")
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('rider_shift_sequence') or ('New')
-
-        return super(RiderShift, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('rider_shift_sequence') or ('New')
+        return super().create(vals_list)
     
     def action_mark_done(self):
         for shift in self:

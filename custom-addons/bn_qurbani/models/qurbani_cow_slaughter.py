@@ -44,16 +44,16 @@ class QurbaniCowSlaughter(models.Model):
             if rec.slot_full == 7:
                 rec.state = 'full'
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
 
-            vals['name'] = f'Cow - {str(slaughter_location.cow_sequence_number).zfill(5)}'
+                vals['name'] = f'Cow - {str(slaughter_location.cow_sequence_number).zfill(5)}'
 
-            slaughter_location.cow_sequence_number += 1
-
-        return super(QurbaniCowSlaughter, self).create(vals)
+                slaughter_location.cow_sequence_number += 1
+        return super().create(vals_list)
     
     def action_transfer(self):
         return {

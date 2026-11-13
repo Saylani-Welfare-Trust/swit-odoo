@@ -30,12 +30,12 @@ class LivestockCutting(models.Model):
     is_picking = fields.Boolean('Is Picking')
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('livestock_cutting') or ('New')
-
-        return super(LivestockCutting, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('livestock_cutting') or ('New')
+        return super().create(vals_list)
 
     def action_confirm(self):
         self.state = 'received'
@@ -65,6 +65,7 @@ class LivestockCutting(models.Model):
             'location_id': slaughter_location.id,
             'location_dest_id': cutting_location.id,
             'origin': self.name or 'Live Stock Slaughter',
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
 
         # Create the stock move

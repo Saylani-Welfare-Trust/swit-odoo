@@ -93,13 +93,14 @@ class BulkKeyIssuance(models.TransientModel):
                 continue
 
             already_issued = KeyIssuance.search([
-                ('key_id', 'in', keys.ids), ('state', 'in', ('issued', 'overdue', 'pending')),
+                ('key_id', 'in', keys.ids), ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive')),
             ])
             if already_issued:
                 raise ValidationError(_(
-                    'Cannot issue Key Bunch "%(bunch)s": the following keys are already issued:\n%(keys)s'
+                    'Cannot issue Key Bunch "%(bunch)s": the following keys are still out (return them first):\n%(keys)s'
                 ) % {'bunch': bunch.display_name,
-                     'keys': '\n'.join('  • %s (%s)' % (r.key_id.display_name, r.rider_id.display_name)
+                     'keys': '\n'.join('  • %s (%s, %s)' % (r.key_id.display_name, r.rider_id.display_name,
+                                                          r._selection_label('state', r.state))
                                       for r in already_issued)})
 
             for key in keys.filtered(lambda k: k.state == 'available'):

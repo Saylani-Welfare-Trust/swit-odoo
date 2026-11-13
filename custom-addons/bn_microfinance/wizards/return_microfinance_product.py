@@ -37,6 +37,7 @@ class ReturnMicrofinanceProduct(models.TransientModel):
                 'microfinance_recovery', self.destination_location_id).id,
             'move_ids_without_package': [(6, 0, [stock_move.id])],
             'origin': self.source_document,
+            'source_record_ref': '%s,%s' % (self.microfinance_id._name, self.microfinance_id.id) if self.microfinance_id else False,
             'location_id': self.env.ref('stock.stock_location_customers').id,
             'location_dest_id': self.destination_location_id.id,
 

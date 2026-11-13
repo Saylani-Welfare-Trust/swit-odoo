@@ -222,11 +222,12 @@ class BankReconciliationMaster(models.Model):
         if self.state == 'draft' and self.bank_statement_config_id.journal_id:
             self.journal_id = self.bank_statement_config_id.journal_id
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('bank.reconciliation.master') or _('New')
-        return super(BankReconciliationMaster, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('bank.reconciliation.master') or _('New')
+        return super().create(vals_list)
 
     @api.depends('transaction_ids', 'transaction_ids.state', 'reconciled_ids', 'reconciled_ids.active')
     def _compute_transaction_counts(self):

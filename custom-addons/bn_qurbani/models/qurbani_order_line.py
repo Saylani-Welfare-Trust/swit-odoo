@@ -29,12 +29,12 @@ class QurbaniOrderLine(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order_line') or ('New')
-
-        return super(QurbaniOrderLine, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order_line') or ('New')
+        return super().create(vals_list)
     
     def write(self, vals):
 

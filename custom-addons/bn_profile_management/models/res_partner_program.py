@@ -12,10 +12,10 @@ class ResPartner(models.Model):
     profile_required_field_names = fields.Char(
         'Fields Required to Register', compute='_compute_profile_required_field_names', store=True)
     registered_program_ids = fields.Many2many(
-        'res.partner.category', string='Registered In', compute='_compute_registered_programs',
+        'res.partner.category', string='Registered In', compute='_compute_registered_program_ids',
         help="Programmes (Record Search tags) this contact has: one tag per module it applied to.")
     registered_program_count = fields.Integer(
-        'Programmes', compute='_compute_registered_programs', store=True,
+        'Programmes', compute='_compute_registered_program_count', store=True,
         help="Number of programmes (Welfare, Microfinance, Medical ...) this contact applied to.")
 
     @api.depends('category_id', 'category_id.registration_required_field_ids')
@@ -25,11 +25,15 @@ class ResPartner(models.Model):
             rec.profile_required_field_names = ',' + ','.join(names) + ',' if names else False
 
     @api.depends('category_id', 'category_id.registration_program_code')
-    def _compute_registered_programs(self):
+    def _compute_registered_program_ids(self):
         for rec in self:
-            programmes = rec.category_id.filtered('registration_program_code')
-            rec.registered_program_ids = programmes
-            rec.registered_program_count = len(programmes)
+            rec.registered_program_ids = rec.category_id.filtered('registration_program_code')
+
+    # stored (searchable, sortable) unlike the list: its own compute
+    @api.depends('category_id', 'category_id.registration_program_code')
+    def _compute_registered_program_count(self):
+        for rec in self:
+            rec.registered_program_count = len(rec.category_id.filtered('registration_program_code'))
 
     # ------------------------------------------------------------------
     def _program_missing_fields(self):

@@ -8,6 +8,14 @@ class KeyIssuance(models.Model):
 
     rider_collection_id = fields.Many2one('rider.collection', string="Rider Collection", copy=False)
 
+    def _money_to_settle(self):
+        """A rider collection with cash collected, submitted or pending, not yet
+        paid at the POS: the issuance stays open so the POS can still settle it."""
+        settled_or_none = ('donation_not_collected', 'paid')
+        return super()._money_to_settle() | self.filtered(
+            lambda i: i.state != 'donation_receive' and i.rider_collection_id
+            and i.rider_collection_id.state not in settled_or_none)
+
     def _do_issue(self):
         super()._do_issue()
         # Rider Shift record: created as superuser, the Key Management group
@@ -124,7 +132,9 @@ class KeyIssuance(models.Model):
                 'is_cfb': is_cfb,
             })
             issuance.key_id._lock_key()
-            issuance.key_id._workflow_write({'state': 'available'})
+            # the key of a box taken out of service stays closed
+            if issuance.key_id.state != 'closed':
+                issuance.key_id._workflow_write({'state': 'available'})
 
 
 class KeyIssuancePosLink(models.Model):

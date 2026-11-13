@@ -29,12 +29,12 @@ class MicrofinanceRecoveryLine(models.Model):
     state = fields.Selection(selection=state_selection, string='State', default="unpaid")
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
-            vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_recovery_line') or ('New')
-                
-        return super(MicrofinanceRecoveryLine, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
+                vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_recovery_line') or ('New')
+        return super().create(vals_list)
     
     @api.depends('due_date', 'paid_amount')
     def _compute_remaining_amount(self):

@@ -6,7 +6,7 @@
         <field name="model">pos.session</field>
         <field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//div[@class='oe_button_box']" position="inside">
+            <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
                 <button name="show_session_slip" type="object" class="oe_stat_button" icon="fa-bars">
                     <div class="o_stat_info">
                         <span class="o_stat_text">Deposit Slips</span>
