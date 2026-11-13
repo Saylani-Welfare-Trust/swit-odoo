@@ -1319,9 +1319,20 @@ class MedicalEquipment(models.Model):
         if not existing_donee:
             # Create new donee in portal
             donee_data = self._create_donee_in_portal()
-        portal_application = self.create_portal_application()
-        portal_application_id = portal_application.get('id')
-        
+        already_on_portal = False
+        try:
+            portal_application = self.create_portal_application()
+        except Exception as e:
+            # An earlier attempt already created this application on the portal (odooId = self.id):
+            # link to it instead of failing
+            if 'already exists' not in str(e):
+                raise
+            already_on_portal = True
+            existing_app, _note = self._search_portal_applications()
+            portal_application = existing_app or {}
+            _logger.info("Application for %s already exists on portal; linking it (%s)", self.display_name, portal_application.get('id'))
+        portal_application_id = portal_application.get('id') or self.welfare_portal_id or self.portal_application_id
+
         
         # Update disbursement record with portal information
         update_vals = {
@@ -1336,7 +1347,10 @@ class MedicalEquipment(models.Model):
         
         action = 'created_donee' if not existing_donee else 'linked_existing_donee'
         message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal "
-        message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
+        if already_on_portal:
+            message += f" | 📋 Application already on portal, linked{f' (ID: {portal_application_id})' if portal_application_id else ''} "
+        else:
+            message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
         
         return {
             'action': action,
