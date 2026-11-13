@@ -21,6 +21,9 @@ USER_GROUP = 'bn_donation_box.donation_box_registration_user_group'
 ADMIN_GROUP = 'bn_donation_box.donation_box_registration_admin_group'
 APPROVE_GROUP = 'bn_donation_box.donation_box_registration_installation_approve_group'
 CHANGE_REQUEST_GROUP = 'bn_donation_box.donation_box_registration_installation_change_request_group'
+# Sees and picks every city; everyone else is limited to the cities of their
+# Allowed Locations (see security/record_rule.xml).
+ALL_LOCATIONS_GROUP = 'bn_donation_box.donation_box_admin_group'
 
 DONOR_CATEGORY_XMLIDS = (
     'bn_profile_management.donor_partner_category',
@@ -55,6 +58,9 @@ class DonationBoxRegistrationInstallation(models.Model):
     city_id = fields.Many2one('account.analytic.account', string="City", tracking=True)
     zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
+    allowed_city_ids = fields.Many2many(
+        'account.analytic.account', string="Allowed Cities", compute='_compute_allowed_city_ids',
+        help="Cities the current user may pick: the Cities of their Allowed Locations.")
 
     name = fields.Char('Name', default="New", copy=False)
     request_no = fields.Char(related='donation_box_request_id.name', string="Request No.", store=True)
@@ -104,6 +110,14 @@ class DonationBoxRegistrationInstallation(models.Model):
         categories = self._get_donor_categories()
         for rec in self:
             rec.donor_category_ids = categories
+
+    @api.depends_context('uid')
+    def _compute_allowed_city_ids(self):
+        cities = self.env['account.analytic.account'].search([('location_option_id.name', '=', 'City')])
+        if not self.env.su and not self.env.user.has_group(ALL_LOCATIONS_GROUP):
+            cities &= self.env.user.donation_box_city_ids
+        for rec in self:
+            rec.allowed_city_ids = cities
 
     # ------------------------------------------------------------------
     # ORM overrides
