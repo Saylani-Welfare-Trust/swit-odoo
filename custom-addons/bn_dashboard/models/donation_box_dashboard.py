@@ -9,13 +9,15 @@ class DonationBoxDashboard(models.TransientModel):
 
     @api.model
     def get_location_hierarchy(self):
+        # the filter lists: names only, read as superuser (a POS / programme
+        # manager needs no Accounting rights); the figures keep their own rules
         allowed_ids, visible_ids = self._get_allowed_location_ids()
 
-        provinces = self.env['account.analytic.account'].search(
+        provinces = self.env['account.analytic.account'].sudo().search(
             [('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        cities = self.env['account.analytic.account'].search(
+        cities = self.env['account.analytic.account'].sudo().search(
             [('parent_id', 'in', provinces.ids)])
-        zones = self.env['account.analytic.account'].search(
+        zones = self.env['account.analytic.account'].sudo().search(
             [('parent_id', 'in', cities.ids)])
 
         if visible_ids is not None:
@@ -115,20 +117,22 @@ class DonationBoxDashboard(models.TransientModel):
         Complain = self.env['donation.box.complain.center']
         Collection = self.env['rider.collection']
 
-        draft_boxes = Registration.search_count(reg_domain + [('status', '=', 'draft')])
-        available = Registration.search_count(reg_domain + [('status', '=', 'available')])
-        installed = Registration.search_count(reg_domain + [('status', '=', 'installed')])
-        closed = Registration.search_count(reg_domain + [('status', '=', 'close')])
-        
-        draft_complaints = Complain.search_count(comp_domain + [('status', '=', 'draft')])
-        process_complaints = Complain.search_count(comp_domain + [('status', '=', 'process')])
-        resolved_complaints = Complain.search_count(comp_domain + [('status', '=', 'resolved')])
+        # counted by PostgreSQL, one query per model: no record is loaded in Python
+        reg_counts = dict(Registration._read_group(reg_domain, ['status'], ['__count']))
+        draft_boxes, available = reg_counts.get('draft', 0), reg_counts.get('available', 0)
+        installed, closed = reg_counts.get('installed', 0), reg_counts.get('close', 0)
 
-        collections = Collection.search(col_domain)
-        total_collection = sum([c.amount for c in collections if c.state in ['donation_submit', 'pending', 'paid']])
-        not_collected_count = Collection.search_count(col_domain + [('state', '=', 'donation_not_collected')])
-        pending_count = Collection.search_count(col_domain + [('state', '=', 'pending')])
-        paid_count = Collection.search_count(col_domain + [('state', '=', 'paid')])
+        comp_counts = dict(Complain._read_group(comp_domain, ['status'], ['__count']))
+        draft_complaints = comp_counts.get('draft', 0)
+        process_complaints = comp_counts.get('process', 0)
+        resolved_complaints = comp_counts.get('resolved', 0)
+
+        col_stats = {state: (count, amount or 0.0) for state, count, amount in
+                     Collection._read_group(col_domain, ['state'], ['__count', 'amount:sum'])}
+        total_collection = sum(col_stats.get(state, (0, 0.0))[1] for state in ('donation_submit', 'pending', 'paid'))
+        not_collected_count = col_stats.get('donation_not_collected', (0, 0.0))[0]
+        pending_count = col_stats.get('pending', (0, 0.0))[0]
+        paid_count = col_stats.get('paid', (0, 0.0))[0]
 
         today = date.today()
         start_3m = (today - relativedelta(months=2)).replace(day=1)
@@ -137,19 +141,19 @@ class DonationBoxDashboard(models.TransientModel):
         start_prev_3m = (start_3m - relativedelta(months=3)).replace(day=1)
         end_prev_3m = start_3m - relativedelta(days=1)
 
-        current_3m_cols = Collection.search(base_col_domain  + [
+        [(current_3m_sum,)] = Collection._read_group(base_col_domain + [
             ('date', '>=', start_3m.strftime('%Y-%m-%d')),
             ('date', '<=', end_3m.strftime('%Y-%m-%d')),
             ('state', 'in', ['donation_submit', 'pending', 'paid'])
-        ])
-        current_3m_sum = sum(current_3m_cols.mapped('amount'))
+        ], [], ['amount:sum'])
+        current_3m_sum = current_3m_sum or 0.0
 
-        prev_3m_cols = Collection.search(base_col_domain + [
+        [(prev_3m_sum,)] = Collection._read_group(base_col_domain + [
             ('date', '>=', start_prev_3m.strftime('%Y-%m-%d')),
             ('date', '<=', end_prev_3m.strftime('%Y-%m-%d')),
             ('state', 'in', ['donation_submit', 'pending', 'paid'])
-        ])
-        prev_3m_sum = sum(prev_3m_cols.mapped('amount'))
+        ], [], ['amount:sum'])
+        prev_3m_sum = prev_3m_sum or 0.0
 
         diff_pct = 0
         if prev_3m_sum > 0:
@@ -275,8 +279,10 @@ class DonationBoxDashboard(models.TransientModel):
         Complaint = self.env['donation.box.complain.center']
 
         def _collect(start, end):
-            cols = Collection.search(col_base + [('date', '>=', start), ('date', '<=', end), ('state', 'in', ['donation_submit', 'pending', 'paid'])])
-            return {'collection_amount': sum(cols.mapped('amount')), 'collection_count': len(cols)}
+            [(count, amount)] = Collection._read_group(
+                col_base + [('date', '>=', start), ('date', '<=', end), ('state', 'in', ['donation_submit', 'pending', 'paid'])],
+                [], ['__count', 'amount:sum'])
+            return {'collection_amount': amount or 0.0, 'collection_count': count}
 
         def _registrations(start, end):
             return Registration.search_count(reg_base + [('installation_date', '>=', start), ('installation_date', '<=', end)])

@@ -20,6 +20,16 @@ class MedicalPatient(models.Model):
     mobile = fields.Char('Mobile No.', readonly=True)
     date_of_birth = fields.Date('Date of Birth', readonly=True)
     registered_on = fields.Datetime('Registered On', readonly=True)
+    image_128 = fields.Image(related='partner_id.image_128', string='Photo')
+    # the photo widget keys its cache on it
+    write_date = fields.Datetime('Last Updated on', readonly=True)
+    age = fields.Integer('Age', compute='_compute_age')
+
+    def _compute_age(self):
+        today = fields.Date.context_today(self)
+        for patient in self:
+            dob = patient.date_of_birth
+            patient.age = (today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))) if dob else 0
 
     def init(self):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -32,7 +42,8 @@ class MedicalPatient(models.Model):
                        p.cnic_no AS cnic_no,
                        p.mobile AS mobile,
                        p.date_of_birth AS date_of_birth,
-                       p.create_date AS registered_on
+                       p.create_date AS registered_on,
+                       p.write_date AS write_date
                   FROM res_partner p
                  WHERE p.active
                    AND p.state = 'register'
@@ -47,6 +58,6 @@ class MedicalPatient(models.Model):
                           FROM res_partner_res_partner_category_rel rel
                           JOIN ir_model_data imd ON imd.model = 'res.partner.category' AND imd.res_id = rel.category_id
                          WHERE rel.partner_id = p.id
-                           AND imd.module = 'bn_profile_management' AND imd.name = 'medical_patient_partner_category')
+                           AND imd.module = 'bn_profile_management' AND imd.name = 'medical_partner_category')
             )
         """)

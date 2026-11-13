@@ -45,7 +45,7 @@
 
                     <group>
                         <group name="distribution_center_col_1">
-                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee')]" requried="1" />
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" requried="1" />
                             <field name="type" />
                             <field name="location" />
                             <field name="delivery_instruction" />

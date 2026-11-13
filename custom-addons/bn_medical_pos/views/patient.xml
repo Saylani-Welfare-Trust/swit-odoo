@@ -10,11 +10,12 @@
                     <button name="%(action_mh_patient_register_wizard)d" type="action" string="Register Patient"
                             class="btn-primary" display="always"/>
                 </header>
-                <field name="registration_id"/>
+                <field name="registration_id" decoration-bf="1"/>
                 <field name="name"/>
                 <field name="cnic_no"/>
-                <field name="mobile"/>
-                <field name="date_of_birth"/>
+                <field name="mobile" widget="phone"/>
+                <field name="date_of_birth" optional="show"/>
+                <field name="age" optional="show"/>
                 <field name="registered_on" optional="hide"/>
             </tree>
         </field>
@@ -27,17 +28,22 @@
             <form string="Patient" create="0" edit="0" delete="0">
                 <sheet>
                     <div class="oe_button_box" name="button_box"/>
+                    <field name="image_128" widget="image" class="oe_avatar" readonly="1" options="{'size': [96, 96]}"/>
                     <div class="oe_title">
+                        <span class="o_form_label">Patient</span>
                         <h1><field name="name"/></h1>
-                        <h3><field name="registration_id"/></h3>
+                        <div class="text-muted fs-5">
+                            <i class="fa fa-id-card-o me-1" title="Registration No."/><field name="registration_id" class="d-inline"/>
+                        </div>
                     </div>
                     <group>
-                        <group>
+                        <group string="Identity" name="identity">
                             <field name="cnic_no"/>
-                            <field name="mobile"/>
-                        </group>
-                        <group>
                             <field name="date_of_birth"/>
+                            <field name="age"/>
+                        </group>
+                        <group string="Contact" name="contact">
+                            <field name="mobile" widget="phone"/>
                             <field name="registered_on"/>
                         </group>
                     </group>

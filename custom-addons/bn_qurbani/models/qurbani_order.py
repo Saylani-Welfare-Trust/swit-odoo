@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 import logging
 import re
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 from datetime import datetime
 _logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ class QurbaniOrder(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
     _description = 'Qurbani POS Orders'
 
-    donor_id = fields.Many2one('res.partner', string="Donor")
+    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'))
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True, readonly=True)
 

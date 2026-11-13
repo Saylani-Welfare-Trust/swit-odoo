@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 from .workflow import in_transition
 
@@ -44,7 +45,7 @@ class DonationBoxRegistrationInstallation(models.Model):
 
     donation_box_request_id = fields.Many2one('donation.box.request', string="Donation Box Request", index=True)
     lot_id = fields.Many2one('stock.lot', string="Lot", index=True)
-    donor_id = fields.Many2one('res.partner', string="Donor", tracking=True)
+    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('db_donor', registered=True), tracking=True)
     installation_category_id = fields.Many2one('installation.category', string="Installation Category", tracking=True)
     product_id = fields.Many2one('product.product', string="Box Category")
     country_id = fields.Many2one(related='donor_id.country_code_id', string="Phone Code", store=True, tracking=True)

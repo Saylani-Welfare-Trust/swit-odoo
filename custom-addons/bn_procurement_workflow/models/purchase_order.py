@@ -4,11 +4,16 @@ from collections import defaultdict
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
+
 CFO_GROUP = 'bn_material_request.menu_group_material_request_cfo'
 
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
+
+    # only the contacts tagged Vendor
+    partner_id = fields.Many2one(domain=tag_domain('vendor'))
 
     # Final approval before the RFQ can be confirmed into a PO (after CXO and HOD).
     cfo_approved = fields.Boolean('CFO Approved', copy=False, readonly=True, tracking=True)

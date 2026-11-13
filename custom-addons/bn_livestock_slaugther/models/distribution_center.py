@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 from dateutil.relativedelta import relativedelta
 
@@ -25,7 +26,7 @@ class DistributionCenter(models.Model):
 
     name = fields.Char('Name', default="New")
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee'))
     purchase_requisition_id = fields.Many2one('purchase.requisition', string="Purchase Requisition")
     picking_id = fields.Many2one('stock.picking', string="Picking")
 

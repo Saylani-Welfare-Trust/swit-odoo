@@ -10,6 +10,7 @@ from datetime import datetime, time, timedelta
 import base64
 from io import BytesIO
 import openpyxl
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 assest_availability_selection = [
@@ -76,7 +77,7 @@ class Microfinance(models.Model):
     name = fields.Char('Name', default="NEW")
     old_system_record = fields.Char('Old System Record')
     microfinance_pdc_line_ids = fields.One2many('microfinance.pdc.line', 'microfinance_id', string="PDC Lines")
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'individual', 'microfinance', registered=True))
     product_id = fields.Many2one('product.product', string="Product")
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
     microfinance_scheme_line_id = fields.Many2one('microfinance.scheme.line', string="Microfinance Scheme Line")

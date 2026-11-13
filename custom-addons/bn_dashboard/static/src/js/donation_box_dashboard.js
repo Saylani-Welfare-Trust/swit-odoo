@@ -1,5 +1,6 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
+import { loadBundle } from "@web/core/assets";
 import { browser } from "@web/core/browser/browser"; // <-- IMPORTED BROWSER
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
@@ -65,6 +66,8 @@ export class DonationBoxDashboard extends Component {
         this.is_mounted = false;
 
         onWillStart(async () => {
+            // Chart.js of Odoo, loaded only when a dashboard opens
+            await loadBundle("web.chartjs_lib");
             await this.fetch_dropdowns();
             await this.fetch_data();
             this._init_comparison_periods();

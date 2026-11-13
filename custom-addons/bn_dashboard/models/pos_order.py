@@ -46,17 +46,19 @@ class PosOrder(models.Model):
 
     @api.model
     def get_location_hierarchy(self):
+        # the filter lists: names only, read as superuser (a POS / programme
+        # manager needs no Accounting rights); the figures keep their own rules
 
-        provinces = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+        provinces = self.env['account.analytic.account'].sudo().search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        seg_l1 = self.env['account.analytic.account'].sudo().search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
 
 
-        cities = self.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
-        zones = self.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
+        cities = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', provinces.ids)])
+        zones = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', cities.ids)])
         
-        seg_l2 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
-        seg_l3 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
-        seg_l4 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
+        seg_l2 = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l1.ids)])
+        seg_l3 = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l2.ids)])
+        seg_l4 = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l3.ids)])
         
         return {
             'provinces': [{'id': p.id, 'name': p.name} for p in provinces],
@@ -134,7 +136,7 @@ class PosOrder(models.Model):
             if segment_type:
                 analytic_domain.append(('name', 'ilike', f'%({segment_type})%'))
 
-            accounts = self.env['account.analytic.account'].search(analytic_domain)
+            accounts = self.env['account.analytic.account'].sudo().search(analytic_domain)
             if not accounts:
                 domain.append(('id', '=', 0))
             else:
@@ -175,12 +177,18 @@ class PosOrder(models.Model):
         return domain
 
     def _get_order_ids_sql(self, domain):
+        """SQL condition limiting ``pos_order`` to the orders of ``domain``.
+
+        A sub-select run by PostgreSQL itself (with the record rules), instead
+        of loading the ids of every order into Python and sending them back:
+        that was the slow part of the dashboard on a year of orders."""
         if not domain:
             return ""
-        orders = self.env['pos.order'].search(domain)
-        if not orders:
+        query = self.env['pos.order']._search(domain)
+        if query.is_empty():
             return " AND 1=0 "
-        return " AND pos_order.id IN (%s) " % ','.join(str(i) for i in orders.ids)
+        sql = query.subselect()
+        return " AND pos_order.id IN (%s) " % self.env.cr.mogrify(sql.code, sql.params).decode()
 
     # ------------------------------------------------------------------
     # sales chart
@@ -260,12 +268,20 @@ class PosOrder(models.Model):
         payment_details = cr.fetchall()
 
         cr.execute("""
-            select hr_employee.name, sum(pos_order.amount_paid) as total,
-                   count(pos_order.amount_paid) as orders
+            select COALESCE(emp.name, rp.name) as cashier, sum(pos_order.amount_paid) as total,
+                   count(pos_order.id) as orders
             from pos_order
-            inner join hr_employee on pos_order.user_id = hr_employee.user_id
+            join res_users ru on ru.id = pos_order.user_id
+            join res_partner rp on rp.id = ru.partner_id
+            -- one employee per cashier (a user can have one per company): a plain
+            -- join would count the order once per employee
+            left join lateral (
+                select e.name from hr_employee e
+                 where e.user_id = pos_order.user_id
+                 order by (e.company_id = pos_order.company_id) desc, e.id limit 1
+            ) emp on true
             where pos_order.company_id = %d %s
-            group by hr_employee.name
+            group by 1
             order by total DESC
         """ % (company_id, order_sql))
         salesperson = cr.fetchall()
@@ -306,24 +322,19 @@ class PosOrder(models.Model):
                            *extra, **kwargs):
         domain = self._get_order_domain(config_id, date_from, date_to, province_id, city_id, zone_id, segment_id, segment_type)
         domain = self._apply_dashboard_filters(domain, category_id, amount_min, amount_max)
-        pos_orders = self.env['pos.order'].search(domain)
-
-        default_date = datetime.today().date()
-        total = 0
-        today_refund_total = 0
-        total_order_count = 0
-        total_refund_count = 0
-        today_sale = 0
-
-        for rec in pos_orders:
-            total += rec.amount_total
-            total_order_count += 1
-            if rec.date_order.date() == default_date:
-                today_sale += 1
-            if rec.amount_total < 0.0:
-                total_refund_count += 1
-                if rec.date_order.date() == default_date:
-                    today_refund_total += 1
+        # counted by PostgreSQL: no order is loaded into Python
+        Order = self.env['pos.order']
+        [(total_order_count, total)] = Order._read_group(domain, [], ['__count', 'amount_total:sum'])
+        total = total or 0.0
+        total_refund_count = Order.search_count(domain + [('amount_total', '<', 0.0)])
+        # today in the user's time zone, as date_order is shown
+        tz = pytz.timezone(self.env.user.tz or 'UTC')
+        local_start = tz.localize(datetime.combine(datetime.now(tz).date(), datetime.min.time()))
+        today_start = local_start.astimezone(pytz.utc).replace(tzinfo=None)
+        today_domain = domain + [('date_order', '>=', today_start),
+                                 ('date_order', '<', today_start + timedelta(days=1))]
+        today_sale = Order.search_count(today_domain)
+        today_refund_total = Order.search_count(today_domain + [('amount_total', '<', 0.0)])
 
         magnitude = 0
         mag_total = total
@@ -638,7 +649,8 @@ class PosOrder(models.Model):
         if "1=0" in order_sql:
             return {'cities': [], 'groups': []}
 
-        location_plans = self.env['account.analytic.plan'].search([('name', '=', 'Location')])
+        # configuration read as superuser: a POS manager needs no Accounting rights
+        location_plans = self.env['account.analytic.plan'].sudo().search([('name', '=', 'Location')])
         plan_ids_sql = ",".join(map(str, location_plans.ids)) if location_plans else "0"
 
         # 1. Join Product's Analytic Account
@@ -1068,14 +1080,14 @@ class PosOrder(models.Model):
                 zone_id, segment_id, segment_type)
             domain = self._apply_dashboard_filters(
                 domain, category_id, amount_min, amount_max)
-            orders = self.search(domain)
-
-            refunds = orders.filtered(lambda o: o.amount_total < 0)
+            [(order_count, total_sale)] = self._read_group(domain, [], ['__count', 'amount_total:sum'])
+            [(refund_count, refund_amount)] = self._read_group(
+                domain + [('amount_total', '<', 0)], [], ['__count', 'amount_total:sum'])
             return {
-                'total_sale':   sum(orders.mapped('amount_total')),
-                'order_count':  len(orders),
-                'refund_count': len(refunds),
-                'refund_amount': abs(sum(refunds.mapped('amount_total'))),
+                'total_sale':   total_sale or 0.0,
+                'order_count':  order_count,
+                'refund_count': refund_count,
+                'refund_amount': abs(refund_amount or 0.0),
             }
 
         p1 = _get_stats(p1_start, p1_end)

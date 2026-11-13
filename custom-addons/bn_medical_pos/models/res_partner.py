@@ -14,7 +14,7 @@ class ResPartner(models.Model):
         return (
             self.env.ref('bn_profile_management.donee_partner_category'),
             self.env.ref('bn_profile_management.individual_partner_category'),
-            self.env.ref('bn_profile_management.medical_patient_partner_category'),
+            self.env.ref('bn_profile_management.medical_partner_category'),
         )
 
     @api.model
@@ -79,14 +79,18 @@ class ResPartner(models.Model):
         Partner = self.sudo()
         donee_tag, individual_tag, medical_tag = self._mh_patient_tags()
 
-        existing = Partner.search([
-            ('category_id', 'in', donee_tag.ids),
-            ('state', '=', 'register'),
-            ('cnic_no', '=', cnic_no),
-        ], limit=1)
+        # one contact per person: whoever already has this CNIC (donor, donee of
+        # another programme ...) becomes the patient instead of a duplicate
+        existing = Partner._find_person(cnic=cnic_no)
         if existing:
-            if medical_tag not in existing.category_id:
-                existing.category_id = [Command.link(medical_tag.id)]
+            existing._add_person_tags(donee_tag | individual_tag | medical_tag)
+            missing = {key: value for key, value in (
+                ('mobile', mobile), ('date_of_birth', date_of_birth)) if not existing[key]}
+            if missing:
+                existing.write(missing)
+            # not registered yet, or registered but without the ID of its new Donee tag
+            if existing.state != 'register' or existing._pattern_tags_without_id():
+                existing.action_register()
             return existing, True
 
         patient = Partner.create({

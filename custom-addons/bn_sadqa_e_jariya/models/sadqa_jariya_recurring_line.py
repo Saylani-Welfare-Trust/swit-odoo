@@ -138,15 +138,20 @@ class SadqaJariyaRecurringLine(models.Model):
 
     def action_delivered(self):
         for line in self.filtered(lambda l: l.disbursement_category_id.name == 'In Kind'):
-            location_src = self.env['stock.location'].search([('usage', '=', 'internal')], limit=1)
-            location_dest = self.env['stock.location'].search([('usage', '=', 'customer')], limit=1)
+            if line.state != 'draft':
+                raise ValidationError(_('A delivery is only created for a Draft line (%s).') % line.display_name)
+            # the Sadqa e Jariya Delivery operation type of the user's warehouse
+            picking_type = self.env['stock.warehouse']._get_program_type('sadqa_jariya')
+            location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
+            location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
             picking = self.env['stock.picking'].create({
                 'partner_id': line.donee_id.id,
-                'picking_type_id': self.env.ref('stock.picking_type_out').id,
+                'picking_type_id': picking_type.id,
                 'location_id': location_src.id,
                 'location_dest_id': location_dest.id,
                 'origin': line.name,
                 'sadqa_jariya_recurring_line_id': line.id,
+                'source_record_ref': '%s,%s' % (line.application_id._name, line.application_id.id) if line.application_id else False,
             })
             move = self.env['stock.move'].create({
                 'name': line.product_id.display_name,

@@ -7,10 +7,13 @@
     'summary': 'A custom Dashboard for Odoo 17 Community',
     'depends': ['base', 'web', 'account', 'bn_pos_cheque',
                 'bn_donation_box','bn_profile_management','hr',
-                'bn_direct_deposit',],
+                'bn_direct_deposit',
+                # models the dashboards extend or read
+                'bn_donation_in_kind', 'bn_rider_shift', 'bn_journal_transfer', 'bn_import_donation'],
     'data': [
         'security/dashboard_security.xml',
         'security/ir.model.access.csv',
+        'security/record_rule.xml',
         'views/treasury_dashboard_views.xml',
         'security/pos_dd_report_rules.xml',
         'views/donation_box_dashboard_views.xml',
@@ -41,12 +44,8 @@
             'bn_dashboard/static/src/xml/pos_dashboard.xml',
             'bn_dashboard/static/src/css/pos_dashboard.css',
             'bn_dashboard/static/src/css/pos_dashboard_v2.scss',
-            'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js',
         ],
     },
-    'external_dependencies': {
-            'python': ['pandas'],
-        },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

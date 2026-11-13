@@ -4,6 +4,7 @@ from odoo.exceptions import AccessError, ValidationError, UserError
 from markupsafe import Markup
 import base64
 import logging
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 _logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class DonationInKind(models.Model):
             return field_map.get(name, False)
         return False
     
-    donor_id = fields.Many2one('res.partner', string="Donor", tracking=True)
+    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'), tracking=True)
     product_id = fields.Many2one('product.product', string="Product", tracking=True)
     picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'))
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))

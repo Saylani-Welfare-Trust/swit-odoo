@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The Donation Box dashboard shows the boxes of the viewer's City
+         (see bn_donation_box/security/record_rule.xml) -->
+    <record id="bn_donation_box.donation_box_registration_city_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_dashboard.group_donation_box_dashboard_user'))]"/>
+    </record>
+
+</odoo>

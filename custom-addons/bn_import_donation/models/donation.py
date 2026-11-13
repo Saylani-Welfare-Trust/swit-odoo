@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
 import logging
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 _logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class Donation(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    donor_id = fields.Many2one('res.partner', string="Donor / Student", tracking=True)
+    donor_id = fields.Many2one('res.partner', string="Donor / Student", domain=tag_domain('donor', 'student', any_of=True), tracking=True)
     journal_id = fields.Many2one('account.journal', string="Journal", tracking=True)
     product_id = fields.Many2one('product.product', string="Product", tracking=True)
     gateway_config_id = fields.Many2one('gateway.config', string="Gateway Config", tracking=True)

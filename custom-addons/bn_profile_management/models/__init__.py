@@ -9,3 +9,4 @@ from . import res_partner_identity
 from . import profile_view_field
 from . import pos_session
 from . import res_company
+from . import partner_tag_domain

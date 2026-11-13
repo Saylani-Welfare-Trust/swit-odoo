@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
 import re
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 status_selection = [       
@@ -19,7 +20,7 @@ class DonationHomeService(models.Model):
     _description = "Donation Home Service"
 
 
-    donor_id = fields.Many2one('res.partner', string="Donor")
+    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'))
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Stock Picking")
     second_picking_id = fields.Many2one('stock.picking', string='Second Stock Picking')

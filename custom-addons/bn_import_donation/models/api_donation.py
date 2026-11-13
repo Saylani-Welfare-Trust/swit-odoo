@@ -2,6 +2,7 @@ import logging
 
 from odoo import models, fields, _
 from odoo.exceptions import ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 _logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class APIDonation(models.Model):
     qurbani_order_line_ids = fields.One2many('api.qurbani.order.line', 'qurbani_order_id', string="Qurbani Order Lines")
 
     fetch_history_id = fields.Many2one('fetch.history', string="Fetch History", tracking=True)
-    donor_id = fields.Many2one('res.partner', string="Donor", tracking=True)
+    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'), tracking=True)
     qurbani = fields.Boolean('Is Qurbani', tracking=True)
     partner_creation_status = fields.Selection([
         ('pending', 'Pending'),

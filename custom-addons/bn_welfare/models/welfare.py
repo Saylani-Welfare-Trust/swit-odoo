@@ -7,6 +7,7 @@ import base64
 import logging
 from dateutil.relativedelta import relativedelta
 import json
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
@@ -89,7 +90,7 @@ class Welfare(models.Model):
 
     order_type = fields.Selection(order_type_selection, string="Order Type")
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'welfare', registered=True))
     employee_id = fields.Many2one('hr.employee', string="Employee")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     is_individual = fields.Boolean('Is Individual', default=False) 

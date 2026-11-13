@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 import logging
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 _logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class DirectDeposit(models.Model):
     favor = fields.Char('favor')
     cnic_no = fields.Char('CNIC No.', size=15)
     bank_id = fields.Many2one('account.journal', string="Bank")
-    donor_id = fields.Many2one('res.partner', string="Donor")
+    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'))
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     # the Branch of the POS shop it was made at; made in the back office: the user's branch

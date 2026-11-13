@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 class PurchaseRequisition(models.Model):
     _inherit = 'purchase.requisition'
+
+    # only the contacts tagged Vendor
+    vendor_id = fields.Many2one(domain=tag_domain('vendor'))
 
     requesting_department_id = fields.Many2one(
         related='material_request_id.department_id',
