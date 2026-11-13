@@ -1548,43 +1548,49 @@ class MedicalEquipment(models.Model):
         officer_code = (self.employee_id.barcode or '').strip()
         if not officer_code:
             return None, f"Inquiry Officer {self.employee_id.name or ''} has no Badge ID (barcode)"
-        # The portal returns at most 50 applications; an officer with many welfare cases fills that
-        # limit and pushes medical ones out, so ask for medical only first
-        try:
-            filtered = self._make_sadqa_api_call(
-                endpoint, 'POST', {"json": {"employeeId": officer_code, "department": "medical"}})
-            if isinstance(filtered, list):
-                matching_app = self._find_matching_application(filtered)
-                if matching_app:
-                    return matching_app, ''
-        except Exception as e:
-            _logger.info("Medical-filtered portal search failed, falling back to officer-only search: %s", e)
-        try:
-            # Search by the inquiry officer's employee ID, so the 50-item limit only covers that officer's applications
-            applications = self._make_sadqa_api_call(endpoint, 'POST', {"json": {"employeeId": officer_code}})
-        except Exception as e:
-            _logger.warning(f"Error occurred while searching portal applications: {str(e)}")
-            if 'Portal API Error' in str(e):
-                return None, f"portal search ({endpoint}) returned no applications"
-            return None, f"portal search ({endpoint}) failed: {e}"
-        _logger.info(f"Unsynced applications found: {applications}")
-        if not isinstance(applications, list):
-            return None, f"portal search ({endpoint}) returned unexpected data: {str(applications)[:300]}"
-        matching_app = self._find_matching_application(applications)
-        if matching_app:
-            return matching_app, ''
-        medical_ids = [(a.get('id'), a.get('cnicNo')) for a in applications if isinstance(a, dict) and a.get('department') == 'medical']
-        departments = {}
-        for a in applications:
-            if isinstance(a, dict):
-                dept = repr(a.get('department'))
-                departments[dept] = departments.get(dept, 0) + 1
+        cnic = (self.cnic_no or '').strip()
+        # The portal returns at most 50 applications per search; an officer with many welfare cases
+        # fills that limit and pushes medical ones out. Try narrower filters first and record what
+        # each one returned, so the notification shows which filters the portal honours.
+        attempts = [
+            ('officer+department', {"employeeId": officer_code, "department": "medical"}),
+            ('odooId', {"odooId": self.id}),
+            ('odooId+department', {"odooId": self.id, "department": "medical"}),
+        ]
+        if cnic:
+            attempts.append(('cnicNo', {"cnicNo": cnic}))
+        attempts.append(('officer', {"employeeId": officer_code}))
+        notes = []
+        last_list = None
+        for label, payload in attempts:
+            try:
+                applications = self._make_sadqa_api_call(endpoint, 'POST', {"json": payload})
+            except Exception as e:
+                _logger.info("Portal search [%s] %s failed: %s", label, payload, e)
+                notes.append(f"{label}: error {str(e)[:120]}")
+                continue
+            if not isinstance(applications, list):
+                notes.append(f"{label}: unexpected data {str(applications)[:120]}")
+                continue
+            departments = {}
+            for a in applications:
+                if isinstance(a, dict):
+                    dept = repr(a.get('department'))
+                    departments[dept] = departments.get(dept, 0) + 1
+            notes.append(f"{label}: {len(applications)} result(s) {departments}")
+            matching_app = self._find_matching_application(applications)
+            if matching_app:
+                _logger.info("Portal search [%s] matched application %s", label, matching_app.get('id'))
+                return matching_app, ''
+            last_list = applications
+        applications = last_list or []
+        medical_ids = [(a.get('id'), a.get('cnicNo'), a.get('odooId')) for a in applications
+                       if isinstance(a, dict) and a.get('department') == 'medical']
         sample = applications[0] if applications and isinstance(applications[0], dict) else {}
-        return None, (f"portal returned {len(applications)} application(s); "
-                      f"medical (portal id, CNIC) in it: {medical_ids or 'none'}; "
-                      f"departments: {departments}; "
-                      f"first item keys: {sorted(sample.keys())}; "
-                      f"first item odooId/department/status: {sample.get('odooId')!r}/{sample.get('department')!r}/{sample.get('status')!r}")
+        return None, (f"searches tried -> " + "; ".join(notes) + ". "
+                      f"Medical (portal id, CNIC, odooId) in last result: {medical_ids or 'none'}; "
+                      f"first item odooId/department/status: {sample.get('odooId')!r}/{sample.get('department')!r}/{sample.get('status')!r}; "
+                      f"this record odooId={self.id}, portal id={self.welfare_portal_id or self.portal_application_id or '-'}")
 
 
     def create_portal_application(self):
