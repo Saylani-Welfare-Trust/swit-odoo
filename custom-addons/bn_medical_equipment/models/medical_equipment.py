@@ -1548,20 +1548,16 @@ class MedicalEquipment(models.Model):
         officer_code = (self.employee_id.barcode or '').strip()
         if not officer_code:
             return None, f"Inquiry Officer {self.employee_id.name or ''} has no Badge ID (barcode)"
-        cnic = (self.cnic_no or '').strip()
-        # The portal returns at most 50 applications per search; an officer with many welfare cases
-        # fills that limit and pushes medical ones out. Try narrower filters first and record what
-        # each one returned, so the notification shows which filters the portal honours.
-        attempts = [
-            ('officer+department', {"employeeId": officer_code, "department": "medical"}),
-            ('odooId', {"odooId": self.id}),
-            ('odooId+department', {"odooId": self.id, "department": "medical"}),
-        ]
-        if cnic:
-            attempts.append(('cnicNo', {"cnicNo": cnic}))
+        portal_id = self.welfare_portal_id or self.portal_application_id
+        # Search by department first, then by the portal application id saved at sync time;
+        # the officer-only search is kept as a last resort (it returns at most 50 unsynced rows)
+        attempts = [('department', {"department": "medical"})]
+        if portal_id:
+            attempts.append(('department+applicationId', {"department": "medical", "applicationId": portal_id}))
+            attempts.append(('department+id', {"department": "medical", "id": portal_id}))
         attempts.append(('officer', {"employeeId": officer_code}))
         notes = []
-        last_list = None
+        last_list = []
         for label, payload in attempts:
             try:
                 applications = self._make_sadqa_api_call(endpoint, 'POST', {"json": payload})
@@ -1569,6 +1565,8 @@ class MedicalEquipment(models.Model):
                 _logger.info("Portal search [%s] %s failed: %s", label, payload, e)
                 notes.append(f"{label}: error {str(e)[:120]}")
                 continue
+            if isinstance(applications, dict):
+                applications = [applications]
             if not isinstance(applications, list):
                 notes.append(f"{label}: unexpected data {str(applications)[:120]}")
                 continue
@@ -1583,14 +1581,11 @@ class MedicalEquipment(models.Model):
                 _logger.info("Portal search [%s] matched application %s", label, matching_app.get('id'))
                 return matching_app, ''
             last_list = applications
-        applications = last_list or []
-        medical_ids = [(a.get('id'), a.get('cnicNo'), a.get('odooId')) for a in applications
+        medical_ids = [(a.get('id'), a.get('cnicNo'), a.get('odooId')) for a in last_list
                        if isinstance(a, dict) and a.get('department') == 'medical']
-        sample = applications[0] if applications and isinstance(applications[0], dict) else {}
         return None, (f"searches tried -> " + "; ".join(notes) + ". "
                       f"Medical (portal id, CNIC, odooId) in last result: {medical_ids or 'none'}; "
-                      f"first item odooId/department/status: {sample.get('odooId')!r}/{sample.get('department')!r}/{sample.get('status')!r}; "
-                      f"this record odooId={self.id}, portal id={self.welfare_portal_id or self.portal_application_id or '-'}")
+                      f"this record odooId={self.id}, portal id={portal_id or '-'}")
 
 
     def create_portal_application(self):
