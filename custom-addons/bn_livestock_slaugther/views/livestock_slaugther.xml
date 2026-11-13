@@ -22,7 +22,7 @@
                 <field name="quantity" />
                 <field name="price" />
                 <field name="pos_order_id" optional="show" />
-                <field name="source_location_id" />
+                <field name="source_location_id" column_invisible="1" />
                 <field name="transfer_location" optional="show" />
                 <field name="transfer_picking_id" optional="hide" />
                 <field name="ref" />
@@ -72,7 +72,7 @@
                         <group name="livestock_slaugther_col_2">
                             <field name="quantity" />
                             <field name="price" />
-                            <field name="source_location_id" />
+                            <field name="source_location_id" invisible="1" />
                             <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
                             <field name="transfer_picking_id" invisible="not transfer_picking_id" />
                             <field name="transfer_remarks" readonly="1" invisible="not transfer_remarks" />
