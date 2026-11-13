@@ -35,14 +35,7 @@ class AdvanceDonationLine(models.Model):
         ('paid', 'Paid')],
         string='Status', compute='_compute_installment_state', store=True)
 
-    donation_state = fields.Selection([
-        ('draft', 'Draft'),
-        ('approval_1', 'Approval 1'),
-        ('approval_2', 'Approval 2'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected')],
-        default='draft',
-        string='Donation State', related='advance_donation_id.state')
+    donation_state = fields.Selection(string='Donation State', related='advance_donation_id.state')
     approved_date = fields.Datetime('Approved Date', related='advance_donation_id.approved_date')
     is_disbursed = fields.Boolean('Is Disbursed?', default=False)
     currency_id = fields.Many2one('res.currency', 'Currency', related='advance_donation_id.currency_id', readonly=True)

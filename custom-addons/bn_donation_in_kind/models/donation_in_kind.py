@@ -215,12 +215,12 @@ May Allah bless you!
     valuation_committee_line_ids = fields.One2many('valuation.committee.line', 'donation_in_kind_id', string="Product Valuation Committee Lines")
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('donation_in_kind') or ('New')
-
-        return super(DonationInKind, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('donation_in_kind') or ('New')
+        return super().create(vals_list)
 
     @api.constrains('donor_id', 'product_id', 'quantity')
     def compute_quantity(self):

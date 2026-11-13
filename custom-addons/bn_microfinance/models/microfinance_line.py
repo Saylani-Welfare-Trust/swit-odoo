@@ -65,14 +65,15 @@ class MicrofinanceLine(models.Model):
     
     payment_status = fields.Char(compute='_get_payment_status', string='Payment Status')
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
-            vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_line') or ('New')
-                
-        res = super(MicrofinanceLine, self).create(vals)
-        res._update_overdue_state()
-        return res
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
+                vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_line') or ('New')
+        records = super().create(vals_list)
+        for res in records:
+            res._update_overdue_state()
+        return records
 
     def _update_overdue_state(self):
         """Move unpaid/partial lines past their due date to 'overdue', and

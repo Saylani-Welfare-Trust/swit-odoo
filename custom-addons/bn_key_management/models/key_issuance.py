@@ -124,6 +124,11 @@ class KeyIssuance(models.Model):
             record._do_return()
         return True
 
+    def _money_to_settle(self):
+        """Issuances whose collection still has money to settle at the POS: they
+        stay open when their box is closed (extended by bn_rider_shift)."""
+        return self.browse()
+
     def _do_return(self):
         self.ensure_one()
         if self.state not in ('donation_receive', 'pending'):
@@ -132,7 +137,9 @@ class KeyIssuance(models.Model):
             ) % {'name': self.display_name, 'state': self._selection_label('state', self.state)})
         key = self.key_id
         key._lock_key()
-        key._workflow_write({'state': 'available'})
+        # the key of a box taken out of service stays closed
+        if key.state != 'closed':
+            key._workflow_write({'state': 'available'})
         self._workflow_write({'state': 'returned', 'returned_on': fields.Datetime.now()})
 
     def action_donation_receive(self):

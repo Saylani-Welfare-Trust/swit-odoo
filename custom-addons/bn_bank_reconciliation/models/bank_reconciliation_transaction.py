@@ -217,18 +217,19 @@ class BankReconciliationTransaction(models.Model):
                 move = master.move_id
             record.reconciliation_move_id = move or False
 
-    @api.model
-    def create(self, vals):
-        if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
-            if vals['amount'] >= 0:
-                vals['debit'] = vals['amount']
-                vals['credit'] = 0.0
-            else:
-                vals['debit'] = 0.0
-                vals['credit'] = abs(vals['amount'])
-        if not vals.get('state'):
-            vals['state'] = 'draft'
-        return super(BankReconciliationTransaction, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
+                if vals['amount'] >= 0:
+                    vals['debit'] = vals['amount']
+                    vals['credit'] = 0.0
+                else:
+                    vals['debit'] = 0.0
+                    vals['credit'] = abs(vals['amount'])
+            if not vals.get('state'):
+                vals['state'] = 'draft'
+        return super().create(vals_list)
 
     def write(self, vals):
         if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:

@@ -641,6 +641,7 @@ class Microfinance(models.Model):
             picking.write({
                 'location_id': location_id,
                 'origin': self.name,
+                'source_record_ref': '%s,%s' % (self._name, self.id),
                 'scheduled_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
             })
             picking.move_ids.write({'location_id': location_id})
@@ -827,15 +828,15 @@ class Microfinance(models.Model):
                 'cheque_date': cheque_date,
             })
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('NEW')) == _('NEW'):
-            sequence_code = f"microfinance.{vals.get('microfinance_scheme_id')}"
-            
-            vals['name'] = "MF/"
-            vals['name'] += self.env['ir.sequence'].next_by_code(sequence_code) or _('New')
-        
-        return super(Microfinance, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('NEW')) == _('NEW'):
+                sequence_code = f"microfinance.{vals.get('microfinance_scheme_id')}"
+
+                vals['name'] = "MF/"
+                vals['name'] += self.env['ir.sequence'].next_by_code(sequence_code) or _('New')
+        return super().create(vals_list)
     
     # --- Recovery Process: New Methods and State Flow ---
     def action_temp_recovered(self):

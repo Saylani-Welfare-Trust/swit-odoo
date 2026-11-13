@@ -13,7 +13,6 @@
                 <field name="pos_reference"/>
                 <field name="pos_config_id"/>
                 <field name="refund_approved_by_1"/>
-                <field name="refund_approved_by_2"/>
                 <field name="medical_equipment_line_ids" string="Line Product" filter_domain="['|', ('medical_equipment_line_ids.product_id', 'ilike', self), ('reference_line_ids.product_id', 'ilike', self)]"/>
                 <separator/>
                 <filter name="filter_state_send_for_inquiry" string="Send for Inquiry" domain="[('state', '=', 'send_for_inquiry')]"/>
@@ -25,8 +24,7 @@
                 <filter name="filter_state_payment_received" string="Payment Received" domain="[('state', '=', 'payment_received')]"/>
                 <filter name="filter_state_validate" string="Validate" domain="[('state', '=', 'validate')]"/>
                 <filter name="filter_state_return" string="Return" domain="[('state', '=', 'return')]"/>
-                <filter name="filter_state_refund_ceo_approval" string="Refund Approval (1)" domain="[('state', '=', 'refund_ceo_approval')]"/>
-                <filter name="filter_state_refund_cfo_approval" string="Refund Approval (2)" domain="[('state', '=', 'refund_cfo_approval')]"/>
+                <filter name="filter_state_refund_ceo_approval" string="Refund Approval" domain="[('state', '=', 'refund_ceo_approval')]"/>
                 <filter name="filter_state_refund" string="Refund" domain="[('state', '=', 'refund')]"/>
                 <filter name="filter_state_payment_return" string="Payment Return" domain="[('state', '=', 'payment_return')]"/>
                 <filter name="filter_state_donate" string="Donate" domain="[('state', '=', 'donate')]"/>
@@ -38,8 +36,7 @@
                 <filter name="period_create_date" string="Created on" date="create_date"/>
                 <group expand="0" string="Group By" name="group_by_options">
                     <filter name="groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
-                    <filter name="groupby_refund_approved_by_1" string="Refund Approved By (1)" context="{'group_by': 'refund_approved_by_1'}"/>
-                    <filter name="groupby_refund_approved_by_2" string="Refund Approved By (2)" context="{'group_by': 'refund_approved_by_2'}"/>
+                    <filter name="groupby_refund_approved_by_1" string="Refund Approved By" context="{'group_by': 'refund_approved_by_1'}"/>
                     <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
                 </group>
             </xpath>

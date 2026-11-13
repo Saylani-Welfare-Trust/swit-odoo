@@ -75,7 +75,7 @@ class StockPicking(models.Model):
         s_no = 1
         for move in self.move_ids:
             qty = int(move.product_uom_qty or 0)
-            for _ in range(qty):
+            for _unit in range(qty):
                 lines.append((0, 0, {
                     's_no': s_no,
                     'product_id': move.product_id.id,

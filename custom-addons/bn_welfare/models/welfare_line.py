@@ -287,13 +287,13 @@ class WelfareLine(models.Model):
             'target': 'new',
         }
 
-    @api.model
-    def create(self, vals):
-        # By name: older databases have two "In Kind" categories (master setup and welfare data)
-        if self.env['disbursement.category'].browse(vals.get('disbursement_category_id')).name == 'In Kind':
-            vals['collection_point'] = 'branch'
-        
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # By name: older databases have two "In Kind" categories (master setup and welfare data)
+            if self.env['disbursement.category'].browse(vals.get('disbursement_category_id')).name == 'In Kind':
+                vals['collection_point'] = 'branch'
+        return super().create(vals_list)
 
 
     # REMOVED - This write() method was problematic and has been merged with the manual tracking one below

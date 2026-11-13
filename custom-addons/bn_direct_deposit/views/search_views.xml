@@ -16,7 +16,7 @@
                 <field name="user_id"/>
                 <field name="direct_deposit_line_ids" string="Line Product" filter_domain="[('direct_deposit_line_ids.product_id', 'ilike', self)]"/>
                 <separator/>
-                <filter name="filter_state_transferred" string="Transferred to DHS" domain="[('state', '=', 'transferred')]"/>
+                <filter name="filter_state_transferred" string="Transferred to DHS" domain="[('state', '=', 'clear'), ('transfer_to_dhs', '=', True)]"/>
                 <separator/>
                 <filter name="filter_my_records" string="My Records" domain="[('user_id', '=', uid)]"/>
                 <group expand="0" string="Group By" name="group_by_options">

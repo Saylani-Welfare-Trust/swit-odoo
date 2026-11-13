@@ -107,7 +107,7 @@
                                     </td>
                                     <td style="width: 27%; vertical-align: top; border: none; text-align: center;">
                                         <t t-if="o.image_1920">
-                                            <img t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 150px; height: 150px; border: 1px solid #000; object-fit: cover;"/>
+                                            <img alt="Logo" t-att-src="'/web/image/%s/%s/image_1920' % (o._name, o.id)" style="width: 150px; height: 150px; border: 1px solid #000; object-fit: cover;"/>
                                         </t>
                                         <t t-else="">
                                             <div style="width: 70px; height: 70px; border: 1px solid #000; display: inline-flex; align-items: center; justify-content: center;">

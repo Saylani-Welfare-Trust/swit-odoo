@@ -1,7 +1,7 @@
 from odoo import models
 
 
-class AdvanceDonationStatementWizard(models.TransientModel):
+class AdvanceDonationStatementWizard(models.AbstractModel):
     _inherit = 'advance.donation.statement.wizard'
 
     def _get_program_disbursements(self, df, dt, donor_id):

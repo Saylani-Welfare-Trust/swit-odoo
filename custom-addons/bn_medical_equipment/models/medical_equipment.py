@@ -30,8 +30,7 @@ status_selection = [
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
     ('return', 'Return'),
-    ('refund_ceo_approval', 'Refund Approval (1)'),
-    ('refund_cfo_approval', 'Refund Approval (2)'),
+    ('refund_ceo_approval', 'Refund Approval'),
     ('refund', 'Refund'),
     ('payment_return','Payment Return'),
     ('donate', 'Donate'),
@@ -175,10 +174,9 @@ class MedicalEquipment(models.Model):
     )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     
-    refund_remarks_approval1 = fields.Text('Refund Approval (1) Remarks')
-    refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By (1)', readonly=True, copy=False)
-    refund_approved_by_2 = fields.Many2one('res.users', string='Refund Approved By (2)', readonly=True, copy=False)
-    refund_approved_date_1 = fields.Datetime('Refund Approved On (1)', readonly=True, copy=False)
+    refund_remarks_approval1 = fields.Text('Refund Approval Remarks')
+    refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By', readonly=True, copy=False)
+    refund_approved_date_1 = fields.Datetime('Refund Approved On', readonly=True, copy=False)
 
     def _inverse_mobile(self):
         for rec in self:
@@ -521,37 +519,35 @@ class MedicalEquipment(models.Model):
             if rec.donee_id and rec.donee_id.state == 'register':
                 rec.is_donee_register = True
     
-    @api.model
-    def create(self, vals):
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
 
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
-
-        if vals.get('medical_equipment_reference_id'):
-            vals['actual_deposit_percentage'] = 0.0
-            vals.setdefault('initial_deposit_percentage', 0.0)
-        elif 'actual_deposit_percentage' in vals:
-            vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
-
-        record = super(MedicalEquipment, self).create(vals)
-        
-        # If donee is selected and registered, check portal status
-        if vals.get('donee_id'):
-            donee = self.env['res.partner'].browse(vals.get('donee_id'))
-            if donee and donee.state == 'register':
-                # Try to check if donee exists in portal and update portal_donee_id
-                try:
-                    existing_donee = record._check_donee_exists_in_portal()
-                    if existing_donee and existing_donee.get('id'):
-                        record.write({
-                            'portal_donee_id': existing_donee.get('id'),
-                            'portal_sync_status': 'synced'
-                        })
-                        _logger.info(f"Linked existing portal donee {existing_donee.get('id')} to new record {record.id}")
-                except Exception as e:
-                    _logger.warning(f"Could not check portal donee during create: {str(e)}")
-
-        return record
+            if vals.get('medical_equipment_reference_id'):
+                vals['actual_deposit_percentage'] = 0.0
+                vals.setdefault('initial_deposit_percentage', 0.0)
+            elif 'actual_deposit_percentage' in vals:
+                vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
+        records = super().create(vals_list)
+        for record, vals in zip(records, vals_list):
+            # If donee is selected and registered, check portal status
+            if vals.get('donee_id'):
+                donee = self.env['res.partner'].browse(vals.get('donee_id'))
+                if donee and donee.state == 'register':
+                    # Try to check if donee exists in portal and update portal_donee_id
+                    try:
+                        existing_donee = record._check_donee_exists_in_portal()
+                        if existing_donee and existing_donee.get('id'):
+                            record.write({
+                                'portal_donee_id': existing_donee.get('id'),
+                                'portal_sync_status': 'synced'
+                            })
+                            _logger.info(f"Linked existing portal donee {existing_donee.get('id')} to new record {record.id}")
+                    except Exception as e:
+                        _logger.warning(f"Could not check portal donee during create: {str(e)}")
+        return records
     
     @api.depends('state', 'case_type', 'Portal_acknowledgment')
     def _compute_approval_button_check(self):
@@ -636,7 +632,6 @@ class MedicalEquipment(models.Model):
             'source_record_ref': '%s,%s' % (self._name, self.id),
             'scheduled_date': fields.Datetime.now(),
             'move_ids': [(0, 0, {
-                'name': f'Medical Equipment: {self.name}',
                 'product_id': product_line.product_id.id,
                 'product_uom_qty': product_line.quantity,
                 'product_uom': product_line.product_id.uom_id.id,
@@ -979,8 +974,6 @@ class MedicalEquipment(models.Model):
             'state': 'refund',
             'refund_approved_by_1': self.env.user.id,
             'refund_approved_date_1': fields.Datetime.now(),
-            # Optional: Fill the second approval fields with the same user for record keeping
-            'refund_approved_by_2': self.env.user.id,
         })
 
         return True
@@ -1227,7 +1220,7 @@ class MedicalEquipment(models.Model):
                     self._update_donee_odoo_mapping(result.get('id'))
                     return result
             
-            _logger.info(f"Donee not found in portal by any criteria")
+            _logger.info("Donee not found in portal by any criteria")
             return None
             
         except Exception as e:
@@ -1350,7 +1343,7 @@ class MedicalEquipment(models.Model):
             if result and isinstance(result, dict) and 'message' in result:
                 message += f" | 📋 {result['message']} "
             else:
-                message += f" | 📋 No applications found"     # type: ignore
+                message += " | 📋 No applications found"     # type: ignore
         return self._show_notification('Portal Status Check', message, 'info')
     
     def _search_portal_applications(self):

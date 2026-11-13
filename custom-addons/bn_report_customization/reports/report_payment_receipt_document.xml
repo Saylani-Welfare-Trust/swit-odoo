@@ -2,7 +2,7 @@
 <odoo>
 
     <template id="bn_report_customization.report_payment_receipt_document" inherit_id="account.report_payment_receipt_document">
-        <xpath expr="//div[@class='mb-4 mt-3']" position="replace">
+        <xpath expr="//div[hasclass('mb-4', 'mt-3')]" position="replace">
             <div class="mb-4 mt-3">
                 <div name="date" class="row">
                     <div class="col-6" t-if="o.date">

@@ -192,8 +192,8 @@ class WelfareFieldsWizard(models.TransientModel):
                 for edu in welfare.educaiton_line_ids:
                     html += '<tr>'
                     html += f'<td style="border: 1px solid #ddd; padding: 8px;">{edu.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
                     html += '</tr>'
                 html += '</tbody></table>'
                 res['education_lines_html'] = html
@@ -211,8 +211,8 @@ class WelfareFieldsWizard(models.TransientModel):
                 for family in welfare.family_line_ids:
                     html += '<tr>'
                     html += f'<td style="border: 1px solid #ddd; padding: 8px;">{family.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
                     html += '</tr>'
                 html += '</tbody></table>'
                 res['family_lines_html'] = html
@@ -231,9 +231,9 @@ class WelfareFieldsWizard(models.TransientModel):
                 for guarantor in welfare.guarantor_line_ids:
                     html += '<tr>'
                     html += f'<td style="border: 1px solid #ddd; padding: 8px;">{guarantor.display_name}</td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
-                    html += f'<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
+                    html += '<td style="border: 1px solid #ddd; padding: 8px;"></td>'
                     html += '</tr>'
                 html += '</tbody></table>'
                 res['guarantor_lines_html'] = html

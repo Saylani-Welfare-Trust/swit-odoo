@@ -22,7 +22,7 @@
         'bn_stock_location',
         # The multi-PR / multi-page vendor-selection wizard filters other Purchase
         # Requests by the "Procurement Manager Approval" state, which this module
-        # defines (PURCHASE_REQUISITION_STATES).
+        # adds (PURCHASE_REQUISITION_STATES_ADD).
         'bn_purchase_customization',
     ],
     'data': [

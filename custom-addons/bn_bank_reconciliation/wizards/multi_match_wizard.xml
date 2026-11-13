@@ -8,7 +8,7 @@
             <form string="Match Several Statement Lines">
                 <sheet>
                     <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
-                        <i class="fa fa-info-circle"/>
+                        <i title="Info" class="fa fa-info-circle"/>
                         <span invisible="match_mode != 'create'">Add the bank statement lines that have no entry in Odoo (e.g. bank charges): one entry is created for all of them and posted on Validate &amp; Complete.</span>
                         <span invisible="match_mode != 'existing'">Add the bank statement lines, then select the one journal entry they add up to.</span>
                     </div>

@@ -18,7 +18,7 @@
                 </header>
                 <sheet>
                     <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
-                        <i class="fa fa-info-circle"/> 
+                        <i title="Info" class="fa fa-info-circle"/> 
                         <span>Select the accounting entry lines that match this bank transaction.</span>
                     </div>
                     

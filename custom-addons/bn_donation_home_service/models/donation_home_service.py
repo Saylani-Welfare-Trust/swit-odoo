@@ -8,8 +8,7 @@ status_selection = [
     ('draft', 'Draft'),
     ('gate_out', 'Gate Out'),
     ('gate_in', 'Gate In'),
-    ('paid','Paid'),
-    ('slotter', 'Slotter'),
+    ('paid', 'Paid'),
     ('cancel', 'Cancelled')
 ]
 
@@ -60,12 +59,12 @@ class DonationHomeService(models.Model):
                         "Mobile number must contain exactly 10 digits."
                     )
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('donation_home_service') or ('New')
-
-        return super(DonationHomeService, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('donation_home_service') or ('New')
+        return super().create(vals_list)
     
     def calculate_amount(self):
         self.amount = sum(line.amount * line.quantity for line in self.donation_home_service_line_ids)

@@ -49,6 +49,18 @@ class Key(models.Model):
                     'Key Bunch Limit Exceeded: bunch "%(bunch)s" would hold %(count)s/%(limit)s keys.'
                 ) % {'bunch': bunch.display_name, 'count': count, 'limit': KEY_BUNCH_LIMIT})
 
+    @api.constrains('lot_id', 'state')
+    def _check_one_key_per_box(self):
+        """Only the key of the registration in service is open; the keys of a
+        box's earlier registrations are closed."""
+        for key in self.filtered(lambda k: k.lot_id and k.state != 'closed'):
+            other = self.sudo().search([('lot_id', '=', key.lot_id.id), ('state', '!=', 'closed'),
+                                        ('id', '!=', key.id)], limit=1)
+            if other:
+                raise ValidationError(_(
+                    'Box "%(lot)s" already has an open key (%(key)s). Close it before another one is used.'
+                ) % {'lot': key.sudo().lot_id.display_name, 'key': other.display_name})
+
     def unlink(self):
         if not self.env.su:
             raise UserError(_('Keys cannot be deleted. They are closed automatically by the donation box workflow.'))
@@ -64,6 +76,18 @@ class Key(models.Model):
             self.invalidate_recordset(['state'])
 
     def _make_available(self, bunch=None):
+        """Put the key (back) in service in ``bunch``. Never while the key, or a
+        key of that bunch, is out with a rider: the bunch goes out as a whole."""
+        out_keys = self | (bunch.sudo().key_ids if bunch else self.browse())
+        out = self.env['key.issuance'].sudo().search([
+            ('key_id', 'in', out_keys.ids), ('state', 'in', ('issued', 'overdue', 'pending', 'donation_receive'))], limit=1)
+        busy = out.key_id or out_keys.filtered(lambda k: k.state in ('issued', 'pending'))[:1]
+        if busy:
+            raise ValidationError(_(
+                'Key "%(key)s" cannot be made available: %(what)s is out with a rider. '
+                'Return the keys of the bunch first.'
+            ) % {'key': self[:1].display_name,
+                 'what': _('key %s of its bunch') % busy.display_name if busy not in self else _('it')})
         vals = {'state': 'available'}
         if bunch:
             vals['key_bunch_id'] = bunch.id

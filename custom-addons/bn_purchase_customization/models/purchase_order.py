@@ -72,11 +72,12 @@ class PurchaseOrder(models.Model):
             }
         }
         
-    @api.model
-    def create(self, vals):
-        # Don't assign the PO sequence when creating an RFQ
-        vals['name'] = '/'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # Don't assign the PO sequence when creating an RFQ
+            vals['name'] = '/'
+        return super().create(vals_list)
 
     def button_confirm(self):
         for order in self:

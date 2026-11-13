@@ -109,12 +109,12 @@ class JournalTransfer(models.Model):
                 rec.move_id.button_cancel()
             rec.state = 'cancel'
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('journal_transfer') or ('New')
-
-        return super(JournalTransfer, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('journal_transfer') or ('New')
+        return super().create(vals_list)
     
     def action_show_entry(self):
         return {

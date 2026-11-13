@@ -4,7 +4,7 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-class ProfileManagementDashboard(models.TransientModel):
+class ProfileManagementDashboard(models.AbstractModel):
     _name = 'profile.management.dashboard'
     _description = 'Profile Management Dashboard'
 

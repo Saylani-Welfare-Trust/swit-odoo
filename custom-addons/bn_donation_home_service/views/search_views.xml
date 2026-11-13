@@ -19,7 +19,6 @@
                 <filter name="filter_state_gate_out" string="Gate Out" domain="[('state', '=', 'gate_out')]"/>
                 <filter name="filter_state_gate_in" string="Gate In" domain="[('state', '=', 'gate_in')]"/>
                 <filter name="filter_state_paid" string="Paid" domain="[('state', '=', 'paid')]"/>
-                <filter name="filter_state_slotter" string="Slotter" domain="[('state', '=', 'slotter')]"/>
                 <filter name="filter_state_cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
                 <separator/>
                 <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>

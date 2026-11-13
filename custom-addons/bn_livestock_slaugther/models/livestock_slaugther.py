@@ -82,19 +82,19 @@ class LivestockSlaughter(models.Model):
         vals = dict(vals, **{source_field: source.id, 'quantity': 1, 'price': (total or 0.0) / animals})
         return self.sudo().create([dict(vals) for _i in range(missing)])
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            if vals.get('is_meat_depart'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('meat_department') or ('New')
-            elif vals.get('is_chicken_depart'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('chicken_department') or ('New')
-            elif vals.get('is_goat_depart'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
-            else:
-                vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
-
-        return super(LivestockSlaughter, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                if vals.get('is_meat_depart'):
+                    vals['name'] = self.env['ir.sequence'].next_by_code('meat_department') or ('New')
+                elif vals.get('is_chicken_depart'):
+                    vals['name'] = self.env['ir.sequence'].next_by_code('chicken_department') or ('New')
+                elif vals.get('is_goat_depart'):
+                    vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
+                else:
+                    vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
+        return super().create(vals_list)
 
     def action_confirm(self):
         self.ensure_one()
@@ -131,6 +131,7 @@ class LivestockSlaughter(models.Model):
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
             'origin': self.name or 'Live Stock Slaughter',
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
 
         # Create the stock move
@@ -179,6 +180,7 @@ class LivestockSlaughter(models.Model):
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
             'origin': self.name or '',
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
 
         self.env['stock.move'].create({

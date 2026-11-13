@@ -20,7 +20,6 @@ class ProductTemplate(models.Model):
 
     purchase_product = fields.Many2one(
         comodel_name='product.product',
-        relation='livestock_product',
         string='Purchase Product',
         help='Product you will make PO',
         required=False

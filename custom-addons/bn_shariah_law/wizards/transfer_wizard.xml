@@ -16,25 +16,25 @@
                     <!-- Info Messages -->
                     <div class="alert alert-info" role="alert" 
                          invisible="allowed_dest_count != 0">
-                        <span class="fa fa-info-circle"/>
+                        <span title="Info" class="fa fa-info-circle"/>
                         <b>No allowed destinations found!</b> Please configure transfer rules for this source segment.
                     </div>
                     
                     <div class="alert alert-success" role="alert" 
                          invisible="allowed_dest_count == 0">
-                        <span class="fa fa-check-circle"/>
+                        <span title="Done" class="fa fa-check-circle"/>
                         <b>Allowed Destinations:</b> <span field="allowed_dest_count"/> destination(s) available for this source.
                     </div>
                     
                     <div class="alert alert-danger" role="alert" 
                          invisible="transfer_allowed == True or allowed_dest_count == 0">
-                        <span class="fa fa-exclamation-circle"/>
+                        <span title="Attention" class="fa fa-exclamation-circle"/>
                         <b>Transfer not allowed!</b> Please check the rules below.
                     </div>
                     
                     <div class="alert alert-warning" role="alert" 
                          invisible="requires_approval == False or allowed_dest_count == 0">
-                        <span class="fa fa-exclamation-triangle"/>
+                        <span title="Warning" class="fa fa-exclamation-triangle"/>
                         <b>Approval Required:</b> This transfer requires member approval. A Shariah Law Person must approve this transfer.
                     </div>
                     
@@ -73,7 +73,7 @@
                             <field name="source_balance_after" widget="monetary" readonly="1" 
                                    style="font-weight: bold; color: #d63031;"/>
                             <div style="padding: 10px; background-color: #fff3cd; border-radius: 5px; border-left: 4px solid #ffc107; margin-top: 5px;">
-                                <span class="fa fa-arrow-right" style="color: #ff6b00;"/> 
+                                <span title="Next" class="fa fa-arrow-right" style="color: #ff6b00;"/> 
                                 <strong>Transfer Out:</strong> 
                                 <span style="color: #d63031;">-<field name="amount" nolabel="1" widget="monetary"/></span>
                             </div>
@@ -83,7 +83,7 @@
                             <field name="destination_balance_after" widget="monetary" readonly="1" 
                                    style="font-weight: bold; color: #00b894;"/>
                             <div style="padding: 10px; background-color: #d4edda; border-radius: 5px; border-left: 4px solid #28a745; margin-top: 5px;">
-                                <span class="fa fa-arrow-right" style="color: #28a745;"/> 
+                                <span title="Next" class="fa fa-arrow-right" style="color: #28a745;"/> 
                                 <strong>Transfer In:</strong> 
                                 <span style="color: #00b894;">+<field name="amount" nolabel="1" widget="monetary"/></span>
                             </div>
@@ -106,7 +106,7 @@
                     <!-- Warning for Insufficient Balance -->
                     <div class="alert alert-danger" role="alert" 
                          invisible="amount &lt;= 0 or source_current_balance >= amount or allowed_dest_count == 0">
-                        <span class="fa fa-exclamation-circle"/>
+                        <span title="Attention" class="fa fa-exclamation-circle"/>
                         <b>Insufficient Balance!</b> 
                         Source balance: <span field="source_current_balance" widget="monetary"/> 
                         Transfer amount: <span field="amount" widget="monetary"/>

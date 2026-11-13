@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Boxes Closed while their key stayed Issued / Pending / Available in its
+         bunch (and so kept going out with bulk issuances): closes the key, takes
+         it out of its bunch and returns its open issuances, except those whose
+         rider collection still has money to settle at the POS. Safe to run again. -->
+    <record id="correct_closed_box_keys_server_action" model="ir.actions.server">
+        <field name="name">Correct Keys of Closed Boxes</field>
+        <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
+        <field name="binding_model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="groups_id" eval="[(6, 0, [ref('bn_key_management.key_management_admin_group'), ref('bn_donation_box.donation_box_admin_group')])]"/>
+        <field name="state">code</field>
+        <field name="code">action = model._correct_closed_box_keys(records)</field>
+    </record>
+
+</odoo>

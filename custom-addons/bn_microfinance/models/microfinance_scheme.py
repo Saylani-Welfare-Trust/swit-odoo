@@ -23,18 +23,17 @@ class MicrofinanceScheme(models.Model):
 
     microfinance_scheme_line_ids = fields.One2many('microfinance.scheme.line', 'microfinance_scheme_id', string="Microfinance Scheme Line")
 
-    @api.model
-    def create(self, vals):
-        record = super(MicrofinanceScheme, self).create(vals)
-
-        self.env['ir.sequence'].create({
-            'name': f"{record.name} Sequence",
-            'code': f"microfinance.{record.id}",
-            'padding': 7,
-            'prefix': record.prefix,
-        })
-
-        return record
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        for record in records:
+            self.env['ir.sequence'].create({
+                'name': f"{record.name} Sequence",
+                'code': f"microfinance.{record.id}",
+                'padding': 7,
+                'prefix': record.prefix,
+            })
+        return records
 
     def write(self, vals):
         record = super(MicrofinanceScheme, self).write(vals)

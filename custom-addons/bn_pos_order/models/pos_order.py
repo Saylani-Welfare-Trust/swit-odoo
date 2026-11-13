@@ -1,8 +1,6 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.exceptions import AccessError, UserError
 from odoo.tools.sql import column_exists, create_column
-
-import re
 
 
 class POSOrder(models.Model):
@@ -42,21 +40,14 @@ class POSOrder(models.Model):
 
     mobile = fields.Char(related='partner_id.mobile', string="Mobile No.")
 
+    # added to the POS statuses (not a new list: other modules can still add theirs)
     state = fields.Selection(
-        [('draft', 'New'), ('cancel', 'Cancelled'), ('cfo_approval', 'CFO Approval'), ('paid', 'Paid'), ('done', 'Posted'), ('invoiced', 'Invoiced'), ('refund', 'Refunded'), ('reject', 'Reject')],
-        'Status', readonly=True, copy=False, default='draft', index=True)
+        selection_add=[('cfo_approval', 'CFO Approval'), ('paid',), ('done',), ('invoiced',),
+                       ('refund', 'Refunded'), ('reject', 'Reject')],
+        ondelete={'cfo_approval': 'set default', 'refund': 'set default', 'reject': 'set default'})
     
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", compute="_set_employee_branch", store=True)
     
-
-    @api.constrains('mobile')
-    def _check_mobile_number(self):
-        for rec in self:
-            if rec.mobile:
-                if not re.fullmatch(r"\d{10}", rec.mobile):
-                    raise ValidationError(
-                        "Mobile number must contain exactly 10 digits."
-                    )
 
     # ------------------------------------------------------------------
     # Refunds: a refund order waits for CFO approval before it is paid

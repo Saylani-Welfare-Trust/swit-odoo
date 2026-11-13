@@ -49,7 +49,7 @@
                             }
                         </style>
 
-                        <img t-if="o.env.company.dn_image"
+                        <img alt="Logo" t-if="o.env.company.dn_image"
                             t-att-src="image_data_uri(o.env.company.dn_image)"
                             style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
 

@@ -295,6 +295,8 @@ class DonationBoxRequest(models.Model):
             'location_id': picking.location_dest_id.id,
             'location_dest_id': picking.location_id.id,
             'origin': _('Return of %s') % picking.name,
+            'source_record_ref': picking.source_record_ref and '%s,%s' % (
+                picking.source_record_ref._name, picking.source_record_ref.id) or False,
         })
         return_move = self.env['stock.move'].sudo().create({
             'name': _('Return: %s') % product.display_name,

@@ -2,31 +2,29 @@ from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
 
-PURCHASE_REQUISITION_STATES = [
-    ('draft', 'Draft'),
+# The purchase request steps, added among the purchase_requisition statuses
+# (draft, ongoing, in_progress, open, done, cancel) in this order.
+PURCHASE_REQUISITION_STATES_ADD = [
+    ('draft',),
     ('confirm', 'Confirm'),
-    ('ongoing', 'Ongoing'),
+    ('ongoing',),
     ('procurement_approval', 'Procurement Manager Approval'),
     ('deferred', 'Deferred / On Hold'),
     ('rfq_sent', 'RFQ Sent'),
     ('vendor_selected', 'Vendor Selected'),
     ('cxo_approved', 'CXO Approved (RFQ)'),
     ('funds_check', 'Funds Availability Check'),
-    ('in_progress', 'Confirmed'),
-    ('open', 'Bid Selection'),
-    ('done', 'Closed'),
-    ('cancel', 'Cancelled')
+    ('in_progress',),
 ]
+_ADDED_STATES_ONDELETE = {key[0]: 'set default' for key in PURCHASE_REQUISITION_STATES_ADD if len(key) == 2}
 
 
 class PurchaseRequisition(models.Model):
     _inherit = 'purchase.requisition'
 
 
-    state = fields.Selection(PURCHASE_REQUISITION_STATES,
-                              'Status', tracking=True, required=True,
-                              copy=False, default='draft')
-    state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES, compute='_set_state')
+    state = fields.Selection(selection_add=PURCHASE_REQUISITION_STATES_ADD, ondelete=_ADDED_STATES_ONDELETE)
+    state_blanket_order = fields.Selection(selection_add=PURCHASE_REQUISITION_STATES_ADD)
 
 
     def _assign_reference_number(self):

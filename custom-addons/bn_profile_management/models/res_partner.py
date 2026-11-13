@@ -407,7 +407,7 @@ class ResPartner(models.Model):
     def _onchange_date_of_birth(self):
         if self.date_of_birth:
             if self.date_of_birth.year == fields.Date.today().year or self.date_of_birth.year > fields.Date.today().year:
-                raise ValidationError(str(f'Invalid Date of Birth...'))
+                raise ValidationError(str('Invalid Date of Birth...'))
 
     def action_print_info(self):
         if self.is_change_request:

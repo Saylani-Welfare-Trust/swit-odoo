@@ -5,7 +5,7 @@ from odoo import models, api
 from datetime import datetime
 
 
-class AdvanceDonationStatementWizard(models.TransientModel):
+class AdvanceDonationStatementWizard(models.AbstractModel):
     _name = 'advance.donation.statement.wizard'
     _description = 'Advance Donation Statement'
 
