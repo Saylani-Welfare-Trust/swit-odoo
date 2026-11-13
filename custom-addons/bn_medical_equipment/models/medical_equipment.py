@@ -1548,6 +1548,17 @@ class MedicalEquipment(models.Model):
         officer_code = (self.employee_id.barcode or '').strip()
         if not officer_code:
             return None, f"Inquiry Officer {self.employee_id.name or ''} has no Badge ID (barcode)"
+        # The portal returns at most 50 applications; an officer with many welfare cases fills that
+        # limit and pushes medical ones out, so ask for medical only first
+        try:
+            filtered = self._make_sadqa_api_call(
+                endpoint, 'POST', {"json": {"employeeId": officer_code, "department": "medical"}})
+            if isinstance(filtered, list):
+                matching_app = self._find_matching_application(filtered)
+                if matching_app:
+                    return matching_app, ''
+        except Exception as e:
+            _logger.info("Medical-filtered portal search failed, falling back to officer-only search: %s", e)
         try:
             # Search by the inquiry officer's employee ID, so the 50-item limit only covers that officer's applications
             applications = self._make_sadqa_api_call(endpoint, 'POST', {"json": {"employeeId": officer_code}})
