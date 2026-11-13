@@ -5,18 +5,22 @@
         <field name="name">medical.prescription.view.tree</field>
         <field name="model">medical.prescription</field>
         <field name="arch" type="xml">
-            <tree string="Prescriptions" decoration-info="state == 'approved'" decoration-muted="state == 'cancel'">
-                <field name="name"/>
+            <tree string="Prescriptions" decoration-muted="state == 'cancel'">
+                <field name="name" decoration-bf="1"/>
                 <field name="partner_id"/>
                 <field name="registration_id" optional="show"/>
                 <field name="cnic_no" optional="hide"/>
+                <field name="mobile" optional="hide"/>
                 <field name="doctor_name" optional="show"/>
                 <field name="approved_date" optional="show"/>
                 <field name="desk_config_id" optional="hide"/>
                 <field name="pos_order_id" optional="show"/>
-                <field name="amount_total" sum="Total"/>
+                <field name="billing_config_id" optional="hide"/>
+                <field name="billed_date" optional="hide"/>
+                <field name="amount_total" sum="Total" decoration-bf="1"/>
                 <field name="currency_id" column_invisible="True"/>
-                <field name="state" widget="badge" decoration-info="state == 'approved'" decoration-success="state == 'billed'"/>
+                <field name="state" widget="badge" decoration-info="state == 'approved'" decoration-success="state == 'billed'"
+                       decoration-muted="state == 'cancel'"/>
             </tree>
         </field>
     </record>
@@ -36,26 +40,47 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,approved,billed"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_patient" type="object" class="oe_stat_button" icon="fa-user"
+                                invisible="not partner_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Patient</span>
+                            </div>
+                        </button>
+                        <button name="action_open_bill" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not pos_order_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="pos_order_id" readonly="1" options="{'no_open': True}"/></span>
+                                <span class="o_stat_text">Bill</span>
+                            </div>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Billed" bg_color="text-bg-success" invisible="state != 'billed'"/>
+                    <widget name="web_ribbon" title="Cancelled" bg_color="text-bg-danger" invisible="state != 'cancel'"/>
                     <div class="oe_title">
+                        <span class="o_form_label">Prescription</span>
                         <h1><field name="name"/></h1>
                     </div>
                     <group>
-                        <group>
+                        <group string="Patient" name="patient">
                             <field name="partner_id" readonly="state != 'draft'" options="{'no_create': True}"/>
-                            <field name="registration_id"/>
-                            <field name="cnic_no"/>
-                            <field name="mobile"/>
-                            <field name="doctor_name" readonly="state != 'draft'"/>
+                            <field name="registration_id" invisible="not partner_id"/>
+                            <field name="cnic_no" invisible="not partner_id"/>
+                            <field name="mobile" invisible="not partner_id" widget="phone"/>
                         </group>
-                        <group>
-                            <field name="approved_by_id" invisible="not approved_by_id"/>
-                            <field name="approved_date" invisible="not approved_date"/>
+                        <group string="Prescription Desk" name="desk">
+                            <field name="doctor_name" readonly="state != 'draft'" placeholder="Doctor's name"/>
                             <field name="desk_config_id" invisible="not desk_config_id"/>
-                            <field name="pos_order_id" invisible="not pos_order_id"/>
-                            <field name="billing_config_id" invisible="not pos_order_id"/>
-                            <field name="billed_date" invisible="not billed_date"/>
+                            <field name="approved_by_id" invisible="not approved_by_id" widget="many2one_avatar_user"/>
+                            <field name="approved_date" invisible="not approved_date"/>
                             <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Billing" name="billing" invisible="not pos_order_id">
+                            <field name="billing_config_id"/>
+                            <field name="pos_session_id"/>
+                            <field name="pos_cashier_id" widget="many2one_avatar_user"/>
+                            <field name="billed_date"/>
                         </group>
                     </group>
                     <notebook>

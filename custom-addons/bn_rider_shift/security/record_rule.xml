@@ -3,6 +3,11 @@
 
     <!-- City access, see bn_donation_box/security/record_rule.xml. -->
 
+    <!-- Rider Shift users work on the boxes of their City -->
+    <record id="bn_donation_box.donation_box_registration_city_rule" model="ir.rule">
+        <field name="groups" eval="[(4, ref('bn_rider_shift.rider_shift_user_group'))]"/>
+    </record>
+
     <!-- Rider Shift: city of a day of its schedule -->
     <record id="rider_shift_own_city_rule" model="ir.rule">
         <field name="name">Rider Shift: Own City</field>

@@ -63,7 +63,7 @@
                     <group>
                         <group name="donation_col_1">
                             <field name="is_fee" invisible="1" />
-                            <field name="donor_id" domain="[('category_id.name', '=', ['Donor'])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
+                            <field name="donor_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" />
                             <label for="product_id" string="Product" invisible="is_fee" />
                             <label for="product_id" string="Course" invisible="not is_fee" />
                             <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state == 'posted'" nolabel="1" />

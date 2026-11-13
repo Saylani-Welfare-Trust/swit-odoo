@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 import logging
 import re
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 _logger = logging.getLogger(__name__)
 
 payment_method_selection = [
@@ -31,7 +32,7 @@ class MedicalSecurityDeposit(models.Model):
     payment_method = fields.Selection(selection=payment_method_selection, string="Payment Method")
     state = fields.Selection(selection=state_selection, string='Status', default='draft')
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'medical', registered=True))
     medical_equipment_id = fields.Many2one('medical.equipment', string="Medical Equipment")
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
 

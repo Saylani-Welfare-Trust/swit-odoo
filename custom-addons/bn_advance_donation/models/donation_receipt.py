@@ -3,6 +3,7 @@ from odoo.exceptions import AccessError, UserError
 from odoo.tools.sql import column_exists
 
 import logging
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 _logger = logging.getLogger(__name__)
 
 
@@ -24,7 +25,7 @@ class DonationReceipt(models.Model):
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     is_donation_id = fields.Boolean('Donation ID?')
     donation_id = fields.Many2one('advance.donation', string='Donation ID')
-    donor_id = fields.Many2one('res.partner', string='Donor')
+    donor_id = fields.Many2one('res.partner', string='Donor', domain=tag_domain('donor'))
     currency_id = fields.Many2one('res.currency', default=lambda self: self.env.company.currency_id.id)
     amount = fields.Monetary('Amount', currency_field='currency_id')
     used_amount = fields.Monetary('Used Amount', currency_field='currency_id', default=0, compute='_compute_amount', store=True)

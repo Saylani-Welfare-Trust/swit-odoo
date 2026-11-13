@@ -15,4 +15,27 @@
         </field>
     </record>
 
+    <!-- Counters: which kind of counter each card is -->
+    <record id="mh_pos_config_view_kanban_inherit_prescription" model="ir.ui.view">
+        <field name="name">pos.config.view.kanban.mh.prescription</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="bn_medical_pos.mh_pos_config_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//templates" position="before">
+                <field name="medical_pos_role"/>
+            </xpath>
+            <xpath expr="//button[@name='open_ui']" position="before">
+                <div class="mb-2 w-100">
+                    <span t-if="record.medical_pos_role.raw_value === 'prescription'" class="badge rounded-pill text-bg-info">
+                        <i class="fa fa-medkit me-1" title="Prescription Desk"/>Prescription Desk
+                    </span>
+                    <span t-elif="record.medical_pos_role.raw_value === 'billing'" class="badge rounded-pill text-bg-success">
+                        <i class="fa fa-money me-1" title="Billing Counter"/>Billing Counter
+                    </span>
+                    <span t-else="" class="badge rounded-pill text-bg-secondary">Medical &amp; Health</span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>

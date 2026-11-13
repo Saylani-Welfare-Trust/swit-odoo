@@ -2,3 +2,9 @@
 .pos-receipt.medical-bill [name="custom-favor"] {
     display: none;
 }
+
+// Actions popup of a Medical & Health counter: only the medical actions
+// (the donation actions of the other modules belong to the donation counters)
+.popup main.o_medical_actions > button:not(.o_medical_action) {
+    display: none !important;
+}

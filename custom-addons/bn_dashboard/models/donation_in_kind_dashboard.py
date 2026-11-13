@@ -12,10 +12,12 @@ class DonationInKindDashboard(models.Model):
     # ------------------------------------------------------------------
     @api.model
     def get_din_hierarchy(self):
-        seg_l1 = self.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
-        seg_l2 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
-        seg_l3 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
-        seg_l4 = self.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
+        # the filter lists: names only, read as superuser (a POS / programme
+        # manager needs no Accounting rights); the figures keep their own rules
+        seg_l1 = self.env['account.analytic.account'].sudo().search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+        seg_l2 = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l1.ids)])
+        seg_l3 = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l2.ids)])
+        seg_l4 = self.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l3.ids)])
 
         return {
             'segments_l1': [{'id': s.id, 'name': s.name} for s in seg_l1],
@@ -62,6 +64,41 @@ class DonationInKindDashboard(models.Model):
         return domain
 
     # ------------------------------------------------------------------
+    # SQL scope: the donations of the domain (record rules included) with
+    # their quantity and value, filtered on the value range. Every figure is
+    # computed by PostgreSQL from it: no donation or line is loaded in Python.
+    # ------------------------------------------------------------------
+    @api.model
+    def _din_scope(self, domain, amount_min=None, amount_max=None):
+        """(sql, params) of a WITH clause defining ``scope``
+        (id, name, donor_id, state, create_date, qty, val), or None when empty."""
+        query = self._search(domain)
+        if query.is_empty():
+            return None
+        sub = query.subselect()
+        having, params = [], list(sub.params)
+        if amount_min is not None:
+            having.append('val >= %s')
+        if amount_max is not None:
+            having.append('val <= %s')
+        sql = """
+            WITH totals AS (
+                SELECT din.id, din.name, din.donor_id, din.state, din.create_date,
+                       COALESCE(SUM(l.quantity), 0) AS qty,
+                       COALESCE(SUM(l.quantity * l.avg_price), 0) AS val
+                  FROM donation_in_kind din
+                  LEFT JOIN donation_in_kind_line l ON l.donation_in_kind_id = din.id
+                 WHERE din.id IN (%s)
+                 GROUP BY din.id
+            ), scope AS (SELECT * FROM totals %s)
+        """ % (sub.code, ('WHERE ' + ' AND '.join(having)) if having else '')
+        if amount_min is not None:
+            params.append(float(amount_min))
+        if amount_max is not None:
+            params.append(float(amount_max))
+        return sql, params
+
+    # ------------------------------------------------------------------
     # Main dashboard data
     # ------------------------------------------------------------------
     @api.model
@@ -69,105 +106,77 @@ class DonationInKindDashboard(models.Model):
                                segment_id=None, segment_type=None, state=None,
                                amount_min=None, amount_max=None):
         domain = self._get_din_domain(date_from, date_to, segment_id, segment_type, state)
-        donations = self.search(domain, order='id desc')
-
-        # Amount range filter
-        if amount_min is not None or amount_max is not None:
-            filtered = self.browse()
-            amin = float(amount_min) if amount_min is not None else None
-            amax = float(amount_max) if amount_max is not None else None
-            for d in donations:
-                v = sum(l.quantity * l.avg_price for l in d.donation_in_kind_line_ids)
-                if amin is not None and v < amin:
-                    continue
-                if amax is not None and v > amax:
-                    continue
-                filtered |= d
-            donations = filtered
-
-        total_qty = 0.0
-        total_value = 0.0
-        for d in donations:
-            for l in d.donation_in_kind_line_ids:
-                total_qty += l.quantity
-                total_value += l.quantity * l.avg_price
-
-        unique_donors = len(set(donations.mapped('donor_id').ids))
-
+        scope = self._din_scope(domain, amount_min, amount_max)
+        cr = self.env.cr
         state_labels = dict(self._fields['state'].selection)
-        state_counts = {}
-        for d in donations:
-            state_counts[d.state] = state_counts.get(d.state, 0) + 1
 
-        donor_agg = {}
-        for d in donations:
-            if not d.donor_id:
-                continue
-            qty = sum(l.quantity for l in d.donation_in_kind_line_ids)
-            val = sum(l.quantity * l.avg_price for l in d.donation_in_kind_line_ids)
-            did = d.donor_id.id
-            if did not in donor_agg:
-                donor_agg[did] = {'name': d.donor_id.name, 'qty': 0.0,
-                                  'value': 0.0, 'count': 0}
-            donor_agg[did]['qty'] += qty
-            donor_agg[did]['value'] += val
-            donor_agg[did]['count'] += 1
-        top_donors = sorted(donor_agg.values(),
-                            key=lambda x: x['value'], reverse=True)[:10]
-
-        prod_agg = {}
-        for d in donations:
-            for l in d.donation_in_kind_line_ids:
-                if not l.product_id:
-                    continue
-                pid = l.product_id.id
-                if pid not in prod_agg:
-                    prod_agg[pid] = {'name': l.product_id.name, 'qty': 0.0, 'value': 0.0}
-                prod_agg[pid]['qty'] += l.quantity
-                prod_agg[pid]['value'] += l.quantity * l.avg_price
-        top_products = sorted(prod_agg.values(),
-                              key=lambda x: x['value'], reverse=True)[:10]
-
-        cat_agg = {}
-        for d in donations:
-            for l in d.donation_in_kind_line_ids:
-                if not l.product_id or not l.product_id.categ_id:
-                    continue
-                cat_name = l.product_id.categ_id.complete_name or l.product_id.categ_id.name
-                if cat_name not in cat_agg:
-                    cat_agg[cat_name] = {'name': cat_name, 'qty': 0.0, 'value': 0.0}
-                cat_agg[cat_name]['qty'] += l.quantity
-                cat_agg[cat_name]['value'] += l.quantity * l.avg_price
-        top_categories = sorted(cat_agg.values(),
-                                key=lambda x: x['value'], reverse=True)[:10]
-
+        total_records = unique_donors = 0
+        total_qty = total_value = 0.0
+        state_counts, top_donors, top_products, top_categories, recent = {}, [], [], [], []
         today = datetime.today()
-        monthly_labels, monthly_counts, monthly_values = [], [], []
+        months = []
         for i in range(11, -1, -1):
             md = today - relativedelta(months=i)
             m_start = md.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            m_end = (m_start + relativedelta(months=1)) - timedelta(seconds=1)
-            monthly_labels.append(md.strftime('%b %Y'))
-            m_dons = donations.filtered(lambda d: m_start <= d.create_date <= m_end)
-            monthly_counts.append(len(m_dons))
-            m_val = sum(sum(l.quantity * l.avg_price
-                            for l in d.donation_in_kind_line_ids) for d in m_dons)
-            monthly_values.append(m_val)
+            months.append((md.strftime('%b %Y'), m_start, (m_start + relativedelta(months=1)) - timedelta(seconds=1)))
+        monthly_counts, monthly_values = [0] * 12, [0.0] * 12
 
-        recent = []
-        for d in donations[:20]:
-            qty = sum(l.quantity for l in d.donation_in_kind_line_ids)
-            val = sum(l.quantity * l.avg_price for l in d.donation_in_kind_line_ids)
-            recent.append({
-                'id': d.id,
-                'name': d.name,
-                'donor': d.donor_id.name if d.donor_id else '',
-                'state': d.state,
-                'state_label': state_labels.get(d.state, d.state),
-                'qty': qty,
-                'value': val,
-                'date': d.create_date.strftime('%Y-%m-%d') if d.create_date else '',
-            })
+        if scope:
+            sql, params = scope
+            cr.execute(sql + """
+                SELECT COUNT(*), COALESCE(SUM(qty), 0), COALESCE(SUM(val), 0), COUNT(DISTINCT donor_id)
+                  FROM scope""", params)
+            total_records, total_qty, total_value, unique_donors = cr.fetchone()
+
+            cr.execute(sql + "SELECT state, COUNT(*) FROM scope GROUP BY state ORDER BY MAX(id) DESC", params)
+            state_counts = dict(cr.fetchall())
+
+            cr.execute(sql + """
+                SELECT donor_id, SUM(qty), SUM(val), COUNT(*) FROM scope
+                 WHERE donor_id IS NOT NULL GROUP BY donor_id ORDER BY SUM(val) DESC LIMIT 10""", params)
+            rows = cr.fetchall()
+            names = dict(self.env['res.partner'].browse([r[0] for r in rows]).sudo().mapped(lambda p: (p.id, p.name)))
+            top_donors = [{'name': names.get(r[0], ''), 'qty': r[1], 'value': r[2], 'count': r[3]} for r in rows]
+
+            cr.execute(sql + """
+                SELECT l.product_id, SUM(l.quantity), SUM(l.quantity * l.avg_price)
+                  FROM donation_in_kind_line l JOIN scope s ON s.id = l.donation_in_kind_id
+                 WHERE l.product_id IS NOT NULL
+                 GROUP BY l.product_id ORDER BY 3 DESC LIMIT 10""", params)
+            rows = cr.fetchall()
+            names = dict(self.env['product.product'].browse([r[0] for r in rows]).sudo().mapped(lambda p: (p.id, p.name)))
+            top_products = [{'name': names.get(r[0], ''), 'qty': r[1], 'value': r[2]} for r in rows]
+
+            cr.execute(sql + """
+                SELECT pt.categ_id, SUM(l.quantity), SUM(l.quantity * l.avg_price)
+                  FROM donation_in_kind_line l JOIN scope s ON s.id = l.donation_in_kind_id
+                  JOIN product_product pp ON pp.id = l.product_id
+                  JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                 WHERE pt.categ_id IS NOT NULL
+                 GROUP BY pt.categ_id ORDER BY 3 DESC LIMIT 10""", params)
+            rows = cr.fetchall()
+            categories = {c.id: c.complete_name or c.name
+                          for c in self.env['product.category'].browse([r[0] for r in rows]).sudo()}
+            top_categories = [{'name': categories.get(r[0], ''), 'qty': r[1], 'value': r[2]} for r in rows]
+
+            cr.execute(sql + """
+                SELECT date_trunc('month', create_date), COUNT(*), SUM(val) FROM scope
+                 WHERE create_date >= %s GROUP BY 1""", params + [months[0][1]])
+            per_month = {r[0].strftime('%Y-%m'): (r[1], r[2]) for r in cr.fetchall()}
+            for index, (_label, m_start, _m_end) in enumerate(months):
+                count, value = per_month.get(m_start.strftime('%Y-%m'), (0, 0.0))
+                monthly_counts[index], monthly_values[index] = count, value
+
+            cr.execute(sql + """
+                SELECT id, name, donor_id, state, qty, val, create_date FROM scope ORDER BY id DESC LIMIT 20""", params)
+            rows = cr.fetchall()
+            names = dict(self.env['res.partner'].browse([r[2] for r in rows if r[2]]).sudo().mapped(lambda p: (p.id, p.name)))
+            recent = [{
+                'id': r[0], 'name': r[1], 'donor': names.get(r[2], '') if r[2] else '',
+                'state': r[3], 'state_label': state_labels.get(r[3], r[3]),
+                'qty': r[4], 'value': r[5], 'date': r[6].strftime('%Y-%m-%d') if r[6] else '',
+            } for r in rows]
+        monthly_labels = [m[0] for m in months]
 
         currency = self.env.company.currency_id
 
@@ -181,7 +190,7 @@ class DonationInKindDashboard(models.Model):
 
         return {
             'kpi': {
-                'total_records': len(donations),
+                'total_records': total_records,
                 'total_quantity': "{:,.0f}".format(total_qty),
                 'total_value': _fmt_money(total_value),
                 'unique_donors': unique_donors,
@@ -217,25 +226,33 @@ class DonationInKindDashboard(models.Model):
             date_to = today.strftime('%Y-%m-%d')
 
         domain = self._get_din_domain(date_from, date_to, segment_id, segment_type, state)
-        donations = self.search(domain)
+        scope = self._din_scope(domain)
 
         tree = {}
         columns_set = set()
-        for d in donations:
-            if not d.create_date:
-                continue
-            month_label = d.create_date.strftime('%b %y')
-            columns_set.add((d.create_date.strftime('%Y-%m'), month_label))
-            for l in d.donation_in_kind_line_ids:
-                if not l.product_id or not l.product_id.categ_id:
-                    continue
-                cat_name = l.product_id.categ_id.complete_name or l.product_id.categ_id.name
-                if cat_name not in tree:
-                    tree[cat_name] = {'months': {}, 'total': 0.0}
-                v = l.quantity * l.avg_price
-                tree[cat_name]['months'][month_label] = \
-                    tree[cat_name]['months'].get(month_label, 0.0) + v
-                tree[cat_name]['total'] += v
+        if scope:
+            sql, params = scope
+            cr = self.env.cr
+            cr.execute(sql + """
+                SELECT DISTINCT to_char(create_date, 'YYYY-MM') FROM scope WHERE create_date IS NOT NULL""", params)
+            for (ym,) in cr.fetchall():
+                columns_set.add((ym, datetime.strptime(ym, '%Y-%m').strftime('%b %y')))
+            cr.execute(sql + """
+                SELECT pt.categ_id, to_char(s.create_date, 'YYYY-MM'), SUM(l.quantity * l.avg_price)
+                  FROM donation_in_kind_line l JOIN scope s ON s.id = l.donation_in_kind_id
+                  JOIN product_product pp ON pp.id = l.product_id
+                  JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                 WHERE pt.categ_id IS NOT NULL AND s.create_date IS NOT NULL
+                 GROUP BY 1, 2""", params)
+            rows = cr.fetchall()
+            categories = {c.id: c.complete_name or c.name
+                          for c in self.env['product.category'].browse({r[0] for r in rows}).sudo()}
+            for categ_id, ym, value in rows:
+                cat_name = categories[categ_id]
+                month_label = datetime.strptime(ym, '%Y-%m').strftime('%b %y')
+                node = tree.setdefault(cat_name, {'months': {}, 'total': 0.0})
+                node['months'][month_label] = node['months'].get(month_label, 0.0) + (value or 0.0)
+                node['total'] += value or 0.0
 
         sorted_columns = [c[1] for c in sorted(columns_set)]
 
@@ -304,15 +321,19 @@ class DonationInKindDashboard(models.Model):
             domain = self._get_din_domain(
                 start.strftime('%Y-%m-%d'), end.strftime('%Y-%m-%d'),
                 segment_id, segment_type, state)
-            dons = self.search(domain)
-            qty = sum(sum(l.quantity for l in d.donation_in_kind_line_ids) for d in dons)
-            val = sum(sum(l.quantity * l.avg_price
-                          for l in d.donation_in_kind_line_ids) for d in dons)
+            scope = self._din_scope(domain)
+            if not scope:
+                return {'records': 0, 'quantity': 0.0, 'value': 0.0, 'donors': 0}
+            sql, params = scope
+            self.env.cr.execute(sql + """
+                SELECT COUNT(*), COALESCE(SUM(qty), 0), COALESCE(SUM(val), 0), COUNT(DISTINCT donor_id)
+                  FROM scope""", params)
+            records, qty, val, donors = self.env.cr.fetchone()
             return {
-                'records': len(dons),
+                'records': records,
                 'quantity': qty,
                 'value': val,
-                'donors': len(set(dons.mapped('donor_id').ids)),
+                'donors': donors,
             }
 
         p1, p2 = stats(s1, e1), stats(s2, e2)

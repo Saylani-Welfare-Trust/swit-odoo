@@ -1,5 +1,6 @@
 from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 state_selection = [
@@ -17,7 +18,7 @@ class LivestockSlaughter(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
 
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee'))
     product_id = fields.Many2one('product.product', string="Product")
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
     pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)

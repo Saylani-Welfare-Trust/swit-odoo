@@ -1,5 +1,6 @@
 from odoo import _, models, fields
 from odoo.exceptions import UserError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 class ReturnMicrofinanceProduct(models.TransientModel):
@@ -7,7 +8,7 @@ class ReturnMicrofinanceProduct(models.TransientModel):
     _description = "Return Microfinance Product"
 
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'microfinance'))
     product_id = fields.Many2one('product.product', string='Product')
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     destination_location_id = fields.Many2one('stock.location', string="Destination Location")

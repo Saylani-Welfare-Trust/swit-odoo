@@ -103,7 +103,13 @@ class PosDdReport(models.Model):
             INNER JOIN pos_order po ON po.id = pol.order_id
             LEFT JOIN pos_config pc ON pc.id = po.config_id
             LEFT JOIN pos_session ps ON ps.id = po.session_id
-            LEFT JOIN hr_employee emp ON emp.user_id = po.user_id
+            -- one employee per cashier (a user can have one per company): a plain
+            -- join would repeat the order line and double its amount
+            LEFT JOIN LATERAL (
+                SELECT e.analytic_account_id FROM hr_employee e
+                 WHERE e.user_id = po.user_id AND e.active
+                 ORDER BY (e.company_id = po.company_id) DESC, e.id LIMIT 1
+            ) emp ON TRUE
             LEFT JOIN res_company rc ON rc.id = po.company_id
             LEFT JOIN product_product pp ON pp.id = pol.product_id
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id

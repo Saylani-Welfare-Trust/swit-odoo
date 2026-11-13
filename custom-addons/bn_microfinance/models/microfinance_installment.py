@@ -2,6 +2,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 import re
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 payment_type_selection = [
@@ -38,7 +39,7 @@ class MicrofinanceInstallment(models.Model):
     payment_method = fields.Selection(selection=payment_method_selection, string="Payment Method")
     state = fields.Selection(selection=state_selection, string='Status', default='draft')
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'microfinance'))
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id')
 

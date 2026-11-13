@@ -90,12 +90,14 @@ class DonationBoxComplain(models.Model):
             if vals.get('box_status') and vals['box_status'] not in RAISABLE_BOX_STATUS:
                 raise ValidationError(_('A complaint cannot be raised with the box status "%s".') % vals['box_status'])
             registration_id = vals.get('donation_box_registration_installation_id')
+            # sudo: the registration of a box is found whoever installed it (the
+            # complaint itself keeps the record rules of the user)
+            Registration = self.env['donation.box.registration.installation'].sudo()
             if not registration_id and vals.get('lot_id'):
-                registration_id = self.env['donation.box.registration.installation']._find_by_lot(
-                    self.env['stock.lot'].browse(vals['lot_id'])).id
+                registration_id = Registration._find_by_lot(self.env['stock.lot'].browse(vals['lot_id'])).id
                 vals['donation_box_registration_installation_id'] = registration_id
             if registration_id:
-                registration = self.env['donation.box.registration.installation'].browse(registration_id)
+                registration = Registration.browse(registration_id)
                 if vals.get('lot_id') and registration.lot_id.id != vals['lot_id']:
                     raise ValidationError(_('The Box No. does not match the selected registration.'))
                 registration._check_in_service()

@@ -1,3 +1,5 @@
+from markupsafe import Markup
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -13,7 +15,7 @@ class MedicalPrescription(models.Model):
     """Products approved for a patient at the prescription desk, billed at the billing counter"""
     _name = 'medical.prescription'
     _description = 'Medical Prescription'
-    _inherit = ['mail.thread']
+    _inherit = ['mail.thread', 'pos.link.mixin']
     _order = 'id desc'
 
     name = fields.Char(
@@ -39,6 +41,8 @@ class MedicalPrescription(models.Model):
     approved_by_id = fields.Many2one('res.users', 'Approved By', readonly=True, copy=False)
     approved_date = fields.Datetime('Approved On', readonly=True, copy=False)
     desk_config_id = fields.Many2one('pos.config', 'Prescription Desk', readonly=True, copy=False)
+    # the bill (pos.link.mixin: with its session, POS and cashier once paid;
+    # before that the prescription desk's session where it was approved)
     pos_order_id = fields.Many2one('pos.order', 'Bill', readonly=True, copy=False, index='btree_not_null')
     billed_date = fields.Datetime('Billed On', readonly=True, copy=False)
     billing_config_id = fields.Many2one(related='pos_order_id.config_id', string='Billing Counter')
@@ -94,14 +98,55 @@ class MedicalPrescription(models.Model):
                 prescription.write({
                     'state': 'billed',
                     'pos_order_id': pos_order.id,
+                    'pos_session_id': pos_order.session_id.id,
+                    'pos_config_id': pos_order.config_id.id,
+                    'pos_reference': pos_order.pos_reference,
+                    'pos_cashier_id': pos_order.user_id.id,
                     'billed_date': fields.Datetime.now(),
                 })
+                prescription._note_bill_differences(pos_order)
             else:
                 # the POS checks this before the payment, but a paid order must still be recorded
                 prescription.message_post(body=_(
                     "Billed again on %(order)s while the prescription was %(state)s.",
                     order=pos_order.name, state=states[prescription.state],
                 ))
+
+    def action_open_patient(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window', 'name': _('Patient'), 'res_model': 'mh.patient',
+            'res_id': self.partner_id.id, 'view_mode': 'form', 'views': [(False, 'form')],
+        }
+
+    def action_open_bill(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window', 'name': _('Bill'), 'res_model': 'pos.order',
+            'res_id': self.pos_order_id.id, 'view_mode': 'form', 'views': [(False, 'form')],
+        }
+
+    def _note_bill_differences(self, pos_order):
+        """The billing counter can still change the order: what was billed
+        differently from the prescription is written in its chatter."""
+        self.ensure_one()
+        prescribed = {}
+        for line in self.line_ids:
+            prescribed[line.product_id] = prescribed.get(line.product_id, 0.0) + line.qty
+        billed = {}
+        for line in pos_order.lines:
+            billed[line.product_id] = billed.get(line.product_id, 0.0) + line.qty
+        differences = []
+        for product in set(prescribed) | set(billed):
+            if round(prescribed.get(product, 0.0) - billed.get(product, 0.0), 4):
+                differences.append(_('%(product)s: prescribed %(prescribed)s, billed %(billed)s') % {
+                    'product': product.display_name, 'prescribed': prescribed.get(product, 0.0),
+                    'billed': billed.get(product, 0.0)})
+        if differences:
+            self.message_post(body=Markup('%s<br/>%s') % (
+                _('Billed on %s differently from the prescription:') % pos_order.name,
+                Markup('<br/>').join(differences)))
+        return differences
 
     # ------------------------------------------------------------------
     # POS

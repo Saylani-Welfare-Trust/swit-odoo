@@ -346,3 +346,46 @@ class TestOneInService(BoxFlowCase):
         self.assertEqual(first.key_ids.state, 'issued')
         with self.assertRaisesRegex(ValidationError, 'out with a rider'):
             first.key_ids._make_available(self.bunch)
+
+
+@tagged('post_install', '-at_install')
+class TestVisibility(BoxFlowCase):
+    """Registrations: installers see their own (user level), the city staff their
+    City; key bunches: the City of the bunch matches the user's City."""
+
+    def _user(self, login, groups, account=None, employee=None):
+        user = self.env['res.users'].create({
+            'name': login, 'login': login,
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id] + [self.env.ref(g).id for g in groups])]})
+        employee = employee or self.env['hr.employee'].create({'name': login, 'cnic_no': '42101-55%05d-1' % user.id})
+        employee.write({'user_id': user.id, 'analytic_account_id': (account or self.zone).id})
+        return user
+
+    def test_installer_sees_own_registrations(self):
+        registration = self._install('L1')
+        Registration = self.env['donation.box.registration.installation']
+        installer = self._user('inst_vis', ['bn_donation_box.donation_box_user_group'], employee=self.installer)
+        colleague = self._user('colleague_vis', ['bn_donation_box.donation_box_user_group'])
+        key_user = self._user('key_vis', ['bn_key_management.key_management_user_group'])
+        self.assertEqual(Registration.with_user(installer).search([('id', '=', registration.id)]), registration)
+        self.assertFalse(Registration.with_user(colleague).search([('id', '=', registration.id)]),
+                         'same city but not the installer: hidden')
+        self.assertEqual(Registration.with_user(key_user).search([('id', '=', registration.id)]), registration,
+                         'Key Management works on the boxes of its City')
+        other_city = self.env['account.analytic.account'].create({
+            'name': 'Lahore', 'plan_id': self.city.plan_id.id, 'location_option_id': self.city.location_option_id.id})
+        far_key_user = self._user('far_key_vis', ['bn_key_management.key_management_user_group'], account=other_city)
+        self.assertFalse(Registration.with_user(far_key_user).search([('id', '=', registration.id)]))
+        manager = self._user('mgr_vis', ['bn_donation_box.donation_box_manager_group'], account=other_city)
+        self.assertEqual(Registration.with_user(manager).search([('id', '=', registration.id)]), registration)
+
+    def test_bunch_city_level(self):
+        Bunch = self.env['key.bunch']
+        branch = self.env['account.analytic.account'].create({
+            'name': 'Saddar Branch', 'plan_id': self.city.plan_id.id, 'parent_id': self.zone.id})
+        same_city = self._user('bunch_vis', ['bn_key_management.key_management_user_group'], account=branch)
+        other_city = self.env['account.analytic.account'].create({
+            'name': 'Multan', 'plan_id': self.city.plan_id.id, 'location_option_id': self.city.location_option_id.id})
+        far = self._user('bunch_far', ['bn_key_management.key_management_user_group'], account=other_city)
+        self.assertIn(self.bunch, Bunch.with_user(same_city).search([]), 'a Branch user sees the bunches of its City')
+        self.assertNotIn(self.bunch, Bunch.with_user(far).search([]))

@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 state_selection = [
@@ -39,7 +40,7 @@ class MicrofinanceLine(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id', default=0)
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id', default=0)
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id', compute='_compute_remaining_amount', store=True)
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'microfinance'))
     # NOTE: duplicate 'currency_id' declaration removed; the stored related
     # definition (store=True) is the effective one kept here.
     currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)

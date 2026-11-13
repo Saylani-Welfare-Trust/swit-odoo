@@ -36,7 +36,10 @@ class TestRoles(BoxFlowCase):
             if employee:
                 cls.env['hr.employee'].create({'name': login, 'user_id': new.id, 'analytic_account_id': cls.city.id})
             return new
-        cls.db_user = user('role_db_user', 'bn_donation_box.donation_box_user_group')
+        # the Donation Box user installing the boxes is their Installer: installers
+        # only see the registrations they install
+        cls.db_user = user('role_db_user', 'bn_donation_box.donation_box_user_group', employee=False)
+        cls.installer.write({'user_id': cls.db_user.id, 'analytic_account_id': cls.city.id})
         cls.db_manager = user('role_db_manager', 'bn_donation_box.donation_box_manager_group')
         cls.key_user = user('role_key_user', 'bn_key_management.key_management_user_group')
         cls.rider_user = user('role_rider_user', 'bn_rider_shift.rider_shift_user_group', employee=False)

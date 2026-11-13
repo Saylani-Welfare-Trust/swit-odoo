@@ -5,6 +5,7 @@ import re
 import logging
 import requests
 import json
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 from dateutil.relativedelta import relativedelta
 
 _logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ class MedicalEquipment(models.Model):
 
 
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'medical', registered=True))
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
