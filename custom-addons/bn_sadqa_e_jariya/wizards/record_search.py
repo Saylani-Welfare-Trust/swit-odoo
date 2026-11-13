@@ -1,46 +1,51 @@
-from odoo import api, models
-
-SADQA_TAG = 'bn_sadqa_e_jariya.sadqa_jariya_partner_category'
-# Asked of an institution before it is registered (the profile form shows and requires them);
-# the contact person and area are Sadqa e Jariya's own fields, required by its view
-REQUIRED_TO_REGISTER = ('mobile', 'street', 'city', 'cnic_no', 'date_of_birth', 'nearest_land_mark')
+from odoo import models, fields
 
 
-class ConfirmSearch(models.TransientModel):
-    """Sadqa e Jariya is a Record Search programme (its tag has the code
-    sadqa_e_jariya, Donee, Corporate / Institute): the search adds the tags,
-    never replacing the person's others. The profile opens in Sadqa e
-    Jariya's own popup (Save keeps it open, Send Profile Form)."""
-    _inherit = 'confirm.search'
+class RecordSearch(models.TransientModel):
+    _inherit = 'record.search'
 
-    def _is_sadqa_e_jariya(self):
-        tag = self.env.ref(SADQA_TAG, raise_if_not_found=False)
-        return bool(tag) and self._program() == tag
+    donee_registration_type = fields.Selection(selection_add=[('sadqa_e_jariya', 'Sadqa-e-Jaria')], ondelete={'sadqa_e_jariya': 'set null'})
+    is_sadqa_e_jariya = fields.Boolean('Is Sadqa e Jariya')
 
-    def _form_action(self, partner=None):
-        action = super()._form_action(partner)
-        if self._is_sadqa_e_jariya():
-            action['view_id'] = self.env.ref('bn_sadqa_e_jariya.sadqa_jariya_profile_popup_form').id
-            action['context']['sadqa_jariya_profile'] = True
+    def action_search(self):
+        action = super().action_search()
+        action['context']['is_sadqa_e_jariya'] = self.is_sadqa_e_jariya
         return action
 
 
-class ResPartnerCategory(models.Model):
-    _inherit = 'res.partner.category'
+class ConfirmSearch(models.TransientModel):
+    _inherit = 'confirm.search'
 
-    @api.model
-    def _setup_sadqa_e_jariya_programme(self):
-        """Every install / upgrade: the Sadqa-e-Jaria tag is the Record Search
-        programme of Sadqa e Jariya, with the fields an institution needs to
-        register (only set when not configured yet, an administrator's changes
-        are kept)."""
-        tag = self.env.ref(SADQA_TAG, raise_if_not_found=False)
-        if not tag:
-            return
-        if not tag.registration_program_code and not self._record_search_program('sadqa_e_jariya'):
-            tag.write({'registration_program_code': 'sadqa_e_jariya', 'registration_role': 'donee',
-                       'registration_kind': 'institution'})
-        if not tag.registration_required_field_ids:
-            fields = self.env['ir.model.fields'].sudo().search([
-                ('model', '=', 'res.partner'), ('name', 'in', REQUIRED_TO_REGISTER)])
-            tag.write({'registration_required_field_ids': [(6, 0, fields.ids)]})
+    donee_registration_type = fields.Selection(selection_add=[('sadqa_e_jariya', 'Sadqa-e-Jaria')], ondelete={'sadqa_e_jariya': 'set null'})
+
+    def _sadqa_jariya_tags(self):
+        """Donee, Corporate / Institute and Sadqa-e-Jaria: Sadqa e Jariya registers institutions only"""
+        return [(6, 0, [
+            self.env.ref('bn_profile_management.donee_partner_category').id,
+            self.env.ref('bn_profile_management.coorporate_institute_partner_category').id,
+            self.env.ref('bn_sadqa_e_jariya.sadqa_jariya_partner_category').id,
+        ])]
+
+    def return_donee_form(self, donee=None):
+        if self.donee_registration_type != 'sadqa_e_jariya':
+            return super().return_donee_form(donee)
+        action = {
+            'type': 'ir.actions.act_window',
+            'res_model': 'res.partner',
+            'view_mode': 'form',
+            'view_id': self.env.ref('bn_sadqa_e_jariya.sadqa_jariya_profile_popup_form').id,
+            'domain': '[("category_id.name", "in", ["Donee"])]',
+            'target': 'new',
+            'context': {'from_record_search': True, 'sadqa_jariya_profile': True},
+        }
+        if donee:
+            donee.category_id = self._sadqa_jariya_tags()
+            action['res_id'] = donee.id
+        else:
+            action['context'].update({
+                'default_category_id': self._sadqa_jariya_tags(),
+                'default_cnic_no': self.cnic_no,
+                'default_mobile': self.mobile_no,
+                'default_country_code_id': self.country_code_id.id,
+            })
+        return action

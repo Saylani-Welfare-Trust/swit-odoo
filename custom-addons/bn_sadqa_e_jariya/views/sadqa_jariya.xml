@@ -215,7 +215,7 @@
 
                         <!-- Inquiry forms filled on the Sadqa e Jariya portal, read-only here -->
                         <!-- Members come from Master Setup when the application moves from HOD to Committee Approval. -->
-                        <page name="committee_members_page" string="Committee Members" invisible="state != 'committee_approval' and not committee_line_ids">
+                        <page name="committee_members_page" string="Committee Members" invisible="0">
                             <field name="committee_member_ids" invisible="1"/>
                             <field name="committee_line_ids" readonly="state != 'committee_approval'" required="state == 'committee_approval'">
                                 <tree editable="bottom">
@@ -231,56 +231,56 @@
                             <field name="donee_form_id" invisible="1"/>
                             <group string="General">
                                 <group>
-                                    <field name="donee_form_md_number" string="MD Number"/>
-                                    <field name="donee_form_new_code_serial" string="New Code / Serial Number"/>
-                                    <field name="donee_form_case_number" string="Case Number"/>
-                                    <field name="donee_form_request_date" string="Request Date"/>
-                                    <field name="donee_form_institution_name" string="Madrasa / Masjid Name"/>
-                                    <field name="donee_form_institution_address" string="Full Address"/>
-                                    <field name="donee_form_responsible_person_name" string="Administrator / Imam / Trustee Name"/>
-                                    <field name="donee_form_contact_number" string="Contact Number"/>
-                                    <field name="donee_form_whatsapp_number" string="WhatsApp Number"/>
-                                    <field name="donee_form_registered_trust" string="Registered Trust"/>
-                                    <field name="donee_form_org_affiliation" string="Organization Affiliation"/>
-                                    <field name="donee_form_established_year" string="Established"/>
-                                    <field name="donee_form_teaching_rooms" string="Teaching Rooms"/>
-                                    <field name="donee_form_residential_rooms" string="Residential Rooms"/>
-                                    <field name="donee_form_total_area" string="Total Madrasa / Masjid Area"/>
+                                    <field name="donee_form_md_number"/>
+                                    <field name="donee_form_new_code_serial"/>
+                                    <field name="donee_form_case_number"/>
+                                    <field name="donee_form_request_date"/>
+                                    <field name="donee_form_institution_name"/>
+                                    <field name="donee_form_institution_address"/>
+                                    <field name="donee_form_responsible_person_name"/>
+                                    <field name="donee_form_contact_number"/>
+                                    <field name="donee_form_whatsapp_number"/>
+                                    <field name="donee_form_registered_trust"/>
+                                    <field name="donee_form_org_affiliation"/>
+                                    <field name="donee_form_established_year"/>
+                                    <field name="donee_form_teaching_rooms"/>
+                                    <field name="donee_form_residential_rooms"/>
+                                    <field name="donee_form_total_area"/>
                                 </group>
                                 <group>
-                                    <field name="donee_form_account_number" string="Account Number"/>
-                                    <field name="donee_form_cnic_number" string="CNIC Number"/>
-                                    <field name="donee_form_monthly_expense" string="Total Monthly Expenses"/>
-                                    <field name="donee_form_exp_salaries" string="Salary Expenses"/>
-                                    <field name="donee_form_exp_ration" string="Ration Expenses"/>
-                                    <field name="donee_form_exp_utility_bills" string="Gas / Electricity Bills"/>
-                                    <field name="donee_form_emergency_contact_if_no_support" string="Contacted If No Support In A Month"/>
-                                    <field name="donee_form_current_saylani_support" string="Current Saylani Support"/>
-                                    <field name="donee_form_support_construction" string="Construction Support"/>
-                                    <field name="donee_form_support_meat" string="Meat Support"/>
-                                    <field name="donee_form_support_cooked_food" string="Cooked Food Support"/>
-                                    <field name="donee_form_student_standard" string="Student Standard"/>
-                                    <field name="donee_form_cleanliness_env" string="Cleanliness"/>
-                                    <field name="donee_form_committee_members" string="Number of Committee Members"/>
-                                    <field name="donee_form_monthly_meetings" string="Number of Monthly Meetings"/>
+                                    <field name="donee_form_account_number"/>
+                                    <field name="donee_form_cnic_number"/>
+                                    <field name="donee_form_monthly_expense"/>
+                                    <field name="donee_form_exp_salaries"/>
+                                    <field name="donee_form_exp_ration"/>
+                                    <field name="donee_form_exp_utility_bills"/>
+                                    <field name="donee_form_emergency_contact_if_no_support"/>
+                                    <field name="donee_form_current_saylani_support"/>
+                                    <field name="donee_form_support_construction"/>
+                                    <field name="donee_form_support_meat"/>
+                                    <field name="donee_form_support_cooked_food"/>
+                                    <field name="donee_form_student_standard"/>
+                                    <field name="donee_form_cleanliness_env"/>
+                                    <field name="donee_form_committee_members"/>
+                                    <field name="donee_form_monthly_meetings"/>
                                 </group>
                             </group>
                             <group string="Masjid Information" invisible="institution_type != 'masjid'">
                                 <group>
-                                    <field name="donee_form_worshippers_fajr" string="Fajr Worshippers"/>
-                                    <field name="donee_form_worshippers_dhuhr" string="Dhuhr Worshippers"/>
-                                    <field name="donee_form_worshippers_asr" string="Asr Worshippers"/>
-                                    <field name="donee_form_worshippers_maghrib" string="Maghrib Worshippers"/>
-                                    <field name="donee_form_worshippers_isha" string="Isha Worshippers"/>
-                                    <field name="donee_form_worshippers_jumuah" string="Jumuah Worshippers"/>
+                                    <field name="donee_form_worshippers_fajr"/>
+                                    <field name="donee_form_worshippers_dhuhr"/>
+                                    <field name="donee_form_worshippers_asr"/>
+                                    <field name="donee_form_worshippers_maghrib"/>
+                                    <field name="donee_form_worshippers_isha"/>
+                                    <field name="donee_form_worshippers_jumuah"/>
                                 </group>
                                 <group>
-                                    <field name="donee_form_dars_schedule" string="Dars Schedule"/>
-                                    <field name="donee_form_book_name" string="Book Name"/>
-                                    <field name="donee_form_participants_count" string="Number of Participants"/>
-                                    <field name="donee_form_imam_other_engagements" string="Imam's Other Engagements"/>
-                                    <field name="donee_form_other_income_sources" string="Government / Other Sources of Income"/>
-                                    <field name="donee_form_monthly_masjid_support" string="Monthly Support from the Masjid"/>
+                                    <field name="donee_form_dars_schedule"/>
+                                    <field name="donee_form_book_name"/>
+                                    <field name="donee_form_participants_count"/>
+                                    <field name="donee_form_imam_other_engagements"/>
+                                    <field name="donee_form_other_income_sources"/>
+                                    <field name="donee_form_monthly_masjid_support"/>
                                 </group>
                             </group>
                             <group string="Madrasa Information" invisible="institution_type != 'madrasa'">
@@ -313,48 +313,48 @@
                             </group>
                             <group invisible="institution_type != 'madrasa'">
                                 <group>
-                                    <field name="donee_form_total_dars_nizami" string="Total Dars-e-Nizami Students"/>
-                                    <field name="donee_form_res_dars_nizami" string="Residential Dars-e-Nizami Students"/>
-                                    <field name="donee_form_non_res_dars_nizami" string="Non-residential Dars-e-Nizami Students"/>
-                                    <field name="donee_form_hifz_students" string="Hifz Students"/>
-                                    <field name="donee_form_nazra_students" string="Nazra Students"/>
-                                    <field name="donee_form_tajweed_students" string="Tajweed Students"/>
-                                    <field name="donee_form_school_students" string="School Students"/>
-                                    <field name="donee_form_other_courses" string="Other Courses"/>
-                                    <field name="donee_form_total_residential" string="Total Residential Students"/>
-                                    <field name="donee_form_total_non_residential" string="Total Non-residential Students"/>
-                                    <field name="donee_form_total_madrasa_students" string="Total Madrasa Students (Male and Female)"/>
-                                    <field name="donee_form_present_students" string="Present Students"/>
+                                    <field name="donee_form_total_dars_nizami"/>
+                                    <field name="donee_form_res_dars_nizami"/>
+                                    <field name="donee_form_non_res_dars_nizami"/>
+                                    <field name="donee_form_hifz_students"/>
+                                    <field name="donee_form_nazra_students"/>
+                                    <field name="donee_form_tajweed_students"/>
+                                    <field name="donee_form_school_students"/>
+                                    <field name="donee_form_other_courses"/>
+                                    <field name="donee_form_total_residential"/>
+                                    <field name="donee_form_total_non_residential"/>
+                                    <field name="donee_form_total_madrasa_students"/>
+                                    <field name="donee_form_present_students"/>
                                 </group>
                                 <group>
-                                    <field name="donee_form_absent_students" string="Absent Students"/>
-                                    <field name="donee_form_staff_dars_nizami" string="Dars-e-Nizami Staff"/>
-                                    <field name="donee_form_staff_hifz_nazra" string="Hifz and Nazra Staff"/>
-                                    <field name="donee_form_staff_non_teaching" string="Non-teaching Staff"/>
-                                    <field name="donee_form_total_staff" string="Total Staff"/>
-                                    <field name="donee_form_prev_test_percentage" string="Previous Test Percentage"/>
-                                    <field name="donee_form_curr_test_percentage" string="Current Test Percentage"/>
-                                    <field name="donee_form_org_students_count" string="Students Affiliated with the Organization"/>
-                                    <field name="donee_form_org_student_exam_percentage" string="Exam Percentage of Affiliated Students"/>
-                                    <field name="donee_form_prev_inquiry_percentage" string="Previous Inquiry Report Percentage"/>
-                                    <field name="donee_form_prev_inquiry_date" string="Previous Inquiry Date"/>
+                                    <field name="donee_form_absent_students"/>
+                                    <field name="donee_form_staff_dars_nizami"/>
+                                    <field name="donee_form_staff_hifz_nazra"/>
+                                    <field name="donee_form_staff_non_teaching"/>
+                                    <field name="donee_form_total_staff"/>
+                                    <field name="donee_form_prev_test_percentage"/>
+                                    <field name="donee_form_curr_test_percentage"/>
+                                    <field name="donee_form_org_students_count"/>
+                                    <field name="donee_form_org_student_exam_percentage"/>
+                                    <field name="donee_form_prev_inquiry_percentage"/>
+                                    <field name="donee_form_prev_inquiry_date"/>
                                 </group>
                             </group>
                             <group string="Flood Situation" invisible="not donee_form_short_intro and not donee_form_status_before_flood and not donee_form_status_after_flood">
-                                <field name="donee_form_short_intro" string="Brief Description of the Situation"/>
-                                <field name="donee_form_status_before_flood" string="Institution Before the Flood"/>
-                                <field name="donee_form_status_after_flood" string="Institution After the Flood"/>
+                                <field name="donee_form_short_intro"/>
+                                <field name="donee_form_status_before_flood"/>
+                                <field name="donee_form_status_after_flood"/>
                             </group>
                             <group string="Construction" invisible="not donee_form_total_estimate and not donee_form_cost_iron_steel and not donee_form_cost_cement and not donee_form_cost_labor and not donee_form_current_work and not donee_form_remaining_work">
                                 <group>
-                                    <field name="donee_form_total_estimate" string="Total Estimated Cost"/>
-                                    <field name="donee_form_cost_iron_steel" string="Steel / Rebar Cost"/>
-                                    <field name="donee_form_cost_cement" string="Cement Cost"/>
-                                    <field name="donee_form_cost_labor" string="Labour Cost"/>
+                                    <field name="donee_form_total_estimate"/>
+                                    <field name="donee_form_cost_iron_steel"/>
+                                    <field name="donee_form_cost_cement"/>
+                                    <field name="donee_form_cost_labor"/>
                                 </group>
                                 <group>
-                                    <field name="donee_form_current_work" string="Current Work"/>
-                                    <field name="donee_form_remaining_work" string="Remaining Work"/>
+                                    <field name="donee_form_current_work"/>
+                                    <field name="donee_form_remaining_work"/>
                                 </group>
                             </group>
                         </page>
@@ -363,56 +363,56 @@
                             <field name="officer_form_id" invisible="1"/>
                             <group string="General">
                                 <group>
-                                    <field name="officer_form_md_number" string="MD Number"/>
-                                    <field name="officer_form_new_code_serial" string="New Code / Serial Number"/>
-                                    <field name="officer_form_case_number" string="Case Number"/>
-                                    <field name="officer_form_request_date" string="Request Date"/>
-                                    <field name="officer_form_institution_name" string="Madrasa / Masjid Name"/>
-                                    <field name="officer_form_institution_address" string="Full Address"/>
-                                    <field name="officer_form_responsible_person_name" string="Administrator / Imam / Trustee Name"/>
-                                    <field name="officer_form_contact_number" string="Contact Number"/>
-                                    <field name="officer_form_whatsapp_number" string="WhatsApp Number"/>
-                                    <field name="officer_form_registered_trust" string="Registered Trust"/>
-                                    <field name="officer_form_org_affiliation" string="Organization Affiliation"/>
-                                    <field name="officer_form_established_year" string="Established"/>
-                                    <field name="officer_form_teaching_rooms" string="Teaching Rooms"/>
-                                    <field name="officer_form_residential_rooms" string="Residential Rooms"/>
-                                    <field name="officer_form_total_area" string="Total Madrasa / Masjid Area"/>
+                                    <field name="officer_form_md_number"/>
+                                    <field name="officer_form_new_code_serial"/>
+                                    <field name="officer_form_case_number"/>
+                                    <field name="officer_form_request_date"/>
+                                    <field name="officer_form_institution_name"/>
+                                    <field name="officer_form_institution_address"/>
+                                    <field name="officer_form_responsible_person_name"/>
+                                    <field name="officer_form_contact_number"/>
+                                    <field name="officer_form_whatsapp_number"/>
+                                    <field name="officer_form_registered_trust"/>
+                                    <field name="officer_form_org_affiliation"/>
+                                    <field name="officer_form_established_year"/>
+                                    <field name="officer_form_teaching_rooms"/>
+                                    <field name="officer_form_residential_rooms"/>
+                                    <field name="officer_form_total_area"/>
                                 </group>
                                 <group>
-                                    <field name="officer_form_account_number" string="Account Number"/>
-                                    <field name="officer_form_cnic_number" string="CNIC Number"/>
-                                    <field name="officer_form_monthly_expense" string="Total Monthly Expenses"/>
-                                    <field name="officer_form_exp_salaries" string="Salary Expenses"/>
-                                    <field name="officer_form_exp_ration" string="Ration Expenses"/>
-                                    <field name="officer_form_exp_utility_bills" string="Gas / Electricity Bills"/>
-                                    <field name="officer_form_emergency_contact_if_no_support" string="Contacted If No Support In A Month"/>
-                                    <field name="officer_form_current_saylani_support" string="Current Saylani Support"/>
-                                    <field name="officer_form_support_construction" string="Construction Support"/>
-                                    <field name="officer_form_support_meat" string="Meat Support"/>
-                                    <field name="officer_form_support_cooked_food" string="Cooked Food Support"/>
-                                    <field name="officer_form_student_standard" string="Student Standard"/>
-                                    <field name="officer_form_cleanliness_env" string="Cleanliness"/>
-                                    <field name="officer_form_committee_members" string="Number of Committee Members"/>
-                                    <field name="officer_form_monthly_meetings" string="Number of Monthly Meetings"/>
+                                    <field name="officer_form_account_number"/>
+                                    <field name="officer_form_cnic_number"/>
+                                    <field name="officer_form_monthly_expense"/>
+                                    <field name="officer_form_exp_salaries"/>
+                                    <field name="officer_form_exp_ration"/>
+                                    <field name="officer_form_exp_utility_bills"/>
+                                    <field name="officer_form_emergency_contact_if_no_support"/>
+                                    <field name="officer_form_current_saylani_support"/>
+                                    <field name="officer_form_support_construction"/>
+                                    <field name="officer_form_support_meat"/>
+                                    <field name="officer_form_support_cooked_food"/>
+                                    <field name="officer_form_student_standard"/>
+                                    <field name="officer_form_cleanliness_env"/>
+                                    <field name="officer_form_committee_members"/>
+                                    <field name="officer_form_monthly_meetings"/>
                                 </group>
                             </group>
                             <group string="Masjid Information" invisible="institution_type != 'masjid'">
                                 <group>
-                                    <field name="officer_form_worshippers_fajr" string="Fajr Worshippers"/>
-                                    <field name="officer_form_worshippers_dhuhr" string="Dhuhr Worshippers"/>
-                                    <field name="officer_form_worshippers_asr" string="Asr Worshippers"/>
-                                    <field name="officer_form_worshippers_maghrib" string="Maghrib Worshippers"/>
-                                    <field name="officer_form_worshippers_isha" string="Isha Worshippers"/>
-                                    <field name="officer_form_worshippers_jumuah" string="Jumuah Worshippers"/>
+                                    <field name="officer_form_worshippers_fajr"/>
+                                    <field name="officer_form_worshippers_dhuhr"/>
+                                    <field name="officer_form_worshippers_asr"/>
+                                    <field name="officer_form_worshippers_maghrib"/>
+                                    <field name="officer_form_worshippers_isha"/>
+                                    <field name="officer_form_worshippers_jumuah"/>
                                 </group>
                                 <group>
-                                    <field name="officer_form_dars_schedule" string="Dars Schedule"/>
-                                    <field name="officer_form_book_name" string="Book Name"/>
-                                    <field name="officer_form_participants_count" string="Number of Participants"/>
-                                    <field name="officer_form_imam_other_engagements" string="Imam's Other Engagements"/>
-                                    <field name="officer_form_other_income_sources" string="Government / Other Sources of Income"/>
-                                    <field name="officer_form_monthly_masjid_support" string="Monthly Support from the Masjid"/>
+                                    <field name="officer_form_dars_schedule"/>
+                                    <field name="officer_form_book_name"/>
+                                    <field name="officer_form_participants_count"/>
+                                    <field name="officer_form_imam_other_engagements"/>
+                                    <field name="officer_form_other_income_sources"/>
+                                    <field name="officer_form_monthly_masjid_support"/>
                                 </group>
                             </group>
                             <group string="Madrasa Information" invisible="institution_type != 'madrasa'">
@@ -445,48 +445,48 @@
                             </group>
                             <group invisible="institution_type != 'madrasa'">
                                 <group>
-                                    <field name="officer_form_total_dars_nizami" string="Total Dars-e-Nizami Students"/>
-                                    <field name="officer_form_res_dars_nizami" string="Residential Dars-e-Nizami Students"/>
-                                    <field name="officer_form_non_res_dars_nizami" string="Non-residential Dars-e-Nizami Students"/>
-                                    <field name="officer_form_hifz_students" string="Hifz Students"/>
-                                    <field name="officer_form_nazra_students" string="Nazra Students"/>
-                                    <field name="officer_form_tajweed_students" string="Tajweed Students"/>
-                                    <field name="officer_form_school_students" string="School Students"/>
-                                    <field name="officer_form_other_courses" string="Other Courses"/>
-                                    <field name="officer_form_total_residential" string="Total Residential Students"/>
-                                    <field name="officer_form_total_non_residential" string="Total Non-residential Students"/>
-                                    <field name="officer_form_total_madrasa_students" string="Total Madrasa Students (Male and Female)"/>
-                                    <field name="officer_form_present_students" string="Present Students"/>
+                                    <field name="officer_form_total_dars_nizami"/>
+                                    <field name="officer_form_res_dars_nizami"/>
+                                    <field name="officer_form_non_res_dars_nizami"/>
+                                    <field name="officer_form_hifz_students"/>
+                                    <field name="officer_form_nazra_students"/>
+                                    <field name="officer_form_tajweed_students"/>
+                                    <field name="officer_form_school_students"/>
+                                    <field name="officer_form_other_courses"/>
+                                    <field name="officer_form_total_residential"/>
+                                    <field name="officer_form_total_non_residential"/>
+                                    <field name="officer_form_total_madrasa_students"/>
+                                    <field name="officer_form_present_students"/>
                                 </group>
                                 <group>
-                                    <field name="officer_form_absent_students" string="Absent Students"/>
-                                    <field name="officer_form_staff_dars_nizami" string="Dars-e-Nizami Staff"/>
-                                    <field name="officer_form_staff_hifz_nazra" string="Hifz and Nazra Staff"/>
-                                    <field name="officer_form_staff_non_teaching" string="Non-teaching Staff"/>
-                                    <field name="officer_form_total_staff" string="Total Staff"/>
-                                    <field name="officer_form_prev_test_percentage" string="Previous Test Percentage"/>
-                                    <field name="officer_form_curr_test_percentage" string="Current Test Percentage"/>
-                                    <field name="officer_form_org_students_count" string="Students Affiliated with the Organization"/>
-                                    <field name="officer_form_org_student_exam_percentage" string="Exam Percentage of Affiliated Students"/>
-                                    <field name="officer_form_prev_inquiry_percentage" string="Previous Inquiry Report Percentage"/>
-                                    <field name="officer_form_prev_inquiry_date" string="Previous Inquiry Date"/>
+                                    <field name="officer_form_absent_students"/>
+                                    <field name="officer_form_staff_dars_nizami"/>
+                                    <field name="officer_form_staff_hifz_nazra"/>
+                                    <field name="officer_form_staff_non_teaching"/>
+                                    <field name="officer_form_total_staff"/>
+                                    <field name="officer_form_prev_test_percentage"/>
+                                    <field name="officer_form_curr_test_percentage"/>
+                                    <field name="officer_form_org_students_count"/>
+                                    <field name="officer_form_org_student_exam_percentage"/>
+                                    <field name="officer_form_prev_inquiry_percentage"/>
+                                    <field name="officer_form_prev_inquiry_date"/>
                                 </group>
                             </group>
                             <group string="Flood Situation" invisible="not officer_form_short_intro and not officer_form_status_before_flood and not officer_form_status_after_flood">
-                                <field name="officer_form_short_intro" string="Brief Description of the Situation"/>
-                                <field name="officer_form_status_before_flood" string="Institution Before the Flood"/>
-                                <field name="officer_form_status_after_flood" string="Institution After the Flood"/>
+                                <field name="officer_form_short_intro"/>
+                                <field name="officer_form_status_before_flood"/>
+                                <field name="officer_form_status_after_flood"/>
                             </group>
                             <group string="Construction" invisible="not officer_form_total_estimate and not officer_form_cost_iron_steel and not officer_form_cost_cement and not officer_form_cost_labor and not officer_form_current_work and not officer_form_remaining_work">
                                 <group>
-                                    <field name="officer_form_total_estimate" string="Total Estimated Cost"/>
-                                    <field name="officer_form_cost_iron_steel" string="Steel / Rebar Cost"/>
-                                    <field name="officer_form_cost_cement" string="Cement Cost"/>
-                                    <field name="officer_form_cost_labor" string="Labour Cost"/>
+                                    <field name="officer_form_total_estimate"/>
+                                    <field name="officer_form_cost_iron_steel"/>
+                                    <field name="officer_form_cost_cement"/>
+                                    <field name="officer_form_cost_labor"/>
                                 </group>
                                 <group>
-                                    <field name="officer_form_current_work" string="Current Work"/>
-                                    <field name="officer_form_remaining_work" string="Remaining Work"/>
+                                    <field name="officer_form_current_work"/>
+                                    <field name="officer_form_remaining_work"/>
                                 </group>
                             </group>
                         </page>

@@ -1,0 +1,4 @@
+// The patient is printed on the bill: other modules' donor name line doesn't apply
+.pos-receipt.medical-bill [name="custom-favor"] {
+    display: none;
+}

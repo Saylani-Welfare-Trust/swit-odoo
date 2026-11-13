@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <!-- Prescription desk: the main button approves the prescription instead of going to the payment -->
+    <t t-name="bn_medical_prescription.ActionpadWidget" t-inherit="point_of_sale.ActionpadWidget" t-inherit-mode="extension">
+        <xpath expr="//button[hasclass('pay-order-button')]//t[@t-esc='props.actionName']" position="replace">
+            <t t-if="pos.isPrescriptionDesk and props.actionType === 'payment'">Approve</t>
+            <t t-else="" t-esc="props.actionName"/>
+        </xpath>
+    </t>
+
+    <t t-name="bn_medical_prescription.Orderline" t-inherit="point_of_sale.Orderline" t-inherit-mode="extension">
+        <xpath expr="//li[hasclass('price-per-unit')]" position="after">
+            <li t-if="line.medicalPrescription" class="text-success small">
+                <i class="fa fa-medkit me-1"/>Prescribed
+            </li>
+        </xpath>
+    </t>
+
+    <!-- The bill of a prescription is not a donation receipt -->
+    <t t-name="bn_medical_prescription.OrderReceipt" t-inherit="point_of_sale.OrderReceipt" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('pos-receipt')]" position="attributes">
+            <attribute name="t-att-class">props.data.medical_prescription_name ? 'medical-bill' : ''</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('receipt_header')]" position="attributes">
+            <attribute name="t-if">!order.medical_prescription_name</attribute>
+        </xpath>
+        <xpath expr="//div[hasclass('receipt_header')]" position="before">
+            <div t-if="order.medical_prescription_name" class="row mb-2 medical-bill-header">
+                <div class="col-6">
+                    <h1>Medical Bill</h1>
+                </div>
+                <div class="col-6 text-end">
+                    <h1 class="text-transform" style="font-size: 12px;">
+                        <t t-if="company.name"><t t-esc="company.name"/></t>
+                        <br/>
+                        <t t-if="order.branch_name">(<t t-esc="order.branch_name"/>)</t>
+                    </h1>
+                </div>
+            </div>
+        </xpath>
+        <xpath expr="//div[@name='custom-donor']" position="before">
+            <t t-if="order.medical_prescription_name">
+                <div><strong>Prescription No.:</strong> <t t-esc="order.medical_prescription_name"/></div>
+                <div><strong>Patient:</strong> <t t-esc="partner.name"/></div>
+                <div t-if="partner.registration_id"><strong>Registration No.:</strong> <t t-esc="partner.registration_id"/></div>
+            </t>
+        </xpath>
+    </t>
+
+</templates>

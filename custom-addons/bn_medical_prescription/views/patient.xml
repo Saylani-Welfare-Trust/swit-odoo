@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="mh_patient_view_form_inherit_prescription" model="ir.ui.view">
+        <field name="name">mh.patient.view.form.inherit.prescription</field>
+        <field name="model">mh.patient</field>
+        <field name="inherit_id" ref="bn_medical_pos.mh_patient_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_prescriptions" type="object" class="oe_stat_button" icon="fa-medkit">
+                    <field name="prescription_count" widget="statinfo" string="Prescriptions"/>
+                </button>
+                <button name="action_view_bills" type="object" class="oe_stat_button" icon="fa-file-text-o">
+                    <field name="bill_count" widget="statinfo" string="Bills"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

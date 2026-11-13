@@ -15,5 +15,3 @@ from . import account_payment
 from . import pos
 from . import res_company
 from . import res_partner
-from . import upgrade_steps
-from . import program_types

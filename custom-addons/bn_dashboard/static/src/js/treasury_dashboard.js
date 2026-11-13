@@ -43,7 +43,6 @@ export class TreasuryDashboard extends Component {
             provinces: [],
             cities: [],
             zones: [],
-            restriction: null,
             segments_l1: [],
             segments_l2: [],
             segments_l3: [],
@@ -219,7 +218,6 @@ export class TreasuryDashboard extends Component {
             this.state.cheques   = { ...this.state.cheques,   ...data.cheques };
             this.state.deposits  = { ...this.state.deposits,  ...data.deposits };
             this.state.transfers = { ...this.state.transfers, ...data.transfers };
-            this.state.restriction = data.restriction || null;
         } catch (error) {
             console.error("Dashboard Fetch Error:", error);
         }
@@ -346,9 +344,7 @@ export class TreasuryDashboard extends Component {
     // ------------------------------------------------------------------
     getFilterDomain(model) {
         const domain = [];
-        if (this.state.restriction && this.state.restriction.analytic_ids && this.state.restriction.analytic_ids.length) {
-                domain.push(['analytic_account_id', 'child_of', this.state.restriction.analytic_ids]);
-            }
+
         const bid = this.state.branch_id   ? parseInt(this.state.branch_id, 10)   : null;
         const pid = this.state.province_id ? parseInt(this.state.province_id, 10) : null;
         const cid = this.state.city_id     ? parseInt(this.state.city_id, 10)     : null;

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_category_medical_health" model="ir.module.category">
+        <field name="name">Medical &amp; Health</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <record id="group_medical_user" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_category_medical_health"/>
+        <field name="implied_ids" eval="[(4, ref('point_of_sale.group_pos_user'))]"/>
+    </record>
+
+    <record id="group_medical_manager" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_category_medical_health"/>
+        <field name="implied_ids" eval="[(4, ref('group_medical_user')), (4, ref('point_of_sale.group_pos_manager'))]"/>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
+
+</odoo>
