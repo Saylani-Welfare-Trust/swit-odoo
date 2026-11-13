@@ -10,11 +10,3 @@ class StockLocation(models.Model):
 
     is_slaughter_location = fields.Boolean('Is Slaughter Location', tracking=True)
     is_distribution_location = fields.Boolean('Is Distribution Location', tracking=True)
-
-    def write(self, vals):
-        res = super().write(vals)
-        # The Donation Box record rules match a user's allowed locations to cities
-        # through this field, and rule domains are cached per user.
-        if 'analytic_account_id' in vals:
-            self.env.registry.clear_cache()
-        return res

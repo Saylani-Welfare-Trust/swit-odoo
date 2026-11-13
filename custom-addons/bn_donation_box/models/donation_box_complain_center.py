@@ -93,8 +93,7 @@ class DonationBoxComplain(models.Model):
                 registration = self.env['donation.box.registration.installation'].browse(registration_id)
                 if vals.get('lot_id') and registration.lot_id.id != vals['lot_id']:
                     raise ValidationError(_('The Box No. does not match the selected registration.'))
-                # sudo: the duplicate check must see complaints of every location.
-                open_complaint = self.sudo().search([
+                open_complaint = self.search([
                     ('donation_box_registration_installation_id', '=', registration_id),
                     ('status', 'in', ('draft', 'process')),
                 ], limit=1)
