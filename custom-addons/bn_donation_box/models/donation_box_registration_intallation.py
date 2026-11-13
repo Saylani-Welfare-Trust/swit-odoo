@@ -60,7 +60,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
     allowed_city_ids = fields.Many2many(
         'account.analytic.account', string="Allowed Cities", compute='_compute_allowed_city_ids',
-        help="Cities the current user may pick: the analytic accounts of their Allowed Locations.")
+        help="Cities the current user may pick: the Cities of their Allowed Locations.")
 
     name = fields.Char('Name', default="New", copy=False)
     request_no = fields.Char(related='donation_box_request_id.name', string="Request No.", store=True)
@@ -115,7 +115,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     def _compute_allowed_city_ids(self):
         cities = self.env['account.analytic.account'].search([('location_option_id.name', '=', 'City')])
         if not self.env.su and not self.env.user.has_group(ALL_LOCATIONS_GROUP):
-            cities &= self.env.user.allowed_location_ids.analytic_account_id
+            cities &= self.env.user.donation_box_city_ids
         for rec in self:
             rec.allowed_city_ids = cities
 

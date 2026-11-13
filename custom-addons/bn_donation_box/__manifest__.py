@@ -14,6 +14,7 @@
         'bn_profile_management',
         'bn_import_donation',
         'bn_master_setup',
+        'account_analytic_parent',
     ],
     'data': [
         'data/ir_module_category.xml',
