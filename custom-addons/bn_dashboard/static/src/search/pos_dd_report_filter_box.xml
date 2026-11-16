@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Date Range / City / Branch box -->
+    <t t-name="bn_dashboard.PosDdReportFilterBox">
+        <div class="o_pos_dd_filter_box px-3 py-1" style="min-width: 16rem;">
+            <div class="fw-bold mb-1">Date Range</div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <DateTimeInput type="'date'"
+                               value="draft.dateFrom"
+                               placeholder="placeholders.from"
+                               onChange.bind="onDateFromChange"
+                               onApply.bind="onDateFromChange"/>
+                <span class="text-muted">–</span>
+                <DateTimeInput type="'date'"
+                               value="draft.dateTo"
+                               minDate="draft.dateFrom || null"
+                               placeholder="placeholders.to"
+                               onChange.bind="onDateToChange"
+                               onApply.bind="onDateToChange"/>
+            </div>
+
+            <div class="fw-bold mb-1">City</div>
+            <select class="form-select form-select-sm mb-2" t-on-change="onCityChange">
+                <option value="" t-att-selected="!draft.cityId">All cities</option>
+                <t t-foreach="options.cities" t-as="city" t-key="city.id">
+                    <option t-att-value="city.id" t-att-selected="city.id === draft.cityId" t-esc="city.name"/>
+                </t>
+            </select>
+
+            <div class="fw-bold mb-1">Branch</div>
+            <select class="form-select form-select-sm mb-3" t-on-change="onBranchChange">
+                <option value="" t-att-selected="!draft.branchId">All branches</option>
+                <t t-foreach="options.branches" t-as="branch" t-key="branch.id">
+                    <option t-att-value="branch.id" t-att-selected="branch.id === draft.branchId" t-esc="branch.name"/>
+                </t>
+            </select>
+
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm flex-grow-1"
+                        t-att-disabled="!canApply" t-on-click="apply">Apply</button>
+                <button type="button" class="btn btn-secondary btn-sm"
+                        t-att-disabled="!canApply" t-on-click="clear">Clear</button>
+            </div>
+        </div>
+    </t>
+
+    <!-- Insert the box into the Filters column, only for the POS & DD report -->
+    <t t-inherit="web.SearchBarMenu" t-inherit-mode="extension">
+        <xpath expr="//DropdownItem[contains(@class, 'o_add_custom_filter')]" position="before">
+            <t t-if="env.searchModel.resModel === 'pos.dd.report'">
+                <PosDdReportFilterBox/>
+                <div role="separator" class="dropdown-divider"/>
+            </t>
+        </xpath>
+    </t>
+
+</templates>
