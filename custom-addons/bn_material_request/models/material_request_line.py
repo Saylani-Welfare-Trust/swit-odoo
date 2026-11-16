@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class MemberApprovalLine(models.Model):
@@ -62,6 +63,23 @@ class MemberApprovalLine(models.Model):
                 ).qty_available
             else:
                 line.on_hand_qty = 0.0
+
+    # ------------------------------------------------------------------
+    # Constraints
+    # ------------------------------------------------------------------
+    @api.constrains('product_id', 'approval_id')
+    def _check_unique_product_per_request(self):
+        for line in self:
+            duplicate = line.approval_id.line_ids.filtered(
+                lambda l: l != line and l.product_id == line.product_id
+            )
+            if duplicate:
+                raise ValidationError(_(
+                    "Product '%(product)s' is already added to %(request)s. "
+                    "Change the quantity on the existing line instead of adding it again.",
+                    product=line.product_id.display_name,
+                    request=line.approval_id.name,
+                ))
 
     # ------------------------------------------------------------------
     # Helpers
