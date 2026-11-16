@@ -164,10 +164,17 @@
                 <field name="config_id"/>
                 <field name="bank_id"/>
                 
-                <!-- New Filter Fields -->
+                <!-- Location filters (dropdowns limited to the right hierarchy level) -->
                 <field name="province_id"/>
-                <field name="city_id"/>
+                <field name="city_id"
+                       domain="[('plan_id.name', '=', 'Location'), ('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]"/>
                 <field name="zone_id"/>
+                <field name="analytic_account_id" string="Branch"
+                       domain="[('plan_id.name', '=', 'Location'), ('parent_id.parent_id.parent_id', '!=', False)]"/>
+
+                <!-- Date range: type a date, pick "Date From" / "Date To" (both inclusive) -->
+                <field name="date_day" string="Date From" operator="&gt;="/>
+                <field name="date_day" string="Date To" operator="&lt;="/>
                 <field name="product_id"/>
                 <field name="category_id"/>
 

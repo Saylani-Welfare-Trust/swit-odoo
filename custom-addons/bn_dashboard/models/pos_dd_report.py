@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models, tools
+from datetime import datetime, time, timedelta
+
+import pytz
+
+from odoo import _, api, fields, models, tools
+from odoo.exceptions import UserError
 from odoo.osv import expression
 
 
@@ -44,6 +49,42 @@ class PosDdReport(models.Model):
     province_id = fields.Many2one('account.analytic.account', 'Province', readonly=True)
     product_id = fields.Many2one('product.product', 'Product', readonly=True)
     category_id = fields.Many2one('product.category', 'Product Category', readonly=True)
+
+    # ---- Date-range search helper (not a view column) ----
+    date_day = fields.Date(
+        'Day', compute='_compute_date_day', search='_search_date_day',
+        help="Transaction date in the user's timezone. Backs the "
+             "'Date From' / 'Date To' search fields so whole days are matched.")
+
+    @api.depends('date')
+    def _compute_date_day(self):
+        for rec in self:
+            rec.date_day = fields.Date.context_today(rec, rec.date) if rec.date else False
+
+    def _search_date_day(self, operator, value):
+        """Translate a local calendar day into UTC bounds on ``date``."""
+        if not value:
+            return [('date', operator, value)]
+        if operator not in ('=', '!=', '<', '<=', '>', '>='):
+            raise UserError(_("Operator '%s' is not supported on Day.", operator))
+
+        tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        day = fields.Date.to_date(value)
+
+        def utc_midnight(d):
+            local = tz.localize(datetime.combine(d, time.min))
+            return local.astimezone(pytz.utc).replace(tzinfo=None)
+
+        start = utc_midnight(day)
+        end = utc_midnight(day + timedelta(days=1))
+        return {
+            '>=': [('date', '>=', start)],
+            '>': [('date', '>=', end)],
+            '<': [('date', '<', start)],
+            '<=': [('date', '<', end)],
+            '=': ['&', ('date', '>=', start), ('date', '<', end)],
+            '!=': ['|', ('date', '<', start), ('date', '>=', end)],
+        }[operator]
 
     # ------------------------------------------------------------------
     def init(self):
