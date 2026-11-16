@@ -1091,10 +1091,20 @@ class Welfare(models.Model):
         if not existing_donee:
             # Create new donee in portal
             donee_data = self._create_donee_in_portal()
-        portal_application = self.create_portal_application()
-        portal_application_id = portal_application.get('id')
-        
-        
+        already_on_portal = False
+        try:
+            portal_application = self.create_portal_application()
+        except Exception as e:
+            # An earlier send already created this application on the portal (odooId = self.id),
+            # e.g. the record was reverted to Completed and sent again: link to it instead of failing
+            if f"odooId {self.id} already exists" not in str(e):
+                raise
+            already_on_portal = True
+            portal_application = self._search_portal_applications() or {}
+            _logger.info("Welfare application %s already exists on portal; linking it (%s)",
+                         self.display_name, portal_application.get('id'))
+        portal_application_id = portal_application.get('id') or self.portal_application_id
+
         # Update disbursement record with portal information
         update_vals = {
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
@@ -1107,7 +1117,10 @@ class Welfare(models.Model):
         
         action = 'created_donee' if not existing_donee else 'linked_existing_donee'
         message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal "
-        message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
+        if already_on_portal:
+            message += f" | 📋 Application already on portal, linked{f' (ID: {portal_application_id})' if portal_application_id else ''} "
+        else:
+            message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
         
         return {
             'action': action,
@@ -1187,13 +1200,14 @@ class Welfare(models.Model):
                 rec.write({
                     'portal_sync_status': 'syncing',
                     'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}",
-                    'state': 'send_for_inquiry'  # Just move to send_for_inquiry
                 })
-                # Your existing sync logic...
                 existing_donee = rec._check_donee_exists_in_portal()
                 result = rec._handle_new_application(existing_donee)
                 rec._update_sync_status_success(result)
                 rec._create_sync_chatter_message(result)
+                # Move on only once the portal has the application, so a failed send
+                # stays in Completed and can simply be sent again (no Revert needed)
+                rec.state = 'send_for_inquiry'
                 success_msgs.append(f"[{rec.display_name}] {result['message']}")
             except Exception as e:
                 error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
