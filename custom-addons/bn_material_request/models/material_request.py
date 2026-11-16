@@ -106,7 +106,15 @@ class MemberApproval(models.Model):
     
     # Lines
     line_ids = fields.One2many('material.request.line', 'approval_id', string='Products', copy=True)
-    
+    # Products already on the lines, so the line's product dropdown can hide them.
+    selected_product_ids = fields.Many2many(
+        'product.product', compute='_compute_selected_product_ids')
+
+    @api.depends('line_ids.product_id')
+    def _compute_selected_product_ids(self):
+        for rec in self:
+            rec.selected_product_ids = rec.line_ids.product_id
+
     # Remarks
     rejection_reason = fields.Text('Rejection Reason', tracking=True)
     committee_remarks = fields.Text('Committee Remarks')
