@@ -54,6 +54,7 @@ class DirectDeposit(models.Model):
     
     dhs_ids = fields.One2many('donation.home.service', 'direct_deposit_id', string="Donation Home Service Records")
 
+
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
     source_model = fields.Selection([
         ('microfinance', 'Microfinance'),
