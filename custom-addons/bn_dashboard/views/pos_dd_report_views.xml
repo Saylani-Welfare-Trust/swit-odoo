@@ -187,6 +187,11 @@
                 <filter name="filter_this_month" string="This Month" domain="[('date', '>=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <filter name="filter_this_year" string="This Year" domain="[('date', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <separator/>
+                <!-- Date ▸ months / quarters / years (pick several to cover a range).
+                     City ▸ and Branch ▸ are added right after this by
+                     pos.dd.report._add_location_filters() -->
+                <filter name="filter_date" string="Date" date="date"/>
+                <separator/>
                 
                 <group expand="0" string="Group By">
                     <filter name="group_source" string="Source" context="{'group_by': 'source_model'}"/>
