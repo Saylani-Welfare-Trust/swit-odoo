@@ -2,7 +2,6 @@
 from datetime import datetime, time, timedelta
 
 import pytz
-from lxml import etree
 
 from odoo import _, api, fields, models, tools
 from odoo.exceptions import UserError
@@ -191,18 +190,12 @@ class PosDdReport(models.Model):
         """)
 
     # ------------------------------------------------------------------
-    # SEARCH VIEW: one filter per city / branch
+    # FILTER POPUPS (City / Branch) — see static/src/search/pos_dd_report_filters.js
     # ------------------------------------------------------------------
     @api.model
-    def get_view(self, view_id=None, view_type='form', **options):
-        res = super().get_view(view_id, view_type, **options)
-        if view_type == 'search':
-            res['arch'] = self._add_location_filters(res['arch'])
-        return res
-
-    @api.model
-    def _get_location_filter_options(self):
+    def get_location_filter_options(self):
         """Cities and branches (Location plan) the current user may report on."""
+        self.check_access_rights('read')
         Account = self.env['account.analytic.account'].sudo()
         location = [('plan_id.name', '=', 'Location')]
         city_domain = location + [('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]
@@ -216,43 +209,15 @@ class PosDdReport(models.Model):
 
         cities = Account.search(city_domain, order='name')
         branches = Account.search(branch_domain, order='name')
-        return cities, branches
-
-    @api.model
-    def _add_location_filters(self, arch):
-        """Insert City and Branch filter groups after the 'Date' filter."""
-        root = etree.fromstring(arch)
-        anchor = root.find(".//filter[@name='filter_date']")
-        if anchor is None:
-            return arch
-
-        cities, branches = self._get_location_filter_options()
-        nodes = []
-        if cities:
-            nodes.append(etree.Element('separator'))
-            nodes += [
-                etree.Element('filter', {
-                    'name': 'pdd_city_%d' % city.id,
-                    'string': city.name,
-                    'domain': "[('city_id', '=', %d)]" % city.id,
-                })
-                for city in cities
-            ]
-        if branches:
-            nodes.append(etree.Element('separator'))
-            nodes += [
-                etree.Element('filter', {
-                    'name': 'pdd_branch_%d' % branch.id,
-                    # branch names repeat across cities, so show the city too
-                    'string': '%s (%s)' % (branch.name, branch.parent_id.parent_id.name)
-                              if branch.parent_id.parent_id else branch.name,
-                    'domain': "[('analytic_account_id', '=', %d)]" % branch.id,
-                })
-                for branch in branches
-            ]
-        for node in reversed(nodes):
-            anchor.addnext(node)
-        return etree.tostring(root, encoding='unicode')
+        return {
+            'cities': [{'id': c.id, 'name': c.name} for c in cities],
+            'branches': [{
+                'id': b.id,
+                'name': b.name,
+                'city_id': b.parent_id.parent_id.id or False,
+                'city_name': b.parent_id.parent_id.name or '',
+            } for b in branches],
+        }
 
     # ------------------------------------------------------------------
     # ACCESS HELPERS
