@@ -883,7 +883,17 @@ class Welfare(models.Model):
         else:
             self._create_donee_in_portal()
 
-        application     = self._search_portal_applications()
+        application = self._search_portal_applications()
+        message     = self._apply_portal_application(application)
+        return self._show_notification('Portal Status Check', message, 'info')
+
+    def _apply_portal_application(self, application):
+        """Pull a completed inquiry from the portal application into this record.
+
+        Shared by the Check Portal Status button and the scheduled action.
+        Returns the status message.
+        """
+        self.ensure_one()
         app_state       = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
 
@@ -991,8 +1001,54 @@ class Welfare(models.Model):
         else:
             message = " | 📋 No applications found"
 
-        return self._show_notification('Portal Status Check', message, 'info')
-    
+        return message
+
+    @api.model
+    def _auto_check_portal_status(self):
+        """Scheduled action: pull completed inquiries for applications already sent to the portal.
+
+        Pages through the portal search once per run and matches every pending record
+        from that single pass, instead of paging through the portal again per record.
+        """
+        company = self.env.company
+        if not company.welfare_url or not company.odoo_auth_key or not company.search_endpoint:
+            _logger.warning("Welfare portal status check skipped: portal URL, auth key, or search endpoint is missing.")
+            return
+
+        pending = self.search([
+            ('state', '=', 'send_for_inquiry'),
+            ('is_synced', '=', True),
+            ('portal_application_id', '!=', False),
+        ])
+        if not pending:
+            return
+
+        records_by_id = {record.id: record for record in pending}
+        found = {}
+        for _page, applications in self._iter_portal_application_pages():
+            for app in applications:
+                if (isinstance(app, dict) and app.get('department') == "welfare"
+                        and app.get('odooId') in records_by_id):
+                    found.setdefault(app['odooId'], app)
+            if len(found) == len(records_by_id):
+                break
+
+        _logger.info(
+            "Welfare portal status check: %s of %s pending applications found in portal",
+            len(found), len(records_by_id),
+        )
+        for odoo_id, application in found.items():
+            record = records_by_id[odoo_id]
+            try:
+                with self.env.cr.savepoint():
+                    message = record._apply_portal_application(application)
+                # The portal has been told this application is synced, so commit now:
+                # a later failure or cron timeout must not roll this record back.
+                self.env.cr.commit()
+                _logger.info("Welfare portal status for %s:%s", record.display_name, message)
+            except Exception:
+                _logger.exception("Could not check Welfare portal status for %s", record.display_name)
+
     def _find_matching_application(self, applications):
         """Find matching application from portal data"""
         for app in applications:
@@ -1009,13 +1065,26 @@ class Welfare(models.Model):
         return None
     
     def _search_portal_applications(self):
-        """Page through the portal search results until this record's application is found.
+        """Page through the portal search results until this record's application is found."""
+        for page, applications in self._iter_portal_application_pages():
+            matching_app = self._find_matching_application(applications)
+            if matching_app:
+                _logger.info(
+                    f"Portal application for odooId {self.id} found on page {page}: "
+                    f"id={matching_app.get('id')} status={matching_app.get('status')!r}"
+                )
+                return matching_app
+        _logger.info(f"No portal application found for odooId {self.id}")
+        return None
+
+    def _iter_portal_application_pages(self):
+        """Yield (page number, applications) for each page of the portal search endpoint.
 
         Each page is requested with {"limit", "cursor"}, where cursor is the portal id
         ("id", or Mongo "_id") of the last record on the previous page (no cursor for
         the first page). The portal may answer with a plain list or {"data": [...]}.
-        Paging stops on a match, on a short or empty page, or when the cursor stops
-        advancing.
+        Paging stops on a short or empty page, or when the cursor stops advancing;
+        callers stop early by breaking out of the loop.
         """
         endpoint = self.env.company.search_endpoint
         cursor = None
@@ -1030,15 +1099,15 @@ class Welfare(models.Model):
                 result = self._make_sadqa_api_call(endpoint, 'POST', payload)
             except Exception as e:
                 if page > 1:
-                    _logger.warning(f"Portal search failed on page {page} for odooId {self.id}: {e}")
-                    return None
+                    _logger.warning(f"Portal search failed on page {page}: {e}")
+                    return
                 # The endpoint may not accept a paging body: fall back to the old unpaged call.
                 _logger.info(f"Paged portal search failed ({e}); retrying without paging")
                 try:
                     result = self._make_sadqa_api_call(endpoint)
                 except Exception as fallback_error:
                     _logger.warning(f"No unsynced applications found: {fallback_error}")
-                    return None
+                    return
 
             if isinstance(result, dict):
                 applications = result.get('data') or []
@@ -1054,33 +1123,23 @@ class Welfare(models.Model):
 
             _logger.info(
                 f"Portal search page {page} (cursor={cursor!r}): {len(applications)} applications, "
-                f"last portal id={next_cursor!r}, looking for odooId {self.id}"
+                f"last portal id={next_cursor!r}"
             )
 
-            matching_app = self._find_matching_application(applications)
-            if matching_app:
-                _logger.info(
-                    f"Portal application found on page {page}: "
-                    f"id={matching_app.get('id')} status={matching_app.get('status')!r}"
-                )
-                return matching_app
+            yield page, applications
 
             if len(applications) < PORTAL_SEARCH_PAGE_LIMIT:
-                return None  # short page: this was the last one
+                return  # short page: this was the last one
             if next_cursor is None or next_cursor in seen_cursors:
                 _logger.warning(
                     f"Portal search cannot advance past page {page} "
                     f"(cursor {next_cursor!r} missing or repeated); stopping"
                 )
-                return None
+                return
             seen_cursors.add(next_cursor)
             cursor = next_cursor
 
-        _logger.warning(
-            f"Portal search stopped after {PORTAL_SEARCH_MAX_PAGES} pages "
-            f"without finding odooId {self.id}"
-        )
-        return None
+        _logger.warning(f"Portal search stopped after {PORTAL_SEARCH_MAX_PAGES} pages")
 
     def _mark_application_synced(self):
         """Mark application as synced in portal"""
