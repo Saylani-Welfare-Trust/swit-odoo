@@ -11,6 +11,10 @@ from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
 
+# Portal search paging (cursor based: send {limit, cursor}, receive {data, nextCursor}).
+PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
+PORTAL_SEARCH_MAX_PAGES = 50     # safety stop so a bad cursor can never loop forever
+
 
 assest_availability_selection = [
     ('not_available', 'Not Available'),
@@ -992,6 +996,8 @@ class Welfare(models.Model):
     def _find_matching_application(self, applications):
         """Find matching application from portal data"""
         for app in applications:
+            if not isinstance(app, dict):
+                continue
             # Match by CNIC (most reliable)
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
             if app.get('odooId') == self.id and app.get('department') == "welfare":
@@ -1003,21 +1009,66 @@ class Welfare(models.Model):
         return None
     
     def _search_portal_applications(self):
-        """Search for matching applications in portal"""
-        try:
-            result = self._make_sadqa_api_call(self.env.company.search_endpoint)
-            applications = result
-            
-            if applications:
-                _logger.info(f"Unsynced applications found: {applications}")
-                # Find matching application based on donee information
-                matching_app = self._find_matching_application(applications)
+        """Page through the portal search results until this record's application is found.
+
+        Each page is requested with {"limit", "cursor"} and the portal answers
+        {"data": [...], "nextCursor": ...}; paging stops on a match or when
+        nextCursor is empty. A plain list response (unpaged endpoint) is
+        treated as a single, final page.
+        """
+        endpoint = self.env.company.search_endpoint
+        cursor = None
+        seen_cursors = set()
+
+        for page in range(1, PORTAL_SEARCH_MAX_PAGES + 1):
+            payload = {"json": {"limit": PORTAL_SEARCH_PAGE_LIMIT}}
+            if cursor:
+                payload["json"]["cursor"] = cursor
+
+            try:
+                result = self._make_sadqa_api_call(endpoint, 'POST', payload)
+            except Exception as e:
+                if page > 1:
+                    _logger.warning(f"Portal search failed on page {page} for odooId {self.id}: {e}")
+                    return None
+                # The endpoint may not accept a paging body: fall back to the old unpaged call.
+                _logger.info(f"Paged portal search failed ({e}); retrying without paging")
+                try:
+                    result = self._make_sadqa_api_call(endpoint)
+                except Exception as fallback_error:
+                    _logger.warning(f"No unsynced applications found: {fallback_error}")
+                    return None
+
+            if isinstance(result, dict):
+                applications = result.get('data') or []
+                next_cursor = result.get('nextCursor')
+            else:
+                applications = result or []
+                next_cursor = None
+
+            _logger.info(
+                f"Portal search page {page}: {len(applications)} applications, "
+                f"nextCursor={next_cursor!r}, looking for odooId {self.id}"
+            )
+
+            matching_app = self._find_matching_application(applications)
+            if matching_app:
+                _logger.info(
+                    f"Portal application found on page {page}: "
+                    f"id={matching_app.get('id')} status={matching_app.get('status')!r}"
+                )
                 return matching_app
-            return None
-            
-        except Exception as e:
-            _logger.warning(f"No unsynced applications found: {str(e)}")
-            return None
+
+            if not next_cursor or next_cursor in seen_cursors:
+                return None
+            seen_cursors.add(next_cursor)
+            cursor = next_cursor
+
+        _logger.warning(
+            f"Portal search stopped after {PORTAL_SEARCH_MAX_PAGES} pages "
+            f"without finding odooId {self.id}"
+        )
+        return None
 
     def _mark_application_synced(self):
         """Mark application as synced in portal"""
