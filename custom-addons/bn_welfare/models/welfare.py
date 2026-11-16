@@ -11,9 +11,9 @@ from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
 
-# Portal search paging (cursor based: send {limit, cursor}, receive {data, nextCursor}).
+# Portal search paging: send {limit, cursor}, where cursor is the odooId of the last record of the previous page.
 PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
-PORTAL_SEARCH_MAX_PAGES = 50     # safety stop so a bad cursor can never loop forever
+PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
 
 
 assest_availability_selection = [
@@ -1011,10 +1011,10 @@ class Welfare(models.Model):
     def _search_portal_applications(self):
         """Page through the portal search results until this record's application is found.
 
-        Each page is requested with {"limit", "cursor"} and the portal answers
-        {"data": [...], "nextCursor": ...}; paging stops on a match or when
-        nextCursor is empty. A plain list response (unpaged endpoint) is
-        treated as a single, final page.
+        Each page is requested with {"limit", "cursor"}, where cursor is the odooId of
+        the last record on the previous page (no cursor for the first page). The portal
+        may answer with a plain list or {"data": [...]}. Paging stops on a match, on a
+        short or empty page, or when the cursor stops advancing.
         """
         endpoint = self.env.company.search_endpoint
         cursor = None
@@ -1022,7 +1022,7 @@ class Welfare(models.Model):
 
         for page in range(1, PORTAL_SEARCH_MAX_PAGES + 1):
             payload = {"json": {"limit": PORTAL_SEARCH_PAGE_LIMIT}}
-            if cursor:
+            if cursor is not None:
                 payload["json"]["cursor"] = cursor
 
             try:
@@ -1041,14 +1041,19 @@ class Welfare(models.Model):
 
             if isinstance(result, dict):
                 applications = result.get('data') or []
-                next_cursor = result.get('nextCursor')
             else:
                 applications = result or []
-                next_cursor = None
+
+            # Cursor for the next page = odooId of the last record that has one.
+            next_cursor = next(
+                (app.get('odooId') for app in reversed(applications)
+                 if isinstance(app, dict) and app.get('odooId') is not None),
+                None,
+            )
 
             _logger.info(
-                f"Portal search page {page}: {len(applications)} applications, "
-                f"nextCursor={next_cursor!r}, looking for odooId {self.id}"
+                f"Portal search page {page} (cursor={cursor!r}): {len(applications)} applications, "
+                f"last odooId={next_cursor!r}, looking for odooId {self.id}"
             )
 
             matching_app = self._find_matching_application(applications)
@@ -1059,7 +1064,13 @@ class Welfare(models.Model):
                 )
                 return matching_app
 
-            if not next_cursor or next_cursor in seen_cursors:
+            if len(applications) < PORTAL_SEARCH_PAGE_LIMIT:
+                return None  # short page: this was the last one
+            if next_cursor is None or next_cursor in seen_cursors:
+                _logger.warning(
+                    f"Portal search cannot advance past page {page} "
+                    f"(cursor {next_cursor!r} missing or repeated); stopping"
+                )
                 return None
             seen_cursors.add(next_cursor)
             cursor = next_cursor
