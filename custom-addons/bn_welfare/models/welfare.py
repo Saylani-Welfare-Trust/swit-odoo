@@ -1095,14 +1095,22 @@ class Welfare(models.Model):
         try:
             portal_application = self.create_portal_application()
         except Exception as e:
-            # An earlier send already created this application on the portal (odooId = self.id),
-            # e.g. the record was reverted to Completed and sent again: link to it instead of failing
+            # The portal keys applications by odooId alone, so "already exists" can also mean another
+            # record used this id (another department, or an older copy of this database).
+            # Link only when it really is this welfare record: listed by the portal as a welfare
+            # application, or sent from this record before (reverted to Completed and sent again)
             if f"odooId {self.id} already exists" not in str(e):
                 raise
-            already_on_portal = True
             portal_application = self._search_portal_applications() or {}
+            if not portal_application.get('id') and not self.portal_application_id:
+                raise Exception(
+                    f"The portal already has an application with odooId {self.id}, but it is not this "
+                    f"welfare application: this record was never sent before and the portal's welfare list "
+                    f"does not have it. Another record used the same id; ask the portal team to check "
+                    f"odooId {self.id}.")
+            already_on_portal = True
             _logger.info("Welfare application %s already exists on portal; linking it (%s)",
-                         self.display_name, portal_application.get('id'))
+                         self.display_name, portal_application.get('id') or self.portal_application_id)
         portal_application_id = portal_application.get('id') or self.portal_application_id
 
         # Update disbursement record with portal information
