@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
 
-# Portal search paging: send {limit, cursor}, where cursor is the odooId of the last record of the previous page.
+# Portal search paging: send {limit, cursor}, where cursor is the portal id of the last record of the previous page.
 PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
 PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
 
@@ -1011,10 +1011,11 @@ class Welfare(models.Model):
     def _search_portal_applications(self):
         """Page through the portal search results until this record's application is found.
 
-        Each page is requested with {"limit", "cursor"}, where cursor is the odooId of
-        the last record on the previous page (no cursor for the first page). The portal
-        may answer with a plain list or {"data": [...]}. Paging stops on a match, on a
-        short or empty page, or when the cursor stops advancing.
+        Each page is requested with {"limit", "cursor"}, where cursor is the portal id
+        ("id", or Mongo "_id") of the last record on the previous page (no cursor for
+        the first page). The portal may answer with a plain list or {"data": [...]}.
+        Paging stops on a match, on a short or empty page, or when the cursor stops
+        advancing.
         """
         endpoint = self.env.company.search_endpoint
         cursor = None
@@ -1044,16 +1045,16 @@ class Welfare(models.Model):
             else:
                 applications = result or []
 
-            # Cursor for the next page = odooId of the last record that has one.
+            # Cursor for the next page = portal id of the last record that has one.
             next_cursor = next(
-                (app.get('odooId') for app in reversed(applications)
-                 if isinstance(app, dict) and app.get('odooId') is not None),
+                (app.get('id') or app.get('_id') for app in reversed(applications)
+                 if isinstance(app, dict) and (app.get('id') or app.get('_id'))),
                 None,
             )
 
             _logger.info(
                 f"Portal search page {page} (cursor={cursor!r}): {len(applications)} applications, "
-                f"last odooId={next_cursor!r}, looking for odooId {self.id}"
+                f"last portal id={next_cursor!r}, looking for odooId {self.id}"
             )
 
             matching_app = self._find_matching_application(applications)
