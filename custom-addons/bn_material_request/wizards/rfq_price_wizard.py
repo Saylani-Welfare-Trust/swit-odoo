@@ -97,6 +97,11 @@ class RFQPriceWizard(models.TransientModel):
     _name = 'rfq.price.wizard'
     _description = 'Bulk RFQ Price Entry Wizard'
 
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('price_update', 'Price Updated'),
+        ('confirmed', 'Confirmed'),
+    ], string='Status', default='draft', readonly=True)
     rfq_ids = fields.Many2many('purchase.order', string='Selected RFQs')
     rfq_line_ids = fields.One2many('rfq.price.wizard.rfq.line', 'wizard_id', string='RFQ Lines')
     line_ids = fields.One2many('rfq.price.wizard.line', 'wizard_id', string='Price Lines')
@@ -234,6 +239,8 @@ class RFQPriceWizard(models.TransientModel):
                 message += f'\n\nRemarks:\n{self.remarks}'
             
             rfq.message_post(body=message)
+
+        self.state = 'price_update'
         
         # Show success message and close wizard
         message = _('Updated %d price(s) for %d RFQ(s).') % (updated_count, len(updated_rfqs))
@@ -245,6 +252,7 @@ class RFQPriceWizard(models.TransientModel):
                 'message': message,
                 'type': 'success',
                 'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
             }
         }
 
@@ -389,6 +397,7 @@ class RFQPriceWizard(models.TransientModel):
             confirmed_rfqs |= rfq
 
         self._confirm_rfqs(confirmed_rfqs)
+        self.state = 'confirmed'
         
         # Show success message
         message = _('Successfully confirmed %d RFQ(s): %s') % (len(confirmed_rfqs), ', '.join(confirmed_rfqs.mapped('name')))

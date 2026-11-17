@@ -89,6 +89,9 @@
         <field name="model">rfq.price.wizard</field>
         <field name="arch" type="xml">
             <form string="Bulk RFQ Price Entry">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,price_update,confirmed"/>
+                </header>
                 <group>
                     <group>
                         <field name="rfq_count" readonly="1"/>
@@ -162,9 +165,9 @@
                 
                 <footer>
                     <button string="Update Prices Only" name="action_update_prices" type="object" 
-                            class="btn-secondary"/>
+                            class="btn-secondary" invisible="state != 'draft'"/>
                     <button string="Confirm Selected Lines" name="action_confirm_selected" type="object" 
-                            class="btn-primary"/>
+                            class="btn-primary" invisible="state != 'price_update'"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
