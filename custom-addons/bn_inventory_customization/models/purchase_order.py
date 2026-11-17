@@ -7,6 +7,7 @@ class PurchaseOrder(models.Model):
 
     # Why a receipt of this order was closed without a backorder, or cancelled
     receipt_reason_ids = fields.One2many('purchase.receipt.reason', 'order_id', string='Receipt Reasons')
+    remark = fields.Text(string="Remark")
 
     # What a confirmed order is waiting for. It is a field of its own, not extra
     # values of `state`: Odoo's receipt and billing logic only knows a confirmed

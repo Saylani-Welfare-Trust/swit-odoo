@@ -16,6 +16,8 @@ class StockPicking(models.Model):
         compute="_compute_show_create_bill"
     )
 
+    remark = fields.Text(string="Remark")
+
     @api.depends('state', 'picking_type_code', 'purchase_id.invoice_status')
     def _compute_show_create_bill(self):
         """The bill is created from the receipt, once the products have been

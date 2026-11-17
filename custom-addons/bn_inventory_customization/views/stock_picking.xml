@@ -14,6 +14,17 @@
         </field>
     </record>
 
+    <record id="view_picking_form_inherit_remark" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.remark</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='origin']" position="after">
+                <field name="remark"/>
+            </xpath>
+        </field>
+    </record>
+
     <!-- Receipts: replace Validate with Receive Product, then Create Bill -->
     <record id="view_picking_form_inherit_receive_product_create_bill" model="ir.ui.view">
         <field name="name">stock.picking.form.inherit.receive.product.create.bill</field>
