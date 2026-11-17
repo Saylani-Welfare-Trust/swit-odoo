@@ -68,32 +68,34 @@
         <xpath expr="//div[hasclass('page')]" position="inside">
             <div class="row mt-3 mb-3">
                 
-                <!-- First Row: 2 Columns -->
+                <!-- Left Column -->
                 <div class="col-6">
-                    <strong>PO Number:</strong>
-                    <p t-field="o.purchase_id.name" class="m-0"/>
+                    <div class="mb-2">
+                        <strong>PO Number:</strong>
+                        <p t-field="o.purchase_id.name" class="m-0"/>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Destination Location:</strong>
+                        <p t-field="o.location_dest_id.display_name" class="m-0"/>
+                    </div>
+                    <div class="mb-2" t-if="o.note">
+                        <strong>Print Note:</strong>
+                        <p t-field="o.note" class="m-0"/>
+                    </div>
                 </div>
+
+                <!-- Right Column -->
                 <div class="col-6">
-                    <strong>MR Number:</strong>
-                    <p t-field="o.origin" class="m-0"/>
+                    <div class="mb-2">
+                        <strong>MR Number:</strong>
+                        <p t-field="o.origin" class="m-0"/>
+                    </div>
+                    <div class="mb-2" t-if="o.remark">
+                        <strong>Remark:</strong>
+                        <p t-field="o.remark" class="m-0"/>
+                    </div>
                 </div>
-                
-                <!-- Second Row: 2 Columns -->
-                <div class="col-6 mt-3">
-                    <strong>Destination Location:</strong>
-                    <p t-field="o.location_dest_id.display_name" class="m-0"/>
-                </div>
-                <div class="col-6 mt-3" t-if="o.remark">
-                    <strong>Remark:</strong>
-                    <p t-field="o.remark" class="m-0"/>
-                </div>
-                
-                <!-- Third Row: Print Note (Kept in 2nd column to maintain layout, or change to col-12 if text is too long) -->
-                <div class="col-6 mt-3" t-if="o.note">
-                    <strong>Print Note:</strong>
-                    <p t-field="o.note" class="m-0"/>
-                </div>
-                
+
             </div>
         </xpath>
     </template>
