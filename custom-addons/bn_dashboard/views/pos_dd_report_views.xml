@@ -44,6 +44,52 @@
         </field>
     </record>
 
+    <!-- ============ LIST ============ -->
+    <record id="view_pos_dd_report_tree" model="ir.ui.view">
+        <field name="name">pos.dd.report.tree</field>
+        <field name="model">pos.dd.report</field>
+        <field name="arch" type="xml">
+            <tree create="false" edit="false" delete="false"
+                  decoration-danger="is_refund"
+                  decoration-muted="state in ('cancel', 'not_clear')"
+                  decoration-info="source_model == 'direct.deposit'">
+
+                <field name="is_refund" column_invisible="1"/>
+                <field name="currency_id" column_invisible="1"/>
+
+                <field name="date"/>
+                <field name="source_model" widget="badge"
+                       decoration-success="source_model == 'pos.order'"
+                       decoration-info="source_model == 'direct.deposit'"/>
+                <field name="reference"/>
+                <field name="partner_id"/>
+                <field name="product_id" optional="show"/>
+                <field name="category_id" optional="hide"/>
+                <field name="province_id" optional="hide"/>
+                <field name="city_id" optional="hide"/>
+                <field name="zone_id" optional="hide"/>
+                <field name="analytic_account_id" optional="show"/>
+                <field name="config_id" optional="show"/>
+                <field name="session_id" optional="hide"/>
+                <field name="bank_id" optional="hide"/>
+                <field name="payment_methods" optional="show"/>
+                <field name="payment_type" optional="hide"/>
+                <field name="transaction_ref" optional="hide"/>
+                <field name="user_id" optional="show"/>
+                <field name="amount" sum="Total"/>
+                <field name="amount_paid" optional="hide" sum="Paid"/>
+                <field name="state" widget="badge"
+                       decoration-success="state in ('paid', 'done', 'invoiced', 'clear')"
+                       decoration-warning="state in ('draft', 'transferred')"
+                       decoration-danger="state in ('cancel', 'not_clear')"/>
+
+                <button name="action_open_source" type="object"
+                        string="Open" icon="fa-external-link"
+                        title="Open source record"/>
+            </tree>
+        </field>
+    </record>
+
     <!-- ============ FORM (read-only) ============ -->
     <record id="view_pos_dd_report_form" model="ir.ui.view">
         <field name="name">pos.dd.report.form</field>
@@ -118,10 +164,17 @@
                 <field name="config_id"/>
                 <field name="bank_id"/>
                 
-                <!-- New Filter Fields -->
+                <!-- Location filters (dropdowns limited to the right hierarchy level) -->
                 <field name="province_id"/>
-                <field name="city_id"/>
+                <field name="city_id"
+                       domain="[('plan_id.name', '=', 'Location'), ('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]"/>
                 <field name="zone_id"/>
+                <field name="analytic_account_id" string="Branch"
+                       domain="[('plan_id.name', '=', 'Location'), ('parent_id.parent_id.parent_id', '!=', False)]"/>
+
+                <!-- Date range: type a date, pick "Date From" / "Date To" (both inclusive) -->
+                <field name="date_day" string="Date From" operator="&gt;="/>
+                <field name="date_day" string="Date To" operator="&lt;="/>
                 <field name="product_id"/>
                 <field name="category_id"/>
 
@@ -134,6 +187,8 @@
                 <filter name="filter_this_month" string="This Month" domain="[('date', '>=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <filter name="filter_this_year" string="This Year" domain="[('date', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <separator/>
+                <!-- "Date Range", "City" and "Branch" (popup filters) are appended to
+                     this list by static/src/search/pos_dd_report_filters.js -->
                 
                 <group expand="0" string="Group By">
                     <filter name="group_source" string="Source" context="{'group_by': 'source_model'}"/>
@@ -163,8 +218,8 @@
     <record id="action_pos_dd_report" model="ir.actions.act_window">
         <field name="name">Reporting</field>
         <field name="res_model">pos.dd.report</field>
-        <!-- List view removed, defaults to Pivot view -->
-        <field name="view_mode">pivot,graph,form</field>
+        <!-- Pivot stays the default; list is available from the view switcher -->
+        <field name="view_mode">pivot,graph,tree,form</field>
         <field name="search_view_id" ref="view_pos_dd_report_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No transactions yet</p>

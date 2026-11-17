@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models, tools
+from datetime import datetime, time, timedelta
+
+import pytz
+
+from odoo import _, api, fields, models, tools
+from odoo.exceptions import UserError
 from odoo.osv import expression
 
 
@@ -44,6 +49,42 @@ class PosDdReport(models.Model):
     province_id = fields.Many2one('account.analytic.account', 'Province', readonly=True)
     product_id = fields.Many2one('product.product', 'Product', readonly=True)
     category_id = fields.Many2one('product.category', 'Product Category', readonly=True)
+
+    # ---- Date-range search helper (not a view column) ----
+    date_day = fields.Date(
+        'Day', compute='_compute_date_day', search='_search_date_day',
+        help="Transaction date in the user's timezone. Backs the "
+             "'Date From' / 'Date To' search fields so whole days are matched.")
+
+    @api.depends('date')
+    def _compute_date_day(self):
+        for rec in self:
+            rec.date_day = fields.Date.context_today(rec, rec.date) if rec.date else False
+
+    def _search_date_day(self, operator, value):
+        """Translate a local calendar day into UTC bounds on ``date``."""
+        if not value:
+            return [('date', operator, value)]
+        if operator not in ('=', '!=', '<', '<=', '>', '>='):
+            raise UserError(_("Operator '%s' is not supported on Day.", operator))
+
+        tz = pytz.timezone(self.env.context.get('tz') or self.env.user.tz or 'UTC')
+        day = fields.Date.to_date(value)
+
+        def utc_midnight(d):
+            local = tz.localize(datetime.combine(d, time.min))
+            return local.astimezone(pytz.utc).replace(tzinfo=None)
+
+        start = utc_midnight(day)
+        end = utc_midnight(day + timedelta(days=1))
+        return {
+            '>=': [('date', '>=', start)],
+            '>': [('date', '>=', end)],
+            '<': [('date', '<', start)],
+            '<=': [('date', '<', end)],
+            '=': ['&', ('date', '>=', start), ('date', '<', end)],
+            '!=': ['|', ('date', '<', start), ('date', '>=', end)],
+        }[operator]
 
     # ------------------------------------------------------------------
     def init(self):
@@ -147,6 +188,36 @@ class PosDdReport(models.Model):
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
             LEFT JOIN loc_tree lt ON lt.id = dd.analytic_account_id
         """)
+
+    # ------------------------------------------------------------------
+    # FILTER POPUPS (City / Branch) — see static/src/search/pos_dd_report_filters.js
+    # ------------------------------------------------------------------
+    @api.model
+    def get_location_filter_options(self):
+        """Cities and branches (Location plan) the current user may report on."""
+        self.check_access_rights('read')
+        Account = self.env['account.analytic.account'].sudo()
+        location = [('plan_id.name', '=', 'Location')]
+        city_domain = location + [('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]
+        branch_domain = location + [('parent_id.parent_id.parent_id', '!=', False)]
+
+        allowed = self.env.user.pos_dd_report_analytic_ids
+        if allowed:
+            # cities above or inside the user's allowed locations; branches inside them
+            city_domain += ['|', ('id', 'parent_of', allowed.ids), ('id', 'child_of', allowed.ids)]
+            branch_domain += [('id', 'child_of', allowed.ids)]
+
+        cities = Account.search(city_domain, order='name')
+        branches = Account.search(branch_domain, order='name')
+        return {
+            'cities': [{'id': c.id, 'name': c.name} for c in cities],
+            'branches': [{
+                'id': b.id,
+                'name': b.name,
+                'city_id': b.parent_id.parent_id.id or False,
+                'city_name': b.parent_id.parent_id.name or '',
+            } for b in branches],
+        }
 
     # ------------------------------------------------------------------
     # ACCESS HELPERS
