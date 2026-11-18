@@ -105,7 +105,7 @@ class AccountPayment(models.Model):
 
             worksheet.write_number(
                 row, 0,
-                payment.amount_signed or 0
+                abs(payment.amount_signed or 0)
             )
 
             worksheet.write(
