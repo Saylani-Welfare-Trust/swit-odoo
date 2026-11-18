@@ -56,7 +56,7 @@
                     <button name="action_right_of_rejected" invisible="state != 'right_of_approval_1'" string="Reject" type="object" groups="bn_microfinance.microfinance_write_off_approval_1_group"/>
                     <button name="action_right_of_rejected" invisible="state != 'right_of_approval_2'" string="Reject" type="object" groups="bn_microfinance.microfinance_write_off_approval_2_group"/>
 
-                    <button string="Send for Recovery" name="action_send_to_recovery" type="object" groups="bn_microfinance.microfinance_user_group" invisible="in_recovery or state != 'done'" />
+                    <button string="Send for Recovery" name="action_send_to_recovery" type="object" groups="bn_microfinance.microfinance_user_group" invisible="in_recovery or state != 'done' or not can_send_to_recovery" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, wfd, treasury, done, reject" invisible="in_recovery or asset_type == 'cash'" />
                     <field name="state" widget="statusbar" statusbar_visible="draft, hod_approve, mem_approve, approve, treasury, done, reject" invisible="in_recovery or asset_type != 'cash'" />
@@ -64,6 +64,7 @@
                 </header>
                 <sheet>
                     <field name="in_recovery" invisible="1" />
+                    <field name="can_send_to_recovery" invisible="1" />
                     <widget name="web_ribbon" title="In Recovery" invisible="not in_recovery"/>
 
                     <div class="oe_button_box" name="button_box">

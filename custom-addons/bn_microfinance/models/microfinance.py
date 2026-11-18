@@ -53,6 +53,9 @@ state_selection = [
     ('close', 'Closed'),
     ('reject', 'Rejected'),
 ]
+# a loan can be sent for recovery once an installment is unpaid this many days past its due date
+RECOVERY_OVERDUE_DAYS = 60
+
 USER = 'bn_microfinance.microfinance_user_group'
 HOD = 'bn_microfinance.microfinance_hod_group'
 MEMBER = 'bn_microfinance.microfinance_member_group'
@@ -172,6 +175,11 @@ class Microfinance(models.Model):
     member_right_of_remarks = fields.Text('Member Right-of Remarks')
 
     in_recovery = fields.Boolean('In Recovery')
+    # not stored: it changes with today's date
+    can_send_to_recovery = fields.Boolean(
+        'Can Send for Recovery', compute='_compute_can_send_to_recovery',
+        help='Whether an installment is still not paid more than %s days after its due date.'
+             % RECOVERY_OVERDUE_DAYS)
 
     microfinance_line_ids = fields.One2many('microfinance.line', 'microfinance_id', string="Microfinance Lines")
     microfinance_recovery_line_ids = fields.One2many('microfinance.recovery.line', 'microfinance_id', string="Microfinance Recovery Lines")
@@ -480,10 +488,25 @@ class Microfinance(models.Model):
                 raise ValidationError(_('%s: please select the No. of Installments.') % rec.name)
         self._mf_set_state('hod_approve')
 
+    @api.depends_context('tz')
+    @api.depends('microfinance_line_ids.due_date', 'microfinance_line_ids.state')
+    def _compute_can_send_to_recovery(self):
+        today = fields.Date.context_today(self)
+        for rec in self:
+            rec.can_send_to_recovery = any(
+                line.state != 'paid' and line.due_date
+                and (today - line.due_date).days > RECOVERY_OVERDUE_DAYS
+                for line in rec.microfinance_line_ids)
+
     def action_send_to_recovery(self):
         self._mf_check(_('Send for Recovery'), ('done',), USER)
         if self.in_recovery:
             raise UserError(_('%s is already in recovery.') % self.name)
+        if not self.can_send_to_recovery:
+            raise UserError(_(
+                '%(loan)s cannot be sent for recovery: none of its installments is unpaid '
+                'more than %(days)s days after its due date.') % {
+                    'loan': self.name, 'days': RECOVERY_OVERDUE_DAYS})
         lines = []
         
         for line in self.microfinance_line_ids:

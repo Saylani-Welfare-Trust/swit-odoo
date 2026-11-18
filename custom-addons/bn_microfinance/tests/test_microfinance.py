@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
@@ -82,6 +84,33 @@ class TestMicrofinance(TransactionCase):
         loan.write({'sd_slip_id': result['deposit_id'], 'delivery_date': fields.Date.today()})
         return loan
 
+    def _set_overdue(self, line, days):
+        """Move the due date of an installment the given number of days before today."""
+        line.sudo().due_date = fields.Date.today() - timedelta(days=days)
+
+    def test_send_for_recovery_needs_installment_unpaid_over_60_days(self):
+        loan = self._loan(self.cash_line, self.cash_product_line)
+        loan.action_move_to_treasury()
+        loan.sudo()._complete_application()
+        self.assertEqual(loan.state, 'done')
+        self.assertFalse(loan.can_send_to_recovery)
+        with self.assertRaises(UserError):
+            loan.action_send_to_recovery()
+
+        last, before_last = loan.microfinance_line_ids[-1], loan.microfinance_line_ids[-2]
+        self._set_overdue(last, 60)
+        self.assertFalse(loan.can_send_to_recovery, 'exactly 60 days overdue is not enough')
+        self._set_overdue(last, 61)
+        self.assertTrue(loan.can_send_to_recovery)
+
+        last.sudo().write({'paid_amount': last.amount, 'state': 'paid'})
+        self.assertFalse(loan.can_send_to_recovery, 'a paid installment does not count')
+
+        self._set_overdue(before_last, 61)
+        self.assertTrue(loan.can_send_to_recovery)
+        loan.action_send_to_recovery()
+        self.assertEqual(loan.state, 'in_recovery')
+
     def test_approval_roles(self):
         loan = self.env['microfinance'].with_user(self.user).create({
             'donee_id': self.donee.id, 'microfinance_scheme_id': self.scheme.id,
@@ -144,6 +173,7 @@ class TestMicrofinance(TransactionCase):
         self.assertEqual(loan.state, 'done')
         self.assertEqual(len(loan.microfinance_line_ids), 10)
 
+        self._set_overdue(loan.microfinance_line_ids[-1], 61)
         loan.action_send_to_recovery()
         with self.assertRaises(UserError):
             loan.action_send_to_recovery()
@@ -207,6 +237,7 @@ class TestMicrofinance(TransactionCase):
         self.assertEqual((pdc2.state_cheque, line2.state, line2.paid_amount), ('bounced', 'unpaid', 0))
 
         line.write({'paid_amount': line.amount, 'state': 'paid'})
+        self._set_overdue(loan.microfinance_line_ids[-1], 61)
         loan.action_send_to_recovery()
         self.assertEqual(loan.state, 'in_recovery')
         self.assertEqual(loan.microfinance_recovery_line_ids[0].state, 'paid')
