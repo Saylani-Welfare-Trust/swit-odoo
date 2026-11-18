@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 
+from markupsafe import Markup
+
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
@@ -197,6 +199,60 @@ class PurchaseRequisition(models.Model):
             'context': {'create': False},
             'target': 'current',
         }
+
+    def _get_all_rfqs(self):
+        """Its RFQs / Purchase Orders: its own, and the consolidated ones it contributed lines to."""
+        self.ensure_one()
+        return self.purchase_ids | self.env['purchase.order'].search([('requisition_ids', 'in', self.id)])
+
+    def _release_quantities_not_on_rfqs(self):
+        """A line whose product is on none of the request's RFQs that is not
+        cancelled is held by none: all of its locked quantity is available
+        again. This catches what the RFQ batches (purchase.requisition.line.lock)
+        do not record - RFQs created before they were. Returns
+        {requisition: [(line, quantity released)]}."""
+        # sudo: the lines are given back whoever cancels the RFQ
+        Lock = self.env['purchase.requisition.line.lock'].sudo()
+        released = defaultdict(list)
+        for requisition in self.sudo().filtered(lambda r: r.state != 'cancel'):
+            rfqs = requisition._get_all_rfqs()
+            live_products = rfqs.filtered(lambda rfq: rfq.state != 'cancel').order_line.product_id
+            for line in requisition.line_ids.filtered(
+                    lambda l: l.locked_qty and l.product_id not in live_products):
+                quantity = line.locked_qty
+                locks = Lock.search([('requisition_line_id', '=', line.id)])
+                # left over: their RFQs are gone
+                locks.filtered(lambda lock: not lock.released).unlink()
+                # recorded as a released batch of the cancelled RFQs nothing records
+                # yet, so that setting one back to draft takes the quantity again
+                Lock.create({
+                    'requisition_line_id': line.id,
+                    'quantity': quantity,
+                    'order_ids': [(6, 0, (rfqs.filtered(
+                        lambda rfq: line.product_id in rfq.order_line.product_id) - locks.order_ids).ids)],
+                    'released': True,
+                })
+                line._unlock_quantity(quantity)
+                released[requisition].append((line, quantity))
+        return released
+
+    @api.model
+    def _backfill_release_cancelled_rfq_quantities(self):
+        """Run on upgrade: give back what RFQs cancelled before cancelling
+        released quantities kept locked on their Purchase Requests."""
+        requisitions = self.sudo().search([('state', '!=', 'cancel'), ('line_ids.locked_qty', '>', 0)])
+        for requisition, lines in requisitions._release_quantities_not_on_rfqs().items():
+            requisition._post_released_quantities(lines, _('Its RFQs are cancelled'))
+
+    def _post_released_quantities(self, lines, reason):
+        """Say on the request which quantities are available again. ``lines``:
+        [(line, quantity)]."""
+        self.ensure_one()
+        self.message_post(body=Markup('%s<ul>%s</ul>') % (
+            _('%s - available again to send out on a new RFQ:') % reason,
+            Markup().join(Markup('<li>%s: %s %s</li>') % (
+                line.product_id.display_name, quantity, line.product_uom_id.name or '')
+                for line, quantity in lines)))
 
     def _close_if_fully_locked(self):
         """Move a requisition to 'done' (Closed) once every one of its lines

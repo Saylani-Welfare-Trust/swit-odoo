@@ -391,6 +391,42 @@ class PurchaseRequisition(models.Model):
         self.message_post(body=_('CFO / Shariah Dept confirmed fund transfer.\nRemarks: %s') % remarks)
         self._release_po()
 
+    def _follow_cancelled_selected_rfq(self):
+        """The request follows its selected RFQ through CXO / CFO approval and
+        the funds check. Once that RFQ is cancelled, it follows another winning
+        quote still open - at whatever approval that one has reached - or goes
+        back to RFQ Sent, for a new quote to be selected (its products are
+        available again for new RFQs: bn_material_request)."""
+        for requisition in self.filtered(
+                lambda r: r.selected_rfq_id.state == 'cancel'
+                and r.state in ('vendor_selected', 'cxo_approved', 'funds_check', 'in_progress')):
+            cancelled = requisition.selected_rfq_id
+            winner = requisition.purchase_ids.filtered(
+                lambda rfq: rfq.is_selected_quote and rfq.state in ('draft', 'sent', 'to approve'))[:1]
+            if winner:
+                state = 'funds_check' if winner.cfo_approved else (
+                    'cxo_approved' if winner.cxo_approved else 'vendor_selected')
+                message = _('Selected RFQ %(cancelled)s cancelled - following the other winning quote %(winner)s.')
+            else:
+                state = 'rfq_sent'
+                message = _('Selected RFQ %(cancelled)s cancelled - back to RFQ Sent, for a new quote to be selected.')
+            requisition.write({
+                'selected_rfq_id': winner.id,
+                'state': state,
+                'funds_available': False,
+                'funds_gate_approver_id': False,
+                'funds_gate_date': False,
+            })
+            requisition.message_post(body=message % {
+                'cancelled': '%s (%s)' % (cancelled.name, cancelled.partner_id.name),
+                'winner': '%s (%s)' % (winner.name, winner.partner_id.name)})
+
+    @api.model
+    def _backfill_cancelled_selected_rfq(self):
+        """Run on upgrade: requests whose selected RFQ was cancelled before
+        they followed it."""
+        self.sudo().search([('selected_rfq_id.state', '=', 'cancel')])._follow_cancelled_selected_rfq()
+
     def action_view_selected_rfq(self):
         self.ensure_one()
         if not self.selected_rfq_id:

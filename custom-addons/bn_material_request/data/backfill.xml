@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- RFQs cancelled before cancelling gave back their quantities: their
+         Purchase Request lines are still locked. Safe to run on every upgrade:
+         it only frees what no open or confirmed RFQ holds. -->
+    <function model="purchase.requisition" name="_backfill_release_cancelled_rfq_quantities"/>
+</odoo>

@@ -32,7 +32,8 @@
         'security/stock_scope_rule.xml',
         'data/sequence.xml',
         'data/state_cleanup.xml',
-        
+        'data/backfill.xml',
+
         'views/material_request_views.xml',
         'views/purchase_requisition_views.xml',
         'views/purchase_requisition_line_deletion_log_views.xml',

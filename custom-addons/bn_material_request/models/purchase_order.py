@@ -1,7 +1,5 @@
 from collections import defaultdict
 
-from markupsafe import Markup
-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from odoo.tools import float_compare
@@ -75,20 +73,20 @@ class PurchaseOrder(models.Model):
         locks = self.env['purchase.requisition.line.lock'].sudo().search([
             ('order_ids', 'in', self.ids), ('released', '=', False)])
         locks = locks.filtered(lambda lock: all(order.state == 'cancel' for order in lock.order_ids))
-        if not locks:
-            return
         items = defaultdict(list)
         for lock in locks:
-            line = lock.requisition_line_id
-            line._unlock_quantity(lock.quantity)
-            items[line.requisition_id].append(Markup('<li>%s: %s %s</li>') % (
-                line.product_id.display_name, lock.quantity, line.product_uom_id.name or ''))
+            lock.requisition_line_id._unlock_quantity(lock.quantity)
+            items[lock.requisition_id].append((lock.requisition_line_id, lock.quantity))
         locks.released = True
-        orders = ', '.join(locks.order_ids.mapped('display_name'))
+        # RFQs created before their batches were recorded
+        requisitions = self.sudo().requisition_id | self.sudo().requisition_ids
+        for requisition, lines in requisitions._release_quantities_not_on_rfqs().items():
+            items[requisition] += lines
+        cancelled = self.filtered(lambda order: order.state == 'cancel')
+        reason = _('RFQ(s) %s cancelled') % ', '.join(
+            '%s (%s)' % (order.name, order.partner_id.name) for order in cancelled)
         for requisition, lines in items.items():
-            requisition.message_post(body=Markup('%s<ul>%s</ul>') % (
-                _('RFQ(s) %s cancelled - available again to send out on a new RFQ:') % orders,
-                Markup().join(lines)))
+            requisition._post_released_quantities(lines, reason)
 
     def _retake_requisition_quantities(self):
         """A cancelled RFQ set back to draft takes back the quantity its batch
