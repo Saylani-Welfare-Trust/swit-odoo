@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
-from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 class PurchaseRequisition(models.Model):
     _inherit = 'purchase.requisition'
-
-    # only the contacts tagged Vendor
-    vendor_id = fields.Many2one(domain=tag_domain('vendor'))
 
     requesting_department_id = fields.Many2one(
         related='material_request_id.department_id',
@@ -166,6 +162,7 @@ class PurchaseRequisition(models.Model):
             user = requisition.assigned_user_id
             # Inbox, so the message shows in Discuss rather than as an email.
             # sudo: whoever assigns need not be allowed to edit other users.
+            user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
             requisition.with_context(mail_notify_author=True).message_notify(
                 body=_('Purchase Request %(request)s has been assigned to you by %(user)s to create its RFQs.',
                        request=requisition.display_name, user=self.env.user.display_name),
@@ -182,12 +179,15 @@ class PurchaseRequisition(models.Model):
         approval step in this workflow. Moves the PR into its own 'Procurement Manager
         Approval' state, which unlocks RFQ creation."""
         self.ensure_one()
-        # Confirm (a request entered by hand), or Draft (a request created for
-        # the remaining products of a Material Request)
-        if self.state not in ('draft', 'confirm'):
-            raise ValidationError(_('This request is not waiting for Procurement Manager approval.'))
-        if not self.env.su and not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
-            raise ValidationError(_('Only a Procurement Manager can approve this request.'))
+        # if self.state != 'confirm':
+        #     raise ValidationError(_('This request is not in confirm state.'))
+        # if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
+        #     raise ValidationError(_('Only a Procurement Manager can approve this request.'))
+        # if not self.material_request_id:
+        #     raise ValidationError(
+        #         _('This Purchase Requisition has no source Material Request, so there is no '
+        #           'requesting department to run Technical Evaluation against. It cannot enter '
+        #           'the Procurement workflow.'))
         # The request gets its number here, so that the RFQs sent out next carry it.
         self._assign_reference_number()
         self.write({
@@ -200,8 +200,8 @@ class PurchaseRequisition(models.Model):
     def action_open_defer_wizard(self):
         """Open the small popup collecting the mandatory deferral reason."""
         self.ensure_one()
-        if self.state not in ('draft', 'confirm'):
-            raise ValidationError(_('Only a request waiting for Procurement Manager approval can be deferred.'))
+        if self.state != 'draft':
+            raise ValidationError(_('This request is not in Draft state.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can defer this request.'))
         return {
@@ -216,8 +216,8 @@ class PurchaseRequisition(models.Model):
     def action_procurement_defer(self, reason):
         """Procurement Manager defers the PR instead of approving it."""
         self.ensure_one()
-        if self.state not in ('draft', 'confirm'):
-            raise ValidationError(_('Only a request waiting for Procurement Manager approval can be deferred.'))
+        if self.state != 'draft':
+            raise ValidationError(_('This request is not in Draft state.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can defer this request.'))
         if not reason:
@@ -226,13 +226,22 @@ class PurchaseRequisition(models.Model):
         self.message_post(body=_('Purchase Requisition deferred by Procurement Manager.\nReason: %s') % reason)
 
     def action_procurement_resume(self):
-        """Resume a deferred PR back to Confirm for Procurement Manager review."""
+        """Resume a deferred PR back to Draft for Procurement Manager review."""
         self.ensure_one()
         if self.state != 'deferred':
             raise ValidationError(_('This request is not Deferred.'))
         if not self.env.user.has_group('bn_procurement_workflow.group_procurement_manager'):
             raise ValidationError(_('Only a Procurement Manager can resume this request.'))
-        self.state = 'confirm'
+        self.state = 'draft'
+
+    def action_mark_rfq_sent(self):
+        """Called once RFQs have been created for this requisition."""
+        self.ensure_one()
+        if self.state != 'procurement_approval':
+            raise ValidationError(_('This request is not in Procurement Manager Approval state.'))
+        if not self.procurement_manager_id:
+            raise ValidationError(_('This request must be approved by the Procurement Manager before RFQs can be sent.'))
+        self.state = 'rfq_sent'
 
     @api.depends('material_request_id', 'state', 'purchase_ids.state',
                  'purchase_ids.order_line.product_id', 'purchase_ids.order_line.product_qty',
@@ -262,6 +271,45 @@ class PurchaseRequisition(models.Model):
         if not any(line.locked_qty for line in self.line_ids):
             return self.line_ids.browse()
         return self.line_ids.filtered(lambda line: not line.is_locked)
+
+    def action_create_remaining_request(self):
+        """A closed request whose Purchase Order covers only part of its Material
+        Request: create a new Purchase Request for the products and quantities
+        that are not on an RFQ yet. This one is left as it is. While a request
+        is open, its remaining products get their RFQs on it instead. The new
+        one starts in Procurement Manager Approval, ready for RFQs: the
+        Procurement Manager creating it is the one who would approve it."""
+        self.ensure_one()
+        if self.state != 'done':
+            raise ValidationError(_(
+                'This request is still open: create the RFQs for its remaining products on it instead.'))
+        if not self.material_request_id:
+            raise ValidationError(_('This Purchase Requisition has no source Material Request.'))
+        if self._has_newer_request():
+            raise ValidationError(_('A more recent Purchase Request already exists for this Material Request.'))
+        shortfall = self._get_request_shortfall()
+        if not shortfall:
+            raise ValidationError(_('Every product and quantity of the Material Request is already on an RFQ.'))
+        new_request = self._create_remaining_request()
+        new_request.action_procurement_approve()
+        products = ', '.join(
+            '%s (%g %s)' % (product.display_name, quantity, product.uom_id.name)
+            for product, quantity in shortfall.items())
+        self.message_post(body=_(
+            '%(user)s created %(request)s for what is not on an RFQ yet: %(products)s.',
+            user=self.env.user.display_name,
+            request=new_request._get_html_link(), products=products))
+        new_request.message_post(body=_(
+            'Created from %(request)s for what the Material Request still needs: %(products)s.',
+            request=self._get_html_link(), products=products))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Purchase Request'),
+            'res_model': 'purchase.requisition',
+            'res_id': new_request.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def _is_selecting_rfqs(self):
         """Whether a winning quote can be selected for this requisition. Each
@@ -414,9 +462,3 @@ class PurchaseRequisition(models.Model):
         # if it ran once the PO has closed it.
         self.action_in_progress()
         self.selected_rfq_id.button_confirm()
-
-
-class PurchaseRequisitionStepActivity(models.Model):
-    """Activity for whoever has to act next (step.activity.mixin)."""
-    _name = 'purchase.requisition'
-    _inherit = ['step.activity.mixin', 'purchase.requisition']

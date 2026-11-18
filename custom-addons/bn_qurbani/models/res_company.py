@@ -8,6 +8,3 @@ class ResCompany(models.Model):
     first_para_halfnama = fields.Text('First Halfnama')
     second_para_halfnama = fields.Text('Second Halfnama')
     third_para_halfnama = fields.Text('Third Halfnama')
-
-    # used by web qurbani orders (formerly in bn_res_qurbani)
-    web_no_meat_distribution_location_id = fields.Many2one('stock.location', string="Web No-Meat Distribution Location")

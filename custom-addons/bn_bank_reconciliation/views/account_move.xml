@@ -13,19 +13,22 @@
                         invisible="bank_reconciliation_original_count &lt; 2">
                     <field name="bank_reconciliation_original_count" widget="statinfo" string="Original Entries"/>
                 </button>
-                <button name="action_view_bank_reconciliation_moves" type="object"
-                        class="oe_stat_button" icon="fa-university"
-                        invisible="bank_reconciliation_move_count &lt; 2">
-                    <field name="bank_reconciliation_move_count" widget="statinfo" string="Reconciliation Entries"/>
-                </button>
             </xpath>
             <xpath expr="//group[@id='header_right_group']" position="inside">
                 <field name="is_bank_reconciled" widget="boolean_toggle" readonly="1" invisible="move_type != 'entry'"/>
                 <field name="bank_reconciliation_id" readonly="1" invisible="not bank_reconciliation_id"/>
                 <!-- Reconciliation entry: the entry its bank statement line was matched with -->
                 <field name="bank_reconciliation_original_move_id" readonly="1" invisible="not bank_reconciliation_original_move_id"/>
-                <!-- Original entry: the reconciliation entry made for its bank statement line -->
+                <!-- Original entry: numbers of the reconciliation entries made for its bank statement lines -->
+                <field name="bank_reconciliation_move_count" invisible="1"/>
                 <field name="bank_reconciliation_move_id" readonly="1" invisible="not bank_reconciliation_move_id"/>
+                <field name="bank_reconciliation_move_ids" readonly="1" invisible="bank_reconciliation_move_count &lt; 2">
+                    <tree>
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="state"/>
+                    </tree>
+                </field>
             </xpath>
         </field>
     </record>

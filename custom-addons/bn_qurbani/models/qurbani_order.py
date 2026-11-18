@@ -1,18 +1,19 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import AccessError, UserError, ValidationError
+from odoo.exceptions import ValidationError
 import logging
 import re
-from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
-from datetime import datetime
+import json
+from datetime import datetime, time
 _logger = logging.getLogger(__name__)
+from datetime import datetime
 
 
 class QurbaniOrder(models.Model):
     _name = 'qurbani.order'
-    _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = 'Qurbani POS Orders'
 
-    donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'))
+    donor_id = fields.Many2one('res.partner', string="Donor")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     country_code_id = fields.Many2one(related='donor_id.country_code_id', string="Country Code", store=True, readonly=True)
 
@@ -24,7 +25,7 @@ class QurbaniOrder(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
 
     # POS vs Web Order indicator
-    pos_qurbani_order = fields.Boolean('From POS', default=True)
+    pos_qurbani_order = fields.Boolean('POS Order', default=True)
 
     # API/Web Order Fields
     api_response_id = fields.Char('API Response ID')
@@ -54,12 +55,12 @@ class QurbaniOrder(models.Model):
     is_sync = fields.Boolean('Is Sync')
 
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('name') or vals.get('name') == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order') or ('New')
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order') or ('New')
+
+        return super(QurbaniOrder, self).create(vals)
     
     def calculate_amount(self):
         self.amount = sum(line.amount for line in self.qurbani_order_line_ids)
@@ -154,7 +155,7 @@ class QurbaniOrder(models.Model):
             qurbani_fullfilment = line.qurbani_fullfilment 
             if qurbani_fullfilment == "meat" :
                 if  not city: raise ValidationError(f"City is required for meat qurbani fulfillment create city '{line.city}' and try again.")
-                if not branch: raise ValidationError("Branch is required for meat qurbani fulfillment, provide branch in line and try again.")
+                if not branch: raise ValidationError(f"Branch is required for meat qurbani fulfillment, provide branch in line and try again.")
                 distribution_name = (
                     f"{city.city_id.complete_name if city and city.city_id else ''}/{branch}"
                 )
@@ -177,7 +178,7 @@ class QurbaniOrder(models.Model):
                         )
                     if not slaughter_center.slaughter_center_id:
                         raise ValidationError(
-                            "Slaughter center record exists but slaughter_center_id is empty"
+                            f"Slaughter center record exists but slaughter_center_id is empty"
                         )
             else: 
                 # SLAUGHTER CENTER
@@ -187,11 +188,11 @@ class QurbaniOrder(models.Model):
                 
                 if not slaughter_center:
                     raise ValidationError(
-                        "No slaughter center mapping found "
+                        f"No slaughter center mapping found "
                     )
                 if not slaughter_center.slaughter_center_id:
                     raise ValidationError(
-                        "Slaughter center record exists but slaughter_center_id is empty"
+                        f"Slaughter center record exists but slaughter_center_id is empty"
                     )
                     
                 distribution_id = self.env.company.web_no_meat_distribution_location_id.id 
@@ -495,6 +496,20 @@ class QurbaniOrder(models.Model):
             "message": "Web Qurbani Order created with slaughter integration"
         }
     
+    @staticmethod
+    def _parse_iso_datetime(iso_string):
+        """Parse ISO 8601 datetime string to Odoo datetime format"""
+        if not iso_string:
+            return None
+        try:
+            from datetime import datetime
+            # Parse ISO 8601 format (e.g., '2026-05-04T20:01:19.593Z')
+            dt = datetime.fromisoformat(iso_string.replace('Z', '+00:00'))
+            return dt.replace(tzinfo=None)
+        except Exception as e:
+            _logger.warning(f"Could not parse datetime {iso_string}: {str(e)}")
+            return None
+    
     def action_show_pos_order(self):
         self.ensure_one()
 
@@ -523,70 +538,12 @@ class QurbaniOrder(models.Model):
         }
 
     @api.model
-    def _book_qurbani(self, data):
-        """create_qurbani_record for a direct deposit / home service: raises
-        (rolling back the deposit) instead of returning an error."""
-        res = self.sudo()._create_qurbani_record(data)
-        if not res:
-            return self.browse()
-        if res.get('status') != 'success':
-            raise UserError(res.get('body') or _('The Qurbani could not be booked.'))
-        return self.browse(res['id'])
-
-    def _release_booked_hissa(self):
-        """Give back the hissa booked by these orders (unpaid deposit,
-        cancelled home service) and drop their lines."""
-        for line in self.sudo().qurbani_order_line_ids:
-            distribution_schedule = self.env['distribution.schedule'].sudo().search([
-                ('day_id', '=', line.day_id.id),
-                ('hijri_id', '=', line.hijri_id.id),
-                ('pos_product_ids', 'in', [line.product_id.id]),
-                ('start_time', '=', line.start_time),
-                ('end_time', '=', line.end_time),
-                ('location_id', '=', line.distribution_id.id)
-            ], limit=1)
-
-            if distribution_schedule:
-                slaughter_slot_demand = self.env['qurbani.slaughter.slot.demand'].sudo().search([
-                    ('day_id', '=', line.day_id.id),
-                    ('hijri_id', '=', line.hijri_id.id),
-                    ('inventory_product_id', '=', distribution_schedule.inventory_product_id.id),
-                    ('end_time', '=', distribution_schedule.slaughter_schedule_id.end_time),
-                    ('slaughter_location_id', '=', distribution_schedule.slaughter_location_id.id)
-                ], limit=1)
-
-                if slaughter_slot_demand:
-                    slaughter_slot_demand.booked_hissa -= line.quantity
-                    slaughter_slot_demand.current_hissa -= line.quantity
-                    slaughter_slot_demand.remaining_hissa += line.quantity
-            line.unlink()
-
-    @api.model
     def create_qurbani_record(self, data):
-        """POS booking. A donor can book a slot in any city, while the
-        schedules and demands are scoped to the planners' locations: the
-        booking runs as superuser once the cashier is checked."""
-        # records made here carry the POS session / POS they come from
-        self = self.with_context(pos_link_create=True)
-        if not self.env.user.has_group('point_of_sale.group_pos_user'):
-            raise AccessError(_('Only Point of Sale users can book a Qurbani.'))
-        return self.sudo()._create_qurbani_record(data)
-
-    @api.model
-    def _create_qurbani_record(self, data):
 
         schedule_usage = {}
         demand_cache = {}
 
-        # nothing to book when no qurbani product was sold (an ordinary
-        # direct deposit / home service)
-        if not any(
-            'qurbani' in (self.env['product.product'].browse(line['product_id']).categ_id.name or '').lower()
-            for line in data.get('order_lines', [])
-        ):
-            return False
-
-        Hijri =self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
+        Hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
         if not Hijri:
             return {"status": "error", "body": "No Hijri found"}
 
@@ -608,7 +565,7 @@ class QurbaniOrder(models.Model):
         # ==================================================
         def _get_demand(line):
 
-            schedule = line.get('qurbani_schedule', {})
+            schedule = line.get('qurbani_schedule') or {}
             slot = schedule.get('slot', {})
 
             slot_demand_id = slot.get('slot_demand_id')
@@ -721,7 +678,7 @@ class QurbaniOrder(models.Model):
             if 'qurbani' not in (product.categ_id.name or '').lower():
                 continue
 
-            schedule = line.get('qurbani_schedule', {})
+            schedule = line.get('qurbani_schedule') or {}
             slot = schedule.get('slot', {})
 
             demand = _get_demand(line)
@@ -831,8 +788,10 @@ class QurbaniOrder(models.Model):
                         break
 
                 if not qurbani_cow_slaughter:
-                    # the hissa are already booked above: roll everything back
-                    raise UserError(_("No empty cow slaughter slot available."))
+                    return {
+                        "status": "error",
+                        "body": "No empty cow slaughter slot available."
+                    }
 
                 # APPEND LINE
                 qurbani_cow_slaughter.write({

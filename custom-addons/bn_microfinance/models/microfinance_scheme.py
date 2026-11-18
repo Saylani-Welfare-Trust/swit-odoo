@@ -16,24 +16,28 @@ class MicrofinanceScheme(models.Model):
     name = fields.Char('Name', tracking=True)
     prefix = fields.Char('Prefix', tracking=True)
     
+    is_created = fields.Boolean('Is Created', tracking=True)
+
     installment_type = fields.Selection(selection=installment_selection, string='Installment Type', default='daily', tracking=True)
 
-    daily_recovery_days = fields.Integer('Daily Recovery Days', default=0, tracking=True)
-    monthly_recovery_days = fields.Integer('Monthly Recovery Days', default=0, tracking=True)
+    daily_recovery_days = fields.Integer('Recovery Days', default=0, tracking=True)
+    monthly_recovery_days = fields.Integer('Recovery Days', default=0, tracking=True)
 
     microfinance_scheme_line_ids = fields.One2many('microfinance.scheme.line', 'microfinance_scheme_id', string="Microfinance Scheme Line")
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        for record in records:
-            self.env['ir.sequence'].create({
-                'name': f"{record.name} Sequence",
-                'code': f"microfinance.{record.id}",
-                'padding': 7,
-                'prefix': record.prefix,
-            })
-        return records
+    @api.model
+    def create(self, vals):
+        # vals['is_created'] = True
+        record = super(MicrofinanceScheme, self).create(vals)
+
+        self.env['ir.sequence'].create({
+            'name': f"{record.name} Sequence",
+            'code': f"microfinance.{record.id}",
+            'padding': 7,
+            'prefix': record.prefix,
+        })
+
+        return record
 
     def write(self, vals):
         record = super(MicrofinanceScheme, self).write(vals)

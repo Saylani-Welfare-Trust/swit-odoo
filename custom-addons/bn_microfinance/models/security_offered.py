@@ -1,10 +1,11 @@
-from odoo import models, fields, _
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class SecurityOffered(models.Model):
     _name = 'security.offered'
-    _description = 'Security Offered for Microfinance'
     _inherit = ['mail.thread', 'mail.activity.mixin']
+    _description = 'Security Offered for Microfinance'
     _order = 'name'
 
     name = fields.Char('Security Type', required=True)
@@ -32,7 +33,7 @@ class SecurityOffered(models.Model):
             'name': _('Microfinance Applications'),
             'res_model': 'microfinance',
             'view_mode': 'tree,form',
-            'domain': [('security_offered_id', '=', self.id)],
+            'domain': [('security_offered_id    ', '=', self.id)],
             'context': {'create': False},
         }
     

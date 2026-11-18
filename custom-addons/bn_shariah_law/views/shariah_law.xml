@@ -18,6 +18,7 @@
                 <field name="dik_amount" sum="Total" widget="monetary"/>
                 
                 <!-- Total Donation (POSITIVE only) -->
+                <!-- <field name="total_donation" sum="Total" widget="monetary"/> -->
                 
                 <!-- NEGATIVE Transactions (Decrease Balance) -->
                 <field name="po_amount" sum="Total" widget="monetary"/>
@@ -31,7 +32,7 @@
                 <!-- Closing Balances -->
                 <field name="closing_balance" sum="Total" widget="monetary"/>
 
-                <button string="Transfer" name="action_transfer" type="object" class="btn-primary" groups="bn_shariah_law.shariah_law_user_group"/>
+                <button string="Transfer" name="action_transfer" type="object" class="btn-primary"/>
             </tree>
         </field>
     </record>

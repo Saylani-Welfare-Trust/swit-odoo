@@ -18,7 +18,7 @@
                 </header>
                 <sheet>
                     <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
-                        <i title="Info" class="fa fa-info-circle"/> 
+                        <i class="fa fa-info-circle"/> 
                         <span>Select the accounting entry lines that match this bank transaction.</span>
                     </div>
                     
@@ -106,6 +106,18 @@
                     <button string="Close" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
+        </field>
+    </record>
+
+    <record id="action_reconcile_wizard" model="ir.actions.act_window">
+        <field name="name">Reconcile</field>
+        <field name="res_model">reconcile.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Select accounting entries to reconcile with bank transactions.
+            </p>
         </field>
     </record>
 

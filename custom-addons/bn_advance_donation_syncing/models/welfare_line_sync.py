@@ -1,5 +1,5 @@
-from odoo import models, fields, _
-from odoo.exceptions import UserError
+from odoo import models, fields, api, _
+from odoo.exceptions import UserError, ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class WelfareLineSync(models.Model):
     
     advance_donation_line_id = fields.Many2one(
         'advance.donation.lines',
-        string='Advance Donation Line',
+        string="Advance Donation",
         ondelete='set null'
     )
     
@@ -39,19 +39,15 @@ class WelfareLineSync(models.Model):
             }
         }
 
-    
-    def action_disbursed(self):
-        res = super().action_disbursed()
-        for line in self.filtered('advance_donation_line_id'):
-            line.advance_donation_line_id.sudo()._register_disbursement(
-                line.advance_donation_amount, line.total_amount,
-                welfare=line.welfare_id, welfare_line=line, record_name=line.welfare_id.name or '')
-        return res
+    # def action_disbursed(self):
+    #     """When disbursing, mark the linked donation line as reserved"""
 
+    #     return super(WelfareLineSync, self).action_disburse()
+    
     def unlink(self):
-        # a line that holds part of an advance donation must give it back first
-        linked = self.filtered('advance_donation_line_id')
-        if linked:
-            raise UserError(_('Welfare lines linked to an advance donation cannot be deleted (%s).')
-                            % ', '.join(linked.mapped(lambda l: l.display_name or str(l.id))))
-        return super().unlink()
+        raise UserError(_('You cannot delete a welfare line.'))
+        ## For each welfare line being deleted, unlink the associated donation line's reserved status
+        # for record in self:
+        #     if record.advance_donation_line_id and record.advance_donation_line_id.is_reserved:
+        #         record.advance_donation_line_id.write({'is_reserved': False})
+        # return super(WelfareLineSync, self).unlink()

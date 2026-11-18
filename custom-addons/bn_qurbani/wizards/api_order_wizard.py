@@ -1,6 +1,8 @@
 from odoo import models, fields, _
 from odoo.exceptions import ValidationError
 import logging
+import json
+from datetime import datetime
 
 _logger = logging.getLogger(__name__)
 
@@ -85,7 +87,7 @@ class APIDonationWizard(models.TransientModel):
                 }
             }
 
-        except ValidationError:
+        except ValidationError as e:
             # Savepoint already rolled back everything — just re-raise so
             # Odoo shows the error dialog to the user. Nothing was committed.
             raise

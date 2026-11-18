@@ -20,6 +20,7 @@ class ReceiveByWeightLine(models.TransientModel):
 
     weight = fields.Float(string="Weight (kg)")
 
+    available_product_ids = fields.Many2many('product.product', compute='_compute_available_products')
     allowed_product_ids = fields.Many2many('product.product', compute='_compute_allowed_product_ids')
 
     @api.depends('wizard_id.picking_id')
@@ -32,3 +33,13 @@ class ReceiveByWeightLine(models.TransientModel):
             else:
                 line.allowed_product_ids = [(6, 0, [])]
     
+    @api.depends('wizard_id.picking_id')
+    def _compute_available_products(self):
+        """Compute available products based on the picking."""
+        for line in self:
+            picking = line.wizard_id.picking_id
+            if picking:
+                product_ids = picking.move_ids.mapped('product_id').ids
+                line.available_product_ids = [(6, 0, product_ids)]
+            else:
+                line.available_product_ids = [(6, 0, [])]

@@ -136,6 +136,10 @@ class BankReconciliationReconciled(models.Model):
         help='Score indicating how well this transaction matched',
         default=0
     )
+    match_criteria = fields.Text(
+        string='Match Criteria',
+        help='Details of what criteria were matched'
+    )
     matched_by_amount = fields.Boolean(string='Matched by Amount', default=False)
     matched_by_reference = fields.Boolean(string='Matched by Reference', default=False)
     matched_by_partner = fields.Boolean(string='Matched by Partner', default=False)
@@ -165,6 +169,30 @@ class BankReconciliationReconciled(models.Model):
     def _compute_amount(self):
         for record in self:
             record.amount = (record.debit or 0.0) - (record.credit or 0.0)
+
+    def action_view_move(self):
+        self.ensure_one()
+        if not self.matched_move_id:
+            raise UserError(_('No accounting entry found for this reconciliation.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'res_id': self.matched_move_id.id,
+            'view_mode': 'form',
+            'target': 'current'
+        }
+    
+    def action_view_journal_line(self):
+        self.ensure_one()
+        if not self.journal_line_id:
+            raise UserError(_('No journal line found for this reconciled transaction.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'res_id': self.journal_line_id.id,
+            'view_mode': 'form',
+            'target': 'current'
+        }
 
     def action_unreconcile(self):
         self.ensure_one()
@@ -263,44 +291,45 @@ class BankReconciliationReconciled(models.Model):
                 ],
             })
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            # Strict duplicate check - prevent any duplicate creation
-            if vals.get('transaction_id'):
-                existing = self.search([
-                    ('transaction_id', '=', vals['transaction_id'])
-                ], limit=1)
-                if existing:
-                    raise UserError(_(
-                        'This transaction (ID: %s) is already reconciled. '
-                        'Cannot create another reconciled record.'
-                    ) % vals['transaction_id'])
-
-            if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
-                if vals['amount'] >= 0:
-                    vals['debit'] = vals['amount']
-                    vals['credit'] = 0.0
-                else:
-                    vals['debit'] = 0.0
-                    vals['credit'] = abs(vals['amount'])
-
-            if vals.get('transaction_id'):
-                transaction = self.env['bank.reconciliation.transaction'].browse(vals['transaction_id'])
-                if transaction.exists():
-                    vals['match_score'] = transaction.match_score or 0
-                    vals['matched_by_amount'] = transaction.matched_by_amount or False
-                    vals['matched_by_reference'] = transaction.matched_by_reference or False
-                    vals['matched_by_partner'] = transaction.matched_by_partner or False
-                    vals['matched_by_invoice'] = transaction.matched_by_invoice or False
-                    vals['matched_by_date'] = transaction.matched_by_date or False
-                    vals['matched_by_description'] = transaction.matched_by_description or False
-                    vals['matched_by_manual'] = transaction.matched_by_manual or False
-        records = super().create(vals_list)
-        for record in records:
-            if record.master_id and record.master_id.state == 'completed':
-                record.is_posted = True
-        return records
+    @api.model
+    def create(self, vals):
+        # Strict duplicate check - prevent any duplicate creation
+        if vals.get('transaction_id'):
+            existing = self.search([
+                ('transaction_id', '=', vals['transaction_id'])
+            ], limit=1)
+            if existing:
+                raise UserError(_(
+                    'This transaction (ID: %s) is already reconciled. '
+                    'Cannot create another reconciled record.'
+                ) % vals['transaction_id'])
+        
+        if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
+            if vals['amount'] >= 0:
+                vals['debit'] = vals['amount']
+                vals['credit'] = 0.0
+            else:
+                vals['debit'] = 0.0
+                vals['credit'] = abs(vals['amount'])
+        
+        if vals.get('transaction_id'):
+            transaction = self.env['bank.reconciliation.transaction'].browse(vals['transaction_id'])
+            if transaction.exists():
+                vals['match_score'] = transaction.match_score or 0
+                vals['matched_by_amount'] = transaction.matched_by_amount or False
+                vals['matched_by_reference'] = transaction.matched_by_reference or False
+                vals['matched_by_partner'] = transaction.matched_by_partner or False
+                vals['matched_by_invoice'] = transaction.matched_by_invoice or False
+                vals['matched_by_date'] = transaction.matched_by_date or False
+                vals['matched_by_description'] = transaction.matched_by_description or False
+                vals['matched_by_manual'] = transaction.matched_by_manual or False
+        
+        record = super(BankReconciliationReconciled, self).create(vals)
+        
+        if record.master_id and record.master_id.state == 'completed':
+            record.is_posted = True
+        
+        return record
 
     def write(self, vals):
         if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
@@ -314,3 +343,7 @@ class BankReconciliationReconciled(models.Model):
 
     def unlink(self):
         raise UserError(_('You cannot delete a reconciled transaction.'))
+        # for record in self:
+        #     if record.is_posted:
+        #         raise UserError(_('Cannot delete a posted reconciled transaction.'))
+        # return super(BankReconciliationReconciled, self).unlink()

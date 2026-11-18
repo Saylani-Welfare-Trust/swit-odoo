@@ -144,13 +144,7 @@ class PosDdReport(models.Model):
             INNER JOIN pos_order po ON po.id = pol.order_id
             LEFT JOIN pos_config pc ON pc.id = po.config_id
             LEFT JOIN pos_session ps ON ps.id = po.session_id
-            -- one employee per cashier (a user can have one per company): a plain
-            -- join would repeat the order line and double its amount
-            LEFT JOIN LATERAL (
-                SELECT e.analytic_account_id FROM hr_employee e
-                 WHERE e.user_id = po.user_id AND e.active
-                 ORDER BY (e.company_id = po.company_id) DESC, e.id LIMIT 1
-            ) emp ON TRUE
+            LEFT JOIN hr_employee emp ON emp.user_id = po.user_id
             LEFT JOIN res_company rc ON rc.id = po.company_id
             LEFT JOIN product_product pp ON pp.id = pol.product_id
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
@@ -196,10 +190,7 @@ class PosDdReport(models.Model):
         """)
 
     # ------------------------------------------------------------------
-    # ACCESS HELPERS
-    # ------------------------------------------------------------------
-    # ------------------------------------------------------------------
-    # FILTER POPUPS (City / Branch) - see static/src/search/pos_dd_report_filters.js
+    # FILTER POPUPS (City / Branch) — see static/src/search/pos_dd_report_filters.js
     # ------------------------------------------------------------------
     @api.model
     def get_location_filter_options(self):
@@ -228,6 +219,9 @@ class PosDdReport(models.Model):
             } for b in branches],
         }
 
+    # ------------------------------------------------------------------
+    # ACCESS HELPERS
+    # ------------------------------------------------------------------
     @api.model
     def _get_user_category_domain(self):
         """
@@ -254,6 +248,19 @@ class PosDdReport(models.Model):
             self._get_user_location_domain(),
             self._get_user_category_domain(),
         ])
+
+    @api.model
+    def get_available_categories(self):
+        """
+        Return the product categories the current user is allowed to see
+        in the report. Used by the search dropdown / custom widgets.
+        """
+        domain = []
+        allowed = self.env.user.pos_dd_report_category_ids
+        if allowed:
+            domain = [('id', 'child_of', allowed.ids)]
+        return self.env['product.category'].search_read(
+            domain, ['id', 'complete_name'], order='complete_name')
 
     # ------------------------------------------------------------------
     def action_open_source(self):

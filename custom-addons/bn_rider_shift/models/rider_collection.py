@@ -33,7 +33,6 @@ state_selection = [
 
 class RiderCollection(models.Model):
     _name = 'rider.collection'
-    _inherit = ['pos.link.mixin']
     _description = "Rider Collection"
     _rec_name = "shop_name"
 
@@ -42,7 +41,7 @@ class RiderCollection(models.Model):
         'rider_collection_counterfeit_rel',
         'collection_id',
         'note_id',
-        string='Counterfeit Note Lines'
+        string='Counterfeit Notes'
     )
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
@@ -59,11 +58,11 @@ class RiderCollection(models.Model):
     sub_zone_id = fields.Many2one(related='donation_box_registration_installation_id.sub_zone_id', string="Sub Zone", store=True)
 
     day = fields.Selection(selection=day_selection, string="Day", default='mon')
-    state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected', index=True)
+    state = fields.Selection(selection=state_selection, string="Status", default='donation_not_collected')
 
     is_complain_generated = fields.Boolean('Is Complain Generated', default=False)
     
-    date = fields.Date("Date", index=True)
+    date = fields.Date("Date")
 
     submission_time = fields.Date('Submission Date')
 
@@ -76,6 +75,13 @@ class RiderCollection(models.Model):
     # Set when the POS order that paid this collection reaches the server (pos_order.py).
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, readonly=True)
     dn_number = fields.Char('DN Number', copy=False, readonly=True)
+    foreign_currency_line_ids = fields.Many2many(
+        'foreign.currency',
+        'rider_collection_foreign_currency_rel',
+        'collection_id',
+        'foreign_currency_id',
+        string='Foreign Currency Lines'
+    )
 
     is_fcb = fields.Boolean('Is FCB', compute='_compute_is_fcb')
     
@@ -97,6 +103,14 @@ class RiderCollection(models.Model):
                 )
         return super().write(vals)
     
+    def action_mark_cfb_paid(self):
+        """Mark all linked counterfeit notes as paid"""
+        for collection in self:
+            if collection.remarks == 'CFB' and collection.counterfeit_note_ids:
+                collection.counterfeit_note_ids.write({'state': 'payment_received'})
+                collection.state = 'paid'
+        return True
+
     def action_fill_dn_number_from_pos(self):
         """Server action "Find DN # from POS": link Paid collections paid before the POS
         order was kept on them. Only a collection with exactly one matching POS order
@@ -117,12 +131,12 @@ class RiderCollection(models.Model):
                 progress = False
                 claims = defaultdict(lambda: self.browse())
                 for collection in todo:
-                    order = collection._find_paying_pos_order(product_name, used_order_ids, by_moment)
+                    order = collection._bn_find_paying_pos_order(product_name, used_order_ids, by_moment)
                     if order:
                         claims[order] |= collection
                 for order, collections in claims.items():
                     if len(collections) == 1:
-                        order._link_rider_collection(collections.id)
+                        order._bn_link_rider_collection(collections.id)
                         used_order_ids.add(order.id)
                         todo -= collections
                         progress = True
@@ -145,7 +159,7 @@ class RiderCollection(models.Model):
             },
         }
 
-    def _find_paying_pos_order(self, product_name, used_order_ids, by_moment=False):
+    def _bn_find_paying_pos_order(self, product_name, used_order_ids, by_moment=False):
         """The POS order that paid this collection, or an empty recordset when it is not
         sure. Candidates: a paid order with a Donation Box line of the same amount, not
         linked to another collection, between this collection's submission and the next
@@ -175,19 +189,19 @@ class RiderCollection(models.Model):
         orders = lines.filtered(
             lambda l: float_compare(l.price_subtotal_incl, self.amount, precision_digits=2) == 0).order_id
 
-        customer = self._pos_customer()
+        customer = self._bn_pos_customer()
         by_customer = orders.filtered(lambda o: o.partner_id == customer) if customer else orders.browse()
         if not by_moment:
             return by_customer if len(by_customer) == 1 else orders.browse()
 
-        cashier, paid_at = self._paid_moment()
+        cashier, paid_at = self._bn_paid_moment()
         if not (cashier and paid_at):
             return orders.browse()
         matched = (by_customer or orders).filtered(
             lambda o: o.user_id == cashier and abs(o.date_order - paid_at) <= POS_MATCH_WINDOW)
         return matched if len(matched) == 1 else orders.browse()
 
-    def _pos_customer(self):
+    def _bn_pos_customer(self):
         """Customer the POS puts on the order (see key.issuance.set_donation_amount)."""
         self.ensure_one()
         Partner = self.env['res.partner'].sudo()
@@ -197,7 +211,7 @@ class RiderCollection(models.Model):
             return Partner.search([('name', 'ilike', 'Foreign Currency Donor')], limit=1)
         return self.donation_box_registration_installation_id.donor_id
 
-    def _paid_moment(self):
+    def _bn_paid_moment(self):
         """(cashier, time) the POS marked this collection Paid. Taken from the chatter of
         its key issuance (the POS sets it to Donation Received, or Returned for CFB / FCB),
         else from the collection's last write unless the system made it (an upgrade

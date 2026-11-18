@@ -7,6 +7,10 @@
                 <i class="fa fa-medkit me-1 text-danger" role="img" aria-label="Medical Equipment" title="Medical Equipment" />
                 Medical Equipment
             </button>
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-if="checkMedicalPatientAccess" t-on-click="() => this.clickRegisterPatient()">
+                <i class="fa fa-user-plus me-1 text-success" role="img" aria-label="Register Patient" title="Register Patient" />
+                Register Patient
+            </button>
         </xpath>
     </t>
 

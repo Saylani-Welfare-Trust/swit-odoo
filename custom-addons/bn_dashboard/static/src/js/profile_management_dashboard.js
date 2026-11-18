@@ -1,6 +1,5 @@
 /** @odoo-module **/
 import { registry } from "@web/core/registry";
-import { loadBundle } from "@web/core/assets";
 import { browser } from "@web/core/browser/browser"; 
 import { Component, onWillStart, onMounted, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
@@ -48,8 +47,6 @@ export class ProfileManagementDashboard extends Component {
         this.is_mounted = false;
 
         onWillStart(async () => {
-            // Chart.js of Odoo, loaded only when a dashboard opens
-            await loadBundle("web.chartjs_lib");
             this._init_comparison_periods();
             await this.fetch_data();
             await this.fetch_comparison();

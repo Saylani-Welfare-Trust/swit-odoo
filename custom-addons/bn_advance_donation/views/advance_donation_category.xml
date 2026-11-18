@@ -52,8 +52,7 @@
             id="advance_donation_menu"
             name="Advance Donation"
             parent="bn_master_setup.master_setup_menu"
-            sequence="8"
-            groups="bn_advance_donation.group_adv_don_admin"/>
+            sequence="8"/>
 
         <menuitem
             id="advance_donation_category_menu"

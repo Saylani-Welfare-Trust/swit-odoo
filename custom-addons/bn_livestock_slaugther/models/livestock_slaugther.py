@@ -1,6 +1,5 @@
 from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError
-from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 state_selection = [
@@ -15,10 +14,10 @@ state_selection = [
 class LivestockSlaughter(models.Model):
     _name = 'livestock.slaugther'
     _description = "Livestock Slaugther"
-    _inherit = ["mail.thread", "mail.activity.mixin", 'pos.link.mixin']
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
 
-    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee'))
+    donee_id = fields.Many2one('res.partner', string="Donee")
     product_id = fields.Many2one('product.product', string="Product")
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
     pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)
@@ -32,6 +31,11 @@ class LivestockSlaughter(models.Model):
         readonly=True,
     )
     material_request_id = fields.Many2one('livestock.cutting.material', string='Material Request', copy=False)
+    material_request_line_ids = fields.One2many(
+        related='material_request_id.livestock_cutting_material_line_ids',
+        string='Material Request Lines',
+        readonly=True,
+    )
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
@@ -43,6 +47,7 @@ class LivestockSlaughter(models.Model):
     ref = fields.Char('Source Document')
 
     quantity = fields.Integer('Quantity', default=1)
+    pos_split_no = fields.Integer('POS Split No', default=1, copy=False)
 
     price = fields.Monetary('Price', currency_field='currency_id', default=0)
 
@@ -55,54 +60,44 @@ class LivestockSlaughter(models.Model):
     is_chicken_depart = fields.Boolean('Is Chicken Department')
     confirm_hide = fields.Boolean('Confirm Hide')
     cutting_hide = fields.Boolean('Cutting Hide')
-    transfer_bool = fields.Boolean('Hide Transferred')
+    transfer_bool = fields.Boolean('Cutting Hide')
 
-    # One record per animal: a source line (POS line, Direct Deposit line,
-    # donation, API item) gets as many records as animals it paid for, see
-    # _create_for_source. The former one-record-per-line unique constraints
-    # are dropped by data/upgrade_hooks.xml.
+    _sql_constraints = [
+        (
+            'unique_pos_order_line_id',
+            'unique(pos_order_line_id, pos_split_no)',
+            'A livestock slaughter record already exists for this POS order line.',
+        ),
+        (
+            'unique_direct_deposit_line_id',
+            'unique(direct_deposit_line_id)',
+            'A livestock slaughter record already exists for this Direct Deposit line.',
+        ),
+        (
+            'unique_donation_id',
+            'unique(donation_id)',
+            'A livestock slaughter record already exists for this Donation.',
+        ),
+        (
+            'unique_api_donation_item_id',
+            'unique(api_donation_item_id)',
+            'A livestock slaughter record already exists for this API Donation item.',
+        ),
+    ]
 
     @api.model
-    def _drop_line_unique_constraints(self):
-        for name in ('unique_pos_order_line_id', 'unique_direct_deposit_line_id',
-                     'unique_donation_id', 'unique_api_donation_item_id'):
-            self.env.cr.execute('ALTER TABLE livestock_slaugther DROP CONSTRAINT IF EXISTS %s'
-                                % ('livestock_slaugther_' + name))
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            if vals.get('is_meat_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('meat_department') or ('New')
+            elif vals.get('is_chicken_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('chicken_department') or ('New')
+            elif vals.get('is_goat_depart'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
+            else:
+                vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
 
-    @api.model
-    def _create_for_source(self, source_field, source, animals, total, vals):
-        """Create the missing records of ``source`` (one per animal, ``animals``
-        in all, sharing ``total``). Run again, it creates nothing more."""
-        animals = int(animals or 0)
-        if animals <= 0:
-            return self.browse()
-        existing = self.sudo().search_count([(source_field, '=', source.id)])
-        missing = animals - existing
-        if missing <= 0:
-            return self.browse()
-        currency = self.env.company.currency_id
-        total = total or 0.0
-        per_animal = currency.round(total / animals)
-        vals = dict(vals, **{source_field: source.id, 'quantity': 1})
-        # the last animal takes the rounding difference, so the records add up to the total
-        return self.sudo().create([
-            dict(vals, price=per_animal if index < animals - 1
-                 else currency.round(total - per_animal * (animals - 1)))
-            for index in range(existing, animals)])
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('name') or vals.get('name') == _('New'):
-                if vals.get('is_meat_depart'):
-                    vals['name'] = self.env['ir.sequence'].next_by_code('meat_department') or ('New')
-                elif vals.get('is_chicken_depart'):
-                    vals['name'] = self.env['ir.sequence'].next_by_code('chicken_department') or ('New')
-                elif vals.get('is_goat_depart'):
-                    vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
-                else:
-                    vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
-        return super().create(vals_list)
+        return super(LivestockSlaughter, self).create(vals)
 
     def action_confirm(self):
         self.ensure_one()
@@ -124,7 +119,10 @@ class LivestockSlaughter(models.Model):
             raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
         # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('warehouse_id.company_id', '=', self.env.company.id)
+        ], limit=1)
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
@@ -138,8 +136,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.name or 'Live Stock Slaughter',
-            'source_record_ref': '%s,%s' % (self._name, self.id),
+            'origin': self.product_id or 'Live Stock Slaughter',
         })
 
         # Create the stock move
@@ -177,7 +174,10 @@ class LivestockSlaughter(models.Model):
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('warehouse_id.company_id', '=', self.env.company.id)
+        ], limit=1)
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
 
@@ -187,8 +187,7 @@ class LivestockSlaughter(models.Model):
             'picking_type_id': picking_type.id,
             'location_id': picking_type.default_location_src_id.id,
             'location_dest_id': location.id,
-            'origin': self.name or '',
-            'source_record_ref': '%s,%s' % (self._name, self.id),
+            'origin': self.product_id.id or '',
         })
 
         self.env['stock.move'].create({

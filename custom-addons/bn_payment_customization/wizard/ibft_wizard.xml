@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <odoo>
-    <record id="view_ibft_reprint_wizard_form" model="ir.ui.view">
+ <record id="view_ibft_reprint_wizard_form" model="ir.ui.view">
         <field name="name">ibft.reprint.wizard.form</field>
         <field name="model">ibft.reprint.wizard</field>
         <field name="arch" type="xml">
@@ -8,7 +8,7 @@
                 <group>
                     <field name="batch_no"/>
                     <field name="payment_ids" invisible="1"/>
-                    <field name="reason" placeholder="Why is this IBFT batch being reprinted?"/>
+                    <field name="reason" placeholder="Why is this IBFT being reprinted?"/>
                 </group>
                 <footer>
                     <button string="Print" name="action_confirm" type="object" class="btn-primary" data-hotkey="q"/>

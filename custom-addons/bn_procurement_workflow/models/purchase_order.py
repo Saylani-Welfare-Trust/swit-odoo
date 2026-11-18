@@ -4,16 +4,11 @@ from collections import defaultdict
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
-from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
-
 CFO_GROUP = 'bn_material_request.menu_group_material_request_cfo'
 
 
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
-
-    # only the contacts tagged Vendor
-    partner_id = fields.Many2one(domain=tag_domain('vendor'))
 
     # Final approval before the RFQ can be confirmed into a PO (after CXO and HOD).
     cfo_approved = fields.Boolean('CFO Approved', copy=False, readonly=True, tracking=True)
@@ -106,6 +101,7 @@ class PurchaseOrder(models.Model):
             return
         # Inbox, so the message shows in Discuss rather than going out as one more
         # email. sudo: whoever triggers it need not be allowed to edit other users.
+        user.sudo().filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
         # mail_notify_author: also sent when the approver is the one who selected the quote.
         self.with_context(mail_notify_author=True).message_notify(
             body=_(
@@ -227,6 +223,10 @@ class PurchaseOrder(models.Model):
             available = sum(abs(l.practical_amount) for l in budget_lines)
             rows.append((analytic, budget, required, available))
         return rows
+
+    def _get_accounting_budget_shortfalls(self):
+        self.ensure_one()
+        return [row for row in self._get_accounting_budget_rows() if row[2] > row[3]]
 
     def _get_budget_check_summary(self):
         self.ensure_one()
@@ -352,6 +352,7 @@ class PurchaseOrder(models.Model):
                 'No user currently holds the CFO approval group (%s) - nobody was notified.'
             ) % CFO_GROUP)
             return
+        cfo_users.filtered(lambda u: u.notification_type != 'inbox').notification_type = 'inbox'
         self.message_notify(
             body=body,
             partner_ids=cfo_users.partner_id.ids,
@@ -439,8 +440,7 @@ class PurchaseOrder(models.Model):
         res = super().action_cxo_approve_po()
         for order in self:
             requisition = order.requisition_id
-            # a request entered by hand (no Material Request) moves on the same way
-            if not requisition:
+            if not requisition or not requisition.material_request_id:
                 continue
             if requisition.selected_rfq_id == order and requisition.state == 'vendor_selected':
                 requisition.write({'state': 'cxo_approved'})
@@ -504,9 +504,3 @@ class PurchaseOrder(models.Model):
             requisition.message_post(body=_(
                 'Closed - Purchase Order %(order)s confirmed. %(count)s other RFQ(s) cancelled.'
             ) % {'order': order.display_name, 'count': len(other_rfqs)})
-
-
-class PurchaseOrderStepActivity(models.Model):
-    """Activity for whoever has to act next (step.activity.mixin)."""
-    _name = 'purchase.order'
-    _inherit = ['step.activity.mixin', 'purchase.order']

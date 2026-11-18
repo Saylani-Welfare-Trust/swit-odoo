@@ -28,4 +28,3 @@ from . import direct_depsoit
 from . import donation_home_service
 from . import qurbani_city
 from . import res_config_settings
-from . import program_types

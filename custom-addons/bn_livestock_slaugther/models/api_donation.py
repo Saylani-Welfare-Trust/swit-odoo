@@ -1,3 +1,4 @@
+from psycopg2 import IntegrityError
 
 from odoo import models
 
@@ -44,13 +45,25 @@ class APIDonation(models.Model):
                 if not product or product.detailed_type != 'product' or not product.is_livestock:
                     continue
 
-                vals = {
-                    'product_id': product.id,
-                    'donee_id': donation.donor_id.id,
-                    'ref': donation.name or donation.import_id,
-                }
-                vals.update(donation._get_livestock_department_vals(product))
-                slaughter_obj._create_for_source('api_donation_item_id', item, item.qty or 1, item.total, vals)
+                if slaughter_obj.search_count([('api_donation_item_id', '=', item.id)]):
+                    continue
+
+                for i in range(int(item.qty or 1)):
+                    slaughter_vals = {
+                        'product_id': product.id,
+                        'donee_id': donation.donor_id.id,
+                        'api_donation_item_id': item.id,
+                        'quantity': 1,
+                        'price': item.total,
+                        'ref': donation.name or donation.import_id,
+                    }
+                    slaughter_vals.update(donation._get_livestock_department_vals(product))
+
+                    try:
+                        with self.env.cr.savepoint():
+                            slaughter_obj.create(slaughter_vals)
+                    except IntegrityError:
+                        continue
 
 class APIDonationWizard(models.TransientModel):
     _inherit = 'api.donation.wizard'

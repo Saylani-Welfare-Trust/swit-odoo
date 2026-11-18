@@ -14,7 +14,7 @@ class QurbaniDay(models.Model):
 
     @api.model
     def validate_qurbani_day(self, day_id):
-        day = self.sudo().browse(day_id).exists()
+        day = self.browse(day_id)
 
         if not day:
             return {

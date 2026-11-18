@@ -35,7 +35,6 @@
         name="Sync Slaughter &amp; Ditribution"
         action="sync_slaughter_and_distribution_action"
         parent="bn_qurbani.menu_qurbani_root"
-        sequence="5"
-        groups="bn_qurbani.qurbani_manager_group"/>
+        sequence="5"/>
 
 </odoo>

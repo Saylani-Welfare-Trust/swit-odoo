@@ -20,8 +20,6 @@
         'data/ir_module_category.xml',
         'security/groups.xml',
         'security/access_right.xml',
-        'security/ir.model.access.csv',
-        'views/chatter.xml',
         'views/menu.xml',
     ],
     'auto_install': False,

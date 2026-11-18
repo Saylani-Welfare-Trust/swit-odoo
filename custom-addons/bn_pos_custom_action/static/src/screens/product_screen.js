@@ -3,8 +3,34 @@ import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
 
+// 🔥 GLOBAL KEYBOARD EVENT LISTENER - WORKS AT THE TOP LEVEL
+document.addEventListener('keydown', function(e) {
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'Subtract') {
+        console.log('Minus key detected globally!');
+        const shouldBlock = true;
+        if (shouldBlock) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            alert('Negative quantities are not allowed!');
+            setTimeout(() => {
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.tagName === 'INPUT') {
+                    const value = activeElement.value;
+                    if (value && value.startsWith('-')) {
+                        activeElement.value = value.substring(1);
+                        const inputEvent = new Event('input', { bubbles: true });
+                        activeElement.dispatchEvent(inputEvent);
+                    }
+                }
+            }, 10);
+            return false;
+        }
+    }
+}, true);
 
 patch(ProductScreen.prototype, {
+    // Getter to check if order has Qurbani product
     get hasQurbaniProduct() {
         const currentOrder = this.pos.get_order();
         if (!currentOrder) return false;
@@ -19,12 +45,35 @@ patch(ProductScreen.prototype, {
             );
         });
     },
-    
+
+    // Getter to check if order is welfare order
     get isWelfareOrder() {
         const order = this.pos.get_order();
         return order && order.extra_data && order.extra_data.welfare;
     },
 
+    // 🆕 Return/refund lines ko order-list se hide karne ke liye
+    getVisibleOrderlines() {
+        const order = this.pos.get_order();
+        if (!order) {
+            return [];
+        }
+        return order.orderlines.filter((line) => !line.refunded_orderline_id);
+    },
+
+    // 🆕 Sirf visible (non-return) lines ka total — display ke liye
+    getVisibleOrderTotal() {
+        const lines = this.getVisibleOrderlines();
+        return lines.reduce((sum, line) => sum + line.get_price_with_tax(), 0);
+    },
+
+    // 🆕 Sirf visible (non-return) lines ka tax — display ke liye
+    getVisibleOrderTax() {
+        const lines = this.getVisibleOrderlines();
+        return lines.reduce((sum, line) => sum + line.get_tax(), 0);
+    },
+
+    // Override numpad buttons to disable based on conditions
     getNumpadButtons() {
         const buttons = [
             { value: "1" },
@@ -43,16 +92,17 @@ patch(ProductScreen.prototype, {
                 text: _t("Price"),
                 disabled: !this.pos.cashierHasPriceControlRights(),
             },
-            { value: "-", text: "+/-" ,disabled: !this.pos.config.allow_negative_quantity},
+            { value: "-", text: "+/-", disabled: !this.pos.config.allow_negative_quantity },
             { value: "0" },
             { value: this.env.services.localization.decimalPoint },
             { value: "Backspace", text: "⌫" },
         ];
 
         if (this.isWelfareOrder) {
-            // Disable all except payment and custom action (adjust value as needed)
+            // Welfare lines can't be edited, only HOD lines can be deleted
+            const canDeleteLine = !!this.pos.get_order().get_selected_orderline()?.welfare_hod_line_id;
             return buttons.map(btn => {
-                if (["payment", "custom_action"].includes(btn.value)) {
+                if (["payment", "custom_action"].includes(btn.value) || (btn.value === "Backspace" && canDeleteLine)) {
                     return { ...btn, disabled: false };
                 }
                 return { ...btn, disabled: true };
@@ -63,7 +113,6 @@ patch(ProductScreen.prototype, {
         const selectedLine = order?.get_selected_orderline?.() || order?.get_orderlines?.().slice(-1)[0] || null;
         const isSelectedDonationInKind = !!selectedLine && !!selectedLine.product && !!selectedLine.product.is_donation_in_kind;
 
-        //  DISABLE MINUS BUTTON FOR ALL PRODUCTS
         return buttons.map(button => {
             if (button.value === "price" && isSelectedDonationInKind) {
                 return { ...button, disabled: true };
@@ -71,7 +120,7 @@ patch(ProductScreen.prototype, {
             if (button.value === "-") {
                 return { ...button, disabled: true };
             }
-            
+
             return {
                 ...button,
                 class: this.pos.numpadMode === button.value ? "active border-primary" : "",
@@ -79,47 +128,47 @@ patch(ProductScreen.prototype, {
         });
     },
 
-    // Override the mounted lifecycle method to ensure event listeners are attached
+    // An HOD welfare line can't be edited: Backspace/Delete removes it in one press
+    // (by default the first Backspace only sets the quantity to 0)
+    async updateSelectedOrderline({ buffer, key }) {
+        const order = this.pos.get_order();
+        const selectedLine = order?.get_selected_orderline();
+        if (selectedLine?.welfare_hod_line_id) {
+            this.numberBuffer.reset();
+            if (["Backspace", "Delete"].includes(key)) {
+                order.removeOrderline(selectedLine);
+            }
+            return;
+        }
+        return super.updateSelectedOrderline(...arguments);
+    },
+
     mounted() {
-        // Call parent mounted if it exists
         if (super.mounted) {
             super.mounted();
         }
-        
-        // Setup keyboard event handler with multiple approaches
         this._setupKeyboardHandler();
-        
-        // Also intercept keydown at the document level with capture phase
         this._setupGlobalKeyHandler();
     },
 
-    // Setup keyboard event listener with capture phase
     _setupGlobalKeyHandler() {
-        // Remove existing global handler if any
         if (this._globalKeyHandler) {
             document.removeEventListener('keydown', this._globalKeyHandler, true);
         }
-
         this._globalKeyHandler = this._handleGlobalKeyEvent.bind(this);
-        // Use capture phase (true) to intercept before other handlers
         document.addEventListener('keydown', this._globalKeyHandler, true);
         this._globalKeyBound = true;
     },
 
-    // Setup keyboard event listener
     _setupKeyboardHandler() {
-        // Remove any existing listener to prevent duplicates
         if (this._keyboardBound) {
             document.removeEventListener('keydown', this._keyboardHandler);
         }
-
-        // Bind the keyboard event handler
         this._keyboardHandler = this._handleKeyboardEvent.bind(this);
         document.addEventListener('keydown', this._keyboardHandler);
         this._keyboardBound = true;
     },
 
-    // Remove keyboard event listeners
     _removeKeyboardHandler() {
         if (this._keyboardHandler && this._keyboardBound) {
             document.removeEventListener('keydown', this._keyboardHandler);
@@ -131,27 +180,79 @@ patch(ProductScreen.prototype, {
         }
     },
 
-    // Handle keyboard events at component level
     _handleKeyboardEvent(event) {
-        // Check if minus key is pressed
         if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
-            // Always block negative entries for all products
             this._blockNegativeEntry(event);
         }
         return true;
     },
 
-    // Handle keyboard events at global level with capture phase
     _handleGlobalKeyEvent(event) {
-        // Check if minus key is pressed
         if (event.key === '-' || event.key === 'Minus' || event.key === 'Subtract') {
-            // Always block negative entries for all products
             this._blockNegativeEntry(event);
         }
-        
-        return buttons.map((button) => ({
-            ...button,
-            class: this.pos.numpadMode === button.value ? "active border-primary" : "",
-        }));
+        return true;
+    },
+
+    _blockNegativeEntry(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        this._showNegativeNotAllowedMessage();
+        this._clearNegativeInput();
+        return false;
+    },
+
+    _clearNegativeInput() {
+        try {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName === 'INPUT') {
+                const value = activeElement.value;
+                if (value && value.startsWith('-')) {
+                    activeElement.value = value.substring(1);
+                    const inputEvent = new Event('input', { bubbles: true });
+                    activeElement.dispatchEvent(inputEvent);
+                }
+            }
+            const quantityInput = this.el?.querySelector?.('input[data-field="quantity"]');
+            if (quantityInput && quantityInput.value && quantityInput.value.startsWith('-')) {
+                quantityInput.value = quantityInput.value.substring(1);
+                const inputEvent = new Event('input', { bubbles: true });
+                quantityInput.dispatchEvent(inputEvent);
+            }
+        } catch (error) {
+            console.debug('Error clearing negative input:', error);
+        }
+    },
+
+    _showNegativeNotAllowedMessage() {
+        const message = _t("Negative quantity is not allowed. Please use positive quantities only.");
+        try {
+            if (this.notification) {
+                this.notification.add(message, { type: 'warning' });
+            } else if (this.pos?.notification) {
+                this.pos.notification.add(message, { type: 'warning' });
+            } else if (this.env?.services?.notification) {
+                this.env.services.notification.add(message, { type: 'warning' });
+            } else if (this.env?.services?.alert) {
+                this.env.services.alert(message);
+            } else {
+                console.log('Negative quantity blocked:', message);
+            }
+        } catch (error) {
+            console.error('Error showing notification:', error);
+            alert(message);
+        }
+    },
+
+    destroy() {
+        this._removeKeyboardHandler();
+        if (super.destroy) {
+            super.destroy();
+        }
+    },
+
+    get isMinusDisabled() {
+        return true;
     }
-})
+});

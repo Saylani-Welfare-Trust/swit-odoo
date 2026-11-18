@@ -41,30 +41,11 @@
         </field>
     </record>
 
-    <record id="sadqa_jariya_fetch_log_view_search" model="ir.ui.view">
-        <field name="name">sadqa.jariya.fetch.log.view.search</field>
-        <field name="model">sadqa.jariya.fetch.log</field>
-        <field name="arch" type="xml">
-            <search>
-                <field name="record_ids"/>
-                <field name="errors"/>
-                <filter name="with_errors" string="With Errors" domain="[('sync', '=', False)]"/>
-                <filter name="all_imported" string="All Imported" domain="[('sync', '=', True)]"/>
-                <separator/>
-                <filter name="fetch_date" string="Sync Date" date="fetch_date"/>
-                <group expand="0" string="Group By">
-                    <filter name="group_fetch_date" string="Sync Date" context="{'group_by': 'fetch_date:day'}"/>
-                </group>
-            </search>
-        </field>
-    </record>
-
     <record id="sadqa_jariya_fetch_log_action" model="ir.actions.act_window">
         <field name="name">Portal Sync Logs</field>
         <field name="res_model">sadqa.jariya.fetch.log</field>
         <field name="view_mode">tree,form</field>
         <field name="context">{'create': False}</field>
-        <field name="search_view_id" ref="sadqa_jariya_fetch_log_view_search"/>
     </record>
 
 </odoo>

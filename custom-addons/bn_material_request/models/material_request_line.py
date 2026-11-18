@@ -54,19 +54,6 @@ class MemberApprovalLine(models.Model):
         for line in self:
             line.subtotal = line.quantity * line.unit_price
 
-    @api.constrains('product_id', 'approval_id')
-    def _check_unique_product_per_request(self):
-        for line in self:
-            duplicate = line.approval_id.line_ids.filtered(
-                lambda l: l != line and l.product_id and l.product_id == line.product_id)
-            if duplicate:
-                raise ValidationError(_(
-                    "Product '%(product)s' is already added to %(request)s. "
-                    "Change the quantity on the existing line instead of adding it again.",
-                    product=line.product_id.display_name,
-                    request=line.approval_id.name,
-                ))
-
     @api.depends('product_id', 'approval_id.source_location_id')
     def _compute_on_hand_qty(self):
         for line in self:
@@ -76,6 +63,23 @@ class MemberApprovalLine(models.Model):
                 ).qty_available
             else:
                 line.on_hand_qty = 0.0
+
+    # ------------------------------------------------------------------
+    # Constraints
+    # ------------------------------------------------------------------
+    @api.constrains('product_id', 'approval_id')
+    def _check_unique_product_per_request(self):
+        for line in self:
+            duplicate = line.approval_id.line_ids.filtered(
+                lambda l: l != line and l.product_id == line.product_id
+            )
+            if duplicate:
+                raise ValidationError(_(
+                    "Product '%(product)s' is already added to %(request)s. "
+                    "Change the quantity on the existing line instead of adding it again.",
+                    product=line.product_id.display_name,
+                    request=line.approval_id.name,
+                ))
 
     # ------------------------------------------------------------------
     # Helpers

@@ -9,6 +9,7 @@
             <xpath expr="//field[@name='journal_id']" position="before">
                 <field name="show_popup" />
                 <field name="is_bank" />
+                <field name="is_donation_in_kind" />
             </xpath>
         </field>
     </record>

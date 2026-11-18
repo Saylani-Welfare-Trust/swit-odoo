@@ -1,13 +1,12 @@
 {
-    'name': 'Company Customization (Attachment Size Limit)',
-    'version': '17.0.1.2.0',
+    'name': 'Company Customization',
+    'version': '1.0',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com',
+    'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Company Customization',
     'depends': [
-        'base',
-        'mail',
+        'base'
     ],
     'data': [
         'views/res_company.xml',

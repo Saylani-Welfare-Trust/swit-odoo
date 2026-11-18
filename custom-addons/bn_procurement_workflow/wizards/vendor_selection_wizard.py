@@ -7,7 +7,8 @@ class VendorSelectionWizard(models.TransientModel):
     
     designated_cxo_approver_id = fields.Many2one(
         'master.cxo.approver', 
-        string='Assigned CXO Approver',
+        string='Assigned CXO Approver', 
+        tracking=True,
         help='If set, ONLY this user can give CXO approval to this RFQ.'
     )
 

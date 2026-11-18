@@ -13,31 +13,27 @@
         name="Totals"
         action="shariah_law_action"
         parent="shariah_law_menu"
-        sequence="10"
-        groups="bn_shariah_law.shariah_law_user_group,bn_shariah_law.shariah_law_audit_group"/>
+        sequence="10"/>
 
     <menuitem
         id="shariah_law_daily_balance_menu"
         name="Daily Balances"
         action="action_shariah_daily_balance"
         parent="shariah_law_menu"
-        sequence="20"
-        groups="bn_shariah_law.shariah_law_user_group,bn_shariah_law.shariah_law_audit_group"/>
+        sequence="20"/>
 
     <menuitem
         id="shariah_law_transfer_menu"
         name="Transfers"
         action="action_shariah_transfer"
         parent="shariah_law_menu"
-        sequence="30"
-        groups="bn_shariah_law.shariah_law_user_group,bn_shariah_law.shariah_law_audit_group"/>
+        sequence="30"/>
 
     <menuitem
         id="shariah_law_config_menu"
         name="Shariah Law"
         parent="bn_master_setup.master_setup_menu"
-        sequence="40"
-        groups="bn_shariah_law.shariah_law_admin_group"/>
+        sequence="40"/>
 
     <menuitem
         id="shariah_law_sync_config_menu"
@@ -72,7 +68,6 @@
         name="Sync Logs"
         action="shariah_law_sync_log_action"
         parent="shariah_law_menu"
-        sequence="50"
-        groups="bn_shariah_law.shariah_law_user_group,bn_shariah_law.shariah_law_audit_group"/>
+        sequence="50"/>
 
 </odoo>

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Report Payment Cheque',
-    'version': '17.0.1.0.0',
+    'version': '1.0',
     'summary': 'Module holding custom cheque report',
     'author': 'Muhammad Abdullah',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Custom Reports',
-    'depends': ['base_accounting_kit'],
+    'depends': ['account'],
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',

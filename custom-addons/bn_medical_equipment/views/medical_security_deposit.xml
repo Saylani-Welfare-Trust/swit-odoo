@@ -36,7 +36,6 @@
         name="Security Receipt"
         action="medical_security_deposit_action"
         parent="bn_medical_equipment.medical_equipment_menu"
-        sequence="1"
-        groups="bn_medical_equipment.medical_equipment_user_group,bn_medical_equipment.medical_equipment_audit_group"/>
+        sequence="1"/>
 
 </odoo>

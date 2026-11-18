@@ -63,12 +63,14 @@
 
     </template>
 
-    <!-- Transfer slip: PO, destination, note, MR number and remark -->
+    <!-- Inherit the standard Stock Picking (Receipt) Report -->
     <template id="report_picking_document_custom_fields" inherit_id="stock.report_picking">
         <xpath expr="//div[hasclass('page')]" position="inside">
             <div class="row mt-3 mb-3">
+                
+                <!-- Left Column -->
                 <div class="col-6">
-                    <div class="mb-2" t-if="o.purchase_id">
+                    <div class="mb-2">
                         <strong>PO Number:</strong>
                         <p t-field="o.purchase_id.name" class="m-0"/>
                     </div>
@@ -81,8 +83,10 @@
                         <p t-field="o.note" class="m-0"/>
                     </div>
                 </div>
+
+                <!-- Right Column -->
                 <div class="col-6">
-                    <div class="mb-2" t-if="o.origin">
+                    <div class="mb-2">
                         <strong>MR Number:</strong>
                         <p t-field="o.origin" class="m-0"/>
                     </div>
@@ -91,6 +95,7 @@
                         <p t-field="o.remark" class="m-0"/>
                     </div>
                 </div>
+
             </div>
         </xpath>
     </template>

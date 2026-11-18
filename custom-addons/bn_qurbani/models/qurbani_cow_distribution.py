@@ -23,8 +23,8 @@ class QurbaniCowDistribution(models.Model):
 
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
-    slaughter_start_time = fields.Float('Slaughter Start Time')
-    slaughter_end_time = fields.Float('Slaughter End Time')
+    slaughter_start_time = fields.Float('Start Time')
+    slaughter_end_time = fields.Float('End Time')
 
     name = fields.Char('Name', default="New")
 
@@ -41,12 +41,12 @@ class QurbaniCowDistribution(models.Model):
     max_distribution = fields.Integer('Max Distribution', default=1)
 
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('name') or vals.get('name') == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_cow_distribution') or ('New')
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_cow_distribution') or ('New')
+
+        return super(QurbaniCowDistribution, self).create(vals)
     
     def action_approved(self):
         for rec in self:

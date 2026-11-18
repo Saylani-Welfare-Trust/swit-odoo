@@ -1,23 +1,19 @@
 {
     'name': 'POS Custom Button',
-    'version': '17.0.1.5.0',
-    'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com',
+    'version': '1.0',
+    'author': 'Syd Owais Noor',
+    'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Custom Button',
     'depends': [
-        'point_of_sale',
-        'bn_analytic_account_customization',
+        'point_of_sale'
     ],
     'data': [
-        'security/ir.model.access.csv',
         'data/sequence.xml',
-        'views/pos_config.xml',
-        'views/pos_session.xml',
+        
         'views/pos_order.xml',
         'views/res_company.xml',
         'views/res_config_setting.xml',
-        'views/pos_document.xml',
     ],
     'auto_install': False,
     'application': False,

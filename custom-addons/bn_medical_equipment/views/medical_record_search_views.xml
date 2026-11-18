@@ -7,8 +7,8 @@
         <field name="view_mode">form</field>
         <field name="context">{
             'default_registration_type': 'donee',
-            'default_program_code': 'medical',
-            'default_program_locked': True,
+            'default_donee_registration_type': 'medical',
+            'default_is_medical': True,
         }</field>
         <field name="target">new</field>
     </record>
@@ -18,11 +18,5 @@
               name="Record Search"
               action="record_search_medical_action"
               parent="medical_equipment_menu"
-              sequence="0"
-        groups="bn_medical_equipment.medical_equipment_user_group"/>
-
-    <!-- These menus follow the programme tag (Profile Management > Tags): hidden while
-         the programme is disabled. Linked on every install / upgrade. -->
-    <function model="res.partner.category" name="_link_program_menus"
-              eval="['medical', ['bn_medical_equipment.record_search_medical_menu']]"/>
+              sequence="0"/>
 </odoo>

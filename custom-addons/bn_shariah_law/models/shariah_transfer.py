@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from collections import defaultdict
 from datetime import timedelta
 import logging
 
@@ -9,7 +10,7 @@ class ShariahTransfer(models.Model):
     _name = 'shariah.transfer'
     _description = 'Shariah Fund Transfer'
     _order = 'date desc, id'
-    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string='Reference', default=lambda self: _('New'), required=True, copy=False)
     date = fields.Date(string='Transfer Date', required=True, default=fields.Date.context_today)
@@ -104,12 +105,6 @@ class ShariahTransfer(models.Model):
         for rec in self:
             if rec.state == 'posted':
                 continue
-            if rec.state not in ('draft', 'member_approval'):
-                raise UserError(_('Transfer %s cannot be posted in its current status.') % rec.display_name)
-            if rec.amount <= 0:
-                raise UserError(_('The amount of a transfer must be positive.'))
-            if rec.source_analytic_account_id == rec.destination_analytic_account_id:
-                raise UserError(_('The source and destination segments must differ.'))
             
             # Check if member approval is required and not yet approved
             if rec.requires_approval and not rec.member_posted:
@@ -158,8 +153,8 @@ class ShariahTransfer(models.Model):
             if not rec.requires_approval:
                 raise UserError(_('This transfer does not require member approval.'))
             
-            if rec.state not in ('draft', 'member_approval'):
-                raise UserError(_('Only a draft transfer or one waiting for approval can be approved.'))
+            if rec.state == 'posted':
+                raise UserError(_('This transfer is already posted.'))
             
             # Check if user has permission to approve
             if not self._check_approval_permission(rec):
@@ -325,12 +320,11 @@ class ShariahTransfer(models.Model):
             daily._compute_balances()
             daily._compute_total_donation()
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('name', _('New')) == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('shariah.transfer') or _('New')
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New')) == _('New'):
+            vals['name'] = self.env['ir.sequence'].next_by_code('shariah.transfer') or _('New')
+        return super().create(vals)
 
     def write(self, vals):
         """Handle state change to posted."""

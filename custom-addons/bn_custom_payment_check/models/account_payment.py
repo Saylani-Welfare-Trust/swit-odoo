@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import UserError
 from markupsafe import Markup
 
 
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
+
+    # FIX: Add these missing fields so Odoo view validation doesn't crash
+    effective_date = fields.Date(string="Effective Date")
+    bank_reference = fields.Char(string="Bank Reference")
+    cheque_reference = fields.Char(string="Cheque Reference")
 
     net_amount = fields.Monetary(
         string="Net Amount",
@@ -48,15 +53,11 @@ class AccountPayment(models.Model):
         return self._print_with_reason('double')
 
     def _print_with_reason(self, print_type):
-        """First print: anyone with access to the payment. Reprint: only a
-        Reprint Cheque user, giving a reason."""
         self.ensure_one()
-        if self.payment_type != 'outbound' or self.state == 'cancel':
-            raise UserError(_("Cheques are printed only for outgoing payments that are not cancelled."))
+        if not self.env.user.has_group('bn_custom_payment_check.group_cheque_reprint'):
+            raise UserError(_("Only a user with the Cheque Reprint right can reprint a cheque."))
+        # Already printed once: ask for a reason first
         if self.cheque_first_printed_by:
-            if not self.env.user.has_group('bn_custom_payment_check.group_cheque_reprint'):
-                raise AccessError(_("This cheque was already printed by %s. Only a user with the "
-                                    "Reprint Cheque right can reprint it.") % self.cheque_first_printed_by.name)
             return {
                 'type': 'ir.actions.act_window',
                 'name': _('Reprint Cheque'),
@@ -84,13 +85,8 @@ class AccountPayment(models.Model):
             model, label = 'bank.cheque.config', _("Bank Cheque Configuration")
         configs = self.env[model].search([('journal_ids', 'in', [self.journal_id.id])])
         if not configs:
-            raise UserError(_("No %(config)s is linked to the journal %(journal)s.")
-                            % {'config': label, 'journal': self.journal_id.display_name})
-        if len(configs) > 1:
-            raise UserError(_("More than one %(config)s is linked to the journal %(journal)s: %(names)s. "
-                              "Keep one per journal.") % {
-                'config': label, 'journal': self.journal_id.display_name,
-                'names': ', '.join(configs.mapped('bank_name'))})
+            raise UserError(_("No %s is linked to this journal.") % label)
+        configs.ensure_one()
         if print_type == 'double':
             return configs.action_print_double_cheque_for_payment(self)
         return configs.action_print_cheque_for_payment(self)
@@ -107,8 +103,9 @@ class AccountPayment(models.Model):
             rupees = int(amount)
             paisa = int(round((amount - rupees) * 100))
 
+            words = pay.currency_id.amount_to_text(rupees) or ""
             words = (
-                (pay.currency_id.amount_to_text(rupees) or "")
+                pay.currency_id.amount_to_text(rupees)
                 .replace("Rupees", "").replace("Rupee", "").replace(",", "").replace("-", " ").strip()
             )
             words = " ".join(words.split()).lower()
@@ -168,12 +165,10 @@ class ChequeReprintWizard(models.TransientModel):
 
     def action_confirm(self):
         self.ensure_one()
-        if not self.env.user.has_group('bn_custom_payment_check.group_cheque_reprint'):
-            raise AccessError(_("Only a user with the Reprint Cheque right can reprint a cheque."))
         payment = self.payment_id
         action = payment._get_print_action(self.print_type)
-        payment.message_post(body=Markup(_(
-            "Cheque reprinted by %s.<br/>Reason: %s<br/>First printed by %s on %s.")
+        payment.message_post(body=Markup(
+            "Cheque reprinted by %s.<br/>Reason: %s<br/>First printed by %s on %s."
         ) % (
             self.env.user.name,
             self.reason,

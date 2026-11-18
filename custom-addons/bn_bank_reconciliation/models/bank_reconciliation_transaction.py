@@ -124,6 +124,11 @@ class BankReconciliationTransaction(models.Model):
         string='Reconciled By'
     )
     
+    is_already_reconciled = fields.Boolean(
+        string='Already Reconciled',
+        compute='_compute_is_already_reconciled',
+        store=False
+    )
     reconciliation_move_id = fields.Many2one(
         'account.move',
         string='Reconciliation Entry',
@@ -217,19 +222,24 @@ class BankReconciliationTransaction(models.Model):
                 move = master.move_id
             record.reconciliation_move_id = move or False
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
-                if vals['amount'] >= 0:
-                    vals['debit'] = vals['amount']
-                    vals['credit'] = 0.0
-                else:
-                    vals['debit'] = 0.0
-                    vals['credit'] = abs(vals['amount'])
-            if not vals.get('state'):
-                vals['state'] = 'draft'
-        return super().create(vals_list)
+    def _compute_is_already_reconciled(self):
+        for record in self:
+            record.is_already_reconciled = self.env['bank.reconciliation.reconciled'].search_count([
+                ('transaction_id', '=', record.id)
+            ]) > 0
+
+    @api.model
+    def create(self, vals):
+        if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
+            if vals['amount'] >= 0:
+                vals['debit'] = vals['amount']
+                vals['credit'] = 0.0
+            else:
+                vals['debit'] = 0.0
+                vals['credit'] = abs(vals['amount'])
+        if not vals.get('state'):
+            vals['state'] = 'draft'
+        return super(BankReconciliationTransaction, self).create(vals)
 
     def write(self, vals):
         if 'amount' in vals and 'debit' not in vals and 'credit' not in vals:
@@ -752,6 +762,21 @@ class BankReconciliationTransaction(models.Model):
         })
         return True
 
+    def action_manual_reconcile(self):
+        self.ensure_one()
+        if self.state == 'reconciled':
+            raise UserError(_('This transaction is already reconciled.'))
+        if self.state not in ['matched', 'unmatched']:
+            raise UserError(_('Only matched or unmatched transactions can be reconciled.'))
+        if self.env['bank.reconciliation.reconciled'].search_count([('transaction_id', '=', self.id)]) > 0:
+            raise UserError(_('This transaction already has a reconciled record. Cannot reconcile again.'))
+        
+        if self.state == 'unmatched':
+            return self.action_manual_match()
+        
+        if self.state == 'matched':
+            self.action_accept_match()
+
     def action_unreconcile(self):
         self.ensure_one()
         if self.state != 'reconciled':
@@ -806,6 +831,17 @@ class BankReconciliationTransaction(models.Model):
             'res_id': self.reconciliation_move_id.id,
             'view_mode': 'form',
             'target': 'current'
+        }
+
+    def action_show_unreconciled_entries(self):
+        self.ensure_one()
+        domain = self.master_id._get_candidate_move_line_domain(self)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'view_mode': 'tree,form',
+            'domain': domain,
+            'context': {'search_default_unreconciled': 1}
         }
 
     @api.onchange('debit', 'credit')

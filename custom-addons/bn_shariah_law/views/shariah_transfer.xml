@@ -19,10 +19,10 @@
                 
                 <!-- Quick Actions -->
                 <button name="action_post" string="Post" type="object" icon="fa-check" 
-                        class="btn-primary" invisible="state != 'draft'" groups="bn_shariah_law.shariah_law_user_group"/>
+                        class="btn-primary" invisible="state != 'draft'"/>
                 <button name="action_send_for_approval" string="Send for Approval" type="object" icon="fa-paper-plane" 
-                        class="btn-warning" invisible="state != 'draft' or requires_approval == False" groups="bn_shariah_law.shariah_law_user_group"/>
-                <button name="action_member_post" groups="bn_shariah_law.group_member_approval" string="Approve" type="object" icon="fa-thumbs-up" 
+                        class="btn-warning" invisible="state != 'draft' or requires_approval == False"/>
+                <button name="action_member_post" string="Approve" type="object" icon="fa-thumbs-up" 
                         class="btn-success" invisible="state != 'member_approval'"/>
             </tree>
         </field>
@@ -36,16 +36,16 @@
                 <header>
                     <!-- Draft State Buttons -->
                     <button name="action_send_for_approval" string="Send for Approval" type="object" class="btn-primary" 
-                            invisible="state != 'draft' or requires_approval == False" groups="bn_shariah_law.shariah_law_user_group"/>
+                            invisible="state != 'draft' or requires_approval == False"/>
                     <button name="action_post" string="Post" type="object" class="btn-primary" 
-                            invisible="state != 'draft'" groups="bn_shariah_law.shariah_law_user_group"/>
+                            invisible="state != 'draft'"/>
                     
                     <!-- Member Approval State Buttons -->
                     <button name="action_member_post" string="Member Post" type="object" class="btn-success" 
                             invisible="state != 'member_approval'" 
                             groups="bn_shariah_law.group_member_approval"/>
                     <button name="action_reject" string="Reject" type="object" class="btn-danger" 
-                            invisible="state != 'member_approval'" groups="bn_shariah_law.shariah_law_manager_group,bn_shariah_law.group_member_approval"/>
+                            invisible="state != 'member_approval'"/>
                     
                     <field name="state" widget="statusbar" statusbar_visible="draft,member_approval,posted"/>
                 </header>
@@ -53,7 +53,7 @@
                     <!-- Warning Messages -->
                     <div class="alert alert-warning" role="alert" 
                          invisible="requires_approval == False">
-                        <span title="Warning" class="fa fa-exclamation-triangle"/>
+                        <span class="fa fa-exclamation-triangle"/>
                         <b>Approval Required:</b> This transfer requires member approval.
                         <ul>
                             <li>Select a Shariah Law Person</li>
@@ -64,20 +64,20 @@
                     
                     <div class="alert alert-info" role="alert" 
                          invisible="requires_approval == True">
-                        <span title="Info" class="fa fa-info-circle"/>
+                        <span class="fa fa-info-circle"/>
                         <b>No Approval Required:</b> This transfer does not require member approval.
                         You can post it directly.
                     </div>
                     
                     <div class="alert alert-success" role="alert" 
                          invisible="requires_approval == False or member_posted == False">
-                        <span title="Done" class="fa fa-check-circle"/>
+                        <span class="fa fa-check-circle"/>
                         <b>Approved:</b> This transfer has been approved by member.
                     </div>
                     
                     <div class="alert alert-danger" role="alert" 
                          invisible="state != 'rejected'">
-                        <span title="Cancelled" class="fa fa-times-circle"/>
+                        <span class="fa fa-times-circle"/>
                         <b>Rejected:</b> This transfer has been rejected.
                         <field name="rejection_reason" nolabel="1"/>
                     </div>

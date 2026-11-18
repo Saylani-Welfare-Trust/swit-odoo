@@ -75,7 +75,7 @@
         <t t-set="amt_formatted" t-value="'{:,.2f}'.format(record.net_amount)"/>
 
         <div class="cheque-box"
-             t-attf-style="position: absolute; left: {{ double_cfg.cheque_margin_left or 0 }}mm; top: {{ top_offset }}mm; width: {{ double_cfg.cheque_width or 0 }}mm; height: {{ double_cfg.cheque_height or 0 }}mm;">
+             t-attf-style="position: absolute; left: {{ double_cfg.cheque_margin_left or 0 }}mm; top: {{ top_offset }}mm; width: {{ double_cfg.cheque_width or 0 }}mm; height: {{ double_cfg.cheque_height or 0 }}mm; border: 1px dashed red;">
             <div t-attf-style="position:absolute; left: {{ double_cfg.ac_payee_margin_left or 0 }}mm; top: {{ double_cfg.ac_payee_margin_top or 0 }}mm; font-size: {{ double_cfg.ac_payee_font_size or 10 }}pt; white-space: nowrap;" class="date-box" t-if="record.cheque_print_mode == 'ac_payee_only'">
                 <span>------------------------</span><br/><span>A/C Payee Only</span><br/><span>------------------------</span>
             </div>
@@ -132,5 +132,7 @@
         <field name="print_report_name">'DoubleCheque-%s' % object.name</field>
         <!-- ⚡ USING PORTRAIT PAPER FORMAT -->
         <field name="paperformat_id" ref="bn_custom_payment_check.paperformat_double_cheque"/>
+        <field name="binding_model_id" ref="account.model_account_payment"/>
+        <field name="binding_type">report</field>
     </record>
 </odoo>

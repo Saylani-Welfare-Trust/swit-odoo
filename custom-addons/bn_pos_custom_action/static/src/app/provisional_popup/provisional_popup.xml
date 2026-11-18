@@ -6,24 +6,52 @@
             <div class="modal-header drag-handle">
                 <h3 class="modal-title"><t t-esc="this.title" /></h3>
             </div>
-            <main class="modal-body" t-if="!this.hasProgramBody">
+            <main class="modal-body" t-if="!['mf', 'me'].includes(this.action_type)">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Donor</div>
                     <div class="col-8 fw-bold" t-esc="this.donor_name"/>
                 </div>
                 
                 <!-- Case No - Readonly field for Direct Deposit -->
+                <!-- <div class="form-group row">
+                    <label class="col-form-label col-md-4">Case No</label>
+                    <div class="col-md-8">
+                        <div class="form-control-static" style="padding-top: 7px;">
+                            <t t-esc="state.case_no || 'Not available'"/>
+                        </div>
+                    </div>
+                </div> -->
 
                 <div class="row mb-2 text-start" t-if="this.action_type == 'dd'">
-                    <div class="col-4 fw-semibold">Transaction Ref</div>
+                    <div class="col-4 fw-semibold">Transaction Ref <span class="text-danger">*</span></div>
                     <div class="col-8">
                         <input type="text"
                             class="form-control form-control-sm"
                             t-att-value="this.state.transaction_ref"
                             t-on-change="updateTransactionRef"
+                            required="required"
                             placeholder="Enter transaction reference"/>
                     </div>
                 </div>
+                <!-- <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.welfare_request_no"
+                            t-on-change="updateWelfareRequestNo"
+                            placeholder="Enter Welfare Request No."/>
+                    </div>
+                </div> -->
+                <!-- <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Disbursement Type</div>
+                    <div class="col-8">
+                        <select class="form-select form-select-sm" t-on-change="updateWfRequestType">
+                            <option value="one_time" t-att-selected="this.state.wf_request_type === 'one_time'">One Time</option>
+                            <option value="recurring" t-att-selected="this.state.wf_request_type === 'recurring'">Recurring</option>
+                        </select>
+                    </div>
+                </div> -->
                 <!-- Readonly Microfinance / Medical Equipment Request No., auto-filled for Direct Deposit -->
                 <div t-if="state.source_request_no" class="row mb-2 text-start">
                     <div class="col-4 fw-semibold" t-esc="state.source_request_type + ' Request No.'"/>
@@ -95,6 +123,20 @@
                 </div>
             </main>
 
+            <!-- Microfinance -->
+            <main class="modal-body" t-if="this.action_type == 'mf'">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.microfinance_request_no"
+                            t-on-change="updateMicrofinanceRequestNo"
+                            placeholder="Enter Microfinance Requets No."/>
+                    </div>
+                </div>
+            </main>
+            
             <main class="modal-body" t-if="this.action_type == 'me'">
                 <div class="row mb-2 text-start">
                     <div class="col-4 fw-semibold">Request No.</div>
@@ -109,8 +151,19 @@
             </main>
 
             <footer class="footer modal-footer">
-                <div class="button btn btn-lg btn-primary" t-att-class="{ disabled: state.is_processing }" t-on-click="confirm">Confirm</div>
-                <div class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Cancel</div>
+                <!-- Disable the button visually if is_processing is true -->
+                <div class="button btn btn-lg btn-primary" 
+                     t-att-class="{'disabled': state.is_processing}" 
+                     t-att-disabled="state.is_processing"
+                     t-on-click="confirm">
+                    <t t-if="state.is_processing">Processing...</t>
+                    <t t-else="">Confirm</t>
+                </div>
+                <div class="button cancel btn btn-lg btn-secondary" 
+                     t-att-class="{'disabled': state.is_processing}" 
+                     t-on-click="cancel">
+                    Cancel
+                </div>
             </footer>
         </div>
     </t>

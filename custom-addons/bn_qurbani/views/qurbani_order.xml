@@ -9,6 +9,7 @@
                 <field name="name"/>
                 <field name="donor_id"/>
                 <field name="amount" sum="1" string="Total" />
+                <!-- <field name="total_amount" sum="1" /> -->
             </tree>
         </field>
     </record>
@@ -158,8 +159,7 @@
     <menuitem id="menu_qurbani_order"
         name="Qurbani Order"
         parent="menu_qurbani_root"
-        sequence="1"
-        groups="bn_qurbani.qurbani_user_group,bn_qurbani.qurbani_audit_group"/>
+        sequence="1"/>
 
     <!-- Make POS Qurbani Order the default by giving it the smallest sequence -->
     <menuitem id="menu_pos_qurbani_order"

@@ -1,5 +1,5 @@
-from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 import re
 
@@ -31,59 +31,21 @@ class RecordSearch(models.TransientModel):
 
 
     registration_id = fields.Char('Registration ID')
-    # No size=: it would silently truncate longer input.
-    mobile_no = fields.Char('Mobile No.')
+    mobile_no = fields.Char('Mobile No.', size=10)
     cnic_no = fields.Char('CNIC No.', size=15)
     
     country_code_id = fields.Many2one('res.country', string="Country Code")
+    microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
 
     search_type = fields.Selection(selection=search_type_selection, string="Search Type", default="registration_id")
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
 
-    # The programme to register for: a tag with a Record Search code. Each
-    # module's Record Search menu passes its code (default_program_code).
-    program_id = fields.Many2one(
-        'res.partner.category', string='Register For',
-        domain="[('registration_program_code', '!=', False), ('registration_program_active', '=', True), "
-               "('registration_role', '=', registration_type)]")
-    program_kind = fields.Selection(related='program_id.registration_kind')
-    program_locked = fields.Boolean('Programme set by the menu')
-
     is_welfare = fields.Boolean('Is Welfare')
+    is_medical = fields.Boolean('Is Medical')
     is_microfinance = fields.Boolean('Is Microfinance')
     category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
 
-
-    @api.model
-    def default_get(self, fields_list):
-        res = super().default_get(fields_list)
-        context = self.env.context
-        # the module's code; older menus pass the donee registration type
-        code = context.get('default_program_code') or res.get('donee_registration_type')
-        program = self.env['res.partner.category']._record_search_program(code)
-        if program and not program.registration_program_active:
-            raise UserError(_('The programme "%s" is disabled: enable it on its tag '
-                              '(Profile Management > Configuration > Tags).') % program.name)
-        if program:
-            res['program_id'] = program.id
-            res['registration_type'] = program.registration_role
-            if context.get('default_program_code') or any(
-                    context.get(k) for k in ('default_is_welfare', 'default_is_microfinance', 'default_is_medical')):
-                res['program_locked'] = True
-            if program.registration_kind != 'choose':
-                res['category'] = program.registration_kind
-        return res
-
-    @api.onchange('registration_type')
-    def _onchange_registration_type(self):
-        if self.program_id and self.program_id.registration_role != self.registration_type:
-            self.program_id = False
-
-    @api.onchange('program_id')
-    def _onchange_program_id(self):
-        if self.program_id.registration_kind in ('individual', 'institution'):
-            self.category = self.program_id.registration_kind
 
     @api.constrains('cnic_no')
     def _check_cnic_format(self):
@@ -125,7 +87,9 @@ class RecordSearch(models.TransientModel):
                 'default_cnic_no': self.cnic_no,
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
-                'default_program_id': self.program_id.id,
+                # microfinance.scheme comes with bn_microfinance (loaded after this module): without it, and in the
+                # server process that just upgraded modules (until Odoo restarts), the field's model is '_unknown'
+                'default_microfinance_scheme_id': self.microfinance_scheme_id.id if self.microfinance_scheme_id._name == 'microfinance.scheme' else False,
                 'default_category': self.category,
                 # carried on to the profile popup, see action_change_request
                 'from_record_search': True,

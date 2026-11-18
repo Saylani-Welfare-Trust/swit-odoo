@@ -1,3 +1,4 @@
+from psycopg2 import IntegrityError
 
 from odoo import models
 
@@ -35,18 +36,30 @@ class DirectDeposit(models.Model):
             if not livestock_lines:
                 continue
 
+            existing_line_ids = set(slaughter_obj.search([
+                ('direct_deposit_line_id', 'in', livestock_lines.ids),
+            ]).mapped('direct_deposit_line_id').ids)
+
             for line in livestock_lines:
-                vals = {
-                    'product_id': line.product_id.id,
-                    'donee_id': deposit.donor_id.id,
-                    'ref': deposit.name,
-                    # the POS session / POS the deposit was made at
-                    **deposit._pos_link_vals(),
-                }
-                vals.update(deposit._get_livestock_department_vals(line.product_id))
-                # line.amount is the unit price
-                slaughter_obj._create_for_source(
-                    'direct_deposit_line_id', line, line.quantity, line.amount * line.quantity, vals)
+                if line.id in existing_line_ids:
+                    continue
+
+                for i in range(int(line.quantity)):
+                    slaughter_vals = {
+                        'product_id': line.product_id.id,
+                        'donee_id': deposit.donor_id.id,
+                        'direct_deposit_line_id': line.id,
+                        'quantity': 1,
+                        'price': line.amount,
+                        'ref': deposit.name,
+                    }
+                    slaughter_vals.update(deposit._get_livestock_department_vals(line.product_id))
+
+                    try:
+                        with self.env.cr.savepoint():
+                            slaughter_obj.create(slaughter_vals)
+                    except IntegrityError:
+                        continue
 
     def action_clear(self):
         res = super().action_clear()

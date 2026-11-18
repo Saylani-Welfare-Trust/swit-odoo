@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 state_selection = [
@@ -45,16 +46,16 @@ class QurbaniGoatSlaughter(models.Model):
             if rec.qurbani_order_no:
                 rec.state = 'full'
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('name') or vals.get('name') == _('New'):
-                slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            slaughter_location = self.env['stock.location'].browse(vals['slaughter_location_id'])
 
-                vals['name'] = f'Goat - {str(slaughter_location.goat_sequence_number).zfill(5)}'
+            vals['name'] = f'Goat - {str(slaughter_location.goat_sequence_number).zfill(5)}'
 
-                slaughter_location.goat_sequence_number += 1
-        return super().create(vals_list)
+            slaughter_location.goat_sequence_number += 1
+
+        return super(QurbaniGoatSlaughter, self).create(vals)
     
     def action_transfer(self):
         return {

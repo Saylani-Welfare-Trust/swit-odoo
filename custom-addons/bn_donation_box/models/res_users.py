@@ -5,16 +5,18 @@ from odoo import api, fields, models
 class ResUsers(models.Model):
     _inherit = 'res.users'
 
-    # The Cities a user works in for the Donation Box records (record rules and
-    # City pickers): the City of the analytic account of each location assigned
-    # to the user (Allowed Location), and the City of their employee's Branch.
-    city_access_ids = fields.Many2many(
-        'account.analytic.account', string="Donation Box Cities", compute='_compute_city_access_ids',
-        compute_sudo=True,
-        help="City of the analytic account of the user's assigned locations, and of their employee's Branch.")
+    donation_box_city_ids = fields.Many2many(
+        'account.analytic.account', string="Donation Box Cities", compute='_compute_donation_box_city_ids',
+        help="Cities of the analytic accounts on the user's Allowed Locations. Locations are tagged "
+             "with a Branch (or Zone / City) account, so the City is found by walking up its parents. "
+             "Used by the Donation Box record rules.")
 
-    @api.depends('allowed_location_ids.analytic_account_id.city_id', 'employee_ids.analytic_account_id.city_id')
-    def _compute_city_access_ids(self):
+    @api.depends('allowed_location_ids.analytic_account_id')
+    def _compute_donation_box_city_ids(self):
+        Analytic = self.env['account.analytic.account'].sudo()
         for user in self:
-            user.city_access_ids = (user.allowed_location_ids.analytic_account_id.city_id
-                                    | user.employee_ids.analytic_account_id.city_id)
+            analytic_ids = user.sudo().allowed_location_ids.analytic_account_id.ids
+            user.donation_box_city_ids = Analytic.search([
+                ('id', 'parent_of', analytic_ids),
+                ('location_option_id.name', '=', 'City'),
+            ]) if analytic_ids else Analytic

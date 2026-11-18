@@ -30,12 +30,12 @@ class LivestockCutting(models.Model):
     is_picking = fields.Boolean('Is Picking')
 
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('name') or vals.get('name') == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('livestock_cutting') or ('New')
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('livestock_cutting') or ('New')
+
+        return super(LivestockCutting, self).create(vals)
 
     def action_confirm(self):
         self.state = 'received'
@@ -51,9 +51,13 @@ class LivestockCutting(models.Model):
             'code': self.code,
         })
 
+        picking_type = self.env['stock.picking.type'].search([
+            ('code', '=', 'internal'),
+            ('warehouse_id.company_id', '=', self.env.company.id)
+        ], limit=1)
+
         cutting_location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
         slaughter_location = self.env['stock.location'].search([('name', '=', 'Livestock Slaugther')], limit=1)
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock', slaughter_location or None)
         if not cutting_location:
             raise ValidationError("Slaughter Stock location not found. Please create it in Inventory > Configuration > Locations.")
 
@@ -65,7 +69,6 @@ class LivestockCutting(models.Model):
             'location_id': slaughter_location.id,
             'location_dest_id': cutting_location.id,
             'origin': self.name or 'Live Stock Slaughter',
-            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
 
         # Create the stock move

@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <field name="qty" position="after">
                 <field name="on_hand_qty" readonly="1"/>
+                <!-- <field name="on_hand_packages" readonly="1"/> -->
             </field>
         </field>
     </record>
@@ -19,13 +20,13 @@
         <field name="arch" type="xml">
             <field name="qty" position="after">
                 <field name="on_hand_qty" readonly="1"/>
+                <!-- <field name="on_hand_packages" readonly="1"/> -->
             </field>
         </field>
     </record>
 
     <menuitem
         id="custom_product_packaging_menu"
-        groups="bn_livestock_slaugther.livestock_slaugther_admin_group"
         name="Product Packaging"
         action="product.action_packaging_view"
         parent="bn_livestock_slaugther.livestock_menu"

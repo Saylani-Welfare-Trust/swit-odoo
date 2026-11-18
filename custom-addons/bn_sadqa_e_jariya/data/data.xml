@@ -23,7 +23,4 @@
 
     </data>
 
-    <!-- every install / upgrade: Sadqa-e-Jaria is the Record Search programme of Sadqa e Jariya -->
-    <function model="res.partner.category" name="_setup_sadqa_e_jariya_programme"/>
-
 </odoo>

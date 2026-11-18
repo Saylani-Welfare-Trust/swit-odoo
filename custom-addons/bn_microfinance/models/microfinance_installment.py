@@ -2,7 +2,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 
 import re
-from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 payment_type_selection = [
@@ -26,7 +25,6 @@ state_selection = [
 
 class MicrofinanceInstallment(models.Model):
     _name = 'microfinance.installment'
-    _inherit = ['pos.link.mixin']
     _description = "Microfinance Installment"
 
 
@@ -39,7 +37,7 @@ class MicrofinanceInstallment(models.Model):
     payment_method = fields.Selection(selection=payment_method_selection, string="Payment Method")
     state = fields.Selection(selection=state_selection, string='Status', default='draft')
 
-    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'microfinance'))
+    donee_id = fields.Many2one('res.partner', string="Donee")
     microfinance_id = fields.Many2one('microfinance', string="Microfinance")
     currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id')
 
@@ -53,17 +51,17 @@ class MicrofinanceInstallment(models.Model):
         ondelete='set null'  # Prevents cascade deletion
     )
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
-                payment_type = vals.get('payment_type')
-
-                if payment_type == 'security':
-                    vals['name'] = self.env['ir.sequence'].next_by_code('sd_slip') or ('New')
-                else:
-                    vals['name'] = self.env['ir.sequence'].next_by_code('installment_slip') or ('New')
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('NEW') == _('NEW')):
+            payment_type = vals.get('payment_type')
+            
+            if payment_type == 'security':
+                vals['name'] = self.env['ir.sequence'].next_by_code('sd_slip') or ('New')
+            else:
+                vals['name'] = self.env['ir.sequence'].next_by_code('installment_slip') or ('New')
+                
+        return super(MicrofinanceInstallment, self).create(vals)
     
     @api.constrains('cnic_no')
     def _check_cnic_format(self):
@@ -110,38 +108,60 @@ class MicrofinanceInstallment(models.Model):
                 'body': "Amount can't be zero or negative."
             }
         
-        # The security deposit is an SD slip (microfinance.installment of type
-        # "security"), not an installment line: loans have no such line.
-        expected = microfinance_request.security_deposit
-        if data['amount'] != expected:
+        # Find the specific security deposit schedule line
+        security_schedule_line = microfinance_request.microfinance_line_ids.filtered(
+            lambda l: l.payment_type == 'security'
+        )
+        
+        if not security_schedule_line:
             return {
                 'status': "error",
-                'body': f"Amount doesn't match. Expected: {expected}"
+                'body': "Security deposit schedule line not found."
             }
-        deposit = self.search([('microfinance_id', '=', microfinance_request.id),
-                               ('payment_type', '=', 'security')], order='id desc', limit=1)
-        if deposit.state == 'paid':
+        
+        # Check if this specific line is already paid
+        if security_schedule_line.state == 'paid':
             return {
                 'status': "error",
                 'body': "Security deposit has already been paid."
             }
-        vals = {
+        
+        # Validate amount against this specific line
+        if data['amount'] != security_schedule_line.amount:
+            return {
+                'status': "error",
+                'body': f"Amount doesn't match. Expected: {security_schedule_line.amount}"
+            }
+
+        # Create the payment transaction
+        microfinance_installment = self.create({
+            'payment_type': 'security',
             'amount': data['amount'],
+            'microfinance_id': microfinance_request.id,
             'donee_id': microfinance_request.donee_id.id,
             'date': fields.Date.today(),
-            'state': 'paid',
-        }
-        if deposit:
-            deposit.write(vals)
-        else:
-            deposit = self.create(dict(vals, payment_type='security', microfinance_id=microfinance_request.id))
-        return {
-            'status': "success",
-            'id': microfinance_request.id,
-            'donee_id': microfinance_request.donee_id.id,
-            'deposit_id': deposit.id,
-            'message': f"Security deposit {deposit.name} received",
-        }
+            'state': 'paid'
+        })
+
+        # Update ONLY this specific line's state to paid
+        if microfinance_installment:
+            security_schedule_line.write({
+                'paid_amount': data['amount'],
+                'remaining_amount': 0,
+                'state': 'paid',  # This line's state changes to paid
+                'payment_date': fields.Date.today(),
+            })
+            
+            return {
+                'status': "success",
+                'id': microfinance_request.id,
+                'donee_id': microfinance_request.donee_id.id,
+                'deposit_id': microfinance_installment.id,
+                'line_id': security_schedule_line.id,
+                'line_state': security_schedule_line.state,  # Will be 'paid'
+                'line_installment_no': security_schedule_line.installment_no,
+                'message': f"Security deposit line {security_schedule_line.installment_no} marked as paid"
+            }
     @api.model
     def get_microfinance_security_deposit(self, data):
         microfinance_request = self.env['microfinance'].search([
@@ -156,8 +176,7 @@ class MicrofinanceInstallment(models.Model):
                 'body': "No request found against enter number."
             }
 
-        security_deposit = self.search([('microfinance_id', '=', microfinance_request.id), ('payment_type', '=', 'security')],
-                                       order='id desc', limit=1)
+        security_deposit = self.search([('microfinance_id', '=', microfinance_request.id), ('payment_type', '=', 'security')])
         
         if security_deposit:
             return {

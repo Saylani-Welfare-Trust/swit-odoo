@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError, ValidationError
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
@@ -338,8 +339,10 @@ class ShariahLaw(models.Model):
                     if line.product_id.display_name.lower() == self.env.company.medical_equipment_security_depsoit_product.lower() or line.product_id.display_name.lower() == self.env.company.microfinance_intallement_product.lower():
                         continue
 
-                    # the analytic account set on the product
-                    analytics = line.product_id.analytic_account_id
+                    # Get analytic accounts from analytical.product.line
+                    analytics = self.env['account.analytic.account'].search([
+                        ('product_ids', 'in', [line.product_id.id])
+                    ])
                     
                     # Process all analytic accounts found
                     for analytic in analytics:
@@ -408,8 +411,10 @@ class ShariahLaw(models.Model):
                 if not donation.product_id:
                     continue
 
-                # the analytic account set on the product
-                analytics = donation.product_id.analytic_account_id
+                # Get analytic accounts from analytical.product.line
+                analytics = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [donation.product_id.id])
+                ])
 
                 for analytic in analytics:
                     target_analytic = analytic.analytic_account_id if hasattr(analytic, 'analytic_account_id') else analytic
@@ -487,8 +492,10 @@ class ShariahLaw(models.Model):
                     if not found or not found.product_id:
                         continue
 
-                    # the analytic account set on the product
-                    analytics = found.product_id.analytic_account_id
+                    # Get analytic accounts from analytical.product.line
+                    analytics = self.env['account.analytic.account'].search([
+                        ('product_ids', 'in', [found.product_id.id])
+                    ])
 
                     for analytic in analytics:
                         self._add_amounts(
@@ -556,8 +563,10 @@ class ShariahLaw(models.Model):
                 if not expense.product_id:
                     continue
 
-                # the analytic account set on the product
-                analytics = expense.product_id.analytic_account_id
+                # Get analytic accounts from account.analytic.account
+                analytics = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [expense.product_id.id])
+                ])
 
                 for analytic in analytics:
                     self._add_amounts(
@@ -627,8 +636,10 @@ class ShariahLaw(models.Model):
                     if not line.product_id:
                         continue
 
-                    # the analytic account set on the product
-                    analytics = line.product_id.analytic_account_id
+                    # Get analytic accounts from account.analytic.account
+                    analytics = self.env['account.analytic.account'].search([
+                        ('product_ids', 'in', [line.product_id.id])
+                    ])
 
                     for analytic in analytics:
                         self._add_amounts(
@@ -765,7 +776,9 @@ class ShariahLaw(models.Model):
         """Get analytic account from welfare record."""
         for line in welfare_record.welfare_line_ids:
             if line.product_id:
-                analytics = line.product_id.analytic_account_id
+                analytics = self.env['account.analytic.account'].search([
+                    ('product_ids', 'in', [line.product_id.id])
+                ])
                 for analytic in analytics:
                     return analytic
         
@@ -860,7 +873,9 @@ class ShariahLaw(models.Model):
     def _get_analytic_account_from_microfinance(self, microfinance_record):
         """Get analytic account from microfinance record."""
         if microfinance_record.product_id:
-            analytics = microfinance_record.product_id.analytic_account_id
+            analytics = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [microfinance_record.product_id.id])
+            ])
             for analytic in analytics:
                 return analytic
         
@@ -1026,7 +1041,9 @@ class ShariahLaw(models.Model):
     def _get_analytic_account_from_dik(self, dik_record):
         """Get analytic account from DIK record."""
         if dik_record.product_id:
-            analytics = dik_record.product_id.analytic_account_id
+            analytics = self.env['account.analytic.account'].search([
+                ('product_ids', 'in', [dik_record.product_id.id])
+            ])
             for analytic in analytics:
                 return analytic
         
@@ -1058,6 +1075,13 @@ class ShariahLaw(models.Model):
             if value:
                 shariah_record[analytic_id][key] += value
                 daily_changes[analytic_id][key] += value
+
+    def _get_analytic_account_from_product(self, product_id):
+        """Get analytic account from product."""
+        analytics = self.env['account.analytic.account'].search([
+            ('product_ids', 'in', [product_id])
+        ])
+        return analytics[:1] if analytics else False
 
     def _update_cumulative_totals_with_hierarchy(self, shariah_record):
         """

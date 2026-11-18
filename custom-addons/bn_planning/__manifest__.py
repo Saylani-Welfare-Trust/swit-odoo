@@ -1,22 +1,18 @@
 {
     'name': 'Planning',
-    'version': '17.0.1.3.0',
+    'version': '1.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Planning',
     'depends': [
-        'bn_stock_location',
         'mail',
         'product',
         'bn_kitchen',
-        'hr',
-        'purchase_requisition',
     ],
     'data': [
-        'security/planning_security.xml',
-        'security/stock_scope_rule.xml',
         'security/ir.model.access.csv',
+        'security/planning_security.xml',
         
         'data/stock_location.xml',
         'data/ir_cron.xml',
@@ -27,8 +23,6 @@
         
         'wizard/import_monthly_planning_wizard_views.xml',
         'wizard/purchase_request_wizard.xml',
-        'data/program_types.xml',
-        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': True,

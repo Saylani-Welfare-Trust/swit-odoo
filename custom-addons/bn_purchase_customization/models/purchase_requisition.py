@@ -2,29 +2,31 @@ from odoo import models, fields, api
 from odoo.exceptions import ValidationError
 
 
-# The purchase request steps, added among the purchase_requisition statuses
-# (draft, ongoing, in_progress, open, done, cancel) in this order.
-PURCHASE_REQUISITION_STATES_ADD = [
-    ('draft',),
+PURCHASE_REQUISITION_STATES = [
+    ('draft', 'Draft'),
     ('confirm', 'Confirm'),
-    ('ongoing',),
+    ('ongoing', 'Ongoing'),
     ('procurement_approval', 'Procurement Manager Approval'),
     ('deferred', 'Deferred / On Hold'),
     ('rfq_sent', 'RFQ Sent'),
     ('vendor_selected', 'Vendor Selected'),
     ('cxo_approved', 'CXO Approved (RFQ)'),
     ('funds_check', 'Funds Availability Check'),
-    ('in_progress',),
+    ('in_progress', 'Confirmed'),
+    ('open', 'Bid Selection'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled')
 ]
-_ADDED_STATES_ONDELETE = {key[0]: 'set default' for key in PURCHASE_REQUISITION_STATES_ADD if len(key) == 2}
 
 
 class PurchaseRequisition(models.Model):
     _inherit = 'purchase.requisition'
 
 
-    state = fields.Selection(selection_add=PURCHASE_REQUISITION_STATES_ADD, ondelete=_ADDED_STATES_ONDELETE)
-    state_blanket_order = fields.Selection(selection_add=PURCHASE_REQUISITION_STATES_ADD)
+    state = fields.Selection(PURCHASE_REQUISITION_STATES,
+                              'Status', tracking=True, required=True,
+                              copy=False, default='draft')
+    state_blanket_order = fields.Selection(PURCHASE_REQUISITION_STATES, compute='_set_state')
 
 
     def _assign_reference_number(self):
@@ -42,13 +44,8 @@ class PurchaseRequisition(models.Model):
         super(PurchaseRequisition, self).action_in_progress()
 
     def action_confirm(self):
-        if not self.env.su and not self.env.user.has_group('bn_purchase_customization.purchase_request_confirm_group'):
-            raise ValidationError('You are not allowed to confirm a Purchase Request.')
-        for requisition in self:
-            if requisition.state != 'draft':
-                raise ValidationError('Only a Draft request can be confirmed.')
         self._assign_reference_number()
-        self.write({'state': 'confirm'})
+        self.state = 'confirm'
 
     @api.model
     def _move_from_removed_states(self):

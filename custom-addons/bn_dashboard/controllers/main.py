@@ -7,20 +7,18 @@ _logger = logging.getLogger(__name__)
 class TreasuryDashboardController(http.Controller):
 
     def _get_location_hierarchy(self):
-        # the filter lists: names only, read as superuser (a treasury manager
-        # needs no Accounting rights); the figures keep their own rules
 
-        provinces = request.env['account.analytic.account'].sudo().search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
-        seg_l1 = request.env['account.analytic.account'].sudo().search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
+        provinces = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', '=', 'Location')])
+        seg_l1 = request.env['account.analytic.account'].search([('parent_id', '=', False), ('plan_id.name', 'ilike', 'Segment')])
 
         
 
-        cities = request.env['account.analytic.account'].sudo().search([('parent_id', 'in', provinces.ids)])
-        zones = request.env['account.analytic.account'].sudo().search([('parent_id', 'in', cities.ids)])
+        cities = request.env['account.analytic.account'].search([('parent_id', 'in', provinces.ids)])
+        zones = request.env['account.analytic.account'].search([('parent_id', 'in', cities.ids)])
         
-        seg_l2 = request.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l1.ids)])
-        seg_l3 = request.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l2.ids)])
-        seg_l4 = request.env['account.analytic.account'].sudo().search([('parent_id', 'in', seg_l3.ids)])
+        seg_l2 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l1.ids)])
+        seg_l3 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l2.ids)])
+        seg_l4 = request.env['account.analytic.account'].search([('parent_id', 'in', seg_l3.ids)])
         
         return (
             [{'id': p.id, 'name': p.name} for p in provinces],
@@ -37,15 +35,13 @@ class TreasuryDashboardController(http.Controller):
         for model_name in ['pos.cheque', 'direct.deposit', 'journal.transfer']:
             if model_name in request.env:
                 Model = request.env[model_name]
-                if 'analytic_account_id' in Model._fields and Model.check_access_rights('read', raise_exception=False):
-                    # the accounts used, grouped by PostgreSQL (not one record per document)
-                    ids.update(account.id for [account] in Model._read_group(
-                        [('analytic_account_id', '!=', False)], ['analytic_account_id']))
-
+                if 'analytic_account_id' in Model._fields:
+                    ids.update(Model.search([('analytic_account_id', '!=', False)]).mapped('analytic_account_id').ids)
+        
         if not ids:
             return []
-
-        accounts = request.env['account.analytic.account'].sudo().browse(list(ids))
+        
+        accounts = request.env['account.analytic.account'].browse(list(ids))
         res = []
         for a in accounts:
             zone_id, city_id, province_id = False, False, False
@@ -67,7 +63,7 @@ class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount', state_field='state', date_from=None, date_to=None,
                                 analytic_account_id=None, province_id=None, city_id=None, zone_id=None, segment_id=None,
-                                amount_min=None, amount_max=None):
+                                segment_type=None, amount_min=None, amount_max=None):
         empty = {'count': 0, 'total_amount': 0.0, 'states': {}, 'state_amounts': {}}
         if model_name not in request.env: return empty
 
@@ -94,34 +90,33 @@ class TreasuryDashboardController(http.Controller):
         if segment_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
             except: pass
+        
+        if segment_type and 'analytic_account_id' in Model._fields:
+            try: base_domain.append(('analytic_account_id.segment_type', '=', segment_type))
+            except: pass
 
         has_amount = amount_field in Model._fields
         if has_amount:
             if amount_min is not None: base_domain.append((amount_field, '>=', float(amount_min)))
             if amount_max is not None: base_domain.append((amount_field, '<=', float(amount_max)))
 
-        if not Model.check_access_rights('read', raise_exception=False):
-            return empty
-        actual_state_field = state_field if state_field in Model._fields else ('status' if 'status' in Model._fields else ('state' if 'state' in Model._fields else None))
-        aggregates = ['__count'] + ([f'{amount_field}:sum'] if has_amount else [])
-        states, state_amounts = {}, {}
         try:
-            # counted and summed by PostgreSQL, per status: no document is loaded in Python
-            groups = Model._read_group(base_domain, [actual_state_field] if actual_state_field else [], aggregates)
+            records = Model.search(base_domain)
+            count = len(records)
+            total_amount = sum(records.mapped(amount_field)) if has_amount else 0.0
         except Exception as e:
             _logger.error(f"❌ TREASURY ERROR on {model_name}: {str(e)}")
             return empty
-        count, total_amount = 0, 0.0
-        for group in groups:
-            key = group[0] if actual_state_field else None
-            n = group[1] if actual_state_field else group[0]
-            amount = (group[-1] or 0.0) if has_amount else 0.0
-            count += n
-            total_amount += amount
-            if key:
-                states[key] = states.get(key, 0) + n
-                if has_amount:
-                    state_amounts[key] = state_amounts.get(key, 0.0) + amount
+
+        actual_state_field = state_field if state_field in Model._fields else ('status' if 'status' in Model._fields else ('state' if 'state' in Model._fields else None))
+        states, state_amounts = {}, {}
+
+        if actual_state_field:
+            for rec in records:
+                key = rec[actual_state_field]
+                if not key: continue
+                states[key] = states.get(key, 0) + 1
+                if has_amount: state_amounts[key] = state_amounts.get(key, 0.0) + (rec[amount_field] or 0.0)
 
         return {'count': count, 'total_amount': total_amount, 'states': states, 'state_amounts': state_amounts}
 
@@ -173,14 +168,14 @@ class TreasuryDashboardController(http.Controller):
                 if v and k in Model._fields:
                     try: domain.append((k, 'child_of' if 'id' in k else '=', int(v)))
                     except: pass
+            
+            # ADDED: Segment Type Filter for Comparison
+            if kwargs.get('segment_type') and 'analytic_account_id' in Model._fields:
+                try: domain.append(('analytic_account_id.segment_type', '=', kwargs.get('segment_type')))
+                except: pass
 
-            if not Model.check_access_rights('read', raise_exception=False):
-                return 0.0
-            try:
-                [(total,)] = Model._read_group(domain, [], ['amount:sum'])
-                return total or 0.0
-            except Exception:
-                return 0.0
+            try: return sum(Model.search(domain).mapped('amount'))
+            except: return 0.0
 
         result = {}
         for key, model in [('cheques', 'pos.cheque'), ('deposits', 'direct.deposit'), ('transfers', 'journal.transfer')]:

@@ -1,5 +1,6 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from datetime import timedelta
 
 class ShariahTransferWizard(models.TransientModel):
     _name = 'shariah.transfer.wizard'

@@ -19,8 +19,8 @@ class QurbaniOrderLine(models.Model):
     name = fields.Char('Name', default="New")
     hissa_name = fields.Char('Hissa Name')
 
-    slaughter_start_time = fields.Float('Slaughter Start Time')
-    slaughter_end_time = fields.Float('Slaughter End Time')
+    slaughter_start_time = fields.Float('Start Time')
+    slaughter_end_time = fields.Float('End Time')
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')
 
@@ -29,12 +29,12 @@ class QurbaniOrderLine(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
 
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        for vals in vals_list:
-            if not vals.get('name') or vals.get('name') == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order_line') or ('New')
-        return super().create(vals_list)
+    @api.model
+    def create(self, vals):
+        if vals.get('name', _('New') == _('New')):
+            vals['name'] = self.env['ir.sequence'].next_by_code('qurbani_order_line') or ('New')
+
+        return super(QurbaniOrderLine, self).create(vals)
     
     def write(self, vals):
 

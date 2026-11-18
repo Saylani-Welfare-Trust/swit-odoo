@@ -106,43 +106,35 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
-        const partnerId = this.props.partner.id || false;
-        // a new donor needs its type (an existing one keeps its tags)
-        if (!partnerId && !processedChanges.donor_type) {
+        if (processedChanges.donor_type == null) {
             return this.popup.add(ErrorPopup, {
                 title: _t("Validation Error"),
                 body: _t("Donor Type Is Required"),
             });
         }
 
+        const domain = [];
         const donor_type = processedChanges.donor_type;
         const mobile = processedChanges.mobile;
         const cnic_no = processedChanges.cnic_no;
 
-        // Duplicate check on the values actually filled in, ignoring the
-        // donor being edited (else an existing donor could never be saved)
-        let domain = null;
-        if (donor_type === 'individual' && mobile) {
-            domain = [
-                ['mobile', '=', mobile],
+        // Correct domain structure
+        if (donor_type === 'individual') {
+            domain.push(
+                ['mobile', '=', mobile], 
                 ['category_id.name', 'in', ['Donor']],
                 ['category_id.name', 'in', ['Individual']],
-            ];
-        } else if (donor_type === 'coorporate' && (mobile || cnic_no)) {
-            const keys = [];
-            if (mobile) keys.push(['mobile', '=', mobile]);
-            if (cnic_no) keys.push(['cnic_no', '=', cnic_no]);
-            domain = [
-                ...(keys.length > 1 ? ['|'] : []), ...keys,
+                );  // Use array with correct structure
+        } else if (donor_type === 'coorporate') {
+            domain.push('|', 
+                ['mobile', '=', mobile], 
+                ['cnic_no', '=', cnic_no], 
                 ['category_id.name', 'in', ['Donor']],
                 ['category_id.name', 'in', ['Coorporate / Institute']],
-            ];
+                ); 
         }
-        if (domain && partnerId) {
-            domain.push(['id', '!=', partnerId]);
-        }
-
-        const res_partner = domain ? await this.orm.call('res.partner', 'search', [domain]) : [];
+        
+        const res_partner = await this.orm.call('res.partner', 'search', [domain]);
         if (res_partner && res_partner.length > 0) {
             return this.popup.add(ErrorPopup, {
                 title: _t(`Validation Error`),
@@ -150,7 +142,7 @@ patch(PartnerDetailsEdit.prototype, {
             });
         }
 
-        processedChanges.id = partnerId;
+        processedChanges.id = this.props.partner.id || false;
         this.props.saveChanges(processedChanges);
     }
 })

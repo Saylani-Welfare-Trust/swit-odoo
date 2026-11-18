@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="bn_advance_donation.AdvanceDonationButton" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
+        <xpath expr="//main" position="inside">
+            <button class="btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center" t-if="checkAdvanceDonationAccess" t-on-click="() => this.clickRecordAdvanceDonation()">
+                <i class="fa fa-hand-holding-usd me-1 text-primary" role="img" aria-label="Advance Donation" title="Advance Donation"/>
+                Advance Donation
+            </button>
+        </xpath>
+    </t>
+</templates>
