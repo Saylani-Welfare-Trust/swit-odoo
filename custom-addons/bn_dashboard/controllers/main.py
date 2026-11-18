@@ -67,7 +67,7 @@ class TreasuryDashboardController(http.Controller):
 
     def _get_custom_model_stats(self, model_name, amount_field='amount', state_field='state', date_from=None, date_to=None,
                                 analytic_account_id=None, province_id=None, city_id=None, zone_id=None, segment_id=None,
-                                amount_min=None, amount_max=None):
+                                segment_type=None, amount_min=None, amount_max=None): 
         empty = {'count': 0, 'total_amount': 0.0, 'states': {}, 'state_amounts': {}}
         if model_name not in request.env: return empty
 
@@ -93,6 +93,10 @@ class TreasuryDashboardController(http.Controller):
             except: pass
         if segment_id and 'analytic_account_id' in Model._fields:
             try: base_domain.append(('analytic_account_id', 'child_of', int(segment_id)))
+            except: pass
+            
+        if segment_type and 'analytic_account_id' in Model._fields:
+            try: base_domain.append(('analytic_account_id.segment_type', '=', segment_type))
             except: pass
 
         has_amount = amount_field in Model._fields
@@ -173,14 +177,14 @@ class TreasuryDashboardController(http.Controller):
                 if v and k in Model._fields:
                     try: domain.append((k, 'child_of' if 'id' in k else '=', int(v)))
                     except: pass
+            
+            # ADDED: Segment Type Filter for Comparison
+            if kwargs.get('segment_type') and 'analytic_account_id' in Model._fields:
+                try: domain.append(('analytic_account_id.segment_type', '=', kwargs.get('segment_type')))
+                except: pass
 
-            if not Model.check_access_rights('read', raise_exception=False):
-                return 0.0
-            try:
-                [(total,)] = Model._read_group(domain, [], ['amount:sum'])
-                return total or 0.0
-            except Exception:
-                return 0.0
+            try: return sum(Model.search(domain).mapped('amount'))
+            except: return 0.0
 
         result = {}
         for key, model in [('cheques', 'pos.cheque'), ('deposits', 'direct.deposit'), ('transfers', 'journal.transfer')]:
