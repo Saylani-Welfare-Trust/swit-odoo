@@ -17,7 +17,7 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.pos = usePos();
         this.orm = useService("orm");
         this.popup = useService("popup");
-        this.report = useService("report");    this.fetchCaseNumber();
+        this.report = useService("report");
         this.notification = useService("notification");
         // Own the numpad buffer while open, so stray keystrokes can't edit the order line underneath
         useService("number_buffer").use();
@@ -34,19 +34,17 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.title = this.props.title || "Provisional Order Details";
         
         this.state = useState({
-            microfinance_request_no: '',
             medical_equipment_request_no: '',
-            welfare_request_no: '',        // NEW
-            wf_request_type: 'one_time',   // NEW
             amount: parseFloat(this.props.amount) || 0,
             service_charges: 0,
             total: parseFloat(this.props.amount) || 0,
             address: this.props.address || "",   
             transaction_ref: this.props.transaction_ref || "",
+            // true while Confirm runs: a second click is ignored (no duplicate records)
+            is_processing: false,
             transfer_to_dhs: false,
             selected_bank_id: false,
             case_no: "",  
-            is_processing: false,
         });
 
         // NEW: for Direct Deposit, pull the request no automatically from the order
@@ -69,12 +67,10 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         const mf = extraData.microfinance;
         const me = extraData.medical_equipment;
         const wf = extraData.welfare;   // NEW
-        const dhs = extraData.dhs;
 
         const mfRequestNo = mf && (mf.record_number || mf.microfinance_request_no);
         const meRequestNo = me && (me.record_number || me.medical_equipment_request_no);
         const wfRequestNo = wf && wf.record_number;   // NEW
-        const dhsRequestNo = dhs && dhs.record_number;
 
         if (mfRequestNo) {
             this.state.source_request_type = 'Microfinance';
@@ -95,11 +91,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             this.state.source_request_no = wfRequestNo;
             this.state.source_welfare_line_ids = wf.welfare_line_ids || [];
             this.state.source_welfare_recurring_line_ids = wf.recurring_line_ids || [];
-        } else if (dhsRequestNo) {
-            this.state.source_request_type = 'Donation Home Service';
-            this.state.source_request_no = dhsRequestNo;
-        }else {
-            console.log("DD popup - no matching request data found on order"); // TEMP DEBUG
         }
     }
 
@@ -108,17 +99,6 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         this.state.service_charges = service_charges;
         this.state.total = this.state.amount + service_charges
     }
-    updateWelfareRequestNo(event) {
-        this.state.welfare_request_no = event.target.value;
-    }
-
-    updateWfRequestType(event) {
-        this.state.wf_request_type = event.target.value;
-    }
-    updateMicrofinanceRequestNo(event) {
-        this.state.microfinance_request_no = event.target.value;
-    }
-
     updateMedicalEquipmentRequestNo(event) {
         this.state.medical_equipment_request_no = event.target.value;
     }
@@ -219,341 +199,251 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             this.state.case_no = this.props.case_no || "N/A";
         }
     }
-    async confirm(){
-        // 1. GUARD: If already processing, ignore extra clicks
+    /**
+     * Hook for the program modules (bn_microfinance ...): handle their own
+     * action_type and return true, or return super.
+     */
+    async confirmProgram(selectedOrder) {
+        return false;
+    }
+
+    /**
+     * True when a program module shows its own body for this action_type
+     * instead of the donor / total summary.
+     */
+    get hasProgramBody() {
+        return this.action_type === 'me';
+    }
+
+    async confirm() {
         if (this.state.is_processing) {
-            return; 
+            return;
         }
         this.state.is_processing = true;
-
         try {
-            const selectedOrder = this.pos.get_order();
+            await this._confirm();
+        } finally {
+            this.state.is_processing = false;
+        }
+    }
 
-            // Donation Home Service
-            if (this.action_type === 'dhs') {
-                const payload ={
-                    'donor_id': this.donor_id,
-                    'favor': this.favor,
-                    'address': this.state.address,
-                    'service_charges': this.state.service_charges,
-                    'order_lines': this.prepareOrderLines(this.orderLines),
-                }
-        
-                await this.orm.call('donation.home.service', "create_dhs_record", [payload]).then((data) => {
-                    if (data.status === 'success') {
-                        this.notification.add(_t("Operation Successful"), {
-                            type: "info",
-                        });
-        
-                        this.cancel()
-                        
-                        this.report.doAction("bn_donation_home_service.report_donation_home_service", [
-                            data.id,
-                        ]);
-                    }
-        
-                    this.pos.removeOrder(selectedOrder);
-                    this.pos.add_new_order();
-                })
+    async _confirm(){
+        const selectedOrder = this.pos.get_order();
+        if (await this.confirmProgram(selectedOrder)) {
+            return;
+        }
+
+        // Donation Home Service
+        if (this.action_type === 'dhs') {
+            const payload ={
+                'donor_id': this.donor_id,
+                'favor': this.favor,
+                'address': this.state.address,
+                'service_charges': this.state.service_charges,
+                'order_lines': this.prepareOrderLines(this.orderLines),
             }
-
-            // Medical Equipment
-            if (this.action_type == 'me') {
-                if (!this.state.medical_equipment_request_no) {
-                    this.notification.add(
-                        "Please enter a Medical Equipment Request No.",
-                        { type: 'warning' }
-                    );
-                    this.state.is_processing = false;
-                    return;
-                }
-                // ... (rest of ME code remains the same)
-                const payload = {
-                    medical_equipment_request_no: this.state.medical_equipment_request_no,
-                    amount: this.state.amount,
-                    security_desposit: true
-                }
-
-                if (!selectedOrder.extra_data) {
-                    selectedOrder.extra_data = {};
-                }
-
-                selectedOrder.extra_data.medical_equipment = payload
-
-                let record = null
-
-                const data = await this.orm.call('medical.security.deposit', "get_medical_equipment_security_deposit", [payload]);
-                
-                if (data.status === 'error') {
-                    this.popup.add(ErrorPopup, {
-                        title: _t("Error"),
-                        body: data.body,
-                    });
-                    this.state.is_processing = false;
-                    return;
-                }
-                
-                if (data.status === 'success') {
-                    record = data;
-                    payload.security_deposit_id = data.deposit_id || null;  
-                    payload.medical_equipment_id = data.id; 
-                    payload.amount = data.amount; 
-
-                    const requestRecords = await this.orm.searchRead(
-                        'medical.equipment',
-                        [['id', '=', data.id]],
-                        ['state'],
-                        { limit: 1 }
-                    );
-
-                    if (!requestRecords || requestRecords.length === 0) {
-                        this.popup.add(ErrorPopup, {
-                            title: _t("Error"),
-                            body: _t("Medical Equipment Request not found."),
-                        });
-                        this.state.is_processing = false;
-                        return;
-                    }
-
-                    const requestState = requestRecords[0].state;
-
-                    if (requestState !== 'cfo_approval') {
-                        this.popup.add(ErrorPopup, {
-                            title: _t("Error"),
-                            body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${requestState}).`),
-                        });
-                        this.state.is_processing = false;
-                        return;
-                    }
-                    if (data.state === 'paid') {
-                        this.notification.add(_t("Security deposit already paid"), { type: "info" });
-                        this.cancel();
-                        return;
-                    }
-
-                    if (data.deposit_exists) {
-                        this.notification.add(_t("Existing deposit found"), { type: "info" });
-                        this.cancel();
-                        return;
-                    } else {
-                        this.notification.add(_t("Security deposit will be created upon payment"), { type: "info" });
-                    }
-                    
-                    if (data.donee_id) {
-                        const partnerId = data.donee_id;
-                        let partner = await this.getOrLoadPartner(partnerId);
-                        if (partner) {
-                            this.assignPartnerToOrder(partner, selectedOrder);
-                        }
-                    }
-                }
-
-                const securityProduct = await this.orm.searchRead(
-                    'product.product',
-                    [
-                        ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
-                        ['detailed_type', '=', 'service'],
-                        ['available_in_pos', '=', true]
-                    ],
-                    ['id'],
-                    { limit: 1 }
-                );
-            
-                if (securityProduct.length) {
-                    const product = this.pos.db.get_product_by_id(securityProduct[0].id);
-                    
-                    if (!product) {
-                        this.popup.add(ErrorPopup, {
-                            title: _t("Error"),
-                            body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
-                        });
-                        this.state.is_processing = false;
-                        return;
-                    }
-                    
-                    selectedOrder.add_product(product, {
-                        quantity: record.quantity,
-                        price_extra: record.amount,
-                    });
-                }
-                   
-                selectedOrder.set_receive_voucher(true)
-                this.cancel()
-            }
-
-            // Microfinance
-            if (this.action_type == 'mf') {
-                if (!this.state.microfinance_request_no) {
-                    this.notification.add(
-                        "Please enter a Microfinance Request No.",
-                        { type: 'warning' }
-                    );
-                    this.state.is_processing = false;
-                    return;
-                }
-                // ... (rest of MF code remains the same)
-                const payload = {
-                    microfinance_request_no: this.state.microfinance_request_no,
-                    amount: this.state.amount,
-                    security_desposit: true
-                }
-
-                if (!selectedOrder.extra_data) {
-                    selectedOrder.extra_data = {};
-                }
-
-                selectedOrder.extra_data.microfinance = payload
-
-                let record = null
-
-                const data = await this.orm.call('microfinance.installment', "get_microfinance_security_deposit", [payload]);
-                
-                if (data.status === 'error') {
-                    this.popup.add(ErrorPopup, {
-                        title: _t("Error"),
-                        body: data.body,
-                    });
-                    this.state.is_processing = false;
-                    return;
-                }
-                
-                if (data.status === 'success') {
-                    record = data;
-                    payload.security_deposit_id = data.deposit_id || null;
-                    payload.microfinance_id = data.id;
-                    payload.amount = data.amount;
-
-                    if (data.state === 'paid') {
-                        this.notification.add(_t("Security deposit already paid"), { type: "info" });
-                        this.cancel();
-                        return;
-                    }
-
-                    if (data.deposit_exists) {
-                        this.notification.add(_t("Existing deposit found"), { type: "info" });
-                    } else {
-                        this.notification.add(_t("Security deposit will be created upon payment"), { type: "info" });
-                    }
-                    
-                    if (data.donee_id) {
-                        const partnerId = data.donee_id;
-                        let partner = await this.getOrLoadPartner(partnerId);
-                        if (partner) {
-                            this.assignPartnerToOrder(partner, selectedOrder);
-                        }
-                    }
-                }
-
-                const securityProduct = await this.orm.searchRead(
-                    'product.product',
-                    [
-                        ['name', '=', this.pos.company.microfinance_security_depsoit_product],
-                        ['detailed_type', '=', 'service'],
-                        ['available_in_pos', '=', true]
-                    ],
-                    ['id'],
-                    { limit: 1 }
-                );
-            
-                if (securityProduct.length) {
-                    const product = this.pos.db.get_product_by_id(securityProduct[0].id);
-                    
-                    if (!product) {
-                        this.popup.add(ErrorPopup, {
-                            title: _t("Error"),
-                            body: _t(`${this.pos.company.microfinance_security_depsoit_product} product not loaded in POS session.`),
-                        });
-                        this.state.is_processing = false;
-                        return;
-                    }
-                    
-                    selectedOrder.add_product(product, {
-                        quantity: 1,
-                        price_extra: record.amount,
-                    });
-                }
-                   
-                selectedOrder.set_receive_voucher(true)
-                this.cancel()
-            }
-
-            // Direct Deposit
-            if (this.action_type === 'dd') {
-                
-                // ✅ NEW MANDATORY CHECK: Transaction Reference
-                if (!this.state.transaction_ref || this.state.transaction_ref.trim() === '') {
-                    this.notification.add(
-                        "Transaction Reference is mandatory for Direct Deposit.",
-                        { type: 'warning' }
-                    );
-                    this.state.is_processing = false; // Unlock the button
-                    return; // Stop the execution here
-                }
-
-                const userId = this.pos.user ? this.pos.user.id : false;
-                const payload = {
-                    'donor_id': this.donor_id,
-                    'favor': this.favor,
-                    'bank_id': this.state.selected_bank_id,
-                    'transaction_ref': this.state.transaction_ref,
-                    'service_charges': this.state.service_charges,
-                    'order_lines': this.prepareOrderLines(this.orderLines),
-                    'user_id': userId,
-                    'transfer_to_dhs': this.state.transfer_to_dhs,
-                    'address': this.state.address,
-                    'source_request_type': this.state.source_request_type,
-                    'source_request_no': this.state.source_request_no,
-                    'source_welfare_line_ids': this.state.source_welfare_line_ids || [],
-                    'source_welfare_recurring_line_ids': this.state.source_welfare_recurring_line_ids || [],
-                }
-
-                const data = await this.orm.call('direct.deposit', "create_dd_record", [payload]);
-
-                if (data.status === 'error') {
-                    this.popup.add(ErrorPopup, {
-                        title: _t("Error"),
-                        body: data.body,
-                    });
-                    this.state.is_processing = false;
-                    return;
-                }
-
+    
+            await this.orm.call('donation.home.service', "create_dhs_record", [payload]).then((data) => {
                 if (data.status === 'success') {
                     this.notification.add(_t("Operation Successful"), {
                         type: "info",
                     });
-                    this.cancel();
+    
+                    this.cancel()
+                    
+                    this.report.doAction("bn_donation_home_service.report_donation_home_service", [
+                        data.id,
+                    ]);
                 }
-
+    
                 this.pos.removeOrder(selectedOrder);
                 this.pos.add_new_order();
-            }
-            
-        } catch (error) {
-            console.error("Error during confirm:", error);
-        } finally {
-            // 2. FINALLY: Always unlock the button when done (even if an error occurred)
-            this.state.is_processing = false;
+            })
         }
-    }
-    /**
-     * Process partner assignment
-     */
-    async processPartner(record, selectedOrder) {
-        if (this.action_type == 'mf') {
-            if (!record.donee_id || !record.donee_id[0]) {
+
+        // Medical Equipment
+        if (this.action_type == 'me') {
+            if (!this.state.medical_equipment_request_no) {
+                this.notification.add(
+                    "Please enter a Medical Equipment Request No.",
+                    { type: 'warning' }
+                );
+
                 return;
             }
-    
-            const partnerId = record.donee_id[0];
-            let partner = await this.getOrLoadPartner(partnerId);
-            
-            if (partner) {
-                this.assignPartnerToOrder(partner, selectedOrder);
-            } else {
-                console.warn("Partner not found in POS database:", partnerId);
+
+            const payload = {
+                medical_equipment_request_no: this.state.medical_equipment_request_no,
+                amount: this.state.amount,
+                security_desposit: true
             }
-        }   
+
+            if (!selectedOrder.extra_data) {
+                selectedOrder.extra_data = {};
+            }
+
+            selectedOrder.extra_data.medical_equipment = payload
+
+            let record = null
+
+            const data = await this.orm.call('medical.security.deposit', "get_medical_equipment_security_deposit", [payload]);
+            
+            if (data.status === 'error') {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: data.body,
+                });
+                return;
+            }
+            
+            if (data.status === 'success') {
+                record = data;
+                payload.security_deposit_id = data.deposit_id || null;  
+                payload.medical_equipment_id = data.id; 
+                payload.amount = data.amount; 
+                      // ----- FETCH REQUEST STATE -----
+                // Fetch the full request record to get its state
+                const requestRecords = await this.orm.searchRead(
+                    'medical.equipment',   // adjust model name if different
+                    [['id', '=', data.id]],
+                    ['state'],                     // only need the state
+                    { limit: 1 }
+                );
+
+                if (!requestRecords || requestRecords.length === 0) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t("Medical Equipment Request not found."),
+                    });
+                    return;
+                }
+
+                const requestState = requestRecords[0].state;
+
+                // Validate state
+                if (requestState !== 'cfo_approval') {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`Medical Equipment Request is not in CFO Approval state (current: ${requestState}).`),
+                    });
+                    return;
+                }
+                if (data.state === 'paid') {
+                    this.notification.add(_t("Security deposit already paid"), {
+                        type: "info",
+                    });
+                    
+                    this.cancel();
+                    return;
+                }
+
+                if (data.deposit_exists) {
+                    this.notification.add(_t("Existing deposit found"), {
+                        type: "info",
+                    });
+
+                    this.cancel();
+                    return
+                } else {
+                    this.notification.add(_t("Security deposit will be created upon payment"), {
+                        type: "info",
+                    });
+                }
+                
+                // Set customer from donee_id
+                if (data.donee_id) {
+                    const partnerId = data.donee_id;
+                    let partner = await this.getOrLoadPartner(partnerId);
+                    if (partner) {
+                        this.assignPartnerToOrder(partner, selectedOrder);
+                    }
+                }
+            }
+
+            const securityProduct = await this.orm.searchRead(
+                'product.product',
+                [
+                    ['name', '=', this.pos.company.medical_equipment_security_depsoit_product],
+                    ['detailed_type', '=', 'service'],
+                    ['available_in_pos', '=', true]
+                ],
+                ['id'],
+                { limit: 1 }
+            );
+        
+            if (securityProduct.length) {
+                // Get the product from POS DB
+                const product = this.pos.db.get_product_by_id(securityProduct[0].id);
+                
+                if (!product) {
+                    this.popup.add(ErrorPopup, {
+                        title: _t("Error"),
+                        body: _t(`${this.pos.company.medical_equipment_security_depsoit_product} product not loaded in POS session.`),
+                    });
+                    
+                    return
+                }
+                
+                // Add product to order
+                selectedOrder.add_product(product, {
+                    quantity: record.quantity,
+                    price_extra: record.amount,
+                });
+            }
+               
+            selectedOrder.set_receive_voucher(true)
+
+            this.cancel()
+        }
+
+        // Direct Deposit
+        if (this.action_type === 'dd') {
+            if (!(this.state.transaction_ref || '').trim()) {
+                this.notification.add(_t("Transaction Reference is mandatory for Direct Deposit."), {
+                    type: 'warning',
+                });
+                return;
+            }
+            const userId = this.pos.user ? this.pos.user.id : false;
+            const payload ={
+                'donor_id': this.donor_id,
+                'favor': this.favor,
+                'bank_id': this.state.selected_bank_id,
+                'transaction_ref': this.state.transaction_ref,
+                'service_charges': this.state.service_charges,
+                'order_lines': this.prepareOrderLines(this.orderLines),
+                'user_id': userId,
+                'transfer_to_dhs': this.state.transfer_to_dhs,
+                'address': this.state.address,
+                // NEW: carry the linked request info through to the backend record
+                'source_request_type': this.state.source_request_type,
+                'source_request_no': this.state.source_request_no,
+                'source_welfare_line_ids': this.state.source_welfare_line_ids || [],           // NEW
+                'source_welfare_recurring_line_ids': this.state.source_welfare_recurring_line_ids || [],
+            }
+    
+            const data = await this.orm.call('direct.deposit', "create_dd_record", [payload]);
+
+            if (data.status === 'error') {
+                this.popup.add(ErrorPopup, {
+                    title: _t("Error"),
+                    body: data.body,
+                });
+                return; // stop here - don't touch the order, let the user fix the ref
+            }
+
+            if (data.status === 'success') {
+                this.notification.add(_t("Operation Successful"), {
+                    type: "info",
+                });
+
+                this.cancel();
+
+            }
+
+            this.pos.removeOrder(selectedOrder);
+            this.pos.add_new_order();
+        } // <-- closes "if (this.action_type === 'dd')"
     }
 
     /**

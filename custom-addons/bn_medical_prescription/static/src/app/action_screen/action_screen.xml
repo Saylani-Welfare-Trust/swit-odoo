@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-name="bn_medical_prescription.PrescriptionsAction" t-inherit="bn_pos_custom_action.ActionScreen" t-inherit-mode="extension">
+        <!-- a Medical &amp; Health counter only offers its medical actions -->
+        <xpath expr="//main" position="attributes">
+            <attribute name="t-att-class">isMedicalCounter ? 'o_medical_actions' : ''</attribute>
+        </xpath>
+        <xpath expr="//main" position="inside">
+            <button t-if="isMedicalCounter"
+                    class="o_medical_action btn btn-secondary btn-lg flex-fill py-4 d-flex align-items-center justify-content-center"
+                    t-on-click="() => this.clickPrescriptions()">
+                <i class="fa fa-medkit me-1 text-success" role="img" aria-label="Prescriptions" title="Prescriptions"/>
+                Prescriptions
+            </button>
+        </xpath>
+    </t>
+
+</templates>

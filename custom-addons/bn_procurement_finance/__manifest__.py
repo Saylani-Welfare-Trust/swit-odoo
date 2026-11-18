@@ -1,6 +1,6 @@
 {
     'name': 'Procurement Finance & Treasury',
-    'version': '1.1',
+    'version': '17.0.1.3.0',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -12,8 +12,10 @@
         'account',
         'purchase',
         'base_accounting_kit',
+        'bn_master_setup',
     ],
     'data': [
+        'security/group_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
         'security/ir_rule.xml',

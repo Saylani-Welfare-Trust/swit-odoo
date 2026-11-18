@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- POS Documents of a session / POS: every record made or paid there -->
+    <record id="pos_document_view_tree" model="ir.ui.view">
+        <field name="name">pos.document.view.tree</field>
+        <field name="model">pos.document</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="document_type"/>
+                <field name="name"/>
+                <field name="date"/>
+                <field name="link" widget="badge" decoration-info="link == 'session'" decoration-success="link == 'order'"/>
+                <field name="pos_order_id" optional="show"/>
+                <field name="pos_session_id" optional="show"/>
+                <field name="pos_config_id" optional="hide"/>
+                <field name="pos_cashier_id" optional="show"/>
+                <button name="action_open_document" type="object" string="Open" icon="fa-external-link" class="btn-link"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="pos_document_view_search" model="ir.ui.view">
+        <field name="name">pos.document.view.search</field>
+        <field name="model">pos.document</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="document_type"/>
+                <field name="pos_order_id"/>
+                <field name="pos_cashier_id"/>
+                <filter name="made_at_pos" string="Made at the POS" domain="[('link', '=', 'session')]"/>
+                <filter name="paid_by_order" string="Paid by a POS Order" domain="[('link', '=', 'order')]"/>
+                <filter name="indirect" string="Linked to the Session / Order" domain="[('link', '=', 'indirect')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_document_type" string="Document Type" context="{'group_by': 'document_type'}"/>
+                    <filter name="group_link" string="Link" context="{'group_by': 'link'}"/>
+                    <filter name="group_session" string="Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="group_cashier" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="group_date" string="Created On" context="{'group_by': 'date:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="pos_session_view_form_pos_documents" model="ir.ui.view">
+        <field name="name">pos.session.form.pos.documents</field>
+        <field name="model">pos.session</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
+        <field name="arch" type="xml">
+            <div name="button_box" position="inside">
+                <button name="action_view_pos_documents" type="object" class="oe_stat_button" icon="fa-files-o"
+                        invisible="not pos_document_count">
+                    <field name="pos_document_count" widget="statinfo" string="POS Documents"/>
+                </button>
+            </div>
+        </field>
+    </record>
+
+    <record id="pos_config_view_form_pos_documents" model="ir.ui.view">
+        <field name="name">pos.config.form.pos.documents</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/field[@name='active']" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button name="action_view_pos_documents" type="object" class="oe_stat_button" icon="fa-files-o"
+                            invisible="not pos_document_count">
+                        <field name="pos_document_count" widget="statinfo" string="POS Documents"/>
+                    </button>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

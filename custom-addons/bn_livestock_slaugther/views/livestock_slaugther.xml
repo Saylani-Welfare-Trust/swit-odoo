@@ -7,7 +7,7 @@
         <field name="arch" type="xml">
             <tree delete="0">
                 <header>
-                    <button string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
                 </header>
                 <field name="is_meat_depart" column_invisible="1" />
                 <field name="is_chicken_depart" column_invisible="1" />
@@ -18,7 +18,6 @@
 
                 <field name="product_id" />
                 <field name="on_hand_qty"/>
-                <!-- <field name="code" /> -->
                 <field name="donee_id" />
                 <field name="quantity" />
                 <field name="price" />
@@ -29,10 +28,10 @@
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'received'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
 
-                <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
-                <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
-                <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
-                <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
             </tree>
         </field>
     </record>
@@ -50,11 +49,11 @@
                 <field name="transfer_bool" invisible="1" />
 
                 <header>
-                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
-                    <button string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
-                    <button string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
-                    <button string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
-                    <button string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'received'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received, received, cutting, material_request, done"/>
                 </header>
@@ -66,7 +65,7 @@
 
                     <group>
                         <group name="livestock_slaugther_col_1">
-                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('category_id.name', '=', 'Donee')]" />
+                            <field name="donee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="code" />
                             <field name="ref" />
                             <field name="pos_order_id" readonly="1" />
@@ -113,81 +112,10 @@
         </field>
     </record>
 
-    <!-- ========================================== -->
-    <!-- SEARCH VIEW                                -->
-    <!-- ========================================== -->
-    <record id="livestock_slaugther_view_search" model="ir.ui.view">
-        <field name="name">livestock.slaugther.view.search</field>
-        <field name="model">livestock.slaugther</field>
-        <field name="arch" type="xml">
-            <search>
-                <!-- Searchable fields -->
-                <field name="product_id" />
-                <field name="donee_id" />
-                <field name="ref" />
-                <field name="code" />
-                <field name="pos_order_id" />
-                <field name="source_location_id" />
-                <field name="transfer_location" />
-
-                <filter name="filter_my_records" string="My Records"
-                        domain="[('create_uid', '=', uid)]" />
-
-                <separator/>
-
-                <!-- State filters -->
-                <filter name="filter_not_received" string="Not Received"
-                        domain="[('state', '=', 'not_received')]" />
-                <filter name="filter_received" string="Received"
-                        domain="[('state', '=', 'received')]" />
-                <filter name="filter_cutting" string="Cutting"
-                        domain="[('state', '=', 'cutting')]" />
-                <filter name="filter_material_request" string="Material Request"
-                        domain="[('state', '=', 'material_request')]" />
-                <filter name="filter_done" string="Done"
-                        domain="[('state', '=', 'done')]" />
-
-                <separator/>
-
-                <!-- Department filters -->
-                <filter name="filter_meat_depart" string="Meat Department"
-                        domain="[('is_meat_depart', '=', True)]" />
-                <filter name="filter_goat_depart" string="Goat Department"
-                        domain="[('is_goat_depart', '=', True)]" />
-                <filter name="filter_chicken_depart" string="Chicken Department"
-                        domain="[('is_chicken_depart', '=', True)]" />
-
-                <separator/>
-
-                <!-- Date filters -->
-                <filter name="filter_today" string="Today"
-                        domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]" />
-                <filter name="filter_this_month" string="This Month"
-                        domain="[('create_date', '&gt;=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d'))]" />
-
-                <group expand="0" string="Group By">
-                    <filter name="group_state" string="State"
-                            context="{'group_by': 'state'}" />
-                    <filter name="group_product" string="Product"
-                            context="{'group_by': 'product_id'}" />
-                    <filter name="group_donee" string="Donee"
-                            context="{'group_by': 'donee_id'}" />
-                    <filter name="group_source_location" string="Source Location"
-                            context="{'group_by': 'source_location_id'}" />
-                    <filter name="group_transfer_location" string="Transfer Location"
-                            context="{'group_by': 'transfer_location'}" />
-                    <filter name="group_create_date" string="Created On"
-                            context="{'group_by': 'create_date:day'}" />
-                </group>
-            </search>
-        </field>
-    </record>
-
     <record id="livestock_slaugther_action" model="ir.actions.act_window">
         <field name="name">Livestock Slaugther</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[]</field>
         <field name="context">{
             'create': 0,
@@ -204,7 +132,6 @@
         <field name="name">Meat Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[('is_meat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_meat_depart': True,
@@ -220,7 +147,6 @@
         <field name="name">Goat Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[('is_goat_depart', '=', True)]</field>
         <field name="context">{
             'default_is_goat_depart': True
@@ -236,7 +162,6 @@
         <field name="name">Chicken Department</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree</field>
-        <field name="search_view_id" ref="livestock_slaugther_view_search"/>
         <field name="domain">[('is_chicken_depart', '=', True)]</field>
         <field name="context">{
             'default_is_chicken_depart': True
@@ -250,12 +175,14 @@
 
     <menuitem
         id="livestock_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_menu_group"
         name="Livestock"
         web_icon="bn_livestock_slaugther,static/description/icon.png"
         sequence="7"/>
 
     <menuitem
         id="slaugther_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Slaugther"
         action="livestock_slaugther_action"
         parent="livestock_menu"
@@ -263,6 +190,7 @@
 
     <menuitem
         id="meat_department_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Meat Department"
         action="meat_department_action"
         parent="livestock_menu"
@@ -270,6 +198,7 @@
 
     <menuitem
         id="goat_department_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Goat Department"
         action="goat_department_action"
         parent="livestock_menu"
@@ -277,6 +206,7 @@
 
     <menuitem
         id="chicken_department_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Chicken Department"
         action="chicken_department_action"
         parent="livestock_menu"

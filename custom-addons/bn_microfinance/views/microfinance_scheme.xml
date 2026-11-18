@@ -99,9 +99,10 @@
     </record>
 
     <menuitem
-        id="microfinance_config_menu"         
+        id="microfinance_config_menu"
         name="Microfinance"
         parent="bn_master_setup.master_setup_menu"
+        groups="bn_microfinance.microfinance_manager_group,bn_microfinance.microfinance_audit_group"
         sequence="3"/>
 
     <menuitem

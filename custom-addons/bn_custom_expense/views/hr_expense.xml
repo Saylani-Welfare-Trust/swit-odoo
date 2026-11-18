@@ -62,4 +62,16 @@
         </field>
     </record>
 
+    <!-- Expense reports: find a report by the product of its expenses -->
+    <record id="hr_expense_sheet_view_search_inherit_line_product" model="ir.ui.view">
+        <field name="name">hr.expense.sheet.view.search.inherit.line.product</field>
+        <field name="model">hr.expense.sheet</field>
+        <field name="inherit_id" ref="hr_expense.hr_expense_sheet_view_search"/>
+        <field name="arch" type="xml">
+            <field name="employee_id" position="after">
+                <field name="expense_line_ids" string="Expense Product" filter_domain="[('expense_line_ids.product_id', 'ilike', self)]"/>
+            </field>
+        </field>
+    </record>
+
 </odoo>

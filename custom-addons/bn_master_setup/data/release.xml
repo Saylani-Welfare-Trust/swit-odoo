@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Must stay the first data file: modules an earlier release had merged
+         into another one are given back and installed again. -->
+    <function model="ir.module.module" name="_rename_xmlids"/>
+    <function model="ir.module.module" name="_release_merged_modules"/>
+</odoo>

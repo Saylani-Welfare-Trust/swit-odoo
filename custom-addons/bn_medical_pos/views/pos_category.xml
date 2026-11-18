@@ -24,6 +24,9 @@
                 <field name="name"/>
                 <filter name="filter_medical" string="Medical &amp; Health" domain="[('mh_medical', '=', True)]"/>
                 <filter name="filter_not_medical" string="Other" domain="[('mh_medical', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_parent" string="Parent Category" context="{'group_by': 'parent_id'}"/>
+                </group>
             </search>
         </field>
     </record>

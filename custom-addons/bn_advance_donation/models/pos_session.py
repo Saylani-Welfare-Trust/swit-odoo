@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import models
 class POSSession(models.Model):
     _inherit = 'pos.session'
 

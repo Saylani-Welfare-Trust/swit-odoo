@@ -18,3 +18,5 @@ from . import distribution_center
 from . import distribution_center_line
 from . import product_packaging
 from . import stock_picking
+from . import program_types
+from . import res_groups

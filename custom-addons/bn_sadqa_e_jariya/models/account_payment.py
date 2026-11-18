@@ -5,8 +5,9 @@ class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
     def _sadqa_jariya_lines(self):
-        """Sadqa e Jariya lines of the bills being paid"""
-        bills = self.line_ids.move_id
+        """Sadqa e Jariya lines of the bills being paid (sudo: the accountant
+        paying the bill needs no Sadqa e Jariya access)"""
+        bills = self.line_ids.move_id.sudo()
         return bills.sadqa_jariya_line_id, bills.sadqa_jariya_recurring_line_id
 
     @api.onchange('source_amount', 'source_amount_currency', 'source_currency_id', 'company_id', 'currency_id', 'payment_date', 'line_ids')

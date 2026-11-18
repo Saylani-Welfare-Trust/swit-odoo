@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Contact details first, then every Donation tab of the profile form on
+         its own page: a tab runs over as many pages as it needs (the column
+         headings repeat) and the next tab only starts on a new page after it. -->
+    <template id="profile_donation_report_document" name="Profile &amp; Donations">
+        <t t-set="o" t-value="contact['partner']"/>
+        <t t-call="web.external_layout">
+            <div class="page profile-donation-report">
+                <style>
+                    .profile-donation-report h2 { color: #3b3591; margin-bottom: 2px; }
+                    .profile-donation-report h4 { color: #3b3591; border-bottom: 2px solid #3b3591; padding-bottom: 3px; margin-top: 10px; }
+                    .profile-donation-report table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    .profile-donation-report th { background: #3b3591; color: #fff; padding: 4px 5px; border: 1px solid #3b3591; }
+                    .profile-donation-report td { padding: 3px 5px; border: 1px solid #c9c8de; vertical-align: top; }
+                    .profile-donation-report thead { display: table-header-group; }
+                    .profile-donation-report tr { page-break-inside: avoid; }
+                    .profile-donation-report td.lbl { background: #ecebf6; font-weight: bold; width: 18%; }
+                    .profile-donation-report td.val { width: 32%; }
+                    .profile-donation-report .num { text-align: right; white-space: nowrap; }
+                    .profile-donation-report tr.total td { font-weight: bold; border-top: 2px solid #3b3591; background: #f6f6fb; }
+                    .profile-donation-report .tab-page { page-break-before: always; }
+                </style>
+
+                <!-- page 1: the contact -->
+                <h2 t-out="o.display_name"/>
+                <div class="text-muted small mb-2">Printed on <t t-out="printed_on"/></div>
+                <h4>Contact Details</h4>
+                <table>
+                    <tbody>
+                        <t t-foreach="range(0, len(contact['details']), 2)" t-as="i">
+                            <tr>
+                                <t t-foreach="contact['details'][i:i + 2]" t-as="detail">
+                                    <td class="lbl" t-out="detail[0]"/>
+                                    <td class="val" t-out="detail[1]"/>
+                                </t>
+                                <t t-if="len(contact['details'][i:i + 2]) == 1"><td class="lbl"/><td class="val"/></t>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <h4>Donations</h4>
+                <t t-if="contact['tabs']">
+                    <table>
+                        <thead><tr><th>Donation</th><th class="num">Records</th><th class="num">Total</th></tr></thead>
+                        <tbody>
+                            <tr t-foreach="contact['tabs']" t-as="tab">
+                                <td t-out="tab['title']"/>
+                                <td class="num" t-out="len(tab['rows'])"/>
+                                <td class="num" t-out="tab['summary_total']"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <p t-else="" class="text-muted">No donations recorded for this contact.</p>
+
+                <!-- one donation tab per page -->
+                <div t-foreach="contact['tabs']" t-as="tab" class="tab-page">
+                    <h4><t t-out="tab['title']"/> - <t t-out="o.display_name"/></h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th t-foreach="tab['columns']" t-as="column" t-att-class="'num' if tab['numeric'][column_index] else None" t-out="column"/>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="tab['rows']" t-as="row">
+                                <td t-out="row_index + 1"/>
+                                <td t-foreach="row" t-as="value" t-att-class="'num' if tab['numeric'][value_index] else None" t-out="value[0]"/>
+                            </tr>
+                            <tr t-if="tab['totals']" class="total">
+                                <td>Total</td>
+                                <td t-foreach="tab['totals']" t-as="total" class="num" t-out="total"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="small text-muted mt-1"><t t-out="len(tab['rows'])"/> record(s)</div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="profile_donation_report" name="Profile &amp; Donations">
+        <t t-call="web.html_container">
+            <t t-foreach="contacts" t-as="contact">
+                <t t-call="bn_profile_management.profile_donation_report_document"/>
+            </t>
+        </t>
+    </template>
+
+    <record id="paperformat_profile_donation_report" model="report.paperformat">
+        <field name="name">Profile &amp; Donations (A4 landscape)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">35</field>
+        <field name="margin_bottom">18</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">30</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_profile_donation_report" model="ir.actions.report">
+        <field name="name">Profile &amp; Donations (PDF)</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_profile_management.profile_donation_report</field>
+        <field name="report_file">bn_profile_management.profile_donation_report</field>
+        <field name="print_report_name">'Profile and Donations - %s' % object.name</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="paperformat_profile_donation_report"/>
+        <field name="groups_id" eval="[(6, 0, [ref('profile_management_user_group'), ref('profile_management_audit_group')])]"/>
+    </record>
+
+    <record id="action_profile_donation_report_xlsx" model="ir.actions.report">
+        <field name="name">Profile &amp; Donations (Excel)</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">xlsx</field>
+        <field name="report_name">bn_profile_management.profile_donation_report_xlsx</field>
+        <field name="report_file">bn_profile_management.profile_donation_report_xlsx</field>
+        <field name="print_report_name">'Profile and Donations'</field>
+        <field name="binding_model_id" ref="base.model_res_partner"/>
+        <field name="binding_type">report</field>
+        <field name="groups_id" eval="[(6, 0, [ref('profile_management_user_group'), ref('profile_management_audit_group')])]"/>
+    </record>
+
+</odoo>

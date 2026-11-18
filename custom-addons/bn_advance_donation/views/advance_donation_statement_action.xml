@@ -11,6 +11,6 @@
               parent="main_menu_advance_donation"
               action="action_advance_donation_statement"
               sequence="15"
-              groups="bn_advance_donation.group_adv_don_menu"/>
+            groups="bn_advance_donation.group_adv_don_menu,bn_advance_donation.group_adv_don_audit"/>
 
 </odoo>

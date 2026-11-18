@@ -1,12 +1,12 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 
 class MemberApproval(models.Model):
 
     _name = 'material.request'
     _description = 'Member Approval - Internal Transfer Request'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
+    _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
     _order = 'id desc'
 
     name = fields.Char('Reference', default='New', readonly=True, copy=False, tracking=True)
@@ -21,18 +21,14 @@ class MemberApproval(models.Model):
     purchase_requisition_ids = fields.One2many(
         'purchase.requisition', 'material_request_id', string='Purchase Requests', readonly=True)
     purchase_requisition_count = fields.Integer(
-        string='Purchase Requests', compute='_compute_purchase_requisition_count')
+        string='Purchase Request Count', compute='_compute_purchase_requisition_count')
+    # what was bought for it: Purchase Orders, their receipts and vendor bills
+    purchase_order_count = fields.Integer(string='Purchase Orders', compute='_compute_purchase_documents')
+    purchase_receipt_count = fields.Integer(string='Receipts', compute='_compute_purchase_documents')
+    vendor_bill_count = fields.Integer(string='Vendor Bills', compute='_compute_purchase_documents')
     
     product_id = fields.Many2one(related='line_ids.product_id', string="Product")
    
-    employee_location_id = fields.Many2one(
-        'account.analytic.account',
-        string='Employee Location',
-        related='user_id.employee_id.analytic_account_id',
-        readonly=True,
-        store=True,
-        help='Location (Branch) of the employee who requested the items. Not editable.'
-    )
     request_date = fields.Date('Request Date', default=fields.Date.today, readonly=True, tracking=True)
     
     # Source and Destination Locations
@@ -49,16 +45,12 @@ class MemberApproval(models.Model):
 
     allowed_location_ids = fields.Many2many(
         'stock.location',
-        related='user_id.allowed_location_ids',
+        related='user_id.scope_location_ids',
         string='Allowed Locations',
         readonly=True,
         store=False
     )
 
-    # dest_location_domain = fields.Char(
-    #     compute='_compute_dest_location_domain',
-    #     store=False
-    # )
 
     dest_location_id = fields.Many2one(
         'stock.location',
@@ -114,7 +106,7 @@ class MemberApproval(models.Model):
     def _compute_selected_product_ids(self):
         for rec in self:
             rec.selected_product_ids = rec.line_ids.product_id
-
+    
     # Remarks
     rejection_reason = fields.Text('Rejection Reason', tracking=True)
     committee_remarks = fields.Text('Committee Remarks')
@@ -125,12 +117,6 @@ class MemberApproval(models.Model):
    
     
     
-    @api.model
-    def create(self, vals):
-        if vals.get('name', 'New') == 'New':
-            vals['name'] = self.env['ir.sequence'].next_by_code('material.request') or 'New'
-        return super().create(vals)
-
     @api.depends_context('uid')
     @api.depends('department_id.manager_id')
     def _compute_is_current_user_hod(self):
@@ -144,11 +130,10 @@ class MemberApproval(models.Model):
             rec.total_amount = sum(line.subtotal for line in rec.line_ids)
 
 
-
-    @api.depends('user_id.allowed_warehouse_ids')
+    @api.depends('user_id.scope_warehouse_ids')
     def _compute_source_location_domain(self):
         for rec in self:
-            warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
+            warehouse_ids = rec.user_id.scope_warehouse_ids.ids or self.env.user.scope_warehouse_ids.ids
             
             if warehouse_ids:
                 rec.source_location_domain = str([
@@ -159,19 +144,6 @@ class MemberApproval(models.Model):
                 rec.source_location_domain = "[]"
 
 
-
-    # @api.depends('user_id.allowed_warehouse_ids')
-    # def _compute_source_location_domain(self):
-    #     for rec in self:
-    #         warehouse_ids = rec.user_id.allowed_warehouse_ids.ids or self.env.user.allowed_warehouse_ids.ids
-    #         if warehouse_ids:
-    #             rec.source_location_domain = (
-    #                 "[('usage','=','internal'),"
-    #                 "('warehouse_id','in',%s)]"
-    #                 % warehouse_ids
-    #             )
-    #         else:
-    #             rec.source_location_domain = "[('usage','=','internal')]"
     
     @api.model
     def _move_from_removed_states(self):
@@ -185,6 +157,8 @@ class MemberApproval(models.Model):
     def action_check_budget(self):
         """Check budget per analytic account (supports multiple lines)"""
         self.ensure_one()
+        if self.state != 'draft':
+            raise ValidationError(_('Only a draft request can be confirmed.'))
 
         if not self.line_ids:
             raise ValidationError(_('Please add at least one product line.'))
@@ -196,10 +170,8 @@ class MemberApproval(models.Model):
         is_in_budget = True
 
         for line in self.line_ids:
-            # Search for analytic account linked to the product
-            analytic = self.env['account.analytic.account'].search([
-                ('product_ids', 'in', [line.product_id.id])
-            ], limit=1)
+            # the analytic account set on the product
+            analytic = line.product_id.analytic_account_id
 
             if not analytic:
                 raise ValidationError(
@@ -220,8 +192,6 @@ class MemberApproval(models.Model):
                 ('date_to', '>=', today),
             ])
             
-            # if not budget_lines:
-            #     raise ValidationError(_('No active budget found for Analytic Account: %s and Budget: %s') % (analytic.display_name, budget.display_name))
             
             available_budget = sum(
                 abs(l.practical_amount)
@@ -273,9 +243,6 @@ class MemberApproval(models.Model):
                 self.budget_amount = 0.0
                 
                 
-            # Update budget lines for each product
-            # today = fields.Date.today()
-            # updated_lines = self.env['budget.lines']
 
             # for line in self.line_ids:
             #     # Find analytic account via product
@@ -316,6 +283,8 @@ class MemberApproval(models.Model):
         self.ensure_one()
         if self.state != 'committee_approval' or self.cfo_approved:
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
+        if not self.env.user.has_group('bn_material_request.menu_group_material_request_cfo'):
+            raise AccessError(_('Only the CFO can give this approval.'))
         if not self.cfo_remarks:
             raise ValidationError(_('CFO Remarks are required to approve.'))
         hold = self._shariah_hold_gate()
@@ -330,6 +299,8 @@ class MemberApproval(models.Model):
         self.ensure_one()
         if self.state != 'committee_approval' or self.coo_approved:
             raise ValidationError(_('This request is not in Committee Approval state. Or you have validated the entry.'))
+        if not self.env.user.has_group('bn_material_request.menu_group_material_request_coo'):
+            raise AccessError(_('Only the COO can give this approval.'))
         if not self.coo_remarks:
             raise ValidationError(_('COO Remarks are required to approve.'))
         hold = self._shariah_hold_gate()
@@ -358,13 +329,9 @@ class MemberApproval(models.Model):
         if not self.dest_location_id:
             raise ValidationError(_('Please specify a Destination Location.'))
 
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
-
-        if not picking_type:
-            raise ValidationError(_('No internal transfer picking type found.'))
+        # the Material Request operation type of the source warehouse
+        picking_type = self.env['stock.warehouse']._get_program_type(
+            'material_request', self.source_location_id)
 
         move_vals = []
         shortage_move_vals = []
@@ -451,6 +418,7 @@ class MemberApproval(models.Model):
                 'location_id': self.source_location_id.id,
                 'location_dest_id': self.dest_location_id.id,
                 'origin': self.name,
+                'source_record_ref': '%s,%s' % (self._name, self.id),
                 'material_request_id': self.id,
                 'move_ids_without_package': move_vals,
             })
@@ -514,11 +482,13 @@ class MemberApproval(models.Model):
     def action_reject(self):
         """Reject the request"""
         self.ensure_one()
+        # once approved, the transfer / purchase request carries on
+        # (shariah_hold: bn_procurement_workflow, rejected by the CFO)
+        if self.state not in ('hod_approval', 'committee_approval', 'shariah_hold'):
+            raise ValidationError(_('Only a request waiting for approval can be rejected.'))
         
         if not self.rejection_reason:
             raise ValidationError(_('Please provide a rejection reason.'))
-        
-        self.picking_id.action_cancel()
 
         self.state = 'rejected'
         
@@ -527,6 +497,8 @@ class MemberApproval(models.Model):
     def action_reset_to_draft(self):
         """Reset to draft state"""
         self.ensure_one()
+        if self.state != 'rejected':
+            raise ValidationError(_('Only a rejected request can be reset to draft.'))
         
         self.write({
             'state': 'draft',
@@ -591,6 +563,36 @@ class MemberApproval(models.Model):
             # sudo: the requester need not be a purchase user.
             rec.purchase_requisition_count = len(rec.sudo().purchase_requisition_ids)
 
+    def _purchase_orders(self):
+        """Confirmed Purchase Orders of all its Purchase Requests (sudo: the
+        requester need not be a purchase user)."""
+        self.ensure_one()
+        return self.env['purchase.order'].sudo().search([
+            ('requisition_id.material_request_id', '=', self.id), ('state', 'in', ('purchase', 'done'))])
+
+    def _compute_purchase_documents(self):
+        for rec in self:
+            orders = rec._purchase_orders() if rec.id else self.env['purchase.order']
+            rec.purchase_order_count = len(orders)
+            rec.purchase_receipt_count = len(orders.picking_ids)
+            rec.vendor_bill_count = len(orders.invoice_ids)
+
+    def _open_documents(self, model, records, name):
+        return {
+            'type': 'ir.actions.act_window', 'name': name, 'res_model': model,
+            'view_mode': 'tree,form', 'domain': [('id', 'in', records.ids)],
+            'context': {'create': False}, 'target': 'current',
+        }
+
+    def action_view_purchase_orders(self):
+        return self._open_documents('purchase.order', self._purchase_orders(), _('Purchase Orders of %s', self.name))
+
+    def action_view_purchase_receipts(self):
+        return self._open_documents('stock.picking', self._purchase_orders().picking_ids, _('Receipts of %s', self.name))
+
+    def action_view_vendor_bills(self):
+        return self._open_documents('account.move', self._purchase_orders().invoice_ids, _('Vendor Bills of %s', self.name))
+
     def action_view_purchase_requisitions(self):
         """View every Purchase Request made for this request"""
         self.ensure_one()
@@ -620,40 +622,37 @@ class MemberApproval(models.Model):
             'target': 'current',
         }
 
-    # def action_committee_approve(self):
-    #     if self.state != 'hod_approval':
-    #         raise ValidationError(_('This request is not in HOD Approval state.'))
         
     #     self.state = 'committee_approval'
 
 
+    def _default_program_type(self, user):
+        try:
+            return self.env['stock.warehouse']._get_program_type('material_request', user=user)
+        except UserError:
+            return self.env['stock.picking.type']
+
     def _get_default_source_location(self, user):
         """Get the Stock location from the user's allowed warehouses."""
-        if user.allowed_warehouse_ids:
+        if user.scope_warehouse_ids:
             # Take the first allowed warehouse and get its internal stock location
-            warehouse = user.allowed_warehouse_ids[0]
+            warehouse = user.scope_warehouse_ids[0]
             if warehouse.lot_stock_id:
                 return warehouse.lot_stock_id
                 
-        # Fallback to internal picking type default
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
+        # Fallback: the Material Request operation type of the user's warehouse
+        picking_type = self._default_program_type(user)
         return picking_type.default_location_src_id if picking_type else False
 
 
     def _get_default_dest_location(self, user):
         """Get the user's explicitly Allowed Location."""
-        # Check if the user has the allowed_location_ids field populated (from your screenshot)
-        if hasattr(user, 'allowed_location_ids') and user.allowed_location_ids:
-            return user.allowed_location_ids[0]
+        # the first location in the user's scope (allowed + Branch / Zone / City)
+        if hasattr(user, 'scope_location_ids') and user.scope_location_ids:
+            return user.scope_location_ids[0]
             
-        # Fallback to internal picking type default
-        picking_type = self.env['stock.picking.type'].search([
-            ('code', '=', 'internal'),
-            ('company_id', '=', self.env.company.id),
-        ], limit=1)
+        # Fallback: the Material Request operation type of the user's warehouse
+        picking_type = self._default_program_type(user)
         return picking_type.default_location_dest_id if picking_type else False
 
     @api.model
@@ -725,9 +724,35 @@ class MemberApproval(models.Model):
             }
         }
 
+    # where a request in each step may be sent back to
+    _REVERT_TARGETS = {
+        'hod_approval': ('draft',),
+        'committee_approval': ('draft', 'hod_approval'),
+    }
+
+    def _check_can_revert(self, target_state):
+        """Only who decides at the current step sends the request back, and
+        only to an earlier step."""
+        self.ensure_one()
+        if target_state not in self._REVERT_TARGETS.get(self.state, ()):
+            raise ValidationError(_('A request in "%(state)s" cannot be reverted to "%(target)s".') % {
+                'state': dict(self._fields['state'].selection).get(self.state),
+                'target': dict(self._fields['state'].selection).get(target_state, target_state)})
+        if self.env.su or self.env.user.has_group('base.group_system'):
+            return
+        if self.state == 'hod_approval':
+            if self.department_id and self.department_id.manager_id != self.env.user.employee_id:
+                raise AccessError(_('Only the HOD of the department can revert this request.'))
+        elif not (self.env.user.has_group('bn_material_request.menu_group_material_request_cfo')
+                  or self.env.user.has_group('bn_material_request.menu_group_material_request_coo')):
+            raise AccessError(_('Only the CFO or the COO can revert a request in Budget Approval.'))
+
     def action_process_revert(self, reason, target_state):
         """Process the revert action based on the selected target state."""
         self.ensure_one()
+        if not (reason or '').strip():
+            raise ValidationError(_('You must provide a reason to revert this request.'))
+        self._check_can_revert(target_state)
         
         # Update state and reason
         self.write({
@@ -736,7 +761,8 @@ class MemberApproval(models.Model):
         })
         
         # Log it in the chatter for full traceability
-        self.message_post(body=_("Request reverted to %s by %s. Reason: %s") % (target_state, self.env.user.name, reason))
+        self.message_post(body=_("Request reverted to %(state)s by %(user)s. Reason: %(reason)s") % {
+            'state': dict(self._fields['state'].selection).get(target_state), 'user': self.env.user.name, 'reason': reason})
 
         # Reset approvals based on where it was reverted to
         if target_state == 'draft':

@@ -97,6 +97,7 @@ class RFQPriceWizard(models.TransientModel):
     _name = 'rfq.price.wizard'
     _description = 'Bulk RFQ Price Entry Wizard'
 
+    # Prices are updated first, then the winning lines are confirmed
     state = fields.Selection([
         ('draft', 'Draft'),
         ('price_update', 'Price Updated'),
@@ -252,7 +253,7 @@ class RFQPriceWizard(models.TransientModel):
             rfq.message_post(body=message)
 
         self.rfq_ids.write({'bulk_price_state': 'price_update'})
-        
+
         # Show success message and close wizard
         message = _('Updated %d price(s) for %d RFQ(s).') % (updated_count, len(updated_rfqs))
         return {

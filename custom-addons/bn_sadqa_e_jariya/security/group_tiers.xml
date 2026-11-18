@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sadqa e Jariya: its own app, with the same structure as every module:
+         Menu, User, Manager (= User), Audit, Administrator (= Manager + Audit),
+         plus its role groups (HOD, Committee, Member, Fetch Institution,
+         All Lines, POS Action). group.xml is noupdate: the existing groups get
+         their category, tier name and inheritance here, on every install / upgrade. -->
+    <record id="module_sadqa_e_jariya" model="ir.module.category">
+        <field name="name">Sadqa e Jariya</field>
+        <field name="sequence">15</field>
+    </record>
+
+    <record id="sadqa_e_jariya_root_group" model="res.groups">
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_sadqa_e_jariya"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Sadqa e Jariya app menu. Assign it explicitly with the role groups: no group implies it.</field>
+    </record>
+
+    <record id="sadqa_e_jariya_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_sadqa_e_jariya"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('group_institutional_disbursement')])]"/>
+        <field name="comment">Everything User can do; the approvals themselves belong to the role groups (HOD, Committee, Member).</field>
+    </record>
+
+    <record id="sadqa_e_jariya_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_sadqa_e_jariya"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of applications, disbursement lines, fetch logs and donees, for reporting.</field>
+    </record>
+
+    <record id="sadqa_e_jariya_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_sadqa_e_jariya"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('sadqa_e_jariya_manager_group'), ref('sadqa_e_jariya_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and the configuration (areas, application types, disbursement categories, approval limits, committee members).</field>
+    </record>
+
+    <!-- the existing groups (group.xml is noupdate) -->
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_institutional_disbursement')]"/>
+        <value eval="{'name': 'User', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(5, 0, 0)], 'comment': 'Day-to-day access: applications (complete, send form, portal status, inquiry, HOD approval, recurring orders), Record Search and donees.'}"/>
+    </function>
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_sadqa_jariya_hod')]"/>
+        <value eval="{'name': 'HOD', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(6, 0, [ref('group_institutional_disbursement')])], 'comment': 'Role: HOD approval, then moves the application to the Committee.'}"/>
+    </function>
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_sadqa_jariya_committee')]"/>
+        <value eval="{'name': 'Committee', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(6, 0, [ref('group_institutional_disbursement')])], 'comment': 'Role: the Committee decision.'}"/>
+    </function>
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_sadqa_jariya_member')]"/>
+        <value eval="{'name': 'Member', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(6, 0, [ref('group_institutional_disbursement')])], 'comment': 'Role: final approval.'}"/>
+    </function>
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_fetch_institution')]"/>
+        <value eval="{'name': 'Fetch Institution', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(6, 0, [ref('group_institutional_disbursement')])], 'comment': 'Role: fetch institution applications from the portal and see the fetch log.'}"/>
+    </function>
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_sadqa_jariya_all_lines')]"/>
+        <value eval="{'name': 'All Lines', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(5, 0, 0)], 'comment': 'Role: the list of every disbursement line (one-time and recurring).'}"/>
+    </function>
+    <function model="res.groups" name="write">
+        <value eval="[ref('group_sadqa_jariya_pos_action')]"/>
+        <value eval="{'name': 'POS Action', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(5, 0, 0)], 'comment': 'Cashiers: disburse Sadqa e Jariya lines at the Point of Sale.'}"/>
+    </function>
+
+    <!-- These groups also opened the app: on the first install / upgrade with
+         the tiers their users get the Menu group -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_sadqa_e_jariya.group_institutional_disbursement': 'bn_sadqa_e_jariya.sadqa_e_jariya_root_group',
+        'bn_sadqa_e_jariya.group_fetch_institution': 'bn_sadqa_e_jariya.sadqa_e_jariya_root_group',
+        'bn_sadqa_e_jariya.group_sadqa_jariya_all_lines': 'bn_sadqa_e_jariya.sadqa_e_jariya_root_group',
+    }, 'bn_sadqa_e_jariya.tiers']"/>
+
+</odoo>

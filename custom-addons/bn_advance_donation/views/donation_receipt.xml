@@ -31,17 +31,16 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="action_pending" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state == 'draft' and payment_type == 'cash' or state != 'draft'"/>
-                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type == 'cheque'"/>
-                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
-                    <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="microfinance_loan.group_mfd_pir_cheque_approval"/>
-                    <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="state != 'bounced'"/>
+                    <button name="action_pending" groups="bn_advance_donation.group_adv_don_menu" string="Deposit Cheque" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type != 'cheque'"/>
+                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'draft' or payment_type == 'cheque'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_paid" string="Confirm Payment" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
+                    <button name="action_bounced" string="Bounced" type="object" class="oe_highlight" invisible="state != 'pending'" groups="bn_pos_cheque.pos_cheque_menu_group"/>
+                    <button name="action_redeposit_cheque" string="Redeposit Cheque" type="object" class="oe_highlight" invisible="state != 'bounced'" groups="bn_advance_donation.group_adv_don_menu"/>
                 
                     <button name="%(bn_advance_donation.action_report_advance_donation_receipt)d" 
                             string="Print Receipt" 
-                            type="action" 
-                            class="oe_highlight" 
-                            context="{'active_ids': [active_id]}"/>      
+                            type="action"
+                            class="oe_highlight"/>
                     <field name="has_pos_source" invisible="1"/>
                     <button name="action_print_pos_receipt"
                             string="Print POS Receipt"
@@ -72,7 +71,6 @@
                             <field name="product_id" readonly="1"/>
                             <field name="donation_id" options="{'no_create': True, 'no_edit': True}" required="1" readonly="state != 'draft'" invisible="is_donation_id == False"/>
                             <field name="donor_id" required="1" readonly="state != 'draft'"/>
-                            <field name="order_id" readonly="1"/>
                             <field name="amount" required="True" readonly="state != 'draft'" force_save="1"/>
                             <field name="date" required="True" readonly="state != 'draft'"/>
                             <field name="used_amount" readonly="1" force_save="1"/>

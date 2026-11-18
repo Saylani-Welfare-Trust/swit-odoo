@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The one-off "Update Country Name | BN" script (unbound: it did nothing
+         when run) was noupdate, so the upgrade does not remove it by itself -->
+    <delete model="ir.actions.server" search="[('name', '=', 'Update Country Name | BN'), ('model_id.model', '=', 'res.country')]"/>
+
+</odoo>

@@ -12,9 +12,7 @@
                         <group name="product_configuration_col_1">
                             <field name="medical_equipment_security_depsoit_product" />
                         </group>
-                        <group name="product_configuration_col_1">
-                            <field name="microfinance_security_depsoit_product" />
-                            <field name="microfinance_intallement_product" />
+                        <group name="product_configuration_col_2">
                             <field name="welfare_product" />
                         </group>
                     </group>

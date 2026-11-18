@@ -29,23 +29,3 @@ class ShariahLawBlocker(models.Model):
         if not config:
             config = self.create({'company_id': self.env.company.id})
         return config
-
-    def is_module_blocked(self, module_key):
-        """Check if a specific module is blocked."""
-        config = self.get_blocker_config()
-        field_map = {
-            'pos': 'enable_pos',
-            'donations': 'enable_donations',
-            'dik': 'enable_dik',
-            'expense': 'enable_expense',
-            'purchase': 'enable_purchase',
-            'material_request': 'enable_material_request',
-            'welfare': 'enable_welfare',
-            'microfinance': 'enable_microfinance',
-            'transfer': 'enable_transfer',
-        }
-        
-        field_name = field_map.get(module_key)
-        if field_name:
-            return not getattr(config, field_name, True)
-        return False

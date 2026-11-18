@@ -194,7 +194,7 @@ def print_text_api():
     hPrinter = None
     try:
         hPrinter = win32print.OpenPrinter(printer_name)
-        hJob = win32print.StartDocPrinter(hPrinter, 1, ("Text Print", None, "RAW"))
+        win32print.StartDocPrinter(hPrinter, 1, ("Text Print", None, "RAW"))
         win32print.StartPagePrinter(hPrinter)
         win32print.WritePrinter(hPrinter, text.encode("utf-8", errors="replace"))
         win32print.EndPagePrinter(hPrinter)

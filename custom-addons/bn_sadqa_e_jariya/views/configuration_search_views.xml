@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Sadqa e Jariya configuration lists -->
+
+    <record id="sadqa_jariya_disbursement_category_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.disbursement.category.view.search</field>
+        <field name="model">sadqa.jariya.disbursement.category</field>
+        <field name="arch" type="xml">
+            <search string="Disbursement Categories">
+                <field name="name"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_area_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.area.view.search</field>
+        <field name="model">sadqa.jariya.area</field>
+        <field name="arch" type="xml">
+            <search string="Areas">
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                <field name="code"/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_committee_member_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.committee.member.view.search</field>
+        <field name="model">sadqa.jariya.committee.member</field>
+        <field name="arch" type="xml">
+            <search string="Committee Members">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_application_type_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.application.type.view.search</field>
+        <field name="model">sadqa.jariya.application.type</field>
+        <field name="arch" type="xml">
+            <search string="Disbursement Application Types">
+                <field name="name"/>
+                <field name="disbursement_category_id"/>
+                <field name="product_category_id"/>
+                <filter name="filter_one_time" string="One Time" domain="[('order_type', '=', 'one_time')]"/>
+                <filter name="filter_recurring" string="Recurring" domain="[('order_type', '=', 'recurring')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_disbursement_category" string="Disbursement Category" context="{'group_by': 'disbursement_category_id'}"/>
+                    <filter name="group_order_type" string="Order Type" context="{'group_by': 'order_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_approval_limit_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.approval.limit.view.search</field>
+        <field name="model">sadqa.jariya.approval.limit</field>
+        <field name="arch" type="xml">
+            <search string="Approval Limits">
+                <field name="group_id"/>
+                <filter name="filter_archived" string="Archived" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_group" string="Group" context="{'group_by': 'group_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+</odoo>

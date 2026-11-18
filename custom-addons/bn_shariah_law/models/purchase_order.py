@@ -13,12 +13,8 @@ class PurchaseOrder(models.Model):
 
     @api.model
     def _get_product_segment(self, product):
-        """The analytic account (segment) of a product: the one set on the product
-        itself, otherwise the one whose Products list contains it."""
-        analytic = self.env['account.analytic.account']
-        if 'analytic_account_id' in product._fields:
-            analytic = product.analytic_account_id
-        return analytic or analytic.search([('product_ids', 'in', [product.id])], limit=1)
+        """The analytic account (segment) of a product: the one set on the product."""
+        return product.analytic_account_id
 
     def _get_shariah_amounts(self):
         """{analytic account id: amount} - the Subtotal of this order's lines added

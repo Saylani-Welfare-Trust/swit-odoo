@@ -24,12 +24,11 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0"/>
-                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0"/>
-                    <!-- <button name="action_apply_manual_payment" string="Apply Manual Payment" type="object" class="btn-primary" invisible="state != 'draft' or manual_payment_amount == 0"/> -->
-                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1"/>
-                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="compute_donation" string="Compute Donation" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_open_payment_wizard" string="Add Payment" type="object" class="btn-primary" invisible="not advance_donation_lines or remaining_amount == 0 or state == 'rejected'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_cancel_payment" string="Cancel Payment" type="object" class="btn-warning" confirm="Are you sure you want to cancel payments for non-disbursed lines? This will return the amounts to the receipts." invisible="not advance_donation_lines or paid_amount == 0 or state == 'rejected'" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_refresh_balance" string="Refresh Balance" type="object" class="btn-secondary" invisible="1" groups="bn_advance_donation.group_adv_don_menu"/>
+                    <button name="action_send_for_approval" string="Send for Approval" type="object" class="oe_highlight" invisible="state != 'draft'" groups="bn_advance_donation.group_adv_don_menu"/>
                     <button name="action_approved" invisible="state != 'approval_1'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_1"/>
                     <button name="action_approved" invisible="state != 'approval_2'" string="Approve" type="object" class="oe_highlight" groups="bn_advance_donation.group_adv_don_approval_2"/>
                     <button name="action_rejected" invisible="state != 'approval_1'" string="Reject" type="object" groups="bn_advance_donation.group_adv_don_approval_1"/>
@@ -81,16 +80,15 @@
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
                             <field name="total_no_of_product" readonly="contract_type in ['frequency','open_contract'] or state != 'draft'" force_save="1" invisible="contract_type == 'open_contract'"/>                            
                             <field name="total_balance" readonly="1" force_save="1"/>
-                            <field name="service_charges" widget="boolean_toggle"/>
+                            <field name="service_charges" widget="boolean_toggle" readonly="state != 'draft'"/>
                             <field name="service_charge_product_id"
                                 invisible="not service_charges"
-                                required="service_charges"/>
+                                required="service_charges"
+                                readonly="state != 'draft'"/>
                             <field name="service_charge_amount"
                                 invisible="not service_charges"
                                 readonly="state != 'draft'"
                                 force_save="1"/>
-                            <!-- <field name="manual_payment_amount" readonly="state != 'draft'"/> -->
-                            <!-- <field name="available_balance" readonly="1" force_save="1" invisible="1"/>                             -->
                             <field name="approved_date" invisible="state != 'approved'" readonly="1"/>
                         </group>
                     </group>
@@ -117,8 +115,6 @@
                                     <field name="donation_state" column_invisible="1"/>
                                     <field name="approved_date" column_invisible="1"/>
                                     <field name="currency_id" column_invisible="1"/>
-                                    <!-- <field name="reserved_welfare_line_id" column_invisible="1"/> -->
-                                    <!-- <field name="reserved_welfare_recurring_line_id" column_invisible="1"/> -->
                                 </tree>
                             </field>
                         </page>
@@ -171,9 +167,6 @@
                                     <field name="advance_amount"/>
                                     <field name="disbursed_record"/>
                                     <field name="disbursed_amount"/>
-                                    <field name="welfare_id"/>
-                                    <!-- <field name="recurring_line_id"/> -->
-                                    <field name="microfinance_id" />
                                     <button name="action_print_line_non_cash_disbursement_report" string="Print Non-Cash Report" type="object" class="btn-link" icon="fa-print"/>
 
                                 </tree>
@@ -185,16 +178,18 @@
                                         <field name="advance_amount" readonly="1"/>
                                         <field name="disbursed_amount" readonly="1"/>
                                     </group>
-                                    <group>
-                                        <field name="welfare_id" readonly="1"/>
-                                        <!-- <field name="recurring_line_id" readonly="1"/> -->
-                                        <field name="microfinance_id" readonly="1"/>
-                                    </group>
+                                    <group name="source_links"/>
                                 </form>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+
             </form>
         </field>
     </record>

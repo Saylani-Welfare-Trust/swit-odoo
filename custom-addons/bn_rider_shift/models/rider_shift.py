@@ -2,7 +2,6 @@ from odoo import fields, models, api
 from odoo.exceptions import UserError
 from odoo.tools.translate import _
 
-from datetime import timedelta
 
 state_selection =[
     ('draft', 'Draft'),
@@ -24,17 +23,17 @@ class RiderShift(models.Model):
 
     start_date = fields.Date("Start Date", tracking=True)
     end_date = fields.Date("End Date", tracking=True)
-    state= fields.Selection(selection=state_selection, default='draft', string="Status", tracking=True)
+    state = fields.Selection(selection=state_selection, default='draft', string="Status", tracking=True, index=True)
  
     schedule_day_ids = fields.One2many('rider.schedule.day', 'rider_shift_id', string="Schedule Days")
 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('rider_shift_sequence') or ('New')
-
-        return super(RiderShift, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('rider_shift_sequence') or ('New')
+        return super().create(vals_list)
     
     def action_mark_done(self):
         for shift in self:

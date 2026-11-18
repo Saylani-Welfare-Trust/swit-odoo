@@ -1,4 +1,3 @@
-from psycopg2 import IntegrityError
 from odoo import api, models, fields
 
 
@@ -10,29 +9,27 @@ class POSOrder(models.Model):
 
     @api.model
     def _process_order(self, order_data, draft=False, existing_order=False):
-        if order_data.get('data'):
-            data = order_data['data']
-            if data.get('pos_order_seq'):
-                self.pos_order_seq = data['pos_order_seq']
         order_id = super()._process_order(order_data, draft=draft, existing_order=existing_order)
         order = self.browse(order_id)
         if order and not order.dn_number:
             dn_number = order._compute_dn_number()
-            order.write({
-                'dn_number': dn_number,
-                'source_document': dn_number,
-            })
+            vals = {'dn_number': dn_number}
+            # keep the request a program order was made for (welfare,
+            # medical equipment, qurbani ...)
+            if not order.source_document:
+                vals['source_document'] = dn_number
+            order.write(vals)
         return order_id
 
     def _get_branch_code(self):
         """Branch code is stored on res.users (the cashier)."""
         self.ensure_one()
-        return self.user_id.branch_code or 'UNK'
+        return self._branch_code()
 
     def _compute_dn_number(self):
         """DN # = {branch_code}-C{counter}-{year}-{pos_order_seq}
 
-        - branch_code:   stored on res.users (cashier)
+        - branch_code:   the shop's Branch (pos.config / session)
         - counter:       stored on pos.config (via the session) - existing field, not redefined here
         - pos_order_seq: stored on this pos.order record
         """
@@ -79,10 +76,6 @@ class POSOrder(models.Model):
             if not livestock_lines:
                 continue
 
-            existing_line_ids = set(slaughter_obj.search([
-                ('pos_order_line_id', 'in', livestock_lines.ids),
-            ]).mapped('pos_order_line_id').ids)
-
             if not order.dn_number:
                 dn_number = order._compute_dn_number()
                 order.write({
@@ -93,36 +86,15 @@ class POSOrder(models.Model):
             reference = order.source_document or order.dn_number
 
             for line in livestock_lines:
-                if line.id in existing_line_ids:
-                    continue
-
-                price = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
-                qty = int(line.qty)
-                if qty < 1:
-                    continue
-                per_unit_price = order.currency_id.round(price / qty)
-
-                for i in range(qty):
-                    # the last record takes the rounding difference
-                    unit_price = per_unit_price if i < qty - 1 else order.currency_id.round(
-                        price - per_unit_price * (qty - 1))
-                    slaughter_vals = {
-                        'product_id': line.product_id.id,
-                        'donee_id': order.partner_id.id,
-                        'pos_order_id': order.id,
-                        'pos_order_line_id': line.id,
-                        'pos_split_no': i + 1,
-                        'quantity': 1,
-                        'price': unit_price,
-                        'ref': reference,
-                    }
-                    slaughter_vals.update(order._get_livestock_department_vals(line.product_id))
-
-                    try:
-                        with self.env.cr.savepoint():
-                            slaughter_obj.create(slaughter_vals)
-                    except IntegrityError:
-                        continue
+                vals = {
+                    'product_id': line.product_id.id,
+                    'donee_id': order.partner_id.id,
+                    'pos_order_id': order.id,
+                    'ref': reference,
+                }
+                vals.update(order._get_livestock_department_vals(line.product_id))
+                total = line.price_subtotal_incl or line.price_subtotal or line.price_unit * line.qty
+                slaughter_obj._create_for_source('pos_order_line_id', line, line.qty, total, vals)
 
     @api.model_create_multi
     def create(self, vals_list):

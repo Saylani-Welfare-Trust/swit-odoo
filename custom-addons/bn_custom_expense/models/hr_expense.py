@@ -1,4 +1,4 @@
-from odoo import models, api, fields
+from odoo import _, models, api, fields
 from odoo.exceptions import ValidationError
 from odoo.exceptions import UserError
 
@@ -108,7 +108,3 @@ class HRExpense(models.Model):
         
     def unlink(self):
         raise UserError(_('You cannot delete an expense.'))
-        # if self.state == 'approved':
-        #     raise ValidationError('No one have right to delete an approved expense.')
-        
-        # return super(HRExpense, self).unlink()

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="search_donation_in_kind" model="ir.ui.view">
+        <field name="name">donation.in.kind.search</field>
+        <field name="model">donation.in.kind</field>
+        <field name="arch" type="xml">
+            <search string="Donation In Kind">
+                <field name="name"/>
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <field name="donor_id"/>
+                <field name="product_id"/>
+                <field name="location_id"/>
+                <field name="previous_location_id"/>
+                <field name="analytical_account_id"/>
+                <field name="donation_in_kind_line_ids" string="Line Product" filter_domain="['|', ('donation_in_kind_line_ids.product_id', 'ilike', self), ('valuation_committee_line_ids.product_id', 'ilike', self)]"/>
+                <separator/>
+                <filter name="filter_state_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_state_delivered" string="Delivered" domain="[('state', '=', 'delivered')]"/>
+                <filter name="filter_state_validate" string="Validate" domain="[('state', '=', 'validate')]"/>
+                <filter name="filter_state_box_open" string="Open Box" domain="[('state', '=', 'box_open')]"/>
+                <filter name="filter_state_valuation_committee" string="Valuation Committee" domain="[('state', '=', 'valuation_committee')]"/>
+                <filter name="filter_state_approval" string="Approval" domain="[('state', '=', 'approval')]"/>
+                <filter name="filter_state_box_validate" string="Box Validate" domain="[('state', '=', 'box_validate')]"/>
+                <filter name="filter_state_cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="groupby_donor_id" string="Donor" context="{'group_by': 'donor_id'}"/>
+                    <filter name="groupby_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="groupby_location_id" string="Location" context="{'group_by': 'location_id'}"/>
+                    <filter name="groupby_previous_location_id" string="Previous Location" context="{'group_by': 'previous_location_id'}"/>
+                    <filter name="groupby_analytical_account_id" string="Analytic Account" context="{'group_by': 'analytical_account_id'}"/>
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="search_donation_in_kind_config" model="ir.ui.view">
+        <field name="name">donation.in.kind.config.search</field>
+        <field name="model">donation.in.kind.config</field>
+        <field name="arch" type="xml">
+            <search string="Donation In Kind Config">
+                <field name="location_id"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <separator/>
+                <filter name="period_create_date" string="Created on" date="create_date"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_location_id" string="Location" context="{'group_by': 'location_id'}"/>
+                    <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

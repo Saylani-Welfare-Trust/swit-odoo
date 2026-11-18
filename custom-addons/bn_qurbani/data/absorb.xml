@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Must stay the first data file: bn_res_qurbani (merged into this
+         module) hands its records over; its old company view is removed. -->
+    <function model="ir.module.module" name="_absorb_modules">
+        <value>bn_qurbani</value>
+        <value eval="['bn_res_qurbani']"/>
+    </function>
+</odoo>

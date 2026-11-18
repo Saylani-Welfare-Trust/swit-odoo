@@ -1,6 +1,6 @@
 {
     'name': 'Purchase Audit',
-    'version': '1.2',
+    'version': '17.0.1.2.0',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',

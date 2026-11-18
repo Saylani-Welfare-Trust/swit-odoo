@@ -14,7 +14,7 @@
         <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
     </record>
 
-    <!-- Material Requests: the app and its Transfer Requests (read-only, see ir_rule.xml) -->
+    <!-- Material Requests: the app (read-only, see ir_rule.xml) -->
     <record id="bn_material_request.material_request_menu_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(4, ref('group_purchase_audit'))]"/>
     </record>

@@ -1,5 +1,4 @@
 from odoo import api, models, fields, _
-from odoo.exceptions import ValidationError
 from odoo.exceptions import UserError
 
 
@@ -50,12 +49,6 @@ class StockPicking(models.Model):
                 move.product_id.check_stock for move in picking.move_ids if move.product_id
             )
 
-    def action_recieve_by_weight(self):
-        """
-        Deprecated method name - kept for backward compatibility.
-        """
-        return self.open_receive_by_weight_wizard()
-
     def open_receive_by_weight_wizard(self):
         """
         Open the receive-by-weight wizard for this picking.
@@ -84,7 +77,7 @@ class StockPicking(models.Model):
         s_no = 1
         for move in self.move_ids:
             qty = int(move.product_uom_qty or 0)
-            for _ in range(qty):
+            for _unit in range(qty):
                 lines.append((0, 0, {
                     's_no': s_no,
                     'product_id': move.product_id.id,

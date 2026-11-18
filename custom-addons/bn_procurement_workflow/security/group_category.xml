@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="module_procurement" model="ir.module.category">
+        <field name="name">Procurement</field>
+        <field name="sequence">63</field>
+    </record>
+
+</odoo>

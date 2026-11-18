@@ -11,14 +11,19 @@
                 <!-- Required for invisible condition -->
                 <field name="show_double_cheque" invisible="1"/>
 
-                <button name="action_print_check" type="object" string="Print Cheque" class="btn-primary"/>
+                <field name="cheque_first_printed_by" invisible="1"/>
+                <button name="action_print_check" type="object" string="Print Cheque" class="btn-primary"
+                        invisible="payment_type != 'outbound' or state == 'cancel'"/>
 
-                <button name="action_print_double_check" type="object" string="Print Double Cheque" class="btn-secondary" invisible="not show_double_cheque"/>
+                <button name="action_print_double_check" type="object" string="Print Double Cheque" class="btn-secondary"
+                        invisible="not show_double_cheque or payment_type != 'outbound' or state == 'cancel'"/>
 
             </header>
 
             <xpath expr="//field[@name='payment_type']" position="after">
-                <field name="cheque_print_mode" readonly="state != 'draft'"/>
+                <field name="cheque_print_mode" readonly="state != 'draft'" invisible="payment_type != 'outbound'"/>
+                <field name="cheque_first_printed_by" invisible="not cheque_first_printed_by"/>
+                <field name="cheque_first_printed_date" invisible="not cheque_first_printed_by"/>
             </xpath>
 
         </field>

@@ -1,4 +1,4 @@
-from odoo import models, fields, api, _
+from odoo import models, fields, api
 
 state_cheque_selection = [
     ('draft', 'Draft'),
@@ -32,33 +32,23 @@ class MicrofinancePDCLine(models.Model):
     created_by = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     create_date = fields.Datetime('Created Date', default=fields.Datetime.now)
 
-    @api.model
-    def create(self, vals):
-        if not vals.get('installment_number') and vals.get('microfinance_line_id'):
-            line = self.env['microfinance.line'].browse(vals['microfinance_line_id'])
-            if line:
-                vals['installment_number'] = line.installment_no or line.installment_number
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('installment_number') and vals.get('microfinance_line_id'):
+                line = self.env['microfinance.line'].browse(vals['microfinance_line_id'])
+                if line:
+                    vals['installment_number'] = line.installment_no or line.installment_number
 
-        # AUTO-LINK via installment_number instead of cheque_no
-        if not vals.get('microfinance_line_id') and vals.get('installment_number') and vals.get('microfinance_id'):
-            microfinance_line = self.env['microfinance.line'].search([
-                ('microfinance_id', '=', vals['microfinance_id']),
-                ('installment_no', '=', vals['installment_number']),
-            ], limit=1)
-            if microfinance_line:
-                vals['microfinance_line_id'] = microfinance_line.id
-
-        return super(MicrofinancePDCLine, self).create(vals)
-    def _compute_donee_id(self):
-        for rec in self:
-            # Try to get donee from microfinance_line_id first
-            if rec.microfinance_line_id:
-                rec.donee_id = rec.microfinance_line_id.donee_id.id
-            # Fallback to microfinance_id
-            elif rec.microfinance_id:
-                rec.donee_id = rec.microfinance_id.donee_id.id
-            else:
-                rec.donee_id = False
+            # AUTO-LINK via installment_number instead of cheque_no
+            if not vals.get('microfinance_line_id') and vals.get('installment_number') and vals.get('microfinance_id'):
+                microfinance_line = self.env['microfinance.line'].search([
+                    ('microfinance_id', '=', vals['microfinance_id']),
+                    ('installment_no', '=', vals['installment_number']),
+                ], limit=1)
+                if microfinance_line:
+                    vals['microfinance_line_id'] = microfinance_line.id
+        return super().create(vals_list)
 
 
     def action_deposit (self):

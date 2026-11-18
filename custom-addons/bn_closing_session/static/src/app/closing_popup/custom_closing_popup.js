@@ -294,77 +294,59 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         return true;
     }
 
-    async confirm() {
-        // The slips of every payment method / type must add up to its expected amount.
-        const visibleMethods = [
-            ...(this.pos.config.cash_control && this.props.default_cash_details ? [this.props.default_cash_details] : []),
-            ...(this.props.other_payment_methods || []),
-        ];
-        for (const pm of visibleMethods) {
-            for (const type of ["restricted", "unrestricted", "neutral"]) {
-                const remaining = this.getRemainingAmount(pm.id, type);
-                if (!this.env.utils.floatIsZero(remaining)) {
-                    const expected = pm.breakdown?.[type] || 0;
-                    await this.popup.add(ErrorPopup, {
-                        title: _t("Validation Error"),
-                        body: _t(
-                            `Slips of "${pm.name}" (${this._getTypeLabel(type)} Amount) total ${this.env.utils.formatCurrency(expected - remaining)} but the expected amount is ${this.env.utils.formatCurrency(expected)}.`
-                        ),
-                    });
-                    return;
-                }
+    /**
+     * Payment methods whose money is deposited by slip (per category).
+     */
+    _slipMethods() {
+        const methods = [];
+        if (this.pos.config.cash_control && this.props.default_cash_details?.use_slips) {
+            methods.push(this.props.default_cash_details);
+        }
+        for (const pm of this.props.other_payment_methods || []) {
+            if (pm.use_slips) {
+                methods.push(pm);
             }
         }
+        return methods;
+    }
 
-        for (const pm of (this.props.other_payment_methods || [])) {
-
-            if (pm.type !== "bank") {
-                continue;
-            }
-
-            const difference = this.getDifference(pm.id);
-
-            // ONLY VALIDATE IF DIFFERENCE IS NOT ZERO
-            if (difference !== 0) {
-
-                const lines = this.state.lines[pm.id] || {};
-
-                const allLines = [
-                    ...(lines.restricted || []),
-                    ...(lines.unrestricted || []),
-                    ...(lines.neutral || []),
-                ];
-
-                // NO LINE ADDED
-                if (!allLines.length) {
-
+    async confirm() {
+        // every category with an amount needs its deposit slip (with a bank)
+        for (const pm of this._slipMethods()) {
+            const lines = this.state.lines[pm.id] || {};
+            for (const type of ["restricted", "unrestricted", "neutral"]) {
+                const expected = pm.breakdown?.[type] || 0;
+                if (this.env.utils.floatIsZero(expected)) {
+                    continue;
+                }
+                const typeLines = lines[type] || [];
+                if (!typeLines.length) {
                     await this.popup.add(ErrorPopup, {
-                        title: _t("Validation Error"),
-                        body: _t(
-                            `Payment method "${pm.name}" has a difference. Please add at least one slip line.`
-                        ),
+                        title: _t("Deposit Slip Missing"),
+                        body: _t("Please add the deposit slip of every category of \"%s\".", pm.name),
                     });
-
                     return;
                 }
-
-                // BANK NOT SELECTED
-                const invalidBank = allLines.some(
-                    (line) =>
-                        !line.bank ||
-                        line.bank === "0" ||
-                        line.bank === 0
-                );
-
-                if (invalidBank) {
-
+                if (typeLines.some((line) => !line.bank || line.bank === "0" || line.bank === 0)) {
+                    await this.popup.add(ErrorPopup, {
+                        title: _t("Validation Error"),
+                        body: _t("Please select a bank for all slip lines of \"%s\".", pm.name),
+                    });
+                    return;
+                }
+                // several slips per category: together they must cover it exactly
+                const remaining = this.getRemainingAmount(pm.id, type);
+                if (!this.env.utils.floatIsZero(remaining)) {
                     await this.popup.add(ErrorPopup, {
                         title: _t("Validation Error"),
                         body: _t(
-                            `Please select a bank for all slip lines of "${pm.name}".`
+                            "Slips of \"%s\" (%s Amount) total %s but the expected amount is %s.",
+                            pm.name,
+                            this._getTypeLabel(type),
+                            this.env.utils.formatCurrency(expected - remaining),
+                            this.env.utils.formatCurrency(expected)
                         ),
                     });
-
                     return;
                 }
             }
@@ -378,13 +360,20 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
         if (!ok) return;
 
         const bankDiffPairs = (this.props.other_payment_methods || [])
-            .filter((p) => p.type === "bank")
+            .filter((p) => p.type === "bank" && !p.use_slips)
             .map((p) => [p.id, this.getDifference(p.id)]);
+
+        // the cash left in the drawer once the slips are deposited
+        const cash = this.props.default_cash_details;
+        const cashCounted = this.pos.config.cash_control && cash
+            ? parseFloat(this.state.payments[cash.id]?.counted || 0) || 0
+            : null;
 
         const response = await this.orm.call("pos.session", "close_session_from_ui", [
             this.pos.pos_session.id,
             bankDiffPairs,
             this.state.lines,
+            cashCounted,
         ]);
 
         if (!response?.successful) {

@@ -11,10 +11,9 @@
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
-        'views/account_payment.xml',
         'data/ibft_sequence.xml',
+        'views/account_payment.xml',
         'wizard/ibft_wizard.xml',
-
     ],
     'auto_install': False,
     'application': False,

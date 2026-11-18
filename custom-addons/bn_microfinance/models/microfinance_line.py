@@ -1,4 +1,5 @@
 from odoo import models, fields, api, _
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 state_selection = [
@@ -39,7 +40,7 @@ class MicrofinanceLine(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id', default=0)
     paid_amount = fields.Monetary('Paid Amount', currency_field='currency_id', default=0)
     remaining_amount = fields.Monetary('Remaining Amount', currency_field='currency_id', compute='_compute_remaining_amount', store=True)
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'microfinance'))
     # NOTE: duplicate 'currency_id' declaration removed; the stored related
     # definition (store=True) is the effective one kept here.
     currency_id = fields.Many2one('res.currency', related='microfinance_id.currency_id', store=True)
@@ -65,14 +66,15 @@ class MicrofinanceLine(models.Model):
     
     payment_status = fields.Char(compute='_get_payment_status', string='Payment Status')
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('NEW') == _('NEW')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_line') or ('New')
-                
-        res = super(MicrofinanceLine, self).create(vals)
-        res._update_overdue_state()
-        return res
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', 'NEW') in ('NEW', _('NEW'), False):
+                vals['name'] = self.env['ir.sequence'].next_by_code('microfinance_line') or ('New')
+        records = super().create(vals_list)
+        for res in records:
+            res._update_overdue_state()
+        return records
 
     def _update_overdue_state(self):
         """Move unpaid/partial lines past their due date to 'overdue', and
@@ -127,23 +129,6 @@ class MicrofinanceLine(models.Model):
 
         return applied_amount
 
-    def action_cheque_deposit(self):
-        if not self.is_cheque_deposit:
-            self.is_cheque_deposit = True
-
-            # microfinance_installment = self.env['microfinance.installment'].create({
-            self.env['microfinance.installment'].create({
-                'payment_type': 'installment',
-                'payment_method': 'cheque',
-                'microfinance_id': self.microfinance_id.id,
-                'amount': self.amount,
-                'currency_id': self.currency_id.id,
-                'bank_name': self.bank_name,
-                'cheque_no': self.cheque_no,
-                'cheque_date': self.cheque_date,
-                'donee_id': self.microfinance_id.donee_id.id,
-            })
-
     def write(self, vals):
         if vals.get('state') == 'paid' and not vals.get('paid_date'):
             vals['paid_date'] = vals.get('payment_date') or fields.Date.today()
@@ -168,17 +153,3 @@ class MicrofinanceLine(models.Model):
             self._update_overdue_state()
         
         return res
-
-    @api.depends('state', 'paid_amount')
-    def _sync_cheque_state(self):
-        for rec in self:
-            # Only sync if this line was created via cheque deposit
-            if not rec.is_cheque_deposit:
-                continue
-            
-            if rec.state == 'paid':
-                rec.state_cheque = 'deposited'
-            elif rec.state == 'partial':
-                rec.state_cheque = 'deposited'  # partially deposited, still counts as deposited
-            elif rec.state == 'unpaid':
-                rec.state_cheque = 'draft'      # reset if payment reversed

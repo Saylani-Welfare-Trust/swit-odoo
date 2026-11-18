@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="advance_donation_form_inherit_bn_welfare" model="ir.ui.view">
+        <field name="name">advance.donation.form.inherit.bn.microfinance</field>
+        <field name="model">advance.donation</field>
+        <field name="inherit_id" ref="bn_advance_donation.advance_donation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='disbursement_line_ids']/tree/field[@name='disbursed_amount']" position="after">
+                <field name="welfare_id"/>
+            </xpath>
+            <xpath expr="//field[@name='disbursement_line_ids']/form/group[@name='source_links']" position="inside">
+                <field name="welfare_id" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -43,7 +43,7 @@ class AccountPayment(models.Model):
     # The amount entered is tax included: the tax is kept back on the account of the tax and
     # only the rest leaves the bank. That rest stays the amount of the payment.
     payment_tax_id = fields.Many2one(
-        'account.tax', string='Tax', check_company=True, domain="[('type_tax_use', '=', 'purchase')]",
+        'account.tax', string='Payment Tax', check_company=True, domain="[('type_tax_use', '=', 'purchase')]",
         help='Tax deducted from the tax-included amount.')
     amount_tax_included = fields.Monetary(string='Amount (Tax Included)')
     payment_tax_amount = fields.Monetary(string='Tax Amount', compute='_compute_payment_tax_amount', store=True)

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="sequence_approval_request" model="ir.sequence">
+        <field name="name">Approval Request</field>
+        <field name="code">approval.request</field>
+        <field name="prefix">APR/</field>
+        <field name="padding">6</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="role_hod" model="approval.role">
+        <field name="name">HOD</field>
+        <field name="code">hod</field>
+        <field name="active" eval="True"/>
+        <field name="approver_type">department_manager</field>
+        <field name="description">The manager of the requester's department, then each parent department's manager when that manager is a different person.</field>
+        <field name="escalate_to_parents" eval="True"/>
+    </record>
+    <record id="role_internal_audit" model="approval.role">
+        <field name="name">Internal Audit</field>
+        <field name="code">internal_audit</field>
+        <field name="active" eval="False"/>
+        <field name="approver_type">users</field>
+    </record>
+    <record id="role_taxation" model="approval.role">
+        <field name="name">Taxation</field>
+        <field name="code">taxation</field>
+        <field name="active" eval="False"/>
+        <field name="approver_type">users</field>
+    </record>
+    <record id="role_coo" model="approval.role">
+        <field name="name">COO</field>
+        <field name="code">coo</field>
+        <field name="active" eval="False"/>
+        <field name="approver_type">users</field>
+    </record>
+    <record id="role_cfo" model="approval.role">
+        <field name="name">CFO</field>
+        <field name="code">cfo</field>
+        <field name="active" eval="False"/>
+        <field name="approver_type">users</field>
+    </record>
+    <record id="role_ceo" model="approval.role">
+        <field name="name">CEO</field>
+        <field name="code">ceo</field>
+        <field name="active" eval="False"/>
+        <field name="approver_type">users</field>
+    </record>
+</odoo>

@@ -15,3 +15,8 @@ class POSOrder(models.Model):
         res['favor'] = ui_order.get('favor') or False
 
         return res
+
+    def _pos_documents(self, extra_data):
+        res = super()._pos_documents(extra_data)
+        qurbani_id = (extra_data.get('qurbani') or {}).get('qurbani_id')
+        return res + [self.env['qurbani.order'].browse(qurbani_id).exists() if qurbani_id else self.env['qurbani.order']]

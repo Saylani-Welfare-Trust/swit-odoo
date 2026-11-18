@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import UserError
 
 
 class PurchaseOrder(models.Model):
@@ -16,15 +16,19 @@ class PurchaseOrder(models.Model):
     hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False)
     hod_approved_date = fields.Datetime(string='HOD Approved On', readonly=True, copy=False)
 
-    designated_cxo_approver_id = fields.Many2one(
-            'master.cxo.approver', 
-            string='Assigned CXO Approver', 
-            tracking=True,
-            help='If set, ONLY this user can give CXO approval to this RFQ.'
-        )
-    
-    def action_cxo_approve_po(self):
+    def _check_po_approval(self, group, label):
+        if not self.env.user.has_group(group):
+            raise UserError(_('You are not allowed to give %s.') % label)
         for order in self:
+            if order.state not in ('draft', 'sent'):
+                raise UserError(_('%(label)s is only possible on an RFQ, not on %(name)s.') % {
+                    'label': label, 'name': order.display_name})
+
+    def action_cxo_approve_po(self):
+        self._check_po_approval('bn_purchase_customization.purchase_cxo_group', _('CXO Approval'))
+        for order in self:
+            if order.cxo_approved:
+                raise UserError(_('RFQ %s is already CXO approved.') % order.display_name)
             order.write({
                 'cxo_approved': True,
                 'cxo_approved_by': self.env.user.id,
@@ -32,7 +36,10 @@ class PurchaseOrder(models.Model):
             })
 
     def action_hod_approve_po(self):
+        self._check_po_approval('bn_purchase_customization.purchase_hod_group', _('HOD Approval'))
         for order in self:
+            if order.hod_approved:
+                raise UserError(_('RFQ %s is already HOD approved.') % order.display_name)
             if not order.cxo_approved:
                 raise UserError(_('CXO approval is required before HOD approval.'))
             order.write({
@@ -65,11 +72,12 @@ class PurchaseOrder(models.Model):
             }
         }
         
-    @api.model
-    def create(self, vals):
-        # Don't assign the PO sequence when creating an RFQ
-        vals['name'] = '/'
-        return super().create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            # Don't assign the PO sequence when creating an RFQ
+            vals['name'] = '/'
+        return super().create(vals_list)
 
     def button_confirm(self):
         for order in self:

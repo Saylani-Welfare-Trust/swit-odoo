@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Bills: only vendors; invoices: only donors (the tag of the contact) -->
+    <record id="account_move_view_form_inherit_partner_tags" model="ir.ui.view">
+        <field name="name">account.move.view.form.inherit.partner.tags</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='partner_id'][@widget='res_partner_many2one']" position="before">
+                <field name="partner_tag_ids" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='partner_id'][@widget='res_partner_many2one']" position="attributes">
+                <attribute name="domain">[('category_id', 'in', partner_tag_ids)] if partner_tag_ids else []</attribute>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

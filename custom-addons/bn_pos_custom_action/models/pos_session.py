@@ -1,13 +1,29 @@
-from odoo import models
+from odoo import models, fields, api
 
 
 class PosSession(models.Model):
     _inherit = 'pos.session'
 
+    analytic_account_id = fields.Many2one(
+        'account.analytic.account', string="Analytic Account",
+        compute="_set_employee_branch", store=True, tracking=True)
 
     def _loader_params_res_company(self):
         # OVERRIDE to load the fields in pos data (load_pos_data)
         vals = super()._loader_params_res_company()
-        vals['search_params']['fields'] += ['donation_box_product', 'donation_home_service_product', 'microfinance_intallement_product', 'microfinance_security_depsoit_product', 'medical_equipment_security_depsoit_product','welfare_product']
-        
+        # Each program module adds its own product fields (bn_donation_box,
+        # bn_microfinance ...).
+        vals['search_params']['fields'] += [
+            'donation_home_service_product',
+            'medical_equipment_security_depsoit_product', 'welfare_product',
+        ]
         return vals
+
+    @api.depends('config_id')
+    def _set_employee_branch(self):
+        """The Branch of the shop, kept as it was when the session opened
+        (changing the shop's Branch later does not retag old sessions). A shop
+        without a Branch falls back to the cashier's."""
+        for rec in self:
+            rec.analytic_account_id = (
+                rec.config_id.analytic_account_id or rec.user_id.employee_id.analytic_account_id)

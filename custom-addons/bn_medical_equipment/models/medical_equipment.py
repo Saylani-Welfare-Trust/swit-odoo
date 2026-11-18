@@ -1,5 +1,3 @@
-from unittest import result
-
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 
@@ -32,8 +30,7 @@ status_selection = [
     ('payment_received', 'Payment Received'),
     ('validate', 'Validate'),
     ('return', 'Return'),
-    ('refund_ceo_approval', 'Refund Approval (1)'),
-    ('refund_cfo_approval', 'Refund Approval (2)'),
+    ('refund_ceo_approval', 'Refund Approval'),
     ('refund', 'Refund'),
     ('payment_return','Payment Return'),
     ('donate', 'Donate'),
@@ -50,14 +47,22 @@ case_type_selection = [
 ]
 
 
+
+
+def _equipment_donee_domain(model):
+    """Registered donees tagged Medical Equipment, or Medical (patients of the
+    Medical & Health POS can also receive equipment)."""
+    Partner = model.env['res.partner']
+    return Partner._tag_domain('donee', registered=True) + Partner._tag_domain('medical', 'patient', any_of=True)
+
 class MedicalEquipment(models.Model):
     _name = 'medical.equipment'
     _description = "Medical Equipment"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin", 'pos.link.mixin']
 
 
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=_equipment_donee_domain)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
@@ -149,7 +154,6 @@ class MedicalEquipment(models.Model):
 
     is_donee_register = fields.Boolean('Is Donee Register', compute="_set_is_donee_register", store=True)
 
-    approval_count = fields.Integer('Approval Count')
     approval_button_check = fields.Boolean('Approval Button Check', compute='_compute_approval_button_check')
 
     move_id = fields.Many2one('account.move', string="Account Move")
@@ -178,13 +182,9 @@ class MedicalEquipment(models.Model):
     )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     
-    refund_approval_count = fields.Integer('Refund Approval Count', default=0, copy=False)
-    refund_remarks_approval1 = fields.Text('Refund Approval (1) Remarks')
-    refund_remarks_approval2 = fields.Text('Refund Approval (2) Remarks')
-    refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By (1)', readonly=True, copy=False)
-    refund_approved_by_2 = fields.Many2one('res.users', string='Refund Approved By (2)', readonly=True, copy=False)
-    refund_approved_date_1 = fields.Datetime('Refund Approved On (1)', readonly=True, copy=False)
-    refund_approved_date_2 = fields.Datetime('Refund Approved On (2)', readonly=True, copy=False)
+    refund_remarks_approval1 = fields.Text('Refund Approval Remarks')
+    refund_approved_by_1 = fields.Many2one('res.users', string='Refund Approved By', readonly=True, copy=False)
+    refund_approved_date_1 = fields.Datetime('Refund Approved On', readonly=True, copy=False)
 
     def _inverse_mobile(self):
         for rec in self:
@@ -315,7 +315,15 @@ class MedicalEquipment(models.Model):
     #                     raise ValidationError(
     #                         f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
     #                     )
+    def _check_me_state(self, allowed, action):
+        labels = dict(status_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
     def action_reject(self):
+        self._check_me_state(('draft', 'completed', 'inquiry', 'send_for_inquiry', 'ceo_approval', 'cfo_approval'), _('Reject'))
         self.state = 'closed'
 
     @api.depends('date_of_birth')
@@ -412,20 +420,6 @@ class MedicalEquipment(models.Model):
 
 
     def write(self, vals):
-        # Handle the scenario where mobile is being set but donee is already registered
-        # if vals.get('donee_id') or self.donee_id:
-        #     donee_id = vals.get('donee_id', self.donee_id.id if self.donee_id else None)
-        #     if donee_id:
-        #         donee = self.env['res.partner'].browse(donee_id)
-        #         if donee and donee.state == 'register':
-        #             # Remove related fields that would cause duplicate validation
-        #             fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-        #             for field in fields_to_remove:
-        #                 if field in vals:
-        #                     _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-        #                     del vals[field]
-        #             if not vals:
-        #                 return True
 
         # Handle medical equipment reference logic
         if vals.get('medical_equipment_reference_id'):
@@ -533,48 +527,35 @@ class MedicalEquipment(models.Model):
             if rec.donee_id and rec.donee_id.state == 'register':
                 rec.is_donee_register = True
     
-    @api.model
-    def create(self, vals):
-        # Handle the scenario where mobile is being set but donee is already registered
-        # if vals.get('donee_id'):
-        #     donee = self.env['res.partner'].browse(vals.get('donee_id'))
-        #     if donee and donee.state == 'register':
-        #         # Remove mobile from vals to prevent duplicate validation
-        #         # The mobile is already in the donee record
-        #         fields_to_remove = ['mobile', 'cnic_no', 'city', 'street', 'gender', 'date_of_birth', 'country_code_id']
-        #         for field in fields_to_remove:
-        #             if field in vals:
-        #                 _logger.info(f"Removing {field} from vals for registered donee: {vals.get(field)}")
-        #                 del vals[field]
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
 
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('medical_equipment') or ('New')
-
-        if vals.get('medical_equipment_reference_id'):
-            vals['actual_deposit_percentage'] = 0.0
-            vals.setdefault('initial_deposit_percentage', 0.0)
-        elif 'actual_deposit_percentage' in vals:
-            vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
-
-        record = super(MedicalEquipment, self).create(vals)
-        
-        # If donee is selected and registered, check portal status
-        if vals.get('donee_id'):
-            donee = self.env['res.partner'].browse(vals.get('donee_id'))
-            if donee and donee.state == 'register':
-                # Try to check if donee exists in portal and update portal_donee_id
-                try:
-                    existing_donee = record._check_donee_exists_in_portal()
-                    if existing_donee and existing_donee.get('id'):
-                        record.write({
-                            'portal_donee_id': existing_donee.get('id'),
-                            'portal_sync_status': 'synced'
-                        })
-                        _logger.info(f"Linked existing portal donee {existing_donee.get('id')} to new record {record.id}")
-                except Exception as e:
-                    _logger.warning(f"Could not check portal donee during create: {str(e)}")
-
-        return record
+            if vals.get('medical_equipment_reference_id'):
+                vals['actual_deposit_percentage'] = 0.0
+                vals.setdefault('initial_deposit_percentage', 0.0)
+            elif 'actual_deposit_percentage' in vals:
+                vals['initial_deposit_percentage'] = vals['actual_deposit_percentage']
+        records = super().create(vals_list)
+        for record, vals in zip(records, vals_list):
+            # If donee is selected and registered, check portal status
+            if vals.get('donee_id'):
+                donee = self.env['res.partner'].browse(vals.get('donee_id'))
+                if donee and donee.state == 'register':
+                    # Try to check if donee exists in portal and update portal_donee_id
+                    try:
+                        existing_donee = record._check_donee_exists_in_portal()
+                        if existing_donee and existing_donee.get('id'):
+                            record.write({
+                                'portal_donee_id': existing_donee.get('id'),
+                                'portal_sync_status': 'synced'
+                            })
+                            _logger.info(f"Linked existing portal donee {existing_donee.get('id')} to new record {record.id}")
+                    except Exception as e:
+                        _logger.warning(f"Could not check portal donee during create: {str(e)}")
+        return records
     
     @api.depends('state', 'case_type', 'Portal_acknowledgment')
     def _compute_approval_button_check(self):
@@ -597,13 +578,14 @@ class MedicalEquipment(models.Model):
         Automatically create return picking and update state
         """
         self.ensure_one()
-        
+        self._check_me_state(('validate',), _('Return'))
+
         if not self.picking_id:
             raise ValidationError('No stock picking found to return. Please validate the equipment first.')
-        
+
         if self.picking_id.state != 'done':
             raise ValidationError('Stock picking must be validated before returning.')
-        
+
         # Create return wizard and generate return picking
         return_wizard = self.env['stock.return.picking'].with_context(
             active_id=self.picking_id.id,
@@ -642,8 +624,12 @@ class MedicalEquipment(models.Model):
         """
         # Ensure we're working with a single record
         self.ensure_one()
-        
-        operation_type = self.env.ref('bn_medical_equipment.medical_equipment_stock_picking_type')  # Outgoing shipment
+        # paid at the POS (payment_received) or no payment due (sd_received)
+        self._check_me_state(('sd_received', 'payment_received'), _('Validate'))
+        if self.picking_id:
+            raise UserError(_('%s is already validated.') % self.name)
+
+        operation_type = self.env['stock.warehouse']._get_program_type('medical_equipment')
         
         # Prepare stock picking values
         picking_vals = {
@@ -651,9 +637,9 @@ class MedicalEquipment(models.Model):
             'location_id': operation_type.default_location_src_id.id,
             'location_dest_id': operation_type.default_location_dest_id.id,
             'origin': self.name,  # Reference to your medical equipment record
+            'source_record_ref': '%s,%s' % (self._name, self.id),
             'scheduled_date': fields.Datetime.now(),
             'move_ids': [(0, 0, {
-                'name': f'Medical Equipment: {self.name}',
                 'product_id': product_line.product_id.id,
                 'product_uom_qty': product_line.quantity,
                 'product_uom': product_line.product_id.uom_id.id,
@@ -744,76 +730,8 @@ class MedicalEquipment(models.Model):
             
         else:
             raise ValidationError('This record has already been approved or is in an invalid state.')
-        
-        self.approval_count += 1
+
     
-    def action_sync_welfare_portal(self):
-        """
-        Sync Below 50% cases to welfare portal - follows welfare.py pattern
-        """
-        if not self:
-            raise UserError("Please select at least one record.")
-        
-        invalid = self.filtered(lambda r: r.case_type != 'below_50_percent')
-        if invalid:
-            raise UserError("Only Below 50% cases can be synced to welfare portal.")
-        # self.state = 'inquiry'
-        
-        success_msgs = []
-        error_msgs = []
-        
-        for rec in self:
-            if not rec.donee_id or not rec.donee_id.name:
-                error_msgs.append(f"[{rec.display_name}] Donee is required.")
-                continue
-            if not rec.cnic_no and not rec.donee_id.mobile:
-                error_msgs.append(f"[{rec.display_name}] CNIC or Mobile is required.")
-                continue
-            
-            try:
-                # Step 1: Check if donee exists in portal
-                donee_exists = rec._check_donee_exists_in_portal()  
-                
-                # Step 2: Create donee if needed
-                if not donee_exists:
-                    donee_data = rec._create_donee_in_portal()
-                    portal_donee_id = donee_data.get('id')
-                else:
-                    portal_donee_id = donee_exists.get('id')
-                
-                # Step 3: Create application in portal
-                portal_application = rec._create_me_portal_application()
-                portal_application_id = portal_application.get('id')
-                
-                # Step 4: Mark as synced in portal
-                # rec._mark_me_application_synced()
-                
-                # Step 5: Update record with portal information (like welfare does)
-                rec.write({
-                    'welfare_portal_id': portal_application_id,
-                    # 'Portal_acknowledgment': True,
-                    'last_sync_date': self.last_sync_date,
-                    'state': 'send_for_inquiry',
-
-                })
-                
-                result_message = f"✅ Successfully synced to Welfare Portal. Application ID: {portal_application_id}"
-                success_msgs.append(f"[{rec.display_name}] {result_message}")
-                
-            except Exception as e:
-                error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
-                error_msgs.append(error_message)
-        
-        summary = ""
-        if success_msgs:
-            summary += "Success:\n" + "\n".join(success_msgs) + "\n"
-        if error_msgs:
-            summary += "Errors:\n" + "\n".join(error_msgs)
-        if not summary:
-            summary = "No records processed."
-        
-        return self._show_notification('Welfare Portal Sync Results', summary, 'info')
-
     def _create_donee_in_portal(self):
         """Create donee in welfare portal"""
         try:
@@ -879,7 +797,7 @@ class MedicalEquipment(models.Model):
         except requests.exceptions.RequestException as e:
             # Keep the portal's response body: on a 4xx it says which field was rejected
             body = e.response.text[:1000] if e.response is not None else ''
-            _logger.error("Welfare API Request failed: %s | payload: %s | response: %s", e, data, body)
+            _logger.error("Welfare API Request failed: %s | response: %s", e, body)
             raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Welfare API Processing failed: {str(e)}")
@@ -900,17 +818,6 @@ class MedicalEquipment(models.Model):
             }
         }
     
-    def action_acknowledge_welfare_portal(self):
-        """
-        Mark welfare portal acknowledgment received for Below 50% cases
-        """
-        self.ensure_one()
-        
-        if self.case_type != 'below_50_percent':
-            raise ValidationError('Only Below 50% cases can receive welfare acknowledgment.')
-        
-        self.write({'Portal_acknowledgment': True})
-        
     def action_show_picking(self):
         return {
             'type': 'ir.actions.act_window',
@@ -954,6 +861,47 @@ class MedicalEquipment(models.Model):
             'target': 'current',
         }
     
+    # ---------- SECURITY DEPOSIT (POS, cheque, direct deposit) ----------
+    def _get_security_deposit(self):
+        self.ensure_one()
+        return self.sd_slip_id or self.env['medical.security.deposit'].search(
+            [('medical_equipment_id', '=', self.id)], order='id desc', limit=1)
+
+    def _receive_security_deposit(self, state, vals=None):
+        """Record the security deposit of an approved request. 'paid' moves
+        the request to Security Received; 'pending' waits for its cheque."""
+        self.ensure_one()
+        if self.state in ('draft', 'completed', 'send_for_inquiry', 'inquiry', 'ceo_approval', 'closed'):
+            raise UserError(_('The security deposit of %s cannot be received in status "%s".') % (
+                self.name, dict(status_selection).get(self.state, self.state)))
+        deposit = self._get_security_deposit()
+        vals = dict(vals or {}, state=state)
+        if deposit:
+            deposit.write(vals)
+        else:
+            deposit = self.env['medical.security.deposit'].create(dict({
+                'medical_equipment_id': self.id,
+                'donee_id': self.donee_id.id,
+                'cnic_no': self.donee_id.cnic_no or '',
+                'amount': self.total_amount,
+                'date': fields.Date.today(),
+            }, **vals))
+        if self.sd_slip_id != deposit:
+            self.sd_slip_id = deposit
+        if state == 'paid' and self.state in ('cfo_approval', 'approved'):
+            self.state = 'sd_received'
+        return deposit
+
+    def _bounce_security_deposit(self, deposit=None):
+        """The cheque of the security deposit bounced: the request waits for
+        a new deposit again."""
+        self.ensure_one()
+        deposit = deposit or self._get_security_deposit()
+        if deposit:
+            deposit.state = 'bounced'
+        if self.state == 'sd_received':
+            self.state = 'cfo_approval'
+
     def action_show_move(self):
         return {
             'type': 'ir.actions.act_window',
@@ -964,108 +912,13 @@ class MedicalEquipment(models.Model):
             'target': 'current',
         }
 
-    @api.model
-    def create_me_record(self, data):
-        product_lines = []
-
-        for line in data['order_lines']:
-            # Assuming 'product_id' is a valid product ID
-            product_lines.append((0, 0, {
-                'product_id': line['product_id'],
-                'quantity': line['quantity'],
-            }))
-        
-        me = self.env['medical.equipment'].create({
-            'donee_id': data['donee_id'],
-            'medical_equipment_line_ids': product_lines
-        })
-
-        for line in me.medical_equipment_line_ids:
-            base_price = line.product_id.lst_price
-            taxes = line.product_id.taxes_id
-
-            total_price_incl_tax = base_price
-
-            for tax in taxes:
-                if tax.amount_type == 'percent':
-                    tax_amount = base_price * (tax.amount / 100)
-
-                    total_price_incl_tax += tax_amount
-                else:
-                    total_price_incl_tax += tax.amount
-
-            line.security_deposit = total_price_incl_tax * line.quantity
-
-        me.calculate_amount()
-       
-        return{
-            "status": "success",
-            "id": me.id
-        }
-    
-    @api.model
-    def get_me_record(self, data):
-        """Fetch ME record by name and return product information"""
-        # Strip spaces just in case the barcode scanner added some
-        me_name = str(data.get('name', '')).strip()
-        
-        # Search for the ME record
-        me = self.sudo().search([('name', '=', me_name)], limit=1)
-        
-        if not me:
-            return {
-                "status": "error",
-                "body": f"Medical Equipment record with reference {me_name} not found."
-            }
-        
-        # Block settlement only if the record is already closed, cancelled, or refunded
-        if me.state in ['closed', 'cancel', 'refund']:
-            return {
-                "status": "error",
-                "body": f"Current status of {me_name} is {me.state.capitalize()}. It cannot be settled."
-            }
-        
-        # Prepare product data for POS
-        products_data = []
-        
-        # Add regular product lines
-        for line in me.medical_equipment_line_ids:
-            # Skip lines that don't have a valid product linked
-            if not line.product_id:
-                continue
-                
-            product = line.product_id
-            products_data.append({
-                'product_id': product.id,
-                'name': product.name,
-                'quantity': line.quantity,
-                'price': product.lst_price,
-                'default_code': product.default_code,
-                'category': product.categ_id.name if product.categ_id else ''
-            })
-            
-        # If the list is still empty, return a very clear error message
-        if not products_data:
-            return {
-                "status": "error",
-                "body": f"No valid products found in {me_name}. Please open the record in the backend and ensure the 'Items' tab has products assigned."
-            }
-        
-        return {
-            'id': me.id,
-            'name': me.name,
-            'donee_id': me.donee_id.id if me.donee_id else False,
-            'donor_name': me.donee_id.name if me.donee_id else '',
-            'products': products_data,
-            'success': True
-        }
-    
     def action_recovery(self):
         """
         Automatically create recovery picking and update state
         """
         self.ensure_one()
-        
+        self._check_me_state(('validate',), _('Recovery'))
+
         if not self.picking_id:
             raise ValidationError('No stock picking found to return. Please validate the equipment first.')
         if self.return_picking_id:
@@ -1107,17 +960,15 @@ class MedicalEquipment(models.Model):
     
     def action_request_refund(self):
         """Initiate the refund approval flow from the Return state."""
-        self.ensure_one()
-        if self.state != 'return':
-            raise ValidationError('Refund can only be requested from the Return state.')
+        self._check_me_state(('return',), _('Request Refund'))
         self.write({'state': 'refund_ceo_approval'})
 
     def action_refund_approve(self):
         """Handle refund approval. Only one approval is required now."""
         self.ensure_one()
-
-        if self.state != 'refund_ceo_approval':
-            raise ValidationError('This record is not in a refund approval state.')
+        self._check_me_state(('refund_ceo_approval',), _('Refund Approval'))
+        if not self.env.user.has_group('bn_medical_equipment.medical_equipment_ceo_approval_group'):
+            raise UserError(_('You are not allowed to approve a refund.'))
 
         case_type = self.case_type
         is_zero_percent = self.medical_equipment_reference_id and self.actual_deposit_percentage == 0.0
@@ -1133,15 +984,12 @@ class MedicalEquipment(models.Model):
             'state': 'refund',
             'refund_approved_by_1': self.env.user.id,
             'refund_approved_date_1': fields.Datetime.now(),
-            'refund_approval_count': self.refund_approval_count + 1,
-            # Optional: Fill the second approval fields with the same user for record keeping
-            'refund_approved_by_2': self.env.user.id,
-            'refund_approved_date_2': fields.Datetime.now(),
         })
 
         return True
     
     def action_donate(self):
+        self._check_me_state(('return',), _('Donate'))
         return {
             'type': 'ir.actions.act_window',
             'name': 'Product Wizard',
@@ -1172,13 +1020,11 @@ class MedicalEquipment(models.Model):
             if (cnic and app.get('department') == "medical"
                     and str(app.get('cnicNo') or '').replace('-', '') == cnic):
                 return app
-            # # Match by name and WhatsApp
-            # if (app.get('name') == self.donee_id.name and 
-            #     app.get('whatsapp') == self.donee_id.mobile):
-            #     return app
         return None            
     
     def action_complete(self):
+        self.ensure_one()
+        self._check_me_state(('draft',), _('Complete'))
         if not self.medical_equipment_line_ids:
             raise ValidationError(_('You must add Medical Equipment Line before completing.'))
         
@@ -1232,7 +1078,7 @@ class MedicalEquipment(models.Model):
     def _handle_existing_application(self, portal_application):
             """Handle existing application found in portal"""
             # Mark application as synced in portal
-            synced_application = self._mark_application_synced()
+            self._mark_application_synced()
             
             return {
             'action': 'linked_existing',
@@ -1411,7 +1257,7 @@ class MedicalEquipment(models.Model):
                     self._update_donee_odoo_mapping(result.get('id'))
                     return result
             
-            _logger.info(f"Donee not found in portal by any criteria")
+            _logger.info("Donee not found in portal by any criteria")
             return None
             
         except Exception as e:
@@ -1420,6 +1266,9 @@ class MedicalEquipment(models.Model):
 
     def _update_donee_odoo_mapping(self, portal_donee_id):
         """Update portal mapping for donee if found by alternate criteria"""
+        if not self.env.company.update_donee_mapping_endpoint:
+            _logger.info("Donee mapping not updated: no Update Donee Mapping Endpoint in the company settings")
+            return
         try:
             data = {
                 "json": {
@@ -1477,7 +1326,7 @@ class MedicalEquipment(models.Model):
         except requests.exceptions.RequestException as e:
             # Keep the portal's response body: on a 4xx it says which field was rejected
             body = e.response.text[:1000] if e.response is not None else ''
-            _logger.error("Sadqa Jaria API Request failed: %s | payload: %s | response: %s", e, data, body)
+            _logger.error("Sadqa Jaria API Request failed: %s | response: %s", e, body)
             raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
@@ -1498,14 +1347,11 @@ class MedicalEquipment(models.Model):
         
      
         donee_data = self._check_donee_exists_in_portal()
-
-            
         if donee_data:
-                message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-
+            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
-            donee_in_portal = self._create_donee_in_portal()
-            # message = "✅ Donee created in portal"  # Add this line
+            self._create_donee_in_portal()
+            message = "✅ Donee created in portal"
         # Check for applications
         application, search_note = self._search_portal_applications()
         # _logger.info(f"Applications found: {application}")
@@ -1534,11 +1380,11 @@ class MedicalEquipment(models.Model):
             self.write({"Portal_acknowledgment": application.get('welfareAcknowledgment', True)})
             self.write({"state":"inquiry"})
             result = self._handle_existing_application(application)
-            message = f" | 📋 application status: {app_state} "
+            message += f" | 📋 application status: {app_state} "
             if result and isinstance(result, dict) and 'message' in result:
                 message += f" | 📋 {result['message']} "
             else:
-                message += f" | 📋 No applications found"     # type: ignore
+                message += " | 📋 No applications found"     # type: ignore
         return self._show_notification('Portal Status Check', message, 'info')
     
     def _search_portal_applications(self):
@@ -1583,7 +1429,7 @@ class MedicalEquipment(models.Model):
             last_list = applications
         medical_ids = [(a.get('id'), a.get('cnicNo'), a.get('odooId')) for a in last_list
                        if isinstance(a, dict) and a.get('department') == 'medical']
-        return None, (f"searches tried -> " + "; ".join(notes) + ". "
+        return None, ("searches tried -> " + "; ".join(notes) + ". "
                       f"Medical (portal id, CNIC, odooId) in last result: {medical_ids or 'none'}; "
                       f"this record odooId={self.id}, portal id={portal_id or '-'}")
 

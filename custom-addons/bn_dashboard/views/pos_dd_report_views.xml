@@ -53,10 +53,8 @@
                   decoration-danger="is_refund"
                   decoration-muted="state in ('cancel', 'not_clear')"
                   decoration-info="source_model == 'direct.deposit'">
-
                 <field name="is_refund" column_invisible="1"/>
                 <field name="currency_id" column_invisible="1"/>
-
                 <field name="date"/>
                 <field name="source_model" widget="badge"
                        decoration-success="source_model == 'pos.order'"
@@ -82,7 +80,6 @@
                        decoration-success="state in ('paid', 'done', 'invoiced', 'clear')"
                        decoration-warning="state in ('draft', 'transferred')"
                        decoration-danger="state in ('cancel', 'not_clear')"/>
-
                 <button name="action_open_source" type="object"
                         string="Open" icon="fa-external-link"
                         title="Open source record"/>
@@ -172,7 +169,9 @@
                 <field name="analytic_account_id" string="Branch"
                        domain="[('plan_id.name', '=', 'Location'), ('parent_id.parent_id.parent_id', '!=', False)]"/>
 
-                <!-- Date range: type a date, pick "Date From" / "Date To" (both inclusive) -->
+                <!-- Date range: type a date, pick "Date From" / "Date To" (both inclusive);
+                     "Date Range", "City" and "Branch" popups are added to the Filters list
+                     by static/src/search/pos_dd_report_filters.js -->
                 <field name="date_day" string="Date From" operator="&gt;="/>
                 <field name="date_day" string="Date To" operator="&lt;="/>
                 <field name="product_id"/>
@@ -187,8 +186,6 @@
                 <filter name="filter_this_month" string="This Month" domain="[('date', '>=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <filter name="filter_this_year" string="This Year" domain="[('date', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <separator/>
-                <!-- "Date Range", "City" and "Branch" (popup filters) are appended to
-                     this list by static/src/search/pos_dd_report_filters.js -->
                 
                 <group expand="0" string="Group By">
                     <filter name="group_source" string="Source" context="{'group_by': 'source_model'}"/>
@@ -218,7 +215,7 @@
     <record id="action_pos_dd_report" model="ir.actions.act_window">
         <field name="name">Reporting</field>
         <field name="res_model">pos.dd.report</field>
-        <!-- Pivot stays the default; list is available from the view switcher -->
+        <!-- Pivot stays the default; the list is available from the view switcher -->
         <field name="view_mode">pivot,graph,tree,form</field>
         <field name="search_view_id" ref="view_pos_dd_report_search"/>
         <field name="help" type="html">

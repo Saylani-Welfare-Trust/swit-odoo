@@ -12,7 +12,7 @@ class StockPicking(models.Model):
         store=False
     )
 
-    @api.depends('partner_id')
+    @api.depends('user_id')
     def _compute_user_allowed_locations(self):
         for rec in self:
             # Clear the field
@@ -20,4 +20,4 @@ class StockPicking(models.Model):
 
             # Assign the user's allowed locations if user exists
             if rec.user_id:
-                rec.user_allowed_location_ids = [(6, 0, rec.user_id.allowed_location_ids.ids)]
+                rec.user_allowed_location_ids = [(6, 0, rec.user_id.scope_location_ids.ids)]

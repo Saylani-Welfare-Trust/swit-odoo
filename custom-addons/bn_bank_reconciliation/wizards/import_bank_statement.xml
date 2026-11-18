@@ -8,7 +8,7 @@
             <form string="Import Bank Statement">
                 <sheet>
                     <div class="alert alert-info" role="alert" style="margin-bottom: 16px;">
-                        <i class="fa fa-info-circle"/> 
+                        <i title="Info" class="fa fa-info-circle"/> 
                         <span>Upload a CSV or Excel file with bank transactions.</span>
                     </div>
                     <group>

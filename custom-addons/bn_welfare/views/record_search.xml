@@ -50,4 +50,9 @@
         parent="welfare_profile_management_menu"
         sequence="1"/>
 
+
+    <!-- These menus follow the programme tag (Profile Management > Tags): hidden while
+         the programme is disabled. Linked on every install / upgrade. -->
+    <function model="res.partner.category" name="_link_program_menus"
+              eval="['welfare', ['bn_welfare.welfare_profile_management_menu']]"/>
 </odoo>
