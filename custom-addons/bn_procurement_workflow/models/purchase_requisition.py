@@ -148,7 +148,28 @@ class PurchaseRequisition(models.Model):
                 lambda requisition: requisition.assigned_user_id
                 and requisition.assigned_user_id != old_users.get(requisition.id)
             )._notify_assigned_user()
+        if 'picking_type_id' in vals:
+            self._sync_operation_type_to_rfqs()
         return res
+
+    def _get_open_rfqs(self):
+        """RFQs of these requests not confirmed yet: their own, and the
+        consolidated ones they contributed lines to (requisition_ids)."""
+        orders = self.purchase_ids | self.env['purchase.order'].search(
+            [('requisition_ids', 'in', self.ids)])
+        return orders.filtered(lambda order: order.state in ('draft', 'sent', 'to approve'))
+
+    def _sync_operation_type_to_rfqs(self):
+        """The Operation Type of a Purchase Request is the one its RFQs - and the
+        Purchase Order they become - receive the products with. A confirmed
+        Purchase Order keeps its own: its receipts are already created."""
+        # sudo: the RFQs may be outside what the user editing the request can write
+        for requisition in self.sudo():
+            rfqs = requisition._get_open_rfqs().filtered(
+                lambda order: order.picking_type_id != requisition.picking_type_id)
+            # skip_operation_type_sync: not sent back up to the requests
+            rfqs.with_context(skip_operation_type_sync=True).write(
+                {'picking_type_id': requisition.picking_type_id.id})
 
     def _notify_assigned_user(self):
         """A message in the assigned employee's Discuss inbox: the request now

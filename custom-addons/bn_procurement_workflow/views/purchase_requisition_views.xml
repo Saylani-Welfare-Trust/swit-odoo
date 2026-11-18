@@ -122,6 +122,20 @@
         </field>
     </record>
 
+    <!-- The Operation Type stays editable while the request is open: a change is
+         passed on to its open RFQs (and back from them) - see
+         _sync_operation_type_to_rfqs() -->
+    <record id="purchase_requisition_view_form_operation_type_bn_procurement_workflow" model="ir.ui.view">
+        <field name="name">purchase.requisition.view.form.operation.type.bn.procurement.workflow</field>
+        <field name="model">purchase.requisition</field>
+        <field name="inherit_id" ref="purchase_requisition_stock.view_purchase_requisition_form_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='picking_type_id']" position="attributes">
+                <attribute name="readonly">state in ('done', 'cancel')</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="purchase_requisition_view_tree_inherit_bn_procurement_workflow" model="ir.ui.view">
         <field name="name">purchase.requisition.view.tree.inherit.bn.procurement.workflow</field>
         <field name="model">purchase.requisition</field>
