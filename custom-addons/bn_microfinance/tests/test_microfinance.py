@@ -111,6 +111,30 @@ class TestMicrofinance(TransactionCase):
         loan.action_send_to_recovery()
         self.assertEqual(loan.state, 'in_recovery')
 
+    def test_send_several_loans_for_recovery(self):
+        loans = self.env['microfinance']
+        for _i in range(2):
+            loan = self._loan(self.cash_line, self.cash_product_line)
+            loan.action_move_to_treasury()
+            loan.sudo()._complete_application()
+            loans |= loan
+        overdue, recent = loans
+        self._set_overdue(overdue.microfinance_line_ids[-1], 61)
+        self._set_overdue(recent.microfinance_line_ids[-1], 20)
+
+        # one loan not overdue long enough: none is sent, and the error names it
+        with self.assertRaises(ValidationError) as error:
+            loans.action_send_to_recovery()
+        self.assertIn('%s - 20 day(s) overdue' % recent.name, str(error.exception))
+        self.assertNotIn('%s - ' % overdue.name, str(error.exception))
+        self.assertEqual(loans.mapped('state'), ['done', 'done'])
+
+        self._set_overdue(recent.microfinance_line_ids[-1], 61)
+        loans.action_send_to_recovery()
+        self.assertEqual(loans.mapped('state'), ['in_recovery', 'in_recovery'])
+        self.assertTrue(all(loans.mapped('in_recovery')))
+        self.assertEqual(len(overdue.microfinance_recovery_line_ids), len(overdue.microfinance_line_ids))
+
     def test_approval_roles(self):
         loan = self.env['microfinance'].with_user(self.user).create({
             'donee_id': self.donee.id, 'microfinance_scheme_id': self.scheme.id,
