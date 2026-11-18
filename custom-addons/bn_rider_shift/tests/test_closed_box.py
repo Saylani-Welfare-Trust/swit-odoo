@@ -389,3 +389,57 @@ class TestVisibility(BoxFlowCase):
         far = self._user('bunch_far', ['bn_key_management.key_management_user_group'], account=other_city)
         self.assertIn(self.bunch, Bunch.with_user(same_city).search([]), 'a Branch user sees the bunches of its City')
         self.assertNotIn(self.bunch, Bunch.with_user(far).search([]))
+
+
+@tagged('post_install', '-at_install')
+class TestBrokenBoxScrap(BoxFlowCase):
+    """A broken box is scrapped from where it is; a box Odoo has no stock of
+    (registered before its stock was recorded) is scrapped all the same."""
+
+    def _broken(self, registration):
+        complaint = self._complaint(registration, 'broken')
+        complaint.action_process()
+        complaint.action_resolve()
+        return complaint
+
+    def _box_location(self):
+        return self.env['stock.quant'].search([('lot_id', '=', self.lot.id), ('quantity', '>', 0)]).location_id
+
+    def test_scrap_box_without_stock(self):
+        registration = self._install('L1')
+        Quant = self.env['stock.quant']
+        shop = registration.donation_box_request_id.picking_id.location_dest_id
+        Quant._update_available_quantity(self.product, shop, -1, lot_id=self.lot)   # no stock of it in Odoo
+        complaint = self._broken(registration)
+        self.assertEqual(complaint.status, 'resolved')
+        self.assertTrue(self._box_location().scrap_location)
+        self.assertTrue(complaint.message_ids.filtered(lambda m: 'no stock' in (m.body or '')))
+
+    def test_scrap_box_found_elsewhere(self):
+        registration = self._install('L1')
+        Quant = self.env['stock.quant']
+        shop = registration.donation_box_request_id.picking_id.location_dest_id
+        Quant._update_available_quantity(self.product, shop, -1, lot_id=self.lot)
+        Quant._update_available_quantity(self.product, self.warehouse.lot_stock_id, 1, lot_id=self.lot)
+        complaint = self._broken(registration)
+        self.assertEqual(complaint.status, 'resolved')
+        self.assertTrue(self._box_location().scrap_location)
+        self.assertFalse(Quant.search([('lot_id', '=', self.lot.id), ('location_id', '=', self.warehouse.lot_stock_id.id),
+                                       ('quantity', '>', 0)]))
+
+    def test_city_from_assigned_location(self):
+        """No employee Branch: the City comes from the analytic account of the
+        locations assigned to the user (Allowed Location)."""
+        registration = self._install('L1')
+        Registration = self.env['donation.box.registration.installation']
+        shop = self.env['stock.location'].create({
+            'name': 'Saddar Shop', 'usage': 'internal', 'analytic_account_id': self.zone.id})
+        user = self.env['res.users'].create({
+            'name': 'loc_vis', 'login': 'loc_vis',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref('bn_key_management.key_management_user_group').id])]})
+        self.assertFalse(Registration.with_user(user).search([('id', '=', registration.id)]), 'no City yet')
+        user.allowed_location_ids = [(6, 0, shop.ids)]
+        self.assertEqual(user.city_access_ids, self.city)
+        self.assertEqual(Registration.with_user(user).search([('id', '=', registration.id)]), registration)
+        self.assertIn(self.bunch, self.env['key.bunch'].with_user(user).search([]))

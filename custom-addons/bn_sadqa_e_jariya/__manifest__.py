@@ -38,6 +38,7 @@
         'views/sadqa_jariya.xml',
         'views/sadqa_jariya_line.xml',
         'views/sadqa_jariya_fetch_log.xml',
+        'views/configuration_search_views.xml',
         'views/configuration.xml',
         'views/res_company.xml',
 

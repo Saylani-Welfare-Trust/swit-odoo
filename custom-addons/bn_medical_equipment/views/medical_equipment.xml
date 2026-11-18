@@ -222,6 +222,10 @@
                 <field name="donee_id"/>
                 <field name="mobile" string="Mobile No."/>
                 <field name="cnic_no" string="CNIC No."/>
+                <field name="medical_equipment_line_ids" string="Line Product"
+                       filter_domain="[('medical_equipment_line_ids.product_id', 'ilike', self)]"/>
+                <field name="medical_equipment_line_ids" string="Product No. / Lot"
+                       filter_domain="[('medical_equipment_line_ids.lot_ids', 'ilike', self)]"/>
                 <filter string="Draft" name="filter_draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Completed" name="filter_completed" domain="[('state', '=', 'completed')]"/>
                 <filter string="Closed" name="filter_closed" domain="[('state', '=', 'closed')]"/>

@@ -12,7 +12,7 @@
             <xpath expr="//search" position="inside">
                 <field name="created_by"/>
                 <field name="source_location_id"/>
-                <field name="food_line_ids" string="Line Product" filter_domain="['|', '|', '|', ('food_line_ids.product_id', 'ilike', self), ('kitchen_line_ids.product_id', 'ilike', self), ('livestock_line_ids.product_id', 'ilike', self), ('madaris_line_ids.product_id', 'ilike', self)]"/>
+                <field name="food_line_ids" string="Line Product" filter_domain="['|', '|', '|', '|', '|', '|', ('food_line_ids.product_id', 'ilike', self), ('kitchen_line_ids.product_id', 'ilike', self), ('livestock_line_ids.product_id', 'ilike', self), ('madaris_line_ids.product_id', 'ilike', self), ('medical_line_ids.product_id', 'ilike', self), ('ration_line_ids.product_id', 'ilike', self), ('meat_line_ids.product_id', 'ilike', self)]"/>
                 <separator/>
                 <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
                 <separator/>

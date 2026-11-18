@@ -273,18 +273,38 @@ class DonationBoxComplain(models.Model):
         if not scrap_location:
             raise ValidationError(_("Scrap location not configured in the system."))
 
+        # Where the box is: normally the Donation Box location its request delivered it
+        # to; a box moved since (or found back in a warehouse) is scrapped from there.
+        location = picking.location_dest_id
+        in_stock = self.env['stock.quant'].sudo().search([
+            ('lot_id', '=', self.lot_id.id), ('quantity', '>', 0),
+            ('location_id.usage', 'in', ('internal', 'transit', 'customer')),
+        ], order='in_date desc')
+        if in_stock and location not in in_stock.location_id:
+            location = in_stock[:1].location_id
+
         scrap = self.env['stock.scrap'].sudo().create({
             'product_id': serial_used.product_id.id,
             'lot_id': self.lot_id.id,
             'scrap_qty': 1,
             'product_uom_id': serial_used.product_uom_id.id,
-            'location_id': picking.location_dest_id.id,   # where the box is now
+            'location_id': location.id,
             'scrap_location_id': scrap_location.id,
             'company_id': picking.company_id.id,
             'origin': picking.name,
         })
-        # action_validate() can return a wizard (insufficient quantity) instead of scrapping.
+        # action_validate() returns the "Insufficient Quantity" wizard instead of
+        # scrapping when Odoo has no stock of the box there.
         scrap.action_validate()
+        if scrap.state != 'done':
+            # The box is not in stock anywhere in Odoo (registered before its stock was
+            # recorded): it is scrapped all the same, as that wizard's Confirm does.
+            scrap.do_scrap()
+            self.message_post(body=_(
+                'Box %(lot)s had no stock in Odoo at %(location)s: it was scrapped all the same '
+                '(%(scrap)s), so its stock now shows it in Scrap.'
+            ) % {'lot': self.sudo().lot_id.display_name, 'location': location.display_name,
+                 'scrap': scrap.display_name})
         if scrap.state != 'done':
             raise UserError(_(
                 'The scrap of box "%s" could not be validated. Please check the stock of the box.'

@@ -15,6 +15,7 @@
         'security/ir.model.access.csv',
         'security/record_rule.xml',
         'views/treasury_dashboard_views.xml',
+        'views/access_config_search_views.xml',
         'security/pos_dd_report_rules.xml',
         'views/donation_box_dashboard_views.xml',
         'views/profile_management_dashboard_views.xml',

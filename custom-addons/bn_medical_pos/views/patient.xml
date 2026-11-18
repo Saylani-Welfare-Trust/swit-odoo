@@ -63,6 +63,10 @@
                 <field name="cnic_no"/>
                 <field name="mobile"/>
                 <filter name="filter_registered_on" string="Registered On" date="registered_on"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_registered_on" string="Registered On" context="{'group_by': 'registered_on:month'}"/>
+                    <filter name="group_date_of_birth" string="Year of Birth" context="{'group_by': 'date_of_birth:year'}"/>
+                </group>
             </search>
         </field>
     </record>

@@ -15,3 +15,4 @@ from . import res_company
 from . import pos_session
 from . import program_types
 from . import donation_product_onhand
+from . import res_users

@@ -27,6 +27,8 @@
                 <field name="cnic_no"/>
                 <field name="institute_name"/>
                 <field name="portal_application_id"/>
+                <field name="line_ids" string="Line Product"
+                       filter_domain="['|', ('line_ids.product_id', 'ilike', self), ('recurring_line_ids.product_id', 'ilike', self)]"/>
                 <filter name="masjid" string="Masjid" domain="[('institution_category', '=', 'masjid')]"/>
                 <filter name="madrasa" string="Madrasa" domain="[('institution_category', '=', 'madrasa')]"/>
                 <separator/>

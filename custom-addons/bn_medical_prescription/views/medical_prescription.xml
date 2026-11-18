@@ -125,6 +125,7 @@
                 <field name="cnic_no"/>
                 <field name="mobile"/>
                 <field name="doctor_name"/>
+                <field name="line_ids" string="Product" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
                 <field name="pos_order_id"/>
                 <filter name="filter_approved" string="Waiting for Bill" domain="[('state', '=', 'approved')]"/>
                 <filter name="filter_billed" string="Billed" domain="[('state', '=', 'billed')]"/>
