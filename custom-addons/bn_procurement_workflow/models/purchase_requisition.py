@@ -270,9 +270,10 @@ class PurchaseRequisition(models.Model):
     def _get_lines_to_rfq(self):
         """Lines not yet fully sent out on an RFQ. A requisition whose RFQs were
         all created before lines were locked has no line locked at all, and is
-        treated as having none left."""
+        treated as having none left - unless those RFQs are all cancelled."""
         self.ensure_one()
-        if not any(line.locked_qty for line in self.line_ids):
+        if not any(line.locked_qty for line in self.line_ids) and \
+                self.sudo().purchase_ids.filtered(lambda rfq: rfq.state != 'cancel'):
             return self.line_ids.browse()
         return self.line_ids.filtered(lambda line: not line.is_locked)
 

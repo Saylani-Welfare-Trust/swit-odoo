@@ -1,4 +1,10 @@
-from odoo import models, fields, api
+from collections import defaultdict
+
+from markupsafe import Markup
+
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
+from odoo.tools import float_compare
 
 
 class PurchaseOrder(models.Model):
@@ -47,6 +53,61 @@ class PurchaseOrder(models.Model):
             'context': {'create': False},
             'target': 'current',
         }
+
+    # ------------------------------------------------------------------
+    # Purchase Request quantities taken by the RFQs
+    # ------------------------------------------------------------------
+    def button_cancel(self):
+        res = super().button_cancel()
+        self._release_requisition_quantities()
+        return res
+
+    def button_draft(self):
+        self._retake_requisition_quantities()
+        return super().button_draft()
+
+    def _release_requisition_quantities(self):
+        """Once every RFQ of a batch is cancelled, the Purchase Request lines get
+        back the quantity it had taken, to send out on a new RFQ. While one RFQ
+        of the batch is still open - another vendor's quote, or the winning one
+        once the others are cancelled - the quantity stays taken."""
+        # sudo: the lines are given back whoever cancels the RFQ
+        locks = self.env['purchase.requisition.line.lock'].sudo().search([
+            ('order_ids', 'in', self.ids), ('released', '=', False)])
+        locks = locks.filtered(lambda lock: all(order.state == 'cancel' for order in lock.order_ids))
+        if not locks:
+            return
+        items = defaultdict(list)
+        for lock in locks:
+            line = lock.requisition_line_id
+            line._unlock_quantity(lock.quantity)
+            items[line.requisition_id].append(Markup('<li>%s: %s %s</li>') % (
+                line.product_id.display_name, lock.quantity, line.product_uom_id.name or ''))
+        locks.released = True
+        orders = ', '.join(locks.order_ids.mapped('display_name'))
+        for requisition, lines in items.items():
+            requisition.message_post(body=Markup('%s<ul>%s</ul>') % (
+                _('RFQ(s) %s cancelled - available again to send out on a new RFQ:') % orders,
+                Markup().join(lines)))
+
+    def _retake_requisition_quantities(self):
+        """A cancelled RFQ set back to draft takes back the quantity its batch
+        had given back - refused if it has gone out on another RFQ since."""
+        locks = self.env['purchase.requisition.line.lock'].sudo().search([
+            ('order_ids', 'in', self.filtered(lambda order: order.state == 'cancel').ids),
+            ('released', '=', True)])
+        for lock in locks:
+            line = lock.requisition_line_id
+            uom = line.product_id.uom_id
+            if float_compare(lock.quantity, line.remaining_qty, precision_rounding=uom.rounding or 0.01) > 0:
+                raise ValidationError(_(
+                    'This RFQ cannot be set back to draft: %(product)s of Purchase Request %(request)s '
+                    'has been sent out on another RFQ since it was cancelled (%(remaining)s left, '
+                    '%(quantity)s needed).') % {
+                        'product': line.product_id.display_name, 'request': line.requisition_id.name,
+                        'remaining': line.remaining_qty, 'quantity': lock.quantity})
+            line._lock_quantity(lock.quantity)
+        locks.released = False
 
 
 class PurchaseOrderLine(models.Model):

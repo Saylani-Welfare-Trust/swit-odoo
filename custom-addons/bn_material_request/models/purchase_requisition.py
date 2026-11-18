@@ -253,15 +253,33 @@ class PurchaseRequisitionLine(models.Model):
         for line in self:
             line.remaining_qty = max(line.product_qty - line.locked_qty, 0.0)
 
-    def _lock_quantity(self, qty):
+    def _lock_quantity(self, qty, orders=None):
         """Consume ``qty`` of this line's remaining quantity for a
-        consolidated RFQ, and lock the line once nothing is left on it."""
+        consolidated RFQ, and lock the line once nothing is left on it.
+        ``orders``: the RFQs it goes out on (one per vendor, for the same
+        quantity) - it comes back to the line once they are all cancelled."""
         self.ensure_one()
         uom = self.product_id.uom_id
         self.locked_qty += qty
         if float_compare(self.locked_qty, self.product_qty, precision_rounding=uom.rounding or 0.01) >= 0:
             self.locked_qty = self.product_qty
             self.is_locked = True
+        if orders:
+            # sudo: a record of the process, whoever runs it
+            self.env['purchase.requisition.line.lock'].sudo().create({
+                'requisition_line_id': self.id,
+                'quantity': qty,
+                'order_ids': [(6, 0, orders.ids)],
+            })
+
+    def _unlock_quantity(self, qty):
+        """Give ``qty`` back to this line's remaining quantity: the RFQs it
+        went out on are cancelled, so it can go out on a new RFQ."""
+        self.ensure_one()
+        uom = self.product_id.uom_id
+        self.locked_qty = max(self.locked_qty - qty, 0.0)
+        self.is_locked = float_compare(
+            self.locked_qty, self.product_qty, precision_rounding=uom.rounding or 0.01) >= 0
 
     def unlink(self):
         """Log who deleted this line, and what it was, before it is gone for
@@ -283,3 +301,24 @@ class PurchaseRequisitionLine(models.Model):
             # sudo: whoever may delete a PR line need not have access to the log model.
             self.env['purchase.requisition.line.deletion.log'].sudo().create(log_vals)
         return result
+
+
+class PurchaseRequisitionLineLock(models.Model):
+    """A quantity of a Purchase Request line sent out on one batch of RFQs -
+    one Vendor Selection Wizard run, an RFQ per vendor quoting for that same
+    quantity. Once every RFQ of the batch is cancelled the quantity goes back
+    to the line (released); it is taken again if one of them is set back to
+    draft."""
+    _name = 'purchase.requisition.line.lock'
+    _description = 'Purchase Request Line Quantity on RFQs'
+
+    requisition_line_id = fields.Many2one(
+        'purchase.requisition.line', string='Purchase Request Line',
+        required=True, ondelete='cascade', index=True)
+    requisition_id = fields.Many2one(related='requisition_line_id.requisition_id', string='Purchase Request')
+    quantity = fields.Float(string='Quantity', required=True)
+    order_ids = fields.Many2many(
+        'purchase.order', 'purchase_requisition_line_lock_order_rel', 'lock_id', 'order_id', string='RFQs')
+    released = fields.Boolean(
+        string='Released', default=False,
+        help='Every RFQ of the batch is cancelled: the quantity is back on the Purchase Request line.')

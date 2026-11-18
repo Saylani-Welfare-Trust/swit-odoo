@@ -200,7 +200,7 @@ class VendorSelectionWizard(models.TransientModel):
         # vendor): fanning the same consolidated quantity out to several
         # vendors for quotation does not mean more of it was actually ordered.
         for entry in selected:
-            entry.requisition_line_id._lock_quantity(entry.qty_to_order)
+            entry.requisition_line_id._lock_quantity(entry.qty_to_order, created_rfqs)
 
         # A Purchase Request with every line now locked is finished.
         contributing_requisitions._close_if_fully_locked()
