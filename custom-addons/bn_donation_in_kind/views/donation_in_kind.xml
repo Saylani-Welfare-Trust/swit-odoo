@@ -132,10 +132,31 @@
         </field>
     </record>
 
+    <record id="donation_in_kind_search_view" model="ir.ui.view">
+        <field name="name">donation.in.kind.search.view</field>
+        <field name="model">donation.in.kind</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="donor_id" />
+                <field name="product_id" />
+                <field name="truk_number" />
+                <field name="location_id" />
+                <filter name="filter_created_by_me" string="Created by Me" domain="[('create_uid', '=', uid)]" />
+                <group expand="0" string="Group By">
+                    <filter name="group_by_created_by" string="Created By" context="{'group_by': 'create_uid'}" />
+                    <filter name="group_by_state" string="Status" context="{'group_by': 'state'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="donation_in_kind_action" model="ir.actions.act_window">
         <field name="name">Donation In Kind</field>
         <field name="res_model">donation.in.kind</field>
         <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="donation_in_kind_search_view" />
+        <field name="context">{'search_default_filter_created_by_me': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Add a new donation in kind...
