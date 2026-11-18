@@ -42,7 +42,7 @@
                                 </group>
                             </group>
                             <div class="alert alert-info" role="alert">
-                                <span class="fa fa-info-circle"/> 
+                                <span title="Info" class="fa fa-info-circle"/> 
                                 <b>Note:</b> Only enabled modules will be synced by their respective cron jobs.
                                 Disabled modules will skip sync execution.
                             </div>

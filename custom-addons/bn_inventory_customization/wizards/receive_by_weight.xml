@@ -34,11 +34,4 @@
         </field>
     </record>
 
-    <record id="action_receive_by_weight" model="ir.actions.act_window">
-        <field name="name">Receive by Weight</field>
-        <field name="res_model">receive.by.weight</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-    </record>
-
 </odoo>

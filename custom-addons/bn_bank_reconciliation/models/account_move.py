@@ -16,10 +16,6 @@ class AccountMove(models.Model):
         string='Bank Reconciliation',
         compute='_compute_bank_reconciliation'
     )
-    bank_reconciliation_ids = fields.Many2many(
-        'bank.reconciliation.master',
-        string='Bank Reconciliations'
-    )
     bank_reconciliation_created_id = fields.Many2one(
         'bank.reconciliation.master',
         string='Created by Bank Reconciliation',
@@ -79,6 +75,7 @@ class AccountMove(models.Model):
 
     def _compute_bank_reconciliation_moves(self):
         ids = [id_ for id_ in self.ids if isinstance(id_, int)]
+        # Unreconciled lines are archived but still name their (cancelled) entry
         reconciled = self.env['bank.reconciliation.reconciled'].with_context(active_test=False).search([
             ('matched_move_id', 'in', ids),
         ])
@@ -96,6 +93,18 @@ class AccountMove(models.Model):
             move.bank_reconciliation_move_ids = entries
             move.bank_reconciliation_move_id = entries if len(entries) == 1 else False
             move.bank_reconciliation_move_count = len(entries)
+
+    def action_view_bank_reconciliation_moves(self):
+        self.ensure_one()
+        entries = self.bank_reconciliation_move_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'name': _('Reconciliation Entries'),
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', entries.ids)],
+        }
 
     def action_view_bank_reconciliation_original_moves(self):
         self.ensure_one()

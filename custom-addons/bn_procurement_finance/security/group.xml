@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
     <record id="group_finance" model="res.groups">
-        <field name="name">Procurement Finance / Finance</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="name">Finance</field>
+        <field name="category_id" ref="module_procurement_finance"/>
     </record>
     <record id="group_treasury" model="res.groups">
-        <field name="name">Procurement Finance / Treasury</field>
-        <field name="category_id" ref="base.module_category_hidden"/>
+        <field name="name">Treasury</field>
+        <field name="category_id" ref="module_procurement_finance"/>
     </record>
+
+    <!-- These groups are noupdate: an earlier version put them in the hidden
+         Technical category, where they could not be assigned. -->
+    <data noupdate="0">
+        <function model="res.groups" name="write">
+            <value eval="[ref('group_finance')]"/>
+            <value eval="{'category_id': ref('module_procurement_finance'), 'name': 'Finance'}"/>
+        </function>
+        <function model="res.groups" name="write">
+            <value eval="[ref('group_treasury')]"/>
+            <value eval="{'category_id': ref('module_procurement_finance'), 'name': 'Treasury'}"/>
+        </function>
+    </data>
 </odoo>

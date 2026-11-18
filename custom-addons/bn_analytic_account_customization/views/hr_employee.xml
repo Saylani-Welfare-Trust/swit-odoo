@@ -8,10 +8,43 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='work_location_id']" position="after">
                 <field name="analytic_account_id" string="Branch Location" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', '=', 'Branch')]" required="1" />
+                <field name="zone_id" options="{'no_open': True}" invisible="not zone_id"/>
+                <field name="city_id" options="{'no_open': True}"/>
             </xpath>
 
             <xpath expr="//field[@name='work_email']" position="after">
                 <field name="cnic_no" required="1" />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_view_employee_filter_location_levels" model="ir.ui.view">
+        <field name="name">hr.employee.search.location.levels</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='job_id']" position="after">
+                <field name="analytic_account_id"/>
+                <field name="zone_id"/>
+                <field name="city_id"/>
+            </xpath>
+            <xpath expr="//filter[@name='group_manager']" position="before">
+                <filter name="groupby_city_id" string="City" context="{'group_by': 'city_id'}"/>
+                <filter name="groupby_zone_id" string="Zone" context="{'group_by': 'zone_id'}"/>
+                <filter name="groupby_analytic_account_id" string="Branch" context="{'group_by': 'analytic_account_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_view_employee_tree_location_levels" model="ir.ui.view">
+        <field name="name">hr.employee.tree.location.levels</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='work_email']" position="before">
+                <field name="analytic_account_id" optional="show"/>
+                <field name="zone_id" optional="hide"/>
+                <field name="city_id" optional="show"/>
             </xpath>
         </field>
     </record>

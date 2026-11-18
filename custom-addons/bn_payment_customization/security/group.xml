@@ -2,5 +2,6 @@
 <odoo>
     <record id="group_ibft_reprint" model="res.groups">
         <field name="name">IBFT Reprint</field>
+        <field name="comment">Can reprint an IBFT batch that was already confirmed, giving a reason.</field>
     </record>
 </odoo>

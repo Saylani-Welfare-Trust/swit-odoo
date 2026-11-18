@@ -14,7 +14,7 @@
     </record>
 
     <record id="bn_profile_management_form_whatsapp" model="ir.ui.view">
-        <field name="name">bn.profile.management.form.whatsapp</field>
+        <field name="name">profile.management.form.whatsapp</field>
         <field name="model">res.partner</field> 
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">

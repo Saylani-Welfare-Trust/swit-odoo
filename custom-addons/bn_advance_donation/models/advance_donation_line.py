@@ -35,14 +35,7 @@ class AdvanceDonationLine(models.Model):
         ('paid', 'Paid')],
         string='Status', compute='_compute_installment_state', store=True)
 
-    donation_state = fields.Selection([
-        ('draft', 'Draft'),
-        ('approval_1', 'Approval 1'),
-        ('approval_2', 'Approval 2'),
-        ('approved', 'Approved'),
-        ('rejected', 'Rejected')],
-        default='draft',
-        string='Donation State', related='advance_donation_id.state')
+    donation_state = fields.Selection(string='Donation State', related='advance_donation_id.state')
     approved_date = fields.Datetime('Approved Date', related='advance_donation_id.approved_date')
     is_disbursed = fields.Boolean('Is Disbursed?', default=False)
     currency_id = fields.Many2one('res.currency', 'Currency', related='advance_donation_id.currency_id', readonly=True)
@@ -57,12 +50,6 @@ class AdvanceDonationLine(models.Model):
         store=True,
         readonly=False,
         help='Date when the disbursement is made'
-    )
-
-    date_visibility = fields.Boolean(
-        string='Date Visibility',
-        help='Controls the visibility of the date field in the tree view. It is set to True if the contract type is frequency based, otherwise False.',
-        compute='_compute_date_visibility'
     )
 
     def _auto_init(self):
@@ -87,20 +74,15 @@ class AdvanceDonationLine(models.Model):
                 # Keep a date entered manually, only default it to today
                 rec.disbursement_date = td.today()
     
-    @api.depends('advance_donation_id.contract_type')
-    def _compute_date_visibility(self):
-        for rec in self:
-            if rec.advance_donation_id.contract_type == 'frequency':
-                rec.date_visibility = True
-            else: rec.date_visibility = False
-    
-    @api.depends('paid_amount', 'amount')
+    @api.depends('paid_amount', 'amount', 'service_charge_amount')
     def _compute_installment_state(self):
         for rec in self:
-            if rec.paid_amount < rec.amount and rec.paid_amount != 0:
-                rec.state = 'partial'
-            elif rec.paid_amount == rec.amount:
+            total = rec.amount + rec.service_charge_amount
+            currency = rec.currency_id or self.env.company.currency_id
+            if total and currency.compare_amounts(rec.paid_amount, total) >= 0:
                 rec.state = 'paid'
+            elif not currency.is_zero(rec.paid_amount):
+                rec.state = 'partial'
             else:
                 rec.state = 'unpaid'
     

@@ -5,3 +5,6 @@ from . import product_template
 from . import pos_session
 from . import stock_picking
 from . import res_company
+from . import program_types
+
+from . import pos_order

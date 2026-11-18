@@ -13,6 +13,7 @@ status_selection = [
 
 class JournalTransfer(models.Model):
     _name = "journal.transfer"
+    _inherit = ['pos.link.mixin']
     _description = "Journal Transfer"
 
 
@@ -26,32 +27,47 @@ class JournalTransfer(models.Model):
     user_id = fields.Many2one('res.users', string="User")
     move_id = fields.Many2one('account.move', string="Account Move")
 
-    date = fields.Date('Transfer Date')
+    date = fields.Date('Transfer Date', index=True)
     accounting_date = fields.Date('Accounting Date')
     
     source_journal_id = fields.Many2one('account.journal', string="Source Journal")
     dest_journal_id = fields.Many2one('account.journal', string="Destination Journal")
     currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.company.currency_id)
     remarks = fields.Char('Remarks')
-    pos_move_id = fields.Many2one('account.move', string="Account Move")
+    pos_move_id = fields.Many2one('account.move', string='POS Session Entry')
 
-    analytic_account_id = fields.Many2one(related='user_id.employee_id.analytic_account_id', string="Analytci Account", store=True)
+    # the Branch of the POS shop it was made at; made in the back office: the user's branch
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch",
+                                          compute='_compute_branch', store=True, readonly=True)
+
+    @api.depends('pos_analytic_account_id', 'user_id')
+    def _compute_branch(self):
+        for rec in self:
+            rec.analytic_account_id = rec.pos_analytic_account_id or rec.user_id.employee_id.analytic_account_id
     reference = fields.Char('Reference')
     state = fields.Selection(selection=status_selection, string="Status", default="draft")
     
     amount = fields.Monetary('Amount', currency_field='currency_id')
     
 
-    @api.constrains('source_journal_id','dest_journal_id')
-    def _check_journals(self):
-        for rec in self:
-            if rec.source_journal_id == rec.dest_journal_id:
-                raise UserError("Source and Destination journals must be different.")
+    def init(self):
+        # transfers pulled before the link existed: the session of their POS entry
+        self.env.cr.execute("""
+            UPDATE journal_transfer t SET pos_session_id = s.id
+              FROM pos_session s
+             WHERE s.move_id = t.pos_move_id AND t.pos_session_id IS NULL
+        """)
+        super().init()
 
     def action_transfer(self):
         for rec in self:
-            if rec.state == 'posted':
-                raise UserError('Entry is already transfered')
+            if rec.state != 'draft':
+                raise UserError(_('Only draft transfers can be posted (%s).') % rec.name)
+            # (lines pulled without a bank journal start with the same journal on both sides)
+            if rec.source_journal_id == rec.dest_journal_id:
+                raise UserError(_('Set a destination journal different from the source on %s.') % rec.name)
+            if not rec.source_journal_id.default_account_id or not rec.dest_journal_id.default_account_id:
+                raise UserError(_('Both journals of %s need a default account.') % rec.name)
 
             move_line_vals = [
                 {
@@ -77,24 +93,28 @@ class JournalTransfer(models.Model):
                 'ref': f'Transfer {rec.amount} from {rec.source_journal_id.name} to {rec.dest_journal_id.name}'
             }
 
-            move = rec.env['account.move'].create(move_vals)
+            move = rec.env['account.move'].with_context(default_source_ref='%s,%s' % (rec._name, rec.id)).create(move_vals)
             rec.move_id = move.id
-            move.post()
+            move.action_post()
 
             rec.state = 'posted'
 
     def action_cancel(self):
-        if self.state == 'cancel':
-            raise UserError('Entry is already cancelled')
-        
-        self.state = 'cancel'
+        for rec in self:
+            if rec.state == 'cancel':
+                raise UserError(_('Entry is already cancelled'))
+            # a posted transfer takes its journal entry with it
+            if rec.move_id and rec.move_id.state == 'posted':
+                rec.move_id.button_draft()
+                rec.move_id.button_cancel()
+            rec.state = 'cancel'
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('journal_transfer') or ('New')
-
-        return super(JournalTransfer, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('journal_transfer') or ('New')
+        return super().create(vals_list)
     
     def action_show_entry(self):
         return {
@@ -134,7 +154,8 @@ class JournalTransfer(models.Model):
             moves = moves.filtered(lambda m: m.id not in existing_move_ids and m.state == 'posted')
 
         for move in moves:
-            pos_session = self.env['pos.session'].search([('name', '=', move.ref)])
+            pos_session = self.env['pos.session'].search([('move_id', '=', move.id)], limit=1) \
+                or self.env['pos.session'].search([('name', '=', move.ref)], limit=1)
         
             debit_lines = move.line_ids.filtered(
                 lambda l: l.debit > 0 and l.account_id.account_type in ['asset_receivable', 'asset_cash']
@@ -165,8 +186,25 @@ class JournalTransfer(models.Model):
                     'date': line.date,
                     'amount': line.debit - line.credit,
                     'user_id': pos_session.user_id.id if pos_session else False,
+                    'pos_session_id': pos_session.id,
                 })
         
         if records:
             self.create(records)
             
+
+    @api.model
+    def _split_description(self):
+        """Upgrade hook (data/upgrade_hooks.xml): fill session / category /
+        deposit slip of the older transfers from their description
+        "<session> - <category> - <slip>". Only rows not done yet."""
+        self.env.cr.execute("""
+            UPDATE journal_transfer
+               SET session         = NULLIF(TRIM(SPLIT_PART(descripiton, ' - ', 1)), ''),
+                   category        = NULLIF(TRIM(SPLIT_PART(descripiton, ' - ', 2)), ''),
+                   deposit_slip_no = NULLIF(TRIM(SPLIT_PART(descripiton, ' - ', 3)), '')
+             WHERE descripiton IS NOT NULL AND descripiton <> '' AND session IS NULL
+        """)
+        if self.env.cr.rowcount:
+            _logger.info("journal.transfer: session / category / slip filled on %s transfers", self.env.cr.rowcount)
+            self.invalidate_model(['session', 'category', 'deposit_slip_no'])

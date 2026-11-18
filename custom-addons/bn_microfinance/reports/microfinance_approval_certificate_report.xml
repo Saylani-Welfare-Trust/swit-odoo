@@ -223,60 +223,6 @@
                             </div>
 
                             <!-- Product/Loan Details Section -->
-                            <!-- <div class="info-box compact-section">
-                                <h6 class="fw-bold" style="font-size: 12px; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px;">
-                                    Loan / Product Details
-                                </h6>
-                                <div class="flex-container">
-                                    <div class="flex-column flex-left">
-                                        <div class="flex-row">
-                                            <div class="flex-label">Product:</div>
-                                            <div class="flex-value">
-                                                <t t-esc="doc.product_id.name or '-'"/>
-                                            </div>
-                                        </div>
-                                        <div class="flex-row">
-                                            <div class="flex-label">Product Amount:</div>
-                                            <div class="flex-value">
-                                                <span t-field="doc.product_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
-                                            </div>
-                                        </div>
-                                        <div class="flex-row">
-                                            <div class="flex-label">Security Deposit:</div>
-                                            <div class="flex-value">
-                                                <span t-field="doc.security_deposit" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
-                                            </div>
-                                        </div>
-                                        <div class="flex-row">
-                                            <div class="flex-label">Donor Contribution:</div>
-                                            <div class="flex-value">
-                                                <span t-field="doc.advance_donation_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex-column flex-right">
-                                        <div class="flex-row">
-                                            <div class="flex-label">Total Amount:</div>
-                                            <div class="flex-value fw-bold">
-                                                <span t-field="doc.total_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
-                                            </div>
-                                        </div>
-                                        <div class="flex-row">
-                                            <div class="flex-label">Installment Amount:</div>
-                                            <div class="flex-value">
-                                                <span t-field="doc.installment_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/>
-                                            </div>
-                                        </div>
-                                        <div class="flex-row">
-                                            <div class="flex-label">Installment Period:</div>
-                                            <div class="flex-value">
-                                                <t t-esc="doc.installment_period"/> Months
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> -->
 
                             <!-- Approval Summary -->
                             <div class="summary-box tight-margin">
@@ -307,10 +253,6 @@
                                     <span><strong>Monthly Installment:</strong></span>
                                     <span><span t-field="doc.installment_amount" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}"/></span>
                                 </div>
-                                <!-- <div class="summary-row">
-                                    <span><strong>Number of Installments:</strong></span>
-                                    <span><t t-esc="doc.installment_period"/></span>
-                                </div> -->
                             </div>
 
                             <!-- Terms & Conditions -->

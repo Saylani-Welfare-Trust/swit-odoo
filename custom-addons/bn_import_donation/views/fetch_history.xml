@@ -20,6 +20,23 @@
         </field>
     </record>
 
+    <record id="fetch_history_view_search" model="ir.ui.view">
+        <field name="name">fetch.history.view.search</field>
+        <field name="model">fetch.history</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" />
+                <field name="journal_entry_id" />
+                <field name="picking_id" />
+                <separator />
+                <filter string="Start Date" name="filter_start_date" date="start_date" />
+                <group string="Group By">
+                    <filter string="Start Date" name="group_start_date" domain="[]" context="{'group_by': 'start_date'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="fetch_history_action" model="ir.actions.act_window">
         <field name="name">Fetch History</field>
         <field name="res_model">fetch.history</field>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates id="template" xml:space="preserve">
+
+    <t t-inherit="bn_pos_custom_action.ProvisionalPopup" t-inherit-mode="extension">
+        <xpath expr="//footer" position="before">
+            <main class="modal-body" t-if="this.action_type == 'mf'">
+                <div class="row mb-2 text-start">
+                    <div class="col-4 fw-semibold">Request No.</div>
+                    <div class="col-8">
+                        <input type="text"
+                            class="form-control form-control-sm"
+                            t-att-value="this.state.microfinance_request_no"
+                            t-on-change="updateMicrofinanceRequestNo"
+                            placeholder="Enter Microfinance Request No."/>
+                    </div>
+                </div>
+            </main>
+        </xpath>
+    </t>
+
+</templates>

@@ -177,7 +177,6 @@
                 </sheet>
                 <footer>
                     <button name="action_approve" string="Approve" type="object" class="btn-primary"/>
-                    <!-- <button name="action_save_and_close" string="Save" type="object" class="btn-default"/> -->
                     <button name="action_cancel" string="Cancel" type="object" class="btn-default"/>
                 </footer>
             </form>

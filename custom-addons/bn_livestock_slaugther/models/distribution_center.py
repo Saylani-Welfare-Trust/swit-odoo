@@ -1,5 +1,6 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 from dateutil.relativedelta import relativedelta
 
@@ -20,16 +21,16 @@ type_selection = [
 
 class DistributionCenter(models.Model):
     _name = 'distribution.center'
-    _decription = "Distribution Center"
+    _description = "Distribution Center"
 
 
     name = fields.Char('Name', default="New")
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee'))
     purchase_requisition_id = fields.Many2one('purchase.requisition', string="Purchase Requisition")
     picking_id = fields.Many2one('stock.picking', string="Picking")
 
-    request_date = fields.Date('Request Date', default=fields.Date.today())
+    request_date = fields.Date('Request Date', default=fields.Date.context_today)
     delivery_date = fields.Date('Delivery Date', compute="_set_delivery_date", store=True)
 
     type = fields.Selection(selection=type_selection, string="Type")
@@ -52,12 +53,12 @@ class DistributionCenter(models.Model):
             if rec.request_date and rec.lead_time:
                 rec.delivery_date = rec.request_date + relativedelta(days=rec.lead_time)
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New') == _('New')):
-            vals['name'] = self.env['ir.sequence'].next_by_code('distribution_center') or ('New')
-        
-        return super(DistributionCenter, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if not vals.get('name') or vals.get('name') == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('distribution_center') or ('New')
+        return super().create(vals_list)
     
     def action_confirm(self):
         self.ensure_one()
@@ -67,14 +68,21 @@ class DistributionCenter(models.Model):
         
         self.state = 'item_selected'
 
+    def _check_livestock_group(self, xmlid, role):
+        """Manager / role steps: the view hides the button, this also refuses it over RPC."""
+        if not self.env.su and not self.env.user.has_group(xmlid):
+            raise UserError(_('Only the Livestock %s can do this step.') % role)
+
     def action_welfare_approve(self):
         self.ensure_one()
+        self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_welfare_approval_group', _('Welfare Approval'))
 
         self.state = 'welfare_approved'
 
     def action_issue_purchase_requisition(self):
         """Purchase Requisition to Supply Chain Dept for all distribution lines."""
         self.ensure_one()
+        self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_manager_group', _('Manager'))
 
         PurchaseRequisition = self.env['purchase.requisition']
 
@@ -106,6 +114,7 @@ class DistributionCenter(models.Model):
     def action_issue_delivery_note(self):
         """Manually create and confirm the outgoing Delivery Note."""
         self.ensure_one()
+        self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_manager_group', _('Manager'))
 
         purchase_order = self.purchase_requisition_id.purchase_ids.filtered(lambda x: x.state in ['purchase', 'done'])
 
@@ -119,8 +128,9 @@ class DistributionCenter(models.Model):
         
         picking = self.env['stock.picking'].create({
             'origin': self.name,
+            'source_record_ref': '%s,%s' % (self._name, self.id),
             'partner_id': self.donee_id.id,
-            'picking_type_id': self.env.ref('stock.picking_type_out').id,
+            'picking_type_id': self.env['stock.warehouse']._get_program_type('livestock_distribution', warehouse_loc).id,
             'location_id': warehouse_loc.id,
             'location_dest_id': self.donee_id.property_stock_customer.id,
             'move_ids': [

@@ -10,31 +10,31 @@
 
                         <div class="row">
                             <div class="col-6">
-                                <span>Location</span> <spna><t t-esc="o.distribution_location_id.name"/></spna>
+                                <span>Location</span> <span><t t-esc="o.distribution_location_id.name"/></span>
                             </div>
                             <div class="col-6">
-                                <span>QO No.</span> <spna><t t-esc="o.qurbani_order_no"/></spna>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <span>Start Time</span> <spna><t t-esc="o.start_time" widget="float_time"/></spna>
-                            </div>
-                            <div class="col-6">
-                                <span>End Time</span> <spna><t t-esc="o.end_time" widget="float_time"/></spna>
+                                <span>QO No.</span> <span><t t-esc="o.qurbani_order_no"/></span>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-6">
-                                <span>QOL No.</span> <spna><t t-esc="o.qurbani_order_line_no"/></spna>
+                                <span>Start Time</span> <span><t t-esc="o.start_time" t-options="{'widget': 'float_time'}"/></span>
                             </div>
                             <div class="col-6">
-                                <span>Product</span> <spna><t t-esc="o.product_id.display_name"/></spna>
+                                <span>End Time</span> <span><t t-esc="o.end_time" t-options="{'widget': 'float_time'}"/></span>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col-6">
-                                <span>Hissa Name</span> <spna><t t-esc="o.hissa_name"/></spna>
+                                <span>QOL No.</span> <span><t t-esc="o.qurbani_order_line_no"/></span>
+                            </div>
+                            <div class="col-6">
+                                <span>Product</span> <span><t t-esc="o.product_id.display_name"/></span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <span>Hissa Name</span> <span><t t-esc="o.hissa_name"/></span>
                             </div>
                             <div class="col-6"/>
                         </div>

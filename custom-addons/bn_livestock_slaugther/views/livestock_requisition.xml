@@ -64,6 +64,7 @@
 
     <menuitem
         id="requisition_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
         name="Requisition"
         action="livestock_requisition_action"
         parent="bn_livestock_slaugther.livestock_menu"

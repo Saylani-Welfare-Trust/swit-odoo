@@ -40,7 +40,6 @@
         <field name="name">Individual Disbursement</field>
         <field name="category_id" ref="base.module_category_hidden"/>
     </record>
-    <!-- Fetch Institution and Institutional Disbursement groups: see bn_sadqa_e_jariya -->
     <record id="group_bn_welfare_user" model="res.groups">
         <field name="name">Welfare User</field>
         <field name="category_id" ref="base.module_category_hidden"/>

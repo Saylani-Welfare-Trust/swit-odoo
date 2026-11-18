@@ -3,6 +3,7 @@
 
     <menuitem
         id="custom_product_types_menu"
+        groups="bn_livestock_slaugther.livestock_slaugther_admin_group"
         name="Product Types"
         action="stock.action_package_type_view"
         parent="bn_livestock_slaugther.livestock_menu"

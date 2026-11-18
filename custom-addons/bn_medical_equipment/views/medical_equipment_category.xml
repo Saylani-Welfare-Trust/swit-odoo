@@ -30,6 +30,7 @@
         name="Medical Equipment Category"
         action="medical_equipment_category_action"
         parent="bn_master_setup.master_setup_menu"
-        sequence="6"/>
+        sequence="6"
+        groups="bn_medical_equipment.medical_equipment_admin_group"/>
 
 </odoo>

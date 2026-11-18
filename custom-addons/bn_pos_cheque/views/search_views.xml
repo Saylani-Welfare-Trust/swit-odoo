@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Search: references, donor / partner, user, product, lot, location; line
+         search on products and lot numbers; status, my records, date filters;
+         group by status, partner, user, product, location and month -->
+
+    <record id="search_pos_cheque" model="ir.ui.view">
+        <field name="name">pos.cheque.search</field>
+        <field name="model">pos.cheque</field>
+        <field name="inherit_id" ref="bn_pos_cheque.pos_cheque_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="pos_reference"/>
+                <field name="pos_config_id"/>
+                <separator/>
+                <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
+                <group expand="0" string="Group By" name="group_by_options">
+                    <filter name="groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="groupby_date_month" string="Cheque Date" context="{'group_by': 'date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

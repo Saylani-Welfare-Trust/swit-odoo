@@ -11,6 +11,26 @@
         </field>
     </record>
 
+    <record id="key_bunch_view_search" model="ir.ui.view">
+        <field name="name">key.bunch.view.search</field>
+        <field name="model">key.bunch</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Bunch" />
+                <field name="room_no" />
+                <field name="rack_no" />
+                <field name="city_id" />
+                <field name="zone_id" />
+                <field name="sub_zone_id" />
+                <group string="Group By">
+                    <filter string="City" name="group_city" domain="[]" context="{'group_by': 'city_id'}" />
+                    <filter string="Zone" name="group_zone" domain="[]" context="{'group_by': 'zone_id'}" />
+                    <filter string="Sub Zone" name="group_sub_zone" domain="[]" context="{'group_by': 'sub_zone_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="key_bunch_view_form" model="ir.ui.view">
         <field name="name">key.bunch.view.form</field>
         <field name="model">key.bunch</field>
@@ -23,7 +43,8 @@
                     </div>
                     <group>
                         <group name="key_bunch_col_1">
-                            <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
+                            <field name="allowed_city_ids" invisible="1" />
+                            <field name="city_id" string="City" domain="[('location_option_id.name', '=', 'City'), ('id', 'in', allowed_city_ids)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="zone_id" string="Zone" domain="[('parent_id', '=', city_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                             <field name="sub_zone_id" string="Sub Zone" domain="[('analytic_account_id', '=', zone_id)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1" />
                         </group>

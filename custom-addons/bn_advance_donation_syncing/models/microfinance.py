@@ -1,5 +1,4 @@
-from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields, _
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -10,7 +9,7 @@ class MicrofinanceSync(models.Model):
     
     advance_donation_line_id = fields.Many2one(
         'advance.donation.lines',
-        string="Advance Donation",
+        string='Advance Donation Line',
         ondelete='set null'
     )
     

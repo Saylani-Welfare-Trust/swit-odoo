@@ -30,7 +30,7 @@
 
                 <field name="max_distribution" column_invisible="1"/>
 
-                <button string="Approve" name="action_approved" type="object" class="oe_highlight" invisible="max_distribution > 2"/>
+                <button string="Approve" name="action_approved" type="object" class="oe_highlight" invisible="max_distribution > 2" groups="bn_qurbani.qurbani_manager_group"/>
             </tree>
         </field>
     </record>
@@ -61,7 +61,8 @@
         id="qurbani_distribution_root_menu"
         name="Distribution"
         parent="bn_qurbani.menu_qurbani_root"
-        sequence="3"/>
+        sequence="3"
+        groups="bn_qurbani.qurbani_user_group,bn_qurbani.qurbani_audit_group"/>
 
     <menuitem
         id="qurbani_cow_distribution_menu"

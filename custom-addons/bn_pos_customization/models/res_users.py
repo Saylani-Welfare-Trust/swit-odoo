@@ -5,5 +5,6 @@ class ResUser(models.Model):
     _inherit = 'res.users'
 
 
-    branch_code = fields.Char(related='employee_id.analytic_account_id.code', string="Branch Code", store=True, tracking=True)
-    branch_name = fields.Char(related='employee_id.analytic_account_id.name', string="Branch Name", store=True, tracking=True)
+    # the cashier's branch: the POS falls back to it when the shop has no Branch
+    branch_code = fields.Char(related='employee_id.analytic_account_id.code', string="Branch Code")
+    branch_name = fields.Char(related='employee_id.analytic_account_id.name', string="Branch Name")

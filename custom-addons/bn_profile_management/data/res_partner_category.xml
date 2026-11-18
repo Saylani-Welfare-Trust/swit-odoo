@@ -31,16 +31,17 @@
             <field name="name">Microfinance</field>
         </record>
         
-        <!-- Medical Equipment donees (was named "Medical" until 1.1, see migrations/1.1) -->
+        <!-- Medical Equipment donees (named "Medical" before; renamed on upgrade by
+             res.partner.category._split_medical_tags) -->
         <record id="medical_partner_category" model="res.partner.category">
             <field name="name">Medical Equipment</field>
         </record>
 
-        <!-- Patients registered from the POS "Register Patient" action -->
+        <!-- Patients of the Medical &amp; Health POS -->
         <record id="medical_patient_partner_category" model="res.partner.category">
             <field name="name">Medical</field>
         </record>
-
+        
         <record id="student_partner_category" model="res.partner.category">
             <field name="name">Student</field>
         </record>

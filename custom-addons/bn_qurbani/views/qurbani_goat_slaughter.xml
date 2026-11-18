@@ -30,7 +30,7 @@
 
                 <field name="state" widget="badge" decoration-info="state == 'available'" decoration-success="state == 'full'" />
 
-                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" groups="bn_qurbani.qurbani_user_group"/>
             </tree>
         </field>
     </record>

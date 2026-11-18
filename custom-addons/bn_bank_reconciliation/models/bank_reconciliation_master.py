@@ -33,7 +33,8 @@ class BankReconciliationMaster(models.Model):
     posted_account_id = fields.Many2one(
         related='journal_id.default_account_id',
         string='Posted Account',
-        required=True,
+        # not required: a stored related field is only filled after the insert;
+        # _check_posted_account makes sure the journal has one
         store=True,
         domain="[('account_type', 'in', ['asset_cash', 'asset_current']), ('deprecated', '=', False)]"
     )
@@ -79,7 +80,7 @@ class BankReconciliationMaster(models.Model):
         store=True
     )
     reconciled_transactions = fields.Integer(
-        string='Reconciled Transactions',
+        string='Reconciled Transactions (count)',
         compute='_compute_transaction_counts',
         store=True
     )
@@ -187,6 +188,13 @@ class BankReconciliationMaster(models.Model):
     match_tolerance_days = fields.Integer(string='Date Tolerance (Days)', default=3)
     match_tolerance_amount = fields.Float(string='Amount Tolerance', default=0.01)
 
+    @api.constrains('journal_id')
+    def _check_posted_account(self):
+        for master in self:
+            if not master.journal_id.default_account_id:
+                raise ValidationError(_('Journal %s has no default account: set it before reconciling its statement.')
+                                      % master.journal_id.display_name)
+
     @api.constrains('date')
     def _check_date(self):
         for record in self:
@@ -207,21 +215,6 @@ class BankReconciliationMaster(models.Model):
     ], string='CSV Delimiter', default=',')
 
 
-    # @api.depends('file_name')
-    # def _compute_file_type(self):
-    #     for rec in self:
-    #         if rec.file_name:
-    #             ext = rec.file_name.lower().split('.')[-1]
-    #             if ext in ('csv',):
-    #                 rec.file_type = 'csv'
-    #             elif ext in ('xls',):
-    #                 rec.file_type = 'xls'
-    #             elif ext in ('xlsx',):
-    #                 rec.file_type = 'xlsx'
-    #             else:
-    #                 rec.file_type = False
-    #         else:
-    #             rec.file_type = False
 
     @api.onchange('bank_statement_config_id')
     def _onchange_bank_statement_config_id(self):
@@ -229,11 +222,12 @@ class BankReconciliationMaster(models.Model):
         if self.state == 'draft' and self.bank_statement_config_id.journal_id:
             self.journal_id = self.bank_statement_config_id.journal_id
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name', _('New')) == _('New'):
-            vals['name'] = self.env['ir.sequence'].next_by_code('bank.reconciliation.master') or _('New')
-        return super(BankReconciliationMaster, self).create(vals)
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if vals.get('name', _('New')) == _('New'):
+                vals['name'] = self.env['ir.sequence'].next_by_code('bank.reconciliation.master') or _('New')
+        return super().create(vals_list)
 
     @api.depends('transaction_ids', 'transaction_ids.state', 'reconciled_ids', 'reconciled_ids.active')
     def _compute_transaction_counts(self):
@@ -509,31 +503,5 @@ class BankReconciliationMaster(models.Model):
             'target': 'current',
         }
 
-    def action_view_transactions(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'bank.reconciliation.transaction',
-            'view_mode': 'tree,form',
-            'domain': [('master_id', '=', self.id)],
-            'context': {'default_master_id': self.id}
-        }
-
-    def action_view_reconciled(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'bank.reconciliation.reconciled',
-            'view_mode': 'tree,form',
-            'domain': [('master_id', '=', self.id)],
-            'context': {'default_master_id': self.id}
-        }
-
     def unlink(self):
         raise UserError(_('You cannot delete a bank reconciliation.'))
-        # for record in self:
-        #     if record.state != 'draft':
-        #         raise UserError(_('You can only delete draft reconciliations.'))
-        #     if record.transaction_ids:
-        #         raise UserError(_('Cannot delete a reconciliation with transactions. Please cancel it first.'))
-        # return super(BankReconciliationMaster, self).unlink()

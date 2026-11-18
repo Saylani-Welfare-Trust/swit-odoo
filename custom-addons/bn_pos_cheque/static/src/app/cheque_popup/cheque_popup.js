@@ -18,7 +18,7 @@ export class ChequePopup extends AbstractAwaitablePopup {
 
         const offset = (this.state.currentPage - 1) * this.state.limit;
             
-        const result = await this.orm.call('pos.order', 'get_cheque_pos_order', [this.state.activeId, shop, offset, this.state.limit]);
+        const result = await this.orm.call('pos.order', 'get_cheque_pos_order', [shop, offset, this.state.limit]);
         
         this.state.chequeorder = result.orders;
         this.state.totalRecords = result.total_count;
@@ -67,20 +67,17 @@ export class ChequePopup extends AbstractAwaitablePopup {
         
         const text = this.searchInput.el.value
 
-        const result = await this.orm.call('pos.order', 'get_cheque_pos_order_specific', [this.state.activeId, shop, text]);
+        this.state.currentPage = 1;
+        const result = await this.orm.call('pos.order', 'get_cheque_pos_order_specific', [shop, text]);
         
         this.state.chequeorder = result.orders;
         this.state.totalRecords = result.total_count;
     }
 
-    reDeposite(orderID){
-        const result = this.orm.call('pos.order', 'redeposite_cheque', [this.state.activeId, orderID])
-        .then(() => {
-            this.get_pos_cheque(); // Refresh the data
-        })
-        .catch(error => {
-            console.error("Error bouncing cheque:", error);
-        });
+    async reDeposite(orderID){
+        await this.orm.call('pos.order', 'redeposite_cheque', [orderID, this.pos.config.id]);
+        this.notification.add(_t("Cheque re-deposited"), { type: 'success' });
+        await this.get_pos_cheque(); // Refresh the data
     }
     
     async settleOrder(orderID){
@@ -232,9 +229,12 @@ export class ChequePopup extends AbstractAwaitablePopup {
             return false;
         }
         
+        // give back exactly what was paid for the line
+        const qty = line.qty || 1;
         selectedOrder.add_product(product, {
-            quantity: -1*line.qty || -1,
-            price_extra:  product.lst_price == 0 ? line.price_subtotal_incl : 0
+            quantity: -qty,
+            price: line.price_subtotal_incl / qty,
+            merge: false,
         });
         
         return true;
@@ -324,12 +324,6 @@ export class ChequePopup extends AbstractAwaitablePopup {
         );
     }
 
-    async cancel() {
-        if (this.canCancel()) {
-            super.cancel();
-        }
-    }
-    
     canCancel() {
         return true;
     }

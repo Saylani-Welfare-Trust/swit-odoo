@@ -1,6 +1,6 @@
 {
     'name': 'Journal Transfer',
-    'version': '1.1',
+    'version': '17.0.1.2.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -15,7 +15,11 @@
         'data/sequence.xml',
         'data/schedule_action.xml',
         
-        'views/journal_transfer.xml'
+        'views/journal_transfer.xml',
+
+        'data/upgrade_hooks.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,

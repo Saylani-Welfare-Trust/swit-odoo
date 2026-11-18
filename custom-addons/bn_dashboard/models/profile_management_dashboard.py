@@ -8,6 +8,34 @@ class ProfileManagementDashboard(models.TransientModel):
     _name = 'profile.management.dashboard'
     _description = 'Profile Management Dashboard'
 
+    # ------------------------------------------------------------------
+    # Top 10 by partner, summed by PostgreSQL (no record loaded in Python)
+    # ------------------------------------------------------------------
+    @api.model
+    def _partner_totals(self, model, domain, sql):
+        """[(partner_id, amount, count)] of ``sql`` (``{ids}``: the records of
+        ``domain``, record rules included)."""
+        if not self.env[model].check_access_rights('read', raise_exception=False):
+            return []   # a programme this user cannot see: its list stays empty, not the dashboard
+        query = self.env[model]._search(domain)
+        if query.is_empty():
+            return []
+        sub = query.subselect()
+        self.env.cr.execute(sql.format(ids=sub.code), list(sub.params))
+        return self.env.cr.fetchall()
+
+    @api.model
+    def _top_named(self, agg, limit=10):
+        """{partner_id: [amount, count]} -> the ``limit`` largest, with names."""
+        top = sorted(agg.items(), key=lambda item: item[1][0], reverse=True)[:limit]
+        names = {p.id: p.name for p in self.env['res.partner'].sudo().browse([pid for pid, _v in top])}
+        return [{'name': names.get(pid, ''), 'amount': value[0], 'count': value[1]} for pid, value in top]
+
+    @api.model
+    def _top_partners(self, model, domain, sql):
+        agg = {pid: [float(amount or 0.0), count] for pid, amount, count in self._partner_totals(model, domain, sql)}
+        return self._top_named(agg)
+
     @api.model
     def get_dashboard_data(self, date_from=None, date_to=None):
         try:
@@ -63,6 +91,7 @@ class ProfileManagementDashboard(models.TransientModel):
         def get_top_orm(model_name, partner_fields, amount_fields, date_fields=['create_date', 'date', 'application_date']):
             if model_name not in self.env: return []
             Model = self.env[model_name]
+            if not Model.check_access_rights('read', raise_exception=False): return []
             
             # Find Partner Field
             partner_field = next((f for f in partner_fields if f in Model._fields), None)
@@ -136,30 +165,23 @@ class ProfileManagementDashboard(models.TransientModel):
             box_dom = [('state', 'in', ['donation_submit', 'pending', 'paid'])]
             if date_from: box_dom.append(('date', '>=', date_from))
             if date_to: box_dom.append(('date', '<=', date_to))
-            collections = self.env['rider.collection'].search(box_dom)
-            agg = {}
-            for col in collections:
-                if not col.donation_box_registration_installation_id or not col.donation_box_registration_installation_id.donor_id: continue
-                donor = col.donation_box_registration_installation_id.donor_id
-                if donor.id not in agg: agg[donor.id] = {'name': donor.name, 'amount': 0.0, 'count': 0}
-                agg[donor.id]['amount'] += col.amount or 0.0
-                agg[donor.id]['count'] += 1
-            box_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+            box_top_donors = self._top_partners('rider.collection', box_dom, """
+                SELECT reg.donor_id, SUM(COALESCE(t.amount, 0)), COUNT(*)
+                  FROM rider_collection t
+                  JOIN donation_box_registration_installation reg ON reg.id = t.donation_box_registration_installation_id
+                 WHERE reg.donor_id IS NOT NULL AND t.id IN ({ids})
+                 GROUP BY 1""")
 
         home_top_donors = []
         if 'donation.home.service' in self.env:
             hs_dom = []
             if date_from: hs_dom.append(('create_date', '>=', date_from + ' 00:00:00'))
             if date_to: hs_dom.append(('create_date', '<=', date_to + ' 23:59:59'))
-            records = self.env['donation.home.service'].search(hs_dom)
-            agg = {}
-            for rec in records:
-                if not rec.donor_id: continue
-                amt = rec.total_amount or rec.amount or 0.0
-                if rec.donor_id.id not in agg: agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
-                agg[rec.donor_id.id]['amount'] += amt
-                agg[rec.donor_id.id]['count'] += 1
-            home_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+            home_top_donors = self._top_partners('donation.home.service', hs_dom, """
+                SELECT t.donor_id, SUM(COALESCE(NULLIF(t.total_amount, 0), t.amount, 0)), COUNT(*)
+                  FROM donation_home_service t
+                 WHERE t.donor_id IS NOT NULL AND t.id IN ({ids})
+                 GROUP BY 1""")
 
         import_top_donors = get_top_orm('donation', ['donor_id', 'partner_id'], ['amount', 'total_amount'])
 
@@ -168,70 +190,54 @@ class ProfileManagementDashboard(models.TransientModel):
             on_dom = []
             if date_from: on_dom.append(('created_at', '>=', date_from + ' 00:00:00'))
             if date_to: on_dom.append(('created_at', '<=', date_to + ' 23:59:59'))
-            records = self.env['api.donation'].search(on_dom)
-            agg = {}
-            for rec in records:
-                if not rec.donor_id: continue
-                amt_str = str(rec.total_amount or '0').replace(',', '')
-                try: amt = float(amt_str)
-                except: amt = 0.0
-                if rec.donor_id.id not in agg: agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
-                agg[rec.donor_id.id]['amount'] += amt
-                agg[rec.donor_id.id]['count'] += 1
-            online_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+            # the amount is the text received: commas removed, not a number counts as 0
+            online_top_donors = self._top_partners('api.donation', on_dom, """
+                SELECT t.donor_id,
+                       SUM(CASE WHEN replace(COALESCE(t.total_amount, '0'), ',', '')
+                                     ~ '^\\s*[-+]?([0-9]+\\.?[0-9]*|\\.[0-9]+)([eE][-+]?[0-9]+)?\\s*$'
+                                THEN replace(COALESCE(t.total_amount, '0'), ',', '')::numeric ELSE 0 END),
+                       COUNT(*)
+                  FROM api_donation t
+                 WHERE t.donor_id IS NOT NULL AND t.id IN ({ids})
+                 GROUP BY 1""")
 
         in_kind_top_donors = []
         if 'donation.in.kind' in self.env:
             ik_dom = []
             if date_from: ik_dom.append(('create_date', '>=', date_from + ' 00:00:00'))
             if date_to: ik_dom.append(('create_date', '<=', date_to + ' 23:59:59'))
-            records = self.env['donation.in.kind'].search(ik_dom)
-            agg = {}
-            for rec in records:
-                if not rec.donor_id: continue
-                total_amt = sum([(line.quantity * line.avg_price) for line in rec.donation_in_kind_line_ids])
-                if rec.donor_id.id not in agg: agg[rec.donor_id.id] = {'name': rec.donor_id.name, 'amount': 0.0, 'count': 0}
-                agg[rec.donor_id.id]['amount'] += total_amt
-                agg[rec.donor_id.id]['count'] += 1
-            in_kind_top_donors = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+            in_kind_top_donors = self._top_partners('donation.in.kind', ik_dom, """
+                SELECT t.donor_id, SUM(COALESCE(v.value, 0)), COUNT(*)
+                  FROM donation_in_kind t
+                  LEFT JOIN (SELECT donation_in_kind_id, SUM(quantity * avg_price) AS value
+                               FROM donation_in_kind_line GROUP BY 1) v ON v.donation_in_kind_id = t.id
+                 WHERE t.donor_id IS NOT NULL AND t.id IN ({ids})
+                 GROUP BY 1""")
 
         # =========================================================================
         # DONEES TOP 10
         # =========================================================================
-        
-        # 1. Welfare (Manual aggregation from lines)
+
+        # 1. Welfare (one-time and recurring lines, by the donee of their welfare)
         welfare_top_donees = []
         if 'welfare.line' in self.env:
             wl_dom = []
             if date_from: wl_dom.append(('collection_date', '>=', date_from))
             if date_to: wl_dom.append(('collection_date', '<=', date_to))
-            
-            lines = self.env['welfare.line'].search(wl_dom)
-            agg = {}
-            for line in lines:
-                if not line.welfare_id or not line.welfare_id.donee_id: continue
-                donee = line.welfare_id.donee_id
-                amt = line.total_amount or 0.0
-                if donee.id not in agg:
-                    agg[donee.id] = {'name': donee.name, 'amount': 0.0, 'count': 0}
-                agg[donee.id]['amount'] += amt
-                agg[donee.id]['count'] += 1
-                
+            parts = [('welfare.line', 'welfare_line', 'total_amount')]
             if 'welfare.recurring.line' in self.env:
-                wrl_dom = []
-                if date_from: wrl_dom.append(('collection_date', '>=', date_from))
-                if date_to: wrl_dom.append(('collection_date', '<=', date_to))
-                rlines = self.env['welfare.recurring.line'].search(wrl_dom)
-                for line in rlines:
-                    if not line.welfare_id or not line.welfare_id.donee_id: continue
-                    donee = line.welfare_id.donee_id
-                    amt = line.amount or 0.0
-                    if donee.id not in agg:
-                        agg[donee.id] = {'name': donee.name, 'amount': 0.0, 'count': 0}
-                    agg[donee.id]['amount'] += amt
-                    agg[donee.id]['count'] += 1
-
-            welfare_top_donees = sorted(agg.values(), key=lambda x: x['amount'], reverse=True)[:10]
+                parts.append(('welfare.recurring.line', 'welfare_recurring_line', 'amount'))
+            agg = {}
+            for model, table, amount in parts:
+                for donee_id, total, count in self._partner_totals(model, wl_dom, f"""
+                        SELECT w.donee_id, SUM(COALESCE(t.{amount}, 0)), COUNT(*)
+                          FROM {table} t JOIN welfare w ON w.id = t.welfare_id
+                         WHERE w.donee_id IS NOT NULL AND t.id IN ({{ids}})
+                         GROUP BY 1"""):
+                    entry = agg.setdefault(donee_id, [0.0, 0])
+                    entry[0] += float(total or 0.0)
+                    entry[1] += count
+            welfare_top_donees = self._top_named(agg)
 
         # 2. Microfinance (Dynamic Model Finder)
         microfinance_top_donees = []

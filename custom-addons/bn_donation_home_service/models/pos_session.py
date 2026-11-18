@@ -1,5 +1,4 @@
 from odoo import models
-from odoo.exceptions import ValidationError
 
 
 class POSSession(models.Model):
@@ -55,15 +54,15 @@ class POSSession(models.Model):
             pickings.write({
                 'pos_session_id': self.id,
                 'origin': self.name,
+                'source_record_ref': '%s,%s' % (self._name, self.id),
             })
 
         # ------------------------------------------------
         # DHS PICKINGS (SEPARATE)
         # ------------------------------------------------
-        dhs_picking_type = self.env.ref(
-            'bn_donation_home_service.donation_home_service_pos_stock_picking_type',
-            raise_if_not_found=False
-        )
+        # the DHS POS operation type of the shop's warehouse
+        dhs_picking_type = self.config_id.warehouse_id._program_type('dhs_pos') \
+            if self.config_id.warehouse_id else self.env['stock.warehouse']._get_program_type('dhs_pos')
 
         for location_dest_id, lines in dhs_orders_by_document.items():
             pickings = self.env['stock.picking']._create_picking_from_pos_order_lines(
@@ -72,4 +71,5 @@ class POSSession(models.Model):
             pickings.write({
                 'pos_session_id': self.id,
                 'origin': self.name,
+                'source_record_ref': '%s,%s' % (self._name, self.id),
             })

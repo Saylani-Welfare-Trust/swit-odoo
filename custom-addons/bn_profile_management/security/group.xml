@@ -1,28 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="profile_management_group" model="res.groups">
-        <field name="name">Profile Management / Menu</field>
+    <!-- Sole gate on the root app menu. No group implies it: assign it
+         explicitly, together with the tier / role groups, to whoever should
+         see the app; the tiers then decide what they can do once inside. -->
+    <record id="profile_management_root_group" model="res.groups">
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_profile_management"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Profile Management app menu. Assign it explicitly with the role groups: no group implies it.</field>
     </record>
 
-    <record id="profile_management_create_access_group" model="res.groups">
-        <field name="name">Profile Management / Create Access</field>
+    <record id="profile_management_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_profile_management"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Day-to-day access: create, edit and read contacts. Cannot delete, and cannot change which fields/pages a profile type shows.</field>
     </record>
-    
-    <record id="profile_management_write_access_group" model="res.groups">
-        <field name="name">Profile Management / Update Access</field>
+
+    <record id="profile_management_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_profile_management"/>
+        <field name="comment">Everything User can do, plus configuring profile types: Area, and which fields/pages each tag shows (Master Setup > Profile Management).</field>
+        <field name="implied_ids" eval="[(6, 0, [ref('profile_management_user_group'), ref('bn_master_setup.master_setup_root_group')])]"/>
     </record>
-    
-    <record id="profile_management_read_access_group" model="res.groups">
-        <field name="name">Profile Management / Read Access</field>
+
+    <record id="profile_management_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_profile_management"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('bn_master_setup.master_setup_root_group')])]"/>
+        <field name="comment">Read-only oversight of contacts and profile-type configuration (Master Setup > Profile Management), for reporting. No create, write or delete anywhere.</field>
     </record>
-    
-    <record id="profile_management_delete_access_group" model="res.groups">
-        <field name="name">Profile Management / Delete Access</field>
-    </record>
-    
-    <record id="profile_management_edit_donor_access_group" model="res.groups">
-        <field name="name">Profile Management / Edit Donor</field>
+
+    <record id="profile_management_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_profile_management"/>
+        <field name="comment">Full control, including delete, plus everything Manager can configure.</field>
+        <field name="implied_ids" eval="[(6, 0, [ref('profile_management_manager_group'), ref('profile_management_audit_group')])]"/>
     </record>
 
 </odoo>

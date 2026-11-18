@@ -16,7 +16,6 @@
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_category_medical_health"/>
         <field name="implied_ids" eval="[(4, ref('group_medical_user')), (4, ref('point_of_sale.group_pos_manager'))]"/>
-        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
     </record>
 
 </odoo>

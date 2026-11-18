@@ -20,7 +20,7 @@ class LivestockCuttingMaterial(models.Model):
     livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaughter', copy=False)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
-    name = fields.Char(related='product_id.name', string="Product Name", store=True)
+    name = fields.Char(related='product_id.name', string="Product Name")
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
 
     quantity = fields.Integer('Quantity', default=1)

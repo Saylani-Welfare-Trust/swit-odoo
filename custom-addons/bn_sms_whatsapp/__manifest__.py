@@ -1,8 +1,8 @@
 {
     'name': 'SMS & WhatsApp Integration',
-    'version': '1.0',
+    'version': '17.0.1.1.0',
     'author': 'Labeeb Farooq',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/SMS & WhatsApp Integration',
     'depends': [
@@ -13,8 +13,9 @@
     ],
     'data': [
         'security/ir.model.access.csv',
-        
+        'data/ir_cron.xml',
         'views/res_partner.xml',
+        'views/pos_order.xml',
     ],
     'assets': {
         'point_of_sale._assets_pos': [  

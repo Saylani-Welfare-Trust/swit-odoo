@@ -8,7 +8,7 @@
         <field name="arch" type="xml">
             <tree create="0" delete="0">
                 <header>
-                    <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight"/>
+                    <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight" groups="bn_donation_in_kind.donation_in_kind_user_group"/>
                 </header>
                 <field name="name" readonly="1"/>
                 <field name="donor_id"/>
@@ -17,7 +17,7 @@
                 <field name="location_id"/>
                 <field name="quantity"/>
                 <field name="state" column_invisible="1"/>
-                <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight" invisible="state not in ['draft']"/>
+                <button name="action_open_transfer_wizard" type="object" string="Transfer" class="oe_highlight" invisible="state not in ['draft']" groups="bn_donation_in_kind.donation_in_kind_user_group"/>
             </tree>
         </field>
     </record>
@@ -44,6 +44,7 @@
         name="Donation In Kind"
         action="pos_donation_in_kind_action"
         parent="point_of_sale.menu_point_rep"
-        sequence="10"/>
+        sequence="10"
+        groups="bn_donation_in_kind.donation_in_kind_user_group,bn_donation_in_kind.donation_in_kind_audit_group"/>
 
 </odoo>

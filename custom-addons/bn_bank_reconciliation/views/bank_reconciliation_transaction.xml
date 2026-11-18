@@ -27,10 +27,10 @@
                 
                 <button name="action_accept_match" type="object"
                         string="Accept" icon="fa-check"
-                        invisible="state != 'matched'"/>
+                        invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                 <button name="action_reject_match" type="object"
                         string="Reject" icon="fa-times"
-                        invisible="state != 'matched'"/>
+                        invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                 <button name="action_view_related_move" type="object"
                         string="Original Entry" icon="fa-eye"
                         invisible="not matched_move_id"/>
@@ -40,7 +40,7 @@
                         invisible="not reconciliation_move_id"/>
                 <button name="action_manual_match" type="object"
                         string="Manual Match" icon="fa-hand-pointer-o"
-                        invisible="state in ['reconciled']"/>
+                        invisible="state in ['reconciled']" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
             </tree>
         </field>
     </record>
@@ -53,10 +53,10 @@
                 <header>
                     <button name="action_accept_match" type="object"
                             string="Accept Match" class="btn-primary"
-                            invisible="state != 'matched'"/>
+                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <button name="action_reject_match" type="object"
                             string="Reject Match" class="btn-danger"
-                            invisible="state != 'matched'"/>
+                            invisible="state != 'matched'" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <button name="action_view_related_move" type="object"
                             string="Original Entry" class="btn-info"
                             invisible="not matched_move_id"/>
@@ -69,7 +69,7 @@
                             invisible="not matched_move_line_id"/>
                     <button name="action_manual_match" type="object"
                             string="Manual Match" class="btn-warning"
-                            invisible="state in ['reconciled']"/>
+                            invisible="state in ['reconciled']" groups="bn_bank_reconciliation.bank_reconciliation_user_group"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,matched,unmatched,reconciled"/>
                 </header>
                 <sheet>
@@ -216,6 +216,7 @@
               name="All Transactions" 
               parent="menu_bank_reconciliation_root"
               action="action_bank_reconciliation_transaction"
-              sequence="20"/>
+              sequence="20"
+        groups="bn_bank_reconciliation.bank_reconciliation_user_group,bn_bank_reconciliation.bank_reconciliation_audit_group"/>
 
 </odoo>

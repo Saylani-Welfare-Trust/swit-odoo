@@ -7,7 +7,7 @@
                 <t t-call="web.external_layout">
 
                     <!-- Microfinance Container -->
-                    <div class="mt-5 clearfix" style="margin-top:360px !important;">
+                    <div class="mt-4 clearfix">
 
                         <!-- Header -->
                         <div class="text-center border-bottom border-3 pb-3 mb-4" style="border-color: black !important;">
@@ -41,41 +41,45 @@
                                 <div class="col-md-6 mb-2">
                                     <span class="fw-bold">Registration No.:</span>
                                     <span class="ms-2">
-                                        <t t-esc="o.donee_id.primary_registration_id"/>
+                                        <t t-esc="o.donee_id.primary_registration_id or '-'"/>
                                     </span>
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <span class="fw-bold">CNIC No.:</span>
                                     <span class="ms-2">
-                                        <t t-esc="o.donee_id.cnic_no"/>
+                                        <t t-esc="o.donee_id.cnic_no or '-'"/>
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Product Info -->
-                        <div class="bg-light p-3 border-start border-5 mb-4">
-                            <div class="row">
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Amount:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.amount"/>
-                                    </span>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Security Deposit:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.security_deposit"/>
-                                    </span>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <span class="fw-bold">Total:</span>
-                                    <span class="ms-2">
-                                        <t t-esc="o.total_amount"/>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Amounts -->
+                        <table class="table table-bordered" style="width:100%;">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold" style="width:60%;">Security Deposit (received)</td>
+                                    <td class="text-end fw-bold"><t t-esc="o.security_deposit" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Total Loan Amount</td>
+                                    <td class="text-end"><t t-esc="o.total_amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                                </tr>
+                                <tr>
+                                    <td>Monthly Installment</td>
+                                    <td class="text-end"><t t-esc="o.amount" t-options="{'widget': 'monetary', 'display_currency': o.currency_id}"/></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="small"><strong>Amount in Words:</strong> <t t-esc="o.currency_id.amount_to_text(o.security_deposit)"/> Only</p>
+                        <p class="small text-muted">This receipt is provisional until the security deposit is confirmed by Treasury.</p>
+
+                        <!-- Signatures -->
+                        <table style="width:100%; margin-top:60px;">
+                            <tr>
+                                <td style="width:50%;"><div style="width:180px; border-top:1px solid #333; padding-top:4px; text-align:center;">Donee Signature</div></td>
+                                <td style="width:50%; text-align:right;"><div style="display:inline-block; width:180px; border-top:1px solid #333; padding-top:4px; text-align:center;">Authorized Signature</div></td>
+                            </tr>
+                        </table>
 
                     </div>
                 </t>
@@ -92,7 +96,6 @@
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
         <field name="print_report_name">'Security Deposit - %s' % (object.name)</field>
-        <!-- <field name="paperformat_id" ref="bn_pos_custom_action.paperformat_custom_receipt_format"/> -->
     </record>
 
 </odoo>

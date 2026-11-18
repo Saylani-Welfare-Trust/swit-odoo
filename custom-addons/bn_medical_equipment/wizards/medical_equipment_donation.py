@@ -85,7 +85,7 @@ class MedicalEquipmentDonation(models.TransientModel):
             'line_ids': line_vals,
         }
 
-        move = self.env['account.move'].create(move_vals)
+        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self.medical_equipment_id._name, self.medical_equipment_id.id)).create(move_vals)
         # DO NOT POST → parked entry
 
         self.medical_equipment_id.state = 'donate'

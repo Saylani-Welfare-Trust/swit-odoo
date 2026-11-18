@@ -14,11 +14,8 @@ class AdvanceDonationDisbursementLine(models.Model):
     advance_amount = fields.Float(string="Advance Donation Amount")
     disbursed_amount = fields.Float(string="Final Disbursed Amount")
 
-    # Optional linking (for traceability)
-    welfare_id = fields.Many2one('welfare')
-    welfare_line_id = fields.Many2one('welfare.line')
-    # recurring_line_id = fields.Many2one('welfare.recurring.line')
-    microfinance_id = fields.Many2one('microfinance')
+    # Program modules add their own link fields (bn_welfare: welfare_id,
+    # welfare_line_id; bn_microfinance: microfinance_id) for traceability.
     disbursed_record= fields.Char(string="Disbursed Record", help="Reference to the record where this disbursement is recorded (e.g., welfare line, microfinance record)")
     
     def action_print_line_non_cash_disbursement_report(self):
@@ -32,3 +29,12 @@ class AdvanceDonationDisbursementLine(models.Model):
             key = (line.product_id.id, line.date)
             groups[key] = groups.get(key, self.browse()) | line
         return list(groups.values())
+
+    def _get_donees(self):
+        """Beneficiaries of these lines, extended by the program modules."""
+        return self.env['res.partner']
+
+    def _get_source_links(self):
+        """[(label, name)] of the records these lines were disbursed for,
+        extended by the program modules."""
+        return []

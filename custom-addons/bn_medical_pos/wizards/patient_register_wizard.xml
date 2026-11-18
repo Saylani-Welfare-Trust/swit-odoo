@@ -6,11 +6,19 @@
         <field name="model">mh.patient.register.wizard</field>
         <field name="arch" type="xml">
             <form string="Register Patient">
+                <div class="alert alert-info mb-3" role="alert">
+                    <i class="fa fa-info-circle me-1" title="Info"/>
+                    A person already registered with this CNIC (as a donor, donee ...) becomes the patient: no duplicate profile is made.
+                </div>
                 <group>
-                    <field name="name" placeholder="Patient name"/>
-                    <field name="mobile" placeholder="3001234567"/>
-                    <field name="cnic_no" placeholder="XXXXX-XXXXXXX-X"/>
-                    <field name="date_of_birth" options="{'max_date': 'today'}"/>
+                    <group>
+                        <field name="name" placeholder="Patient's full name"/>
+                        <field name="date_of_birth" options="{'max_date': 'today'}" placeholder="DD/MM/YYYY"/>
+                    </group>
+                    <group>
+                        <field name="cnic_no" placeholder="XXXXX-XXXXXXX-X"/>
+                        <field name="mobile" placeholder="3001234567" widget="phone"/>
+                    </group>
                 </group>
                 <footer>
                     <button name="action_register" type="object" string="Register" class="btn-primary" data-hotkey="q"/>

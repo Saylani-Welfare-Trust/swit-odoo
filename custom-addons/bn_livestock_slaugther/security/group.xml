@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Livestock Slaughter: the same structure as every module:
+         Menu, User, Manager (= User), Audit, Administrator (= Manager + Audit),
+         plus its role group (Welfare Approval). Groups ship with no users. -->
+    <record id="module_livestock_slaugther" model="ir.module.category">
+        <field name="name">Livestock Slaughter</field>
+        <field name="sequence">56</field>
+    </record>
+
+    <!-- Sole gate on the app menu. No group implies it: assign it explicitly,
+         together with the tier / role groups, to whoever should see the app. -->
+    <record id="livestock_slaugther_menu_group" model="res.groups">
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_livestock_slaugther"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Grants visibility of the Livestock app menu. Assign it explicitly with the tier / role groups: no group implies it.</field>
+    </record>
+
+    <record id="livestock_slaugther_user_group" model="res.groups">
+        <field name="name">User</field>
+        <field name="category_id" ref="module_livestock_slaugther"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Day-to-day access: slaughter, cutting, material requests, departments, meat management, requisitions and distribution centers (confirm, transfer, cutting steps). Cannot delete.</field>
+    </record>
+
+    <record id="livestock_slaugther_manager_group" model="res.groups">
+        <field name="name">Manager</field>
+        <field name="category_id" ref="module_livestock_slaugther"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('livestock_slaugther_user_group')])]"/>
+        <field name="comment">Everything User can do, plus issuing the Purchase Requisition and the Delivery Note of a distribution center.</field>
+    </record>
+
+    <record id="livestock_slaugther_audit_group" model="res.groups">
+        <field name="name">Audit</field>
+        <field name="category_id" ref="module_livestock_slaugther"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Read-only oversight of every Livestock document, for reporting. No create, write or delete.</field>
+    </record>
+
+    <record id="livestock_slaugther_admin_group" model="res.groups">
+        <field name="name">Administrator</field>
+        <field name="category_id" ref="module_livestock_slaugther"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('livestock_slaugther_manager_group'), ref('livestock_slaugther_audit_group')])]"/>
+        <field name="comment">Full control: everything Manager can do, plus delete rights and the configuration (Product Types, Product Packaging).</field>
+    </record>
+
+    <!-- Role group: one action, on top of the tiers -->
+    <record id="livestock_slaugther_welfare_approval_group" model="res.groups">
+        <field name="name">Welfare Approval</field>
+        <field name="category_id" ref="module_livestock_slaugther"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('livestock_slaugther_user_group')])]"/>
+        <field name="comment">Role: the Welfare approval of a Jahaiz distribution center.</field>
+    </record>
+
+    <!-- The app was open to every internal user: on the first upgrade with the
+         tiers, whoever already worked in it gets Menu + User (fresh install: nobody) -->
+    <function model="res.groups" name="_livestock_first_tier_users"/>
+
+</odoo>

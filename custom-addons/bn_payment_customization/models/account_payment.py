@@ -1,5 +1,5 @@
-from odoo import models, fields, _
-from odoo.exceptions import UserError
+from odoo import _, models, fields
+from odoo.exceptions import AccessError, UserError
 
 import io
 import base64
@@ -16,23 +16,36 @@ class AccountPayment(models.Model):
     _inherit = "account.payment"
 
     
-    ibft_status = fields.Selection(selection=IBFT_STATUS, string="Printing Status", default="pending", tracking=True)
-    ibft_batch_no = fields.Char(string="IBFT Batch No", copy=False, readonly=True, index=True)
+    ibft_status = fields.Selection(selection=IBFT_STATUS, string="IBFT Status", default="pending", tracking=True)
+    ibft_batch_no = fields.Char(string="IBFT Batch No", copy=False, readonly=True, index=True, tracking=True)
 
     def action_confirm_ibft(self):
+        """Confirm the selected payments as one IBFT batch and download its Excel file.
+        Payments already in a batch are reprinted only by an IBFT Reprint user, with a reason."""
         if not self:
             return False
-
+        if not self.env.user.has_group('account.group_account_invoice'):
+            raise AccessError(_('Only accounting users can confirm an IBFT.'))
+        wrong = self.filtered(lambda p: p.state != 'posted' or p.payment_type != 'outbound')
+        if wrong:
+            raise UserError(_('Only posted outgoing payments are sent by IBFT:\n%s')
+                            % '\n'.join(wrong.mapped('display_name')))
         batch_nos = set(self.filtered('ibft_batch_no').mapped('ibft_batch_no'))
         if len(batch_nos) > 1:
-            raise UserError(_(
-                "Selected payments belong to different IBFT batches (%s). "
-                "Select payments of one batch only.") % ", ".join(sorted(batch_nos)))
+            raise UserError(_('The selected payments belong to different IBFT batches (%s). '
+                              'Select the payments of one batch only.') % ', '.join(sorted(batch_nos)))
+        done = self.filtered(lambda p: p.ibft_status == 'success' and not p.ibft_batch_no)
+        if done:
+            raise UserError(_('These payments were already confirmed by IBFT:\n%s')
+                            % '\n'.join(done.mapped('display_name')))
+        no_bank = self.filtered(lambda p: not (p.partner_bank_id or p.partner_id.bank_ids))
+        if no_bank:
+            raise UserError(_('These payments have no recipient bank account:\n%s')
+                            % '\n'.join(no_bank.mapped('display_name')))
 
-        # Already confirmed before: ask for a reason first
         if batch_nos:
             if not self.env.user.has_group('bn_payment_customization.group_ibft_reprint'):
-                raise UserError(_("Only a user with the IBFT Reprint right can reprint an IBFT batch."))
+                raise AccessError(_('Only a user with the IBFT Reprint right can reprint an IBFT batch.'))
             return {
                 'type': 'ir.actions.act_window',
                 'name': _('Reprint IBFT'),
@@ -97,17 +110,17 @@ class AccountPayment(models.Model):
 
             worksheet.write(
                 row, 1,
-                payment.partner_id.bank_ids[0].acc_holder_name if payment.partner_id.bank_ids else ''
+                (payment.partner_bank_id or payment.partner_id.bank_ids[:1]).acc_holder_name or ''
             )
 
             worksheet.write_string(
                 row, 2,
-                payment.partner_id.bank_ids[0].acc_number if payment.partner_id.bank_ids else ''
+                (payment.partner_bank_id or payment.partner_id.bank_ids[:1]).acc_number or ''
             )
 
             worksheet.write(
                 row, 3,
-                payment.partner_id.bank_ids[0].bank_id.name if payment.partner_id.bank_ids else ''
+                (payment.partner_bank_id or payment.partner_id.bank_ids[:1]).bank_id.name or ''
             )
 
             worksheet.write(
@@ -135,6 +148,4 @@ class AccountPayment(models.Model):
             'type': 'ir.actions.act_url',
             'url': '/web/content/%s?download=true' % attachment.id,
             'target': 'self',
-            'close': True,
-
         }

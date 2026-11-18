@@ -18,7 +18,7 @@
                            placeholder="Select multiple vendors..."/>
                 </group>
                 <div class="alert alert-info" role="alert">
-                    <i class="fa fa-info-circle"/>
+                    <i title="Info" class="fa fa-info-circle"/>
                     One consolidated RFQ is created per selected vendor. Lines for the same
                     product, even from different Purchase Requests, are summed into a single
                     RFQ line. Every line you order here is locked and cannot be selected
@@ -164,9 +164,9 @@
                 </notebook>
                 
                 <footer>
-                    <button string="Update Prices Only" name="action_update_prices" type="object" 
+                    <button string="Update Prices Only" name="action_update_prices" type="object"
                             class="btn-secondary" invisible="state != 'draft'"/>
-                    <button string="Confirm Selected Lines" name="action_confirm_selected" type="object" 
+                    <button string="Confirm Selected Lines" name="action_confirm_selected" type="object"
                             class="btn-primary" invisible="state != 'price_update'"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
@@ -175,13 +175,6 @@
     </record>
 
     <!-- Action for Vendor Selection Wizard -->
-    <record id="action_vendor_selection_wizard" model="ir.actions.act_window">
-        <field name="name">Select Vendors</field>
-        <field name="res_model">vendor.selection.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="context">{'default_material_request_id': active_id}</field>
-    </record>
 
     <!-- Action for RFQ Price Wizard (called from Purchase Order list view) -->
     <record id="action_rfq_price_wizard" model="ir.actions.act_window">

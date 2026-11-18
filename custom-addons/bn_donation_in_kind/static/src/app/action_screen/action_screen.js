@@ -77,9 +77,10 @@ patch(ActionScreen.prototype, {
                 if (data.status === 'success') {
                     order.set_source_document(data.origin);
 
+                    // the receipt message result (WhatsApp / SMS) is shown when it did not go as planned
                     const notification = data.notification;
                     this.notification.add(
-                        notification?.message || _t("Operation Successful"),
+                        notification && notification.status !== "success" ? notification.message : _t("Operation Successful"),
                         { type: !notification || notification.status === "success" ? "info" : "warning" }
                     );
 

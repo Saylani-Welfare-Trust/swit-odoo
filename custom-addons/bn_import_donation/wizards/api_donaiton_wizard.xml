@@ -15,7 +15,7 @@
                     </group>
                 </group>
                 <footer>
-                    <button name="action_fetch_donation" string="Fetch" type="object" class="oe_highlight"/>
+                    <button name="action_fetch_donation" groups="bn_import_donation.api_donation_fetch_donation_group,bn_import_donation.import_donation_admin_group" string="Fetch" type="object" class="oe_highlight"/>
                     <button string="Cancel" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
@@ -38,7 +38,7 @@
     <menuitem
         id="fetch_donation_menu"
         name="Fetch Donation"
-        groups="bn_import_donation.manual_sync_group"
+        groups="bn_import_donation.api_donation_fetch_donation_group"
         action="api_donation_wizard_action"
         parent="api_donation_menu"
         sequence="0"/>

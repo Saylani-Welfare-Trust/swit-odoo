@@ -66,6 +66,9 @@ class PosSession(models.Model):
             'note': (vals.get('note') or '').strip() or False,
             'company_id': self.config_id.company_id.id,
             'desk_config_id': self.config_id.id,
+            'pos_session_id': self.id,
+            'pos_config_id': self.config_id.id,
+            'pos_cashier_id': self.env.user.id,
             'line_ids': line_commands,
         })
         prescription.action_approve()

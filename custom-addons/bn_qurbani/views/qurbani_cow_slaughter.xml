@@ -27,7 +27,7 @@
 
                 <field name="state" widget="badge" decoration-info="state == 'available'" decoration-success="state == 'full'" />
                 
-                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" groups="bn_qurbani.qurbani_user_group"/>
             </tree>
         </field>
     </record>
@@ -39,7 +39,7 @@
             <form>
                 <header>
                     <button string="Print" name="action_print_report" type="object" class="oe_highlight"/>
-                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" groups="bn_qurbani.qurbani_user_group"/>
                     
                     <field name="state" widget="statusbar" statusbar_visible="available,full"/>
                 </header>
@@ -73,7 +73,7 @@
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="hissa_name" />
 
-                                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight"/>
+                                    <button string="Transfer" name="action_transfer" type="object" class="oe_highlight" groups="bn_qurbani.qurbani_user_group"/>
                                 </tree>
                             </field>
                         </page>
@@ -109,7 +109,8 @@
         id="qurbani_slaughter_root_menu"
         name="Slaughter"
         parent="bn_qurbani.menu_qurbani_root"
-        sequence="3"/>
+        sequence="3"
+        groups="bn_qurbani.qurbani_user_group,bn_qurbani.qurbani_audit_group"/>
 
     <menuitem
         id="qurbani_cow_slaughter_menu"
