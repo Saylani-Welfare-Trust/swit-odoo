@@ -9,6 +9,7 @@
                'and Funds Availability gates on top of Purchase Requisitions',
     'depends': [
         'purchase_requisition',
+        'purchase_requisition_stock',
         'bn_purchase_customization',
         'bn_material_request',
         'bn_shariah_law',

@@ -122,6 +122,12 @@ class PurchaseOrder(models.Model):
     # ------------------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
+        for vals in vals_list:
+            # an RFQ receives the products with the Operation Type of its Purchase Request
+            if vals.get('requisition_id') and not vals.get('picking_type_id'):
+                requisition = self.env['purchase.requisition'].browse(vals['requisition_id']).sudo()
+                if requisition.picking_type_id:
+                    vals['picking_type_id'] = requisition.picking_type_id.id
         orders = super().create(vals_list)
         for order in orders:
             if order.designated_cxo_approver_id and not order.awaiting_quote_selection:
@@ -141,7 +147,20 @@ class PurchaseOrder(models.Model):
                 if new_approver and new_approver != old_approvers.get(order.id) \
                         and not order.awaiting_quote_selection:
                     order._send_cxo_approval_email()
+        if 'picking_type_id' in vals and not self.env.context.get('skip_operation_type_sync'):
+            self._sync_operation_type_to_requisitions()
         return res
+
+    def _sync_operation_type_to_requisitions(self):
+        """An Operation Type changed on an RFQ / Purchase Order goes to its
+        Purchase Requests (its own and the ones consolidated into it), which
+        pass it on to their other open RFQs (_sync_operation_type_to_rfqs)."""
+        # sudo: the requests may be outside what the user editing the order can write
+        for order in self.sudo():
+            requisitions = (order.requisition_id | order.requisition_ids).filtered(
+                lambda requisition: requisition.state not in ('done', 'cancel')
+                and requisition.picking_type_id != order.picking_type_id)
+            requisitions.write({'picking_type_id': order.picking_type_id.id})
 
     # Optional: a manual "resend" button
     def action_resend_cxo_approval_email(self):
