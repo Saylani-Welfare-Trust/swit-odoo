@@ -52,3 +52,32 @@ class TestRfqCancelReleasesQuantity(TransactionCase):
         self.line._lock_quantity(10, self._rfq(self.vendor_b))
         with self.assertRaises(ValidationError):
             rfq.button_draft()
+
+    def test_rfq_from_before_batches_were_recorded(self):
+        rfq = self._rfq(self.vendor_a)
+        self.line._lock_quantity(10)  # no batch recorded, as before
+        rfq.button_cancel()
+        self.assertFalse(self.line.is_locked)
+        self.assertEqual(self.line.remaining_qty, 10)
+
+        rfq.button_draft()
+        self.assertTrue(self.line.is_locked)
+
+    def test_backfill_frees_rfqs_cancelled_before(self):
+        rfq = self._rfq(self.vendor_a)
+        open_rfq_product = self.env['product.product'].create({'name': 'PR Oil', 'detailed_type': 'consu'})
+        self.requisition.write({'line_ids': [(0, 0, {'product_id': open_rfq_product.id, 'product_qty': 4})]})
+        oil_line = self.requisition.line_ids.filtered(lambda line: line.product_id == open_rfq_product)
+        self.env['purchase.order'].create({
+            'partner_id': self.vendor_b.id, 'requisition_id': self.requisition.id,
+            'order_line': [(0, 0, {'product_id': open_rfq_product.id, 'product_qty': 4, 'price_unit': 1})],
+        })
+        self.line._lock_quantity(10)
+        oil_line._lock_quantity(4)
+        # cancelled back when cancelling gave nothing back
+        rfq.write({'state': 'cancel'})
+        self.assertTrue(self.line.is_locked)
+
+        self.env['purchase.requisition']._backfill_release_cancelled_rfq_quantities()
+        self.assertEqual(self.line.remaining_qty, 10)
+        self.assertTrue(oil_line.is_locked, 'still on an open RFQ')

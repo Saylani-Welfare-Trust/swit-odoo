@@ -484,6 +484,14 @@ class PurchaseOrder(models.Model):
         held = self._evaluate_cfo_stage()
         return self._shariah_hold_notification() if held else True
 
+    def button_cancel(self):
+        res = super().button_cancel()
+        # sudo: whoever cancels the RFQ need not be allowed to edit the requests
+        self.env['purchase.requisition'].sudo().search([
+            ('selected_rfq_id', 'in', self.filtered(lambda order: order.state == 'cancel').ids),
+        ])._follow_cancelled_selected_rfq()
+        return res
+
     def button_confirm(self):
         for order in self:
             if not order.cfo_approved:
