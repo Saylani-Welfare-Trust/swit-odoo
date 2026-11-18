@@ -16,6 +16,25 @@ class PurchaseOrder(models.Model):
     hod_approved_by = fields.Many2one('res.users', string='HOD Approved By', readonly=True, copy=False)
     hod_approved_date = fields.Datetime(string='HOD Approved On', readonly=True, copy=False)
 
+    payment_status = fields.Selection(
+        [('draft', 'Draft'), ('paid', 'Paid')], string='Payment Status',
+        compute='_compute_payment_status', store=True, copy=False,
+        help='Paid once the order has vendor bills and the payment of every one of them has been '
+             'registered; Draft while it has no bill yet, or a bill is unpaid or only partly paid.')
+
+    @api.depends('order_line.invoice_lines.move_id.move_type',
+                 'order_line.invoice_lines.move_id.state',
+                 'order_line.invoice_lines.move_id.payment_state')
+    def _compute_payment_status(self):
+        for order in self:
+            # its vendor bills (not the refunds), a cancelled one aside
+            bills = order.order_line.invoice_lines.move_id.filtered(
+                lambda move: move.move_type == 'in_invoice' and move.state != 'cancel')
+            # in_payment: the payment is registered, not yet matched with the bank statement
+            order.payment_status = 'paid' if bills and all(
+                bill.state == 'posted' and bill.payment_state in ('paid', 'in_payment')
+                for bill in bills) else 'draft'
+
     def _check_po_approval(self, group, label):
         if not self.env.user.has_group(group):
             raise UserError(_('You are not allowed to give %s.') % label)
