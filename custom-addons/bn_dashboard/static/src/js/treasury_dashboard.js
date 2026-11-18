@@ -185,6 +185,20 @@ export class TreasuryDashboard extends Component {
         const pId = parseInt(this.state.segment_l3, 10);
         return this.state.segments_l4.filter(s => s.parent_id === pId);
     }
+    get naflia_wajiba_segments() {
+        return this.state.segments_l1.filter(s => {
+            const name = (s.name || '').toLowerCase();
+            return name.includes('naflia') || name.includes('wajiba');
+        });
+    }
+
+    get other_segments() {
+        return this.state.segments_l1.filter(s => {
+            const name = (s.name || '').toLowerCase();
+            return !name.includes('naflia') && !name.includes('wajiba');
+        });
+    }
+
 
     async fetchData() {
         try {
