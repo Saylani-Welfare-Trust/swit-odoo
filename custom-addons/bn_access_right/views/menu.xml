@@ -6,7 +6,8 @@
         <field name="groups_id" eval="[
             (6, 0, [
                 ref('hr.group_hr_manager'),
-                ref('hr.group_hr_user')
+                ref('hr.group_hr_user'),
+                ref('bn_access_right.custom_employees_menu_group')
             ])
         ]"/>
     </record>

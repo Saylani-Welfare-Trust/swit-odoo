@@ -77,15 +77,19 @@ patch(ActionScreen.prototype, {
                 if (data.status === 'success') {
                     order.set_source_document(data.origin);
 
-                    this.notification.add(_t("Operation Successful"), {
-                        type: "info",
-                    });
+                    // the receipt message result (WhatsApp / SMS) is shown when it did not go as planned
+                    const notification = data.notification;
+                    this.notification.add(
+                        notification && notification.status !== "success" ? notification.message : _t("Operation Successful"),
+                        { type: !notification || notification.status === "success" ? "info" : "warning" }
+                    );
 
                     this.cancel();
 
-                    this.report.doAction("bn_donation_in_kind.action_report_donation_in_kind", [
-                        data.id,
-                    ]);
+                    this.report.doAction(
+                        "bn_donation_in_kind.action_report_donation_in_kind_combined",
+                        data.ids || [data.id]
+                    );
                 }
                 this.pos.removeOrder(order);
                 this.pos.add_new_order();

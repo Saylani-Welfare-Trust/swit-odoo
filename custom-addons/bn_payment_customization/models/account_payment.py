@@ -17,10 +17,11 @@ class AccountPayment(models.Model):
 
     
     ibft_status = fields.Selection(selection=IBFT_STATUS, string="IBFT Status", default="pending", tracking=True)
-
+    ibft_batch_no = fields.Char(string="IBFT Batch No", copy=False, readonly=True, index=True, tracking=True)
 
     def action_confirm_ibft(self):
-
+        """Confirm the selected payments as one IBFT batch and download its Excel file.
+        Payments already in a batch are reprinted only by an IBFT Reprint user, with a reason."""
         if not self:
             return False
         if not self.env.user.has_group('account.group_account_invoice'):
@@ -29,7 +30,11 @@ class AccountPayment(models.Model):
         if wrong:
             raise UserError(_('Only posted outgoing payments are sent by IBFT:\n%s')
                             % '\n'.join(wrong.mapped('display_name')))
-        done = self.filtered(lambda p: p.ibft_status == 'success')
+        batch_nos = set(self.filtered('ibft_batch_no').mapped('ibft_batch_no'))
+        if len(batch_nos) > 1:
+            raise UserError(_('The selected payments belong to different IBFT batches (%s). '
+                              'Select the payments of one batch only.') % ', '.join(sorted(batch_nos)))
+        done = self.filtered(lambda p: p.ibft_status == 'success' and not p.ibft_batch_no)
         if done:
             raise UserError(_('These payments were already confirmed by IBFT:\n%s')
                             % '\n'.join(done.mapped('display_name')))
@@ -38,9 +43,27 @@ class AccountPayment(models.Model):
             raise UserError(_('These payments have no recipient bank account:\n%s')
                             % '\n'.join(no_bank.mapped('display_name')))
 
-        # Update all selected payment statuses
+        if batch_nos:
+            if not self.env.user.has_group('bn_payment_customization.group_ibft_reprint'):
+                raise AccessError(_('Only a user with the IBFT Reprint right can reprint an IBFT batch.'))
+            return {
+                'type': 'ir.actions.act_window',
+                'name': _('Reprint IBFT'),
+                'res_model': 'ibft.reprint.wizard',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': {
+                    'default_batch_no': batch_nos.pop(),
+                    'default_payment_ids': [(6, 0, self.ids)],
+                },
+            }
+        return self._do_confirm_ibft()
+
+    def _do_confirm_ibft(self, batch_no=False):
+        batch_no = batch_no or self.env['ir.sequence'].next_by_code('ibft.batch.number')
         self.write({
-            'ibft_status': 'success'
+            'ibft_status': 'success',
+            'ibft_batch_no': batch_no,
         })
 
         # Generate Excel
@@ -110,7 +133,7 @@ class AccountPayment(models.Model):
 
         # Create Excel attachment
         attachment = self.env['ir.attachment'].create({
-            'name': 'IBFT_Success_Payments.xlsx',
+            'name': 'IBFT_%s.xlsx' % batch_no.replace('/', '_'),
             'type': 'binary',
             'datas': base64.b64encode(output.read()),
             'mimetype': (

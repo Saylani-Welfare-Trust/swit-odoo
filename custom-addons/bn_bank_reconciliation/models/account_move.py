@@ -58,6 +58,54 @@ class AccountMove(models.Model):
             move.bank_reconciliation_original_move_id = originals if len(originals) == 1 else False
             move.bank_reconciliation_original_count = len(originals)
 
+    bank_reconciliation_move_ids = fields.Many2many(
+        'account.move',
+        string='Reconciliation Entries',
+        compute='_compute_bank_reconciliation_moves',
+        help='Entries moving the bank statement lines matched with this entry to the Posted Account'
+    )
+    bank_reconciliation_move_id = fields.Many2one(
+        'account.move',
+        string='Reconciliation Entry',
+        compute='_compute_bank_reconciliation_moves'
+    )
+    bank_reconciliation_move_count = fields.Integer(
+        compute='_compute_bank_reconciliation_moves'
+    )
+
+    def _compute_bank_reconciliation_moves(self):
+        ids = [id_ for id_ in self.ids if isinstance(id_, int)]
+        # Unreconciled lines are archived but still name their (cancelled) entry
+        reconciled = self.env['bank.reconciliation.reconciled'].with_context(active_test=False).search([
+            ('matched_move_id', 'in', ids),
+        ])
+        for move in self:
+            records = reconciled.filtered(lambda r: r.matched_move_id == move)
+            entries = records.mapped('reconciliation_move_id')
+            # Reconciliations validated before the entries were made per line have
+            # one entry for all their lines
+            entries |= records.filtered(
+                lambda r: not r.reconciliation_move_id
+                and r.matched_move_line_id.account_id != r.master_id.posted_account_id
+            ).mapped('master_id.move_id')
+            # Entries cancelled by unreconciling no longer reconcile anything
+            entries = entries.filtered(lambda m: m.state != 'cancel')
+            move.bank_reconciliation_move_ids = entries
+            move.bank_reconciliation_move_id = entries if len(entries) == 1 else False
+            move.bank_reconciliation_move_count = len(entries)
+
+    def action_view_bank_reconciliation_moves(self):
+        self.ensure_one()
+        entries = self.bank_reconciliation_move_ids
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move',
+            'name': _('Reconciliation Entries'),
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', entries.ids)],
+        }
+
     def action_view_bank_reconciliation_original_moves(self):
         self.ensure_one()
         originals = self.bank_reconciliation_original_move_ids

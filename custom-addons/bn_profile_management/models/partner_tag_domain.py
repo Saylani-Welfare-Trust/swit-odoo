@@ -11,6 +11,7 @@ TAGS = {
     'welfare': 'bn_profile_management.welfare_partner_category',
     'microfinance': 'bn_profile_management.microfinance_partner_category',
     'medical': 'bn_profile_management.medical_partner_category',
+    'patient': 'bn_profile_management.medical_patient_partner_category',
     'student': 'bn_profile_management.student_partner_category',
     'db_donor': 'bn_profile_management.donation_box_donor_partner_category',
 }

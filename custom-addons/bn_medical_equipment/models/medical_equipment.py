@@ -5,7 +5,6 @@ import re
 import logging
 import requests
 import json
-from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 from dateutil.relativedelta import relativedelta
 
 _logger = logging.getLogger(__name__)
@@ -48,6 +47,14 @@ case_type_selection = [
 ]
 
 
+
+
+def _equipment_donee_domain(model):
+    """Registered donees tagged Medical Equipment, or Medical (patients of the
+    Medical & Health POS can also receive equipment)."""
+    Partner = model.env['res.partner']
+    return Partner._tag_domain('donee', registered=True) + Partner._tag_domain('medical', 'patient', any_of=True)
+
 class MedicalEquipment(models.Model):
     _name = 'medical.equipment'
     _description = "Medical Equipment"
@@ -55,7 +62,7 @@ class MedicalEquipment(models.Model):
 
 
 
-    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'medical', registered=True))
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=_equipment_donee_domain)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     picking_id = fields.Many2one('stock.picking', string="Picking")
     return_picking_id = fields.Many2one('stock.picking', string="Return Picking")
@@ -788,8 +795,10 @@ class MedicalEquipment(models.Model):
             return result.get('json', {})
             
         except requests.exceptions.RequestException as e:
-            _logger.error(f"Welfare API Request failed: {str(e)}")
-            raise Exception(f"Network error: {str(e)}")
+            # Keep the portal's response body: on a 4xx it says which field was rejected
+            body = e.response.text[:1000] if e.response is not None else ''
+            _logger.error("Welfare API Request failed: %s | response: %s", e, body)
+            raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Welfare API Processing failed: {str(e)}")
             raise e
@@ -999,7 +1008,17 @@ class MedicalEquipment(models.Model):
         for app in applications:
             # Match by CNIC (most reliable)
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
-            if app.get('odooId') == self.id and app.get('department') == "medical":
+            if app.get('department') != "medical":
+                continue
+            # Results are already filtered by the inquiry officer's employee ID; pick this record by
+            # the portal application ID saved at sync time, else by the donee's CNIC
+            portal_ids = {str(i) for i in (self.portal_application_id, self.welfare_portal_id) if i}
+            if portal_ids and str(app.get('id')) in portal_ids:
+                return app
+        cnic = (self.cnic_no or '').replace('-', '')
+        for app in applications:
+            if (cnic and app.get('department') == "medical"
+                    and str(app.get('cnicNo') or '').replace('-', '') == cnic):
                 return app
         return None            
     
@@ -1111,9 +1130,9 @@ class MedicalEquipment(models.Model):
 
         summary = ""
         if success_msgs:
-            summary += "<b>Success:</b><br/>" + "<br/>".join(success_msgs) + "<br/>"
+            summary += "Success:\n" + "\n".join(success_msgs) + "\n"
         if error_msgs:
-            summary += "<b>Errors:</b><br/>" + "<br/>".join(error_msgs)
+            summary += "Errors:\n" + "\n".join(error_msgs)
         if not summary:
             summary = "No records processed."
 
@@ -1137,6 +1156,8 @@ class MedicalEquipment(models.Model):
         
         self.message_post(body=message_body)
 
+
+
     def _handle_new_application(self, existing_donee):
         """Handle creation of new application/donee in portal"""
         donee_data = None
@@ -1144,23 +1165,38 @@ class MedicalEquipment(models.Model):
         if not existing_donee:
             # Create new donee in portal
             donee_data = self._create_donee_in_portal()
-        portal_application = self.create_portal_application()
-        portal_application_id = portal_application.get('id')
-        
+        already_on_portal = False
+        try:
+            portal_application = self.create_portal_application()
+        except Exception as e:
+            # An earlier attempt already created this application on the portal (odooId = self.id):
+            # link to it instead of failing
+            if 'already exists' not in str(e):
+                raise
+            already_on_portal = True
+            existing_app, _note = self._search_portal_applications()
+            portal_application = existing_app or {}
+            _logger.info("Application for %s already exists on portal; linking it (%s)", self.display_name, portal_application.get('id'))
+        portal_application_id = portal_application.get('id') or self.welfare_portal_id or self.portal_application_id
+
         
         # Update disbursement record with portal information
         update_vals = {
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
             'is_synced': True,
             'last_sync_date': fields.Datetime.now(),
-            'portal_application_id': portal_application_id
+            'portal_application_id': portal_application_id,
+            'welfare_portal_id': portal_application_id,
         }
         
         self.write(update_vals)
         
         action = 'created_donee' if not existing_donee else 'linked_existing_donee'
         message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal "
-        message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
+        if already_on_portal:
+            message += f" | 📋 Application already on portal, linked{f' (ID: {portal_application_id})' if portal_application_id else ''} "
+        else:
+            message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
         
         return {
             'action': action,
@@ -1288,8 +1324,10 @@ class MedicalEquipment(models.Model):
             return result.get('json', {})
             
         except requests.exceptions.RequestException as e:
-            _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
-            raise Exception(f"Network error: {str(e)}")
+            # Keep the portal's response body: on a 4xx it says which field was rejected
+            body = e.response.text[:1000] if e.response is not None else ''
+            _logger.error("Sadqa Jaria API Request failed: %s | response: %s", e, body)
+            raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
             raise e
@@ -1309,16 +1347,14 @@ class MedicalEquipment(models.Model):
         
      
         donee_data = self._check_donee_exists_in_portal()
-
-            
         if donee_data:
-                message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-
+            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
         else:
             self._create_donee_in_portal()
+            message = "✅ Donee created in portal"
         # Check for applications
-        application = self._search_portal_applications()
-        # _logger.info(f"Applications found: {application}")    
+        application, search_note = self._search_portal_applications()
+        # _logger.info(f"Applications found: {application}")
         app_state = application.get('status') if application else None
         inquiry_reports = application.get('inquiryReports') if application else None
         all_media = []
@@ -1333,6 +1369,10 @@ class MedicalEquipment(models.Model):
                 if remarks:
                     all_remarks.append(remarks)
         # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
+        if not application:
+            message += f" | ⚠️ Application not found in portal search (officer {self.employee_id.barcode}, CNIC {self.cnic_no}, department medical): {search_note}"
+        elif app_state != 'inquiry_complete':
+            message += f" | 📋 Portal status: {app_state} (data is imported only when status is inquiry_complete)"
         if app_state == 'inquiry_complete': # type: ignore
             self.write({"inquiry_media": '<br/>'.join(all_media) if all_media else ''})
             self.write({"portal_review_notes": '\n'.join(all_remarks) if all_remarks else '' })
@@ -1340,7 +1380,7 @@ class MedicalEquipment(models.Model):
             self.write({"Portal_acknowledgment": application.get('welfareAcknowledgment', True)})
             self.write({"state":"inquiry"})
             result = self._handle_existing_application(application)
-            message = f" | 📋 application status: {app_state} "
+            message += f" | 📋 application status: {app_state} "
             if result and isinstance(result, dict) and 'message' in result:
                 message += f" | 📋 {result['message']} "
             else:
@@ -1349,30 +1389,62 @@ class MedicalEquipment(models.Model):
     
     def _search_portal_applications(self):
         """Search for matching applications in portal"""
-        try:
-            result = self._make_sadqa_api_call(self.env.company.search_endpoint)
-            applications = result
-            # raise ValidationError(str(applications))
-            if applications:
-                _logger.info(f"Unsynced applications found: {applications}")
-                # Find matching application based on donee information
-                matching_app = self._find_matching_application(applications)
-                return matching_app
-            return None
-            
-        except Exception as e:
-            # raise ValidationError(str(e))
-            _logger.warning(f"Error occurred while searching portal applications: {str(e)}")
-            return None
+        """Returns (application or None, note explaining why nothing matched)"""
+        endpoint = self.env.company.search_endpoint
+        officer_code = (self.employee_id.barcode or '').strip()
+        if not officer_code:
+            return None, f"Inquiry Officer {self.employee_id.name or ''} has no Badge ID (barcode)"
+        portal_id = self.welfare_portal_id or self.portal_application_id
+        # Search by department first, then by the portal application id saved at sync time;
+        # the officer-only search is kept as a last resort (it returns at most 50 unsynced rows)
+        attempts = [('department', {"department": "medical"})]
+        if portal_id:
+            attempts.append(('department+applicationId', {"department": "medical", "applicationId": portal_id}))
+            attempts.append(('department+id', {"department": "medical", "id": portal_id}))
+        attempts.append(('officer', {"employeeId": officer_code}))
+        notes = []
+        last_list = []
+        for label, payload in attempts:
+            try:
+                applications = self._make_sadqa_api_call(endpoint, 'POST', {"json": payload})
+            except Exception as e:
+                _logger.info("Portal search [%s] %s failed: %s", label, payload, e)
+                notes.append(f"{label}: error {str(e)[:120]}")
+                continue
+            if isinstance(applications, dict):
+                applications = [applications]
+            if not isinstance(applications, list):
+                notes.append(f"{label}: unexpected data {str(applications)[:120]}")
+                continue
+            departments = {}
+            for a in applications:
+                if isinstance(a, dict):
+                    dept = repr(a.get('department'))
+                    departments[dept] = departments.get(dept, 0) + 1
+            notes.append(f"{label}: {len(applications)} result(s) {departments}")
+            matching_app = self._find_matching_application(applications)
+            if matching_app:
+                _logger.info("Portal search [%s] matched application %s", label, matching_app.get('id'))
+                return matching_app, ''
+            last_list = applications
+        medical_ids = [(a.get('id'), a.get('cnicNo'), a.get('odooId')) for a in last_list
+                       if isinstance(a, dict) and a.get('department') == 'medical']
+        return None, (f"searches tried -> " + "; ".join(notes) + ". "
+                      f"Medical (portal id, CNIC, odooId) in last result: {medical_ids or 'none'}; "
+                      f"this record odooId={self.id}, portal id={portal_id or '-'}")
 
 
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
         # self.ensure_one()
+        officer_code = (self.employee_id.barcode or '').strip()
+        if not officer_code:
+            raise UserError(_("Inquiry Officer %s has no Badge ID (barcode); the portal needs it.")
+                            % (self.employee_id.name or ''))
         data_list = []
         for line in self.medical_equipment_line_ids:
             data_list.append({
-                "medicalEquipmentCategoryId": line.medical_equipment_category_id,
+                "medicalEquipmentCategoryId": line.medical_equipment_category_id.id or None,
                 "productId": line.product_id.display_name,
                 "quantity": line.quantity,
                 "baseSecurityDeposit": line.base_security_deposit,
@@ -1385,14 +1457,15 @@ class MedicalEquipment(models.Model):
                 "applicationData": {
                     "odooId": self.id,
                     "doneeOdooId": self.donee_id.id,
-                    "inquiryOfficerOdooId": self.employee_id.id,
+                    "inquiryOfficerEmployeeId": officer_code,
                     "department": "medical",
                     "form": {
                         "category": "medical",
                         "subcategory": "medical",
-                        "date": fields.Date.today().strftime("%d-%m-%Y"),
+                        # same format and key as bn_welfare, which the portal accepts
+                        "date": str(fields.Date.today()),
                         "loanRequestAmount": self.loan_request_amount,
-                        "applicationInformation": {
+                        "applicantInformation": {
                             "name": self.donee_id.name,
                             "fatherName": self.donee_id.father_name,
                             "cnic": self.cnic_no,

@@ -13,6 +13,7 @@
     'data': [
         'security/group.xml',
         'security/ir.model.access.csv',
+        'data/patient_tag.xml',
 
         'wizards/patient_register_wizard.xml',
 

@@ -89,3 +89,27 @@ class TestDonorNotifier(TransactionCase):
         donor.whatsapp = False
         self._send(donor)
         self.assertIn('sent by SMS', self.record.message_ids[:1].body)
+
+    def test_one_receipt_for_several_records(self):
+        """Records of one donation (e.g. Donation In Kind lines of a POS order):
+        one message, one receipt, logged on each record."""
+        second = self.env['res.partner'].create({'name': 'Receipt record 2'})
+        donor = self.env['res.partner'].create({'name': 'D8', 'whatsapp': '3001234573', 'mobile': '3001234573'})
+        sent = []
+
+        def fake_wa(service, mobile, link, filename):
+            sent.append(('whatsapp', mobile, link))
+            return True
+
+        def fake_pdf(report, report_ref, res_ids=None, data=None):
+            sent.append(('pdf', tuple(res_ids)))
+            return b'%PDF-1.4 fake', 'pdf'
+
+        WA = type(self.env['whatsapp.service'])
+        with patch.object(WA, 'send_template_message', fake_wa), patch(REPORT, fake_pdf):
+            result = self.Notifier._send(self.record | second, donor, lambda link: 'Thanks',
+                                         report_name='bn_pos_order.pos_whatsapp_donation_receipt_template')
+        self.assertEqual(result['channel'], 'whatsapp')
+        self.assertEqual([s[0] for s in sent], ['pdf', 'whatsapp'])
+        self.assertEqual(list(sent[0][1]), (self.record | second).ids)
+        self.assertIn('WhatsApp', second.message_ids[:1].body)

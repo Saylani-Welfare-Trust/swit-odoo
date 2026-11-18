@@ -11,6 +11,7 @@
             <search string="Microfinance">
                 <field name="name"/>
                 <field name="donee_id"/>
+                <field name="donee_id" string="Donee CNIC" filter_domain="[('donee_id.cnic_no', 'ilike', self)]"/>
                 <field name="product_id"/>
                 <field name="recovered_location_id"/>
                 <field name="warehouse_location_id"/>

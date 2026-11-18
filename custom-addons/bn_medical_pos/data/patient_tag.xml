@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Patients have their own "Medical" tag (the former one is now "Medical Equipment"):
+         customers of the Medical & Health POS get it on install / upgrade -->
+    <function model="res.partner" name="_mh_tag_existing_patients"/>
+</odoo>

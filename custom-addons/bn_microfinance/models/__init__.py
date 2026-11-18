@@ -21,3 +21,4 @@ from . import pos_session
 from . import pos_cheque
 from . import advance_donation_disbursement
 from . import program_types
+from . import pos_order

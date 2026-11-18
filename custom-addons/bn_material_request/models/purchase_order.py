@@ -4,6 +4,12 @@ from odoo import models, fields, api
 class PurchaseOrder(models.Model):
     _inherit = 'purchase.order'
 
+    bulk_price_state = fields.Selection([
+        ('draft', 'Draft'),
+        ('price_update', 'Price Updated'),
+        ('confirmed', 'Confirmed'),
+    ], string='Bulk Price Entry Status', default='draft', copy=False, tracking=True)
+
     material_request_id = fields.Many2one(
         related='requisition_id.material_request_id',
         string='Source Material Request',

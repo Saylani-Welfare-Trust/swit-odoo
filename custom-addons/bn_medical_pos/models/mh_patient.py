@@ -58,6 +58,6 @@ class MedicalPatient(models.Model):
                           FROM res_partner_res_partner_category_rel rel
                           JOIN ir_model_data imd ON imd.model = 'res.partner.category' AND imd.res_id = rel.category_id
                          WHERE rel.partner_id = p.id
-                           AND imd.module = 'bn_profile_management' AND imd.name = 'medical_partner_category')
+                           AND imd.module = 'bn_profile_management' AND imd.name = 'medical_patient_partner_category')
             )
         """)

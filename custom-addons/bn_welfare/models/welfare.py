@@ -565,8 +565,10 @@ class Welfare(models.Model):
             return result.get('json', {})
             
         except requests.exceptions.RequestException as e:
-            _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
-            raise Exception(f"Network error: {str(e)}")
+            # Keep the portal's response body: on a 4xx it says which field was rejected
+            body = e.response.text[:1000] if e.response is not None else ''
+            _logger.error("Sadqa Jaria API Request failed: %s | response: %s", e, body)
+            raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
             raise e
@@ -590,11 +592,10 @@ class Welfare(models.Model):
     def action_check_portal_status(self):
         self.ensure_one()
 
-        donee_data = self._check_donee_exists_in_portal()
-        if donee_data:
-            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-        else:
-            self._create_donee_in_portal()
+        if not self.is_synced:
+            donee_data = self._check_donee_exists_in_portal()
+            if not donee_data:
+                self._create_donee_in_portal()
 
         application     = self._search_portal_applications()
         app_state       = application.get('status') if application else None
@@ -697,6 +698,26 @@ class Welfare(models.Model):
 
         return self._show_notification('Portal Status Check', message, 'info')
     
+    @api.model
+    def _auto_check_portal_status(self):
+        """Poll the portal for completed inquiries on applications already sent there."""
+        company = self.env.company
+        if not company.welfare_url or not company.odoo_auth_key or not company.search_endpoint:
+            _logger.warning("Welfare portal status check skipped: portal URL, auth key, or search endpoint is missing.")
+            return
+
+        records = self.search([
+            ('state', '=', 'send_for_inquiry'),
+            ('is_synced', '=', True),
+            ('portal_application_id', '!=', False),
+        ])
+        for record in records:
+            try:
+                with self.env.cr.savepoint():
+                    record.action_check_portal_status()
+            except Exception:
+                _logger.exception("Could not check Welfare portal status for %s", record.display_name)
+
     def _find_matching_application(self, applications):
         """Find matching application from portal data"""
         for app in applications:
@@ -841,10 +862,28 @@ class Welfare(models.Model):
         if not existing_donee:
             # Create new donee in portal
             donee_data = self._create_donee_in_portal()
-        portal_application = self.create_portal_application()
-        portal_application_id = portal_application.get('id')
-        
-        
+        already_on_portal = False
+        try:
+            portal_application = self.create_portal_application()
+        except Exception as e:
+            # The portal keys applications by odooId alone, so "already exists" can also mean another
+            # record used this id (another department, or an older copy of this database).
+            # Link only when it really is this welfare record: listed by the portal as a welfare
+            # application, or sent from this record before (reverted to Completed and sent again)
+            if f"odooId {self.id} already exists" not in str(e):
+                raise
+            portal_application = self._search_portal_applications() or {}
+            if not portal_application.get('id') and not self.portal_application_id:
+                raise Exception(
+                    f"The portal already has an application with odooId {self.id}, but it is not this "
+                    f"welfare application: this record was never sent before and the portal's welfare list "
+                    f"does not have it. Another record used the same id; ask the portal team to check "
+                    f"odooId {self.id}.")
+            already_on_portal = True
+            _logger.info("Welfare application %s already exists on portal; linking it (%s)",
+                         self.display_name, portal_application.get('id') or self.portal_application_id)
+        portal_application_id = portal_application.get('id') or self.portal_application_id
+
         # Update disbursement record with portal information
         update_vals = {
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
@@ -857,7 +896,10 @@ class Welfare(models.Model):
         
         action = 'created_donee' if not existing_donee else 'linked_existing_donee'
         message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal "
-        message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
+        if already_on_portal:
+            message += f" | 📋 Application already on portal, linked{f' (ID: {portal_application_id})' if portal_application_id else ''} "
+        else:
+            message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
         
         return {
             'action': action,
@@ -969,13 +1011,14 @@ class Welfare(models.Model):
                 rec.write({
                     'portal_sync_status': 'syncing',
                     'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}",
-                    'state': 'send_for_inquiry'  # Just move to send_for_inquiry
                 })
-                # Your existing sync logic...
                 existing_donee = rec._check_donee_exists_in_portal()
                 result = rec._handle_new_application(existing_donee)
                 rec._update_sync_status_success(result)
                 rec._create_sync_chatter_message(result)
+                # Move on only once the portal has the application, so a failed send
+                # stays in Completed and can simply be sent again (no Revert needed)
+                rec.state = 'send_for_inquiry'
                 success_msgs.append(f"[{rec.display_name}] {result['message']}")
             except Exception as e:
                 error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"

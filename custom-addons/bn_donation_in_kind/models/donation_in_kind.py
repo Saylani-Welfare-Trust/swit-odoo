@@ -2,7 +2,6 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, ValidationError, UserError
 
 from markupsafe import Markup
-import base64
 import logging
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
@@ -88,106 +87,19 @@ May Allah bless you!
 
 - SWIT"""
 
-    def _generate_din_receipt_pdf(self):
-        try:
-            pdf_data, _ = self.env['ir.actions.report']._render_qweb_pdf(
-                'bn_donation_in_kind.donation_in_kind_whatsapp_report',
-                self.ids
-            )
-            return pdf_data
-        except Exception as e:
-            _logger.error('DIN receipt PDF error: %s', str(e))
-            return None
-        
-    def _save_din_receipt_attachment(self, pdf_data):
-        self.ensure_one()
-        safe_name = self.name.replace('/', '_')
-        filename = f"Receipt_{safe_name}.pdf"
-
-        old = self.env['ir.attachment'].sudo().search([
-            ('res_model', '=', 'donation.in.kind'),
-            ('res_id', '=', self.id),
-            ('name', '=', filename)
-        ])
-        old.unlink()
-
-        attachment = self.env['ir.attachment'].sudo().create({
-            'name': filename,
-            'type': 'binary',
-            'datas': base64.b64encode(pdf_data),
-            'res_model': 'donation.in.kind',
-            'res_id': self.id,
-            'mimetype': 'application/pdf',
-        })
-        attachment.generate_access_token()
-
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
-        pdf_url = f"{base_url}/web/content/{attachment.id}?access_token={attachment.access_token}&download=true"
-
-        return attachment, pdf_url
-
     def _send_din_notification(self):
-        """Send WhatsApp (with PDF receipt) and/or SMS to the donor when
-        Donation In Kind records are created from POS. A POS order creates
-        one record per order line, so self holds all of them and the donor
-        gets a single message covering the whole order."""
-        names = ', '.join(self.mapped('name'))
+        """Donation receipt to the donor when Donation In Kind records are created
+        from POS: WhatsApp first, SMS fallback (donor.notifier). A POS order creates
+        one record per order line, so self holds all of them and the donor gets a
+        single message and one combined receipt for the whole order."""
         donor = self.donor_id[:1]
-        if not donor:
-            _logger.warning('DIN %s created with no donor_id set - skipping notification', names)
-            return {'status': 'error', 'message': 'No donor on this record'}
-
         message = self._build_din_receipt_message()
+        return self.env['donor.notifier']._send(
+            self, donor,
+            lambda link: message + (f"\n\nReceipt: {link}" if link else ''),
+            report_name='bn_donation_in_kind.donation_in_kind_whatsapp_report',
+            filename=f"Receipt_{self[:1].name.replace('/', '_')}.pdf")
 
-        whatsapp_ok = False
-        sms_ok = False
-        whatsapp_error = None
-        sms_error = None
-
-        if donor.whatsapp:
-            try:
-                pdf_data = self._generate_din_receipt_pdf()
-                if not pdf_data or not pdf_data.startswith(b'%PDF'):
-                    raise Exception("Invalid PDF generated")
-
-                attachment, pdf_url = self[-1]._save_din_receipt_attachment(pdf_data)
-                _logger.info('DIN receipt PDF URL: %s', pdf_url)
-
-                self.env['whatsapp.service'].send_template_message(
-                    donor.whatsapp,
-                    pdf_url,
-                    attachment.name
-                )
-                whatsapp_ok = True
-                _logger.info('DIN WhatsApp sent successfully for %s', names)
-            except Exception as e:
-                whatsapp_error = str(e)
-                _logger.error('DIN WhatsApp failed for %s: %s', names, whatsapp_error)
-        else:
-            whatsapp_error = "No WhatsApp number"
-
-        mobile = donor.mobile or donor.phone
-        if mobile:
-            try:
-                self.env['sms.service'].send_sms(mobile, message)
-                sms_ok = True
-                _logger.info('DIN SMS sent successfully for %s', names)
-            except Exception as e:
-                sms_error = str(e)
-                _logger.error('DIN SMS failed for %s: %s', names, sms_error)
-        else:
-            sms_error = "No contact number"
-
-        if whatsapp_ok and sms_ok:
-            return {'status': 'success', 'message': 'WhatsApp and SMS sent successfully'}
-        if whatsapp_ok:
-            return {'status': 'warning', 'message': f'WhatsApp sent. SMS failed: {sms_error}'}
-        if sms_ok:
-            return {'status': 'warning', 'message': f'SMS sent. WhatsApp failed: {whatsapp_error}'}
-        return {
-            'status': 'error',
-            'message': f'WhatsApp failed: {whatsapp_error}. SMS failed: {sms_error}'
-        }
     @api.depends('location_id')
     def _compute_warehouse_name(self):
         for record in self:
@@ -702,14 +614,17 @@ May Allah bless you!
             dins |= din
 
         try:
-            dins._send_din_notification()
-        except Exception as e:
-            _logger.error('DIN %s: notification step failed: %s', din.name, str(e))
+            notification = dins._send_din_notification()
+        except Exception as e:  # noqa: BLE001 - the records are created; the message can be resent
+            _logger.exception('DIN %s: notification step failed', ', '.join(dins.mapped('name')))
+            notification = {'status': 'error', 'message': str(e)}
 
         return {
             "status": "success",
-            "origin": din.name,
-            "id": din.id
+            "origin": ', '.join(dins.mapped('name')),
+            "id": din.id,
+            "ids": dins.ids,
+            "notification": notification,
         }
     
 

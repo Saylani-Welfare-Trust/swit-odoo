@@ -63,4 +63,36 @@
 
     </template>
 
+    <!-- Transfer slip: PO, destination, note, MR number and remark -->
+    <template id="report_picking_document_custom_fields" inherit_id="stock.report_picking">
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <div class="row mt-3 mb-3">
+                <div class="col-6">
+                    <div class="mb-2" t-if="o.purchase_id">
+                        <strong>PO Number:</strong>
+                        <p t-field="o.purchase_id.name" class="m-0"/>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Destination Location:</strong>
+                        <p t-field="o.location_dest_id.display_name" class="m-0"/>
+                    </div>
+                    <div class="mb-2" t-if="o.note">
+                        <strong>Print Note:</strong>
+                        <p t-field="o.note" class="m-0"/>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="mb-2" t-if="o.origin">
+                        <strong>MR Number:</strong>
+                        <p t-field="o.origin" class="m-0"/>
+                    </div>
+                    <div class="mb-2" t-if="o.remark">
+                        <strong>Remark:</strong>
+                        <p t-field="o.remark" class="m-0"/>
+                    </div>
+                </div>
+            </div>
+        </xpath>
+    </template>
+
 </odoo>

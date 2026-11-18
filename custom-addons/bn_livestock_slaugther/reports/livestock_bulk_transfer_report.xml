@@ -5,7 +5,6 @@
         <t t-call="web.html_container">
             <t t-call="web.external_layout">
                 <t t-set="company" t-value="docs[:1].env.company"/>
-                <t t-set="sources" t-value="docs.mapped('source_location_id')"/>
                 <t t-set="destinations" t-value="docs.mapped('transfer_location')"/>
                 <t t-set="pickings" t-value="docs.mapped('transfer_picking_id')"/>
                 <t t-set="user_branch" t-value="user.sudo().employee_id.analytic_account_id.name"/>
@@ -14,7 +13,6 @@
 
                     <div class="row mb-3">
                         <div class="col-6">
-                            <div><strong>Source Location:</strong> <t t-esc="', '.join(sources.mapped('display_name')) or '-'"/></div>
                             <div><strong>Destination Location:</strong> <t t-esc="', '.join(destinations.mapped('display_name')) or '-'"/></div>
                         </div>
                         <div class="col-6 text-end">
@@ -32,7 +30,6 @@
                                 <th>Product</th>
                                 <th>Donee</th>
                                 <th>Source Document</th>
-                                <th>Source Location</th>
                                 <th>Destination Location</th>
                                 <th class="text-end">Quantity</th>
                             </tr>
@@ -45,7 +42,6 @@
                                     <td><t t-esc="rec.product_id.display_name"/></td>
                                     <td><t t-esc="rec.donee_id.name or '-'"/></td>
                                     <td><t t-esc="rec.ref or '-'"/></td>
-                                    <td><t t-esc="rec.source_location_id.display_name or '-'"/></td>
                                     <td><t t-esc="rec.transfer_location.display_name or '-'"/></td>
                                     <td class="text-end"><t t-esc="rec.quantity"/></td>
                                 </tr>
@@ -53,7 +49,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="7" class="text-end"><strong>Total</strong></td>
+                                <td colspan="6" class="text-end"><strong>Total</strong></td>
                                 <td class="text-end"><strong><t t-esc="sum(docs.mapped('quantity'))"/></strong></td>
                             </tr>
                         </tfoot>

@@ -96,7 +96,12 @@ class StockWarehouse(models.Model):
             return self.env.ref('stock.stock_location_customers')
         if spec == 'supplier':
             return self.env.ref('stock.stock_location_suppliers')
-        return self.env.ref(spec, raise_if_not_found=False) or self.env['stock.location']
+        location = self.env.ref(spec, raise_if_not_found=False) or self.env['stock.location']
+        # a location of another company cannot be a default of this warehouse's
+        # type (another company's warehouse): the document sets it then
+        if location.company_id and location.company_id != self.company_id:
+            return self.env['stock.location']
+        return location
 
     def _program_type(self, program):
         """The operation type of `program` in this warehouse (created if missing)."""

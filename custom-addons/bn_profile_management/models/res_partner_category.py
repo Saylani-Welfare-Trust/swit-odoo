@@ -142,13 +142,24 @@ class ResPartnerCategory(models.Model):
         return self.sudo().search([('registration_program_code', '=', code)], limit=1).sudo(False)
 
     @api.model
+    def _split_medical_tags(self):
+        """Run on every install / upgrade. The "Medical" donee tag of Medical
+        Equipment is named "Medical Equipment", and "Medical" tags the patients
+        of the Medical & Health POS (its own tag). The tags are noupdate
+        records, so an existing database is renamed here; once renamed, this
+        does nothing."""
+        tag = self.env.ref('bn_profile_management.medical_partner_category', raise_if_not_found=False)
+        if tag and tag.name == 'Medical':
+            tag.name = 'Medical Equipment'
+
+    @api.model
     def _setup_record_search_programs(self):
         """Run on every install / upgrade: the programmes Record Search
         offered before they were configurable. Only tags without a code are
         set, so an administrator's changes are kept."""
         programmes = {
             'bn_profile_management.student_partner_category': ('student', 'donee', 'choose'),
-            'bn_profile_management.welfare_partner_category': ('welfare', 'donee', 'choose'),
+            'bn_profile_management.welfare_partner_category': ('welfare', 'donee', 'individual'),  # institutions: Sadqa e Jariya
             'bn_profile_management.microfinance_partner_category': ('microfinance', 'donee', 'individual'),
             'bn_profile_management.medical_partner_category': ('medical', 'donee', 'individual'),
         }

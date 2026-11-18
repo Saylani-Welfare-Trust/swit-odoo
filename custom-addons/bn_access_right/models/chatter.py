@@ -14,7 +14,7 @@ class ResGroups(models.Model):
     def _compute_user_info(self):
         for group in self:
             group.user_count = len(group.users)
-            group.user_names = ', '.join(group.users.mapped('display_name')) or 'No users'
+            group.user_names = ', '.join(name for name in group.users.mapped('display_name') if name) or 'No users'
 
     def _get_mail_thread_data(self, request_list):
         return {record.id: {'message_ids': [], 'log_ids': []} for record in self}

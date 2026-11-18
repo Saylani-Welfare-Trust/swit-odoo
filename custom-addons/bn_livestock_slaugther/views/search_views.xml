@@ -101,6 +101,10 @@
                 <filter name="filter_state_material_request" string="Material Request" domain="[('state', '=', 'material_request')]"/>
                 <filter name="filter_state_done" string="Done" domain="[('state', '=', 'done')]"/>
                 <separator/>
+                <filter name="filter_meat_depart" string="Meat Department" domain="[('is_meat_depart', '=', True)]"/>
+                <filter name="filter_goat_depart" string="Goat Department" domain="[('is_goat_depart', '=', True)]"/>
+                <filter name="filter_chicken_depart" string="Chicken Department" domain="[('is_chicken_depart', '=', True)]"/>
+                <separator/>
                 <filter name="filter_my_records" string="My Records" domain="[('create_uid', '=', uid)]"/>
                 <separator/>
                 <filter name="period_create_date" string="Created on" date="create_date"/>

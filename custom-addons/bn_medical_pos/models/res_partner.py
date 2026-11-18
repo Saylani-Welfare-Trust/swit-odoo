@@ -10,11 +10,11 @@ class ResPartner(models.Model):
 
     @api.model
     def _mh_patient_tags(self):
-        """(Donee, Individual, Medical) partner tags"""
+        """(Donee, Individual, Medical) partner tags; "Medical" is the patient tag"""
         return (
             self.env.ref('bn_profile_management.donee_partner_category'),
             self.env.ref('bn_profile_management.individual_partner_category'),
-            self.env.ref('bn_profile_management.medical_partner_category'),
+            self.env.ref('bn_profile_management.medical_patient_partner_category'),
         )
 
     @api.model
@@ -102,6 +102,27 @@ class ResPartner(models.Model):
         })
         patient.action_register()
         return patient, False
+
+    @api.model
+    def _mh_tag_existing_patients(self):
+        """Customers of the Medical & Health POS who are registered donees get the
+        patient tag. Patients registered before it existed carry the donee tag that
+        is now "Medical Equipment". Running it again adds nothing."""
+        donee_tag, _individual_tag, patient_tag = self._mh_patient_tags()
+        self.env.cr.execute("""
+            INSERT INTO res_partner_res_partner_category_rel (partner_id, category_id)
+            SELECT DISTINCT po.partner_id, %(patient)s
+              FROM pos_order po
+              JOIN pos_session ps ON ps.id = po.session_id
+              JOIN pos_config pc ON pc.id = ps.config_id
+              JOIN res_partner_res_partner_category_rel d
+                ON d.partner_id = po.partner_id AND d.category_id = %(donee)s
+             WHERE pc.is_medical_pos
+               AND NOT EXISTS (SELECT 1 FROM res_partner_res_partner_category_rel r
+                                WHERE r.partner_id = po.partner_id AND r.category_id = %(patient)s)
+        """, {'patient': patient_tag.id, 'donee': donee_tag.id})
+        if self.env.cr.rowcount:
+            self.invalidate_model(['category_id'])
 
     @api.model
     def _mh_format_cnic(self, digits):

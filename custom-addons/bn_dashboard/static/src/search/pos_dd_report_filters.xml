@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Date range popup -->
+    <t t-name="bn_dashboard.PosDdDateRangeDialog">
+        <Dialog title="dialogTitle" size="'lg'">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <t t-foreach="presets" t-as="preset" t-key="preset_index">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            t-on-click="() => this.usePreset(preset)" t-esc="preset.label"/>
+                </t>
+            </div>
+            <div class="mb-2 fw-bold" t-esc="rangeLabel"/>
+            <div class="d-flex justify-content-center">
+                <DateTimePicker type="'date'"
+                                range="true"
+                                value="pickerValue"
+                                focusedDateIndex="focusedDateIndex"
+                                onSelect.bind="onSelect"/>
+            </div>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" t-att-disabled="!state.from" t-on-click="apply">Apply</button>
+                <button class="btn btn-secondary" t-on-click="clear">Clear</button>
+                <button class="btn btn-link" t-on-click="() => this.props.close()">Cancel</button>
+            </t>
+        </Dialog>
+    </t>
+
+    <!-- City / Branch popup -->
+    <t t-name="bn_dashboard.PosDdLocationDialog">
+        <Dialog title="title" size="'md'">
+            <input type="text" class="form-control mb-2" placeholder="Search…"
+                   t-model="state.search"/>
+            <div t-if="cityNote" class="text-muted small mb-2" t-esc="cityNote"/>
+            <div t-if="state.loading" class="text-muted">Loading…</div>
+            <t t-else="">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                    <label class="d-flex align-items-center gap-2 mb-0 cursor-pointer">
+                        <input type="checkbox" class="form-check-input mt-0"
+                               t-att-checked="allVisibleSelected"
+                               t-on-change="toggleAllVisible"/>
+                        <span>Select all</span>
+                    </label>
+                    <span class="text-muted small"><t t-esc="state.selected.size"/> selected</span>
+                </div>
+                <div style="max-height: 50vh; overflow-y: auto;">
+                    <t t-foreach="visibleOptions" t-as="option" t-key="option.id">
+                        <label class="d-flex align-items-center gap-2 py-1 cursor-pointer">
+                            <input type="checkbox" class="form-check-input mt-0"
+                                   t-att-checked="state.selected.has(option.id)"
+                                   t-on-change="() => this.toggle(option.id)"/>
+                            <span t-esc="option.name"/>
+                            <span t-if="option.city_name" class="text-muted small" t-esc="option.city_name"/>
+                        </label>
+                    </t>
+                    <div t-if="!visibleOptions.length" class="text-muted py-2">No match.</div>
+                </div>
+            </t>
+            <t t-set-slot="footer">
+                <button class="btn btn-primary" t-on-click="apply">Apply</button>
+                <button class="btn btn-secondary" t-on-click="clear">Clear</button>
+                <button class="btn btn-link" t-on-click="() => this.props.close()">Cancel</button>
+            </t>
+        </Dialog>
+    </t>
+
+</templates>

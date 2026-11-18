@@ -12,6 +12,18 @@
         </field>
     </record>
 
+    <!-- Expenses list: hide the Analytic Distribution column -->
+    <record id="hr_expense_view_expenses_analysis_tree_inherit_bn_custom_expense" model="ir.ui.view">
+        <field name="name">hr.expense.view.expenses.analysis.tree.inherit.bn.custom.expense</field>
+        <field name="model">hr.expense</field>
+        <field name="inherit_id" ref="hr_expense.hr_expense_view_expenses_analysis_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='analytic_distribution']" position="attributes">
+                <attribute name="column_invisible">True</attribute>
+            </xpath>
+        </field>
+    </record>
+
     <record id="hr_expense_view_search_analytic_location" model="ir.ui.view">
         <field name="name">hr.expense.view.search.analytic.location</field>
         <field name="model">hr.expense</field>

@@ -17,6 +17,7 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
+        'security/record_rule.xml',
 
         'data/sequences.xml',
         'data/sync_pos_donation_receipts_action.xml',

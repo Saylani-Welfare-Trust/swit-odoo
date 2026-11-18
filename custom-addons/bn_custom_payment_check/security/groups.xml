@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo> 
+ <record id="group_cheque_reprint" model="res.groups">
+        <field name="name">Reprint Cheque</field>
+        <field name="comment">Can print a cheque again after its first print, giving a reason.</field>
+    </record>
+</odoo>

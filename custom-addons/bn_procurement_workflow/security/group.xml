@@ -4,6 +4,11 @@
         <field name="name">Procurement Manager</field>
         <field name="category_id" ref="module_procurement"/>
     </record>
+    <record id="group_confirm_to_bill" model="res.groups">
+        <field name="name">Confirm to Bill</field>
+        <field name="category_id" ref="module_procurement"/>
+        <field name="comment">Creates the vendor bill from a received receipt.</field>
+    </record>
     <record id="group_cfo_shariah" model="res.groups">
         <field name="name">CFO-Shariah Fund Transfer</field>
         <field name="category_id" ref="module_procurement"/>

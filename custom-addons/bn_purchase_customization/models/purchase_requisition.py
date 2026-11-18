@@ -47,6 +47,7 @@ class PurchaseRequisition(models.Model):
         for requisition in self:
             if requisition.state != 'draft':
                 raise ValidationError('Only a Draft request can be confirmed.')
+        self._assign_reference_number()
         self.write({'state': 'confirm'})
 
     @api.model

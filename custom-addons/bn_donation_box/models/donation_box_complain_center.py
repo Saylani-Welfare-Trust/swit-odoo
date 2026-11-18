@@ -102,7 +102,8 @@ class DonationBoxComplain(models.Model):
                     raise ValidationError(_('The Box No. does not match the selected registration.'))
                 registration._check_in_service()
                 # A resolved "Return" whose box was not taken back yet is still open.
-                open_complaint = self.search([
+                # sudo: the duplicate check must see complaints of every city.
+                open_complaint = self.sudo().search([
                     ('donation_box_registration_installation_id', '=', registration_id),
                     '|', ('status', 'in', ('draft', 'process')),
                     '&', '&', ('status', '=', 'resolved'), ('return_picking_id', '=', False),

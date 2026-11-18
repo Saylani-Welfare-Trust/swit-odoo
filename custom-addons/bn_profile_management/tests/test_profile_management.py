@@ -107,7 +107,7 @@ class TestProfileManagement(ProfileCase):
                                                     'cnic_no': '42101-1000008-1', 'donee_registration_type': 'medical'})
         action = wizard.action_confirm()
         self.assertEqual(action['res_id'], person.id)
-        self.assertEqual(set(person.category_id.mapped('name')), {'Donee', 'Donor', 'Individual', 'Employee', 'Medical'})
+        self.assertEqual(set(person.category_id.mapped('name')), {'Donee', 'Donor', 'Individual', 'Employee', 'Medical Equipment'})
 
     def test_search_donor_by_mobile(self):
         donor = self.Partner.create({'name': 'Mobile Donor', 'mobile': '3001000009',

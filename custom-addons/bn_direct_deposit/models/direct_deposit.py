@@ -224,7 +224,10 @@ May Allah bless you!
         self = self.with_context(pos_link_create=True)
         self._check_dd_pos_access()
 
-        transaction_ref = data.get('transaction_ref')
+        transaction_ref = (data.get('transaction_ref') or '').strip()
+        if not transaction_ref:
+            return {'status': 'error', 'body': _('Transaction Reference is mandatory for Direct Deposit.')}
+        data = dict(data, transaction_ref=transaction_ref)
         duplicate = self._check_duplicate_transaction_ref(transaction_ref)
         if duplicate:
             return {

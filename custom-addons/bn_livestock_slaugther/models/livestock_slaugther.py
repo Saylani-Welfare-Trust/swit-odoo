@@ -80,8 +80,15 @@ class LivestockSlaughter(models.Model):
         missing = animals - existing
         if missing <= 0:
             return self.browse()
-        vals = dict(vals, **{source_field: source.id, 'quantity': 1, 'price': (total or 0.0) / animals})
-        return self.sudo().create([dict(vals) for _i in range(missing)])
+        currency = self.env.company.currency_id
+        total = total or 0.0
+        per_animal = currency.round(total / animals)
+        vals = dict(vals, **{source_field: source.id, 'quantity': 1})
+        # the last animal takes the rounding difference, so the records add up to the total
+        return self.sudo().create([
+            dict(vals, price=per_animal if index < animals - 1
+                 else currency.round(total - per_animal * (animals - 1)))
+            for index in range(existing, animals)])
 
     @api.model_create_multi
     def create(self, vals_list):

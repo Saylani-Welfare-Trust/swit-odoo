@@ -97,6 +97,12 @@ class RFQPriceWizard(models.TransientModel):
     _name = 'rfq.price.wizard'
     _description = 'Bulk RFQ Price Entry Wizard'
 
+    # Prices are updated first, then the winning lines are confirmed
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('price_update', 'Price Updated'),
+        ('confirmed', 'Confirmed'),
+    ], string='Status', compute='_compute_state')
     rfq_ids = fields.Many2many('purchase.order', string='Selected RFQs')
     rfq_line_ids = fields.One2many('rfq.price.wizard.rfq.line', 'wizard_id', string='RFQ Lines')
     line_ids = fields.One2many('rfq.price.wizard.line', 'wizard_id', string='Price Lines')
@@ -105,6 +111,17 @@ class RFQPriceWizard(models.TransientModel):
     selected_rfq_id = fields.Many2one('purchase.order', string='Selected RFQ', compute='_compute_selected_rfq', store=False)
     selected_rfq_name = fields.Char(string='Selected RFQ Name', compute='_compute_selected_rfq', store=False)
     remarks = fields.Text(string='Remarks', help='These remarks will be posted to all RFQs (confirmed or updated)')
+
+    @api.depends('rfq_ids', 'rfq_ids.bulk_price_state')
+    def _compute_state(self):
+        for wizard in self:
+            states = set(wizard.rfq_ids.mapped('bulk_price_state'))
+            if 'price_update' in states:
+                wizard.state = 'price_update'
+            elif states and states == {'confirmed'}:
+                wizard.state = 'confirmed'
+            else:
+                wizard.state = 'draft'
 
     @api.depends('rfq_ids')
     def _compute_rfq_count(self):
@@ -234,7 +251,9 @@ class RFQPriceWizard(models.TransientModel):
                 message += f'\n\nRemarks:\n{self.remarks}'
             
             rfq.message_post(body=message)
-        
+
+        self.rfq_ids.write({'bulk_price_state': 'price_update'})
+
         # Show success message and close wizard
         message = _('Updated %d price(s) for %d RFQ(s).') % (updated_count, len(updated_rfqs))
         return {
@@ -245,6 +264,7 @@ class RFQPriceWizard(models.TransientModel):
                 'message': message,
                 'type': 'success',
                 'sticky': False,
+                'next': {'type': 'ir.actions.client', 'tag': 'reload'},
             }
         }
 
@@ -389,6 +409,7 @@ class RFQPriceWizard(models.TransientModel):
             confirmed_rfqs |= rfq
 
         self._confirm_rfqs(confirmed_rfqs)
+        confirmed_rfqs.write({'bulk_price_state': 'confirmed'})
         
         # Show success message
         message = _('Successfully confirmed %d RFQ(s): %s') % (len(confirmed_rfqs), ', '.join(confirmed_rfqs.mapped('name')))

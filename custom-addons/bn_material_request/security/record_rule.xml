@@ -41,6 +41,30 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+    <!-- Every internal user may write requests by their access rights: without a rule
+         of its own for write, an Audit user could write any request. -->
+    <record id="material_request_rule_audit_no_write" model="ir.rule">
+        <field name="name">Material Request: Audit writes none</field>
+        <field name="model_id" ref="bn_material_request.model_material_request"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.material_request_audit_group'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="material_request_line_rule_audit_no_write" model="ir.rule">
+        <field name="name">Material Request Line: Audit writes none</field>
+        <field name="model_id" ref="bn_material_request.model_material_request_line"/>
+        <field name="domain_force">[(0, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('bn_material_request.material_request_audit_group'))]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
     <record id="material_request_rule_admin" model="ir.rule">
         <field name="name">Material Request: Administrator sees all</field>
         <field name="model_id" ref="bn_material_request.model_material_request"/>

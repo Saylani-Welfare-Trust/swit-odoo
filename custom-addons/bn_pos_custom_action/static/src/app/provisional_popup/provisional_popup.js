@@ -40,6 +40,8 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
             total: parseFloat(this.props.amount) || 0,
             address: this.props.address || "",   
             transaction_ref: this.props.transaction_ref || "",
+            // true while Confirm runs: a second click is ignored (no duplicate records)
+            is_processing: false,
             transfer_to_dhs: false,
             selected_bank_id: false,
             case_no: "",  
@@ -213,7 +215,19 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
         return this.action_type === 'me';
     }
 
-    async confirm(){
+    async confirm() {
+        if (this.state.is_processing) {
+            return;
+        }
+        this.state.is_processing = true;
+        try {
+            await this._confirm();
+        } finally {
+            this.state.is_processing = false;
+        }
+    }
+
+    async _confirm(){
         const selectedOrder = this.pos.get_order();
         if (await this.confirmProgram(selectedOrder)) {
             return;
@@ -384,6 +398,12 @@ export class ProvisionalPopup extends AbstractAwaitablePopup {
 
         // Direct Deposit
         if (this.action_type === 'dd') {
+            if (!(this.state.transaction_ref || '').trim()) {
+                this.notification.add(_t("Transaction Reference is mandatory for Direct Deposit."), {
+                    type: 'warning',
+                });
+                return;
+            }
             const userId = this.pos.user ? this.pos.user.id : false;
             const payload ={
                 'donor_id': this.donor_id,
