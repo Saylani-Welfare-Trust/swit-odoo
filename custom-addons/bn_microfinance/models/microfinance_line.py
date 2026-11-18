@@ -153,17 +153,3 @@ class MicrofinanceLine(models.Model):
             self._update_overdue_state()
         
         return res
-
-    @api.depends('state', 'paid_amount')
-    def _sync_cheque_state(self):
-        for rec in self:
-            # Only sync if this line was created via cheque deposit
-            if not rec.is_cheque_deposit:
-                continue
-            
-            if rec.state == 'paid':
-                rec.state_cheque = 'deposited'
-            elif rec.state == 'partial':
-                rec.state_cheque = 'deposited'  # partially deposited, still counts as deposited
-            elif rec.state == 'unpaid':
-                rec.state_cheque = 'draft'      # reset if payment reversed

@@ -1429,7 +1429,7 @@ class MedicalEquipment(models.Model):
             last_list = applications
         medical_ids = [(a.get('id'), a.get('cnicNo'), a.get('odooId')) for a in last_list
                        if isinstance(a, dict) and a.get('department') == 'medical']
-        return None, (f"searches tried -> " + "; ".join(notes) + ". "
+        return None, ("searches tried -> " + "; ".join(notes) + ". "
                       f"Medical (portal id, CNIC, odooId) in last result: {medical_ids or 'none'}; "
                       f"this record odooId={self.id}, portal id={portal_id or '-'}")
 

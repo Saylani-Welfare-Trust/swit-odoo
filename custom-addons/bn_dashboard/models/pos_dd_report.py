@@ -255,19 +255,6 @@ class PosDdReport(models.Model):
             self._get_user_category_domain(),
         ])
 
-    @api.model
-    def get_available_categories(self):
-        """
-        Return the product categories the current user is allowed to see
-        in the report. Used by the search dropdown / custom widgets.
-        """
-        domain = []
-        allowed = self.env.user.pos_dd_report_category_ids
-        if allowed:
-            domain = [('id', 'child_of', allowed.ids)]
-        return self.env['product.category'].search_read(
-            domain, ['id', 'complete_name'], order='complete_name')
-
     # ------------------------------------------------------------------
     def action_open_source(self):
         """Open the underlying POS order or Direct Deposit form."""

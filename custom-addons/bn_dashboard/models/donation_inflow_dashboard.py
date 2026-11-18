@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from datetime import datetime, timedelta
+from odoo import models, api
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import calendar
 
