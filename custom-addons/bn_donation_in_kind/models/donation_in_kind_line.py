@@ -20,6 +20,7 @@ class DonationInKindLine(models.Model):
     location_id = fields.Many2one('stock.location', string='Location', required=True, domain="[('usage', '=', 'internal')]", default=lambda self: self.default_set_value('location_id'))
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
+    
     quantity = fields.Float('Quantity')
     avg_price = fields.Float('Average Price', required=True)
 
