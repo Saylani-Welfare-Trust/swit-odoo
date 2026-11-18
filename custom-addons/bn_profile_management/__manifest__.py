@@ -31,7 +31,6 @@
         # Last: needs the views and the Donor / Donee menus loaded above.
         'data/profile_registration.xml',
     ],
-    'post_init_hook': 'post_init_hook',
     'auto_install': False,
     'application': True,
 }

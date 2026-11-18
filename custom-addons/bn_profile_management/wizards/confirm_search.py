@@ -139,6 +139,8 @@ class ConfirmSearch(models.TransientModel):
     # ------------------------------------------------------------------
     def action_confirm(self):
         self.ensure_one()
+        if self._program() and not self._program().registration_program_active:
+            raise UserError(_('The programme "%s" is disabled.') % self._program().name)
         if self.registration_type == 'donee' and not self._program():
             raise UserError(_('Please select what the donee registers for (e.g. Welfare, Microfinance, Medical).'))
         # One contact per person: look at every contact, whatever its tags.

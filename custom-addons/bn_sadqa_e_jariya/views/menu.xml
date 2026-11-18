@@ -143,4 +143,9 @@
         parent="sadqa_jariya_config_menu"
         sequence="4"/>
 
+
+    <!-- These menus follow the programme tag (Profile Management > Tags): hidden while
+         the programme is disabled. Linked on every install / upgrade. -->
+    <function model="res.partner.category" name="_link_program_menus"
+              eval="['sadqa_e_jariya', ['bn_sadqa_e_jariya.sadqa_e_jariya_profile_menu']]"/>
 </odoo>

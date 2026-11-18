@@ -41,6 +41,10 @@
                     <group>
                         <group>
                             <field name="registration_program_code" placeholder="e.g. welfare"/>
+                            <field name="registration_program_active" widget="boolean_toggle"
+                                   invisible="not registration_program_code"/>
+                            <field name="program_menu_ids" widget="many2many_tags"
+                                   invisible="not program_menu_ids"/>
                             <field name="registration_role" invisible="not registration_program_code"
                                    required="registration_program_code"/>
                             <field name="registration_kind" invisible="not registration_program_code or registration_role != 'donee'"/>

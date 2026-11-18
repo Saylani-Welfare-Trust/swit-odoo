@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 import re
 
@@ -45,7 +45,8 @@ class RecordSearch(models.TransientModel):
     # module's Record Search menu passes its code (default_program_code).
     program_id = fields.Many2one(
         'res.partner.category', string='Register For',
-        domain="[('registration_program_code', '!=', False), ('registration_role', '=', registration_type)]")
+        domain="[('registration_program_code', '!=', False), ('registration_program_active', '=', True), "
+               "('registration_role', '=', registration_type)]")
     program_kind = fields.Selection(related='program_id.registration_kind')
     program_locked = fields.Boolean('Programme set by the menu')
 
@@ -61,6 +62,9 @@ class RecordSearch(models.TransientModel):
         # the module's code; older menus pass the donee registration type
         code = context.get('default_program_code') or res.get('donee_registration_type')
         program = self.env['res.partner.category']._record_search_program(code)
+        if program and not program.registration_program_active:
+            raise UserError(_('The programme "%s" is disabled: enable it on its tag '
+                              '(Profile Management > Configuration > Tags).') % program.name)
         if program:
             res['program_id'] = program.id
             res['registration_type'] = program.registration_role

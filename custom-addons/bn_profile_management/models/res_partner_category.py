@@ -112,6 +112,15 @@ class ResPartnerCategory(models.Model):
         'Record Search Code', copy=False,
         help="Makes this tag a programme offered by Record Search. Each module's Record Search "
              "menu passes this code (e.g. welfare, microfinance, medical). Leave empty for other tags.")
+    registration_program_active = fields.Boolean(
+        'Programme Enabled', default=True,
+        help="Off: the programme's menus in its module (Record Search, its contact list) are hidden "
+             "and Record Search no longer offers it. On again: they come back.")
+    program_menu_ids = fields.Many2many(
+        'ir.ui.menu', 'res_partner_category_program_menu_rel', 'category_id', 'menu_id',
+        string='Programme Menus', readonly=True, copy=False,
+        help="Menus of the module of this programme, linked on install / upgrade. Shown while the "
+             "programme is enabled, hidden when it is not.")
     registration_role = fields.Selection([('donee', 'Donee'), ('donor', 'Donor')], string='Registers as',
                                          default='donee')
     registration_kind = fields.Selection([
@@ -140,6 +149,85 @@ class ResPartnerCategory(models.Model):
         if not code:
             return self.browse()
         return self.sudo().search([('registration_program_code', '=', code)], limit=1).sudo(False)
+
+    @api.model
+    def _link_program_menus(self, code, menu_xmlids):
+        """Install / upgrade of a programme module: its menus follow the tag of
+        its Record Search code (shown while the programme is enabled)."""
+        tag = self._record_search_program(code).sudo()
+        if not tag:
+            return
+        menus = self.env['ir.ui.menu'].sudo()
+        for xmlid in menu_xmlids:
+            menus |= self.env.ref(xmlid, raise_if_not_found=False) or self.env['ir.ui.menu']
+        if menus - tag.program_menu_ids:
+            tag.program_menu_ids = [(4, menu.id) for menu in menus]
+        tag._sync_program_menus()
+
+    def _sync_program_menus(self):
+        for tag in self.sudo():
+            show = bool(tag.registration_program_code and tag.registration_program_active)
+            menus = tag.with_context(active_test=False).program_menu_ids
+            changed = menus.filtered(lambda m: m.active != show)
+            if changed:
+                changed.write({'active': show})
+
+    @api.model
+    def _setup_profile_menus(self):
+        """Run on every install / upgrade. Donor and Donee have the Profile
+        Management menus installed by this module: their tags are linked to
+        those menus and actions, so the tag configuration drives them (enable,
+        fields, pages) and enabling a tag never adds a second menu.
+
+        A tag not linked yet is enabled (its installed menu was showing) and
+        gets the configuration of those screens where it has none. A menu
+        created for the tag before this link existed is removed (its menu is
+        the installed one). A linked tag an administrator disabled stays
+        disabled, and hides its menu."""
+        Field = self.env['ir.model.fields']
+        Page = self.env['profile.management.page']
+
+        def field_ids(names):
+            return Field.search([('model', '=', 'res.partner'), ('name', 'in', names)]).ids
+
+        defaults = {
+            'profile_list_field_ids': [(6, 0, field_ids(LEGACY_LIST_FIELDS))],
+            'profile_form_field_ids': [(6, 0, field_ids(
+                [f for f in CURATED_PROFILE_FIELDS if f not in LEGACY_FORM_ABSENT]))],
+            'profile_search_field_ids': [(6, 0, field_ids(LEGACY_SEARCH_FIELDS))],
+        }
+        presets = [
+            ('donor', ['general_info', 'donation']),
+            ('donee', ['general_info', 'welfare', 'microfinance', 'medical']),
+        ]
+        for role, pages in presets:
+            tag = self.env.ref('bn_profile_management.%s_partner_category' % role, raise_if_not_found=False)
+            menu = self.env.ref('bn_profile_management.%s_profile_management_menu' % role, raise_if_not_found=False)
+            action = self.env.ref('bn_profile_management.%s_profile_management_action' % role, raise_if_not_found=False)
+            if not (tag and menu and action):
+                continue
+            # never linked: the installed menu was showing, so the tag is enabled to match it
+            was_unlinked = not tag.profile_menu_id
+            had_duplicate = bool(tag.profile_menu_id and tag.profile_menu_id != menu)
+            if had_duplicate:
+                duplicate_menu, duplicate_action = tag.profile_menu_id, tag.profile_action_id
+                tag.with_context(profile_view_sync=True).write(
+                    {'profile_menu_id': menu.id, 'profile_action_id': action.id})
+                duplicate_menu.sudo().unlink()
+                if duplicate_action and duplicate_action != action:
+                    duplicate_action.sudo().unlink()
+            elif tag.profile_menu_id != menu or tag.profile_action_id != action:
+                tag.with_context(profile_view_sync=True).write(
+                    {'profile_menu_id': menu.id, 'profile_action_id': action.id})
+            never_configured = not (tag.profile_form_field_ids or tag.profile_page_ids)
+            if not tag.is_profile_type and (never_configured or was_unlinked or had_duplicate):
+                vals = {'is_profile_type': True}
+                for fname, value in defaults.items():
+                    if not tag[fname]:
+                        vals[fname] = value
+                if not tag.profile_page_ids:
+                    vals['profile_page_ids'] = [(6, 0, Page.search([('technical_name', 'in', pages)]).ids)]
+                tag.write(vals)
 
     @api.model
     def _split_medical_tags(self):
@@ -339,6 +427,8 @@ class ResPartnerCategory(models.Model):
             self._profile_sync_lines_from_m2m()
         if 'registration_pattern' in vals:
             self._ensure_registration_sequence()
+        if 'registration_program_active' in vals or 'registration_program_code' in vals:
+            self._sync_program_menus()
         if 'is_profile_type' in vals or any(
             f in vals for f in ('profile_list_field_ids', 'profile_form_field_ids',
                                 'profile_search_field_ids', 'profile_page_ids')

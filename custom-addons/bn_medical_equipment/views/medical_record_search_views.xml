@@ -20,4 +20,9 @@
               parent="medical_equipment_menu"
               sequence="0"
         groups="bn_medical_equipment.medical_equipment_user_group"/>
+
+    <!-- These menus follow the programme tag (Profile Management > Tags): hidden while
+         the programme is disabled. Linked on every install / upgrade. -->
+    <function model="res.partner.category" name="_link_program_menus"
+              eval="['medical', ['bn_medical_equipment.record_search_medical_menu']]"/>
 </odoo>

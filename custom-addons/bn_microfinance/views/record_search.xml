@@ -43,4 +43,9 @@
         parent="microfinance_profile_management_menu"
         sequence="1"/>
 
+
+    <!-- These menus follow the programme tag (Profile Management > Tags): hidden while
+         the programme is disabled. Linked on every install / upgrade. -->
+    <function model="res.partner.category" name="_link_program_menus"
+              eval="['microfinance', ['bn_microfinance.microfinance_profile_management_menu']]"/>
 </odoo>

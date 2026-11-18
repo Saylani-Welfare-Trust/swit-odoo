@@ -2,6 +2,8 @@
 <odoo>
     <!-- Runs on every install / upgrade. Idempotent: configures the Donor /
          Donee ID patterns only if empty, records IDs issued earlier. -->
+    <!-- Donor / Donee tags linked to their installed menus (never a second menu) -->
+    <function model="res.partner.category" name="_setup_profile_menus"/>
     <function model="res.partner.category" name="_setup_registration_ids"/>
     <!-- Record Search programmes offered before they were configurable
          (Student, Welfare, Microfinance, Medical): set only if not configured -->
