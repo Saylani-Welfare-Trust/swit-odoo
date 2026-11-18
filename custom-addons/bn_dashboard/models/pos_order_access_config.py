@@ -29,14 +29,6 @@ class PosOrderAccessConfig(models.Model):
         column1='config_id', column2='account_id',
         string='Zones',
         domain=[('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)])
-    
-    # ⚡ NEW: Add Branch / Shop field
-    shop_ids = fields.Many2many(
-        'pos.config',
-        relation='pos_access_shop_rel',
-        column1='config_id', column2='shop_id',
-        string='Branches / Shops',
-        help="Select specific POS configurations (shops) this user can access.")
 
     _sql_constraints = [
         ('user_unique', 'unique(user_id)', 'This user already has a POS access configuration.'),
@@ -54,31 +46,13 @@ class PosOrderAccessConfig(models.Model):
             return {'domain': {'zone_ids': [('parent_id', 'in', self.city_ids.ids)]}}
         return {'domain': {'zone_ids': [('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)]}}
 
-    # ⚡ NEW: Filter Shops based on selected Zone / City / Province
-    @api.onchange('province_ids', 'city_ids', 'zone_ids')
-    def _onchange_location_for_shops(self):
-        domain = [('analytic_account_id', '!=', False)]
-        if self.zone_ids:
-            domain = [('analytic_account_id', 'child_of', self.zone_ids.ids)]
-        elif self.city_ids:
-            domain = [('analytic_account_id', 'child_of', self.city_ids.ids)]
-        elif self.province_ids:
-            domain = [('analytic_account_id', 'child_of', self.province_ids.ids)]
-        return {'domain': {'shop_ids': domain}}
-
     def _sync_user(self):
         user_grp = self.env.ref('bn_dashboard.group_pos_order_dashboard_user').sudo()
         # report_grp = self.env.ref('bn_dashboard.group_pos_dd_report_user').sudo()
 
         for rec in self:
             user = rec.user_id.sudo()
-            if rec.full_access:
-                ids = []
-            else:
-                # Combine analytic IDs from locations and the analytic accounts of selected shops
-                shop_analytic_ids = rec.shop_ids.mapped('analytic_account_id').ids
-                ids = list(set((rec.province_ids | rec.city_ids | rec.zone_ids).ids + shop_analytic_ids))
-                
+            ids = [] if rec.full_access else (rec.province_ids | rec.city_ids | rec.zone_ids).ids
             user.pos_analytic_ids = [(6, 0, ids)]
             user_grp.write({'users': [(4, user.id)]})
             # report_grp.write({'users': [(4, user.id)]})

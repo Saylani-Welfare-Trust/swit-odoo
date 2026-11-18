@@ -28,11 +28,9 @@ class MaterialRequest(models.Model):
         if not (blocker and blocker.enable_material_request):
             return []
         amounts = defaultdict(float)
-        purchase_order = self.env['purchase.order']
         for line in self.line_ids:
-            # the analytic account (segment) set on the product, as the budget
-            # check and the Purchase Order's Shariah check read it
-            analytic = purchase_order._get_product_segment(line.product_id)
+            analytic = line.analytic_account_id or self.env['account.analytic.account'].search(
+                [('product_ids', 'in', [line.product_id.id])], limit=1)
             if analytic:
                 amounts[analytic.id] += line.subtotal
         return self.env['shariah.law'].get_shortfalls(amounts)

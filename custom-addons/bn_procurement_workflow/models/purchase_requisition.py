@@ -101,18 +101,26 @@ class PurchaseRequisition(models.Model):
         approval."""
         self.ensure_one()
         shariah_law = self.env['shariah.law']
+        rfq = self.selected_rfq_id
         insufficient_accounts = self.env['account.analytic.account']
-        if not self.selected_rfq_id:
-            return True, 0.0, insufficient_accounts
+        lowest_balance = 0.0
+        if not rfq:
+            return True, lowest_balance, insufficient_accounts
         balances = []
-        # {segment id: subtotal of the RFQ's lines on it}, each line going to
-        # the analytic account set on its product
-        for analytic_id, required in self.selected_rfq_id._get_shariah_amounts().items():
-            balance = shariah_law.get_closing_balance(analytic_id)
+        for line in rfq.order_line:
+            if not line.product_id:
+                continue
+            analytic = self.env['account.analytic.account'].search(
+                [('product_ids', 'in', [line.product_id.id])], limit=1)
+            if not analytic:
+                continue
+            balance = shariah_law.get_closing_balance(analytic.id)
             balances.append(balance)
-            if required > balance:
-                insufficient_accounts |= insufficient_accounts.browse(analytic_id)
-        return not insufficient_accounts, min(balances, default=0.0), insufficient_accounts
+            if line.price_subtotal > balance:
+                insufficient_accounts |= analytic
+        if balances:
+            lowest_balance = min(balances)
+        return not insufficient_accounts, lowest_balance, insufficient_accounts
 
     @api.depends_context('uid')
     @api.depends('assigned_employee_id', 'assigned_user_id')

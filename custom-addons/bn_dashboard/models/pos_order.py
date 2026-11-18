@@ -144,12 +144,9 @@ class PosOrder(models.Model):
                 if 'user_id' in self._fields:
                     analytic_filters.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
 
-                if 'analytic_account_id' in self.env['product.template']._fields:
-                    analytic_filters.append(
-                        ('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
-                elif 'analytic_account_ids' in self.env['product.template']._fields:
-                    analytic_filters.append(
-                        ('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
+                # the product carries its analytic account (bn_analytic_account_customization)
+                analytic_filters.append(
+                    ('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
 
                 if analytic_filters:
                     if len(analytic_filters) == 1:
@@ -648,21 +645,7 @@ class PosOrder(models.Model):
         plan_ids_sql = ",".join(map(str, location_plans.ids)) if location_plans else "0"
 
         # 1. Join Product's Analytic Account
-        if 'analytic_account_id' in self.env['product.template']._fields:
-            pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
-        elif 'analytic_account_ids' in self.env['product.template']._fields:
-            pt_acc_join = """
-                LEFT JOIN LATERAL (
-                    SELECT acc.id, acc.name, acc.parent_id
-                    FROM account_analytic_account acc
-                    INNER JOIN product_template_account_analytic_account_rel rel
-                        ON rel.account_analytic_account_id = acc.id
-                    WHERE rel.product_template_id = product_template.id
-                    LIMIT 1
-                ) pt_acc ON true
-            """
-        else:
-            pt_acc_join = ""
+        pt_acc_join = "LEFT JOIN account_analytic_account pt_acc ON pt_acc.id = product_template.analytic_account_id"
 
         name_field = self.env['account.analytic.account']._fields['name']
         
@@ -1148,14 +1131,9 @@ class PosOrder(models.Model):
             or_leaves.append(('config_id.analytic_account_id', 'in', accounts.ids))
         if 'user_id' in self._fields:
             or_leaves.append(('user_id.employee_id.analytic_account_id', 'in', accounts.ids))
-        # Product analytic link (some setups tie city to the product template)
+        # the product carries its analytic account (bn_analytic_account_customization)
         if 'lines' in self._fields:
-            if 'analytic_account_id' in self.env['product.template']._fields:
-                or_leaves.append(
-                    ('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
-            elif 'analytic_account_ids' in self.env['product.template']._fields:
-                or_leaves.append(
-                    ('lines.product_id.product_tmpl_id.analytic_account_ids', 'in', accounts.ids))
+            or_leaves.append(('lines.product_id.product_tmpl_id.analytic_account_id', 'in', accounts.ids))
 
         if not or_leaves:
             return [('id', '=', 0)]

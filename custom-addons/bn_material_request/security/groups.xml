@@ -38,7 +38,7 @@
     <record id="material_request_admin_group" model="res.groups">
         <field name="name">Administrator</field>
         <field name="category_id" ref="module_material_request"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('material_request_manager_group'),])]"/>
+        <field name="implied_ids" eval="[(6, 0, [ref('material_request_manager_group'), ref('material_request_audit_group')])]"/>
         <field name="comment">Full control over every material request, including delete.</field>
     </record>
 

@@ -10,8 +10,6 @@
                 <field name="province_ids" widget="many2many_tags"/>
                 <field name="city_ids" widget="many2many_tags"/>
                 <field name="zone_ids" widget="many2many_tags"/>
-                <!-- ⚡ NEW: Add to tree view -->
-                <field name="shop_ids" widget="many2many_tags"/>
             </tree>
         </field>
     </record>
@@ -33,14 +31,10 @@
                                options="{'no_create': True}"/>
                         <field name="zone_ids" widget="many2many_tags"
                                options="{'no_create': True}"/>
-                        <!-- ⚡ NEW: Add to form view -->
-                        <field name="shop_ids" widget="many2many_tags"
-                               options="{'no_create': True}"/>
                     </group>
                     <div class="text-muted" invisible="full_access">
                         Selecting a province gives access to all its cities and zones.
                         Selecting a city gives access to all its zones and branches.
-                        Selecting specific shops restricts access to those exact registers.
                     </div>
                 </sheet>
             </form>
