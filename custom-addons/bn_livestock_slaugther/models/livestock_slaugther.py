@@ -1,5 +1,5 @@
 from odoo import models, fields, _, api
-from odoo.exceptions import ValidationError
+from odoo.exceptions import ValidationError, AccessError
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
@@ -106,6 +106,10 @@ class LivestockSlaughter(models.Model):
 
     def action_confirm(self):
         self.ensure_one()
+        
+        if not self.env.user.has_group('bn_livestock_slaugther.livestock_slaugther_user_group'):
+            raise AccessError(_("You do not have the access rights to confirm Livestock Slaughter records."))
+        
         if self.state != 'not_received':
             return
         # Retrieve the 'Slaughter Stock' location
