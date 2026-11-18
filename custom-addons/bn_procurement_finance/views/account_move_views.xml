@@ -19,6 +19,11 @@
             <xpath expr="//div[@name='button_box']" position="inside">
                 <field name="finance_confirmed" invisible="1"/>
                 <field name="forwarded_to_treasury" invisible="1"/>
+                
+                <!-- Show button only if grn_count > 0 -->
+                <button name="action_view_grn" type="object" class="oe_stat_button" icon="fa-truck" invisible="grn_count == 0">
+                    <field name="grn_count" widget="statinfo" string="Receipts"/>
+                </button>
             </xpath>
 
             <xpath expr="//page[@id='other_tab']" position="after">

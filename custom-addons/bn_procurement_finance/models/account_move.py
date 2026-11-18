@@ -22,6 +22,42 @@ class AccountMove(models.Model):
         'res.users', string='Assigned Treasury Officer', copy=False,
         help='Optional explicit assignment; if blank, any Treasury group member can act.')
 
+    grn_ids = fields.Many2many(
+        'stock.picking', 
+        string='Receipts (GRN)', 
+        compute='_compute_grn_ids',
+        help="Goods Receipt Notes associated with the Purchase Orders of this bill."
+    )
+    grn_count = fields.Integer(
+        string='Receipt Count', 
+        compute='_compute_grn_ids'
+    )
+
+    @api.depends('line_ids.purchase_line_id.order_id.picking_ids')
+    def _compute_grn_ids(self):
+        for move in self:
+            if move.move_type == 'in_invoice':
+                # Get all Purchase Orders linked to the bill's lines
+                orders = move.line_ids.purchase_line_id.order_id
+                # Fetch the related incoming receipts (GRNs) that are completed (done)
+                pickings = orders.mapped('picking_ids').filtered(
+                    lambda p: p.picking_type_code == 'incoming' and p.state == 'done'
+                )
+                move.grn_ids = pickings
+                move.grn_count = len(pickings)
+            else:
+                move.grn_ids = False
+                move.grn_count = 0
+
+    def action_view_grn(self):
+        """Action to open the list of linked Goods Receipt Notes."""
+        self.ensure_one()
+        # Use the standard incoming receipt action
+        action = self.env['ir.actions.act_window']._for_xml_id('stock.action_picking_tree_incoming')
+        action['domain'] = [('id', 'in', self.grn_ids.ids)]
+        action['context'] = {}
+        return action
+
     def action_finance_confirm_and_post(self):
         """Finance matches the draft bill against the physical vendor invoice, then posts it."""
         self.ensure_one()
