@@ -491,37 +491,45 @@ class Microfinance(models.Model):
     @api.depends_context('tz')
     @api.depends('microfinance_line_ids.due_date', 'microfinance_line_ids.state')
     def _compute_can_send_to_recovery(self):
-        today = fields.Date.context_today(self)
         for rec in self:
-            rec.can_send_to_recovery = any(
-                line.state != 'paid' and line.due_date
-                and (today - line.due_date).days > RECOVERY_OVERDUE_DAYS
-                for line in rec.microfinance_line_ids)
+            rec.can_send_to_recovery = rec._get_overdue_days() > RECOVERY_OVERDUE_DAYS
+
+    def _get_overdue_days(self):
+        """Days the oldest installment not paid yet is past its due date (0 when none is)."""
+        self.ensure_one()
+        today = fields.Date.context_today(self)
+        return max([0] + [
+            (today - line.due_date).days for line in self.microfinance_line_ids
+            if line.state != 'paid' and line.due_date])
 
     def action_send_to_recovery(self):
+        """Send the loans for recovery - from the form, or several at once from
+        the list. Either all of them are sent, or none: each must have an
+        installment unpaid more than RECOVERY_OVERDUE_DAYS past its due date."""
         self._mf_check(_('Send for Recovery'), ('done',), USER)
-        if self.in_recovery:
-            raise UserError(_('%s is already in recovery.') % self.name)
-        if not self.can_send_to_recovery:
-            raise UserError(_(
-                '%(loan)s cannot be sent for recovery: none of its installments is unpaid '
-                'more than %(days)s days after its due date.') % {
-                    'loan': self.name, 'days': RECOVERY_OVERDUE_DAYS})
-        lines = []
-        
-        for line in self.microfinance_line_ids:
-            lines.append((0, 0, {
+        already = self.filtered('in_recovery')
+        if already:
+            raise UserError(_('Already in recovery: %s') % ', '.join(already.mapped('name')))
+        not_overdue = self.filtered(lambda rec: not rec.can_send_to_recovery)
+        if not_overdue:
+            raise ValidationError(_(
+                'These loans cannot be sent for recovery: none of their installments is unpaid '
+                'more than %(days)s days after its due date.\n\n%(loans)s') % {
+                    'days': RECOVERY_OVERDUE_DAYS,
+                    'loans': '\n'.join(
+                        _('%(loan)s - %(overdue)s day(s) overdue') % {
+                            'loan': rec.name, 'overdue': rec._get_overdue_days()}
+                        for rec in not_overdue)})
+
+        for rec in self:
+            rec.microfinance_recovery_line_ids = [(0, 0, {
                 'installment_no': line.installment_no,
                 'due_date': line.due_date,
                 'amount': line.amount,
                 'paid_amount': line.paid_amount,
                 'state': line.state,
-            }))
-
-        self.microfinance_recovery_line_ids = lines
-
-        self.in_recovery = True
-
+            }) for line in rec.microfinance_line_ids]
+        self.write({'in_recovery': True})
         self._mf_set_state('in_recovery')
 
     def action_move_to_member(self):

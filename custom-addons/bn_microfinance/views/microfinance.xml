@@ -6,6 +6,12 @@
         <field name="model">microfinance</field>
         <field name="arch" type="xml">
             <tree>
+                <!-- for the selected loans: refused, listing them, for any without an
+                     installment unpaid more than 60 days past its due date -->
+                <header>
+                    <button string="Send for Recovery" name="action_send_to_recovery" type="object"
+                            groups="bn_microfinance.microfinance_user_group"/>
+                </header>
                 <field name="name" />
                 <field name="donee_id" />
                 <field name="asset_type" />
