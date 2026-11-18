@@ -33,6 +33,7 @@ export class TreasuryDashboard extends Component {
             city_id: savedFilters.city_id || '',
             zone_id: savedFilters.zone_id || '',
             segment_l1: savedFilters.segment_l1 || '',
+            segment_type: savedFilters.segment_type || '',
             segment_l2: savedFilters.segment_l2 || '',
             segment_l3: savedFilters.segment_l3 || '',
             segment_l4: savedFilters.segment_l4 || '',
@@ -128,6 +129,7 @@ export class TreasuryDashboard extends Component {
             city_id: this.state.city_id,
             zone_id: this.state.zone_id,
             segment_l1: this.state.segment_l1,
+            segment_type: this.state.segment_type, 
             segment_l2: this.state.segment_l2,
             segment_l3: this.state.segment_l3,
             segment_l4: this.state.segment_l4,
@@ -185,20 +187,6 @@ export class TreasuryDashboard extends Component {
         const pId = parseInt(this.state.segment_l3, 10);
         return this.state.segments_l4.filter(s => s.parent_id === pId);
     }
-    get naflia_wajiba_segments() {
-        return this.state.segments_l1.filter(s => {
-            const name = (s.name || '').toLowerCase();
-            return name.includes('naflia') || name.includes('wajiba');
-        });
-    }
-
-    get other_segments() {
-        return this.state.segments_l1.filter(s => {
-            const name = (s.name || '').toLowerCase();
-            return !name.includes('naflia') && !name.includes('wajiba');
-        });
-    }
-
 
     async fetchData() {
         try {
@@ -217,6 +205,7 @@ export class TreasuryDashboard extends Component {
                 city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
                 zone_id: this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
                 segment_id: effective_segment_id,
+                segment_type: this.state.segment_type || null, // <-- ADDED
                 amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
                 amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
             });
@@ -277,6 +266,14 @@ export class TreasuryDashboard extends Component {
         await this.fetchComparison();
     }
 
+    async onchange_segment_type() {
+        this.state.segment_l1 = '';
+        this.state.segment_l2 = '';
+        this.state.segment_l3 = '';
+        this.state.segment_l4 = '';
+        await this.applyFilter();
+    }
+
     clearFilter() {
         this.state.date_from = '';
         this.state.date_to = '';
@@ -288,10 +285,11 @@ export class TreasuryDashboard extends Component {
         this.state.segment_l2 = '';
         this.state.segment_l3 = '';
         this.state.segment_l4 = '';
+        this.state.segment_type = ''; // <-- ADDED
         this.state.amount_min = '';
         this.state.amount_max = '';
         
-        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY); // <-- CLEAR STORAGE
+        browser.sessionStorage.removeItem(FILTER_STORAGE_KEY);
         this.applyFilter();
     }
 
@@ -377,6 +375,10 @@ export class TreasuryDashboard extends Component {
         if (cid)    domain.push(['analytic_account_id', 'child_of', cid]);
         if (zid)    domain.push(['analytic_account_id', 'child_of', zid]);
         if (seg_id) domain.push(['analytic_account_id', 'child_of', seg_id]);
+        if (this.state.segment_type) {
+            domain.push(['analytic_account_id.segment_type', '=', this.state.segment_type]);
+        }
+
 
         // Date field per model — match what the backend actually uses
         const DATE_FIELD = {

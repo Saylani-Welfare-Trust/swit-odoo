@@ -77,21 +77,9 @@
                             <label class="form-label">Segment L1</label>
                             <select class="form-select" t-model="state.segment_l1" t-on-change="onchange_segment_l1">
                                 <option value="">All</option>
-                                
-                                <!-- Group 1: Naflia and Wajiba -->
-                                <optgroup label="Naflia &amp; Wajiba" t-if="naflia_wajiba_segments.length > 0">
-                                    <t t-foreach="naflia_wajiba_segments" t-as="s" t-key="s.id">
-                                        <option t-att-value="s.id" t-esc="s.name"/>
-                                    </t>
-                                </optgroup>
-                                
-                                <!-- Group 2: Other Segments -->
-                                <optgroup label="Other Segments" t-if="other_segments.length > 0">
-                                    <t t-foreach="other_segments" t-as="s" t-key="s.id">
-                                        <option t-att-value="s.id" t-esc="s.name"/>
-                                    </t>
-                                </optgroup>
-                                
+                                <t t-foreach="state.segments_l1" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
                             </select>
                         </div>
                         <div class="col-xl-2 col-lg-3 col-md-4">
