@@ -30,13 +30,13 @@ class PosOrderAccessConfig(models.Model):
         string='Zones',
         domain=[('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)])
     
-    # ⚡ NEW: Add Branch / Shop field
+    # Points of sale: the user also sees the branch (analytic account) of each
     shop_ids = fields.Many2many(
         'pos.config',
         relation='pos_access_shop_rel',
         column1='config_id', column2='shop_id',
         string='Branches / Shops',
-        help="Select specific POS configurations (shops) this user can access.")
+        help="Points of sale whose branch this user can also report on.")
 
     _sql_constraints = [
         ('user_unique', 'unique(user_id)', 'This user already has a POS access configuration.'),
@@ -54,7 +54,7 @@ class PosOrderAccessConfig(models.Model):
             return {'domain': {'zone_ids': [('parent_id', 'in', self.city_ids.ids)]}}
         return {'domain': {'zone_ids': [('plan_id.name', '=', 'Location'), ('parent_id.parent_id', '!=', False)]}}
 
-    # ⚡ NEW: Filter Shops based on selected Zone / City / Province
+    # Points of sale offered: those under the selected Zones / Cities / Provinces
     @api.onchange('province_ids', 'city_ids', 'zone_ids')
     def _onchange_location_for_shops(self):
         domain = [('analytic_account_id', '!=', False)]

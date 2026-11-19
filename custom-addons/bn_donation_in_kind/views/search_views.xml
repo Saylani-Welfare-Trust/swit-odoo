@@ -39,6 +39,7 @@
                     <filter name="groupby_location_id" string="Location" context="{'group_by': 'location_id'}"/>
                     <filter name="groupby_previous_location_id" string="Previous Location" context="{'group_by': 'previous_location_id'}"/>
                     <filter name="groupby_analytical_account_id" string="Analytic Account" context="{'group_by': 'analytical_account_id'}"/>
+                    <filter name="groupby_create_uid" string="Created By" context="{'group_by': 'create_uid'}"/>
                     <filter name="groupby_create_date_month" string="Created on" context="{'group_by': 'create_date:month'}"/>
                 </group>
             </search>

@@ -196,7 +196,7 @@
                                     <field name="amount" />
                                     <field name="paid_amount" />
                                     <field name="remaining_amount" />
-                                    <field name="state" force_save="1" widget="badge" decoration-danger="state == 'unpaid'" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
+                                    <field name="state" force_save="1" widget="badge" decoration-danger="state in ('unpaid', 'overdue')" decoration-warning="state == 'partial'" decoration-success="state == 'paid'" />
                                 </tree>
                             </field>
                         </page>

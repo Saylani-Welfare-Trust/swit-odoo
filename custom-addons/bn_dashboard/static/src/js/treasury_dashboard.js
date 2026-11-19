@@ -129,7 +129,7 @@ export class TreasuryDashboard extends Component {
             city_id: this.state.city_id,
             zone_id: this.state.zone_id,
             segment_l1: this.state.segment_l1,
-            segment_type: this.state.segment_type, 
+            segment_type: this.state.segment_type,
             segment_l2: this.state.segment_l2,
             segment_l3: this.state.segment_l3,
             segment_l4: this.state.segment_l4,
@@ -205,7 +205,7 @@ export class TreasuryDashboard extends Component {
                 city_id: this.state.city_id ? parseInt(this.state.city_id, 10) : null,
                 zone_id: this.state.zone_id ? parseInt(this.state.zone_id, 10) : null,
                 segment_id: effective_segment_id,
-                segment_type: this.state.segment_type || null, // <-- ADDED
+                segment_type: this.state.segment_type || null,
                 amount_min: this.state.amount_min ? parseFloat(this.state.amount_min) : null,
                 amount_max: this.state.amount_max ? parseFloat(this.state.amount_max) : null,
             });
@@ -285,7 +285,7 @@ export class TreasuryDashboard extends Component {
         this.state.segment_l2 = '';
         this.state.segment_l3 = '';
         this.state.segment_l4 = '';
-        this.state.segment_type = ''; // <-- ADDED
+        this.state.segment_type = '';
         this.state.amount_min = '';
         this.state.amount_max = '';
         
@@ -376,7 +376,8 @@ export class TreasuryDashboard extends Component {
         if (zid)    domain.push(['analytic_account_id', 'child_of', zid]);
         if (seg_id) domain.push(['analytic_account_id', 'child_of', seg_id]);
         if (this.state.segment_type) {
-            domain.push(['analytic_account_id.segment_type', '=', this.state.segment_type]);
+            // Nafila (N) / Wajiba (W): written in the analytic account name
+            domain.push(['analytic_account_id.name', 'ilike', `(${this.state.segment_type})`]);
         }
 
 
