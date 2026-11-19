@@ -17,3 +17,4 @@ from . import res_company
 from . import res_partner
 from . import upgrade_steps
 from . import program_types
+from . import sadqa_jariya_scope
