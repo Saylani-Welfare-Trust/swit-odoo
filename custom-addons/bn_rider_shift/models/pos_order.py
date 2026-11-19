@@ -23,10 +23,12 @@ class POSOrder(models.Model):
                 pos_order._link_rider_collection(collection.id)
                 # the key issuance of the box: same order, session, POS and cashier
                 (issuance or KeyIssuance.search([('rider_collection_id', '=', collection.id)], limit=1))._link_pos(pos_order)
-                # the receipt the donor got for this collection
+                # the receipt the donor got for this collection: the DN # of the
+                # order (its receipt number is given by the server when the order
+                # is saved, so the one the POS screen sent may still end in 0000)
                 collection.sudo().pos_receipt_number = (
-                    box_data.get('receipt_number')
-                    or ('dn_number' in pos_order._fields and pos_order.dn_number)
+                    (pos_order.pos_order_seq and pos_order._dn_number())
+                    or box_data.get('receipt_number')
                     or pos_order.pos_reference or pos_order.name)
             else:
                 # already closed (order synced twice) or changed meanwhile
