@@ -34,7 +34,7 @@ class AdvanceDonation(models.Model):
                                    string='Payment Type', default='cash')
 
     total_no_of_product = fields.Integer('Total No of Products')
-    donation_slip_ids = fields.Many2many('advance.donation.receipt', 'rel_2', string='Donation Slip')
+    donation_slip_ids = fields.Many2many('advance.donation.receipt', 'rel_2', string='Donation Slip', copy=False)
 
     contract_frequency = fields.Selection([('daily', 'Daily'),
                                     ('weekly', 'Weekly')],
@@ -100,11 +100,17 @@ class AdvanceDonation(models.Model):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('advance.donation') or _('New')
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records.filtered('donation_slip_ids')._check_slip_allowed()
+        return records
 
     # ------------------------------------------------------------------
     # Workflow checks
     # ------------------------------------------------------------------
+    def _check_slip_allowed(self):
+        """Donation slips (receipts) are used only on an approved donation."""
+        self._check_donation_state(('approved',), _('Add Donation Slip'))
+
     def _check_donation_state(self, allowed, action):
         for rec in self:
             if rec.state not in allowed:
@@ -547,10 +553,15 @@ class AdvanceDonation(models.Model):
         if 'donation_slip_ids' in vals:
             # Store old receipts for recomputation
             old_donation_receipts = self.donation_slip_ids
-            
+            old_slips = {rec.id: rec.donation_slip_ids for rec in self}
+
             # Perform the write operation
             res = super(AdvanceDonation, self).write(vals)
-            
+
+            # A slip can be added only once the donation is approved; removing
+            # slips (Cancel Payment) stays possible in every state.
+            self.filtered(lambda rec: rec.donation_slip_ids - old_slips[rec.id])._check_slip_allowed()
+
             # Trigger receipt recomputation for old and new receipts
             for donation_slip in old_donation_receipts:
                 donation_slip._compute_amount()
@@ -590,7 +601,7 @@ class AdvanceDonation(models.Model):
     
     def allocate_payment(self, amount, receipt_ids):
         self.ensure_one()
-        self._check_donation_state(('draft', 'approval_1', 'approval_2', 'approved'), _('Add Payment'))
+        self._check_donation_state(('approved',), _('Add Payment'))
         if amount <= 0:
             raise UserError(_('Payment amount must be positive.'))
         foreign = self.env['advance.donation.receipt'].browse(receipt_ids).filtered(
@@ -682,6 +693,7 @@ class AdvanceDonation(models.Model):
 
 
     def action_open_payment_wizard(self):
+        self._check_donation_state(('approved',), _('Add Payment'))
         return {
             'type': 'ir.actions.act_window',
             'name': 'Add Payment',

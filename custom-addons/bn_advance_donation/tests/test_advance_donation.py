@@ -15,9 +15,14 @@ class TestAdvanceDonation(TransactionCase):
         cls.category = cls.env['advance.donation.category'].create({'name': 'Cat T'})
         cls.donor = cls.env['res.partner'].create({'name': 'Donor T'})
 
+        Users = cls.env['res.users']
+        # products are limited to the user's categories when that rule is installed
+        categories = ({'allowed_product_category_ids': [(6, 0, cls.product.categ_id.ids)]}
+                      if 'allowed_product_category_ids' in Users._fields else {})
+
         def user(login, *groups):
-            return cls.env['res.users'].create({'name': login, 'login': login, 'groups_id': [
-                (6, 0, [ref('base.group_user').id] + [ref(g).id for g in groups])]})
+            return Users.create(dict(categories, name=login, login=login, groups_id=[
+                (6, 0, [ref('base.group_user').id] + [ref(g).id for g in groups])]))
         cls.user = user('ad_t_user', 'bn_advance_donation.group_adv_don_menu')
         cls.approver_1 = user('ad_t_ap1', 'bn_advance_donation.group_adv_don_approval_1')
         cls.approver_2 = user('ad_t_ap2', 'bn_advance_donation.group_adv_don_approval_2')
@@ -29,6 +34,48 @@ class TestAdvanceDonation(TransactionCase):
             'product_id': self.product.id, 'amount_percentage': 100, 'total_no_of_product': 2})
         donation.compute_donation()
         return donation
+
+    def _approve(self, donation):
+        donation.action_send_for_approval()
+        donation.with_user(self.approver_1).action_approved()
+        donation.with_user(self.approver_2).action_approved()
+        self.assertEqual(donation.state, 'approved')
+
+    def _paid_receipt(self, amount):
+        receipt = self.env['advance.donation.receipt'].create(
+            {'donor_id': self.donor.id, 'amount': amount, 'payment_type': 'cash'})
+        receipt.action_paid()
+        return receipt
+
+    def test_slip_and_disbursement_only_when_approved(self):
+        donation = self._donation()
+        receipt = self._paid_receipt(1000)
+        line = donation.advance_donation_lines[0]
+        for step in ('draft', 'approval_1', 'approval_2'):
+            if step == 'approval_1':
+                donation.action_send_for_approval()
+            elif step == 'approval_2':
+                donation.with_user(self.approver_1).action_approved()
+            self.assertEqual(donation.state, step)
+            with self.assertRaises(UserError):
+                donation.allocate_payment(500, receipt.ids)
+            with self.assertRaises(UserError):
+                donation.action_open_payment_wizard()
+            with self.assertRaises(UserError):
+                donation.write({'donation_slip_ids': [(4, receipt.id)]})
+            with self.assertRaises(UserError):
+                line.write({'is_disbursed': True})
+        self.assertFalse(donation.donation_slip_ids)
+        self.assertFalse(line.is_disbursed)
+
+        donation.with_user(self.approver_2).action_approved()
+        self.assertEqual(donation.state, 'approved')
+        donation.action_open_payment_wizard()
+        donation.allocate_payment(500, receipt.ids)
+        self.assertEqual(donation.donation_slip_ids, receipt)
+        line.write({'is_disbursed': True})
+        self.assertTrue(line.is_disbursed)
+        self.assertTrue(line.disbursement_date)
 
     def test_approval_workflow(self):
         donation = self._donation()
@@ -76,6 +123,9 @@ class TestAdvanceDonation(TransactionCase):
         other = self.env['res.partner'].create({'name': 'Other donor'})
         foreign = self.env['advance.donation.receipt'].create({'donor_id': other.id, 'amount': 100, 'payment_type': 'cash'})
         foreign.action_paid()
+        with self.assertRaises(UserError):
+            donation.allocate_payment(1500, (cash | cheque).ids)  # not approved yet
+        self._approve(donation)
         with self.assertRaises(UserError):
             donation.allocate_payment(100, foreign.ids)
         donation.allocate_payment(1500, (cash | cheque).ids)
