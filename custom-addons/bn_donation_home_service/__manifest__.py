@@ -1,17 +1,17 @@
 {
     'name': 'Donation Home Service',
-    'version': '17.0.1.3.0',
+    'version': '17.0.1.3.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Donation Home Service',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_pos_custom_action',
         'bn_import_donation',
     ],
     'data': [
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         
         'data/server_action.xml',
         'data/sequence.xml',

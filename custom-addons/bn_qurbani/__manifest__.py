@@ -1,6 +1,6 @@
 {
     'name': 'Qurbani',
-    'version': '17.0.1.7.0',
+    'version': '17.0.1.7.1',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -17,7 +17,7 @@
     'data': [
         'data/absorb.xml',
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         'security/stock_scope_rule.xml',
         
         'data/sequence.xml',
