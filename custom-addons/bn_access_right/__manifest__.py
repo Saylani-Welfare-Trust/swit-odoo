@@ -18,7 +18,7 @@
     ],
     'data': [
         'data/ir_module_category.xml',
-        'security/group.xml',
+        'security/groups.xml',
         'security/access_right.xml',
         'security/ir.model.access.csv',
         'views/chatter.xml',
