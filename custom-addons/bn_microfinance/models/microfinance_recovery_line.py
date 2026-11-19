@@ -1,9 +1,11 @@
 from odoo import models, fields, api, _
 
 
+# the same as the installments it copies (microfinance.line), overdue included
 state_selection = [
     ('unpaid', 'Unpaid'),
     ('partial', 'Partial'),
+    ('overdue', 'Overdue'),
     ('paid', 'Paid')
 ]
 
