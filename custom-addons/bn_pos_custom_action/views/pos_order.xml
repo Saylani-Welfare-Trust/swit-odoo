@@ -8,7 +8,6 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='fiscal_position_id']" position="after">
                 <field name="pos_cheque_order_id" invisible="1" readonly="1" />
-                <field name="source_document" readonly="1" />
                 <field name="receive_voucher" readonly="1" />
                 <field name="qurbani" readonly="1" />
                 <field name="pos_order_seq" readonly="1" />
@@ -31,7 +30,6 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='pos_reference']" position="after">
                 <field name="pos_order_seq" />
-                <field name="source_document" optional="show" />
             </xpath>
         </field>
     </record>
@@ -43,7 +41,6 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='pos_reference']" position="after">
                 <field name="pos_order_seq"/>
-                <field name="source_document"/>
             </xpath>
         </field>
     </record>
