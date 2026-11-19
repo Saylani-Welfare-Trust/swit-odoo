@@ -82,14 +82,5 @@
             ])
         ]"/>
     </record>
-
-    <!-- Sales -->
-    <record id="sale.sale_menu_root" model="ir.ui.menu">
-        <field name="groups_id" eval="[
-            (6, 0, [
-                ref('bn_access_right.custom_sale_menu_group'),
-            ])
-        ]"/>
-    </record>
     
 </odoo>

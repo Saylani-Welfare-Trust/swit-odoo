@@ -84,11 +84,4 @@
         <field name="implied_ids" eval="[(5, 0, 0)]"/>
     </record>
 
-    <!-- Sales -->
-    <record id="custom_sale_menu_group" model="res.groups">
-        <field name="name">Menu</field>
-        <field name="category_id" ref="base.module_category_sales_sales"/>
-        <field name="implied_ids" eval="[(5, 0, 0)]"/>
-    </record>
-
 </odoo>
