@@ -74,7 +74,7 @@
                                 <field name="amount_percentage" class="oe_inline" readonly="state != 'draft' or contract_type == 'open_contract'" force_save="1"/>
                                 <span class="o_form_label oe_inline">%</span>
                             </div>
-                            <field name="contract_start_date" string="Date" widget="daterange" options="{'end_date_field': 'contract_end_date'}" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
+                            <field name="contract_start_date" string="Date" widget="daterange" options="{'end_date_field': 'contract_end_date'}" invisible="contract_type != 'frequency'" readonly="state != 'draft'"/>
                             <field name="contract_end_date" invisible="1"/>
                             <field name="no_of_days" readonly="1" force_save="1" invisible="contract_type != 'frequency' or contract_frequency != 'daily'"/>
                             <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_type != 'frequency' or contract_frequency != 'weekly'"/>
