@@ -1,6 +1,6 @@
 {
     'name': 'Analytical Account Enhancement',
-    'version': '1.0',
+    'version': '1.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',

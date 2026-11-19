@@ -1,6 +1,6 @@
 {
     'name': 'Donation In Kind',
-    'version': '1.0',
+    'version': '1.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -9,6 +9,7 @@
         'bn_import_donation',
         'bn_pos_custom_action',
         'bn_sms_whatsapp',
+        'bn_stock_location',
     ],
     'data': [
         'security/group.xml',

@@ -1,6 +1,6 @@
 {
     'name': 'Master Setup',
-    'version': '1.0',
+    'version': '1.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -16,6 +16,8 @@
         'data/ir_module_category.xml',
         'security/group.xml',
         'security/ir.model.access.csv',
+        'data/mail_activity_type.xml',
+        'views/source_document.xml',
         
         
         'views/menu.xml',

@@ -7,7 +7,7 @@ import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { ErrorPopup } from "@point_of_sale/app/errors/popups/error_popup";
 
 export class DonationBoxPopup extends AbstractAwaitablePopup {
-    static template = "bn_donation_box.DonationBoxPopup";
+    static template = "bn_rider_shift.DonationBoxPopup";
 
     setup() {
         this.pos = usePos();
@@ -46,8 +46,9 @@ export class DonationBoxPopup extends AbstractAwaitablePopup {
         // 🔹 Add product line to current order
         const current_order = this.pos.get_order();
 
-        const cityCode = current_order.branch_code || 'UNK';
-        const counter = current_order.counter || '0';
+        // the shop's Branch, as on the receipt DN #
+        const cityCode = this.pos.config.branch_code || this.pos.get_cashier()?.branch_code || 'UNK';
+        const counter = current_order.counter || this.pos.config.counter || '0';
         const currentYear = new Date().getFullYear();
         const posOrderSeq = current_order.pos_order_seq || '0000';
 

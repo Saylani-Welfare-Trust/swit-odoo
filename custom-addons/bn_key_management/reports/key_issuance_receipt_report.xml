@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <template id="bn_donation_box.donation_box_receipt_template">
+    <template id="bn_key_management.donation_box_receipt_template">
         <t t-call="web.basic_layout">
             <t t-foreach="docs" t-as="o">
                 <!-- PAGE WRAPPER -->
@@ -51,7 +51,7 @@
 
                         <div class="page-content">
                             <!-- Header -->
-                             <img t-if="o.env.company.dn_image"
+                             <img alt="Logo" t-if="'dn_image' in o.env.company._fields and o.env.company.dn_image"
                                 t-att-src="image_data_uri(o.env.company.dn_image)"
                                 style="display:block; width:100%; height:auto; margin-bottom:6px;"/>
 
@@ -195,12 +195,12 @@
         <field name="name">Donation Box Receipt</field>
         <field name="model">key.issuance</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">bn_donation_box.donation_box_receipt_template</field>
-        <field name="report_file">bn_donation_box.donation_box_receipt_template</field>
+        <field name="report_name">bn_key_management.donation_box_receipt_template</field>
+        <field name="report_file">bn_key_management.donation_box_receipt_template</field>
         <field name="binding_model_id" eval="False"/>
         <field name="binding_type">report</field>
         <field name="print_report_name">'Donation Box Receipt - %s' % (object.lot_id.name)</field>
-        <field name="paperformat_id" ref="bn_donation_box.report_donation_box_paperformat"/>
+        <field name="paperformat_id" ref="bn_key_management.report_donation_box_paperformat"/>
     </record>
 
 </odoo>

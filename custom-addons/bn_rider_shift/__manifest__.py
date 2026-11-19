@@ -1,8 +1,8 @@
 {
     'name': 'Rider Shift',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.6.2',
     'author': 'Syed Owais Noor',
-    'website': 'https://bytesnode.com/',
+    'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Rider Shift',
     'depends': [
@@ -10,14 +10,12 @@
         'bn_donation_box',
     ],
     'data': [
-        'security/ir.model.access.csv',
-        'security/groups.xml',
-        'security/record_rule.xml',
-        
         'data/ir_module_category.xml',
         'data/sequence.xml',
+        'security/groups.xml',
+        'security/ir.model.access.csv',
+        'security/record_rule.xml',
         'data/server_action.xml',
-        
         'views/rider_shift.xml',
         'views/rider_collection.xml',
         'views/counterfeit_notes.xml',
@@ -26,12 +24,15 @@
         'wizards/rider_schedule.xml',
         'wizards/foreign_currency_wizard.xml',
         'wizards/counterfeit_notes_wizard.xml',
+        'views/pos_link_views.xml',
+        'views/search_views.xml',
     ],
     'auto_install': False,
     'application': False,
     'assets': {
         'point_of_sale._assets_pos': [
             'bn_rider_shift/static/src/app/**/*',
+            'bn_rider_shift/static/src/screen/*',
         ],
     },
 }

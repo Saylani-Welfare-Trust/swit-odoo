@@ -102,6 +102,43 @@
         </field>
     </record>
 
+    <record id="donation_box_complain_center_view_search" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.search</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" string="Registration" />
+                <field name="rider_id" />
+                <field name="lot_id" string="Box No." />
+                <field name="shop_name" />
+                <field name="installer_id" />
+                <field name="city_id" />
+                <field name="zone_id" />
+                <field name="complain_officer_id" />
+                <separator />
+                <filter string="Draft" name="filter_draft" domain="[('status', '=', 'draft')]" />
+                <filter string="Process" name="filter_process" domain="[('status', '=', 'process')]" />
+                <filter string="Resolved" name="filter_resolved" domain="[('status', '=', 'resolved')]" />
+                <filter string="Not Recovered" name="filter_not_recovered" domain="[('status', '=', 'not_recovered')]" />
+                <separator />
+                <filter string="Missing" name="filter_missing" domain="[('box_status', '=', 'missing')]" />
+                <filter string="Broken" name="filter_broken" domain="[('box_status', '=', 'broken')]" />
+                <filter string="Robbery" name="filter_robbery" domain="[('box_status', '=', 'robbery')]" />
+                <filter string="Return" name="filter_return" domain="[('box_status', '=', 'return')]" />
+                <filter string="Repaired" name="filter_repaired" domain="[('box_status', '=', 'repaired')]" />
+                <separator />
+                <filter string="Date" name="filter_date" date="date" />
+                <group string="Group By">
+                    <filter string="Status" name="group_status" domain="[]" context="{'group_by': 'status'}" />
+                    <filter string="Box Status" name="group_box_status" domain="[]" context="{'group_by': 'box_status'}" />
+                    <filter string="Rider" name="group_rider" domain="[]" context="{'group_by': 'rider_id'}" />
+                    <filter string="Complain Officer" name="group_complain_officer" domain="[]" context="{'group_by': 'complain_officer_id'}" />
+                    <filter string="City" name="group_city" domain="[]" context="{'group_by': 'city_id'}" />
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="donation_box_complain_center_action" model="ir.actions.act_window">
         <field name="name">Complain Center</field>
         <field name="res_model">donation.box.complain.center</field>

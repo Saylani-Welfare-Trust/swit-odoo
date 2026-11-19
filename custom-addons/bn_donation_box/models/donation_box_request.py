@@ -14,9 +14,10 @@ APPROVE_GROUP = 'bn_donation_box.donation_box_manager_group'
 class DonationBoxRequest(models.Model):
     _name = 'donation.box.request'
     _description = "Donation Box Request"
-    _inherit = ["mail.thread", "mail.activity.mixin", "bn.workflow.mixin"]
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin", "workflow.mixin"]
+    _step_field = 'status'
     _order = 'id desc'
-    _bn_guarded_fields = ('status',)
+    _guarded_fields = ('status',)
 
     rider_id = fields.Many2one('hr.employee', string="Installer", tracking=True)
 
@@ -49,7 +50,7 @@ class DonationBoxRequest(models.Model):
     request_date = fields.Datetime(string='Request Date', default=fields.Datetime.now, tracking=True)
 
     status = fields.Selection(selection=status_selection, string='Status', default='draft',
-                              tracking=True, copy=False)
+                              tracking=True, copy=False, index=True)
 
     key_tag_assign = fields.Boolean('Key Tag Assign', default=False, copy=False)
 
@@ -73,8 +74,8 @@ class DonationBoxRequest(models.Model):
         company = self.env.company
         user = self.env.user
         allowed = Warehouse
-        if 'allowed_warehouse_ids' in user._fields:
-            allowed = user.allowed_warehouse_ids.filtered(lambda w: w.company_id == company)
+        if 'scope_warehouse_ids' in user._fields:
+            allowed = user.scope_warehouse_ids.filtered(lambda w: w.company_id == company)
         warehouse = allowed[:1] or Warehouse.search([('company_id', '=', company.id)], limit=1)
         return warehouse.id
 
@@ -132,9 +133,9 @@ class DonationBoxRequest(models.Model):
     # Workflow
     # ------------------------------------------------------------------
     def action_reject(self):
-        self._bn_require_group(APPROVE_GROUP)
-        self._bn_check_state('status', ('draft',), _('Reject'))
-        self._bn_write({'status': 'rejected'})
+        self._require_group(APPROVE_GROUP)
+        self._check_workflow_state('status', ('draft',), _('Reject'))
+        self._workflow_write({'status': 'rejected'})
         return True
 
     def check_lines(self):
@@ -145,7 +146,7 @@ class DonationBoxRequest(models.Model):
             if len(lot_ids) != len(set(lot_ids)):
                 raise ValidationError(_('Duplicate Box No. found in request lines.'))
 
-    def _bn_validate_before_approve(self):
+    def _validate_before_approve(self):
         self.ensure_one()
         if not self.rider_id:
             raise ValidationError(_('Please select the Installer before approving the request.'))
@@ -164,31 +165,33 @@ class DonationBoxRequest(models.Model):
             raise ValidationError(_('Please add at least one box line before approving the request.'))
 
         self.check_lines()
-        lines._bn_validate_for_approval()
+        lines._validate_for_approval()
 
     def action_approve(self):
-        self._bn_require_group(APPROVE_GROUP)
-        self._bn_check_state('status', ('draft',), _('Approve'))
+        self._require_group(APPROVE_GROUP)
+        self._check_workflow_state('status', ('draft',), _('Approve'))
         for request in self:
-            request._bn_validate_before_approve()
-            request._bn_do_approve()
+            request._validate_before_approve()
+            request._do_request_approval()
         return True
 
-    def _bn_do_approve(self):
+    def _do_request_approval(self):
         self.ensure_one()
         lines = self.donation_box_request_line_ids
 
         # 1. Stock first: it is the step most likely to fail, and everything below
         #    runs in the same transaction so a failure rolls the whole approval back.
-        picking = self._bn_create_and_validate_picking()
+        picking = self._create_and_validate_picking()
 
         # 2. Key tags (only once per request).
         if not self.key_tag_assign:
-            lines._bn_prefix_key_tags()
+            lines._prefix_key_tags()
 
         # 3. One registration (+ key, through the hook of bn_key_management) per box.
         for line in lines:
             registration = self.env['donation.box.registration.installation'].create({
+                # the city of the requester: their own city users install the box
+                'city_id': self.env['donation.box.registration.installation']._user_city_ids_of(self.create_uid)[:1].id,
                 'donation_box_request_id': self.id,
                 'lot_id': line.lot_id.id,
                 'lock_no': line.lock_no,
@@ -196,35 +199,34 @@ class DonationBoxRequest(models.Model):
                 'installer_id': self.rider_id.id,
                 'old_box_no': line.old_box_no,
             })
-            registration._bn_key_create(line)
+            registration._key_create(line)
 
         # 4. The boxes are now consumed.
-        lines.mapped('lot_id').write({'lot_consume': True})
+        lines.mapped('lot_id').sudo().write({'lot_consume': True})
 
-        self._bn_write({
+        self._workflow_write({
             'status': 'approved',
             'picking_id': picking.id,
             'key_tag_assign': True,
         })
 
-    def generate_records(self):
-        """Kept for backward compatibility. The approval now does this itself."""
-        raise UserError(_('Records are generated automatically when the request is approved.'))
-
     # ------------------------------------------------------------------
     # Stock helpers
     # ------------------------------------------------------------------
-    def _bn_create_and_validate_picking(self):
+    # Stock helpers run as superuser: the Donation Box group checked by the
+    # calling action is the gate, so its users need no Inventory rights.
+    def _create_and_validate_picking(self):
         self.ensure_one()
-        Picking = self.env['stock.picking']
-        Move = self.env['stock.move']
-        MoveLine = self.env['stock.move.line']
+        Picking = self.env['stock.picking'].sudo()
+        Move = self.env['stock.move'].sudo()
+        MoveLine = self.env['stock.move.line'].sudo()
 
         picking = Picking.create({
             'picking_type_id': self.picking_type_id.id,
             'location_id': self.source_location_id.id,
             'location_dest_id': self.destination_location_id.id,
             'origin': self.name,
+            'source_record_ref': '%s,%s' % (self._name, self.id),
         })
 
         # One move (with its own move line and serial) per box.
@@ -251,17 +253,18 @@ class DonationBoxRequest(models.Model):
             })
 
         picking.action_confirm()
-        self._bn_validate_picking(picking)
+        self._validate_request_picking(picking)
         return picking
 
     @api.model
-    def _bn_validate_picking(self, picking):
+    def _validate_request_picking(self, picking):
         """Validate ``picking`` and make sure it really is done.
 
         ``button_validate`` may return a wizard action (backorder, immediate transfer ...)
         instead of validating; ignoring that silently leaves stock untouched while the
         Donation Box records claim otherwise.
         """
+        picking = picking.sudo()
         picking.with_context(skip_backorder=True, skip_immediate=True).button_validate()
         if picking.state != 'done':
             raise UserError(_(
@@ -271,13 +274,14 @@ class DonationBoxRequest(models.Model):
         return picking
 
     @api.model
-    def _bn_return_lot(self, picking, lot):
+    def _return_lot(self, picking, lot):
         """Create and validate a return of ONE box (``lot``) of the done ``picking``.
 
         The move line is created with the exact serial before the transfer is
         confirmed, so the return can never pick another box of the same product
         that happens to sit in the same location.
         """
+        picking = picking.sudo()
         source_line = picking.move_line_ids.filtered(lambda ml: ml.lot_id == lot)[:1]
         if not source_line:
             raise ValidationError(_('Box "%(lot)s" does not belong to transfer %(picking)s.') % {
@@ -286,13 +290,15 @@ class DonationBoxRequest(models.Model):
         product = source_line.product_id
 
         picking_type = picking.picking_type_id.return_picking_type_id or picking.picking_type_id
-        return_picking = self.env['stock.picking'].create({
+        return_picking = self.env['stock.picking'].sudo().create({
             'picking_type_id': picking_type.id,
             'location_id': picking.location_dest_id.id,
             'location_dest_id': picking.location_id.id,
             'origin': _('Return of %s') % picking.name,
+            'source_record_ref': picking.source_record_ref and '%s,%s' % (
+                picking.source_record_ref._name, picking.source_record_ref.id) or False,
         })
-        return_move = self.env['stock.move'].create({
+        return_move = self.env['stock.move'].sudo().create({
             'name': _('Return: %s') % product.display_name,
             'product_id': product.id,
             'product_uom_qty': 1.0,
@@ -303,7 +309,7 @@ class DonationBoxRequest(models.Model):
             'origin_returned_move_id': source_move.id,
             'company_id': return_picking.company_id.id,
         })
-        self.env['stock.move.line'].create({
+        self.env['stock.move.line'].sudo().create({
             'move_id': return_move.id,
             'picking_id': return_picking.id,
             'product_id': product.id,
@@ -314,15 +320,15 @@ class DonationBoxRequest(models.Model):
             'location_dest_id': picking.location_id.id,
         })
         return_picking.action_confirm()
-        self._bn_validate_picking(return_picking)
+        self._validate_request_picking(return_picking)
         return return_picking
 
     @api.model
-    def _bn_find_done_picking(self, request):
+    def _find_done_picking(self, request):
         """The done transfer created when ``request`` was approved."""
-        picking = request.picking_id
+        picking = request.sudo().picking_id
         if not picking or picking.state != 'done':
-            picking = self.env['stock.picking'].search([
+            picking = self.env['stock.picking'].sudo().search([
                 ('origin', '=', request.name),
                 ('state', '=', 'done'),
             ], order='id desc', limit=1)

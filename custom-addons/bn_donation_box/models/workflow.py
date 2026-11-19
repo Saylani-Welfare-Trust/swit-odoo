@@ -26,36 +26,36 @@ import contextvars
 from odoo import _, models
 from odoo.exceptions import AccessError, UserError
 
-_BN_TRANSITION = contextvars.ContextVar('bn_donation_box_transition', default=False)
+_TRANSITION = contextvars.ContextVar('bn_donation_box_transition', default=False)
 
 
 @contextlib.contextmanager
-def bn_transition():
+def workflow_transition():
     """Mark the enclosed block as a legitimate workflow transition."""
-    token = _BN_TRANSITION.set(True)
+    token = _TRANSITION.set(True)
     try:
         yield
     finally:
-        _BN_TRANSITION.reset(token)
+        _TRANSITION.reset(token)
 
 
 def in_transition():
-    return _BN_TRANSITION.get()
+    return _TRANSITION.get()
 
 
-class BnWorkflowMixin(models.AbstractModel):
-    _name = 'bn.workflow.mixin'
+class WorkflowMixin(models.AbstractModel):
+    _name = 'workflow.mixin'
     _description = 'BytesNode Workflow Guard Mixin'
 
     # Fields that may only be changed by the model's own workflow methods.
-    _bn_guarded_fields = ()
+    _guarded_fields = ()
 
     # ------------------------------------------------------------------
     # Direct write protection
     # ------------------------------------------------------------------
     def write(self, vals):
-        if self._bn_guarded_fields and not self.env.su and not _BN_TRANSITION.get():
-            touched = [name for name in self._bn_guarded_fields if name in vals]
+        if self._guarded_fields and not self.env.su and not _TRANSITION.get():
+            touched = [name for name in self._guarded_fields if name in vals]
             if touched:
                 labels = ', '.join(self._fields[name].string for name in touched)
                 raise UserError(_(
@@ -64,24 +64,24 @@ class BnWorkflowMixin(models.AbstractModel):
                 ) % labels)
         return super().write(vals)
 
-    def _bn_write(self, vals):
+    def _workflow_write(self, vals):
         """Write ``vals`` as a legitimate workflow transition."""
-        with bn_transition():
+        with workflow_transition():
             return self.write(vals)
 
     # ------------------------------------------------------------------
     # Permission helpers
     # ------------------------------------------------------------------
-    def _bn_user_has_any_group(self, *xmlids):
+    def _user_has_any_group(self, *xmlids):
         user = self.env.user
         if self.env.su or user.has_group('base.group_system'):
             return True
         return any(user.has_group(xmlid) for xmlid in xmlids)
 
-    def _bn_require_group(self, *xmlids):
+    def _require_group(self, *xmlids):
         """Raise ``AccessError`` unless the user is in one of ``xmlids``
         (or is an administrator)."""
-        if self._bn_user_has_any_group(*xmlids):
+        if self._user_has_any_group(*xmlids):
             return
         names = []
         for xmlid in xmlids:
@@ -95,11 +95,11 @@ class BnWorkflowMixin(models.AbstractModel):
     # ------------------------------------------------------------------
     # State helpers
     # ------------------------------------------------------------------
-    def _bn_selection_label(self, field, value):
+    def _selection_label(self, field, value):
         selection = dict(self._fields[field]._description_selection(self.env))
         return selection.get(value, value)
 
-    def _bn_check_state(self, field, allowed, action):
+    def _check_workflow_state(self, field, allowed, action):
         """Raise unless every record is in one of the ``allowed`` states."""
         for rec in self:
             current = rec[field]
@@ -110,11 +110,11 @@ class BnWorkflowMixin(models.AbstractModel):
                 ) % {
                     'action': action,
                     'record': rec.display_name,
-                    'current': self._bn_selection_label(field, current),
-                    'allowed': ', '.join(self._bn_selection_label(field, a) for a in allowed),
+                    'current': self._selection_label(field, current),
+                    'allowed': ', '.join(self._selection_label(field, a) for a in allowed),
                 })
 
-    def _bn_check_required(self, field_names):
+    def _check_required(self, field_names):
         """Raise a single readable error listing every empty required field."""
         for rec in self:
             missing = [rec._fields[name].string for name in field_names if not rec[name]]

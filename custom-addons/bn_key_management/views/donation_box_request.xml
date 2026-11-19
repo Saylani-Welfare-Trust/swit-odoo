@@ -2,7 +2,7 @@
 <odoo>
 
     <record id="bn_donation_box_donation_box_request_view_form_inherit_bn_key_management" model="ir.ui.view">
-        <field name="name">bn.donation.box.donation.box.request..view.form.inherit.bn.key.management</field>
+        <field name="name">donation.box.donation.box.request..view.form.inherit.bn.key.management</field>
         <field name="model">donation.box.request</field>
         <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_form"/>
         <field name="arch" type="xml">
