@@ -108,7 +108,9 @@ class POSOrder(models.Model):
             # the POS screens already gave this year (before the server did).
             DateRange.create({
                 'sequence_id': sequence.id, 'date_from': year_start, 'date_to': year_end,
-                'number_next': self._last_pos_order_seq(branch, counter, year_start, year_end) + 1,
+                # number_next_actual, not number_next: on create its default (1)
+                # would be written over number_next by its inverse
+                'number_next_actual': self._last_pos_order_seq(branch, counter, year_start, year_end) + 1,
             })
         return sequence
 

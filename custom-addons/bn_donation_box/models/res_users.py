@@ -16,7 +16,7 @@ class ResUsers(models.Model):
         compute_sudo=True,
         help="City of each analytic account in the user's scope (locations, warehouses and employee's Branch).")
 
-    @api.depends('scope_analytic_account_ids.city_id')
+    @api.depends('scope_analytic_account_ids')
     @api.depends_context('company')
     def _compute_city_access_ids(self):
         for user in self:
