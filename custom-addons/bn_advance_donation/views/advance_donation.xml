@@ -54,7 +54,7 @@
                             <field name="donor_id" required="1" readonly="state != 'draft'"/>
                             <field name="category_id" required="1" options="{'no_create': True, 'no_edit': True}" readonly="state != 'draft'"/>
                             <field name="contract_type" required="1" readonly="state != 'draft'"/>
-                            <field name="contract_frequency" required="1" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
+                            <field name="contract_frequency" required="contract_type == 'frequency'" invisible="contract_type != 'frequency'" readonly="state != 'draft'"/>
                             <field name="total_product_amount" readonly="not contract_type == 'open_contract'" force_save="1"/>
                             <field name="remaining_amount"/>
                             <field name="donation_slip_ids" domain="[('state', '=', 'paid'), ('donor_id', '=', donor_id), ('remaining_amount', '>', 0)]" invisible="is_fully_paid == True" widget="many2many_tags" options="{'no_create': True, 'no_edit': True}"  readonly="state != 'approved'" force_save="1"/>
@@ -76,8 +76,8 @@
                             </div>
                             <field name="contract_start_date" string="Date" widget="daterange" options="{'end_date_field': 'contract_end_date'}" invisible="contract_type == 'product'" readonly="state != 'draft'"/>
                             <field name="contract_end_date" invisible="1"/>
-                            <field name="no_of_days" readonly="1" force_save="1" invisible="contract_frequency == 'weekly' or contract_type == 'product' or contract_type == 'open_contract'"/>
-                            <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_frequency == 'daily' or contract_type == 'product'"/>
+                            <field name="no_of_days" readonly="1" force_save="1" invisible="contract_type != 'frequency' or contract_frequency != 'daily'"/>
+                            <field name="no_of_weeks" readonly="1" force_save="1" invisible="contract_type != 'frequency' or contract_frequency != 'weekly'"/>
                             <field name="total_no_of_product" readonly="contract_type in ['frequency','open_contract'] or state != 'draft'" force_save="1" invisible="contract_type == 'open_contract'"/>                            
                             <field name="total_balance" readonly="1" force_save="1"/>
                             <field name="service_charges" widget="boolean_toggle" readonly="state != 'draft'"/>

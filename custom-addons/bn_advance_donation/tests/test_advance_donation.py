@@ -77,6 +77,37 @@ class TestAdvanceDonation(TransactionCase):
         self.assertTrue(line.is_disbursed)
         self.assertTrue(line.disbursement_date)
 
+    def test_open_contract_has_no_frequency_or_dates(self):
+        empty = {'contract_frequency': False, 'contract_start_date': False,
+                 'contract_end_date': False, 'no_of_days': 0, 'no_of_weeks': 0}
+        values = lambda d: {f: d[f] for f in empty}
+        dated = {'contract_frequency': 'daily', 'contract_start_date': '2026-01-01',
+                 'contract_end_date': '2026-01-10'}
+
+        # switching to Open Contract in the form empties them
+        new = self.env['advance.donation'].new(dict(dated, contract_type='frequency'))
+        new.contract_type = 'open_contract'
+        new._onchange_contract_type()
+        self.assertEqual(values(new), empty)
+        new.contract_type = 'frequency'
+        new._onchange_contract_type()
+        self.assertEqual(new.contract_frequency, 'daily')
+
+        # and they are never stored, whatever is sent
+        donation = self.env['advance.donation'].with_user(self.user).create(dict(
+            dated, donor_id=self.donor.id, category_id=self.category.id, product_id=self.product.id,
+            contract_type='open_contract', total_product_amount=900))
+        self.assertEqual(values(donation), empty)
+        donation.write({'contract_type': 'frequency', **dated})
+        self.assertEqual(donation.contract_frequency, 'daily')
+        donation.write({'contract_type': 'open_contract'})
+        self.assertEqual(values(donation), empty)
+
+        # one line for the whole amount
+        donation.compute_donation()
+        self.assertEqual(len(donation.advance_donation_lines), 1)
+        self.assertEqual(donation.advance_donation_lines.amount, 900)
+
     def test_approval_workflow(self):
         donation = self._donation()
         self.assertEqual(len(donation.advance_donation_lines), 2)
