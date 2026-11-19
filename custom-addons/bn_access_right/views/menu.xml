@@ -12,7 +12,13 @@
     <!-- <record id="spreadsheet_dashboard.spreadsheet_dashboard_menu_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('dashboard_menu_group')])]"/>
     </record> -->
-    
+    <record id="sale.sale_menu_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[
+            (6, 0, [
+                ref('bn_access_right.custom_sale_menu_group'),
+            ])
+        ]"/>
+    </record>    
     <record id="hr.menu_hr_root" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('employees_menu_group')])]"/>
     </record>
