@@ -63,6 +63,37 @@ class TestDonorRecordSearch(TransactionCase):
         self.assertEqual(action.get('res_id'), donee.id)
         self.assertLessEqual(self.donor_tag | self.account_tag | self.donee_tag, donee.category_id)
 
+    def test_donor_field_lists_donor_accounts_only(self):
+        Partner = self.env['res.partner']
+        donor_only = Partner.create({'name': 'RS Donor only', 'category_id': [(6, 0, self.donor_tag.ids)]})
+        account_only = Partner.create({'name': 'RS Account only', 'category_id': [(6, 0, self.account_tag.ids)]})
+        both = Partner.create({'name': 'RS Donor Account',
+                               'category_id': [(6, 0, (self.donor_tag | self.account_tag).ids)]})
+        Donation = self.env['advance.donation']
+        domain = Donation._fields['donor_id'].get_domain_list(Donation)
+        found = Partner.search(domain + [('id', 'in', (donor_only | account_only | both).ids)])
+        self.assertEqual(found, both)
+
+    def test_existing_donors_tagged_once(self):
+        Partner = self.env['res.partner']
+        with_donation = Partner.create({'name': 'RS Old Donor', 'category_id': [(6, 0, self.donor_tag.ids)]})
+        with_receipt = Partner.create({'name': 'RS Old Receipt Donor'})
+        unused = Partner.create({'name': 'RS Unused Donor', 'category_id': [(6, 0, self.donor_tag.ids)]})
+        self.env['advance.donation'].create({'donor_id': with_donation.id})
+        self.env['advance.donation.receipt'].create({'donor_id': with_receipt.id, 'amount': 10})
+
+        params = self.env['ir.config_parameter'].sudo()
+        params.set_param('bn_advance_donation.donor_account_tagged', False)
+        self.env['res.partner.category']._setup_donor_account_program()
+        for partner in (with_donation, with_receipt):
+            self.assertLessEqual(self.donor_tag | self.account_tag, partner.category_id, partner.name)
+        self.assertNotIn(self.account_tag, unused.category_id)
+
+        # done once: a later upgrade does not give the tag back
+        with_donation.category_id = [(3, self.account_tag.id)]
+        self.env['res.partner.category']._setup_donor_account_program()
+        self.assertNotIn(self.account_tag, with_donation.category_id)
+
     def test_no_match_opens_a_new_donor(self):
         action = self._search(search_type='cnic_no', cnic_no='42101-9999999-9')
         self.assertFalse(action.get('res_id'))

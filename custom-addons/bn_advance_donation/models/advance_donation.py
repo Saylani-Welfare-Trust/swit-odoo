@@ -2,6 +2,8 @@ from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError
 from datetime import date, timedelta
 
+from .res_partner_category import donor_account_domain
+
 STATE_LABELS = {
     'draft': 'Draft', 'approval_1': 'Approval 1', 'approval_2': 'Approval 2',
     'approved': 'Approved', 'rejected': 'Rejected',
@@ -28,10 +30,11 @@ class AdvanceDonation(models.Model):
     # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
+    # only donors registered for Advance Donation (Record Search > Donor Account)
     donor_id = fields.Many2one(
         'res.partner', 
         string='Donor',
-        domain=[('category_id.name', '=', 'Donor')]
+        domain=donor_account_domain,
     )
     category_id = fields.Many2one('advance.donation.category', string='Category')
     contract_type = fields.Selection([('product', 'Quantity Based'),
