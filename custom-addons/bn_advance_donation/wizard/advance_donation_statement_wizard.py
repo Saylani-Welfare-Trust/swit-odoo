@@ -1,116 +1,222 @@
 import io
 import json
+import re
 import xlsxwriter
 from odoo import models, api
-from datetime import datetime
+from odoo.osv import expression
+from datetime import date, datetime
 
 
 class AdvanceDonationStatementWizard(models.AbstractModel):
     _name = 'advance.donation.statement.wizard'
     _description = 'Advance Donation Statement'
 
+    # Contact fields a donor / donee is found by (the ones a contact does not
+    # have are skipped)
+    _PARTNER_SEARCH_FIELDS = (
+        'name', 'mobile', 'phone', 'cnic_no', 'ref',
+        'primary_registration_id', 'secondary_registration_id',
+        'registration_ids.code',
+    )
+
+    # ------------------------------------------------------------------
+    #  Donor lookup (statement filter)
+    # ------------------------------------------------------------------
+    @api.model
+    def search_donors(self, term='', limit=20):
+        """Donors matching ``term`` by name, mobile, CNIC, registration ID..."""
+        Partner = self.env['res.partner']
+        domain = Partner._tag_domain('donor')
+        term = (term or '').strip()
+        if term:
+            domain = expression.AND([domain, self._partner_search_domain(Partner, term)])
+        return [
+            {'id': p.id, 'name': p.name or '', 'details': self._partner_details(p)}
+            for p in Partner.search(domain, limit=limit, order='name')
+        ]
+
+    def _partner_search_domain(self, Partner, term):
+        fields_ = [f for f in self._PARTNER_SEARCH_FIELDS if f.split('.')[0] in Partner._fields]
+        domain = expression.OR([[(f, 'ilike', term)] for f in fields_])
+        digits = re.sub(r'[\s-]', '', term)
+        if 'cnic_no' in Partner._fields and len(digits) == 13 and digits.isdigit():
+            # a CNIC typed without its dashes
+            cnic = '%s-%s-%s' % (digits[:5], digits[5:12], digits[12:])
+            domain = expression.OR([domain, [('cnic_no', '=', cnic)]])
+        return domain
+
+    def _partner_details(self, partner):
+        return ' · '.join(
+            partner[f] for f in ('primary_registration_id', 'mobile', 'cnic_no')
+            if f in partner._fields and partner[f])
+
+    def _partner_search_text(self, partners):
+        """Name and numbers of the donees of a line, for the statement search."""
+        parts = []
+        for p in partners or []:
+            parts.append(p.name or '')
+            parts += [p[f] for f in ('mobile', 'phone', 'cnic_no', 'ref',
+                                     'primary_registration_id', 'secondary_registration_id')
+                      if f in p._fields and p[f]]
+            if 'registration_ids' in p._fields:
+                parts += p.registration_ids.mapped('code')
+        return ' '.join(parts)
+
+    # ------------------------------------------------------------------
+    #  Statement
+    # ------------------------------------------------------------------
     @api.model
     def get_statement_data(self, date_from=None, date_to=None, donor_id=False):
-        Receipt    = self.env['advance.donation.receipt']
-        DonLine    = self.env['advance.donation.lines']
+        """Movements of ONE donor. Without a donor the statement is empty.
 
-        df = self._to_date(date_from) if date_from else None
-        dt = self._to_date(date_to)   if date_to   else None
+        The movements before ``date_from`` make the opening balance, so the
+        running balance of the period continues the donor's whole history.
+        Without dates every movement is listed (opening balance 0)."""
+        currency = self.env.company.currency_id
+        result = {
+            'donor':           False,
+            'lines':           [],
+            'opening_balance': 0.0,
+            'total_in':        0.0,
+            'total_out':       0.0,
+            'balance':         0.0,
+            'currency':        currency.name,
+        }
+        donor = self.env['res.partner'].browse(int(donor_id)).exists() if donor_id else None
+        if not donor:
+            return result
 
-        # ---------------- IN side : receipts -----------------------------
-        rec_domain = [('state', '=', 'paid')]
-        if df:
-            rec_domain.append(('date', '>=', df))
-        if dt:
-            rec_domain.append(('date', '<=', dt))
-        if donor_id:
-            rec_domain.append(('donor_id', '=', donor_id))
+        df = self._to_date(date_from)
+        dt = self._to_date(date_to)
+        df_s = df.isoformat() if df else None
+        dt_s = dt.isoformat() if dt else None
 
-        receipts = Receipt.search(rec_domain)
+        movements = self._get_movements(donor)
+        movements.sort(key=lambda m: (m['date'] or '0000-00-00',
+                                      0 if m['direction'] == 'in' else 1,
+                                      m['reference'] or ''))
 
-        # ---------------- OUT side : program disbursements --------------
-        # Records of the program modules (welfare, microfinance ...) that
-        # used an advance donation line.
-        program_lines, linked_line_ids = self._get_program_disbursements(df, dt, donor_id)
+        opening = 0.0
+        lines = []
+        for m in movements:
+            if df_s and (m['date'] or '') < df_s:
+                opening += m['amount_in'] - m['amount_out']
+            elif not (dt_s and m['date'] and m['date'] > dt_s):
+                lines.append(m)
 
-        # ---------------- OUT side : disbursed donation lines -----------
-        # This is the important addition. Even if no welfare / microfinance
-        # record links back, the donation line itself carries the flag.
-        disb_domain = [('is_disbursed', '=', True)]
-        if donor_id:
-            disb_domain.append(('advance_donation_id.donor_id', '=', donor_id))
-        if df:
-            disb_domain.append(('disbursement_date', '>=', df))
-        if dt:
-            disb_domain.append(('disbursement_date', '<=', dt))
+        opening = currency.round(opening)
+        running = opening
+        for line in lines:
+            running = currency.round(running + line['amount_in'] - line['amount_out'])
+            line['balance'] = running
 
-        disbursed_lines = DonLine.search(disb_domain)
+        total_in = currency.round(sum(l['amount_in'] for l in lines))
+        total_out = currency.round(sum(l['amount_out'] for l in lines))
+        result.update({
+            'donor':           {'id': donor.id, 'name': donor.name or '',
+                                'details': self._partner_details(donor)},
+            'lines':           lines,
+            'opening_balance': opening,
+            'total_in':        total_in,
+            'total_out':       total_out,
+            'balance':         currency.round(opening + total_in - total_out),
+        })
+        return result
 
-        # ---------------- assemble movements ----------------------------
+    def _get_movements(self, donor):
+        """Every movement of the donor, undated by the statement period."""
         lines = []
 
-        for r in receipts:
-            lines.append({
-                'date':         r.date.strftime('%Y-%m-%d') if r.date else '',
-                'reference':    r.name,
-                'partner':      r.donor_id.name or '',
-                'type':         'Receipt',
-                'direction':    'in',
-                'purpose':      '',
-                'beneficiary':  '',
-                'description':  dict(r._fields['payment_type'].selection)
-                                .get(r.payment_type, ''),
-                'amount_in':    float(r.amount or 0.0),
-                'amount_out':   0.0,
-            })
+        # ---------------- IN side : paid receipts ------------------------
+        Receipt = self.env['advance.donation.receipt']
+        payment_types = dict(Receipt._fields['payment_type'].selection)
+        for r in Receipt.search([('state', '=', 'paid'), ('donor_id', '=', donor.id)]):
+            lines.append(self._movement(
+                r.date, r.name, 'Receipt', 'in',
+                amount_in=float(r.amount or 0.0),
+                partner=r.donor_id.name or '',
+                description=payment_types.get(r.payment_type, ''),
+            ))
 
+        # ---------------- OUT side : disbursements -----------------------
+        # What was actually given out of the donation lines (welfare and
+        # recurring lines register one record per payment).
+        records = self.env['advance.donation.disbursement.line'].search(
+            [('advance_donation_id.donor_id', '=', donor.id)])
+        covered_line_ids = set(records.mapped('advance_donation_line_id').ids)
+        # the donee / source record is in a program module (welfare,
+        # microfinance) the statement user may have no access to
+        for rec in records.sudo():
+            amount = float(rec.disbursed_amount or rec.advance_amount or 0.0)
+            if amount > 0:
+                lines.append(self._disbursement_record_line(rec, amount))
+
+        # program records using a donation line without such a record
+        program_lines, linked_line_ids = self._get_program_disbursements(None, None, donor.id)
         lines += program_lines
+        covered_line_ids |= set(linked_line_ids)
 
-        # ---- NEW: disbursed donation lines without a welfare/micro link ----
+        # donation lines marked disbursed by hand
+        disbursed_lines = self.env['advance.donation.lines'].search([
+            ('is_disbursed', '=', True),
+            ('advance_donation_id.donor_id', '=', donor.id),
+            ('id', 'not in', list(covered_line_ids)),
+        ])
         for line in disbursed_lines:
-            if line.id in linked_line_ids:
-                continue  # already accounted for above
             donation = line.advance_donation_id
-            amount   = float(line.paid_amount or line.amount or 0.0)
+            amount = float(line.paid_amount or line.amount or 0.0)
             if amount <= 0:
                 continue
-            lines.append({
-                'date':         line.disbursement_date.strftime('%Y-%m-%d')
-                                 if line.disbursement_date else '',
-                'reference':    donation.name or '',
-                'partner':      donation.donor_id.name or '',
-                'type':         'Disbursement',
-                'direction':    'out',
-                'purpose':      'Advance Donation Disbursement',
-                'beneficiary':  donation.donor_id.name or '',
-                'description':  (line.product_id.display_name
-                                 if line.product_id else
-                                 (line.description or '')),
-                'amount_in':    0.0,
-                'amount_out':   amount,
-            })
-
-        # ---------------- sort + running balance ------------------------
-        lines.sort(key=lambda x: (x['date'] or '0000-00-00',
-                                  0 if x['direction'] == 'in' else 1))
-
-        running = 0.0
-        for l in lines:
-            running += l['amount_in'] - l['amount_out']
-            l['balance'] = running
-
-        total_in  = sum(l['amount_in']  for l in lines)
-        total_out = sum(l['amount_out'] for l in lines)
-
-        return {
-            'lines':     lines,
-            'total_in':  total_in,
-            'total_out': total_out,
-            'balance':   total_in - total_out,
-            'currency':  self.env.company.currency_id.name,
-        }
+            lines.append(self._movement(
+                line.disbursement_date, donation.name or '', 'Disbursement', 'out',
+                amount_out=amount,
+                partner=donation.donor_id.name or '',
+                purpose='Advance Donation Disbursement',
+                beneficiary=donation.donor_id.name or '',
+                description=(line.product_id.display_name if line.product_id
+                             else (line.description or '')),
+            ))
+        return lines
 
     # ---------- helpers --------------------------------------------------
+    def _movement(self, rec_date, reference, type_, direction, amount_in=0.0, amount_out=0.0,
+                  partner='', purpose='', beneficiary='', description='', donees=None):
+        return {
+            'date':         rec_date.strftime('%Y-%m-%d') if rec_date else '',
+            'reference':    reference or '',
+            'partner':      partner,
+            'type':         type_,
+            'direction':    direction,
+            'purpose':      purpose,
+            'beneficiary':  beneficiary,
+            'description':  description,
+            'amount_in':    amount_in,
+            'amount_out':   amount_out,
+            'search_text':  self._partner_search_text(donees),
+        }
+
+    def _disbursement_record_line(self, rec, amount):
+        donation = rec.advance_donation_id or rec.advance_donation_line_id.advance_donation_id
+        donees = self._disbursement_donees(rec)
+        product = rec.product_id or rec.advance_donation_line_id.product_id
+        return self._movement(
+            rec.date, rec.disbursed_record or donation.name, 'Disbursement', 'out',
+            amount_out=amount,
+            partner=donation.donor_id.name or '',
+            purpose=self._disbursement_purpose(rec),
+            beneficiary=', '.join(n for n in donees.mapped('name') if n),
+            description=product.display_name or '',
+            donees=donees,
+        )
+
+    def _disbursement_donees(self, rec):
+        """Donees of a disbursement record, extended by the program modules."""
+        return rec._get_donees()
+
+    def _disbursement_purpose(self, rec):
+        labels = [label for label, _name in rec._get_source_links() if label]
+        return labels[0] if labels else 'Advance Donation Disbursement'
+
     def _get_program_disbursements(self, df, dt, donor_id):
         """Hook for the program modules: (statement lines, ids of the
         advance donation lines they cover). The covered donation lines are
@@ -132,21 +238,18 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
             return False
         return True
 
-    def _disbursement_line(self, rec, purpose, amount, beneficiary, description):
+    def _disbursement_line(self, rec, purpose, amount, beneficiary, description,
+                           donees=None, rec_date=None):
         d = rec.advance_donation_line_id.advance_donation_id
-        rd = self._rec_date(rec)
-        return {
-            'date':         rd.strftime('%Y-%m-%d') if rd else '',
-            'reference':    rec.display_name,
-            'partner':      d.donor_id.name or '',
-            'type':         'Disbursement',
-            'direction':    'out',
-            'purpose':      purpose,
-            'beneficiary':  beneficiary,
-            'description':  description,
-            'amount_in':    0.0,
-            'amount_out':   amount,
-        }
+        return self._movement(
+            rec_date or self._rec_date(rec), rec.display_name, 'Disbursement', 'out',
+            amount_out=amount,
+            partner=d.donor_id.name or '',
+            purpose=purpose,
+            beneficiary=beneficiary,
+            description=description,
+            donees=donees,
+        )
 
     def _pick_amount(self, rec, field_names):
         for f in field_names:
@@ -156,9 +259,9 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
                     return float(v)
         return 0.0
 
-    def _rec_date(self, rec):
+    def _rec_date(self, rec, field_names=('date', 'disbursement_date', 'create_date')):
         """Best-effort date for a welfare / microfinance record."""
-        for fname in ('date', 'disbursement_date', 'create_date'):
+        for fname in field_names:
             if fname in rec._fields and rec[fname]:
                 v = rec[fname]
                 return v.date() if isinstance(v, datetime) else v
@@ -169,8 +272,10 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
             return None
         if isinstance(s, datetime):
             return s.date()
+        if isinstance(s, date):
+            return s
         return datetime.strptime(s, '%Y-%m-%d').date()
-    
+
     @api.model
     def get_xlsx_report(self, data, response, report_name, report_action):
         """
@@ -178,13 +283,15 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
         `data` is the JSON string sent from the OWL component.
         """
         payload = json.loads(data)
-        lines        = payload.get("lines", [])
-        date_from    = payload.get("date_from", "")
-        date_to      = payload.get("date_to", "")
-        search       = payload.get("search", "")
-        total_in     = payload.get("total_in", 0)
-        total_out    = payload.get("total_out", 0)
-        balance      = payload.get("balance", 0)
+        lines           = payload.get("lines", [])
+        date_from       = payload.get("date_from", "")
+        date_to         = payload.get("date_to", "")
+        search          = payload.get("search", "")
+        donor_name      = payload.get("donor_name", "")
+        opening_balance = payload.get("opening_balance", 0)
+        total_in        = payload.get("total_in", 0)
+        total_out       = payload.get("total_out", 0)
+        balance         = payload.get("balance", 0)
 
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output, {"in_memory": True})
@@ -214,7 +321,7 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
 
         # -------- title --------
         sheet.merge_range(0, 0, 0, 9, report_name or "Advance Donation Statement", head_fmt)
-        sub_txt = f"{date_from}  →  {date_to}"
+        sub_txt = "Donor: %s   |   %s" % (donor_name, self._period_label(date_from, date_to))
         if search:
             sub_txt += f'   |   search: "{search}"'
         sheet.merge_range(1, 0, 1, 9, sub_txt, sub_fmt)
@@ -225,6 +332,12 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
         row = 3
         for i, h in enumerate(headers):
             sheet.write(row, i, h, th_fmt)
+        row += 1
+
+        # -------- opening balance --------
+        sheet.write(row, 0, date_from or "", cell_left)
+        sheet.merge_range(row, 1, row, 8, "Opening Balance", cell_left)
+        sheet.write(row, 9, float(opening_balance or 0), cell_right_num)
         row += 1
 
         # -------- data rows --------
@@ -242,7 +355,7 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
             row += 1
 
         # -------- totals --------
-        sheet.merge_range(row, 0, row, 6, "Totals", total_lbl_fmt)
+        sheet.merge_range(row, 0, row, 6, "Totals / Closing Balance", total_lbl_fmt)
         sheet.write(row, 7, float(total_in),  total_fmt)
         sheet.write(row, 8, float(total_out), total_fmt)
         sheet.write(row, 9, float(balance),   total_fmt)
@@ -251,3 +364,12 @@ class AdvanceDonationStatementWizard(models.AbstractModel):
         output.seek(0)
         response.stream.write(output.read())
         output.close()
+
+    def _period_label(self, date_from, date_to):
+        if date_from and date_to:
+            return "From %s to %s" % (date_from, date_to)
+        if date_from:
+            return "From %s" % date_from
+        if date_to:
+            return "Up to %s" % date_to
+        return "All transactions"
