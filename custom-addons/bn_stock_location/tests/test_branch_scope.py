@@ -72,3 +72,12 @@ class TestBranchScope(TransactionCase):
             'analytic_account_id': self.other_city.id})
         self.user.invalidate_recordset(['scope_analytic_account_ids'])
         self.assertEqual(self.user.scope_analytic_account_ids, self.other_branch | sub.analytic_account_id)
+
+    def test_branch_picker(self):
+        """With branch_scope, a branch picker offers only the analytic accounts in scope."""
+        Account = self.env['account.analytic.account'].with_user(self.user)
+        accounts = (self.branch | self.city | self.other_branch | self.other_city).ids
+        picker = Account.with_context(branch_scope=True).search([('id', 'in', accounts)])
+        self.assertEqual(picker, self.branch | self.city)
+        # without the context (every other search) nothing is filtered
+        self.assertEqual(len(Account.search([('id', 'in', accounts)])), 4)

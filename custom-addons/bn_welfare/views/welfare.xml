@@ -142,7 +142,7 @@
                                     <field name="payment_type" />
                                     <field name="assigned_officer_id" domain="[('category_ids', 'in', [employee_category_id_officer])]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="payment_type == 'self'" />
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
-                                    <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
+                                    <field name="analytic_account_id" context="{'branch_scope': True}" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="analytic_account_domain" invisible="collection_point == 'bank'" />
                                     <field name="collection_date" />
                                     <field name="marriage_date" optional="hide" invisible="disbursement_category_id.name != 'Marriage / Wedding'" />
                                     <field name="is_cash_category" column_invisible="1" />
