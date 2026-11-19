@@ -155,16 +155,16 @@ class TestSadqaEJariya(TransactionCase):
         donee = self._institution('Form Masjid')
         with_form, without = self.env['sadqa.jariya'].create([{'donee_id': donee.id}, {'donee_id': donee.id}])
         form = self.env['sadqa.jariya.form'].create({
-            'application_id': with_form.id, 'submission': 'donee', 'account_title': 'Masjid Trust A'})
+            'application_id': with_form.id, 'submission': 'donee', 'md_number': 'MD-1'})
         self.assertEqual(with_form.donee_form_id, form)
-        self.assertEqual(with_form.donee_form_account_title, 'Masjid Trust A')
+        self.assertEqual(with_form.donee_form_md_number, 'MD-1')
         Application = self.env['sadqa.jariya']
         self.assertIn(with_form, Application.search([('donee_form_id', '=', form.id)]))
         found = Application.search([('id', 'in', (with_form | without).ids), ('donee_form_id', '=', False)])
         self.assertEqual(found, without)
         # editing the form updates the tab
-        form.account_title = 'Masjid Trust B'
-        self.assertEqual(with_form.donee_form_account_title, 'Masjid Trust B')
+        form.md_number = 'MD-2'
+        self.assertEqual(with_form.donee_form_md_number, 'MD-2')
 
     def test_role_steps_need_their_role(self):
         """HOD / Committee / Member steps are refused to a plain User, even over RPC."""

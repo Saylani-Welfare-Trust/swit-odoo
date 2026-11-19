@@ -16,5 +16,3 @@ class SadqaJariyaInquiryReport(models.Model):
     officer_employee_code = fields.Char(string='Officer Employee ID')
     # completedAt on the portal, create_date is when Odoo imported it
     report_date = fields.Datetime(string='Completed At')
-    # the officer's own completed form of this report (inquiry.form)
-    form_ids = fields.One2many('sadqa.jariya.form', 'report_id', string='Officer Form')

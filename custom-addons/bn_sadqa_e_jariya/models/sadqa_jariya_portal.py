@@ -11,9 +11,6 @@ from odoo.exceptions import UserError
 
 from .sadqa_jariya import FORM_KINDS
 
-# a completed inquiry is reopened before the Final Approval
-REOPEN_STATES = ('inquiry', 'hod_approve', 'committee_approval')
-
 _logger = logging.getLogger(__name__)
 
 # Sadqa Jaria institutional integration: POST <portal>/rpc/odoo/institutional/<operation>, {"json": ...} envelope
@@ -134,7 +131,7 @@ class SadqaJariya(models.Model):
             'institutionAddress': self.address or ', '.join(part for part in (donee.street, donee.street2, donee.city) if part),
             # the portal would default it to the donee name, i.e. the institution's
             'responsiblePersonName': donee.sadqa_contact_person,
-            # account title / number and photos come from the portal submissions, never from Odoo
+            'accountNumber': self.account_number,
             'fatherName': donee.father_name,
             'phoneNumber': donee.phone,
             'applicantLocationLink': self.applicant_location_link,
@@ -246,14 +243,10 @@ class SadqaJariya(models.Model):
         self.message_post(body=_("🔑 Portal password reset, login %s sent by %s to %s.") % (donee.sadqa_portal_login, channel, donee.mobile))
         return self._show_notification(_('Reset Portal Password'), _('New password sent to the donee by %s.') % channel, 'success')
 
-    def _acknowledge(self, operation, field_name, report_id=None):
-        """acknowledgeDoneeForm / acknowledgeInquiry (idempotent, the portal keeps the first timestamp);
-        an inquiry is acknowledged with its report (required once the inquiry was reopened)"""
+    def _acknowledge(self, operation, field_name):
+        """acknowledgeDoneeForm / acknowledgeInquiry (idempotent, the portal keeps the first timestamp)"""
         self.ensure_one()
-        payload = {'odooId': self.id}
-        if report_id:
-            payload['reportId'] = report_id
-        result = self._portal_call(operation, payload) or {}
+        result = self._portal_call(operation, {'odooId': self.id}) or {}
         acknowledged_at = self.env['sadqa.jariya.fetch.log']._as_datetime(result.get('acknowledgedAt'))
         self[field_name] = acknowledged_at or fields.Datetime.now()
 
@@ -265,10 +258,25 @@ class SadqaJariya(models.Model):
         if not self.line_ids:
             raise UserError(_("Add the Disbursement Items before sending for inquiry."))
         officer = self.employee_id
+        if not officer:
+            raise UserError(_("Select the Inquiry Officer first."))
+        if not officer.active:
+            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee before assigning the inquiry.") % officer.name)
+        employee_id = (officer.barcode or '').strip()
         # The portal only assigns an officer once the imported form is acknowledged
-        if officer and officer.active and not self.form_acknowledged_at:
+        if not self.form_acknowledged_at:
             self._acknowledge('acknowledgeDoneeForm', 'form_acknowledged_at')
-        result = self._portal_officer_call('assignOfficer', officer)
+        try:
+            result = self._portal_call('assignOfficer', {'odooId': self.id, 'employeeId': employee_id}) or {}
+        except UserError as error:
+            message = str(error).lower()
+            if 'bad_request' in message and 'active inquiry officer' in message and 'employee id' in message:
+                raise UserError(_(
+                    "The portal has no active inquiry officer with employee ID '%(employee_id)s'. "
+                    "Add or activate this officer in the portal using the exact Odoo Badge ID, then retry. "
+                    "The form is already acknowledged; you do not need to resend it."
+                ) % {'employee_id': employee_id}) from error
+            raise
         self.write({
             'state': 'send_for_inquiry',
             'portal_report_id': result.get('reportId'),
@@ -276,70 +284,6 @@ class SadqaJariya(models.Model):
         })
         self.message_post(body=_("📤 Sent for inquiry to %s on the portal.") % officer.name)
         return self._show_notification(_('Send for Inquiry'), _('Inquiry officer assigned on the portal.'), 'success')
-
-    def _portal_officer_call(self, operation, officer):
-        """assignOfficer / reopenInquiry / changeInquiryOfficer for ``officer`` (identified by the Badge ID)"""
-        self.ensure_one()
-        if not officer:
-            raise UserError(_("Select the Inquiry Officer first."))
-        if not officer.active:
-            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee before assigning the inquiry.") % officer.name)
-        employee_id = (officer.barcode or '').strip()
-        try:
-            return self._portal_call(operation, {'odooId': self.id, 'employeeId': employee_id}) or {}
-        except UserError as error:
-            message = str(error).lower()
-            if 'bad_request' in message and 'officer' in message and 'employee id' in message:
-                hint = _(" The form is already acknowledged; you do not need to resend it.") if operation == 'assignOfficer' else ''
-                raise UserError(_(
-                    "The portal has no active inquiry officer with employee ID '%(employee_id)s'. "
-                    "Add or activate this officer in the portal using the exact Odoo Badge ID, then retry."
-                ) % {'employee_id': employee_id} + hint) from error
-            raise
-
-    def action_open_officer_wizard(self):
-        """Reopen Inquiry / Change Inquiry Officer: pick the officer first"""
-        self.ensure_one()
-        mode = self.env.context.get('officer_wizard_mode', 'reopen')
-        return {
-            'type': 'ir.actions.act_window',
-            'name': _('Reopen Inquiry') if mode == 'reopen' else _('Change Inquiry Officer'),
-            'res_model': 'sadqa.jariya.officer.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_application_id': self.id, 'default_mode': mode,
-                        'default_employee_id': self.employee_id.id if mode == 'reopen' else False},
-        }
-
-    def action_reopen_inquiry(self, officer):
-        """reopenInquiry: a new inquiry report for ``officer``, the application goes back to Send for Inquiry"""
-        self.ensure_one()
-        if self.state not in REOPEN_STATES:
-            raise UserError(_("An inquiry can be reopened once it is completed and before the Final Approval."))
-        # the portal reopens only an acknowledged inquiry
-        if not self.inquiry_acknowledged_at:
-            self._acknowledge('acknowledgeInquiry', 'inquiry_acknowledged_at', self.inquiry_report_ids.sorted('id')[-1:].external_id)
-        result = self._portal_officer_call('reopenInquiry', officer)
-        self.write({
-            'state': 'send_for_inquiry',
-            'employee_id': officer.id,
-            'portal_report_id': result.get('reportId'),
-            'portal_status': 'inquiry_assigned',
-            'inquiry_acknowledged_at': False,
-        })
-        self.message_post(body=_("🔁 Inquiry reopened on the portal for %s.") % officer.name)
-        return self._show_notification(_('Reopen Inquiry'), _('Inquiry reopened, %s can complete a new report.') % officer.name, 'success')
-
-    def action_change_inquiry_officer(self, officer):
-        """changeInquiryOfficer: the open inquiry (same report) goes to ``officer``"""
-        self.ensure_one()
-        if self.state != 'send_for_inquiry':
-            raise UserError(_("The officer can only be changed while the inquiry is open (Send for Inquiry)."))
-        previous = self.employee_id
-        result = self._portal_officer_call('changeInquiryOfficer', officer)
-        self.write({'employee_id': officer.id, 'portal_report_id': result.get('reportId') or self.portal_report_id})
-        self.message_post(body=_("👤 Inquiry officer changed on the portal: %s → %s.") % (previous.name or '-', officer.name))
-        return self._show_notification(_('Change Inquiry Officer'), _('%s can now complete the inquiry.') % officer.name, 'success')
 
     @api.model
     def _sync_portal(self, from_cron=False):
@@ -371,16 +315,15 @@ class SadqaJariya(models.Model):
                     errors.append(f"[{application.name}] {export}: {e}")
                     continue
                 applications |= application
-                # inquiries are acknowledged with their report
-                to_acknowledge.append((application, ack, ack_field, (row.get('inquiry') or {}).get('id') if index else None))
+                to_acknowledge.append((application, ack, ack_field))
 
         # Imports are saved before the portal is told: an acknowledged row leaves its export
         if not self.env.context.get('sadqa_jariya_no_commit'):
             self.env.cr.commit()
-        for application, ack, ack_field, report_id in to_acknowledge:
+        for application, ack, ack_field in to_acknowledge:
             try:
                 with self.env.cr.savepoint():
-                    application._acknowledge(ack, ack_field, report_id)
+                    application._acknowledge(ack, ack_field)
             except Exception as e:
                 # still exported, acknowledged on the next sync
                 errors.append(f"[{application.name}] {ack}: {e}")

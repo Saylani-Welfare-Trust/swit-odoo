@@ -40,4 +40,3 @@ access_sadqa_jariya_area,sadqa.jariya.area user,model_sadqa_jariya_area,base.gro
 access_sadqa_jariya_area_admin,sadqa.jariya.area admin,model_sadqa_jariya_area,sadqa_e_jariya_admin_group,1,1,1,1
 access_sadqa_jariya_committee_member,sadqa.jariya.committee.member user,model_sadqa_jariya_committee_member,base.group_user,1,0,0,0
 access_sadqa_jariya_committee_member_admin,sadqa.jariya.committee.member admin,model_sadqa_jariya_committee_member,sadqa_e_jariya_admin_group,1,1,1,1
-access_sadqa_jariya_officer_wizard,sadqa.jariya.officer.wizard user,model_sadqa_jariya_officer_wizard,group_institutional_disbursement,1,1,1,0
