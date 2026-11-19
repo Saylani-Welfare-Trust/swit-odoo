@@ -1,11 +1,11 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.6.0',
+    'version': '17.0.1.6.3',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Welfare',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_microfinance',
         'bn_pos_cheque',
         'bn_direct_deposit',
@@ -17,7 +17,7 @@
         'security/group.xml',
         'security/group_category.xml',
         'security/group_tiers.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         
         'data/sequence.xml',
         'data/hr_employee_category.xml',

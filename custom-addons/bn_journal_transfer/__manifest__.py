@@ -1,16 +1,16 @@
 {
     'name': 'Journal Transfer',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.2.1',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Journal Transfer',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_pos_cheque'
     ],
     'data': [
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         
         'data/sequence.xml',
         'data/schedule_action.xml',

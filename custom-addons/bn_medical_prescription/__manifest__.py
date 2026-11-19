@@ -1,6 +1,6 @@
 {
     'name': 'Medical Prescription Billing',
-    'version': '1.0',
+    'version': '1.1',
     'summary': 'Prescription desk approves the products for a patient, the billing counter bills them',
     'description': """
 Flow on Medical & Health POS counters:
@@ -13,12 +13,12 @@ Flow on Medical & Health POS counters:
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Medical & Health',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_medical_pos',
         'bn_pos_order',
     ],
     'data': [
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         'security/record_rule.xml',
 
         'data/sequence.xml',

@@ -11,6 +11,49 @@
                 <!-- Row 1: main filters -->
                 <div class="d-flex flex-wrap align-items-end gap-3">
 
+                    <!-- Donor: searched by name, mobile, CNIC, registration ID -->
+                    <div class="position-relative" style="min-width:280px; max-width:340px;">
+                        <label class="d-block small text-muted">Donor <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fa fa-user" aria-hidden="true"></i>
+                            </span>
+                            <input type="text" class="form-control"
+                                   placeholder="Name, mobile, CNIC, registration ID…"
+                                   autocomplete="off"
+                                   t-att-value="state.donor_query"
+                                   t-on-focus="onDonorFocus"
+                                   t-on-input="onDonorInput"
+                                   t-on-keydown="onDonorKeydown"
+                                   t-on-blur="onDonorBlur"/>
+                            <button t-if="state.donor_id"
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    title="Clear donor"
+                                    t-on-click="clearDonor">
+                                <i class="fa fa-times" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div t-if="state.donor_open"
+                             class="dropdown-menu show w-100 shadow-sm"
+                             style="max-height:320px;overflow:auto;z-index:1050;">
+                            <div t-if="state.donor_loading and !state.donor_results.length"
+                                 class="dropdown-item-text text-muted small">Searching…</div>
+                            <div t-elif="!state.donor_results.length"
+                                 class="dropdown-item-text text-muted small">No donor found.</div>
+                            <t t-foreach="state.donor_results" t-as="d" t-key="d.id">
+                                <a href="#"
+                                   class="dropdown-item"
+                                   t-att-style="'white-space:normal;' + (d_index === state.donor_active ? 'background:#e9ecef;' : '')"
+                                   t-on-mouseenter="() => state.donor_active = d_index"
+                                   t-on-mousedown.prevent="() => this.selectDonor(d)">
+                                    <div t-esc="d.name"/>
+                                    <div t-if="d.details" class="small text-muted" t-esc="d.details"/>
+                                </a>
+                            </t>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="d-block small text-muted">From</label>
                         <input type="date" class="form-control"
@@ -27,25 +70,21 @@
                                t-on-change="onDateChange"/>
                     </div>
 
-                    <!-- Donor (narrower) -->
-                    <div style="min-width:160px; max-width:180px;">
-                        <label class="d-block small text-muted">Donor</label>
-                        <select class="form-select" t-on-change="onDonorChange">
-                            <option value="">All donors</option>
-                            <t t-foreach="state.donors" t-as="d" t-key="d.id">
-                                <option t-att-value="d.id"
-                                        t-att-selected="state.donor_id === d.id">
-                                    <t t-esc="d.name"/>
-                                </option>
-                            </t>
-                        </select>
+                    <div t-if="state.date_from or state.date_to" class="align-self-end">
+                        <button type="button"
+                                class="btn btn-link px-1"
+                                title="Show all transactions"
+                                t-on-click="clearDates">
+                            <i class="fa fa-times me-1"/> All dates
+                        </button>
                     </div>
 
-                    <!-- Type (moved next to Donor) -->
+                    <!-- Type -->
                     <div style="min-width:140px; max-width:160px;">
                         <label class="d-block small text-muted">Type</label>
                         <select class="form-select"
                                 name="filter_type"
+                                t-att-disabled="!state.donor_id"
                                 t-on-change="onFilterChange">
                             <option value="">All types</option>
                             <t t-foreach="state.type_options" t-as="opt" t-key="opt_index">
@@ -64,7 +103,8 @@
                                 <i class="fa fa-search" aria-hidden="true"></i>
                             </span>
                             <input type="text" class="form-control"
-                                   placeholder="Reference, purpose, beneficiary…"
+                                   placeholder="Reference, donee name, mobile, CNIC…"
+                                   t-att-disabled="!state.donor_id"
                                    t-att-value="state.search"
                                    t-on-input="onSearchInput"
                                    t-on-keydown="onSearchKeydown"/>
@@ -81,6 +121,7 @@
                     <div class="align-self-end">
                         <button type="button"
                                 class="btn btn-outline-primary"
+                                t-att-disabled="!state.donor_id"
                                 t-on-click="toggleMoreFilters">
                             <i class="fa fa-sliders me-1" aria-hidden="true"></i>
                             More Filters
@@ -99,18 +140,27 @@
                     <div class="align-self-end d-flex gap-2">
                         <button type="button"
                                 class="btn btn-info btn-report-print"
+                                t-att-disabled="!state.donor_id or state.loading"
                                 t-on-click="printPdf">
                             <i class="fa fa-print me-1"/> Print (PDF)
                         </button>
                         <button type="button"
                                 class="btn btn-info btn-report-print"
+                                t-att-disabled="!state.donor_id or state.loading"
                                 t-on-click="printXlsx">
                             <i class="fa fa-file-excel-o me-1"/> Export (XLSX)
                         </button>
                     </div>
 
                     <!-- Totals on the right -->
-                    <div class="ms-auto d-flex gap-4 pt-2">
+                    <div t-if="state.donor_id" class="ms-auto d-flex gap-4 pt-2">
+                        <div class="text-end">
+                            <div class="small text-muted">Opening Balance</div>
+                            <div class="fw-bold">
+                                <t t-esc="state.currency"/>
+                                <t t-esc="formatAmount(state.opening_balance)"/>
+                            </div>
+                        </div>
                         <div class="text-end">
                             <div class="small text-muted">Total In</div>
                             <div class="fw-bold text-success">
@@ -126,17 +176,17 @@
                             </div>
                         </div>
                         <div class="text-end">
-                            <div class="small text-muted">Balance</div>
+                            <div class="small text-muted">Closing Balance</div>
                             <div class="fw-bold">
                                 <t t-esc="state.currency"/>
-                                <t t-esc="formatAmount(filteredTotals.balance)"/>
+                                <t t-esc="formatAmount(state.balance)"/>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Row 2: extra filters (collapsible) -->
-                <div t-if="state.show_more_filters"
+                <div t-if="state.show_more_filters and state.donor_id"
                      class="d-flex flex-wrap align-items-end gap-3 mt-3 pt-3"
                      style="border-top:1px dashed #d5d5d5;">
 
@@ -181,105 +231,127 @@
                 </div>
             </div>
 
-            <!-- =================== RESULT COUNTER =================== -->
-            <div t-if="hasActiveFilters and !state.loading and !state.error"
-                 class="px-3 py-2 small text-muted d-flex align-items-center gap-3"
-                 style="background:#fff;border-bottom:1px solid #eee;">
-                <span>
-                    Showing
-                    <strong><t t-esc="filteredLines.length"/></strong>
-                    of
-                    <strong><t t-esc="state.lines.length"/></strong>
-                    movements
-                </span>
-                <button t-if="hasActiveFilters"
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        t-on-click="clearAllFilters">
-                    <i class="fa fa-times me-1"/> Clear all filters
-                </button>
+            <!-- =================== NO DONOR YET =================== -->
+            <div t-if="!state.donor_id" class="text-center text-muted p-5">
+                <i class="fa fa-user-circle-o fa-3x mb-3 d-block" aria-hidden="true"></i>
+                Select a donor to see their statement.
             </div>
 
-            <!-- =================== STATES =================== -->
-            <t t-if="state.error">
-                <div class="alert alert-danger m-3">
-                    <t t-esc="state.error"/>
+            <t t-else="">
+                <!-- =================== RESULT COUNTER =================== -->
+                <div t-if="hasActiveFilters and !state.loading and !state.error"
+                     class="px-3 py-2 small text-muted d-flex align-items-center gap-3"
+                     style="background:#fff;border-bottom:1px solid #eee;">
+                    <span>
+                        Showing
+                        <strong><t t-esc="filteredLines.length"/></strong>
+                        of
+                        <strong><t t-esc="state.lines.length"/></strong>
+                        movements
+                    </span>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            t-on-click="clearAllFilters">
+                        <i class="fa fa-times me-1"/> Clear all filters
+                    </button>
                 </div>
-            </t>
-            <t t-if="state.loading">
-                <div class="text-center p-4 text-muted">Loading…</div>
-            </t>
 
-            <!-- =================== TABLE =================== -->
-            <t t-if="!state.loading and !state.error">
-                <div style="overflow:auto;max-height:70vh;">
-                    <table class="table table-sm table-hover mb-0">
-                        <thead style="position:sticky;top:0;background:#fff;z-index:1;">
-                            <tr>
-                                <th style="text-align:left;">Date</th>
-                                <th style="text-align:left;">Reference</th>
-                                <th style="text-align:left;">Donor</th>
-                                <th style="text-align:left;">Type</th>
-                                <th style="text-align:left;">Purpose</th>
-                                <th style="text-align:left;">Beneficiary</th>
-                                <th style="text-align:left;">Description</th>
-                                <th style="text-align:right;">In</th>
-                                <th style="text-align:right;">Out</th>
-                                <th style="text-align:right;">Balance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <t t-if="!filteredLines.length">
+                <!-- =================== STATES =================== -->
+                <t t-if="state.error">
+                    <div class="alert alert-danger m-3">
+                        <t t-esc="state.error"/>
+                    </div>
+                </t>
+                <t t-if="state.loading">
+                    <div class="text-center p-4 text-muted">Loading…</div>
+                </t>
+
+                <!-- =================== TABLE =================== -->
+                <t t-if="!state.loading and !state.error">
+                    <div class="px-3 pt-2 pb-1 small text-muted">
+                        <strong t-esc="state.donor and state.donor.name"/>
+                        <t t-if="state.donor and state.donor.details"> · <t t-esc="state.donor.details"/></t>
+                        · <t t-esc="periodLabel"/>
+                    </div>
+                    <div style="overflow:auto;max-height:70vh;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead style="position:sticky;top:0;background:#fff;z-index:1;">
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted p-4">
-                                        <t t-if="hasActiveFilters">No movements match your filters.</t>
-                                        <t t-else="">No movements in the selected range.</t>
+                                    <th style="text-align:left;">Date</th>
+                                    <th style="text-align:left;">Reference</th>
+                                    <th style="text-align:left;">Donor</th>
+                                    <th style="text-align:left;">Type</th>
+                                    <th style="text-align:left;">Purpose</th>
+                                    <th style="text-align:left;">Beneficiary</th>
+                                    <th style="text-align:left;">Description</th>
+                                    <th style="text-align:right;">In</th>
+                                    <th style="text-align:right;">Out</th>
+                                    <th style="text-align:right;">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="fw-bold" style="background:#f6f7fa;">
+                                    <td style="text-align:left;"><t t-esc="state.date_from"/></td>
+                                    <td colspan="8" style="text-align:left;">Opening Balance</td>
+                                    <td style="text-align:right;">
+                                        <t t-esc="formatAmount(state.opening_balance)"/>
                                     </td>
                                 </tr>
-                            </t>
-                            <t t-foreach="filteredLines" t-as="l" t-key="l_index">
-                                <tr t-att-class="l.direction === 'in' ? '' : 'table-light'">
-                                    <td style="text-align:left;"><t t-esc="l.date"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.reference"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.partner"/></td>
-                                    <td style="text-align:left;">
-                                        <span t-att-class="l.direction === 'in'
-                                              ? 'badge text-bg-success'
-                                              : 'badge text-bg-warning'">
-                                            <t t-esc="l.type"/>
-                                        </span>
+                                <t t-if="!filteredLines.length">
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted p-4">
+                                            <t t-if="hasActiveFilters">No movements match your filters.</t>
+                                            <t t-else="">No movements in the selected range.</t>
+                                        </td>
+                                    </tr>
+                                </t>
+                                <t t-foreach="filteredLines" t-as="l" t-key="l_index">
+                                    <tr t-att-class="l.direction === 'in' ? '' : 'table-light'">
+                                        <td style="text-align:left;"><t t-esc="l.date"/></td>
+                                        <td style="text-align:left;"><t t-esc="l.reference"/></td>
+                                        <td style="text-align:left;"><t t-esc="l.partner"/></td>
+                                        <td style="text-align:left;">
+                                            <span t-att-class="l.direction === 'in'
+                                                  ? 'badge text-bg-success'
+                                                  : 'badge text-bg-warning'">
+                                                <t t-esc="l.type"/>
+                                            </span>
+                                        </td>
+                                        <td style="text-align:left;"><t t-esc="l.purpose"/></td>
+                                        <td style="text-align:left;"><t t-esc="l.beneficiary"/></td>
+                                        <td style="text-align:left;"><t t-esc="l.description"/></td>
+                                        <td style="text-align:right;">
+                                            <t t-if="l.amount_in"><t t-esc="formatAmount(l.amount_in)"/></t>
+                                        </td>
+                                        <td style="text-align:right;">
+                                            <t t-if="l.amount_out"><t t-esc="formatAmount(l.amount_out)"/></t>
+                                        </td>
+                                        <td style="text-align:right;">
+                                            <t t-esc="formatAmount(l.balance)"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                            <tfoot style="position:sticky;bottom:0;background:#fff;">
+                                <tr style="font-weight:bold;border-top:2px solid #ccc;">
+                                    <td colspan="7" class="text-end">
+                                        <t t-if="hasActiveFilters">Totals (filtered) / Closing Balance</t>
+                                        <t t-else="">Totals / Closing Balance</t>
                                     </td>
-                                    <td style="text-align:left;"><t t-esc="l.purpose"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.beneficiary"/></td>
-                                    <td style="text-align:left;"><t t-esc="l.description"/></td>
                                     <td style="text-align:right;">
-                                        <t t-if="l.amount_in"><t t-esc="formatAmount(l.amount_in)"/></t>
+                                        <t t-esc="formatAmount(filteredTotals.in)"/>
                                     </td>
                                     <td style="text-align:right;">
-                                        <t t-if="l.amount_out"><t t-esc="formatAmount(l.amount_out)"/></t>
+                                        <t t-esc="formatAmount(filteredTotals.out)"/>
                                     </td>
                                     <td style="text-align:right;">
-                                        <t t-esc="formatAmount(l.balance)"/>
+                                        <t t-esc="formatAmount(state.balance)"/>
                                     </td>
                                 </tr>
-                            </t>
-                        </tbody>
-                        <tfoot style="position:sticky;bottom:0;background:#fff;">
-                            <tr style="font-weight:bold;border-top:2px solid #ccc;">
-                                <td colspan="7" class="text-end">Totals</td>
-                                <td style="text-align:right;">
-                                    <t t-esc="formatAmount(filteredTotals.in)"/>
-                                </td>
-                                <td style="text-align:right;">
-                                    <t t-esc="formatAmount(filteredTotals.out)"/>
-                                </td>
-                                <td style="text-align:right;">
-                                    <t t-esc="formatAmount(filteredTotals.balance)"/>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                            </tfoot>
+                        </table>
+                    </div>
+                </t>
             </t>
         </div>
     </t>

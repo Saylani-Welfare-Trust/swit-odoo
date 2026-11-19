@@ -1,11 +1,11 @@
 {
     'name': 'Direct Deposit',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.2.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Direct Deposit',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_pos_cheque',
         'bn_donation_home_service',
         'bn_microfinance',
@@ -14,7 +14,7 @@
     ],
     'data': [
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         
         'data/server_action.xml',
         'data/sequence.xml',

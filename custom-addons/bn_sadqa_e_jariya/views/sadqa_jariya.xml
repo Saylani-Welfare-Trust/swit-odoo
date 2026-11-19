@@ -153,7 +153,7 @@
                                     <field name="product_id" domain="product_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
                                     <field name="is_hod" optional="hide"/>
                                     <field name="collection_point" readonly="is_collection_point_readonly"/>
-                                    <field name="analytic_account_id" domain="analytic_account_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="collection_point == 'bank'"/>
+                                    <field name="analytic_account_id" context="{'branch_scope': True}" domain="analytic_account_domain or '[]'" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="collection_point == 'bank'"/>
                                     <field name="collection_date"/>
                                     <field name="quantity" readonly="is_bank_category" force_save="1"/>
                                     <field name="amount" readonly="1" optional="hide"/>

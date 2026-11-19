@@ -22,6 +22,7 @@ class AdvanceDonationLineSync(models.Model):
         """A welfare / recurring line funded by this donation line was paid:
         record the disbursement and mark the line disbursed once all of it is used."""
         self.ensure_one()
+        self._check_disbursable()
         disbursed = self.disbursed_amount + amount
         currency = self.currency_id or self.env.company.currency_id
         # a single-product line is reserved whole by one record (see the wizard)

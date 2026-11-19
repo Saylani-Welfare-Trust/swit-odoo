@@ -1,18 +1,18 @@
 {
     'name': 'Dashboard',
-    'version': '17.0.1.0.0',
+    'version': '17.0.1.0.1',
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
     'website': 'https://bytesnode.com/',
     'summary': 'A custom Dashboard for Odoo 17 Community',
-    'depends': ['base', 'web', 'account', 'bn_pos_cheque',
+    'depends': ['bn_stock_location', 'base', 'web', 'account', 'bn_pos_cheque',
                 'bn_donation_box','bn_profile_management','hr',
                 'bn_direct_deposit', 'account_analytic_parent',
                 # models the dashboards extend or read
                 'bn_donation_in_kind', 'bn_rider_shift', 'bn_journal_transfer', 'bn_import_donation'],
     'data': [
         'security/dashboard_security.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         'security/record_rule.xml',
         'views/treasury_dashboard_views.xml',
         'views/access_config_search_views.xml',

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Same scope as bn_stock_location: these records have no location, so they are
+         matched on their Analytic Account (Branch), which must be the analytic account
+         tagged on one of the user's locations in scope, or the user's own Branch
+         (res.users.scope_analytic_account_ids). A record without one stays visible.
+         Settings administrators and "Unrestricted Access" see everything. -->
+
+    <record id="scope_sadqa_jariya_line_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Line: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_line"/>
+        <field name="domain_force">['|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_line_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Line: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_recurring_line_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Recurring Line: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_recurring_line"/>
+        <field name="domain_force">['|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_recurring_line_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Recurring Line: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_recurring_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya"/>
+        <field name="domain_force">['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_document_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Document: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_document"/>
+        <field name="domain_force">['|', ('application_id', '=', False), ('application_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_document_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Document: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_document"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_inquiry_report_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Inquiry Report: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_inquiry_report"/>
+        <field name="domain_force">['|', ('application_id', '=', False), ('application_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_inquiry_report_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Inquiry Report: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_inquiry_report"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_committee_line_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Committee Line: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_committee_line"/>
+        <field name="domain_force">['|', ('application_id', '=', False), ('application_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_committee_line_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Committee Line: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_committee_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_form_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Form: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_form"/>
+        <field name="domain_force">['|', ('application_id', '=', False), ('application_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_sadqa_jariya_form_unrestricted_rule" model="ir.rule">
+        <field name="name">Sadqa Jariya Form: unrestricted</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_form"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+</odoo>

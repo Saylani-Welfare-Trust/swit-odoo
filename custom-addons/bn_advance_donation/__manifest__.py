@@ -1,11 +1,11 @@
 {
     'name': 'Advance Donation',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.4.1',
     'description': "",
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',
     'category': 'BytesNode/Advance Donation',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'account',
         'point_of_sale',
         'bn_import_donation',
@@ -16,7 +16,7 @@
     ],
     'data': [
         'security/groups.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         'security/record_rule.xml',
 
         'data/sequences.xml',

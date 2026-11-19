@@ -1,11 +1,11 @@
 {
     'name': 'POS Cheque',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.4.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/POS Cheque',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'account',
         'bn_closing_session',
         'bn_pos_custom_action',
@@ -14,7 +14,7 @@
     ],
     'data': [
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         
         'reports/pos_order_receipt.xml',
         'reports/donation_note.xml',

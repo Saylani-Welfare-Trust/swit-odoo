@@ -65,6 +65,24 @@ class AdvanceDonationLine(models.Model):
                 )
         return super()._auto_init()
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        lines.filtered('is_disbursed')._check_disbursable()
+        return lines
+
+    def write(self, vals):
+        if vals.get('is_disbursed'):
+            self._check_disbursable()
+        return super().write(vals)
+
+    def _check_disbursable(self):
+        """Lines are disbursed only from an approved advance donation."""
+        not_approved = self.mapped('advance_donation_id').filtered(lambda d: d.state != 'approved')
+        if not_approved:
+            raise UserError(_('Only approved advance donations can be disbursed (%s is not approved).')
+                            % ', '.join(not_approved.mapped('name')))
+
     @api.depends('is_disbursed')
     def _compute_disbursement_and_disbursed(self):
         for rec in self:

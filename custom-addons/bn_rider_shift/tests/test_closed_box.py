@@ -443,3 +443,19 @@ class TestBrokenBoxScrap(BoxFlowCase):
         self.assertEqual(user.city_access_ids, self.city)
         self.assertEqual(Registration.with_user(user).search([('id', '=', registration.id)]), registration)
         self.assertIn(self.bunch, self.env['key.bunch'].with_user(user).search([]))
+
+    def test_city_from_allowed_warehouse(self):
+        """The City also comes from the locations of the user's Allowed
+        Warehouses (the same scope as the Branch-level rules)."""
+        registration = self._install('L2')
+        Registration = self.env['donation.box.registration.installation']
+        warehouse = self.env['stock.warehouse'].create({'name': 'Saddar WH', 'code': 'SDWH'})
+        warehouse.view_location_id.analytic_account_id = self.zone
+        user = self.env['res.users'].create({
+            'name': 'wh_vis', 'login': 'wh_vis',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref('bn_key_management.key_management_user_group').id])]})
+        self.assertFalse(user.city_access_ids)
+        user.allowed_warehouse_ids = [(6, 0, warehouse.ids)]
+        self.assertEqual(user.city_access_ids, self.city)
+        self.assertEqual(Registration.with_user(user).search([('id', '=', registration.id)]), registration)

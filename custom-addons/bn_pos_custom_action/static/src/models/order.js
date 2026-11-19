@@ -6,6 +6,14 @@ patch(Order.prototype, {
     /**
      * Override export_as_JSON to include custom fields like CNIC and source_document
      */
+    /**
+     * Orders loaded back from the server (reprint) keep their receipt number
+     */
+    init_from_JSON(json) {
+        super.init_from_JSON(...arguments);
+        this.pos_order_seq = json.pos_order_seq || this.pos_order_seq || false;
+    },
+
     export_as_JSON() {
         // Get the original JSON
         const json = super.export_as_JSON(...arguments);

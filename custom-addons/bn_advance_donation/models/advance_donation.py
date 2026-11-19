@@ -11,6 +11,16 @@ APPROVAL_GROUPS = {
     'approval_2': 'bn_advance_donation.group_adv_don_approval_2',
 }
 
+# An open contract is one amount: no frequency, no date range
+OPEN_CONTRACT_EMPTY = {
+    'contract_frequency': False,
+    'contract_start_date': False,
+    'contract_end_date': False,
+    'no_of_days': 0,
+    'no_of_weeks': 0,
+}
+
+
 class AdvanceDonation(models.Model):
     _name = 'advance.donation'
     _description = "Advance Donation"
@@ -34,7 +44,7 @@ class AdvanceDonation(models.Model):
                                    string='Payment Type', default='cash')
 
     total_no_of_product = fields.Integer('Total No of Products')
-    donation_slip_ids = fields.Many2many('advance.donation.receipt', 'rel_2', string='Donation Slip')
+    donation_slip_ids = fields.Many2many('advance.donation.receipt', 'rel_2', string='Donation Slip', copy=False)
 
     contract_frequency = fields.Selection([('daily', 'Daily'),
                                     ('weekly', 'Weekly')],
@@ -100,11 +110,19 @@ class AdvanceDonation(models.Model):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
                 vals['name'] = self.env['ir.sequence'].next_by_code('advance.donation') or _('New')
-        return super().create(vals_list)
+            if vals.get('contract_type') == 'open_contract':
+                vals.update(OPEN_CONTRACT_EMPTY)
+        records = super().create(vals_list)
+        records.filtered('donation_slip_ids')._check_slip_allowed()
+        return records
 
     # ------------------------------------------------------------------
     # Workflow checks
     # ------------------------------------------------------------------
+    def _check_slip_allowed(self):
+        """Donation slips (receipts) are used only on an approved donation."""
+        self._check_donation_state(('approved',), _('Add Donation Slip'))
+
     def _check_donation_state(self, allowed, action):
         for rec in self:
             if rec.state not in allowed:
@@ -166,6 +184,9 @@ class AdvanceDonation(models.Model):
             self.total_no_of_product = 1
             self.no_of_product = 1   # also for consistency
             self.amount_percentage = 100.00
+            self.update(OPEN_CONTRACT_EMPTY)
+        elif self.contract_type == 'frequency' and not self.contract_frequency:
+            self.contract_frequency = 'daily'
     @api.onchange('service_charges')
     def _onchange_service_charges(self):
         if not self.service_charges:
@@ -189,7 +210,7 @@ class AdvanceDonation(models.Model):
         unit_service_charge = self.service_charge_amount or 0.0 if self.service_charges else 0.0
 
         dates = []
-        if self.contract_type in ('frequency', 'open_contract') and self.contract_start_date and self.contract_end_date:
+        if self.contract_type == 'frequency' and self.contract_start_date and self.contract_end_date:
             start_date = fields.Date.from_string(self.contract_start_date)
             end_date = fields.Date.from_string(self.contract_end_date)
             if self.contract_frequency == 'daily':
@@ -220,27 +241,6 @@ class AdvanceDonation(models.Model):
                     })
                     serial += 1
                     total_lines += 1
-        elif self.contract_type == 'open_contract' and dates:
-            # The total is spread over the days (or weeks), the last line takes the rounding difference
-            currency = self.currency_id or self.env.company.currency_id
-            count = len(dates)
-            share = currency.round(self.total_product_amount / count)
-            charge_share = currency.round(line_service_charge / count)
-            for line_date in dates:
-                last = serial == count
-                line_amount = self.total_product_amount - share * (count - 1) if last else share
-                line_charge = line_service_charge - charge_share * (count - 1) if last else charge_share
-                self.advance_donation_lines.create({
-                    'serial_no': serial,
-                    'product_id': self.product_id.id,
-                    'amount': line_amount,
-                    'service_charge_amount': line_charge,
-                    'remaining_amount': line_amount + line_charge,
-                    'advance_donation_id': self.id,
-                    'date': line_date,
-                })
-                serial += 1
-                total_lines += 1
         else:
             # Lines that are not spread over days are dated the day they are computed
             today = fields.Date.context_today(self)
@@ -543,14 +543,21 @@ class AdvanceDonation(models.Model):
                 })
 
     def write(self, vals):
+        if vals.get('contract_type') == 'open_contract':
+            vals = dict(vals, **OPEN_CONTRACT_EMPTY)
         # Only handle donation_slip_ids changes, don't unlink usage lines for other field updates
         if 'donation_slip_ids' in vals:
             # Store old receipts for recomputation
             old_donation_receipts = self.donation_slip_ids
-            
+            old_slips = {rec.id: rec.donation_slip_ids for rec in self}
+
             # Perform the write operation
             res = super(AdvanceDonation, self).write(vals)
-            
+
+            # A slip can be added only once the donation is approved; removing
+            # slips (Cancel Payment) stays possible in every state.
+            self.filtered(lambda rec: rec.donation_slip_ids - old_slips[rec.id])._check_slip_allowed()
+
             # Trigger receipt recomputation for old and new receipts
             for donation_slip in old_donation_receipts:
                 donation_slip._compute_amount()
@@ -590,7 +597,7 @@ class AdvanceDonation(models.Model):
     
     def allocate_payment(self, amount, receipt_ids):
         self.ensure_one()
-        self._check_donation_state(('draft', 'approval_1', 'approval_2', 'approved'), _('Add Payment'))
+        self._check_donation_state(('approved',), _('Add Payment'))
         if amount <= 0:
             raise UserError(_('Payment amount must be positive.'))
         foreign = self.env['advance.donation.receipt'].browse(receipt_ids).filtered(
@@ -682,6 +689,7 @@ class AdvanceDonation(models.Model):
 
 
     def action_open_payment_wizard(self):
+        self._check_donation_state(('approved',), _('Add Payment'))
         return {
             'type': 'ir.actions.act_window',
             'name': 'Add Payment',
