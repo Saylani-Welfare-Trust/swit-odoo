@@ -1,11 +1,11 @@
 {
     'name': 'Microfinance',
-    'version': '17.0.1.5.0',
+    'version': '17.0.1.5.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Microfinance',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_master_setup',
         'bn_profile_management',
         'bn_pos_order',
@@ -17,7 +17,7 @@
     ],
     'data': [
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/stock_scope_rule.xml',
         
         'data/sequence.xml',
         'data/ir_cron.xml',

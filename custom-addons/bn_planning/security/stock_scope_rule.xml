@@ -17,4 +17,18 @@
         <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
     </record>
 
+    <record id="scope_report_monthly_planning_line_rule" model="ir.rule">
+        <field name="name">Monthly Planning Report Line: allowed locations</field>
+        <field name="model_id" ref="bn_planning.model_report_monthly_planning_line"/>
+        <field name="domain_force">['|', '|', '|', ('location_id', '=', False), ('location_id', 'child_of', user.scope_location_ids.ids), ('monthly_planning_id.location_dest_id', 'child_of', user.scope_location_ids.ids), ('monthly_planning_id.source_location_id', 'child_of', user.scope_location_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_report_monthly_planning_line_unrestricted_rule" model="ir.rule">
+        <field name="name">Monthly Planning Report Line: unrestricted</field>
+        <field name="model_id" ref="bn_planning.model_report_monthly_planning_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
 </odoo>
