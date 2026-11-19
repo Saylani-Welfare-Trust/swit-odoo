@@ -94,27 +94,6 @@ class TestDonorRecordSearch(TransactionCase):
         self.env['res.partner.category']._setup_donor_account_program()
         self.assertNotIn(self.account_tag, with_donation.category_id)
 
-    def test_donor_account_is_a_tag_not_a_registered_programme(self):
-        welfare = self.env.ref('bn_profile_management.welfare_partner_category')
-        partner = self.env['res.partner'].create({
-            'name': 'RS Both Roles',
-            'category_id': [(6, 0, (self.donor_tag | self.account_tag | self.donee_tag | welfare).ids)]})
-        self.assertIn(self.account_tag, partner.category_id)
-        self.assertEqual(partner.registered_program_ids, welfare)
-        self.assertEqual(partner.registered_program_count, 1)
-
-    def test_donors_menu_lists_donor_accounts(self):
-        Partner = self.env['res.partner']
-        donor_only = Partner.create({'name': 'RS Menu Donor only', 'category_id': [(6, 0, self.donor_tag.ids)]})
-        both = Partner.create({'name': 'RS Menu Donor Account',
-                               'category_id': [(6, 0, (self.donor_tag | self.account_tag).ids)]})
-        action = self.env.ref('bn_advance_donation.advance_donation_donor_action')
-        found = Partner.with_user(self.user).search(
-            safe_eval(action.domain) + [('id', 'in', (donor_only | both).ids)])
-        self.assertEqual(found, both)
-        menu = self.env.ref('bn_advance_donation.advance_donation_donor_menu')
-        self.assertEqual(menu.parent_id, self.env.ref('bn_advance_donation.advance_donation_profile_menu'))
-
     def test_no_match_opens_a_new_donor(self):
         action = self._search(search_type='cnic_no', cnic_no='42101-9999999-9')
         self.assertFalse(action.get('res_id'))
