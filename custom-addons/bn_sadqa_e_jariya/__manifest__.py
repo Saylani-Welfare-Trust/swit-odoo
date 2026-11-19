@@ -1,6 +1,6 @@
 {
     'name': 'Sadqa e Jariya',
-    'version': '17.0.2.6',
+    'version': '17.0.2.7',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -23,7 +23,7 @@
     'data': [
         'security/group.xml',
         'security/group_tiers.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
 
         'data/sequence.xml',
         'data/program_types.xml',

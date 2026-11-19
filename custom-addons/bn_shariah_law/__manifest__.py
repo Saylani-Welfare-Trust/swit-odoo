@@ -1,11 +1,11 @@
 {
     'name': 'Shariah Law',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.1.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Shariah Law',
-    'depends': [
+    'depends': ['bn_stock_location', 
         'bn_analytic_account_customization',
         'bn_import_donation',
         'purchase',
@@ -19,7 +19,7 @@
     'data': [
         'data/ir_module_category.xml',
         'security/group.xml',
-        'security/ir.model.access.csv',
+        'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
         
         'data/schedule_action.xml',
         'data/sequence.xml',

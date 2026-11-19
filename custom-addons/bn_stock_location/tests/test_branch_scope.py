@@ -58,3 +58,17 @@ class TestBranchScope(TransactionCase):
         self.employee.analytic_account_id = False
         self.user.allowed_location_ids = self.other_store
         self.assertEqual(self._seen(self.user), self.other_store)
+
+    def test_analytic_accounts_in_scope(self):
+        """Records without a location are matched on the analytic accounts
+        tagged on the user's locations (and the user's own Branch)."""
+        self.assertEqual(self.user.scope_analytic_account_ids, self.branch | self.city)
+        self.employee.analytic_account_id = False
+        self.user.allowed_location_ids = self.other_store
+        self.assertEqual(self.user.scope_analytic_account_ids, self.other_branch)
+        # a sub-location of an allowed location brings its analytic account
+        sub = self.env['stock.location'].create({
+            'name': 'Scope Sub', 'usage': 'internal', 'location_id': self.other_store.id,
+            'analytic_account_id': self.other_city.id})
+        self.user.invalidate_recordset(['scope_analytic_account_ids'])
+        self.assertEqual(self.user.scope_analytic_account_ids, self.other_branch | sub.analytic_account_id)
