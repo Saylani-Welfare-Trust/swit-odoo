@@ -36,6 +36,12 @@ class ResPartnerCategory(models.Model):
             else:
                 tag = Category.create(dict(vals, name='Donor Account'))
         self._tag_active_donors(tag)
+        # Donor Account is not counted in "Registered In" / Programmes any more:
+        # the stored count of the donors that have it is computed again
+        Partner = self.env['res.partner'].sudo().with_context(active_test=False)
+        donors = Partner.search([('category_id', 'in', tag.ids)])
+        if donors:
+            self.env.add_to_compute(Partner._fields['registered_program_count'], donors)
 
     @api.model
     def _tag_active_donors(self, tag):
