@@ -29,6 +29,7 @@ def _form_tab_attrs():
         attrs[f'_search_{prefix}_id'] = _search_form_tab(submission)
         attrs[f'{prefix}_id'] = fields.Many2one('sadqa.jariya.form', string=string, compute='_compute_form_tab_ids',
                                                 search=f'_search_{prefix}_id')
+        attrs[f'{prefix}_form_kind'] = fields.Char(related=f'{prefix}_id.form_kind', string=f'Portal Form Kind ({string})')
         for section in FORM_SECTIONS:
             for key, label, field_type in section:
                 attrs[f'{prefix}_{field_name(key)}'] = FIELD_TYPES[field_type](related=f'{prefix}_id.{field_name(key)}', string=f'{label} ({string})')
@@ -37,7 +38,8 @@ def _form_tab_attrs():
     def _compute_form_tab_ids(self):
         for rec in self:
             for prefix, (submission, _string) in FORM_TABS.items():
-                rec[f'{prefix}_id'] = rec.form_ids.filtered(lambda f: f.submission == submission)[:1]
+                # after a reopened inquiry: the latest officer form
+                rec[f'{prefix}_id'] = rec.form_ids.filtered(lambda f: f.submission == submission).sorted('id')[-1:]
 
     attrs['_compute_form_tab_ids'] = _compute_form_tab_ids
     return attrs

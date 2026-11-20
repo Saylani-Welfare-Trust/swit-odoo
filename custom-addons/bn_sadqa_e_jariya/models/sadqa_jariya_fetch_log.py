@@ -86,7 +86,17 @@ class SadqaJariyaFetchLog(models.Model):
                 continue
             value = form[key]
             field_type = Model._fields[field_name].type
-            if field_type == 'integer':
+            if field_type == 'binary':
+                # signed URL valid 15 minutes: a failed download fails the import, the row is not acknowledged
+                # and the next sync gets a fresh URL
+                if not value:
+                    continue
+                try:
+                    value = self._portal_picture(value)
+                except Exception as e:
+                    raise UserError(_("Photo %(photo)s could not be downloaded (%(error)s); the form is imported again on the next sync.",
+                                      photo=key, error=e)) from e
+            elif field_type == 'integer':
                 value = self._as_int(value)
             elif field_type == 'float':
                 value = self._as_float(value)
@@ -99,11 +109,14 @@ class SadqaJariyaFetchLog(models.Model):
             vals[field_name] = value
         return vals
 
-    def _create_portal_form(self, application, submission, form, institution_type, submitted_at):
+    def _create_portal_form(self, application, submission, form, row, submitted_at, report=None):
+        institution_type = row.get('institutionType')
         self.env['sadqa.jariya.form'].create(dict(
             self._portal_form_vals(form),
             application_id=application.id,
             submission=submission,
+            form_kind=row.get('formKind'),
+            report_id=report.id if report else False,
             institution_type=institution_type if institution_type in ('masjid', 'madrasa') else application.institution_type,
             submitted_at=self._as_datetime(submitted_at),
         ))
@@ -130,16 +143,19 @@ class SadqaJariyaFetchLog(models.Model):
         }
         if row.get('institutionType') in ('masjid', 'madrasa'):
             vals['institution_type'] = row['institutionType']
-        for key, field_name in (('institutionName', 'institute_name'), ('institutionAddress', 'address'),
+        for key, field_name in (('institutionName', 'institute_name'), ('institutionAddress', 'address'), ('accountTitle', 'account_title'),
                                 ('accountNumber', 'account_number'), ('applicantLocationLink', 'applicant_location_link')):
             value = form.get(key) if form.get(key) not in (None, '') else base_info.get(key)
+            # account details entered in Odoo before Complete are kept; the donee's stay on the Donee Form tab
+            if field_name in ('account_title', 'account_number') and application[field_name]:
+                continue
             if value not in (None, ''):
                 vals[field_name] = str(value)
         if application.state in ('completed', 'form_sent'):
             vals['state'] = 'form_filled'
         application.write(vals)
 
-        self._create_portal_form(application, 'donee', form, row.get('institutionType'), row.get('submittedAt'))
+        self._create_portal_form(application, 'donee', form, row, row.get('submittedAt'))
         application.message_post(body=_("📝 Form submitted by the donee on the portal (%s), imported.")
                                  % (row.get('submittedAt') or '').replace('T', ' ')[:16])
         self._import_donee_picture(application.donee_id, row)
@@ -185,11 +201,8 @@ class SadqaJariyaFetchLog(models.Model):
             return False
         officer = inquiry.get('officer') or {}
         code = officer.get('employeeId')
-        # the officer's own completed form (null for applications made before the three-section forms)
-        if isinstance(inquiry.get('form'), dict) and not application.officer_form_id:
-            self._create_portal_form(application, 'officer', inquiry['form'], row.get('institutionType'), inquiry.get('completedAt'))
         employee = self.env['hr.employee'].search([('barcode', '=', code)], limit=1) if code else self.env['hr.employee']
-        self.env['sadqa.jariya.inquiry.report'].create({
+        report = self.env['sadqa.jariya.inquiry.report'].create({
             'application_id': application.id,
             'external_id': inquiry.get('id'),
             'status': 'completed',
@@ -199,6 +212,9 @@ class SadqaJariyaFetchLog(models.Model):
             'officer_employee_code': code,
             'report_date': self._as_datetime(inquiry.get('completedAt')),
         })
+        # the officer's own completed form and photos (null for applications made before the three-section forms)
+        if isinstance(inquiry.get('form'), dict):
+            self._create_portal_form(application, 'officer', inquiry['form'], row, inquiry.get('completedAt'), report)
         vals = {'portal_status': row.get('status')}
         if application.state in ('form_filled', 'send_for_inquiry'):
             vals['state'] = 'inquiry'

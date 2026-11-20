@@ -3,11 +3,8 @@ import re
 from odoo import fields, models
 
 # Institutional form field reference of the portal contract: (key, English label, type) per section.
-# The portal sends one flat camelCase form; its keys are stored on snake_case fields (mdNumber -> md_number).
+# The portal sends one flat camelCase form; its keys are stored on snake_case fields (accountTitle -> account_title).
 GENERAL_FIELDS = (
-    ('mdNumber', 'MD Number', 'char'),
-    ('newCodeSerial', 'New Code / Serial Number', 'char'),
-    ('caseNumber', 'Case Number', 'char'),
     ('requestDate', 'Request Date', 'date'),
     ('institutionName', 'Madrasa / Masjid Name', 'char'),
     ('institutionAddress', 'Full Address', 'text'),
@@ -20,6 +17,8 @@ GENERAL_FIELDS = (
     ('teachingRooms', 'Teaching Rooms', 'integer'),
     ('residentialRooms', 'Residential Rooms', 'integer'),
     ('totalArea', 'Total Madrasa / Masjid Area', 'char'),
+    # entered by the donee and by the officer on the portal, never sent by Odoo
+    ('accountTitle', 'Account Title', 'char'),
     ('accountNumber', 'Account Number', 'char'),
     ('cnicNumber', 'CNIC Number', 'char'),
     ('monthlyExpense', 'Total Monthly Expenses', 'float'),
@@ -35,6 +34,15 @@ GENERAL_FIELDS = (
     ('cleanlinessEnv', 'Cleanliness', 'char'),
     ('committeeMembers', 'Number of Committee Members', 'integer'),
     ('monthlyMeetings', 'Number of Monthly Meetings', 'integer'),
+)
+
+# signed URLs valid 15 minutes: downloaded on import, before the ACK; either user may leave one out
+PHOTO_FIELDS = (
+    ('applicationImage', 'Application Photo', 'image'),
+    ('institutionImage', 'Institution Photo', 'image'),
+    ('assemblyImage', 'Assembly Photo', 'image'),
+    ('studentsStudyingImage', 'Students During Lessons', 'image'),
+    ('mealtimeImage', 'Students at Mealtime', 'image'),
 )
 
 MASJID_FIELDS = (
@@ -73,19 +81,13 @@ MADRASA_FIELDS = tuple(
     ('totalResidential', 'Total Residential Students', 'integer'),
     ('totalNonResidential', 'Total Non-residential Students', 'integer'),
     ('totalMadrasaStudents', 'Total Madrasa Students (Male and Female)', 'integer'),
-    ('presentStudents', 'Present Students', 'integer'),
-    ('absentStudents', 'Absent Students', 'integer'),
     ('staffDarsNizami', 'Dars-e-Nizami Staff', 'integer'),
     ('staffHifzNazra', 'Hifz and Nazra Staff', 'integer'),
     ('staffNonTeaching', 'Non-teaching Staff', 'integer'),
     ('totalStaff', 'Total Staff', 'integer'),
-    ('prevTestPercentage', 'Previous Test Percentage', 'char'),
     ('currTestPercentage', 'Current Test Percentage', 'char'),
     ('orgStudentsCount', 'Students Affiliated with the Organization', 'integer'),
     ('orgStudentExamPercentage', 'Exam Percentage of Affiliated Students', 'char'),
-    ('prevInquiryPercentage', 'Previous Inquiry Report Percentage', 'char'),
-    # a string on the portal, N/A when there was no previous inquiry
-    ('prevInquiryDate', 'Previous Inquiry Date', 'char'),
 )
 
 # construction, and flood-institute after its three flood fields
@@ -104,9 +106,10 @@ FLOOD_FIELDS = (
     ('statusAfterFlood', 'Institution After the Flood', 'text'),
 )
 
-FORM_SECTIONS = (GENERAL_FIELDS, MASJID_FIELDS, MADRASA_FIELDS, CONSTRUCTION_FIELDS, FLOOD_FIELDS)
+FORM_SECTIONS = (GENERAL_FIELDS, PHOTO_FIELDS, MASJID_FIELDS, MADRASA_FIELDS, CONSTRUCTION_FIELDS, FLOOD_FIELDS)
 
-FIELD_TYPES = {'char': fields.Char, 'text': fields.Text, 'integer': fields.Integer, 'float': fields.Float, 'date': fields.Date}
+FIELD_TYPES = {'char': fields.Char, 'text': fields.Text, 'integer': fields.Integer, 'float': fields.Float, 'date': fields.Date,
+               'image': fields.Image}
 
 
 def field_name(key):
@@ -120,20 +123,26 @@ def _form_attrs():
         '_description': 'Sadqa e Jariya Portal Form',
         '_order': 'submission',
         '__module__': __name__,
-        '__doc__': "A completed portal form: the donee's (getSubmittedForms form) or the officer's own (getCompletedInquiries inquiry.form)",
+        '__doc__': "A completed portal form: the donee's (getSubmittedForms form) or an officer's own (getCompletedInquiries inquiry.form)",
         'application_id': fields.Many2one('sadqa.jariya', string='Application', required=True, ondelete='cascade'),
         'submission': fields.Selection([('donee', 'Donee'), ('officer', 'Inquiry Officer')], string='Submitted By', required=True),
         'institution_type': fields.Selection([('masjid', 'Masjid'), ('madrasa', 'Madrasa')], string='Institution Type'),
+        # the row's formKind: construction / flood-institute forms (legacy rows) carry those sections
+        'form_kind': fields.Char('Portal Form Kind'),
         'submitted_at': fields.Datetime('Submitted At'),
+        # officer forms: one per portal report (a reopened inquiry is a new report)
+        'report_id': fields.Many2one('sadqa.jariya.inquiry.report', string='Inquiry Report', ondelete='cascade'),
         '_sql_constraints': [
-            ('submission_unique', 'unique(application_id, submission)', 'An application has one donee form and one officer form.'),
+            ('report_unique', 'unique(report_id)', 'An inquiry report has one officer form.'),
         ],
         # portal key -> field
         '_portal_form_fields': {key: field_name(key) for section in FORM_SECTIONS for key, _label, _type in section},
     }
     for section in FORM_SECTIONS:
         for key, label, field_type in section:
-            attrs[field_name(key)] = FIELD_TYPES[field_type](label)
+            # photos up to 10 MB on the portal, kept at most 1920px here
+            extra = {'max_width': 1920, 'max_height': 1920} if field_type == 'image' else {}
+            attrs[field_name(key)] = FIELD_TYPES[field_type](label, **extra)
     return attrs
 
 
