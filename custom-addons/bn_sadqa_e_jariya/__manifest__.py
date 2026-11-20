@@ -31,6 +31,7 @@
         'data/ir_cron.xml',
         'data/server_action_fetch.xml',
         'data/mail_template.xml',
+        'data/move_portal_photos.xml',
 
         'reports/collection_report.xml',
         'reports/donee_profile_report.xml',
