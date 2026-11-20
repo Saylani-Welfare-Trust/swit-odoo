@@ -42,7 +42,7 @@
     <!-- the existing groups (group.xml is noupdate) -->
     <function model="res.groups" name="write">
         <value eval="[ref('group_institutional_disbursement')]"/>
-        <value eval="{'name': 'User', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(5, 0, 0)], 'comment': 'Day-to-day access: applications (complete, send form, portal status, inquiry, HOD approval, recurring orders), Record Search and donees.'}"/>
+        <value eval="{'name': 'User', 'category_id': ref('module_sadqa_e_jariya'), 'implied_ids': [(6, 0, [ref('bn_profile_management.profile_management_user_group')])], 'comment': 'Day-to-day access: applications (complete, send form, portal status, inquiry, HOD approval, recurring orders), and the Profile menu (Record Search, donees). Includes Profile Management / User for that, but not its app menu.'}"/>
     </function>
     <function model="res.groups" name="write">
         <value eval="[ref('group_sadqa_jariya_hod')]"/>
