@@ -1,3 +1,4 @@
+from markupsafe import Markup
 import json
 import logging
 import re
@@ -320,6 +321,7 @@ class SadqaJariya(models.Model):
         if not self.inquiry_acknowledged_at:
             self._acknowledge('acknowledgeInquiry', 'inquiry_acknowledged_at', self.inquiry_report_ids.sorted('id')[-1:].external_id)
         result = self._portal_officer_call('reopenInquiry', officer)
+        self._reset_decisions_for_new_inquiry()
         self.write({
             'state': 'send_for_inquiry',
             'employee_id': officer.id,
@@ -329,6 +331,22 @@ class SadqaJariya(models.Model):
         })
         self.message_post(body=_("🔁 Inquiry reopened on the portal for %s.") % officer.name)
         return self._show_notification(_('Reopen Inquiry'), _('Inquiry reopened, %s can complete a new report.') % officer.name, 'success')
+
+    def _reset_decisions_for_new_inquiry(self):
+        """A reopened inquiry is decided again on its new report: the HOD / Committee remarks and the
+        members' decisions of the previous one are kept in the chatter, then cleared."""
+        self.ensure_one()
+        decided = self.committee_line_ids.filtered(lambda l: l.is_approved or l.is_rejected or l.remarks)
+        previous = [(_('HOD Remarks'), self.hod_remarks), (_('Committee Remarks'), self.committee_remarks)]
+        previous += [(line.member_id.name, '%s - %s' % (_('Approved') if line.is_approved else _('Rejected') if line.is_rejected else '-',
+                                                        line.remarks or '')) for line in decided]
+        previous = [(label, value) for label, value in previous if value]
+        if previous:
+            self.message_post(body=Markup('%s<ul>%s</ul>') % (
+                _('Decisions on the previous inquiry (cleared for the new one):'),
+                Markup().join(Markup('<li>%s: %s</li>') % (label, value) for label, value in previous)))
+        decided.write({'is_approved': False, 'is_rejected': False, 'remarks': False})
+        self.write({'hod_remarks': False, 'committee_remarks': False})
 
     def action_change_inquiry_officer(self, officer):
         """changeInquiryOfficer: the open inquiry (same report) goes to ``officer``"""

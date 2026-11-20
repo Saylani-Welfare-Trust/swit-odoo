@@ -78,6 +78,8 @@ class DistributionCenter(models.Model):
     def action_welfare_approve(self):
         self.ensure_one()
         self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_welfare_approval_group', _('Welfare Approval'))
+        if self.state != 'item_selected' or self.type != 'jahaiz':
+            raise ValidationError(_('Only Jahaiz requests with their items selected are approved by Welfare.'))
 
         self.state = 'welfare_approved'
 
@@ -87,6 +89,11 @@ class DistributionCenter(models.Model):
         self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_manager_group', _('Manager'))
 
         PurchaseRequisition = self.env['purchase.requisition']
+        # once, after the items are selected (and approved by Welfare for Jahaiz)
+        allowed = ('welfare_approved',) if self.type == 'jahaiz' else ('item_selected', 'welfare_approved')
+        if self.state not in allowed or self.purchase_requisition_id:
+            raise ValidationError(_('The purchase request of %s is issued once, after the items are selected'
+                                    ' (and approved by Welfare for Jahaiz).') % self.name)
 
         if not self.distribution_center_line_ids:
             raise ValidationError("No distribution lines found to create a Purchase Request.")
@@ -117,6 +124,9 @@ class DistributionCenter(models.Model):
         """Manually create and confirm the outgoing Delivery Note."""
         self.ensure_one()
         self._check_livestock_group('bn_livestock_slaugther.livestock_slaugther_manager_group', _('Manager'))
+        # once, at its step: a second run would deliver the items twice
+        if self.state != 'purchase_requisition' or self.picking_id:
+            raise ValidationError(_('The delivery note of %s is issued once, from the Purchase Requisition step.') % self.name)
 
         purchase_order = self.purchase_requisition_id.purchase_ids.filtered(lambda x: x.state in ['purchase', 'done'])
 

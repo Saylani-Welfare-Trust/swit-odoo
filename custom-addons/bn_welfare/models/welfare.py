@@ -1,3 +1,4 @@
+from markupsafe import Markup
 from odoo import models, fields, _, api
 from odoo.exceptions import AccessError, ValidationError, UserError
 
@@ -590,6 +591,8 @@ class Welfare(models.Model):
 
     def action_check_portal_status(self):
         self.ensure_one()
+        # only an inquiry on its way: applied later it would move the welfare back to Inquiry
+        self._check_welfare_state(('send_for_inquiry',), _('Check Portal Status'))
 
         if not self.is_synced:
             donee_data = self._check_donee_exists_in_portal()
@@ -658,7 +661,8 @@ class Welfare(models.Model):
                     all_remarks.append(remarks)
                 document_sources.append(report)
 
-        if app_state == 'inquiry_complete':
+        # the completed inquiry moves the welfare on only from Send for Inquiry
+        if app_state == 'inquiry_complete' and self.state == 'send_for_inquiry':
             write_vals = {
                 'inquiry_media':       '<br/>'.join(all_media) if all_media else '',
                 'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
@@ -1193,7 +1197,15 @@ class Welfare(models.Model):
         self._check_welfare_group(WF % 'group_bn_welfare_user', _('Reopen Inquiry'))
         self._check_welfare_state(WELFARE_REOPEN_STATES, _('Reopen Inquiry'))
         self._welfare_officer_call('reopenInquiry', officer)
-        self.write({'state': 'send_for_inquiry', 'employee_id': officer.id})
+        # decided again on the new report: the previous remarks stay in the chatter
+        previous = [(_('Committee Remarks'), self.committee_remarks), (_('HOD Remarks'), self.hod_remarks)]
+        previous = [(label, value) for label, value in previous if value]
+        if previous:
+            self._message_log(body=Markup('%s<ul>%s</ul>') % (
+                _('Remarks on the previous inquiry (cleared for the new one):'),
+                Markup().join(Markup('<li>%s: %s</li>') % (label, value) for label, value in previous)))
+        self.write({'state': 'send_for_inquiry', 'employee_id': officer.id,
+                    'committee_remarks': False, 'hod_remarks': False})
         self._message_log(body=_("🔁 Inquiry reopened on the portal for %s.") % officer.name)
         return self._show_notification(_('Reopen Inquiry'), _('Inquiry reopened, %s can complete a new report.') % officer.name, 'success')
 

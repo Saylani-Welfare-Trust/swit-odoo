@@ -380,9 +380,12 @@ class AdvanceDonation(models.Model):
         self.ensure_one()
         self._check_donation_state(('draft', 'approval_1', 'approval_2', 'approved'), _('Cancel Payment'))
         
-        # Get non-disbursed lines
-        non_disbursed_lines = self.advance_donation_lines.filtered(lambda l: not l.is_disbursed)
-        
+        # A line of which anything was disbursed keeps its payment: refunding it
+        # would give the disbursed part out a second time
+        def used(line):
+            return line.is_disbursed or line.disbursed_amount > 0
+        non_disbursed_lines = self.advance_donation_lines.filtered(lambda l: not used(l))
+
         if not non_disbursed_lines:
             raise UserError('No non-disbursed lines to cancel. All lines have been disbursed.')
         
@@ -393,7 +396,7 @@ class AdvanceDonation(models.Model):
         old_receipts = self.donation_slip_ids
         
         # Calculate total disbursed amount BEFORE unlinking usage lines
-        disbursed_lines = self.advance_donation_lines.filtered(lambda l: l.is_disbursed)
+        disbursed_lines = self.advance_donation_lines.filtered(used)
         total_disbursed_amount = sum(disbursed_lines.mapped('paid_amount')) if disbursed_lines else 0
         
         # Remove all existing usage lines

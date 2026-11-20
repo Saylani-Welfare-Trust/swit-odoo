@@ -362,6 +362,9 @@ class MonthlyPlanning(models.Model):
 
     def action_set_active(self):
         for rec in self:
+            if rec.state == 'active':
+                # activating again would reset the planned quantities
+                raise ValidationError("This Monthly Planning is already active.")
             if rec.is_locked:
                 raise ValidationError(
                     "This Monthly Planning is locked and cannot be modified."

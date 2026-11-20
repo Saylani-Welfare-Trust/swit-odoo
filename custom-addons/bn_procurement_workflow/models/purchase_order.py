@@ -475,6 +475,8 @@ class PurchaseOrder(models.Model):
         if not self.env.user.has_group(CFO_GROUP):
             raise UserError(_('Only the CFO can give CFO approval.'))
         for order in self:
+            if order.state not in ('draft', 'sent'):
+                raise UserError(_('RFQ %s is no longer a request for quotation.') % order.display_name)
             if not (order.cxo_approved and order.hod_approved):
                 raise UserError(_('CXO and HOD approval are required before CFO approval.'))
             if order.cfo_approved:
