@@ -1,6 +1,7 @@
 from markupsafe import escape
 
-from odoo import models, fields, api
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class SadqaJariyaDisbursementCategory(models.Model):
@@ -113,6 +114,18 @@ class SadqaJariyaDocument(models.Model):
     ], string='Uploaded From', default='odoo', readonly=True)
     form_id = fields.Many2one('sadqa.jariya.form', string='Portal Form', ondelete='set null', readonly=True)
     display_image = fields.Html(string='Preview', compute='_compute_display_image', sanitize=False)
+
+    # Once the application is decided, its documents are the evidence of the decision
+    LOCKED_STATES = ('approve', 'recurring', 'disbursed', 'reject')
+
+    @api.ondelete(at_uninstall=False)
+    def _unlink_only_while_under_review(self):
+        if self.env.su or self.env.user.has_group('bn_sadqa_e_jariya.sadqa_e_jariya_admin_group'):
+            return
+        locked = self.filtered(lambda doc: doc.application_id.state in self.LOCKED_STATES)
+        if locked:
+            raise UserError(_('Documents of %s cannot be deleted any more: the application is decided '
+                              '(only a Sadqa e Jariya Admin can).') % ', '.join(locked.application_id.mapped('display_name')))
 
     @api.depends('image_data', 'source_url', 'document_type')
     def _compute_display_image(self):
