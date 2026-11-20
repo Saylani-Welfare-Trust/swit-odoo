@@ -78,8 +78,6 @@ class MemberApproval(models.Model):
     state = fields.Selection([
         ('draft', 'Draft'),
         ('hod_approval', 'HOD Approval'),
-        # ('cfo_approval', 'CFO Approval'),
-        # ('coo_approval', 'COO Approval'),
         ('committee_approval', 'Budget Approval'),
         ('pending', 'Waiting for Delivery'),
         ('done', 'Done'),
@@ -180,8 +178,6 @@ class MemberApproval(models.Model):
                 )
 
             budget = line.budget_id
-            # if not budget:
-            #     raise ValidationError(_('Please select a Budgetary Position for product "%s".') % line.product_id.display_name)
             
             # sudo: practical_amount reads account.budget.post, which only
             # accounting users may access; requesters just need the figure.
@@ -242,31 +238,6 @@ class MemberApproval(models.Model):
             if self.budget_amount < 0:
                 self.budget_amount = 0.0
                 
-                
-
-            # for line in self.line_ids:
-            #     # Find analytic account via product
-            #     analytic = self.env['analytical.product.line'].search(
-            #         [('product_id', '=', line.product_id.id)], limit=1
-            #     ).analytic_account_id
-            #     if analytic:
-            #         # Find active budget line(s)
-            #         budget_lines = self.env['budget.lines'].search([
-            #             ('analytic_account_id', '=', analytic.id),
-            #             ('budget_id', '=', line.budget_id.id),
-            #             ('date_from', '<=', today),
-            #             ('date_to', '>=', today),
-            #         ])
-            #         if budget_lines:
-            #             # Deduct line.subtotal (practical_amount is negative, so add)
-            #             budget_lines[0].practical_amount += line.subtotal
-            #             updated_lines |= budget_lines
-
-            # # Recompute total remaining budget
-            # self.budget_amount = sum(abs(bl.practical_amount) for bl in updated_lines)
-
-       
-
             # Within budget: go to procurement (simulate with 'done' state and create transfer)
             if self.request_type == 'internal':
                 self._create_internal_transfer()

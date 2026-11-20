@@ -301,9 +301,15 @@ class MonthlyPlanning(models.Model):
             if not pending:
                 continue
 
-            picking = plan._create_internal_transfer_for_lines(
-                pending, plan.location_dest_id
-            )
+            try:
+                # one failing plan must not stop the others' transfers
+                with self.env.cr.savepoint():
+                    picking = plan._create_internal_transfer_for_lines(
+                        pending, plan.location_dest_id
+                    )
+            except Exception:
+                _logger.exception("Cron internal transfers: could not create the transfer of plan %s.", plan.name)
+                continue
             if picking:
                 created_total += 1
                 _logger.info(

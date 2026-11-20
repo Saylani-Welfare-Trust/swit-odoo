@@ -213,7 +213,7 @@ class WelfareLine(models.Model):
             return
         
         lines = self.search([
-            ('collection_date', '=', today),
+            ('collection_date', '<=', today),
             ('state', '=', 'draft'),
             ('disbursement_category_id', '=', cash_category.id),
             ('collection_point', '=', 'bank'),
@@ -224,11 +224,14 @@ class WelfareLine(models.Model):
         _logger.info(f"Auto-creating bills for {len(lines)} welfare lines")
         for line in lines:
             try:
-                line._create_bill()
-                line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
-            except Exception as e:
-                # Log error but continue processing other lines
-                _logger.error(f"Error creating bill for Welfare Line ID {line.id}: {str(e)}")
+                # a failing line is rolled back alone; the others still get their bill
+                with self.env.cr.savepoint():
+                    line._create_bill()
+                    # delivered once its bill exists (no donee: no bill, left as is)
+                    if line.bill_id:
+                        line.state = 'delivered'
+            except Exception:
+                _logger.exception("Could not create the bill of welfare line %s", line.id)
     
     def _create_bill(self):
         """Create vendor bill for Cash + Bank collection"""

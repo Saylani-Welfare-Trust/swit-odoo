@@ -318,54 +318,56 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            pos_orders = self.env['pos.order'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'done')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                pos_orders = self.env['pos.order'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('state', '=', 'done')
+                ])
 
-            if not pos_orders:
-                return {'records_synced': 0}
+                if not pos_orders:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for order in pos_orders:
-                for line in order.lines:
-                    if not line.product_id:
-                        continue
+                for order in pos_orders:
+                    for line in order.lines:
+                        if not line.product_id:
+                            continue
 
-                    # Skip excluded products
-                    if line.product_id.display_name.lower() == self.env.company.medical_equipment_security_depsoit_product.lower() or line.product_id.display_name.lower() == self.env.company.microfinance_intallement_product.lower():
-                        continue
+                        # Skip excluded products
+                        if line.product_id.display_name.lower() == self.env.company.medical_equipment_security_depsoit_product.lower() or line.product_id.display_name.lower() == self.env.company.microfinance_intallement_product.lower():
+                            continue
 
-                    # the analytic account set on the product
-                    analytics = line.product_id.analytic_account_id
+                        # the analytic account set on the product
+                        analytics = line.product_id.analytic_account_id
                     
-                    # Process all analytic accounts found
-                    for analytic in analytics:
-                        self._add_amounts(
-                            shariah_record, daily_changes,
-                            analytic.id,
-                            pos_donation=line.price_subtotal_incl  # POSITIVE
-                        )
+                        # Process all analytic accounts found
+                        for analytic in analytics:
+                            self._add_amounts(
+                                shariah_record, daily_changes,
+                                analytic.id,
+                                pos_donation=line.price_subtotal_incl  # POSITIVE
+                            )
 
-                order.is_sync_shariah_law = True
+                    order.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='POS Donations',
-                status='success',
-                message=f"Synced {len(pos_orders)} POS orders",
-                records_synced=len(pos_orders),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='POS Donations',
+                    status='success',
+                    message=f"Synced {len(pos_orders)} POS orders",
+                    records_synced=len(pos_orders),
+                    duration=duration
+                )
 
-            return {'records_synced': len(pos_orders)}
+                return {'records_synced': len(pos_orders)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -393,50 +395,52 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            donations = self.env['donation'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'posted')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                donations = self.env['donation'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('state', '=', 'posted')
+                ])
 
-            if not donations:
-                return {'records_synced': 0}
+                if not donations:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for donation in donations:
-                if not donation.product_id:
-                    continue
+                for donation in donations:
+                    if not donation.product_id:
+                        continue
 
-                # the analytic account set on the product
-                analytics = donation.product_id.analytic_account_id
+                    # the analytic account set on the product
+                    analytics = donation.product_id.analytic_account_id
 
-                for analytic in analytics:
-                    target_analytic = analytic.analytic_account_id if hasattr(analytic, 'analytic_account_id') else analytic
-                    if target_analytic:
-                        self._add_amounts(
-                            shariah_record, daily_changes,
-                            target_analytic.id,
-                            api_donation=donation.amount  # POSITIVE
-                        )
+                    for analytic in analytics:
+                        target_analytic = analytic.analytic_account_id if hasattr(analytic, 'analytic_account_id') else analytic
+                        if target_analytic:
+                            self._add_amounts(
+                                shariah_record, daily_changes,
+                                target_analytic.id,
+                                api_donation=donation.amount  # POSITIVE
+                            )
 
-                donation.is_sync_shariah_law = True
+                    donation.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Donations',
-                status='success',
-                message=f"Synced {len(donations)} donations",
-                records_synced=len(donations),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Donations',
+                    status='success',
+                    message=f"Synced {len(donations)} donations",
+                    records_synced=len(donations),
+                    duration=duration
+                )
 
-            return {'records_synced': len(donations)}
+                return {'records_synced': len(donations)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -464,56 +468,58 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            api_donations = self.env['api.donation'].search([
-                ('is_sync_shariah_law', '=', False)
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                api_donations = self.env['api.donation'].search([
+                    ('is_sync_shariah_law', '=', False)
+                ])
 
-            if not api_donations:
-                return {'records_synced': 0}
+                if not api_donations:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for api_don in api_donations:
-                for line in api_don.donation_item_ids:
-                    product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
-                    if not product_name:
-                        continue
+                for api_don in api_donations:
+                    for line in api_don.donation_item_ids:
+                        product_name = f"{line.donation_type or ''}{line.item or ''}{line.type or ''}"
+                        if not product_name:
+                            continue
 
-                    found = self.env['gateway.config.line'].search([
-                        ('name', '=', product_name)
-                    ], limit=1)
+                        found = self.env['gateway.config.line'].search([
+                            ('name', '=', product_name)
+                        ], limit=1)
 
-                    if not found or not found.product_id:
-                        continue
+                        if not found or not found.product_id:
+                            continue
 
-                    # the analytic account set on the product
-                    analytics = found.product_id.analytic_account_id
+                        # the analytic account set on the product
+                        analytics = found.product_id.analytic_account_id
 
-                    for analytic in analytics:
-                        self._add_amounts(
-                            shariah_record, daily_changes,
-                            analytic.id,
-                            api_donation=line.total  # POSITIVE
-                        )
+                        for analytic in analytics:
+                            self._add_amounts(
+                                shariah_record, daily_changes,
+                                analytic.id,
+                                api_donation=line.total  # POSITIVE
+                            )
 
-                api_don.is_sync_shariah_law = True
+                    api_don.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='API / Wallet Donations',
-                status='success',
-                message=f"Synced {len(api_donations)} API donations",
-                records_synced=len(api_donations),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='API / Wallet Donations',
+                    status='success',
+                    message=f"Synced {len(api_donations)} API donations",
+                    records_synced=len(api_donations),
+                    duration=duration
+                )
 
-            return {'records_synced': len(api_donations)}
+                return {'records_synced': len(api_donations)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -541,48 +547,50 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            expenses = self.env['hr.expense'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'done')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                expenses = self.env['hr.expense'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('state', '=', 'done')
+                ])
 
-            if not expenses:
-                return {'records_synced': 0}
+                if not expenses:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for expense in expenses:
-                if not expense.product_id:
-                    continue
+                for expense in expenses:
+                    if not expense.product_id:
+                        continue
 
-                # the analytic account set on the product
-                analytics = expense.product_id.analytic_account_id
+                    # the analytic account set on the product
+                    analytics = expense.product_id.analytic_account_id
 
-                for analytic in analytics:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        analytic.id,
-                        expense=-expense.total_amount_currency  # NEGATIVE
-                    )
+                    for analytic in analytics:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            analytic.id,
+                            expense=-expense.total_amount_currency  # NEGATIVE
+                        )
 
-                expense.is_sync_shariah_law = True
+                    expense.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Expenses',
-                status='success',
-                message=f"Synced {len(expenses)} expenses",
-                records_synced=len(expenses),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Expenses',
+                    status='success',
+                    message=f"Synced {len(expenses)} expenses",
+                    records_synced=len(expenses),
+                    duration=duration
+                )
 
-            return {'records_synced': len(expenses)}
+                return {'records_synced': len(expenses)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -610,50 +618,52 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            purchases = self.env['purchase.order'].search([
-                ('is_sync_shariah_law', '=', False),
-                # 'done' is a confirmed order that has been locked
-                ('state', 'in', ('purchase', 'done'))
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                purchases = self.env['purchase.order'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    # 'done' is a confirmed order that has been locked
+                    ('state', 'in', ('purchase', 'done'))
+                ])
 
-            if not purchases:
-                return {'records_synced': 0}
+                if not purchases:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for purchase in purchases:
-                for line in purchase.order_line:
-                    if not line.product_id:
-                        continue
+                for purchase in purchases:
+                    for line in purchase.order_line:
+                        if not line.product_id:
+                            continue
 
-                    # the analytic account set on the product
-                    analytics = line.product_id.analytic_account_id
+                        # the analytic account set on the product
+                        analytics = line.product_id.analytic_account_id
 
-                    for analytic in analytics:
-                        self._add_amounts(
-                            shariah_record, daily_changes,
-                            analytic.id,
-                            po=-line.price_subtotal  # NEGATIVE
-                        )
+                        for analytic in analytics:
+                            self._add_amounts(
+                                shariah_record, daily_changes,
+                                analytic.id,
+                                po=-line.price_subtotal  # NEGATIVE
+                            )
 
-                purchase.is_sync_shariah_law = True
+                    purchase.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Purchase Orders (PO)',
-                status='success',
-                message=f"Synced {len(purchases)} purchase orders",
-                records_synced=len(purchases),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Purchase Orders (PO)',
+                    status='success',
+                    message=f"Synced {len(purchases)} purchase orders",
+                    records_synced=len(purchases),
+                    duration=duration
+                )
 
-            return {'records_synced': len(purchases)}
+                return {'records_synced': len(purchases)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -681,50 +691,52 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            welfare_records = self.env['welfare'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'disbursed')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                welfare_records = self.env['welfare'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('state', '=', 'disbursed')
+                ])
 
-            if not welfare_records:
-                return {'records_synced': 0}
+                if not welfare_records:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for welfare in welfare_records:
-                total_amount = self._calculate_welfare_amount(welfare)
+                for welfare in welfare_records:
+                    total_amount = self._calculate_welfare_amount(welfare)
                 
-                if total_amount <= 0:
-                    continue
+                    if total_amount <= 0:
+                        continue
 
-                # Get analytic account from welfare
-                analytic_account = self._get_analytic_account_from_welfare(welfare)
+                    # Get analytic account from welfare
+                    analytic_account = self._get_analytic_account_from_welfare(welfare)
                 
-                if analytic_account:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        analytic_account.id,
-                        welfare=-total_amount  # NEGATIVE
-                    )
+                    if analytic_account:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            analytic_account.id,
+                            welfare=-total_amount  # NEGATIVE
+                        )
 
-                welfare.is_sync_shariah_law = True
+                    welfare.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Welfare (Cash)',
-                status='success',
-                message=f"Synced {len(welfare_records)} welfare records",
-                records_synced=len(welfare_records),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Welfare (Cash)',
+                    status='success',
+                    message=f"Synced {len(welfare_records)} welfare records",
+                    records_synced=len(welfare_records),
+                    duration=duration
+                )
 
-            return {'records_synced': len(welfare_records)}
+                return {'records_synced': len(welfare_records)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -782,50 +794,52 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            microfinance_records = self.env['microfinance'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('asset_type', '=', 'cash'),
-                ('state', '=', 'done')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                microfinance_records = self.env['microfinance'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('asset_type', '=', 'cash'),
+                    ('state', '=', 'done')
+                ])
 
-            if not microfinance_records:
-                return {'records_synced': 0}
+                if not microfinance_records:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for microfinance in microfinance_records:
-                amount = self._calculate_microfinance_amount(microfinance)
+                for microfinance in microfinance_records:
+                    amount = self._calculate_microfinance_amount(microfinance)
                 
-                if amount <= 0:
-                    continue
+                    if amount <= 0:
+                        continue
 
-                analytic_account = self._get_analytic_account_from_microfinance(microfinance)
+                    analytic_account = self._get_analytic_account_from_microfinance(microfinance)
                 
-                if analytic_account:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        analytic_account.id,
-                        microfinance=-amount  # NEGATIVE
-                    )
+                    if analytic_account:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            analytic_account.id,
+                            microfinance=-amount  # NEGATIVE
+                        )
 
-                microfinance.is_sync_shariah_law = True
+                    microfinance.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Microfinance (Cash)',
-                status='success',
-                message=f"Synced {len(microfinance_records)} microfinance records",
-                records_synced=len(microfinance_records),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Microfinance (Cash)',
+                    status='success',
+                    message=f"Synced {len(microfinance_records)} microfinance records",
+                    records_synced=len(microfinance_records),
+                    duration=duration
+                )
 
-            return {'records_synced': len(microfinance_records)}
+                return {'records_synced': len(microfinance_records)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -877,51 +891,53 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            transfers = self.env['shariah.transfer'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'posted')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                transfers = self.env['shariah.transfer'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('state', '=', 'posted')
+                ])
 
-            if not transfers:
-                return {'records_synced': 0}
+                if not transfers:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for transfer in transfers:
-                # For source account - transfer out (NEGATIVE)
-                if transfer.source_analytic_account_id:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        transfer.source_analytic_account_id.id,
-                        transfer=-transfer.amount  # NEGATIVE
-                    )
+                for transfer in transfers:
+                    # For source account - transfer out (NEGATIVE)
+                    if transfer.source_analytic_account_id:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            transfer.source_analytic_account_id.id,
+                            transfer=-transfer.amount  # NEGATIVE
+                        )
                 
-                # For destination account - transfer in (POSITIVE)
-                if transfer.destination_analytic_account_id:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        transfer.destination_analytic_account_id.id,
-                        transfer=transfer.amount  # POSITIVE
-                    )
+                    # For destination account - transfer in (POSITIVE)
+                    if transfer.destination_analytic_account_id:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            transfer.destination_analytic_account_id.id,
+                            transfer=transfer.amount  # POSITIVE
+                        )
                 
-                transfer.is_sync_shariah_law = True
+                    transfer.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Transfers (Cron Backup)',
-                status='success',
-                message=f"Synced {len(transfers)} transfers (backup sync)",
-                records_synced=len(transfers),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Transfers (Cron Backup)',
+                    status='success',
+                    message=f"Synced {len(transfers)} transfers (backup sync)",
+                    records_synced=len(transfers),
+                    duration=duration
+                )
 
-            return {'records_synced': len(transfers)}
+                return {'records_synced': len(transfers)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()
@@ -949,49 +965,51 @@ class ShariahLaw(models.Model):
         start_time = datetime.now()
         
         try:
-            dik_records = self.env['donation.in.kind'].search([
-                ('is_sync_shariah_law', '=', False),
-                ('state', '=', 'box_validate')
-            ])
+            # all or nothing: a failure rolls back the flags and the amounts together
+            with self.env.cr.savepoint():
+                dik_records = self.env['donation.in.kind'].search([
+                    ('is_sync_shariah_law', '=', False),
+                    ('state', '=', 'box_validate')
+                ])
 
-            if not dik_records:
-                return {'records_synced': 0}
+                if not dik_records:
+                    return {'records_synced': 0}
 
-            shariah_record = defaultdict(lambda: self._get_default_record())
-            daily_changes = defaultdict(lambda: self._get_default_record())
+                shariah_record = defaultdict(lambda: self._get_default_record())
+                daily_changes = defaultdict(lambda: self._get_default_record())
 
-            for dik in dik_records:
-                amount = self._calculate_dik_amount(dik)
+                for dik in dik_records:
+                    amount = self._calculate_dik_amount(dik)
                 
-                if amount <= 0:
-                    continue
+                    if amount <= 0:
+                        continue
 
-                analytic_account = dik.analytical_account_id or self._get_analytic_account_from_dik(dik)
+                    analytic_account = dik.analytical_account_id or self._get_analytic_account_from_dik(dik)
                 
-                if analytic_account:
-                    self._add_amounts(
-                        shariah_record, daily_changes,
-                        analytic_account.id,
-                        dik=amount  # POSITIVE
-                    )
+                    if analytic_account:
+                        self._add_amounts(
+                            shariah_record, daily_changes,
+                            analytic_account.id,
+                            dik=amount  # POSITIVE
+                        )
 
-                dik.is_sync_shariah_law = True
+                    dik.is_sync_shariah_law = True
 
-            self._update_cumulative_totals(shariah_record)
-            self._update_daily_balances(daily_changes)
-            self._recompute_balances()
+                self._update_cumulative_totals(shariah_record)
+                self._update_daily_balances(daily_changes)
+                self._recompute_balances()
 
-            duration = (datetime.now() - start_time).total_seconds()
-            self._create_sync_log(
-                config=config,
-                module_name='Donation In Kind (DIK)',
-                status='success',
-                message=f"Synced {len(dik_records)} DIK records",
-                records_synced=len(dik_records),
-                duration=duration
-            )
+                duration = (datetime.now() - start_time).total_seconds()
+                self._create_sync_log(
+                    config=config,
+                    module_name='Donation In Kind (DIK)',
+                    status='success',
+                    message=f"Synced {len(dik_records)} DIK records",
+                    records_synced=len(dik_records),
+                    duration=duration
+                )
 
-            return {'records_synced': len(dik_records)}
+                return {'records_synced': len(dik_records)}
 
         except Exception as e:
             duration = (datetime.now() - start_time).total_seconds()

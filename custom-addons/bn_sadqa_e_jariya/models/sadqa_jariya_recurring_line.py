@@ -89,7 +89,7 @@ class SadqaJariyaRecurringLine(models.Model):
     def _auto_create_bank_bills(self):
         """Scheduled action: bills for recurring Bank lines due on their collection date"""
         lines = self.search([
-            ('collection_date', '=', fields.Date.today()),
+            ('collection_date', '<=', fields.Date.today()),
             ('state', '=', 'draft'),
             ('disbursement_category_id.name', '=', 'Bank'),
             ('collection_point', '=', 'bank'),
@@ -101,7 +101,9 @@ class SadqaJariyaRecurringLine(models.Model):
             try:
                 with self.env.cr.savepoint():
                     line._create_bill()
-                    line.state = 'delivered'
+                    # delivered once its bill exists (no donee: no bill, left as is)
+                    if line.bill_id:
+                        line.state = 'delivered'
             except Exception:
                 _logger.exception("Could not create bill for Sadqa e Jariya recurring line %s", line.id)
 

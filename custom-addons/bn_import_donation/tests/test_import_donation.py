@@ -244,3 +244,21 @@ class TestImportDonation(TransactionCase):
         self._api_setup()
         with self.assertRaises(Exception):
             self.env.company.with_user(self.manager).read(['client_secret'])
+
+    def test_rounding_difference_parked_on_difference_account(self):
+        """Amounts with more decimals than the currency: the entry lines are
+        rounded and the remaining difference goes to the Difference Account."""
+        currency = self.env.company.currency_id
+        accounts = self.env['account.account'].search([('company_id', '=', self.env.company.id)], limit=3)
+        gateway = self.env['gateway.config'].create({'name': 'Rounding Gateway', 'type': 'gateway'})
+        lines = [(0, 0, {'account_id': accounts[0].id, 'debit': 10.0})] + [
+            (0, 0, {'account_id': accounts[1].id, 'credit': 3.333}) for _i in range(3)]
+        with self.assertRaises(UserError):
+            gateway._balance_entry_lines(lines, currency, 'Test')  # no Difference Account
+        gateway.difference_account_id = accounts[2]
+        balanced = gateway._balance_entry_lines(lines, currency, 'Test')
+        self.assertEqual(len(balanced), 5)
+        self.assertEqual(balanced[-1][2]['account_id'], accounts[2].id)
+        self.assertAlmostEqual(sum(l[2]['debit'] for l in balanced), sum(l[2]['credit'] for l in balanced))
+        # already balanced: nothing added
+        self.assertEqual(len(gateway._balance_entry_lines(lines[:2] + [(0, 0, {'account_id': accounts[1].id, 'credit': 6.667})], currency, 'Test')), 3)

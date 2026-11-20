@@ -110,7 +110,13 @@ class ShariahTransfer(models.Model):
                 raise UserError(_('The amount of a transfer must be positive.'))
             if rec.source_analytic_account_id == rec.destination_analytic_account_id:
                 raise UserError(_('The source and destination segments must differ.'))
-            
+
+            # The transfer rules decide (the form only shows them): refused when no rule
+            # allows this source, destination or amount
+            rule = self.env['segment.transfer.rule'].check_transfer_allowed(
+                rec.source_analytic_account_id.id, rec.destination_analytic_account_id.id, rec.amount)
+            rec.rule_id = rule
+
             # Check if member approval is required and not yet approved
             if rec.requires_approval and not rec.member_posted:
                 rec.state = 'member_approval'

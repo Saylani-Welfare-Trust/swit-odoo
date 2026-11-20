@@ -316,7 +316,8 @@ May Allah bless you!
             if not credit_account:
                 raise ValidationError(_("Missing credit account for product %s") % line.product_id.name)
 
-            line_amount = line.amount * line.quantity
+            # rounded per line, the debit being their sum: the entry always balances
+            line_amount = self.env.company.currency_id.round(line.amount * line.quantity)
             line_vals.append((0, 0, {
                 "name": credit_account.name,
                 "account_id": credit_account.id,

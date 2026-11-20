@@ -1,6 +1,6 @@
 {
     'name': 'Advance Donation',
-    'version': '17.0.1.4.3',
+    'version': '17.0.1.4.4',
     'description': "",
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',

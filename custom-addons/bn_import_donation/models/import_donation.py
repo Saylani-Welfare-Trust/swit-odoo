@@ -574,12 +574,15 @@ class ImportDonation(models.Model):
                 ) % {'picking': picking.display_name, 'state': picking.state})
 
         # ACCOUNT MOVE (left in Draft for review by Accounts)
+        # Each line rounded to the currency, the debit being the total of the file:
+        # a rounding difference between them is parked on the gateway's
+        # Difference Account, so the entry always balances.
+        currency = journal.currency_id or self.company_id.currency_id
         debit = (0, 0, {
             'account_id': self.gateway_config_id.account_id.id,
             'name': f"Donations {self.name}",
             'debit': total,
         })
-
         credits = [
             (0, 0, {
                 'account_id': acc,
@@ -588,13 +591,14 @@ class ImportDonation(models.Model):
             })
             for acc, amt in credit_groups.items()
         ]
+        lines = self.gateway_config_id._balance_entry_lines([debit] + credits, currency, self.name)
 
         move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'ref': self.name,
             'import_donation_id': self.id,
-            'line_ids': [debit] + credits,
+            'line_ids': lines,
         })
 
         donations.write({'state': 'posted', 'journal_id': journal.id})

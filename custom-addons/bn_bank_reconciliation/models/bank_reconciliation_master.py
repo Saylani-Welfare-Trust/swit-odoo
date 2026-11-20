@@ -203,11 +203,6 @@ class BankReconciliationMaster(models.Model):
 
     file = fields.Binary(string='File', attachment=True)
     file_name = fields.Char(string='File Name')
-    # file_type = fields.Selection([
-    #     ('csv', 'CSV'),
-    #     ('xls', 'Excel (.xls)'),
-    #     ('xlsx', 'Excel (.xlsx)'),
-    # ], string='File Type', compute='_compute_file_type', store=False)
     delimiter = fields.Selection([
         (',', 'Comma (,)'),
         (';', 'Semicolon (;)'),

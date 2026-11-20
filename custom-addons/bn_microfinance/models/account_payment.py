@@ -17,18 +17,15 @@ class AccountRegisterPayments(models.TransientModel):
         return res
     
     def action_create_payments(self):
+        """A cash loan in Treasury is completed once its disbursement bill is
+        paid: found through the bills this payment pays (not through the memo,
+        which anyone can type), and only when they are fully paid."""
+        bills = self.line_ids.move_id
         res = super().action_create_payments()
-
-
-        microfinance = self.env['microfinance'].sudo().search([
-            ('name', '=', self.communication)
-        ], limit=1)
-
-        if microfinance and microfinance.asset_type == 'cash':
-            if microfinance.state == 'treasury':
-                microfinance._complete_application()
-
+        loans = self.env['microfinance'].sudo().search([
+            ('bill_ids', 'in', bills.ids), ('asset_type', '=', 'cash'), ('state', '=', 'treasury')])
+        for loan in loans:
+            posted = loan.bill_ids.filtered(lambda bill: bill.state == 'posted')
+            if posted and all(bill.payment_state in ('paid', 'in_payment') for bill in posted):
+                loan._complete_application()
         return res
-
-
-

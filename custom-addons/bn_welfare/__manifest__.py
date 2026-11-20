@@ -1,6 +1,6 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.6.6',
+    'version': '17.0.1.6.8',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
