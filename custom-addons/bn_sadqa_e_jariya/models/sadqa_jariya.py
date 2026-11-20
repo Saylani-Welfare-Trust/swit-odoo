@@ -30,8 +30,8 @@ order_type_selection = [
     ('recurring', 'Recurring'),
 ]
 
-# Revert moves one step back, only where nothing was sent to the portal yet or it's all in Odoo:
-# the portal contract has no correction / reopening / officer reassignment
+# Revert moves one step back, only where nothing was sent to the portal yet or it's all in Odoo
+# (the portal has no form correction; a new inquiry goes through Reopen Inquiry, see sadqa_jariya_portal.py)
 REVERT_STATE = {
     'completed': 'draft',
     'hod_approve': 'inquiry',

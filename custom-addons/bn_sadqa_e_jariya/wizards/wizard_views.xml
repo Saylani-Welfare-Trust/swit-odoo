@@ -45,4 +45,29 @@
         </field>
     </record>
 
+    <record id="sadqa_jariya_officer_wizard_view_form" model="ir.ui.view">
+        <field name="name">sadqa.jariya.officer.wizard.view.form</field>
+        <field name="model">sadqa.jariya.officer.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="mode" invisible="1"/>
+                <field name="employee_category_id" invisible="1"/>
+                <div class="text-muted mb-2" invisible="mode != 'reopen'">
+                    The portal opens a new inquiry report for this officer; the completed one stays on the application.
+                </div>
+                <div class="text-muted mb-2" invisible="mode != 'change'">
+                    The open inquiry moves to this officer, who completes the same report.
+                </div>
+                <group>
+                    <field name="application_id"/>
+                    <field name="employee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                </group>
+                <footer>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
 </odoo>
