@@ -22,6 +22,12 @@ class ReturnMicrofinanceProduct(models.TransientModel):
         self.microfinance_id._mf_check(_('Recover'), ('in_recovery',), 'bn_microfinance.microfinance_recovery_group')
         if not self.product_id or not self.destination_location_id:
             raise UserError(_('Please select the product and the destination location.'))
+        # once: the loan stays In Recovery until its recovery receipt is validated
+        open_recovery = self.microfinance_id.sudo().picking_ids.filtered(
+            lambda p: p.picking_type_id.program_type == 'microfinance_recovery' and p.state not in ('done', 'cancel'))
+        if open_recovery:
+            raise UserError(_('The recovery of %(loan)s is already on its way (%(receipt)s): validate or cancel it first.') % {
+                'loan': self.microfinance_id.display_name, 'receipt': ', '.join(open_recovery.mapped('name'))})
         # Stock created as superuser: the Recovery group checked above is the gate.
         stock_move = self.env['stock.move'].sudo().create({
             'name': f'Recovered Product of Loan {self.source_document}',

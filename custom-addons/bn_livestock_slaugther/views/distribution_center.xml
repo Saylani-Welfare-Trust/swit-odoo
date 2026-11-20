@@ -21,7 +21,7 @@
                 <header>
                     <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'draft'" />
                     <button groups="bn_livestock_slaugther.livestock_slaugther_welfare_approval_group" string="Welfare" name="action_welfare_approve" type="object" class="oe_highlight" invisible="state != 'item_selected' or type != 'jahaiz'" />
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_manager_group" string="Issue Purchase Requisition" name="action_issue_purchase_requisition" type="object" class="oe_highlight" invisible="state not in ['item_selected', 'welfare_approved']" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_manager_group" string="Issue Purchase Requisition" name="action_issue_purchase_requisition" type="object" class="oe_highlight" invisible="purchase_requisition_id or state not in ['item_selected', 'welfare_approved'] or (type == 'jahaiz' and state != 'welfare_approved')" />
                     <button groups="bn_livestock_slaugther.livestock_slaugther_manager_group" string="Issue Delivery Note" name="action_issue_delivery_note" type="object" class="oe_highlight" invisible="state != 'purchase_requisition'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="draft, item_selected, purchase_requisition, delivery_note"/>

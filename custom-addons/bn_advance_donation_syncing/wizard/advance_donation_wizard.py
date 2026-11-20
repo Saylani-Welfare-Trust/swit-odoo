@@ -3,6 +3,30 @@ from odoo.exceptions import UserError
 from odoo.tools import float_compare
 
 
+
+# A donation is linked to a record that is still open (as the buttons show it),
+# and to one donation only: relinking would leave the first one reserved forever
+TARGET_OPEN_STATES = {
+    'microfinance': ('draft', 'hod_approve', 'mem_approve'),
+    'livestock.slaugther': ('not_received',),
+}
+TARGET_CLOSED_STATES = {
+    'welfare.line': ('disbursed', 'cancel'),
+    'welfare.recurring.line': ('disbursed', 'cancel'),
+}
+
+
+def check_link_target(target, donation):
+    if target._name in TARGET_OPEN_STATES and target.state not in TARGET_OPEN_STATES[target._name]:
+        raise UserError(_("%s is past the step where an advance donation can be selected.") % target.display_name)
+    if target._name in TARGET_CLOSED_STATES and target.state in TARGET_CLOSED_STATES[target._name]:
+        raise UserError(_("%s is already disbursed or cancelled: no advance donation can be selected.") % target.display_name)
+    if target.advance_donation_id:
+        if target.advance_donation_id == donation:
+            raise UserError(_("This Advance Donation is already linked to this record."))
+        raise UserError(_("%(record)s is already funded by advance donation %(donation)s.") % {
+            'record': target.display_name, 'donation': target.advance_donation_id.display_name})
+
 class AdvanceDonationWizard(models.TransientModel):
     _name = 'advance.donation.wizard'
     _description = 'Wizard to Select Advance Donation'
@@ -76,9 +100,7 @@ class AdvanceDonationWizard(models.TransientModel):
         else:
             raise UserError(_("No target record found to link the donation."))
 
-        if (target_model.advance_donation_id
-                and target_model.advance_donation_id.id == self.advance_donation_id.id):
-            raise UserError(_("This Advance Donation is already linked to this record."))
+        check_link_target(target_model, self.advance_donation_id)
 
         rounding = self.advance_donation_id.currency_id.rounding or 0.01
         is_open_contract = self.advance_donation_id.contract_type == 'open_contract'
@@ -193,6 +215,7 @@ class AdvanceDonationLineSelectionWizard(models.TransientModel):
             target_model = self.livestock_slaughter_id                           # ← NEW
         else:
             raise UserError(_("No target record found to link the donation."))
+        check_link_target(target_model, self.advance_donation_id)
 
         vals = {
             'advance_donation_id': self.advance_donation_id.id,

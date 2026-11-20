@@ -232,3 +232,21 @@ class TestSadqaEJariya(TransactionCase):
         application.state = 'approve'
         with self.assertRaises(UserError):
             decided_doc.unlink()
+
+    def test_reopened_inquiry_is_decided_again(self):
+        """Reopen Inquiry: the previous HOD / Committee remarks and the members'
+        decisions are kept in the chatter and cleared, so the committee cannot be
+        completed on decisions about the previous inquiry."""
+        application = self.env['sadqa.jariya'].create({
+            'donee_id': self._institution('Reopen Masjid').id, 'hod_remarks': 'old hod', 'committee_remarks': 'old committee'})
+        member = self.env['sadqa.jariya.committee.member'].create({
+            'employee_id': self.env['hr.employee'].create({'name': 'Reopen Member'}).id})
+        line = self.env['sadqa.jariya.committee.line'].create({
+            'application_id': application.id, 'member_id': member.id, 'is_approved': True, 'remarks': 'yes'})
+        messages = len(application.message_ids)
+        application._reset_decisions_for_new_inquiry()
+        self.assertFalse(application.hod_remarks or application.committee_remarks)
+        self.assertFalse(line.is_approved or line.is_rejected or line.remarks)
+        self.assertGreater(len(application.message_ids), messages, 'the previous decisions are logged')
+        self.assertTrue(any('old committee' in (m.body or '') and 'Reopen Member' in (m.body or '')
+                            for m in application.message_ids))

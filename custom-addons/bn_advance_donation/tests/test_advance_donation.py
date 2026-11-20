@@ -184,3 +184,16 @@ class TestAdvanceDonation(TransactionCase):
         # an unchanged value, a comment or the payment fields stay writable
         donation.write({'amount_percentage': donation.amount_percentage})
         line.write({'comment': 'approved', 'paid_amount': line.paid_amount})
+
+    def test_cancel_payment_keeps_partly_disbursed_lines(self):
+        """Cancel Payment refunds only lines nothing was disbursed from."""
+        donation = self._donation()
+        self._approve(donation)
+        receipt = self._paid_receipt(sum(donation.advance_donation_lines.mapped('remaining_amount')))
+        donation.allocate_payment(receipt.amount, receipt.ids)
+        partly, untouched = donation.advance_donation_lines[0], donation.advance_donation_lines[1]
+        paid = partly.paid_amount
+        partly.write({'disbursed_amount': paid / 2})  # half used, line not fully disbursed
+        donation.action_cancel_payment()
+        self.assertEqual(partly.paid_amount, paid, 'the used line keeps its payment')
+        self.assertEqual(untouched.paid_amount, 0.0)
