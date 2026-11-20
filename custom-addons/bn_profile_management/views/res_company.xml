@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The Welfare API page is bn_res_company's here. This view is the anchor
+         other modules (Sadqa e Jariya) inherit from: the institution URL / key
+         are left to Sadqa e Jariya, which adds them back to this column. -->
+    <record id="base_view_company_form_inherit_bn_profile_management" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.profile.management</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="bn_res_company.base_view_company_form_inherit_bn_res_company"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_1']/field[@name='welfare_instituiton_url']" position="replace"/>
+            <xpath expr="//group[@name='welfare_api_auth_endpoints_col_1']/field[@name='odoo_auth_institution_key']" position="replace"/>
+        </field>
+    </record>
+
+</odoo>

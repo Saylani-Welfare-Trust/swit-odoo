@@ -25,7 +25,8 @@
                             <field name="cnic_no" invisible="search_type != 'cnic_no'" readonly="1" />
                             
                             <field name="category" invisible="registration_type != 'donee'" readonly="1" />
-                            <field name="donee_registration_type" invisible="registration_type != 'donee'" readonly="1" />
+                            <field name="donee_registration_type" invisible="registration_type != 'donee' or program_id" readonly="1" />
+                            <field name="program_id" invisible="not program_id" readonly="1" options="{'no_open': True}"/>
                         </group>
                     </group>
                 </sheet>
