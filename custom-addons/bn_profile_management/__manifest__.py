@@ -9,8 +9,6 @@
     'depends': [
         'bn_analytic_account_customization',
         'bn_pos_customization',
-        # owns the company's Welfare API page (views/res_company.xml)
-        'bn_res_company',
     ],
     'data': [
         'security/group.xml',
@@ -27,7 +25,6 @@
         
         'views/res_partner.xml',
         'views/res_partner_layer.xml',
-        'views/res_company.xml',
         
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',

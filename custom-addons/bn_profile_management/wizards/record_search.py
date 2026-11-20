@@ -1,5 +1,5 @@
-from odoo import _, models, fields, api
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 import re
 
@@ -41,49 +41,10 @@ class RecordSearch(models.TransientModel):
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
 
-    # The programme to register for: a tag with a Record Search code. A
-    # module's Record Search menu passes its code (default_program_code), e.g.
-    # Sadqa e Jariya. The other menus keep using donee_registration_type.
-    program_id = fields.Many2one(
-        'res.partner.category', string='Register For',
-        domain="[('registration_program_code', '!=', False), ('registration_program_active', '=', True), "
-               "('registration_role', '=', registration_type)]")
-    program_kind = fields.Selection(related='program_id.registration_kind')
-    program_locked = fields.Boolean('Programme set by the menu')
-
     is_welfare = fields.Boolean('Is Welfare')
     is_medical = fields.Boolean('Is Medical')
     is_microfinance = fields.Boolean('Is Microfinance')
     category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
-
-    @api.model
-    def default_get(self, fields_list):
-        res = super().default_get(fields_list)
-        code = self.env.context.get('default_program_code')
-        if not code:
-            return res
-        program = self.env['res.partner.category']._record_search_program(code)
-        if not program:
-            raise UserError(_('No tag has the Record Search code "%s": upgrade the module of this '
-                              'programme.') % code)
-        if not program.registration_program_active:
-            raise UserError(_('The programme "%s" is disabled.') % program.name)
-        res['program_id'] = program.id
-        res['registration_type'] = program.registration_role
-        res['program_locked'] = True
-        if program.registration_kind != 'choose':
-            res['category'] = program.registration_kind
-        return res
-
-    @api.onchange('registration_type')
-    def _onchange_registration_type(self):
-        if self.program_id and self.program_id.registration_role != self.registration_type:
-            self.program_id = False
-
-    @api.onchange('program_id')
-    def _onchange_program_id(self):
-        if self.program_id.registration_kind in ('individual', 'institution'):
-            self.category = self.program_id.registration_kind
 
 
     @api.constrains('cnic_no')
@@ -126,7 +87,6 @@ class RecordSearch(models.TransientModel):
                 'default_cnic_no': self.cnic_no,
                 'default_registration_type': self.registration_type,
                 'default_donee_registration_type': self.donee_registration_type,
-                'default_program_id': self.program_id.id,
                 'default_microfinance_scheme_id': self.microfinance_scheme_id.id,
                 'default_category': self.category,
                 # carried on to the profile popup, see action_change_request

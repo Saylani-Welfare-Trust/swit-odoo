@@ -1,5 +1,5 @@
-from odoo import _, models, fields
-from odoo.exceptions import UserError, ValidationError
+from odoo import models, fields
+from odoo.exceptions import ValidationError
 
 
 donee_registration_selection = [
@@ -20,10 +20,6 @@ search_type_selection = [
     ('mobile_no', 'Mobile No.'),
 ]
 
-ROLE_CATEGORY = {
-    'donee': 'bn_profile_management.donee_partner_category',
-    'donor': 'bn_profile_management.donor_partner_category',
-}
 
 
 class ConfirmSearch(models.TransientModel):
@@ -42,88 +38,7 @@ class ConfirmSearch(models.TransientModel):
     donee_registration_type = fields.Selection(selection=donee_registration_selection, string="Donee Registration Type")
     registration_type = fields.Selection(selection=registration_type_selection, string="Registration Type", default="donee")
     category = fields.Selection(selection=[('individual', 'Individual'), ('institution', 'Institution')], string="Category", default="individual")
-    # Programme of a Record Search code (see record.search.program_id)
-    program_id = fields.Many2one('res.partner.category', string='Register For')
 
-    # ------------------------------------------------------------------
-    # Record Search programmes (tags with a Record Search code)
-    # ------------------------------------------------------------------
-    def _program(self):
-        """The programme tag of this search (empty for the Welfare /
-        Microfinance / Medical / Student searches by donee registration type)."""
-        return self.program_id
-
-    def _program_search_domain(self):
-        if self.search_type == 'registration_id':
-            if not self.registration_id:
-                raise UserError(_('Please enter the Registration ID to search for.'))
-            return [('primary_registration_id', '=', self.registration_id.strip())]
-        if self.search_type == 'cnic_no':
-            if not self.cnic_no:
-                raise UserError(_('Please enter the CNIC No. to search for.'))
-            return [('cnic_no', '=', self.cnic_no)]
-        if not self.mobile_no:
-            raise UserError(_('Please enter the Mobile No. to search for.'))
-        domain = [('mobile', '=', self.mobile_no)]
-        if self.country_code_id:
-            domain.append(('country_code_id', '=', self.country_code_id.id))
-        return domain
-
-    def _kind_tag(self):
-        program = self._program()
-        institution = (program.registration_kind == 'institution'
-                       or (program.registration_kind != 'individual' and self.category == 'institution'))
-        return self.env.ref('bn_profile_management.coorporate_institute_partner_category' if institution
-                            else 'bn_profile_management.individual_partner_category')
-
-    def _search_tags(self):
-        """Role and programme tags: every contact found or created gets them."""
-        return self.env.ref(ROLE_CATEGORY[self.registration_type]) | self._program()
-
-    def _category_ids(self):
-        """Tags of a new profile: role, Individual / Corporate-Institute, programme."""
-        if self.registration_type == 'donor':
-            return (self._search_tags() | self.env.ref('bn_profile_management.individual_partner_category')).ids
-        return (self._search_tags() | self._kind_tag()).ids
-
-    def _form_action(self, partner=None):
-        """Profile popup after a programme search: the contact found, or a new
-        one with the programme's tags."""
-        action = {
-            'type': 'ir.actions.act_window',
-            'res_model': 'res.partner',
-            'view_mode': 'form',
-            'view_id': self.env.ref('bn_profile_management.profile_management_view_form').id,
-            'target': 'new',
-            'context': {'from_record_search': True},
-        }
-        if partner:
-            action['res_id'] = partner.id
-            return action
-        action['context'].update({
-            'default_category_id': [(6, 0, self._category_ids())],
-            'default_country_code_id': (self.country_code_id or self.env.ref('base.pk')).id,
-        })
-        if self.cnic_no:
-            action['context']['default_cnic_no'] = self.cnic_no
-        if self.mobile_no:
-            action['context']['default_mobile'] = self.mobile_no
-        return action
-
-    def _confirm_program(self):
-        program = self._program()
-        if not program.registration_program_active:
-            raise UserError(_('The programme "%s" is disabled.') % program.name)
-        # one contact per person: every contact, whatever its tags
-        matches = self.env['res.partner'].search(self._program_search_domain())
-        if len(matches) > 1:
-            raise ValidationError(_("Several contacts match this search. Please refine your search."))
-        if matches:
-            # a new role / programme ADDS the tags, the person's others stay
-            missing = self._search_tags() - matches.category_id
-            if missing:
-                matches.write({'category_id': [(4, tag.id) for tag in missing]})
-        return self._form_action(matches or None)
 
     def return_donee_form(self, donee=None):
         if self.donee_registration_type == 'microfinance':
@@ -273,8 +188,6 @@ class ConfirmSearch(models.TransientModel):
                 }
 
     def action_confirm(self):
-        if self._program():
-            return self._confirm_program()
         if self.registration_type == 'donee':
             if self.search_type == 'registration_id':
                 donee_obj = self.env['res.partner'].search([('primary_registration_id', '=', self.registration_id), ('category_id.name', 'in', ['Donee'])])
