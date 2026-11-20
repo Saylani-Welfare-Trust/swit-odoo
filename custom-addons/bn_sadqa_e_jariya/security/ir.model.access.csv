@@ -8,7 +8,7 @@ access_sadqa_jariya_line_admin,sadqa.jariya.line admin,model_sadqa_jariya_line,s
 access_sadqa_jariya_recurring_line,sadqa.jariya.recurring.line user,model_sadqa_jariya_recurring_line,group_institutional_disbursement,1,1,1,0
 access_sadqa_jariya_recurring_line_audit,sadqa.jariya.recurring.line audit,model_sadqa_jariya_recurring_line,sadqa_e_jariya_audit_group,1,0,0,0
 access_sadqa_jariya_recurring_line_admin,sadqa.jariya.recurring.line admin,model_sadqa_jariya_recurring_line,sadqa_e_jariya_admin_group,1,1,1,1
-access_sadqa_jariya_document,sadqa.jariya.document user,model_sadqa_jariya_document,group_institutional_disbursement,1,1,1,0
+access_sadqa_jariya_document,sadqa.jariya.document user,model_sadqa_jariya_document,group_institutional_disbursement,1,1,1,1
 access_sadqa_jariya_document_audit,sadqa.jariya.document audit,model_sadqa_jariya_document,sadqa_e_jariya_audit_group,1,0,0,0
 access_sadqa_jariya_document_admin,sadqa.jariya.document admin,model_sadqa_jariya_document,sadqa_e_jariya_admin_group,1,1,1,1
 access_sadqa_jariya_inquiry_report,sadqa.jariya.inquiry.report user,model_sadqa_jariya_inquiry_report,group_institutional_disbursement,1,1,1,0
