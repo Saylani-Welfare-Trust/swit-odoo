@@ -220,3 +220,15 @@ class TestSadqaEJariya(TransactionCase):
             application.action_complete()  # only from Draft
         application.action_reject()
         self.assertEqual(application.state, 'reject')
+
+    def test_documents_kept_once_decided(self):
+        """Documents can be removed while the application is under review, not
+        once it is decided (only a Sadqa e Jariya Admin can)."""
+        application = self.env['sadqa.jariya'].create({'donee_id': self._institution('Doc Masjid').id})
+        Document = self.env['sadqa.jariya.document'].with_user(self.user)
+        draft_doc = Document.create({'application_id': application.id, 'document_type': 'other'})
+        draft_doc.unlink()
+        decided_doc = Document.create({'application_id': application.id, 'document_type': 'other'})
+        application.state = 'approve'
+        with self.assertRaises(UserError):
+            decided_doc.unlink()

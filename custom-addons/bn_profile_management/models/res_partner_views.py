@@ -71,29 +71,6 @@ class ResPartner(models.Model):
                 self._profile_build_search(arch, tag)
         return arch, view
 
-    @api.model
-    def get_view(self, view_id=None, view_type='form', **options):
-        """Leave out of a contact's form the lists of other modules' records
-        (POS orders, donations, microfinance, medical equipment, ...) that the
-        user may not read. The form loads every list, even on a hidden page, so
-        one such list stopped the whole donee form with an access error.
-        Users with those rights still see the lists. (After the per-user group
-        filtering: the cached view is shared by every user.)"""
-        result = super().get_view(view_id, view_type, **options)
-        if view_type != 'form' or self.env.su:
-            return result
-        arch = etree.fromstring(result['arch'])
-        removed = False
-        for node in arch.xpath('//field[@name][not(ancestor::field)]'):
-            field = self._fields.get(node.get('name'))
-            if field and field.type in ('one2many', 'many2many') and \
-                    not self.env[field.comodel_name].check_access_rights('read', raise_exception=False):
-                node.getparent().remove(node)
-                removed = True
-        if removed:
-            result['arch'] = etree.tostring(arch, encoding='unicode')
-        return result
-
     # ------------------------------------------------------------------
     def _profile_selected(self, tag, view_type):
         """Field names selected on ``tag`` for ``view_type``, in the order
