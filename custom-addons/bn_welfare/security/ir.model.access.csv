@@ -31,3 +31,4 @@ access_disbursement_category_welfare_user,access.disbursement.category welfare u
 access_welfare_admin,welfare admin,bn_welfare.model_welfare,base.group_system,1,1,1,1
 access_welfare_line_admin,welfare.line admin,bn_welfare.model_welfare_line,base.group_system,1,1,1,1
 access_welfare_recurring_line_admin,welfare.recurring.line admin,bn_welfare.model_welfare_recurring_line,base.group_system,1,1,1,1
+access_welfare_officer_wizard_user,welfare.officer.wizard user,model_welfare_officer_wizard,bn_welfare.group_bn_welfare_user,1,1,1,0

@@ -39,6 +39,7 @@
         
         'wizards/check_marfat_shift.xml',
         'wizards/wizard_view.xml',
+        'wizards/welfare_officer_wizard.xml',
         'data/program_types.xml',
         'views/pos_link_views.xml',
         'views/search_views.xml',
