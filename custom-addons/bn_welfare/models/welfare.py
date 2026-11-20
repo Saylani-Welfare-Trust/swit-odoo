@@ -17,6 +17,10 @@ PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
 PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
 
 WF = 'bn_welfare.%s'
+# Change Inquiry Officer / Reopen Inquiry: the portal's institutional operations, also used for Welfare
+WELFARE_INQUIRY_RPC = '/rpc/odoo/institutional/'
+# a completed inquiry is reopened before the Final Approval
+WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
 # Who acts on a welfare in each status (send on, revert, reject).
 STEP_GROUPS = {
     'completed': WF % 'group_bn_welfare_user',
@@ -1146,6 +1150,66 @@ class Welfare(models.Model):
             summary = "No records processed."
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
+    def _welfare_officer_call(self, operation, officer):
+        """changeInquiryOfficer / reopenInquiry for ``officer`` (by Badge ID); the application is identified by its
+        portal ID, Welfare and Sadqa e Jariya Odoo IDs overlap"""
+        self.ensure_one()
+        if not self.portal_application_id:
+            raise UserError(_("%s has no Portal Application ID yet, send it for inquiry first.") % self.name)
+        if not officer.active:
+            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee first.") % officer.name)
+        employee_id = (officer.barcode or '').strip()
+        if not employee_id:
+            raise UserError(_("Inquiry Officer %s has no Badge ID, the portal identifies the officer by it.") % officer.name)
+        data = {'json': {'applicationId': self.portal_application_id, 'employeeId': employee_id}}
+        try:
+            return self._make_sadqa_api_call(WELFARE_INQUIRY_RPC + operation, 'POST', data) or {}
+        except Exception as e:
+            # oRPC error kept by _make_sadqa_api_call: ... | Portal response: {"json": {"code": ..., "message": ...}}
+            detail = str(e)
+            try:
+                error = json.loads(detail.split('Portal response: ', 1)[1])['json']
+                detail = f"{error.get('code', '')} {error.get('message', '')}".strip()
+            except (IndexError, ValueError, KeyError, TypeError, AttributeError):
+                pass
+            raise UserError(_("Portal %(operation)s: %(error)s", operation=operation, error=detail)) from e
+
+    def action_open_officer_wizard(self):
+        """Change Inquiry Officer / Reopen Inquiry: pick the officer first"""
+        self.ensure_one()
+        mode = self.env.context.get('officer_wizard_mode', 'reopen')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Reopen Inquiry') if mode == 'reopen' else _('Change Inquiry Officer'),
+            'res_model': 'welfare.officer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_welfare_id': self.id, 'default_mode': mode,
+                        'default_employee_id': self.employee_id.id if mode == 'reopen' else False},
+        }
+
+    def action_change_inquiry_officer(self, officer):
+        """changeInquiryOfficer: the open inquiry (same report) goes to ``officer``"""
+        self.ensure_one()
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Change Inquiry Officer'))
+        self._check_welfare_state(('send_for_inquiry',), _('Change Inquiry Officer'))
+        previous = self.employee_id
+        self._welfare_officer_call('changeInquiryOfficer', officer)
+        self.employee_id = officer
+        self._message_log(body=_("👤 Inquiry officer changed on the portal: %s → %s") % (previous.name or '-', officer.name))
+        return self._show_notification(_('Change Inquiry Officer'), _('%s can now complete the inquiry.') % officer.name, 'success')
+
+    def action_reopen_inquiry(self, officer):
+        """reopenInquiry: a new inquiry report for ``officer``, the welfare goes back to Send for Inquiry
+        (Check Portal Status / the scheduled action import it again once completed)"""
+        self.ensure_one()
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Reopen Inquiry'))
+        self._check_welfare_state(WELFARE_REOPEN_STATES, _('Reopen Inquiry'))
+        self._welfare_officer_call('reopenInquiry', officer)
+        self.write({'state': 'send_for_inquiry', 'employee_id': officer.id})
+        self._message_log(body=_("🔁 Inquiry reopened on the portal for %s.") % officer.name)
+        return self._show_notification(_('Reopen Inquiry'), _('Inquiry reopened, %s can complete a new report.') % officer.name, 'success')
+
     def action_move_to_hod(self):
         """HOD Approval - Check required fields and documents"""
         self._check_welfare_state(('committee_approval',), _('Move to HOD'))

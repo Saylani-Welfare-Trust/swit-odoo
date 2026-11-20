@@ -52,6 +52,11 @@
                     <button name ="action_open_full_edit_wizard" string="Open View" type="object" class="btn-secondary" invisible="state not in ['committee_approval','hod_approve']" groups="bn_welfare.group_bn_welfare_committee, bn_welfare.group_welfare_hod"/>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight" invisible="state != 'completed'" groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" groups = "bn_welfare.group_bn_welfare_user"/>
+                    <!-- the portal's changeInquiryOfficer (open report) / reopenInquiry (new report, maybe another officer) -->
+                    <button string="Change Inquiry Officer" name="action_open_officer_wizard" type="object" context="{'officer_wizard_mode': 'change'}"
+                            invisible="state != 'send_for_inquiry'" groups="bn_welfare.group_bn_welfare_user"/>
+                    <button string="Reopen Inquiry" name="action_open_officer_wizard" type="object" context="{'officer_wizard_mode': 'reopen'}"
+                            invisible="state not in ['inquiry', 'committee_approval', 'hod_approve']" groups="bn_welfare.group_bn_welfare_user"/>
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="Move to HOD" name="action_move_to_hod" type="object" class="oe_highlight" invisible="state != 'committee_approval'" groups = "bn_welfare.group_bn_welfare_committee"/>
                     <button string="Move to Member" name="action_move_to_member" type="object" class="oe_highlight" invisible="state != 'hod_approve'" groups = "bn_welfare.group_welfare_hod"/>
