@@ -141,21 +141,24 @@ class SadqaJariya(models.Model):
         }
         return {key: value for key, value in values.items() if value}
 
-    def _portal_login_channel(self):
-        """WhatsApp once an approved template is set in the Company settings, SMS until then"""
+    def _portal_login_channels(self):
+        """In order of preference: WhatsApp once an approved template is set in the Company settings,
+        SMS (when WhatsApp isn't set up or can't deliver) once its API key is set"""
         company = self.env.company
+        channels = []
         if company.institution_login_whatsapp_template and company.institution_login_whatsapp_namespace:
-            return 'WhatsApp'
-        return 'SMS'
+            channels.append('WhatsApp')
+        if self.env['ir.config_parameter'].sudo().get_param('bn_sms_whatsapp.sms_api_key'):
+            channels.append('SMS')
+        return channels
 
     def _check_portal_login_channel(self):
         """Before a new password goes to the portal: if it can't reach the donee, they're locked out"""
-        if self._portal_login_channel() == 'SMS' and \
-                not self.env['ir.config_parameter'].sudo().get_param('bn_sms_whatsapp.sms_api_key'):
+        if not self._portal_login_channels():
             raise UserError(_(
-                "SMS is not set up on this server, so the donee could not get the new password; nothing was changed.\n"
-                "Set the System Parameter bn_sms_whatsapp.sms_api_key (Settings > Technical > System Parameters), "
-                "or the Portal Login WhatsApp Template in the Company settings."))
+                "Neither WhatsApp nor SMS is set up on this server, so the donee could not get the new password; nothing was changed.\n"
+                "Set the Portal Login WhatsApp Template in the Company settings, or the System Parameter "
+                "bn_sms_whatsapp.sms_api_key (Settings > Technical > System Parameters) for SMS."))
 
     def _portal_login_sms(self, login, password_text):
         lines = [_("Assalam-o-Alaikum %s,") % self.donee_id.name, _("Your Sadqa e Jariya portal login:")]
@@ -165,24 +168,33 @@ class SadqaJariya(models.Model):
         return '\n'.join(lines)
 
     def _send_portal_login(self, login, password_text):
-        """Send the portal login to the donee, returns the error if it couldn't be sent"""
+        """Send the portal login to the donee: WhatsApp, and SMS if WhatsApp isn't available.
+        Returns (channel that delivered it or None, errors of the channels that failed)"""
         self.ensure_one()
         company = self.env.company
-        try:
-            if self._portal_login_channel() == 'WhatsApp':
-                self.env['whatsapp.service'].send_text_template(
-                    self.donee_id.mobile,
-                    company.institution_login_whatsapp_template,
-                    company.institution_login_whatsapp_namespace,
-                    [self.donee_id.name, company.institution_portal_login_url, login, password_text],
-                    language=company.institution_login_whatsapp_language,
-                )
-            else:
-                self.env['sms.service'].send_sms(self.donee_id.mobile, self._portal_login_sms(login, password_text))
-        except Exception as e:
-            _logger.warning("Sadqa e Jariya %s: portal login %s failed: %s", self.name, self._portal_login_channel(), e)
-            return str(e) or e.__class__.__name__
-        return None
+        errors = []
+        for channel in self._portal_login_channels():
+            try:
+                if channel == 'WhatsApp':
+                    self.env['whatsapp.service'].send_text_template(
+                        self.donee_id.mobile,
+                        company.institution_login_whatsapp_template,
+                        company.institution_login_whatsapp_namespace,
+                        [self.donee_id.name, company.institution_portal_login_url, login, password_text],
+                        language=company.institution_login_whatsapp_language,
+                    )
+                else:
+                    self.env['sms.service'].send_sms(self.donee_id.mobile, self._portal_login_sms(login, password_text))
+                return channel, errors
+            except Exception as e:
+                _logger.warning("Sadqa e Jariya %s: portal login %s failed: %s", self.name, channel, e)
+                errors.append(_('%s failed: %s') % (channel, str(e) or e.__class__.__name__))
+        return None, errors or [_('neither WhatsApp nor SMS is set up')]
+
+    def _portal_login_sent_note(self, channel, errors):
+        """'by SMS', or 'by SMS (WhatsApp failed: ...)' when SMS stood in for WhatsApp"""
+        note = _("by %s") % channel
+        return note + (' (%s)' % '; '.join(errors) if errors else '')
 
     def action_send_institution_form(self):
         """createApplication: the donee gets the form on the portal, with their login by WhatsApp / SMS"""
@@ -232,14 +244,14 @@ class SadqaJariya(models.Model):
             'portal_status': result.get('status'),
         })
         # The application exists on the portal now: a failed message must not undo it
-        channel = self._portal_login_channel()
-        error = self._send_portal_login(login, password if new_login else _("Use your existing password"))
-        if error:
-            self.message_post(body=_("⚠️ Form sent on the portal (login %s) but the %s failed: %s. "
-                                     "Use Reset Portal Password to send the donee a login.") % (login, channel, error))
-            return self._show_notification(_('Send Form'), _('Form sent on the portal, but the %s failed. Use Reset Portal Password.') % channel, 'warning')
-        self.message_post(body=_("📨 Form sent on the portal, login %s sent by %s to %s.") % (login, channel, donee.mobile))
-        return self._show_notification(_('Send Form'), _('Form sent, the donee got the portal login by %s.') % channel, 'success')
+        channel, errors = self._send_portal_login(login, password if new_login else _("Use your existing password"))
+        if not channel:
+            self.message_post(body=_("⚠️ Form sent on the portal (login %s) but the login could not be sent (%s). "
+                                     "Use Reset Portal Password to send the donee a login.") % (login, '; '.join(errors)))
+            return self._show_notification(_('Send Form'), _('Form sent on the portal, but the login could not be sent (%s). Use Reset Portal Password.') % '; '.join(errors), 'warning')
+        sent = self._portal_login_sent_note(channel, errors)
+        self.message_post(body=_("📨 Form sent on the portal, login %s sent %s to %s.") % (login, sent, donee.mobile))
+        return self._show_notification(_('Send Form'), _('Form sent, the donee got the portal login %s.') % sent, 'warning' if errors else 'success')
 
     def action_reset_portal_password(self):
         """resetDoneePassword: new password on the portal, sent to the donee by WhatsApp / SMS"""
@@ -250,12 +262,12 @@ class SadqaJariya(models.Model):
         self._check_portal_login_channel()
         password = self._generate_portal_password()
         self._portal_call('resetDoneePassword', {'doneeOdooId': donee.id, 'password': password})
-        channel = self._portal_login_channel()
-        error = self._send_portal_login(donee.sadqa_portal_login, password)
-        if error:
-            raise UserError(_("The password was changed on the portal but the %s failed (%s). Reset it again.") % (channel, error))
-        self.message_post(body=_("🔑 Portal password reset, login %s sent by %s to %s.") % (donee.sadqa_portal_login, channel, donee.mobile))
-        return self._show_notification(_('Reset Portal Password'), _('New password sent to the donee by %s.') % channel, 'success')
+        channel, errors = self._send_portal_login(donee.sadqa_portal_login, password)
+        if not channel:
+            raise UserError(_("The password was changed on the portal but could not be sent to the donee (%s). Reset it again.") % '; '.join(errors))
+        sent = self._portal_login_sent_note(channel, errors)
+        self.message_post(body=_("🔑 Portal password reset, login %s sent %s to %s.") % (donee.sadqa_portal_login, sent, donee.mobile))
+        return self._show_notification(_('Reset Portal Password'), _('New password sent to the donee %s.') % sent, 'warning' if errors else 'success')
 
     def _acknowledge(self, operation, field_name, report_id=None):
         """acknowledgeDoneeForm / acknowledgeInquiry (idempotent, the portal keeps the first timestamp);

@@ -21,7 +21,7 @@
                     </group>
                     <group name="sadqa_e_jariya_whatsapp" string="Portal Login WhatsApp Template (optional)">
                         <div colspan="2" class="text-muted">
-                            Leave empty to send the donee's portal login by SMS. Once a Meta-approved template is set here, it goes on WhatsApp instead.
+                            Once a Meta-approved template is set here, the donee's portal login goes on WhatsApp. When it is empty or WhatsApp can't deliver, the login goes by SMS.
                         </div>
                         <field name="institution_login_whatsapp_template" />
                         <field name="institution_login_whatsapp_namespace" />
