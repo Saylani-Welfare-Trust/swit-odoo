@@ -1,4 +1,3 @@
-import json
 import logging
 
 from dateutil.relativedelta import relativedelta
@@ -160,8 +159,12 @@ class SadqaJariya(models.Model):
         for rec in self:
             rec.committee_member_ids = rec.committee_line_ids.member_id
 
+    # Keep this dependency: without one the web client gets False on a new application
+    # (state always has its default), and the Donee field fails or lists the wrong partners
+    @api.depends('state')
     def _compute_donee_domain(self):
-        domain = json.dumps(self._donee_tag_domain())
+        # Python syntax, not JSON: the web client reads False / True, JSON's false breaks the Donee field
+        domain = repr(self._donee_tag_domain())
         for rec in self:
             rec.donee_domain = domain
 
