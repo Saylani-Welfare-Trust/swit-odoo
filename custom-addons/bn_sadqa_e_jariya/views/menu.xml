@@ -12,10 +12,12 @@
         <field name="target">new</field>
     </record>
 
-    <!-- tags matched when the menu opens, also by name: see res.partner.action_sadqa_jariya_donees -->
+    <!-- tags matched when the menu opens, also by name: see res.partner.action_sadqa_jariya_donees.
+         Opened by group: without groups Odoo only runs it for users who can edit contacts (not Audit). -->
     <record id="sadqa_e_jariya_donee_server_action" model="ir.actions.server">
         <field name="name">Donee</field>
         <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups_id" eval="[(6, 0, [ref('bn_sadqa_e_jariya.group_institutional_disbursement'), ref('bn_sadqa_e_jariya.sadqa_e_jariya_audit_group')])]"/>
         <field name="state">code</field>
         <field name="code">action = model.action_sadqa_jariya_donees()</field>
     </record>

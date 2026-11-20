@@ -26,7 +26,7 @@
         <field name="name">Sadqa e Jariya Member</field>
         <field name="category_id" ref="base.module_category_hidden"/>
         <field name="implied_ids" eval="[(4, ref('group_institutional_disbursement'))]"/>
-    </record>
+    </record>   
 
     <record id="group_sadqa_jariya_all_lines" model="res.groups">
         <field name="name">Sadqa e Jariya All Lines</field>
