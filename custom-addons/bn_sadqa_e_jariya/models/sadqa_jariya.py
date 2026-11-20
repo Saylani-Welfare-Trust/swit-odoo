@@ -160,6 +160,9 @@ class SadqaJariya(models.Model):
         for rec in self:
             rec.committee_member_ids = rec.committee_line_ids.member_id
 
+    # Keep this dependency: without one the web client gets False on a new application
+    # (state always has its default), and the Donee field fails or lists the wrong partners
+    @api.depends('state')
     def _compute_donee_domain(self):
         domain = json.dumps(self._donee_tag_domain())
         for rec in self:
@@ -263,16 +266,7 @@ class SadqaJariya(models.Model):
             } for product in new_products])
 
     def action_complete(self):
-        for record in self:
-            missing = [
-                label for field_name, label in (
-                    ('account_title', _('Account Title')),
-                    ('account_number', _('Account Number')),
-                )
-                if not (record[field_name] or '').strip()
-            ]
-            if missing:
-                raise ValidationError(_('Please enter the following before completing the application: %s') % ', '.join(missing))
+        # Account Title / Number are optional: the donee enters them on the portal form (filled in on import when empty)
         if self.filtered(lambda r: r.state != 'draft'):
             raise ValidationError(_('Only Draft applications can be marked as Completed.'))
         # Disbursement Items come once the portal form is in (Form Filled), see action_send_for_inquiry
