@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Same scope as bn_stock_location: these records have no location, so they are
+         matched on their Analytic Account (Branch), which must be the analytic account
+         tagged on one of the user's locations in scope, or the user's own Branch
+         (res.users.scope_analytic_account_ids). A record without one stays visible.
+         Settings administrators and "Unrestricted Access" see everything. -->
+
+    <record id="scope_welfare_line_rule" model="ir.rule">
+        <field name="name">Welfare Line: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_welfare_line"/>
+        <field name="domain_force">['|', '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids), ('pos_analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_welfare_line_unrestricted_rule" model="ir.rule">
+        <field name="name">Welfare Line: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_welfare_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_welfare_recurring_line_rule" model="ir.rule">
+        <field name="name">Welfare Recurring Line: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_welfare_recurring_line"/>
+        <field name="domain_force">['|', '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids), ('pos_analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_welfare_recurring_line_unrestricted_rule" model="ir.rule">
+        <field name="name">Welfare Recurring Line: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_welfare_recurring_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_welfare_rule" model="ir.rule">
+        <field name="name">Welfare: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_welfare"/>
+        <field name="domain_force">['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_welfare_unrestricted_rule" model="ir.rule">
+        <field name="name">Welfare: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_welfare"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_welfare_document_image_rule" model="ir.rule">
+        <field name="name">Welfare Document: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_welfare_document_image"/>
+        <field name="domain_force">['|', ('welfare_id', '=', False), ('welfare_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_welfare_document_image_unrestricted_rule" model="ir.rule">
+        <field name="name">Welfare Document: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_welfare_document_image"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_microfinance_guarantor_rule" model="ir.rule">
+        <field name="name">Guarantor: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_microfinance_guarantor"/>
+        <field name="domain_force">['|', '&amp;', ('microfinance_id', '=', False), ('welfare_id', '=', False), '|', ('microfinance_id', 'any', ['|', '|', ('warehouse_location_id', 'child_of', user.scope_location_ids.ids), ('recovered_location_id', 'child_of', user.scope_location_ids.ids), '&amp;', ('warehouse_location_id', '=', False), ('recovered_location_id', '=', False)]), ('welfare_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_microfinance_guarantor_unrestricted_rule" model="ir.rule">
+        <field name="name">Guarantor: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_microfinance_guarantor"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_microfinance_family_rule" model="ir.rule">
+        <field name="name">Family Member: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_microfinance_family"/>
+        <field name="domain_force">['|', '&amp;', ('microfinance_id', '=', False), ('welfare_id', '=', False), '|', ('microfinance_id', 'any', ['|', '|', ('warehouse_location_id', 'child_of', user.scope_location_ids.ids), ('recovered_location_id', 'child_of', user.scope_location_ids.ids), '&amp;', ('warehouse_location_id', '=', False), ('recovered_location_id', '=', False)]), ('welfare_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_microfinance_family_unrestricted_rule" model="ir.rule">
+        <field name="name">Family Member: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_microfinance_family"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+    <record id="scope_microfinance_education_rule" model="ir.rule">
+        <field name="name">Education: allowed locations' analytic accounts</field>
+        <field name="model_id" ref="bn_welfare.model_microfinance_education"/>
+        <field name="domain_force">['|', '&amp;', ('microfinance_id', '=', False), ('welfare_id', '=', False), '|', ('microfinance_id', 'any', ['|', '|', ('warehouse_location_id', 'child_of', user.scope_location_ids.ids), ('recovered_location_id', 'child_of', user.scope_location_ids.ids), '&amp;', ('warehouse_location_id', '=', False), ('recovered_location_id', '=', False)]), ('welfare_id', 'any', ['|', ('line_branch_ids', '=', False), ('line_branch_ids', 'in', user.scope_analytic_account_ids.ids)])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+    </record>
+
+    <record id="scope_microfinance_education_unrestricted_rule" model="ir.rule">
+        <field name="name">Education: unrestricted</field>
+        <field name="model_id" ref="bn_welfare.model_microfinance_education"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+    </record>
+
+</odoo>

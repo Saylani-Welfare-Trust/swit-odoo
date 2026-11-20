@@ -1,5 +1,4 @@
 from odoo import models, fields, api
-from odoo.exceptions import UserError
 
 class WelfareDocumentImage(models.Model):
     _name = 'welfare.document.image'

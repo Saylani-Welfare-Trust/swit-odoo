@@ -1,5 +1,6 @@
-from odoo import models, fields, _, api, tools
-from odoo.exceptions import ValidationError, UserError
+from markupsafe import Markup
+from odoo import models, fields, _, api
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 import requests
 
@@ -7,6 +8,7 @@ import base64
 import logging
 from dateutil.relativedelta import relativedelta
 import json
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 from urllib.parse import urlparse
 
 _logger = logging.getLogger(__name__)
@@ -14,6 +16,24 @@ _logger = logging.getLogger(__name__)
 # Portal search paging: send {limit, cursor}, where cursor is the portal id of the last record of the previous page.
 PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
 PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
+
+WF = 'bn_welfare.%s'
+# Change Inquiry Officer / Reopen Inquiry: the portal's institutional operations, also used for Welfare
+WELFARE_INQUIRY_RPC = '/rpc/odoo/institutional/'
+# a completed inquiry is reopened before the Final Approval
+WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
+# Who acts on a welfare in each status (send on, revert, reject).
+STEP_GROUPS = {
+    'completed': WF % 'group_bn_welfare_user',
+    'send_for_inquiry': WF % 'group_bn_welfare_user',
+    'inquiry': WF % 'group_bn_welfare_user',
+    'committee_approval': WF % 'group_bn_welfare_committee',
+    'hod_approve': WF % 'group_welfare_hod',
+    'mem_approve': WF % 'group_welfare_member',
+    'approve': WF % 'group_welfare_member',
+    'recurring': WF % 'group_welfare_member',
+    'return': WF % 'group_welfare_member',
+}
 
 
 assest_availability_selection = [
@@ -69,18 +89,24 @@ order_type_selection = [
 class Welfare(models.Model):
     _name = 'welfare'
     _description = "Welfare"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ['step.activity.mixin', "mail.thread", "mail.activity.mixin"]
+
+    def init(self):
+        super().init()
+        # the former "consolidated lines" model (never used, removed): its table stays
+        # behind when Odoo removes the model on upgrade
+        self.env.cr.execute('DROP TABLE IF EXISTS welfare_consolidated_line CASCADE')
 
     order_type = fields.Selection(order_type_selection, string="Order Type")
 
-    donee_id = fields.Many2one('res.partner', string="Donee")
+    donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee', 'welfare', registered=True))
     employee_id = fields.Many2one('hr.employee', string="Employee")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     is_individual = fields.Boolean('Is Individual', default=False) 
     employee_category_id = fields.Many2one('hr.employee.category', string="Employee Category", default=lambda self: self.env.ref('bn_welfare.inquiry_officer_hr_employee_category', raise_if_not_found=False).id)
     employee_category_id_officer = fields.Many2one(
         'hr.employee.category', 
-        string="Employee Category", 
+        string='Officer Employee Category', 
         default=lambda self: self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False).id if self.env.ref('bn_welfare.assigned_officer_hr_employee_category', raise_if_not_found=False) else False
     )
     document_image_ids = fields.One2many(
@@ -95,7 +121,7 @@ class Welfare(models.Model):
     old_system_id = fields.Char('Old System ID')
     
     applicantLocationLink = fields.Char('Applicant Location Link') 
-    date = fields.Date('Date', default=fields.Date.today())
+    date = fields.Date('Date', default=fields.Date.context_today)
     cnic_expiration_date = fields.Date(related='donee_id.cnic_expiration', string="CNIC Expiration Date", store=True)
 
     hod_remarks = fields.Text('HOD Remarks')
@@ -117,51 +143,6 @@ class Welfare(models.Model):
     
     gas_bill_file = fields.Binary('Gas Bill')
     gas_bill_name = fields.Char('Gas Bill Name')
-        # Separate document image fields for each document type
-    application_form_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Application Forms',
-        domain=[('document_type', '=', 'application_form')]
-    )
-    
-    frc_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id', 
-        string='FRC Documents',
-        domain=[('document_type', '=', 'frc')]
-    )
-    
-    electricity_bill_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Electricity Bills',
-        domain=[('document_type', '=', 'electricity_bill')]
-    )
-    
-    gas_bill_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Gas Bills',
-        domain=[('document_type', '=', 'gas_bill')]
-    )
-    
-    family_cnic_ids = fields.One2many(
-        'welfare.document.image',
-        'welfare_id',
-        string='Family CNICs',
-        domain=[('document_type', '=', 'family_cnic')]
-    )
-
-
-    
-
-    # NOTE: the *_ids document One2many fields (application_form_ids, frc_ids,
-    # electricity_bill_ids, gas_bill_ids, family_cnic_ids) are defined once
-    # above. The duplicated second set (app_form_ids / elec_bill_ids and the
-    # re-declared frc_ids / gas_bill_ids / family_cnic_ids) was removed: in
-    # Python only the last assignment survived, silently overriding the first
-    # definitions with different labels.
     family_cnic = fields.Binary('Family CNIC')
     family_cnic_name = fields.Char('Family CNIC Name')
     # Store raw URLs (never touched by sanitizer)
@@ -175,41 +156,13 @@ class Welfare(models.Model):
     # is required and the ORM never calls a compute on x2many), so these were
     # broken no-op declarations. Replaced with the equivalent Many2many fields
     # computed from document_image_ids in _compute_filtered_images below.
-    application_form_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Application Forms',
-    )
 
-    frc_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='FRC Documents',
-    )
-
-    electricity_bill_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Electricity Bills',
-    )
-
-    gas_bill_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Gas Bills',
-    )
-
-    family_cnic_images = fields.Many2many(
-        'welfare.document.image',
-        compute='_compute_filtered_images',
-        string='Family CNICs',
-    )
     # Computed Html fields for display only — never written by the form
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
 
     welfare_line_ids = fields.One2many('welfare.line', 'welfare_id', string="Welfare Lines")
-    welfare_recurring_line_ids = fields.One2many('welfare.recurring.line', 'welfare_id', string="Welfare Lines")
+    welfare_recurring_line_ids = fields.One2many('welfare.recurring.line', 'welfare_id', string='Welfare Recurring Lines')
 
     # Portal Details
     portal_application_id = fields.Char('Portal Application ID')
@@ -226,10 +179,6 @@ class Welfare(models.Model):
         string="Inquiry Media",
         sanitize=False,   # IMPORTANT
     )
-    required_approval_for_limit = fields.Selection([
-        ('hod', 'HOD Approval Required'),
-        ('member', 'Member Approval Required')
-    ], string="Required Approval Based on Amount", compute="_compute_required_approval", store=False)
     previous_welfare_source_id = fields.Many2one(
         'welfare', 
         string="Previous Welfare Source",
@@ -291,10 +240,6 @@ class Welfare(models.Model):
     # Request Details
     # loan_request_amount = fields.Float('Loan Request Amount')
 
-    # loan_request_amount = fields.Float(
-    #     'Loan Request Amount',
-    #     required=True
-    # )
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     def _save_portal_images_to_document_model(self):
         field_config = {
@@ -311,7 +256,8 @@ class Welfare(models.Model):
 
             # Delete existing images for this document type
             existing_images = self.document_image_ids.filtered(lambda img: img.document_type == doc_type)
-            existing_images.unlink()
+            # the portal sync replaces them (only Welfare Admins delete documents by hand)
+            existing_images.sudo().unlink()
 
             for url in urls:
                 try:
@@ -334,24 +280,6 @@ class Welfare(models.Model):
                 except Exception as e:
                     _logger.error("Failed saving image from %s: %s", url, str(e))
     
-    @api.depends('document_image_ids')
-    def _compute_filtered_images(self):
-        for record in self:
-            record.application_form_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'application_form'
-            )
-            record.frc_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'frc'
-            )
-            record.electricity_bill_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'electricity_bill'
-            )
-            record.gas_bill_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'gas_bill'
-            )
-            record.family_cnic_images = record.document_image_ids.filtered(
-                lambda img: img.document_type == 'family_cnic'
-            )                    
     loan_request_amount = fields.Float(
         string='Loan Request Amount',
         default=0.0
@@ -371,45 +299,6 @@ class Welfare(models.Model):
 
     family_line_ids = fields.One2many('microfinance.family', 'welfare_id', string='Family Lines')
 
-    # Add these fields if not already present
-    institution_category = fields.Selection([
-        ('masjid', 'Masjid'),
-        ('madrasa', 'Madrasa'),
-    ], string='Institution Category')
-    
-    subcategory = fields.Char(string='Subcategory')
-    
-    # Relationships
-    committee_member_ids = fields.One2many(
-        'welfare.committee.member', 
-        'welfare_id', 
-        string='Committee Members'
-    )
-    
-    teacher_ids = fields.One2many(
-        'welfare.teacher', 
-        'welfare_id', 
-        string='Teachers'
-    )
-    
-    inquiry_report_ids = fields.One2many(
-        'welfare.inquiry.report', 
-        'welfare_id', 
-        string='Inquiry Reports'
-    )
-    
-    masjid_id = fields.One2many(
-        'welfare.masjid', 
-        'welfare_id', 
-        string='Masjid Details'
-    )
-    
-    madrasa_id = fields.One2many(
-        'welfare.madrasa', 
-        'welfare_id', 
-        string='Madrasa Details'
-    )
-    
     # Inquiry Committee Questions Tab
     applicant_occupation = fields.Char('Applicant Occupation / Source of Income', tracking=True)
     residence_ownership = fields.Selection([
@@ -419,19 +308,8 @@ class Welfare(models.Model):
     ], string='Residence Ownership', tracking=True)
     total_children = fields.Integer('Total Number of Children', tracking=True)
     boys_count = fields.Integer('Number of Boys', tracking=True)
-    girls_count = fields.Integer('Number of Girls', tracking=True)
-    children_education_status = fields.Text('Children Education Status', tracking=True, 
-        help="Specify whether children are studying in school, college, or university")
-    main_issue = fields.Text('Main Issue/Problem', tracking=True, 
-        help="Describe the main issue or problem being faced by the applicant or their family")
     
     # Previous Disbursements for same Donee
-    previous_welfare_ids = fields.One2many(
-        compute='_compute_previous_welfare_ids',
-        comodel_name='welfare',
-        string='Previous Disbursements to This Donee',
-        store=False
-    )
     
     previous_disbursement_id = fields.Many2one(
         compute='_compute_previous_disbursement_id',
@@ -452,15 +330,15 @@ class Welfare(models.Model):
         help="Does he own the house or live in a rented house?"
     )
 
-    num_of_children = fields.Char(
+    num_of_children = fields.Integer(
         string="Number of Children"
     )
 
-    num_of_sons = fields.Char(
+    num_of_sons = fields.Integer(
         string="Number of Sons"
     )
 
-    num_of_daughters = fields.Char(
+    num_of_daughters = fields.Integer(
         string="Number of Daughters"
     )
 
@@ -473,12 +351,6 @@ class Welfare(models.Model):
         string="Donee Issues", 
         help="What are the issues/concerns related to the donee?"
     )
-    def _compute_required_approval(self):
-        for rec in self:
-            if rec._check_amount_within_hod_limit():
-                rec.required_approval_for_limit = 'hod'
-            else:
-                rec.required_approval_for_limit = 'member'
     @api.depends('donee_id.area', 'employee_category_id')
     def _compute_employee_domain(self):
         for record in self:
@@ -491,64 +363,36 @@ class Welfare(models.Model):
                 domain.append(('area', '=', record.donee_id.area.id))
 
             record.employee_domain = json.dumps(domain)
-    @api.depends('donee_id')
-    def _compute_previous_welfare_ids(self):
-        """Compute previous welfare disbursements for the same donee"""
-        for rec in self:
-            if rec.donee_id:
-                domain = [
-                    ('donee_id', '=', rec.donee_id.id),
-                    ('state', 'in', ['disbursed', 'recurring'])
-                ]
-                # Only exclude current record if it has a real integer ID (saved record)
-                if rec.id and isinstance(rec.id, int) and rec.id > 0:
-                    domain.append(('id', '!=', rec.id))
-                previous = self.search(domain, order='date desc')
-                rec.previous_welfare_ids = previous
-            else:
-                rec.previous_welfare_ids = False
+
+    def _get_previous_welfare(self):
+        """Most recent other application of the same donee that is past draft"""
+        self.ensure_one()
+        if not self.donee_id:
+            return self.browse()
+        domain = [('donee_id', '=', self.donee_id.id), ('state', '!=', 'draft')]
+        # _origin also excludes the saved record while the form is being edited
+        if self._origin.id:
+            domain.append(('id', '!=', self._origin.id))
+        return self.search(domain, order='date desc, id desc', limit=1)
 
     @api.depends('donee_id')
     def _compute_previous_disbursement_id(self):
         """Compute the most recent previous disbursement for the same donee"""
         for rec in self:
-            if rec.donee_id:
-                domain = [
-                    ('donee_id', '=', rec.donee_id.id),
-                    ('state', 'in', ['disbursed', 'recurring'])
-                ]
-                # Only exclude current record if it has a real integer ID (saved record)
-                if rec.id and isinstance(rec.id, int) and rec.id > 0:
-                    domain.append(('id', '!=', rec.id))
-                previous = self.search(domain, order='date desc', limit=1)
-                rec.previous_disbursement_id = previous[0] if previous else False
-            else:
-                rec.previous_disbursement_id = False
+            rec.previous_disbursement_id = rec._get_previous_welfare()
 
     @api.onchange('donee_id')
     def _onchange_donee_id_populate_data(self):
         """Auto-populate form data from most recent previous welfare record for existing donee"""
-        if not self.donee_id:
-            return
-
-        domain = [
-            ('donee_id', '=', self.donee_id.id),
-            ('state', 'in', ['disbursed', 'recurring', 'approve', 'inquiry', 'committee_approval'])
-        ]
-        
-        if self.id and isinstance(self.id, int) and self.id > 0:
-            domain.append(('id', '!=', self.id))
-        
-        previous_welfare = self.search(domain, order='date desc', limit=1)
+        previous_welfare = self._get_previous_welfare()
+        # Reset on every donee change so another donee's documents are never copied
+        self.previous_welfare_source_id = previous_welfare
 
         if previous_welfare:
             self.applicant_occupation = previous_welfare.applicant_occupation
             self.residence_ownership = previous_welfare.residence_ownership
             self.total_children = previous_welfare.total_children
             self.boys_count = previous_welfare.boys_count
-            self.girls_count = previous_welfare.girls_count
-            self.children_education_status = previous_welfare.children_education_status
-            self.main_issue = previous_welfare.main_issue
             self.residence_type = previous_welfare.residence_type
             self.home_phone_no = previous_welfare.home_phone_no
             self.landlord_name = previous_welfare.landlord_name
@@ -587,23 +431,21 @@ class Welfare(models.Model):
             if previous_welfare.family_cnic_urls:
                 self.family_cnic_urls = previous_welfare.family_cnic_urls
 
-            # ✅ This is the only change — replaces the broken self.with_context() line
-            self.previous_welfare_source_id = previous_welfare.id
-
             return {
                 'warning': {
                     'title': 'Data Auto-Populated',
                     'message': (
                         f'Form has been automatically populated with data from previous application '
-                        f'dated {previous_welfare.date}.\n\n'
+                        f'{previous_welfare.name} dated {previous_welfare.date}.\n\n'
                         f'Document images will be copied when you save the record.\n\n'
-                        f'Previous Disbursements can be viewed in the "Previous Disbursements" tab.'
+                        f'Use "View Most Recent Disbursement" to open the previous application.'
                     )
                 }
             }
-    @api.model
     def _auto_disburse_if_all_lines_delivered(self):
-        records = self.search([('state', 'in', ['recurring', 'approve'])])
+        """Disburse the welfares whose lines are all disbursed. Called on
+        records (a line was paid) or on the empty model (all of them)."""
+        records = (self or self.search([])).filtered(lambda r: r.state in ('recurring', 'approve'))
         for rec in records:
             if rec.order_type == 'one_time':
                 lines = rec.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
@@ -627,86 +469,46 @@ class Welfare(models.Model):
                 # Show ONLY in approve state
                 rec.show_disburse_button = rec.state == 'approve'
 
-    # Add this method to handle data parsing
-    def _parse_form_data(self, rec):
-        """Parse form data based on category"""
-        form_data = rec.get('form', {})
-        category = rec.get('category')
-        subcategory = rec.get('subCategory')
-        
-        data = {
-            'institution_category': category,
-            'subcategory': subcategory,
-        }
-        
-        if category == 'masjid':
-            data.update(self._parse_masjid_data(form_data))
-        elif category == 'madrasa':
-            data.update(self._parse_madrasa_data(form_data))
-            
-        return data
-    
-    def _parse_masjid_data(self, form_data):
-        """Parse masjid specific data"""
-        masjid_info = form_data.get('masjidInfo', {})
-        prayers_info = form_data.get('prayersInfo', {})
-        fund_info = form_data.get('fundInfo', {})
-        account_details = form_data.get('accountDetails', {})
-        
-        return {
-            'institute_name': masjid_info.get('masjidName'),
-            'company_address': masjid_info.get('address'),
-            'city': masjid_info.get('city'),
-            'district': masjid_info.get('district'),
-        }
-    
-    def _parse_madrasa_data(self, form_data):
-        """Parse madrasa specific data"""
-        madrasa_info = form_data.get('madrasaInfo', {})
-        fund_info = form_data.get('fundInfo', {})
-        account_details = form_data.get('accountDetails', {})
-        
-        return {
-            'institute_name': madrasa_info.get('madarsaName'),
-            'company_address': madrasa_info.get('address'),
-            'city': madrasa_info.get('city'),
-            'district': madrasa_info.get('district'),
-        }
-    
-    def _to_float(self, value):
-        """Convert string to float safely"""
-        try:
-            return float(value) if value else 0.0
-        except:
-            return 0.0
-    
-    def _to_int(self, value):
-        """Convert string to int safely"""
-        try:
-            return int(float(value)) if value else 0
-        except:
-            return 0
-    
-    def _to_bool(self, value):
-        """Convert Yes/No string to boolean"""
-        return str(value).lower() == 'yes' if value else False
 
+    def _check_count_values(self, vals):
+        """Readable error instead of a crash when text reaches the numeric count fields
+        (e.g. from a browser tab opened while they were still text fields)"""
+        for fname in ('num_of_children', 'num_of_sons', 'num_of_daughters'):
+            value = vals.get(fname)
+            if isinstance(value, str) and value.strip() and not value.strip().isdigit():
+                raise ValidationError(_(
+                    "%s: only numbers are allowed, you can't use alphabets.",
+                    self._fields[fname].string,
+                ))
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._check_count_values(vals)
+            if not vals.get('name') or vals.get('name') == 'New':
+                seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
+                vals['name'] = seq if seq else _('New')
+        records = super().create(vals_list)
+        for record in records:
+            record._copy_previous_documents()
+        return records
 
-    @api.model
-    def create(self, vals):
-        if not vals.get('name') or vals.get('name') == 'New':
-            seq = self.env['ir.sequence'].sudo().next_by_code('welfare_sequence')
-            vals['name'] = seq if seq else _('New')
+    def write(self, vals):
+        self._check_count_values(vals)
+        res = super().write(vals)
+        # Donee changed on an already saved application
+        if vals.get('previous_welfare_source_id'):
+            self._copy_previous_documents()
+        return res
 
-        record = super().create(vals)
-
-        # ✅ Read from the stored field, not from lost context
-        previous_welfare_id = record.previous_welfare_source_id.id
-
-        if previous_welfare_id:
-            previous_welfare = self.browse(previous_welfare_id)
-            for img in previous_welfare.document_image_ids:
+    def _copy_previous_documents(self):
+        """Copy the document images of previous_welfare_source_id (set by the donee onchange)"""
+        for record in self.filtered('previous_welfare_source_id'):
+            # Keep documents already uploaded on this application, only fill the missing types
+            existing_types = set(record.document_image_ids.mapped('document_type'))
+            for img in record.previous_welfare_source_id.document_image_ids:
+                if img.document_type in existing_types:
+                    continue
                 self.env['welfare.document.image'].sudo().create({
                     'welfare_id':     record.id,
                     'document_type':  img.document_type,
@@ -714,11 +516,9 @@ class Welfare(models.Model):
                     'image_filename': img.image_filename,
                     'source_url':     img.source_url,
                 })
-            
-            # ✅ Clear the helper field after copying so it doesn't linger
-            record.previous_welfare_source_id = False
 
-        return record
+            # Clear the helper field after copying so it doesn't linger
+            record.previous_welfare_source_id = False
     
     def clean_url(self, url) :
         return (
@@ -736,10 +536,6 @@ class Welfare(models.Model):
         headers = self._get_sadqa_api_headers()
 
         url = self.clean_url(url)
-        # raise UserError(
-        #         "URL:\n%s\n\nHeaders:\n%s\n\nData:\n%s"
-        #         % (url, headers, data)
-        #     )
         if data is not None:
             try:
                 # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
@@ -747,12 +543,6 @@ class Welfare(models.Model):
             except Exception as e:
                 _logger.error("Failed to prepare JSON payload: %s", e)
                 raise UserError(_("Failed to prepare request payload: %s") % e)
-        # raise UserError(
-        #     f"API Request Failed\n\n"
-        #     f"URL: {url}\n"
-        #     f"Headers: {headers}"
-        #     f"Data: {data}\n"
-        # )
         _logger.info(f"Making Sadqa Jaria API call to {url} with method {method} and data: {data}")
         try:
             if data is None :
@@ -775,8 +565,10 @@ class Welfare(models.Model):
             return result.get('json', {})
             
         except requests.exceptions.RequestException as e:
-            _logger.error(f"Sadqa Jaria API Request failed: {str(e)}")
-            raise Exception(f"Network error: {str(e)}")
+            # Keep the portal's response body: on a 4xx it says which field was rejected
+            body = e.response.text[:1000] if e.response is not None else ''
+            _logger.error("Sadqa Jaria API Request failed: %s | response: %s", e, body)
+            raise Exception(f"Network error: {str(e)}" + (f" | Portal response: {body}" if body else ''))
         except Exception as e:
             _logger.error(f"Sadqa Jaria API Processing failed: {str(e)}")
             raise e
@@ -791,97 +583,21 @@ class Welfare(models.Model):
                 }    
             _logger.info(f"Donee checking query peremeters: {data}")
             result = self._make_sadqa_api_call(f'{self.env.company.check_donee_endpoint}','POST', data) # type: ignore
-            # _logger.info(f"Donee found in portal: {result}")
-            # raise UserError(str(result))
             return result
         except Exception as e:
             _logger.info(f"Donee not found in portal: {str(e)}")
             return None
 
-    def _get_portal_document_value(self, payload, portal_fields):
-        """Find a document value anywhere in a nested portal payload."""
-        if not payload:
-            return None
-
-        field_names = set(portal_fields)
-        stack = [payload]
-        while stack:
-            value = stack.pop()
-            if isinstance(value, dict):
-                for field_name in field_names:
-                    field_value = value.get(field_name)
-                    if field_value:
-                        return field_value
-
-                document_key = value.get('field') or value.get('key') or value.get('name')
-                if document_key in field_names:
-                    for url_key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data'):
-                        if value.get(url_key):
-                            return value.get(url_key)
-
-                stack.extend(value.values())
-            elif isinstance(value, list):
-                stack.extend(value)
-
-        return None
-
-
-
-
-    def _iter_portal_document_values(self, value):
-        if isinstance(value, str):
-            cleaned_value = value.strip()
-            if cleaned_value:
-                yield cleaned_value
-        elif isinstance(value, list):
-            for item in value:
-                yield from self._iter_portal_document_values(item)
-        elif isinstance(value, dict):
-            for key in ('url', 'fileUrl', 'imageUrl', 'secureUrl', 'path', 'value', 'data', 'base64'):
-                if value.get(key):
-                    yield from self._iter_portal_document_values(value.get(key))
-
-    def _portal_document_filename(self, portal_field, value):
-        if isinstance(value, str) and value.startswith('http'):
-            filename = urlparse(value).path.rsplit('/', 1)[-1]
-            if filename:
-                return filename
-        return f"{portal_field}.jpg"
-
-    def _download_portal_document(self, portal_field, document_value):
-        """Return a base64 string and filename for portal document payloads."""
-        for value in self._iter_portal_document_values(document_value):
-            try:
-                if value.startswith('data:') and ',' in value:
-                    return value.split(',', 1)[1], self._portal_document_filename(portal_field, value)
-
-                if value.startswith('http'):
-                    response = requests.get(value, timeout=10)
-                    if response.status_code == 200:
-                        return base64.b64encode(response.content).decode('utf-8'), self._portal_document_filename(portal_field, value)
-                    _logger.warning(
-                        f"Failed to download {portal_field}: HTTP {response.status_code}"
-                    )
-                    continue
-
-                # Some portal payloads already contain plain base64 without a data URL prefix.
-                base64.b64decode(value, validate=True)
-                return value, self._portal_document_filename(portal_field, value)
-            except Exception as e:
-                _logger.error(
-                    f"Error processing {portal_field} document value {value}: {str(e)}"
-                )
-
-        return None, None
 
     def action_check_portal_status(self):
         self.ensure_one()
+        # only an inquiry on its way: applied later it would move the welfare back to Inquiry
+        self._check_welfare_state(('send_for_inquiry',), _('Check Portal Status'))
 
-        donee_data = self._check_donee_exists_in_portal()
-        if donee_data:
-            message = f"✅ Donee exists in portal. Name: {donee_data.get('name')}"
-        else:
-            self._create_donee_in_portal()
+        if not self.is_synced:
+            donee_data = self._check_donee_exists_in_portal()
+            if not donee_data:
+                self._create_donee_in_portal()
 
         application = self._search_portal_applications()
         message     = self._apply_portal_application(application)
@@ -906,14 +622,6 @@ class Welfare(models.Model):
             'electricityBillImages': 'electricity_bill_urls',
             'gasBillImages':         'gas_bill_urls',
             'familyCnicImages':      'family_cnic_urls',
-        }
-
-        document_labels = {
-            'applicationFormImages': 'Application Form',
-            'frcImages':             'FRC',
-            'electricityBillImages': 'Electricity Bill',
-            'gasBillImages':         'Gas Bill',
-            'familyCnicImages':      'Family CNIC',
         }
 
         document_aliases = {
@@ -953,7 +661,8 @@ class Welfare(models.Model):
                     all_remarks.append(remarks)
                 document_sources.append(report)
 
-        if app_state == 'inquiry_complete':
+        # the completed inquiry moves the welfare on only from Send for Inquiry
+        if app_state == 'inquiry_complete' and self.state == 'send_for_inquiry':
             write_vals = {
                 'inquiry_media':       '<br/>'.join(all_media) if all_media else '',
                 'portal_review_notes': '\n'.join(all_remarks) if all_remarks else '',
@@ -961,7 +670,6 @@ class Welfare(models.Model):
             }
 
             for portal_field, html_field in portal_to_html_field.items():
-                label      = document_labels[portal_field]
                 raw_values = []
 
                 for source in document_sources:
@@ -1058,10 +766,6 @@ class Welfare(models.Model):
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
             if app.get('odooId') == self.id and app.get('department') == "welfare":
                 return app
-            # # Match by name and WhatsApp
-            # if (app.get('name') == self.donee_id.name and 
-            #     app.get('whatsapp') == self.donee_id.mobile):
-            #     return app
         return None
     
     def _search_portal_applications(self):
@@ -1156,16 +860,8 @@ class Welfare(models.Model):
     def _handle_existing_application(self, portal_application):
         """Handle existing application found in portal"""
         # Mark application as synced in portal
-        synced_application = self._mark_application_synced()
+        self._mark_application_synced()
         
-        # Update disbursement record with portal information
-        # self.write({
-        #     'portal_application_id': portal_application.get('id'),
-        #     'portal_donee_id': portal_application.get('doneeId', ''),
-        #     'is_synced': True,
-        #     'last_sync_date': fields.Datetime.now(),
-        #     # 'portal_review_notes': portal_application.get('reviewNotes', '') or portal_application.get('notes', '')
-        # })
         
         return {
             'action': 'linked_existing',
@@ -1267,10 +963,28 @@ class Welfare(models.Model):
         if not existing_donee:
             # Create new donee in portal
             donee_data = self._create_donee_in_portal()
-        portal_application = self.create_portal_application()
-        portal_application_id = portal_application.get('id')
-        
-        
+        already_on_portal = False
+        try:
+            portal_application = self.create_portal_application()
+        except Exception as e:
+            # The portal keys applications by odooId alone, so "already exists" can also mean another
+            # record used this id (another department, or an older copy of this database).
+            # Link only when it really is this welfare record: listed by the portal as a welfare
+            # application, or sent from this record before (reverted to Completed and sent again)
+            if f"odooId {self.id} already exists" not in str(e):
+                raise
+            portal_application = self._search_portal_applications() or {}
+            if not portal_application.get('id') and not self.portal_application_id:
+                raise Exception(
+                    f"The portal already has an application with odooId {self.id}, but it is not this "
+                    f"welfare application: this record was never sent before and the portal's welfare list "
+                    f"does not have it. Another record used the same id; ask the portal team to check "
+                    f"odooId {self.id}.")
+            already_on_portal = True
+            _logger.info("Welfare application %s already exists on portal; linking it (%s)",
+                         self.display_name, portal_application.get('id') or self.portal_application_id)
+        portal_application_id = portal_application.get('id') or self.portal_application_id
+
         # Update disbursement record with portal information
         update_vals = {
             'portal_donee_id': donee_data.get('id') if donee_data else existing_donee.get('id'),
@@ -1283,7 +997,10 @@ class Welfare(models.Model):
         
         action = 'created_donee' if not existing_donee else 'linked_existing_donee'
         message = "✅ New donee created in portal" if not existing_donee else "✅ Existing donee linked in portal "
-        message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
+        if already_on_portal:
+            message += f" | 📋 Application already on portal, linked{f' (ID: {portal_application_id})' if portal_application_id else ''} "
+        else:
+            message += f" | 📋 Application created with ID: {portal_application_id} " if portal_application_id else f" Portal application not created Error {portal_application.get('code', 'Unknown error')}"
         
         return {
             'action': action,
@@ -1315,7 +1032,7 @@ class Welfare(models.Model):
         <b>Sync Date:</b> {fields.Datetime.now()}
         """
         
-        self.message_post(body=message_body)
+        self._message_log(body=message_body)
 
     def _show_notification(self, title, message, type='info'):
         """Show notification to user"""
@@ -1339,6 +1056,37 @@ class Welfare(models.Model):
             'Content-Type': 'application/json'
         }
 
+    @api.ondelete(at_uninstall=False)
+    def _unlink_only_draft(self):
+        locked = self.filtered(lambda r: r.state not in ('draft', 'reject'))
+        if locked:
+            raise UserError(_('Only Draft or Rejected welfare applications can be deleted (%s).')
+                            % ', '.join(locked.mapped('name')))
+
+    # ------------------------------------------------------------------
+    # Workflow checks
+    # ------------------------------------------------------------------
+    def _check_welfare_state(self, allowed, action):
+        labels = dict(state_selection)
+        for rec in self:
+            if rec.state not in allowed:
+                raise UserError(_('"%(action)s" is not possible for %(name)s in status "%(state)s".') % {
+                    'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
+
+    def _check_welfare_group(self, xmlid, action):
+        user = self.env.user
+        if self.env.su or user._is_system() or user.has_group(xmlid):
+            return
+        group = self.env.ref(xmlid, raise_if_not_found=False)
+        raise AccessError(_('Only "%(group)s" can do "%(action)s".') % {
+            'group': group.name if group else xmlid, 'action': action})
+
+    def _check_step_group(self, action):
+        """The group in charge of the current status."""
+        for rec in self:
+            if rec.state in STEP_GROUPS:
+                rec._check_welfare_group(STEP_GROUPS[rec.state], action)
+
     def action_send_for_inquiry(self):
         """Send for Inquiry - No automatic routing"""
         if not self:
@@ -1347,6 +1095,7 @@ class Welfare(models.Model):
         invalid = self.filtered(lambda r: r.state != 'completed')
         if invalid:
             raise UserError("Some selected records are not completed and cannot be processed.")
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Send for Inquiry'))
         
         # Your existing portal sync code...
         success_msgs = []
@@ -1363,13 +1112,14 @@ class Welfare(models.Model):
                 rec.write({
                     'portal_sync_status': 'syncing',
                     'portal_last_sync_message': f"Sync started at {fields.Datetime.now()}",
-                    'state': 'send_for_inquiry'  # Just move to send_for_inquiry
                 })
-                # Your existing sync logic...
                 existing_donee = rec._check_donee_exists_in_portal()
                 result = rec._handle_new_application(existing_donee)
                 rec._update_sync_status_success(result)
                 rec._create_sync_chatter_message(result)
+                # Move on only once the portal has the application, so a failed send
+                # stays in Completed and can simply be sent again (no Revert needed)
+                rec.state = 'send_for_inquiry'
                 success_msgs.append(f"[{rec.display_name}] {result['message']}")
             except Exception as e:
                 error_message = f"[{rec.display_name}] Portal sync failed: {str(e)}"
@@ -1378,7 +1128,7 @@ class Welfare(models.Model):
                     'portal_last_sync_message': error_message,
                     'is_synced': False
                 })
-                rec.message_post(body=f"❌ {error_message}")
+                rec._message_log(body=f"❌ {error_message}")
                 error_msgs.append(error_message)
         
         # Show results
@@ -1391,8 +1141,78 @@ class Welfare(models.Model):
             summary = "No records processed."
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
+    def _welfare_officer_call(self, operation, officer):
+        """changeInquiryOfficer / reopenInquiry for ``officer`` (by Badge ID); the application is identified by its
+        portal ID, Welfare and Sadqa e Jariya Odoo IDs overlap"""
+        self.ensure_one()
+        if not self.portal_application_id:
+            raise UserError(_("%s has no Portal Application ID yet, send it for inquiry first.") % self.name)
+        if not officer.active:
+            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee first.") % officer.name)
+        employee_id = (officer.barcode or '').strip()
+        if not employee_id:
+            raise UserError(_("Inquiry Officer %s has no Badge ID, the portal identifies the officer by it.") % officer.name)
+        data = {'json': {'applicationId': self.portal_application_id, 'employeeId': employee_id}}
+        try:
+            return self._make_sadqa_api_call(WELFARE_INQUIRY_RPC + operation, 'POST', data) or {}
+        except Exception as e:
+            # oRPC error kept by _make_sadqa_api_call: ... | Portal response: {"json": {"code": ..., "message": ...}}
+            detail = str(e)
+            try:
+                error = json.loads(detail.split('Portal response: ', 1)[1])['json']
+                detail = f"{error.get('code', '')} {error.get('message', '')}".strip()
+            except (IndexError, ValueError, KeyError, TypeError, AttributeError):
+                pass
+            raise UserError(_("Portal %(operation)s: %(error)s", operation=operation, error=detail)) from e
+
+    def action_open_officer_wizard(self):
+        """Change Inquiry Officer / Reopen Inquiry: pick the officer first"""
+        self.ensure_one()
+        mode = self.env.context.get('officer_wizard_mode', 'reopen')
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Reopen Inquiry') if mode == 'reopen' else _('Change Inquiry Officer'),
+            'res_model': 'welfare.officer.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_welfare_id': self.id, 'default_mode': mode,
+                        'default_employee_id': self.employee_id.id if mode == 'reopen' else False},
+        }
+
+    def action_change_inquiry_officer(self, officer):
+        """changeInquiryOfficer: the open inquiry (same report) goes to ``officer``"""
+        self.ensure_one()
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Change Inquiry Officer'))
+        self._check_welfare_state(('send_for_inquiry',), _('Change Inquiry Officer'))
+        previous = self.employee_id
+        self._welfare_officer_call('changeInquiryOfficer', officer)
+        self.employee_id = officer
+        self._message_log(body=_("👤 Inquiry officer changed on the portal: %s → %s") % (previous.name or '-', officer.name))
+        return self._show_notification(_('Change Inquiry Officer'), _('%s can now complete the inquiry.') % officer.name, 'success')
+
+    def action_reopen_inquiry(self, officer):
+        """reopenInquiry: a new inquiry report for ``officer``, the welfare goes back to Send for Inquiry
+        (Check Portal Status / the scheduled action import it again once completed)"""
+        self.ensure_one()
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Reopen Inquiry'))
+        self._check_welfare_state(WELFARE_REOPEN_STATES, _('Reopen Inquiry'))
+        self._welfare_officer_call('reopenInquiry', officer)
+        # decided again on the new report: the previous remarks stay in the chatter
+        previous = [(_('Committee Remarks'), self.committee_remarks), (_('HOD Remarks'), self.hod_remarks)]
+        previous = [(label, value) for label, value in previous if value]
+        if previous:
+            self._message_log(body=Markup('%s<ul>%s</ul>') % (
+                _('Remarks on the previous inquiry (cleared for the new one):'),
+                Markup().join(Markup('<li>%s: %s</li>') % (label, value) for label, value in previous)))
+        self.write({'state': 'send_for_inquiry', 'employee_id': officer.id,
+                    'committee_remarks': False, 'hod_remarks': False})
+        self._message_log(body=_("🔁 Inquiry reopened on the portal for %s.") % officer.name)
+        return self._show_notification(_('Reopen Inquiry'), _('Inquiry reopened, %s can complete a new report.') % officer.name, 'success')
+
     def action_move_to_hod(self):
         """HOD Approval - Check required fields and documents"""
+        self._check_welfare_state(('committee_approval',), _('Move to HOD'))
+        self._check_step_group(_('Move to HOD'))
         for record in self:
             # Check for required documents
             missing_fields = []
@@ -1426,12 +1246,12 @@ class Welfare(models.Model):
             record._add_hod_lines()
 
             # Add chatter message
-            record.message_post(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
+            record._message_log(body=_("Application moved to HOD Approval by %s") % record.env.user.name)
 
     def _add_hod_lines(self):
         """Add an HOD line for every HOD product that has none yet (manual lines of the same product are separate)."""
         hod_products = self.env['product.product'].search([('product_tmpl_id.is_hod', '=', True)])
-        cash_category = self.env.ref('bn_master_setup.disbursement_category_Cash', raise_if_not_found=False)
+        cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
         for record in self:
             new_products = hod_products - record.welfare_line_ids.filtered('is_hod').product_id
             if not new_products:
@@ -1447,32 +1267,21 @@ class Welfare(models.Model):
             } for product in new_products])
 
     def action_move_to_member(self):
+        """HOD decision: approved directly when within the HOD limit, else
+        on to Final Approval."""
+        self._check_welfare_state(('hod_approve',), _('Move to Member'))
+        self._check_step_group(_('Move to Member'))
         for record in self:
-            current_user = self.env.user
-            is_hod = current_user.has_group('bn_welfare.group_welfare_hod')
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
-
-            if is_hod:
-                within_limit = record._check_amount_within_hod_limit()
-                # raise UserError(str(within_limit))
-                if within_limit == False:
-                    record.state = 'mem_approve'  # Move back to committee approval
-                    # raise ValidationError(error_message)
-                else:
-                    record.state = 'approve'
+            record.state = 'approve' if record._check_amount_within_hod_limit() else 'mem_approve'
+        # HOD lines may all have been disbursed from POS already
+        self.filtered(lambda r: r.state == 'approve')._auto_disburse_if_all_lines_delivered()
     def action_approve(self):
         """Final approval logic"""
+        self._check_welfare_state(('mem_approve',), _('Approve'))
+        self._check_step_group(_('Approve'))
         for record in self:
-            if record.order_type == 'recurring':
-                for line in record.welfare_line_ids:
-                    if self.env['welfare.recurring.line'].search_count([
-                        ('donee_id', '=', record.donee_id.id),
-                        ('disbursement_category_id', '=', line.disbursement_category_id.id),
-                        ('state', '=', 'draft')
-                    ]):
-                        pass
-            
             if not record.member_remarks:
                 raise ValidationError('Please enter Member Remarks!')
             record.state = 'approve'
@@ -1485,14 +1294,20 @@ class Welfare(models.Model):
     
 
     def action_reject(self):
-        if not self.rejection_remarks:
-            raise ValidationError('Please enter Rejection Remarks before rejection.')
-        self.state = 'reject'
+        self._check_welfare_state(tuple(STEP_GROUPS), _('Reject and Close'))
+        self._check_step_group(_('Reject and Close'))
+        for rec in self:
+            if not rec.rejection_remarks:
+                raise ValidationError('Please enter Rejection Remarks before rejection.')
+        self.write({'state': 'reject'})
 
     def action_create_recurring_order(self):
+        self.ensure_one()
+        self._check_welfare_state(('approve',), _('Create Recurring Orders'))
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Create Recurring Orders'))
+        if self.welfare_recurring_line_ids:
+            raise UserError(_('The recurring orders of %s were already created.') % self.name)
         for line in self.welfare_line_ids:
-            # if line.order_type != 'recurring':
-            #     raise ValidationError('This request does not belong to recurring order.')
             if self.order_type != 'recurring':
                 raise ValidationError('This request does not belong to recurring order.')
             
@@ -1526,30 +1341,35 @@ class Welfare(models.Model):
 
     
     def action_committee_approval(self):
-
-            self.state = 'committee_approval'
-        
+        self._check_welfare_state(('inquiry',), _('Move to Committee Approval'))
+        self._check_step_group(_('Move to Committee Approval'))
+        self.write({'state': 'committee_approval'})
 
     def action_complete(self):
-        if not self.welfare_line_ids:
-            raise ValidationError(_('You must add Welfare Line before completing.'))
-        self.state = 'completed'
-    
+        self._check_welfare_state(('draft',), _('Mark as Completed'))
+        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Mark as Completed'))
+        for rec in self:
+            if not rec.welfare_line_ids:
+                raise ValidationError(_('You must add Welfare Line before completing.'))
+        self.write({'state': 'completed'})
+
     def action_disburse(self):
-        self.state = 'disbursed'
+        self._check_welfare_state(('approve', 'recurring'), _('Disburse'))
+        self._check_step_group(_('Disburse'))
+        self.write({'state': 'disbursed'})
     
     def action_view_previous_disbursement(self):
         """Open the form view of the most recent previous disbursement"""
         self.ensure_one()
-        if self.previous_disbursement_id:
-            return {
-                'type': 'ir.actions.act_window',
-                'view_mode': 'form',
-                'res_model': 'welfare',
-                'res_id': self.previous_disbursement_id.id,
-                'target': 'current',
-            }
-        return {}
+        if not self.previous_disbursement_id:
+            raise UserError(_('No previous application found for this donee.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'view_mode': 'form',
+            'res_model': 'welfare',
+            'res_id': self.previous_disbursement_id.id,
+            'target': 'current',
+        }
         
     def action_reverse_state(self):
         state_flow = [
@@ -1564,6 +1384,7 @@ class Welfare(models.Model):
             'recurring',
             'disbursed',
         ]
+        self._check_step_group(_('Revert'))
         for rec in self:
             if rec.state in ['draft', 'disbursed', 'reject','recurring','approve']:
                 continue
@@ -1581,7 +1402,7 @@ class Welfare(models.Model):
         self.ensure_one()
         
         # Only allow in committee_approval and hod_approve states
-        if self.state not in ['inquiry', 'committee_approval']:
+        if self.state not in ['committee_approval', 'hod_approve']:
             raise ValidationError(_('This option is only available in Committee Approval and HOD Approval states.'))
         
         return {
@@ -1605,7 +1426,7 @@ class Welfare(models.Model):
 
         hod_group = self.env.ref('bn_welfare.group_welfare_hod', raise_if_not_found=False)
         if not hod_group:
-            return True, None
+            return True
 
         limit = self.env['welfare.approval.limit'].search([
             ('group_id', '=', hod_group.id),
@@ -1613,7 +1434,7 @@ class Welfare(models.Model):
         ], limit=1)
 
         if not limit:
-            return True, None
+            return True
 
         for line in self.welfare_line_ids:
             # Check amount limit
@@ -1621,9 +1442,6 @@ class Welfare(models.Model):
                 # self.state = 'mem_approve'
                 return False
                 # , _(
-                #     "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
-                #     "This request cannot be approved by HOD."
-                # ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
 
             # Check product limit only if allowed products are set
             if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
@@ -1631,11 +1449,8 @@ class Welfare(models.Model):
 
                 return False
                 # , _(
-                #     "Product '%s' is not in the allowed products list for HOD approval. "
-                #     "Please contact your administrator."
-                # ) % line.product_id.name
 
-        return True, None
+        return True
 
 
     def action_return_to_pos(self):

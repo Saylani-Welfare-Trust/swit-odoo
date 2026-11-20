@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="welfare_officer_wizard_view_form" model="ir.ui.view">
+        <field name="name">welfare.officer.wizard.view.form</field>
+        <field name="model">welfare.officer.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <field name="mode" invisible="1"/>
+                <field name="employee_domain" invisible="1"/>
+                <div class="text-muted mb-2" invisible="mode != 'reopen'">
+                    The portal opens a new inquiry report for this officer; the completed one stays on the application.
+                </div>
+                <div class="text-muted mb-2" invisible="mode != 'change'">
+                    The open inquiry moves to this officer, who completes the same report.
+                </div>
+                <group>
+                    <field name="welfare_id"/>
+                    <field name="employee_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                </group>
+                <footer>
+                    <button string="Confirm" name="action_confirm" type="object" class="oe_highlight"/>
+                    <button string="Cancel" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

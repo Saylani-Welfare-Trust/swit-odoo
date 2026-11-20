@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="sadqa_jariya_line_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.view.tree</field>
+        <field name="model">sadqa.jariya.line</field>
+        <field name="arch" type="xml">
+            <tree edit="0" create="0" delete="0">
+                <field name="application_id"/>
+                <field name="donee_id"/>
+                <field name="recurring_duration" optional="hide"/>
+                <field name="disbursement_category_id"/>
+                <field name="application_type_id"/>
+                <field name="product_id"/>
+                <field name="on_hand_qty" optional="hide"/>
+                <field name="collection_point"/>
+                <field name="analytic_account_id"/>
+                <field name="collection_date"/>
+                <field name="quantity"/>
+                <field name="amount" optional="hide"/>
+                <field name="total_amount" sum="Total"/>
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_line_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.view.search</field>
+        <field name="model">sadqa.jariya.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="application_id"/>
+                <field name="donee_id"/>
+                <field name="product_id"/>
+                <field name="disbursement_category_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="disbursed" string="Disbursed" domain="[('state', '=', 'disbursed')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_category" string="Category" context="{'group_by': 'disbursement_category_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_line_action" model="ir.actions.act_window">
+        <field name="name">All Disbursement Lines</field>
+        <field name="res_model">sadqa.jariya.line</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="sadqa_jariya_line_view_search"/>
+    </record>
+
+    <record id="sadqa_jariya_recurring_line_view_tree" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.view.tree</field>
+        <field name="model">sadqa.jariya.recurring.line</field>
+        <field name="arch" type="xml">
+            <tree edit="0" create="0" delete="0">
+                <field name="application_id"/>
+                <field name="donee_id"/>
+                <field name="disbursement_category_id"/>
+                <field name="product_id"/>
+                <field name="collection_point"/>
+                <field name="analytic_account_id"/>
+                <field name="collection_date"/>
+                <field name="quantity"/>
+                <field name="amount" sum="Total"/>
+                <field name="state" widget="badge" decoration-warning="state == 'draft'" decoration-success="state == 'disbursed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_recurring_line_view_search" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.view.search</field>
+        <field name="model">sadqa.jariya.recurring.line</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="application_id"/>
+                <field name="donee_id"/>
+                <field name="product_id"/>
+                <field name="disbursement_category_id"/>
+                <field name="analytic_account_id"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="pending" string="Pending" domain="[('state', 'in', ('delivered', 'pending'))]"/>
+                <filter name="disbursed" string="Disbursed" domain="[('state', '=', 'disbursed')]"/>
+                <separator/>
+                <filter name="due" string="Due" domain="[('collection_date', '&lt;=', context_today().strftime('%Y-%m-%d')), ('state', 'not in', ('disbursed', 'return'))]"/>
+                <filter name="collection_date" string="Collection Date" date="collection_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="State" context="{'group_by': 'state'}"/>
+                    <filter name="group_category" string="Category" context="{'group_by': 'disbursement_category_id'}"/>
+                    <filter name="group_branch" string="Branch" context="{'group_by': 'analytic_account_id'}"/>
+                    <filter name="group_collection_date" string="Collection Date" context="{'group_by': 'collection_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_recurring_line_action" model="ir.actions.act_window">
+        <field name="name">All Recurring Lines</field>
+        <field name="res_model">sadqa.jariya.recurring.line</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="sadqa_jariya_recurring_line_view_search"/>
+    </record>
+
+</odoo>

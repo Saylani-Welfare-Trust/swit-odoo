@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <form string="Edit Welfare Application - Full View">
                 <sheet>
+                    <field name="welfare_id" invisible="1"/>
                     <div class="oe_title">
                         <h1>Welfare Application Details - Full Page Editor</h1>
                         <button string="View Most Recent Disbursement" name="view_previous_disbursement" type="object" 
@@ -29,8 +30,6 @@
                                 <field name="cnic_expiration_date"/>
                             </group>
                             <group>
-                                <field name="institution_category"/>
-                                <field name="subcategory"/>
                                 <field name="loan_request_amount"/>
                                 <field name="loan_tenure_expected"/>
                                 <field name="security_offered"/>
@@ -150,23 +149,27 @@
                         <!-- Recurring Welfare Lines Section -->
                         <separator string="Recurring Welfare Lines" class="text-uppercase"/>
                         <field name="recurring_lines_html" nolabel="1" widget="html"/>
-                        
-                        <!-- Committee Members Section -->
-                        <separator string="Committee Members" class="text-uppercase"/>
-                        <field name="committee_members_html" nolabel="1" widget="html"/>
 
                         
                         <!-- Attachments Section -->
                         <separator string="Attachments" class="text-uppercase"/>
+                        <field name="document_image_ids" nolabel="1" mode="tree">
+                            <tree>
+                                <field name="document_type" string="Document Type"/>
+                                <field name="image_filename" string="File Name"/>
+                                <field name="display_image" string="Preview" widget="html"/>
+                            </tree>
+                        </field>
+                        <!-- Old single-file fields: only shown on records that still have them -->
                         <group>
                             <group>
-                                <field name="application_form" filename="application_form_name" widget="binary"/>
-                                <field name="frc" filename="frc_name" widget="binary"/>
+                                <field name="application_form" filename="application_form_name" widget="binary" invisible="not application_form"/>
+                                <field name="frc" filename="frc_name" widget="binary" invisible="not frc"/>
                             </group>
                             <group>
-                                <field name="electricity_bill_file" filename="electricity_bill_name" widget="binary"/>
-                                <field name="gas_bill_file" filename="gas_bill_name" widget="binary"/>
-                                <field name="family_cnic" filename="family_cnic_name" widget="binary"/>
+                                <field name="electricity_bill_file" filename="electricity_bill_name" widget="binary" invisible="not electricity_bill_file"/>
+                                <field name="gas_bill_file" filename="gas_bill_name" widget="binary" invisible="not gas_bill_file"/>
+                                <field name="family_cnic" filename="family_cnic_name" widget="binary" invisible="not family_cnic"/>
                             </group>
                         </group>
                         
@@ -174,7 +177,6 @@
                 </sheet>
                 <footer>
                     <button name="action_approve" string="Approve" type="object" class="btn-primary"/>
-                    <!-- <button name="action_save_and_close" string="Save" type="object" class="btn-default"/> -->
                     <button name="action_cancel" string="Cancel" type="object" class="btn-default"/>
                 </footer>
             </form>

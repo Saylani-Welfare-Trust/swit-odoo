@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <template id="report_sadqa_jariya_collection_document">
+        <t t-call="web.external_layout">
+            <main>
+                <t t-foreach="docs" t-as="application">
+                    <div class="page">
+                        <style>
+                            .info-box { border: 1px solid #000; padding: 10px; margin-bottom: 12px; font-size: 11px; }
+                            .flex-container { display: flex; width: 100%; }
+                            .flex-column { width: 50%; padding-right: 10px; }
+                            .flex-row { display: flex; margin-bottom: 6px; }
+                            .flex-label { width: 45%; }
+                            .flex-value { width: 55%; font-weight: 500; }
+                            .table-bordered-custom { border-collapse: collapse !important; border: 1px solid #000 !important; font-size: 11px; }
+                            .table-bordered-custom th, .table-bordered-custom td { border: 1px solid #000 !important; padding: 6px !important; }
+                        </style>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                            <h6 class="fw-bold text-uppercase" style="font-size: 14px;">Sadqa e Jariya Collection Receipt</h6>
+                            <h6 class="fw-bold text-uppercase" style="font-size: 14px;"><t t-esc="application.name"/></h6>
+                        </div>
+                        <div class="info-box">
+                            <div class="flex-container">
+                                <div class="flex-column">
+                                    <div class="flex-row"><div class="flex-label">Date:</div><div class="flex-value"><t t-esc="application.date" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Receipt #:</div><div class="flex-value"><t t-esc="application.name"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Donee Name:</div><div class="flex-value"><t t-esc="application.donee_id.name"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">CNIC #:</div><div class="flex-value"><t t-esc="application.cnic_no"/></div></div>
+                                </div>
+                                <div class="flex-column">
+                                    <div class="flex-row"><div class="flex-label">Institution:</div><div class="flex-value"><t t-esc="application.institute_name"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Institution Type:</div><div class="flex-value"><span t-field="application.institution_category"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">Order Type:</div><div class="flex-value"><span t-field="application.order_type"/></div></div>
+                                    <div class="flex-row"><div class="flex-label">State:</div><div class="flex-value"><span t-field="application.state"/></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <t t-if="application.order_type == 'recurring'">
+                            <h3>Recurring Lines</h3>
+                            <table class="table table-bordered-custom">
+                                <thead>
+                                    <tr><th>Product</th><th>Quantity</th><th>Amount</th><th>Collection Date</th><th>State</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="application.recurring_line_ids" t-as="line">
+                                        <td><t t-esc="line.product_id.display_name"/></td>
+                                        <td class="text-center"><t t-esc="line.quantity"/></td>
+                                        <td class="text-end"><t t-esc="line.amount"/></td>
+                                        <td class="text-center"><t t-esc="line.collection_date"/></td>
+                                        <td class="text-center"><span t-field="line.state"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <h3>Disbursement Items</h3>
+                            <table class="table table-bordered-custom">
+                                <thead>
+                                    <tr><th>Product</th><th>Quantity</th><th>Amount</th><th>Total</th><th>Collection Date</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="application.line_ids.filtered(lambda l: l.state != 'cancel')" t-as="line">
+                                        <td><t t-esc="line.product_id.display_name"/></td>
+                                        <td class="text-center"><t t-esc="line.quantity"/></td>
+                                        <td class="text-end"><t t-esc="line.amount"/></td>
+                                        <td class="text-end"><t t-esc="line.total_amount"/></td>
+                                        <td class="text-center"><t t-esc="line.collection_date"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                    </div>
+                </t>
+            </main>
+        </t>
+    </template>
+
+    <record id="action_report_sadqa_jariya_collection" model="ir.actions.report">
+        <field name="name">Sadqa e Jariya Collection</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_sadqa_e_jariya.report_sadqa_jariya_collection_document</field>
+        <field name="report_file">sadqa_jariya_collection</field>
+        <field name="binding_model_id" ref="model_sadqa_jariya"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

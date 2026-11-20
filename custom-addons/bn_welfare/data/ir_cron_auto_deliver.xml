@@ -1,6 +1,6 @@
 <odoo>
-    <!-- Scheduled Action: pull completed inquiries from the portal (same as main).
-         Ships disabled; noupdate keeps it enabled across module upgrades once switched on. -->
+    <!-- Polls the portal for finished inquiries (off by default: turn it on in Scheduled Actions).
+         noupdate: once switched on, a module upgrade does not switch it off again. -->
     <data noupdate="1">
         <record id="ir_cron_auto_check_welfare_portal_status" model="ir.cron">
             <field name="name">Welfare: Auto Check Portal Status</field>
