@@ -26,8 +26,7 @@
         id="welfare_config_menu"
         name="Welfare"
         parent="bn_master_setup.master_setup_menu"
-        sequence="4"
-        groups="bn_welfare.group_welfare_admin"/>
+        sequence="4"/>
 
     <menuitem
         id="disbursement_category_menu"

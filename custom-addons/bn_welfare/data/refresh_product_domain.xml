@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <!-- Lines saved with the old "all products" domain get the Is Welfare one -->
-    <function model="welfare.line" name="_refresh_product_domain"/>
-</odoo>

@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError
 
 
 class WelfareApprovalLimit(models.Model):
@@ -9,7 +10,7 @@ class WelfareApprovalLimit(models.Model):
 
 
     group_id = fields.Many2one('res.groups', string="User Group", required=True)
-    group_name = fields.Char(related='group_id.name', string="Group Name")
+    group_name = fields.Char(related='group_id.name', string="Group Name", store=True)
 
     # Limit settings
     max_amount_limit = fields.Monetary(string="Maximum Approval Amount", required=True)

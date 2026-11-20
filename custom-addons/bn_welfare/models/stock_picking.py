@@ -1,4 +1,5 @@
-from odoo import models, fields
+from odoo import models, api, fields
+from odoo.exceptions import UserError as Warning
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
