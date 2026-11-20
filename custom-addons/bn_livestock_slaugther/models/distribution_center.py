@@ -63,9 +63,11 @@ class DistributionCenter(models.Model):
     def action_confirm(self):
         self.ensure_one()
 
+        if self.state != 'draft':
+            raise ValidationError(_('Only Draft records can be confirmed.'))
         if not self.distribution_center_line_ids:
             raise ValidationError(_('Please select at least one item.'))
-        
+
         self.state = 'item_selected'
 
     def _check_livestock_group(self, xmlid, role):

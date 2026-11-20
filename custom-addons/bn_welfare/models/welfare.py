@@ -255,7 +255,8 @@ class Welfare(models.Model):
 
             # Delete existing images for this document type
             existing_images = self.document_image_ids.filtered(lambda img: img.document_type == doc_type)
-            existing_images.unlink()
+            # the portal sync replaces them (only Welfare Admins delete documents by hand)
+            existing_images.sudo().unlink()
 
             for url in urls:
                 try:
@@ -534,10 +535,6 @@ class Welfare(models.Model):
         headers = self._get_sadqa_api_headers()
 
         url = self.clean_url(url)
-        # raise UserError(
-        #         "URL:\n%s\n\nHeaders:\n%s\n\nData:\n%s"
-        #         % (url, headers, data)
-        #     )
         if data is not None:
             try:
                 # Convert non-serializable types (dates, datetimes, Decimals, etc.) to JSON-safe values
@@ -545,12 +542,6 @@ class Welfare(models.Model):
             except Exception as e:
                 _logger.error("Failed to prepare JSON payload: %s", e)
                 raise UserError(_("Failed to prepare request payload: %s") % e)
-        # raise UserError(
-        #     f"API Request Failed\n\n"
-        #     f"URL: {url}\n"
-        #     f"Headers: {headers}"
-        #     f"Data: {data}\n"
-        # )
         _logger.info(f"Making Sadqa Jaria API call to {url} with method {method} and data: {data}")
         try:
             if data is None :
@@ -715,7 +706,7 @@ class Welfare(models.Model):
             message = " | 📋 No applications found"
 
         return message
-    
+
     @api.model
     def _auto_check_portal_status(self):
         """Scheduled action: pull completed inquiries for applications already sent to the portal.
@@ -771,10 +762,6 @@ class Welfare(models.Model):
             # _logger.info(f"Checking application: {app} and id is system {self.id} portal {app.get('id')}" )
             if app.get('odooId') == self.id and app.get('department') == "welfare":
                 return app
-            # # Match by name and WhatsApp
-            # if (app.get('name') == self.donee_id.name and 
-            #     app.get('whatsapp') == self.donee_id.mobile):
-            #     return app
         return None
     
     def _search_portal_applications(self):
@@ -1443,9 +1430,6 @@ class Welfare(models.Model):
                 # self.state = 'mem_approve'
                 return False
                 # , _(
-                #     "Amount (%.2f) on product '%s' exceeds your HOD approval limit (%.2f). "
-                #     "This request cannot be approved by HOD."
-                # ) % (line.total_amount, line.product_id.name, limit.max_amount_limit)
 
             # Check product limit only if allowed products are set
             if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
@@ -1453,9 +1437,6 @@ class Welfare(models.Model):
 
                 return False
                 # , _(
-                #     "Product '%s' is not in the allowed products list for HOD approval. "
-                #     "Please contact your administrator."
-                # ) % line.product_id.name
 
         return True
 

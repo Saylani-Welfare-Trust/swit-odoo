@@ -6,5 +6,5 @@ class AdvanceDonationCategoryLine(models.Model):
     _description = "Advance Donation Category Line"
 
 
-    product_id = fields.Many2one('product.product', 'Product')
+    product_id = fields.Many2one('product.product', 'Product', domain=[('is_advance_donation', '=', True)])
     category_id = fields.Many2one('advance.donation.category', 'Category')

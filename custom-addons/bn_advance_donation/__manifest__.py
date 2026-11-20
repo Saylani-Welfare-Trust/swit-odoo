@@ -1,6 +1,6 @@
 {
     'name': 'Advance Donation',
-    'version': '17.0.1.4.1',
+    'version': '17.0.1.4.4',
     'description': "",
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',
@@ -13,6 +13,7 @@
         'bn_master_setup',
         'bn_pos_custom_action',
         'bn_pos_cheque',
+        'bn_profile_management',
     ],
     'data': [
         'security/groups.xml',
@@ -36,6 +37,7 @@
         'views/advance_donation_category.xml',
         'views/menu.xml',
         'views/advance_donation_statement_action.xml',
+        'views/record_search.xml',
         'views/res_partner.xml',
         
         'wizard/partial_payment.xml',

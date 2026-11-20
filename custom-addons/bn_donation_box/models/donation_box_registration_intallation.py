@@ -47,7 +47,7 @@ class DonationBoxRegistrationInstallation(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot", index=True)
     donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('db_donor', registered=True), tracking=True)
     installation_category_id = fields.Many2one('installation.category', string="Installation Category", tracking=True)
-    product_id = fields.Many2one('product.product', string="Box Category")
+    product_id = fields.Many2one('product.product', string="Box Category", domain=[('is_donation_box', '=', True)])
     country_id = fields.Many2one(related='donor_id.country_code_id', string="Phone Code", store=True, tracking=True)
 
     installer_id = fields.Many2one('hr.employee', string="Installer", tracking=True)
@@ -55,8 +55,8 @@ class DonationBoxRegistrationInstallation(models.Model):
         'hr.employee.category', string="Employee Installer Category",
         default=lambda self: self._default_employee_category_id())
 
-    city_id = fields.Many2one('account.analytic.account', string="City", tracking=True)
-    zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True)
+    city_id = fields.Many2one('account.analytic.account', string="City", tracking=True, index='btree_not_null')
+    zone_id = fields.Many2one('account.analytic.account', string="Zone", tracking=True, index='btree_not_null')
     sub_zone_id = fields.Many2one('sub.zone', string="Sub Zone", tracking=True)
 
     name = fields.Char('Name', default="New", copy=False)

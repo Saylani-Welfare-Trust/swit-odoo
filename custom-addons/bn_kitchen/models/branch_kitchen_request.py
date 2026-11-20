@@ -1,5 +1,5 @@
 from odoo import _, models, fields
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 
 month_selection = [
@@ -55,6 +55,9 @@ class BranchKitchenRequest(models.Model):
 
 
     def action_approve(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_kitchen.kitchen_manager_group',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         if any(rec.state != 'draft' for rec in self):
             raise UserError(_('Only a draft kitchen request can be approved.'))
         self.state = 'approve'

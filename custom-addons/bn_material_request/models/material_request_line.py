@@ -130,17 +130,6 @@ class MemberApprovalLine(models.Model):
                         if budget:
                             vals['budget_id'] = budget.id
         return super().create(vals_list)
-    # @api.onchange('budget_id')
-    # def _onchange_budget_id_update_analytic_default(self):
-    #     """When a budget is manually selected on the line, set it as the default on the analytic account."""
-    #     for line in self:
-    #         if line.budget_id and line.analytic_account_id:
-    #             # Optionally, only update if the analytic account has no default yet
-    #             # or update always to keep them in sync
-    #             if not line.analytic_account_id.default_budget_id:
-    #                 line.analytic_account_id.default_budget_id = line.budget_id.id
-    #             # If you want to always override:
-    #             # line.analytic_account_id.default_budget_id = line.budget_id.id
             
 
     product_packaging_id = fields.Many2one(

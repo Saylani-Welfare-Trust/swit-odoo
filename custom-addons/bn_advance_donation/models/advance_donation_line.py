@@ -1,4 +1,8 @@
 from odoo import models, fields, api, _
+from .advance_donation import changed_fields
+
+# What a line is: fixed once the donation is sent for approval
+LINE_TERM_FIELDS = {'advance_donation_id', 'product_id', 'quantity', 'amount', 'service_charge_amount', 'date'}
 from odoo.exceptions import UserError
 from odoo.tools.sql import column_exists, create_column, table_exists
 from datetime import date as td
@@ -12,7 +16,7 @@ class AdvanceDonationLine(models.Model):
     advance_donation_id = fields.Many2one('advance.donation', 'Donation ID', ondelete='cascade', required=True)
     # advance_donation_id = fields.Integer(string="Temp Fix")  # 👈 TEMP
     serial_no = fields.Char('Serial No.')
-    product_id = fields.Many2one('product.product', 'Product')
+    product_id = fields.Many2one('product.product', 'Product', domain=[('is_advance_donation', '=', True)])
     description = fields.Char('Description')
     comment = fields.Char('Comment')
     quantity = fields.Integer(
@@ -74,7 +78,19 @@ class AdvanceDonationLine(models.Model):
     def write(self, vals):
         if vals.get('is_disbursed'):
             self._check_disbursable()
+        if not self.env.su:
+            for line in self.filtered(lambda l: l.advance_donation_id.state != 'draft'):
+                changed = changed_fields(line, vals, LINE_TERM_FIELDS)
+                if changed:
+                    raise UserError(_('The lines of %(name)s can only be changed in Draft. Changed: %(fields)s.') % {
+                        'name': line.advance_donation_id.name,
+                        'fields': ', '.join(sorted(line._fields[f].string for f in changed))})
         return super().write(vals)
+
+    def unlink(self):
+        if not self.env.su and self.filtered(lambda l: l.advance_donation_id.state != 'draft'):
+            raise UserError(_('Lines of an advance donation can only be deleted in Draft.'))
+        return super().unlink()
 
     def _check_disbursable(self):
         """Lines are disbursed only from an approved advance donation."""

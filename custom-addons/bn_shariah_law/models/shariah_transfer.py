@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from datetime import timedelta
 import logging
 
@@ -110,7 +110,13 @@ class ShariahTransfer(models.Model):
                 raise UserError(_('The amount of a transfer must be positive.'))
             if rec.source_analytic_account_id == rec.destination_analytic_account_id:
                 raise UserError(_('The source and destination segments must differ.'))
-            
+
+            # The transfer rules decide (the form only shows them): refused when no rule
+            # allows this source, destination or amount
+            rule = self.env['segment.transfer.rule'].check_transfer_allowed(
+                rec.source_analytic_account_id.id, rec.destination_analytic_account_id.id, rec.amount)
+            rec.rule_id = rule
+
             # Check if member approval is required and not yet approved
             if rec.requires_approval and not rec.member_posted:
                 rec.state = 'member_approval'
@@ -178,6 +184,9 @@ class ShariahTransfer(models.Model):
 
     def action_reject(self):
         """Reject the transfer."""
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_shariah_law.shariah_law_manager_group', 'bn_shariah_law.group_member_approval')):
+            raise AccessError(_('You are not allowed to do this action.'))
         for rec in self:
             if rec.state != 'member_approval':
                 raise UserError(_('This transfer is not waiting for member approval.'))

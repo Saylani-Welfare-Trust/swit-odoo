@@ -32,7 +32,7 @@ class POSCheque(models.Model):
 
     bank_id = fields.Many2one('account.journal', string="Bank")
     donor_id = fields.Many2one('res.partner', string="Donor", compute="_set_details", store=True)
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_details", store=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Analytic Account", compute="_set_details", store=True, index='btree_not_null')
     name = fields.Char('Cheque Number')
     state = fields.Selection(selection=state_selection, string="State", default='draft')
     order_reference = fields.Char('Order Reference', compute="_set_details", store=True)

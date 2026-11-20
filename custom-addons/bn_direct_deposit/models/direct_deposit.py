@@ -30,7 +30,7 @@ class DirectDeposit(models.Model):
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     # the Branch of the POS shop it was made at; made in the back office: the user's branch
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location",
-                                          compute='_compute_branch', store=True, readonly=True)
+                                          compute='_compute_branch', store=True, readonly=True, index='btree_not_null')
 
     @api.depends('pos_analytic_account_id', 'user_id')
     def _compute_branch(self):
@@ -316,7 +316,8 @@ May Allah bless you!
             if not credit_account:
                 raise ValidationError(_("Missing credit account for product %s") % line.product_id.name)
 
-            line_amount = line.amount * line.quantity
+            # rounded per line, the debit being their sum: the entry always balances
+            line_amount = self.env.company.currency_id.round(line.amount * line.quantity)
             line_vals.append((0, 0, {
                 "name": credit_account.name,
                 "account_id": credit_account.id,

@@ -49,7 +49,15 @@ class QurbaniCowDistribution(models.Model):
         return super().create(vals_list)
     
     def action_approved(self):
+        # the Approve button (No Meat approval) is the Qurbani Manager's, for
+        # undelivered records of at most 2 distributions: also refused over RPC
+        if not self.env.su and not self.env.user.has_group('bn_qurbani.qurbani_manager_group'):
+            raise ValidationError('Only Qurbani Managers can approve.')
         for rec in self:
+            if rec.state not in ('pending', 'not_applicable'):
+                raise ValidationError('Only pending or not applicable records can be approved.')
+            if rec.max_distribution > 2:
+                raise ValidationError('Records with more than 2 distributions cannot be approved.')
             if not rec.remarks:
                 raise ValidationError('Please enter the remarks first for No meet approval.')
             

@@ -1,6 +1,6 @@
 import re
 
-from odoo import api, fields, models
+from odoo import fields, models
 
 # Institutional form field reference of the portal contract: (key, English label, type) per section.
 # The portal sends one flat camelCase form; its keys are stored on snake_case fields (accountTitle -> account_title).
@@ -36,15 +36,14 @@ GENERAL_FIELDS = (
     ('monthlyMeetings', 'Number of Monthly Meetings', 'integer'),
 )
 
-# Photos (signed URLs valid 15 minutes, either user may leave one out): downloaded on import, before the ACK,
-# into the application's Documents, where they can be viewed, removed and added to. key -> (document type, label)
-PHOTO_DOCUMENT_TYPES = {
-    'applicationImage': ('application_photo', 'Application Photo'),
-    'institutionImage': ('institution_photo', 'Institution Photo'),
-    'assemblyImage': ('assembly_photo', 'Assembly Photo'),
-    'studentsStudyingImage': ('students_studying_photo', 'Students During Lessons'),
-    'mealtimeImage': ('mealtime_photo', 'Students at Mealtime'),
-}
+# signed URLs valid 15 minutes: downloaded on import, before the ACK; either user may leave one out
+PHOTO_FIELDS = (
+    ('applicationImage', 'Application Photo', 'image'),
+    ('institutionImage', 'Institution Photo', 'image'),
+    ('assemblyImage', 'Assembly Photo', 'image'),
+    ('studentsStudyingImage', 'Students During Lessons', 'image'),
+    ('mealtimeImage', 'Students at Mealtime', 'image'),
+)
 
 MASJID_FIELDS = (
     ('worshippersFajr', 'Fajr Worshippers', 'integer'),
@@ -107,9 +106,10 @@ FLOOD_FIELDS = (
     ('statusAfterFlood', 'Institution After the Flood', 'text'),
 )
 
-FORM_SECTIONS = (GENERAL_FIELDS, MASJID_FIELDS, MADRASA_FIELDS, CONSTRUCTION_FIELDS, FLOOD_FIELDS)
+FORM_SECTIONS = (GENERAL_FIELDS, PHOTO_FIELDS, MASJID_FIELDS, MADRASA_FIELDS, CONSTRUCTION_FIELDS, FLOOD_FIELDS)
 
-FIELD_TYPES = {'char': fields.Char, 'text': fields.Text, 'integer': fields.Integer, 'float': fields.Float, 'date': fields.Date}
+FIELD_TYPES = {'char': fields.Char, 'text': fields.Text, 'integer': fields.Integer, 'float': fields.Float, 'date': fields.Date,
+               'image': fields.Image}
 
 
 def field_name(key):
@@ -140,29 +140,9 @@ def _form_attrs():
     }
     for section in FORM_SECTIONS:
         for key, label, field_type in section:
-            attrs[field_name(key)] = FIELD_TYPES[field_type](label)
-
-    # photos imported onto the form before they went to the Documents: moved there on upgrade
-    for key, (_document_type, label) in PHOTO_DOCUMENT_TYPES.items():
-        attrs[field_name(key)] = fields.Image(f'{label} (moved to Documents)')
-
-    def _move_photos_to_documents(self):
-        """Runs on install / upgrade (data/move_portal_photos.xml); nothing is left to move after the first time"""
-        Document = self.env['sadqa.jariya.document']
-        for key, (document_type, _label) in PHOTO_DOCUMENT_TYPES.items():
-            name = field_name(key)
-            for form in self.search([(name, '!=', False)]):
-                Document.create({
-                    'application_id': form.application_id.id,
-                    'document_type': document_type,
-                    'image_data': form[name],
-                    'image_filename': f'{document_type}.jpg',
-                    'uploaded_from': form.submission,
-                    'form_id': form.id,
-                })
-                form[name] = False
-
-    attrs['_move_photos_to_documents'] = api.model(_move_photos_to_documents)
+            # photos up to 10 MB on the portal, kept at most 1920px here
+            extra = {'max_width': 1920, 'max_height': 1920} if field_type == 'image' else {}
+            attrs[field_name(key)] = FIELD_TYPES[field_type](label, **extra)
     return attrs
 
 

@@ -1,8 +1,8 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from odoo import SUPERUSER_ID, models, fields, api
-from odoo.exceptions import UserError
+from odoo import SUPERUSER_ID, _, models, fields, api
+from odoo.exceptions import AccessError, UserError
 from odoo.tools import float_compare
 
 EDIT_AMOUNT_GROUP = 'bn_rider_shift.group_edit_rider_collection'
@@ -46,7 +46,7 @@ class RiderCollection(models.Model):
     )
 
     rider_id = fields.Many2one('hr.employee', string="Rider")
-    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box")
+    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", index=True)
 
     shop_name = fields.Char(related='donation_box_registration_installation_id.shop_name', string="Shop Name", store=True)
     contact_person = fields.Char(related='donation_box_registration_installation_id.contact_person', string="Contact Person", store=True)
@@ -101,6 +101,9 @@ class RiderCollection(models.Model):
         """Server action "Find DN # from POS": link Paid collections paid before the POS
         order was kept on them. Only a collection with exactly one matching POS order
         is filled; the others are listed."""
+        # the server action is the Donation Box Managers': also refused over RPC
+        if not self.env.su and not self.env.user.has_group('bn_donation_box.donation_box_manager_group'):
+            raise AccessError(_('Only Donation Box Managers can fill the DN # from the POS.'))
         product_name = self.env.company.donation_box_product
         if not product_name:
             raise UserError("Please set the Donation Box product on the company first.")

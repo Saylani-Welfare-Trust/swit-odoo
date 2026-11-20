@@ -7,5 +7,6 @@ class DonationInKindConfig(models.Model):
 
 
     location_id = fields.Many2one('stock.location', string='Location')
-    picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types')
+    picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types',
+                                      domain=[('program_type', '=', 'donation_in_kind')])
     journal_id = fields.Many2one('account.journal', string='Journal')

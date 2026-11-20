@@ -38,9 +38,15 @@ class LivestockCutting(models.Model):
         return super().create(vals_list)
 
     def action_confirm(self):
-        self.state = 'received'
-    
+        if self.filtered(lambda r: r.state != 'not_received'):
+            raise ValidationError(_('Only cuttings not received yet can be confirmed.'))
+        self.write({'state': 'received'})
+
     def action_validate_picking(self):
+        self.ensure_one()
+        # once: a second run would create a second cutting material and transfer
+        if self.is_picking:
+            raise ValidationError(_('The picking of %s is already validated.') % self.name)
         cutting_obj = self.env['livestock.cutting.material']
         product_pro = self.product_id
 

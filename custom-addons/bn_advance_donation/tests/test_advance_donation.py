@@ -162,3 +162,25 @@ class TestAdvanceDonation(TransactionCase):
         donation.allocate_payment(1500, (cash | cheque).ids)
         self.assertEqual(donation.advance_donation_lines.mapped('state'), ['paid', 'partial'])
         self.assertFalse(donation.is_fully_paid)
+
+    def test_terms_fixed_once_sent_for_approval(self):
+        """What the approvers approve is what is paid: the terms and the lines
+        can only be changed (or lines deleted) in Draft."""
+        donation = self._donation()
+        line = donation.advance_donation_lines[:1]
+        donation.write({'amount_percentage': 50})  # Draft: free
+        donation.compute_donation()
+        line = donation.advance_donation_lines[:1]
+        line.write({'comment': 'draft'})
+        self._approve(donation)
+        with self.assertRaises(UserError):
+            donation.write({'amount_percentage': 100})
+        with self.assertRaises(UserError):
+            donation.write({'donor_id': self.env['res.partner'].create({'name': 'Other T'}).id})
+        with self.assertRaises(UserError):
+            line.write({'amount': line.amount + 1})
+        with self.assertRaises(UserError):
+            line.unlink()
+        # an unchanged value, a comment or the payment fields stay writable
+        donation.write({'amount_percentage': donation.amount_percentage})
+        line.write({'comment': 'approved', 'paid_amount': line.paid_amount})

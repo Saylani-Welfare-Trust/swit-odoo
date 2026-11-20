@@ -1,6 +1,8 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError
-from datetime import date, timedelta
+from datetime import timedelta
+
+from .res_partner_category import donor_account_domain
 
 STATE_LABELS = {
     'draft': 'Draft', 'approval_1': 'Approval 1', 'approval_2': 'Approval 2',
@@ -10,6 +12,30 @@ APPROVAL_GROUPS = {
     'approval_1': 'bn_advance_donation.group_adv_don_approval_1',
     'approval_2': 'bn_advance_donation.group_adv_don_approval_2',
 }
+
+# The terms of a donation: set in Draft, fixed once it is sent for approval
+# (what the approvers approved is what is paid and disbursed)
+TERM_FIELDS = {
+    'donor_id', 'category_id', 'contract_type', 'payment_type', 'total_no_of_product',
+    'contract_frequency', 'product_id', 'amount_percentage', 'no_of_product',
+    'contract_start_date', 'contract_end_date', 'no_of_days', 'no_of_weeks',
+    'service_charges', 'service_charge_product_id', 'service_charge_amount',
+}
+
+
+def changed_fields(record, vals, names):
+    """The fields of ``names`` that ``vals`` really changes on ``record``."""
+    changed = set()
+    for name in names & set(vals):
+        field = record._fields[name]
+        new = vals[name]
+        old = record[name].id if field.type == 'many2one' else record[name]
+        if field.type == 'many2one':
+            new = new or False
+        if (old or False) != (new or False):
+            changed.add(name)
+    return changed
+
 
 # An open contract is one amount: no frequency, no date range
 OPEN_CONTRACT_EMPTY = {
@@ -28,10 +54,11 @@ class AdvanceDonation(models.Model):
     # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
+    # only donors registered for Advance Donation (Record Search > Donor Account)
     donor_id = fields.Many2one(
         'res.partner', 
         string='Donor',
-        domain=[('category_id.name', '=', 'Donor')]
+        domain=donor_account_domain,
     )
     category_id = fields.Many2one('advance.donation.category', string='Category')
     contract_type = fields.Selection([('product', 'Quantity Based'),
@@ -316,34 +343,7 @@ class AdvanceDonation(models.Model):
                 raise UserError(_('Compute the donation lines of %s before sending it for approval.') % rec.name)
         self.write({'state': 'approval_1'})
     
-    # def _validate_manual_payment(self):
-    #     """Validate that manual payment doesn't exceed available balance"""
-    #     if self.manual_payment_amount > self.total_balance:
-    #         raise UserError(
-    #             f'Manual payment amount ({self.manual_payment_amount}) cannot be greater than '
-    #             f'total available balance ({self.total_balance})'
-    #         )
-        
-    
-
-    #     # Get available receipts in FIFO order (oldest first)
-    #     available_receipts = self.env['advance.donation.receipt'].search([
-    #         ('donor_id', '=', self.donor_id.id),
-    #         ('state', '=', 'paid'),
-    #         ('remaining_amount', '>', 0)
-    #     ], order='date asc, id asc')
-    #     if not available_receipts:
-    #         raise UserError('No available donation receipts found for this donor')
-
-    #     # Apply FIFO logic to determine which receipts to use
-    #     receipts_to_use = self._get_receipts_for_payment(available_receipts, self.manual_payment_amount)
-
-
-    #     # Update donation_slip_ids which will trigger onchange_donation_slip_ids automatically
-    #     self.write({'donation_slip_ids': [(6, 0, current_slips)]})
-
         # Now reset manual_payment_amount AFTER distribution
-        # self.manual_payment_amount = 0
     
     def action_refresh_balance(self):
         """Refresh total balance computation"""
@@ -481,68 +481,15 @@ class AdvanceDonation(models.Model):
             'context': self.env.context,
         }
 
-    def onchange_donation_slip_ids(self,amount):
-        # Reset all donation lines to unpaid state
-        for rec in self.advance_donation_lines:
-            rec.paid_amount = 0
-            rec.remaining_amount = rec.amount + rec.service_charge_amount
-
-        # Use manual_payment_amount instead of total from all slips
-        payment_to_distribute = amount
-        remaining_value = payment_to_distribute
-
-        # If no manual payment amount is set, don't distribute anything
-        if payment_to_distribute <= 0:
-            return
-
-        # Sort donation slips by date for FIFO logic
-        sorted_donation_slips = self.donation_slip_ids.sorted(lambda x: (x.date, x.id))
-
-        for donation_slip in sorted_donation_slips:
-            donation_slip_remaining_amount = donation_slip.amount - donation_slip.used_amount
-
-            if donation_slip_remaining_amount <= 0 or remaining_value <= 0:
-                continue
-
-            for donation_line in self.advance_donation_lines:
-                remaining_installment_amount = donation_line.remaining_amount
-                if remaining_installment_amount <= 0:
-                    continue
-
-                if remaining_value <= 0:
-                    break  # Exit the loop if there's no remaining value to distribute
-
-                # Skip if the line is already fully paid
-                if donation_line.paid_amount >= donation_line.amount:
-                    continue
-
-                # Only continue if there's still remaining amount for both the donation slip and donation line
-                if donation_slip_remaining_amount <= 0:
-                    continue  # Skip if this donation slip has no remaining amount to use
-
-                # Determine how much can be paid from this donation slip
-                amount_to_pay = min(remaining_installment_amount, donation_slip_remaining_amount, remaining_value)
-
-                # Update the donation line's paid amount
-                donation_line.write({
-                    'paid_amount': donation_line.paid_amount + amount_to_pay,
-                    'remaining_amount': donation_line.remaining_amount - amount_to_pay
-                })
-
-                # Update remaining values
-                remaining_value -= amount_to_pay  # Deduct from the total remaining value
-                donation_slip_remaining_amount -= amount_to_pay  # Deduct from the slip's available balance
-                remaining_installment_amount -= amount_to_pay  # Deduct from the line's remaining balance
-
-                # Create a DonationSlipUsage record to track the used amount
-                self.env['advance.donation.slip.usage'].create({
-                    'advance_donation_id': self.id,
-                    'donation_slip_id': donation_slip.id,
-                    'usage_amount': amount_to_pay,
-                    'receipt_date': date.today()
-                })
-
     def write(self, vals):
+        if not self.env.su:
+            for rec in self.filtered(lambda r: r.state != 'draft'):
+                changed = changed_fields(rec, vals, TERM_FIELDS)
+                if changed:
+                    raise UserError(_('The terms of %(name)s can only be changed in Draft (status: %(state)s). '
+                                      'Changed: %(fields)s.') % {
+                        'name': rec.name, 'state': STATE_LABELS.get(rec.state, rec.state),
+                        'fields': ', '.join(sorted(rec._fields[f].string for f in changed))})
         if vals.get('contract_type') == 'open_contract':
             vals = dict(vals, **OPEN_CONTRACT_EMPTY)
         # Only handle donation_slip_ids changes, don't unlink usage lines for other field updates
@@ -570,23 +517,6 @@ class AdvanceDonation(models.Model):
             # For other field updates, just do the normal write
             return super(AdvanceDonation, self).write(vals)
     
-    def _get_receipts_for_payment(self, available_receipts, payment_amount):
-        """Get receipts needed for payment using FIFO basis"""
-        receipts_to_use = []
-        remaining_amount = payment_amount
-        
-        for receipt in available_receipts:
-            if remaining_amount <= 0:
-                break
-                
-            receipt_available = receipt.remaining_amount
-            if receipt_available > 0:
-                receipts_to_use.append(receipt)
-                remaining_amount -= receipt_available
-        
-        return receipts_to_use
-    
-
     def _compute_fully_paid(self):
         for rec in self:
             lines = rec.advance_donation_lines

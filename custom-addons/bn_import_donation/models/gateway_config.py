@@ -1,4 +1,6 @@
-from odoo import models, fields, api
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 type_selection = [
@@ -33,8 +35,13 @@ class GatewayConfig(models.Model):
         'account.account', string="Bank Charges Account", tracking=True,
         help="Expense account for the charges the gateway keeps. The donation income is booked gross, "
              "the gateway account receives the amount after charges.")
+    difference_account_id = fields.Many2one(
+        'account.account', string="Difference Account", tracking=True,
+        domain="[('deprecated', '=', False)]",
+        help="Where the difference between the debit and the credit of a donation entry is parked "
+             "(rounding of amounts with more decimals than the currency), so the entry always balances.")
     default_partner_id = fields.Many2one(
-        'res.partner', string="Default Donor", tracking=True,
+        'res.partner', string="Default Donor", tracking=True, domain=tag_domain('donor'),
         help="Donor of the donations received without a donor number (no mobile and no CNIC). "
              "Empty: the donor with Primary Registration ID %s." % LEGACY_DEFAULT_DONOR_REGISTRATION)
 
@@ -55,6 +62,32 @@ class GatewayConfig(models.Model):
     def _onchange_journal_id(self):
         if self.journal_id.default_account_id:
             self.account_id = self.journal_id.default_account_id
+
+    def _balance_entry_lines(self, line_vals, currency, label):
+        """Make the (0, 0, vals) entry lines balance: each amount rounded to the
+        currency, and a remaining difference parked on the Difference Account.
+        Returns the lines (a new list)."""
+        lines = []
+        for command in line_vals:
+            vals = dict(command[2])
+            vals['debit'] = currency.round(vals.get('debit') or 0.0)
+            vals['credit'] = currency.round(vals.get('credit') or 0.0)
+            lines.append((0, 0, vals))
+        diff = currency.round(sum(l[2]['debit'] for l in lines) - sum(l[2]['credit'] for l in lines))
+        if currency.is_zero(diff):
+            return lines
+        if not self.difference_account_id:
+            raise UserError(_(
+                'The entry of %(label)s is off by %(diff)s (rounding): set the Difference Account on the '
+                'gateway configuration "%(gateway)s" to park it.') % {
+                'label': label, 'diff': diff, 'gateway': self.display_name or '-'})
+        lines.append((0, 0, {
+            'account_id': self.difference_account_id.id,
+            'name': _('Difference (rounding) - %s') % label,
+            'debit': -diff if diff < 0 else 0.0,
+            'credit': diff if diff > 0 else 0.0,
+        }))
+        return lines
 
     def _get_journal(self, company):
         self.ensure_one()

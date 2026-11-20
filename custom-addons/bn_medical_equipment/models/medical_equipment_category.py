@@ -8,7 +8,7 @@ class MedicalEquipmentCategory(models.Model):
 
     name = fields.Char('Name')
 
-    product_id = fields.Many2one('product.product', string="Product")
+    product_id = fields.Many2one('product.product', string="Product", domain=[('is_medical_equipment', '=', True)])
     currency_id = fields.Many2one('res.currency', string="Currency", default=lambda self: self.env.company.currency_id)
 
     is_medical_approval = fields.Boolean('Is Medical Approval')

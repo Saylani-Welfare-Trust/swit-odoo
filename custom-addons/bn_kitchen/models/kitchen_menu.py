@@ -1,5 +1,5 @@
 from odoo import _, models, fields
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 month_selection = [
@@ -73,6 +73,9 @@ class KitchenMenu(models.Model):
                 raise UserError(_('"%s" is not possible for menu %s in its current status.') % (action, rec.name))
 
     def action_submit(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_kitchen.kitchen_admin_group',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         self._check_menu_state(('draft',), _('Submit'))
         for rec in self:
             if not rec.kitchen_menu_line_ids:
@@ -80,6 +83,9 @@ class KitchenMenu(models.Model):
         self.state = 'to_be_approved'
 
     def action_approve(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_kitchen.kitchen_admin_group',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         self._check_menu_state(('to_be_approved',), _('Approve'))
         for rec in self:
             rec._generate_bom()

@@ -5,7 +5,8 @@
         <field name="name">Donee</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Individual'), ('category_id.name', '=', 'Microfinance')]</field>
+        <!-- by tag id (a renamed tag keeps working) -->
+        <field name="domain" eval="[('category_id', 'in', [ref('bn_profile_management.donee_partner_category')]), ('category_id', 'in', [ref('bn_profile_management.individual_partner_category')]), ('category_id', 'in', [ref('bn_profile_management.microfinance_partner_category')])]"/>
         <field name="context">{
             'create': 0,
             'delete': 0,

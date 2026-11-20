@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Deposit slips of the closing: anyone may read them (closing reports,
+        treasury), but a user only adds, changes or removes the slips of the
+        sessions of the POS shops they work at (the session's cashier or a user
+        of the shop). POS Administrators: every session.
+    -->
+    <record id="pos_session_slip_own_session_rule" model="ir.rule">
+        <field name="name">Deposit Slip: own POS sessions</field>
+        <field name="model_id" ref="bn_closing_session.model_pos_session_slip"/>
+        <field name="domain_force">['|', ('session_id.user_id', '=', user.id), ('session_id.config_id.user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="pos_session_slip_manager_rule" model="ir.rule">
+        <field name="name">Deposit Slip: POS Administrators</field>
+        <field name="model_id" ref="bn_closing_session.model_pos_session_slip"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('point_of_sale.group_pos_manager'), ref('base.group_system')])]"/>
+    </record>
+
+</odoo>

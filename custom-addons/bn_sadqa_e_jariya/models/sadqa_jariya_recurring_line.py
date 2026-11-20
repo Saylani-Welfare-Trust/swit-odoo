@@ -32,7 +32,7 @@ class SadqaJariyaRecurringLine(models.Model):
     product_id = fields.Many2one('product.product', string='Product')
 
     collection_point = fields.Selection(collection_point_selection, string='Collection Point')
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch')
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch', index='btree_not_null')
     collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
 
     quantity = fields.Float('Quantity', default=1.0)
@@ -89,7 +89,7 @@ class SadqaJariyaRecurringLine(models.Model):
     def _auto_create_bank_bills(self):
         """Scheduled action: bills for recurring Bank lines due on their collection date"""
         lines = self.search([
-            ('collection_date', '=', fields.Date.today()),
+            ('collection_date', '<=', fields.Date.today()),
             ('state', '=', 'draft'),
             ('disbursement_category_id.name', '=', 'Bank'),
             ('collection_point', '=', 'bank'),
@@ -101,7 +101,9 @@ class SadqaJariyaRecurringLine(models.Model):
             try:
                 with self.env.cr.savepoint():
                     line._create_bill()
-                    line.state = 'delivered'
+                    # delivered once its bill exists (no donee: no bill, left as is)
+                    if line.bill_id:
+                        line.state = 'delivered'
             except Exception:
                 _logger.exception("Could not create bill for Sadqa e Jariya recurring line %s", line.id)
 

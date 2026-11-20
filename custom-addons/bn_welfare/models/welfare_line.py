@@ -75,7 +75,7 @@ class WelfareLine(models.Model):
     welfare_id = fields.Many2one('welfare', string="Welfare")
     product_id = fields.Many2one('product.product', string="Product")
     is_hod = fields.Boolean('Is HOD', readonly=True, help="Line added automatically at HOD Approval.")
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", index='btree_not_null')
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
     disbursement_application_type_id = fields.Many2one('disbursement.application.type', string="Disbursement Application Type")
@@ -213,7 +213,7 @@ class WelfareLine(models.Model):
             return
         
         lines = self.search([
-            ('collection_date', '=', today),
+            ('collection_date', '<=', today),
             ('state', '=', 'draft'),
             ('disbursement_category_id', '=', cash_category.id),
             ('collection_point', '=', 'bank'),
@@ -224,11 +224,14 @@ class WelfareLine(models.Model):
         _logger.info(f"Auto-creating bills for {len(lines)} welfare lines")
         for line in lines:
             try:
-                line._create_bill()
-                line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
-            except Exception as e:
-                # Log error but continue processing other lines
-                _logger.error(f"Error creating bill for Welfare Line ID {line.id}: {str(e)}")
+                # a failing line is rolled back alone; the others still get their bill
+                with self.env.cr.savepoint():
+                    line._create_bill()
+                    # delivered once its bill exists (no donee: no bill, left as is)
+                    if line.bill_id:
+                        line.state = 'delivered'
+            except Exception:
+                _logger.exception("Could not create the bill of welfare line %s", line.id)
     
     def _create_bill(self):
         """Create vendor bill for Cash + Bank collection"""
@@ -348,19 +351,23 @@ class WelfareLine(models.Model):
         
         return result
             
+    @api.model
+    def _refresh_product_domain(self):
+        """Upgrade: lines saved with the old "all products" domain get the Is Welfare one."""
+        lines = self.search([('product_domain', 'in', ('[]', False))])
+        if lines:
+            self.env.add_to_compute(self._fields['product_domain'], lines)
+            lines.flush_recordset(['product_domain'])
+
     @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:
+            # Is Welfare products, of the application type's category when it has one
+            domain = [('product_tmpl_id.is_welfare', '=', True)]
             product_category = rec.disbursement_application_type_id.product_category_id
-            if not product_category:
-                rec.product_domain = "[]"
-                continue
-
-            products = self.env['product.product'].search([
-                ('categ_id', 'child_of', product_category.id),
-                ('product_tmpl_id.is_welfare', '=', True),
-            ])
-            rec.product_domain = str([('id', 'in', products.ids)])
+            if product_category:
+                domain.append(('categ_id', 'child_of', product_category.id))
+            rec.product_domain = str(domain)
     @api.depends('disbursement_application_type_id')
     def _compute_analytic_account_domain(self):
         for rec in self:

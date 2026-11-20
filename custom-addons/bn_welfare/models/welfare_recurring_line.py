@@ -39,7 +39,7 @@ class WelfareRecurringLine(models.Model):
         
     donee_id = fields.Many2one('res.partner', string="Donee", related='welfare_id.donee_id', store=True)
     product_id = fields.Many2one('product.product', string="Product")
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", index='btree_not_null')
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)
@@ -104,12 +104,13 @@ class WelfareRecurringLine(models.Model):
             return
         
         lines = self.search([
-            ('collection_date', '=', today),
+            ('collection_date', '<=', today),
             ('state', '=', 'draft'),
             ('disbursement_category_id', '=', cash_category.id),
             ('collection_point', '=', 'bank'),
             ('bill_id', '=', False),
-            ('welfare_id.state', '=', 'approve'),
+            # recurring lines exist once Create Recurring Orders moved the welfare to Recurring
+            ('welfare_id.state', '=', 'recurring'),
             ('welfare_id.order_type', 'in', ['recurring'])
 
         ])
@@ -118,7 +119,9 @@ class WelfareRecurringLine(models.Model):
             try:
                 with self.env.cr.savepoint():
                     line._create_bill()
-                    line.state = 'delivered'  # Mark as disbursed immediately after bill creation for Cash + Bank
+                    # delivered once its bill exists (no donee: no bill, left as is)
+                    if line.bill_id:
+                        line.state = 'delivered'
             except Exception:
                 # the other lines still get their bill
                 _logger.exception("Could not create the bill of welfare %s recurring line %s", line.welfare_id.name, line.id)
@@ -208,12 +211,6 @@ class WelfareRecurringLine(models.Model):
 
             line.state = 'collected' if line.payment_type == 'assigned_officer' else 'disbursed'
         # # For Cash + Bank, check if bill is paid
-        # cash_category = self.env.ref('bn_welfare.disbursement_category_Cash', raise_if_not_found=False)
-        # if cash_category and self.disbursement_category_id.id == cash_category.id:
-        #     if self.collection_point == 'bank' and self.bill_id:
-        #         # Bill payment is handled through account.move payment
-        #         # This method will be called after payment is registered
-        #         pass
         
             if line.welfare_id:
                 line.welfare_id._auto_disburse_if_all_lines_delivered()

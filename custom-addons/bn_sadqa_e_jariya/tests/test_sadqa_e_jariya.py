@@ -201,3 +201,22 @@ class TestSadqaEJariya(TransactionCase):
                              ('pos.config', 'point_of_sale.pos_config_view_form')):
             arch = self.env[model].get_views([(self.env.ref(xmlid).id, 'form')])['views']['form']['arch']
             self.assertIn('action_view_pos_documents', arch, model)
+
+    def test_steps_need_their_status(self):
+        """Approve, Complete, Reject and Create Recurring Orders are refused in
+        the wrong status, even over RPC (the buttons are only hidden)."""
+        application = self.env['sadqa.jariya'].create({
+            'donee_id': self._institution('Status Masjid').id, 'member_remarks': 'ok',
+            'rejection_remarks': 'no', 'order_type': 'recurring',
+            'account_title': 'Status Trust', 'account_number': '123'})
+        with self.assertRaises(ValidationError):
+            application.sudo().action_approve()  # Draft, not Final Approval
+        with self.assertRaises(ValidationError):
+            application.action_reject()  # Draft
+        with self.assertRaises(ValidationError):
+            application.action_create_recurring_order()  # not Approved
+        application.state = 'inquiry'
+        with self.assertRaises(ValidationError):
+            application.action_complete()  # only from Draft
+        application.action_reject()
+        self.assertEqual(application.state, 'reject')

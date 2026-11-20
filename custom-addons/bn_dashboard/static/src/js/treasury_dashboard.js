@@ -60,8 +60,7 @@ export class TreasuryDashboard extends Component {
 
         onWillStart(async () => {
             this._init_comparison_periods();
-            await this.fetchData();
-            await this.fetchComparison();
+            await Promise.all([this.fetchData(), this.fetchComparison()]);
         });
     }
 
@@ -262,8 +261,7 @@ export class TreasuryDashboard extends Component {
 
     async applyFilter() {
         this.save_filters();
-        await this.fetchData();
-        await this.fetchComparison();
+        await Promise.all([this.fetchData(), this.fetchComparison()]);
     }
 
     async onchange_segment_type() {

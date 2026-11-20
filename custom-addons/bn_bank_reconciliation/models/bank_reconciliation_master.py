@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -203,11 +203,6 @@ class BankReconciliationMaster(models.Model):
 
     file = fields.Binary(string='File', attachment=True)
     file_name = fields.Char(string='File Name')
-    # file_type = fields.Selection([
-    #     ('csv', 'CSV'),
-    #     ('xls', 'Excel (.xls)'),
-    #     ('xlsx', 'Excel (.xlsx)'),
-    # ], string='File Type', compute='_compute_file_type', store=False)
     delimiter = fields.Selection([
         (',', 'Comma (,)'),
         (';', 'Semicolon (;)'),
@@ -441,6 +436,9 @@ class BankReconciliationMaster(models.Model):
         })
 
     def action_cancel_reconciliation(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_bank_reconciliation.bank_reconciliation_manager_group',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         self.ensure_one()
         if self.state == 'completed':
             raise UserError(_('Cannot cancel a completed reconciliation.'))

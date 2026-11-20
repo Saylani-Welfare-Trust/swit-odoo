@@ -1,6 +1,6 @@
 {
     'name': 'POS Order Customizaiton',
-    'version': '17.0.1.2.0',
+    'version': '17.0.1.2.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

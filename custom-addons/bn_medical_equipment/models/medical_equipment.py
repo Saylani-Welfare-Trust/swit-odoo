@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 
 import re
 import logging
@@ -50,10 +50,9 @@ case_type_selection = [
 
 
 def _equipment_donee_domain(model):
-    """Registered donees tagged Medical Equipment, or Medical (patients of the
-    Medical & Health POS can also receive equipment)."""
-    Partner = model.env['res.partner']
-    return Partner._tag_domain('donee', registered=True) + Partner._tag_domain('medical', 'patient', any_of=True)
+    """Registered donees tagged Medical Equipment (tag 'medical'; the "Medical"
+    tag of the Medical & Health POS patients is 'patient' and is not enough)."""
+    return model.env['res.partner']._tag_domain('donee', 'medical', registered=True)
 
 class MedicalEquipment(models.Model):
     _name = 'medical.equipment'
@@ -301,20 +300,6 @@ class MedicalEquipment(models.Model):
             if record.actual_deposit_percentage < 0 or record.actual_deposit_percentage > 100:
                 raise ValidationError("Actual Deposit Percentage must be between 0 and 100.")
 
-    # @api.constrains('mobile')
-    # def _check_mobile_number(self):
-    #         for rec in self:
-    #             if rec.donee_id and rec.donee_id.state != 'register':
-    #                 existing_partner = self.env['res.partner'].search([
-    #                     ('mobile', '=', rec.mobile),
-    #                     ('id', '!=', rec.donee_id.id),
-    #                     ('state', '=', 'register'),
-    #                     ('category_id.name', '=', 'Donee'),
-    #                 ], limit=1)
-    #                 if existing_partner:
-    #                     raise ValidationError(
-    #                         f"A Partner with the same Mobile No. {rec.mobile} already exists in the System."
-    #                     )
     def _check_me_state(self, allowed, action):
         labels = dict(status_selection)
         for rec in self:
@@ -323,6 +308,9 @@ class MedicalEquipment(models.Model):
                     'action': action, 'name': rec.name, 'state': labels.get(rec.state, rec.state)})
 
     def action_reject(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_medical_equipment.medical_equipment_manager_group', 'bn_medical_equipment.medical_equipment_ceo_approval_group', 'bn_medical_equipment.medical_equipment_cfo_approval_group')):
+            raise AccessError(_('You are not allowed to do this action.'))
         self._check_me_state(('draft', 'completed', 'inquiry', 'send_for_inquiry', 'ceo_approval', 'cfo_approval'), _('Reject'))
         self.state = 'closed'
 
@@ -677,7 +665,21 @@ class MedicalEquipment(models.Model):
         - Reference: Two approvals (CEO → CFO) with no remarks
         """
         self.ensure_one()
-        
+
+        # The step is the role's (the buttons are only hidden): CEO from
+        # Completed / Inquiry, CFO after that - also refused over RPC.
+        if self.state in ('completed', 'inquiry'):
+            group, role = 'bn_medical_equipment.medical_equipment_ceo_approval_group', _('CEO')
+            if not self.approval_button_check:
+                raise ValidationError(_('%s is not ready for approval yet.') % self.name)
+        elif self.state in ('ceo_approval', 'cfo_approval'):
+            group, role = 'bn_medical_equipment.medical_equipment_cfo_approval_group', _('CFO')
+        else:
+            raise ValidationError(_('This record has already been approved or is in an invalid state.'))
+        if not self.env.su and not self.env.user.has_group(group):
+            raise AccessError(_('Only the %(role)s approvers can approve %(name)s at this step.') % {
+                'role': role, 'name': self.name})
+
         case_type = self.case_type
         current_state = self.state
         

@@ -11,3 +11,4 @@ from . import advance_donation_category
 from . import advance_donation_category_line
 from . import pos_cheque
 from . import res_partner
+from . import res_partner_category

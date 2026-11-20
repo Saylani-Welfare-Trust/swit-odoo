@@ -1,6 +1,6 @@
 {
     'name': 'Sadqa e Jariya',
-    'version': '17.0.2.9',
+    'version': '17.0.2.12',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -31,7 +31,6 @@
         'data/ir_cron.xml',
         'data/server_action_fetch.xml',
         'data/mail_template.xml',
-        'data/move_portal_photos.xml',
 
         'reports/collection_report.xml',
         'reports/donee_profile_report.xml',

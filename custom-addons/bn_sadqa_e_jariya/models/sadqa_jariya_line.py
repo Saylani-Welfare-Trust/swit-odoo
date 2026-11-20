@@ -43,7 +43,7 @@ class SadqaJariyaLine(models.Model):
     is_hod = fields.Boolean('Is HOD', readonly=True, help="Line added automatically at HOD Approval.")
 
     collection_point = fields.Selection(collection_point_selection, string='Collection Point')
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch')
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch', index='btree_not_null')
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
     recurring_duration = fields.Selection(recurring_duration_selection, string='Recurring Duration')
@@ -198,7 +198,7 @@ class SadqaJariyaLine(models.Model):
     def _auto_create_bank_bills(self):
         """Scheduled action: bills for Bank lines due on their collection date"""
         lines = self.search([
-            ('collection_date', '=', fields.Date.today()),
+            ('collection_date', '<=', fields.Date.today()),
             ('state', '=', 'draft'),
             ('disbursement_category_id.name', '=', 'Bank'),
             ('collection_point', '=', 'bank'),
@@ -210,7 +210,9 @@ class SadqaJariyaLine(models.Model):
             try:
                 with self.env.cr.savepoint():
                     line._create_bill()
-                    line.state = 'delivered'
+                    # delivered once its bill exists (no donee: no bill, left as is)
+                    if line.bill_id:
+                        line.state = 'delivered'
             except Exception:
                 _logger.exception("Could not create bill for Sadqa e Jariya line %s", line.id)
 

@@ -12,7 +12,7 @@ class HREmployee(models.Model):
 
 
     # the employee's Branch; its Zone and City come from the analytic hierarchy
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", tracking=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", tracking=True, index='btree_not_null')
     zone_id = fields.Many2one(related='analytic_account_id.zone_id', string='Zone', store=True)
     city_id = fields.Many2one(related='analytic_account_id.city_id', string='City', store=True)
 

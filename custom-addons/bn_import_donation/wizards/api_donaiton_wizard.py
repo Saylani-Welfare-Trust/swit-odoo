@@ -220,7 +220,8 @@ class APIDonationWizard(models.TransientModel):
                 result['accumulators']['debit'],
                 result['accumulators']['credit'],
                 company_currency,
-                history
+                history,
+                gateway_config=gateway_config,
             )
 
             history.write({'journal_entry_id': move.id})
@@ -924,7 +925,8 @@ class APIDonationWizard(models.TransientModel):
             return None
 
     # ---------------------- Journal Entry Creation ----------------------
-    def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history):
+    def _create_grouped_journal_move(self, journal, debit_accumulator, credit_accumulator, company_currency, history,
+                                     gateway_config=None):
         self.create_fetch_log(history.id, "Start _create_grouped_journal_move", 'Journal Entry Creation', 'Starting to create grouped journal entry with accumulated lines')
 
         """Create journal entry safely (currency constraint compliant)"""
@@ -992,31 +994,10 @@ class APIDonationWizard(models.TransientModel):
             self.create_fetch_log(history.id, "No journal lines to create.", 'Error', "No journal lines to create.")
 
         # -----------------------------
-        # Balance check before create
+        # Balance: a rounding difference goes to the gateway's Difference Account
         # -----------------------------
-        total_debit = sum(l[2]['debit'] for l in lines)
-        total_credit = sum(l[2]['credit'] for l in lines)
-        diff = company_currency.round(total_debit - total_credit)
-
-        if not company_currency.is_zero(diff):
-            diff_account = self._get_rounding_difference_account(journal, history)
-
-            if diff > 0 and diff_account:
-                # Need credit
-                lines.append((0, 0, {
-                    'account_id': diff_account.id,
-                    'debit': 0.0,
-                    'credit': abs(diff),
-                    'name': 'Rounding Adjustment',
-                }))
-            elif diff_account:
-                # Need debit
-                lines.append((0, 0, {
-                    'account_id': diff_account.id,
-                    'debit': abs(diff),
-                    'credit': 0.0,
-                    'name': 'Rounding Adjustment',
-                }))
+        gateway_config = gateway_config or self.env['gateway.config']
+        lines = gateway_config._balance_entry_lines(lines, company_currency, _('Donation Import %s') % fields.Date.today())
 
         # -----------------------------
         # Create & Post Move
@@ -1032,42 +1013,3 @@ class APIDonationWizard(models.TransientModel):
         self.create_fetch_log(history.id, "End _create_grouped_journal_move", 'Journal Entry Creation', f"Completed creation of journal entry with ID {move.id} and {len(lines)} lines")
         # move.action_post()
         return move
-
-    def _get_rounding_difference_account(self, journal, history):
-        self.create_fetch_log(history.id, "Start _get_rounding_difference_account", 'Journal Entry Creation', 'Attempting to find rounding difference account with proper fallbacks')
-
-        """Get rounding difference account with proper fallbacks"""
-        # First try journal's default account
-        if journal.default_account_id:
-            return journal.default_account_id
-        
-        # Try company's difference account
-        company = self.env.company
-        if company.difference_account_prefix:
-            diff_account = self.env['account.account'].search([
-                ('code', 'like', f"{company.difference_account_prefix}%"),
-                ('company_id', '=', company.id)
-            ], limit=1)
-            if diff_account:
-                return diff_account
-        
-        # Try expense rounding account
-        diff_account = self.env['account.account'].search([
-            ('account_type', 'in', ['expense', 'income']),
-            ('name', 'ilike', 'rounding'),
-            ('company_id', '=', company.id)
-        ], limit=1)
-        
-        if not diff_account:
-            # Last resort: get any expense account
-            diff_account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', company.id)
-            ], limit=1)
-            
-            if not diff_account:
-                self.create_fetch_log(history.id,  f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.", 'Error', f"No suitable rounding difference account found. Please configure a default account on journal {journal.name} or set up a rounding difference account.")
-        
-        self.create_fetch_log(history.id, "End _get_rounding_difference_account", 'Journal Entry Creation', 'Completed search for rounding difference account')
-
-        return diff_account

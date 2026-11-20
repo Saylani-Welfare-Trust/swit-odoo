@@ -1,4 +1,5 @@
 from odoo import models, fields, _
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 from odoo.exceptions import UserError
 
 class MicrofinanceApplicationWizard(models.TransientModel):
@@ -6,7 +7,8 @@ class MicrofinanceApplicationWizard(models.TransientModel):
     _description = 'Microfinance Application Wizard'
 
 
-    partner_id = fields.Many2one('res.partner', string="Partner", required=True)
+    partner_id = fields.Many2one('res.partner', string="Partner", required=True,
+                                 domain=tag_domain('donee', 'individual', 'microfinance', registered=True))
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme", required=True)
 
 

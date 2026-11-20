@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <!-- Photos imported onto portal forms before they went to the Documents (nothing to move after the first time) -->
-    <function model="sadqa.jariya.form" name="_move_photos_to_documents"/>
-</odoo>

@@ -178,8 +178,21 @@ class TestMicrofinance(TransactionCase):
 
         bill = bill.with_user(self.accountant)
         bill.action_post()
-        self.env['account.payment.register'].with_user(self.accountant).with_context(
-            active_model='account.move', active_ids=bill.ids).create({}).action_create_payments()
+        Register = self.env['account.payment.register'].with_user(self.accountant)
+        # another bill paid with the loan's name as memo does not complete it
+        other = self.env['account.move'].with_user(self.accountant).create({
+            'move_type': 'in_invoice', 'partner_id': self.donee.id, 'invoice_date': fields.Date.today(),
+            'invoice_line_ids': [(0, 0, {'name': 'Other', 'quantity': 1, 'price_unit': 10, 'tax_ids': [(5, 0, 0)]})]})
+        other.action_post()
+        Register.with_context(active_model='account.move', active_ids=other.ids).create(
+            {'communication': loan.name}).action_create_payments()
+        self.assertEqual(loan.state, 'treasury')
+        # a partial payment of the loan's bill neither
+        Register.with_context(active_model='account.move', active_ids=bill.ids).create(
+            {'amount': bill.amount_total / 2}).action_create_payments()
+        self.assertEqual(loan.state, 'treasury')
+        # paid in full: done
+        Register.with_context(active_model='account.move', active_ids=bill.ids).create({}).action_create_payments()
         self.assertEqual(loan.state, 'done')
         self.assertEqual(len(loan.microfinance_line_ids), 12)
         self.assertAlmostEqual(sum(loan.microfinance_line_ids.mapped('amount')), loan.total_amount)
