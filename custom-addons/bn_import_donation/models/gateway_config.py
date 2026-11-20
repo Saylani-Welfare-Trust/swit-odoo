@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 type_selection = [
@@ -34,7 +35,7 @@ class GatewayConfig(models.Model):
         help="Expense account for the charges the gateway keeps. The donation income is booked gross, "
              "the gateway account receives the amount after charges.")
     default_partner_id = fields.Many2one(
-        'res.partner', string="Default Donor", tracking=True,
+        'res.partner', string="Default Donor", tracking=True, domain=tag_domain('donor'),
         help="Donor of the donations received without a donor number (no mobile and no CNIC). "
              "Empty: the donor with Primary Registration ID %s." % LEGACY_DEFAULT_DONOR_REGISTRATION)
 

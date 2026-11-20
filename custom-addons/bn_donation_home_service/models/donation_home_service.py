@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 import re
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
@@ -74,6 +74,10 @@ class DonationHomeService(models.Model):
         self.total_amount = self.amount + self.service_charges
 
     def action_cancel(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_donation_home_service.donation_home_service_manager_group', 'bn_donation_home_service.donation_home_service_cancel_group')):
+            raise AccessError(_('You are not allowed to do this action.'))
+
         def _create_return_for_picking(picking):
             ReturnWizard = self.env['stock.return.picking']
 

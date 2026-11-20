@@ -6,7 +6,7 @@ class PosSession(models.Model):
 
     analytic_account_id = fields.Many2one(
         'account.analytic.account', string="Analytic Account",
-        compute="_set_employee_branch", store=True, tracking=True)
+        compute="_set_employee_branch", store=True, tracking=True, index='btree_not_null')
 
     def _loader_params_res_company(self):
         # OVERRIDE to load the fields in pos data (load_pos_data)

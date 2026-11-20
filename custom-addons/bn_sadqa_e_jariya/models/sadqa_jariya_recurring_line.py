@@ -32,7 +32,7 @@ class SadqaJariyaRecurringLine(models.Model):
     product_id = fields.Many2one('product.product', string='Product')
 
     collection_point = fields.Selection(collection_point_selection, string='Collection Point')
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch')
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch', index='btree_not_null')
     collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
 
     quantity = fields.Float('Quantity', default=1.0)

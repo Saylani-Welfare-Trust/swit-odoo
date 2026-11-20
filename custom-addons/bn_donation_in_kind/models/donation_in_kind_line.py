@@ -15,7 +15,7 @@ class DonationInKindLine(models.Model):
             return field_map.get(name, False)
         return False
 
-    product_id = fields.Many2one('product.product', string="Product")
+    product_id = fields.Many2one('product.product', string="Product", domain=[('is_donation_in_kind', '=', True)])
     donation_in_kind_id = fields.Many2one('donation.in.kind', string="Donation In Kind")
     location_id = fields.Many2one('stock.location', string='Location', required=True, domain="[('usage', '=', 'internal')]", default=lambda self: self.default_set_value('location_id'))
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)

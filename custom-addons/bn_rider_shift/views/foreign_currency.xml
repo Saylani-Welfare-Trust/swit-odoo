@@ -50,7 +50,7 @@
                    decoration-danger="state == 'reject'" readonly="1"/>
                 <field name="attachment_ids" widget="many2many_binary" readonly="0"/>
 
-                <button string="Convert" name="action_convert_amount" type="object" groups="bn_rider_shift.rider_shift_user_group" class="oe_highlight" invisible="state  in ['converted','reject']"/>
+                <button string="Convert" name="action_convert_amount" type="object" groups="bn_rider_shift.rider_shift_user_group" class="oe_highlight" invisible="state != 'draft'"/>
                 <button string="Reject" name="action_reject" type="object" groups="bn_rider_shift.rider_shift_user_group" class="oe_highlight" invisible="state not in ['draft']"/>
                 <button name="action_create_pos_record" 
                     type="object" groups="bn_rider_shift.group_foreign_currency_collection"

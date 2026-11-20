@@ -35,7 +35,7 @@ class DonationBoxComplain(models.Model):
     lot_id = fields.Many2one('stock.lot', string="Lot", tracking=True)
     rider_id = fields.Many2one('hr.employee', string="Rider", tracking=True)
     complain_officer_id = fields.Many2one('hr.employee', string="Complain Officer", tracking=True)
-    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", tracking=True)
+    donation_box_registration_installation_id = fields.Many2one('donation.box.registration.installation', string="Donation Box", tracking=True, index=True)
     return_picking_id = fields.Many2one('stock.picking', string="Return", tracking=True, copy=False)
     scrap_picking_id = fields.Many2one('stock.scrap', string="Scrap", tracking=True, copy=False)
     scrap_return_picking_id = fields.Many2one('stock.picking', string="Scrap Return Picking", tracking=True, copy=False)

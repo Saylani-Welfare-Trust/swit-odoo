@@ -1,5 +1,5 @@
-from odoo import models, fields, api
-from odoo.exceptions import ValidationError
+from odoo import _, models, fields, api
+from odoo.exceptions import AccessError, ValidationError
 from datetime import timedelta
 import logging
 
@@ -379,6 +379,9 @@ class MonthlyPlanning(models.Model):
             rec.state = 'active'
 
     def action_set_draft(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_planning.group_planning_manager',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         for rec in self:
             if rec.is_locked:
                 raise ValidationError(

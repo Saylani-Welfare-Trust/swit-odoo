@@ -1,5 +1,5 @@
-from odoo import models, fields
-from odoo.exceptions import UserError
+from odoo import _, models, fields
+from odoo.exceptions import AccessError, UserError
 
 EDIT_AMOUNT_GROUP = 'bn_rider_shift.group_foreign_currency_collection'
 
@@ -42,15 +42,25 @@ class ForeignCurrency(models.Model):
             )
         return super().write(vals)
 
+    def _check_draft(self, action):
+        # once converted, the amount is what the POS donation box (FCB) is paid with
+        if self.filtered(lambda rec: rec.state != 'draft'):
+            raise UserError(_('Only Draft foreign currency can be %s.') % action)
+
     def action_convert_amount(self):
-        self.exchanged_amount = self.amount * self.conversion_rate
-        self.state = 'converted'
+        self._check_draft(_('converted'))
+        for rec in self:
+            rec.write({'exchanged_amount': rec.amount * rec.conversion_rate, 'state': 'converted'})
 
     def action_reject(self):
-        self.state = 'reject'
+        self._check_draft(_('rejected'))
+        self.write({'state': 'reject'})
 
     def action_create_pos_record(self):
         """Create a donation box (FCB) from selected foreign currency lines."""
+        # the button is the Foreign Currency Collection group's: also refused over RPC
+        if not self.env.su and not self.env.user.has_group(EDIT_AMOUNT_GROUP):
+            raise AccessError(_('Only the Foreign Currency Collection group can create the POS record.'))
         # Validate selected lines
         invalid_lines = self.filtered(lambda rec: rec.state != 'converted')
         if invalid_lines:

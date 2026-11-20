@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 
 
 class QurbaniSlaughterSlotDemand(models.Model):
@@ -154,6 +154,9 @@ class QurbaniSlaughterSlotDemand(models.Model):
     # UPDATE DEMAND
     # ==================================================
     def update_demand(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_qurbani.demand_menu_group', 'bn_qurbani.qurbani_manager_group')):
+            raise AccessError(_('You are not allowed to do this action.'))
         current_hijri = self.env['hijri'].search([('approved', '=', True)], order="id desc", limit=1)
 
         if not current_hijri:

@@ -324,7 +324,7 @@
         <field name="name">Donee Profile</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', 'in', ['Donee'])]</field>
+        <field name="domain" eval="[('category_id', 'in', [ref('bn_profile_management.donee_partner_category')])]"/>
         <field name="context" eval="{
             'default_category_id': [(6, 0, [
                 ref('bn_profile_management.donee_partner_category'),
@@ -349,7 +349,7 @@
         <field name="name">Donor Profile</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', 'in', ['Donor'])]</field>
+        <field name="domain" eval="[('category_id', 'in', [ref('bn_profile_management.donor_partner_category')])]"/>
         <field name="context" eval="{
             'default_category_id': [(6, 0, [
                 ref('bn_profile_management.donor_partner_category'),

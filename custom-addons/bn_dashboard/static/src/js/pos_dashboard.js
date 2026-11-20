@@ -86,10 +86,8 @@ export class PosDashboard extends Component {
         onWillStart(async () => {
             // Chart.js of Odoo, loaded only when a dashboard opens
             await loadBundle("web.chartjs_lib");
-            await this.fetch_dropdowns();
             this._init_comparison_periods();
-            await this.fetch_data();
-            await this.fetch_comparison();
+            await Promise.all([this.fetch_dropdowns(), this.fetch_data(), this.fetch_comparison()]);
         });
 
         onMounted(async () => {
@@ -142,8 +140,12 @@ export class PosDashboard extends Component {
     }
 
     async fetch_dropdowns() {
-        this.state.shops = await this.orm.call('pos.order', 'get_shops', []);
-        const hierarchy = await this.orm.call('pos.order', 'get_location_hierarchy', []);
+        const [shops, hierarchy, categories] = await Promise.all([
+            this.orm.call('pos.order', 'get_shops', []),
+            this.orm.call('pos.order', 'get_location_hierarchy', []),
+            this.orm.call('pos.order', 'get_pos_categories', []),
+        ]);
+        this.state.shops = shops;
         
         this.state.provinces = hierarchy.provinces || [];
         this.state.cities = hierarchy.cities || [];
@@ -153,7 +155,7 @@ export class PosDashboard extends Component {
         this.state.segments_l3 = hierarchy.segments_l3 || [];
         this.state.segments_l4 = hierarchy.segments_l4 || [];
 
-        this.state.categories = await this.orm.call('pos.order', 'get_pos_categories', []);
+        this.state.categories = categories;
     }
 
     get filteredCities() {
@@ -202,8 +204,7 @@ export class PosDashboard extends Component {
     }
 
     async refresh() {
-        await this.fetch_data();
-        await this.fetch_comparison();
+        await Promise.all([this.fetch_data(), this.fetch_comparison()]);
         if (this.is_mounted) {
             await this.render_all_charts();
         }
@@ -267,7 +268,18 @@ export class PosDashboard extends Component {
 
     async fetch_data() {
         const args = this._filter_args();
-        const result = await this.orm.call('pos.order', 'get_refund_details', args);
+        // the queries don't depend on each other: sent together, the dashboard
+        // waits for the slowest one instead of the sum of all of them
+        const call = (method) => this.orm.call('pos.order', method, args);
+        const [result, data, top_products_amount, treasury, products_by_category, category_time_series] =
+            await Promise.all([
+                call('get_refund_details'),
+                call('get_details'),
+                call('get_top_products_by_amount'),
+                call('get_treasury_stats'),
+                call('get_products_by_category_group'),
+                call('get_category_group_time_series'),
+            ]);
 
         this.state.total_sale         = result['total_sale'];
         this.state.total_order_count  = (result['total_order_count'] || 0).toLocaleString('en-US');
@@ -276,22 +288,18 @@ export class PosDashboard extends Component {
         this.state.today_refund_total = (result['today_refund_total'] || 0).toLocaleString('en-US');
         this.state.today_sale         = (result['today_sale'] || 0).toLocaleString('en-US');
 
-        const data = await this.orm.call('pos.order', 'get_details', args);
         this.state.payment_details = data['payment_details'];
         this.state.top_salesperson = data['salesperson'];
         this.state.selling_product = data['selling_product'];
 
-        this.state.top_products_amount = await this.orm.call('pos.order', 'get_top_products_by_amount', args);
+        this.state.top_products_amount = top_products_amount;
 
-        const treasury = await this.orm.call('pos.order', 'get_treasury_stats', args);
         this.state.cheque_count   = (treasury.cheque_count   || 0).toLocaleString('en-US');
         this.state.deposit_count  = (treasury.deposit_count  || 0).toLocaleString('en-US');
         this.state.transfer_count = (treasury.transfer_count || 0).toLocaleString('en-US');
         
-        this.state.products_by_category =
-            await this.orm.call('pos.order', 'get_products_by_category_group', args);
-        this.state.category_time_series =
-            await this.orm.call('pos.order', 'get_category_group_time_series', args);
+        this.state.products_by_category = products_by_category;
+        this.state.category_time_series = category_time_series;
     }
 
     async onchange_province() {
@@ -448,10 +456,13 @@ export class PosDashboard extends Component {
     }
 
     async render_all_charts() {
-        await this.render_top_customer_graph();
-        await this.render_top_product_graph();
-        await this.render_product_category_graph();
-        await this.load_sales_chart(this.state.sales_period || 'pos_hourly_sales');
+        // each chart loads its own data and draws on its own canvas
+        await Promise.all([
+            this.render_top_customer_graph(),
+            this.render_top_product_graph(),
+            this.render_product_category_graph(),
+            this.load_sales_chart(this.state.sales_period || 'pos_hourly_sales'),
+        ]);
     }
 
     render_top_customer_graph() {

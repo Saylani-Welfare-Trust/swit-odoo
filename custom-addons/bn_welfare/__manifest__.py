@@ -1,6 +1,6 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.6.3',
+    'version': '17.0.1.6.6',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -40,7 +40,7 @@
         'wizards/check_marfat_shift.xml',
         'wizards/wizard_view.xml',
         'wizards/welfare_officer_wizard.xml',
-        'data/program_types.xml',
+        'data/program_types.xml', 'data/refresh_product_domain.xml',
         'views/pos_link_views.xml',
         'views/search_views.xml',
     ],

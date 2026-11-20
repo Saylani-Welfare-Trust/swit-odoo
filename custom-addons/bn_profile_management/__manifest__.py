@@ -1,6 +1,6 @@
 {
     'name': 'Profile Management',
-    'version': '17.0.1.9.0',
+    'version': '17.0.1.9.1',
     'summary': 'Layer above Contacts',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',

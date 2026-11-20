@@ -56,10 +56,9 @@ export class DonationDashboard extends Component {
         onWillStart(async () => {
             // Chart.js of Odoo, loaded only when a dashboard opens
             await loadBundle("web.chartjs_lib");
-            await this.fetch_dropdowns();
             this._init_comparison_periods();
-            await this.fetch_data();
-            await this.fetch_comparison();
+            // independent queries: sent together, the page waits for the slowest one only
+            await Promise.all([this.fetch_dropdowns(), this.fetch_data(), this.fetch_comparison()]);
         });
 
         onMounted(async () => {
@@ -130,7 +129,10 @@ export class DonationDashboard extends Component {
 
     async fetch_data() {
         const args = this._args();
-        const data = await this.orm.call('donation.in.kind', 'get_din_dashboard_data', args);
+        const [data, category_time_series] = await Promise.all([
+            this.orm.call('donation.in.kind', 'get_din_dashboard_data', args),
+            this.orm.call('donation.in.kind', 'get_din_category_time_series', args),
+        ]);
         this.state.kpi = data.kpi;
         this.state.chart_monthly = data.chart_monthly;
         this.state.chart_states = data.chart_states;
@@ -139,13 +141,11 @@ export class DonationDashboard extends Component {
         this.state.top_categories = data.top_categories;
         this.state.recent = data.recent;
 
-        this.state.category_time_series =
-            await this.orm.call('donation.in.kind', 'get_din_category_time_series', args);
+        this.state.category_time_series = category_time_series;
     }
 
     async refresh() {
-        await this.fetch_data();
-        await this.fetch_comparison();
+        await Promise.all([this.fetch_data(), this.fetch_comparison()]);
         if (this.is_mounted) await this.render_all_charts();
     }
 

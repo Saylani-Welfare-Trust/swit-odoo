@@ -1,6 +1,6 @@
 {
     'name': 'Medical Prescription Billing',
-    'version': '1.1',
+    'version': '1.3',
     'summary': 'Prescription desk approves the products for a patient, the billing counter bills them',
     'description': """
 Flow on Medical & Health POS counters:

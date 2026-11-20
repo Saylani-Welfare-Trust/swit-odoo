@@ -1,6 +1,6 @@
 {
     'name': 'Shariah Law',
-    'version': '17.0.1.1.2',
+    'version': '17.0.1.1.3',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

@@ -5,7 +5,7 @@
         <field name="name">Donee</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare')]</field>
+        <field name="domain" eval="[('category_id', 'in', [ref('bn_profile_management.donee_partner_category')]), ('category_id', 'in', [ref('bn_profile_management.welfare_partner_category')])]"/>
         <field name="context">{
             'create': 0,
             'delete': 0,

@@ -43,7 +43,7 @@ class SadqaJariyaLine(models.Model):
     is_hod = fields.Boolean('Is HOD', readonly=True, help="Line added automatically at HOD Approval.")
 
     collection_point = fields.Selection(collection_point_selection, string='Collection Point')
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch')
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Branch', index='btree_not_null')
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     collection_date = fields.Date('Collection Date', default=fields.Date.context_today)
     recurring_duration = fields.Selection(recurring_duration_selection, string='Recurring Duration')

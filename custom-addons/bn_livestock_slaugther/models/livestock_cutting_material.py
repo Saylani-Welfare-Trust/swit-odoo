@@ -28,6 +28,9 @@ class LivestockCuttingMaterial(models.Model):
     price = fields.Monetary('Price', currency_field='currency_id', default=0)
 
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
+    # each stock step is done once (Update Inventory, then Send to Goat & Meat)
+    inventory_updated = fields.Boolean('Inventory Updated', readonly=True, copy=False)
+    materials_sent = fields.Boolean('Materials Sent', readonly=True, copy=False)
 
     start_time = fields.Datetime('Start Time')
 
@@ -101,82 +104,75 @@ class LivestockCuttingMaterial(models.Model):
                 if record.livestock_slaughter_id and record.livestock_slaughter_id.state == 'cutting':
                     record.livestock_slaughter_id.state = 'material_request'
 
-    def action_update_inventory(self):
-        # 1) find the Cutting location record
-        cutting_loc = self.env['stock.location'].search([
-            ('name', 'ilike', 'Livestock Cutting')
-        ], limit=1)
-        if not cutting_loc:
-            raise ValidationError("No such location as (Livestock Cutting) found!")
+    def _stock_move(self, product, qty, source, destination):
+        """Move ``qty`` of ``product`` with a validated stock move (traceable and
+        valued), refusing when the source location does not have it."""
+        self.ensure_one()
+        if qty <= 0:
+            return self.env['stock.move']
+        # the button is the Livestock group's: the stock step itself is done as superuser
+        if source.usage == 'internal':
+            available = product.sudo().with_context(location=source.id).qty_available
+            if available < qty:
+                raise ValidationError(
+                    "Not enough %s in %s (%s available, need %s)."
+                    % (product.display_name, source.display_name, available, qty))
+        move = self.env['stock.move'].sudo().create({
+            'name': '%s: %s' % (self.code or self.name or 'Livestock', product.display_name),
+            'origin': self.name or self.code,
+            'product_id': product.id,
+            'product_uom': product.uom_id.id,
+            'product_uom_qty': qty,
+            'location_id': source.id,
+            'location_dest_id': destination.id,
+            'company_id': self.env.company.id,
+        })
+        move._action_confirm()
+        move._action_assign()
+        move.quantity = qty
+        move.picked = True
+        move._action_done()
+        return move
 
-        # 2) for each material, bump the quant in that cutting location
+    def _cutting_location(self):
+        location = self.env['stock.location'].search([('name', 'ilike', 'Livestock Cutting')], limit=1)
+        if not location:
+            raise ValidationError("No such location as (Livestock Cutting) found!")
+        return location
+
+    def action_update_inventory(self):
+        """The materials of the cutting enter the Cutting location (once)."""
+        cutting_loc = self._cutting_location()
         for record in self:
+            if record.state != 'not_received':
+                raise ValidationError("Inventory can only be updated before the material is received.")
+            if record.inventory_updated:
+                raise ValidationError("The inventory of %s is already updated." % (record.name or record.code))
             for material in record.livestock_cutting_material_line_ids:
                 product = material.product_id
-                qty = material.quantity
-
-                # find or create the quant in the Cutting location
-                quant = self.env['stock.quant'].search([
-                    ('product_id', '=', product.id),
-                    ('location_id', '=', cutting_loc.id),
-                ], limit=1)
-
-                if quant:
-                    quant.quantity += qty
-                else:
-                    self.env['stock.quant'].create({
-                        'product_id': product.id,
-                        'location_id': cutting_loc.id,
-                        'quantity': qty,
-                    })
+                record._stock_move(product, material.quantity,
+                                   product.with_company(self.env.company).property_stock_inventory, cutting_loc)
+            record.inventory_updated = True
 
     def action_send_to_goat_and_meat(self):
-        # 1) Find Cutting, Goat, and Meat locations
-        cutting_loc = self.env['stock.location'].search([('name', 'ilike', 'Cutting')], limit=1)
+        """The materials go from the Cutting location to Meat (meat products) or Goat (once)."""
+        cutting_loc = self._cutting_location()
         goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
         meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
-
-        if not cutting_loc or not goat_loc or not meat_loc:
+        if not goat_loc or not meat_loc:
             raise ValidationError("Cutting, Goat, or Meat location not properly set!")
-
-        for material in self.livestock_cutting_material_line_ids:
-            product = material.product_id
-            qty = material.quantity
-
-            # Decide target location
-            if 'meat' in product.name.lower():
-                target_loc = meat_loc
-            else:
-                target_loc = goat_loc
-
-            # 2) Deduct from Cutting location
-            cutting_quant = self.env['stock.quant'].search([
-                ('product_id', '=', product.id),
-                ('location_id', '=', cutting_loc.id),
-            ], limit=1)
-
-            if not cutting_quant:
-                raise ValidationError(f"No stock.quant forM')], l {product.name} in Cutting location.")
-            if cutting_quant.quantity < qty:
-                raise ValidationError(
-                    f"Not enough {product.name} in Cutting location (Available {cutting_quant.quantity}, need {qty}).")
-
-            cutting_quant.quantity -= qty
-
-            # 3) Add to target location
-            target_quant = self.env['stock.quant'].search([
-                ('product_id', '=', product.id),
-                ('location_id', '=', target_loc.id),
-            ], limit=1)
-
-            if target_quant:
-                target_quant.quantity += qty
-            else:
-                self.env['stock.quant'].create({
-                    'product_id': product.id,
-                    'location_id': target_loc.id,
-                    'quantity': qty,
-                })
+        for record in self:
+            if record.state != 'not_received':
+                raise ValidationError("Materials can only be sent before the material is received.")
+            if not record.inventory_updated:
+                raise ValidationError("Update the inventory of %s first." % (record.name or record.code))
+            if record.materials_sent:
+                raise ValidationError("The materials of %s are already sent." % (record.name or record.code))
+            for material in record.livestock_cutting_material_line_ids:
+                product = material.product_id
+                target_loc = meat_loc if 'meat' in (product.name or '').lower() else goat_loc
+                record._stock_move(product, material.quantity, cutting_loc, target_loc)
+            record.materials_sent = True
 
     def action_start_cutting(self):
         for record in self:
@@ -201,33 +197,10 @@ class LivestockCuttingMaterial(models.Model):
                 "No BOM component products found for %s." % self.product_id.display_name
             )
 
-        # 1) find the Cutting location
-        cutting_loc = self.env['stock.location'].search([
-            ('name', 'ilike', 'Livestock Cutting')
-        ], limit=1)
-        if not cutting_loc:
-            raise ValidationError("No such location Livestock Cutting found!")
-
-        # 2) for each material line, subtract from that location’s quant
+        # the cut animal is used up: it leaves the Cutting location
         product = self.product_id
-        used_qty = self.quantity
-
-        # find the quant in Cutting location
-        quant = self.env['stock.quant'].search([
-            ('product_id', '=', product.id),
-            ('location_id', '=', cutting_loc.id),
-        ], limit=1)
-
-        if not quant:
-            raise ValidationError(f"No stock.quant for {product.display_name} in Livestock Cutting location to deduct from.")
-        if quant.quantity < used_qty:
-            raise ValidationError(
-                f"Not enough {product.display_name} in Livestock Cutting location "
-                f"({quant.quantity} available, need {used_qty})."
-            )
-
-        # subtract the used quantity
-        quant.quantity -= used_qty
+        self._stock_move(product, self.quantity, self._cutting_location(),
+                         product.with_company(self.env.company).property_stock_inventory)
         self.state = 'done'
         self.end_time = fields.Datetime.now()
         if self.livestock_slaughter_id:

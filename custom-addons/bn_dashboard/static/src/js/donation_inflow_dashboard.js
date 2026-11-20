@@ -50,10 +50,9 @@ export class DonationInflowDashboard extends Component {
         onWillStart(async () => {
             // Chart.js of Odoo, loaded only when a dashboard opens
             await loadBundle("web.chartjs_lib");
-            await this.fetch_segments();
             this._init_comparison_periods();
-            await this.fetch_data();
-            await this.fetch_comparison();
+            // independent queries: sent together, the page waits for the slowest one only
+            await Promise.all([this.fetch_segments(), this.fetch_data(), this.fetch_comparison()]);
         });
 
         onMounted(() => {
@@ -153,8 +152,7 @@ export class DonationInflowDashboard extends Component {
     // ---------- Handlers ----------
     async applyFilter() {
         this.save_filters();
-        await this.fetch_data();
-        await this.fetch_comparison();
+        await Promise.all([this.fetch_data(), this.fetch_comparison()]);
     }
 
     clearFilter() {

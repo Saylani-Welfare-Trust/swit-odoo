@@ -30,7 +30,7 @@ class DirectDeposit(models.Model):
     user_id = fields.Many2one('res.users', string="Created By", default=lambda self: self.env.user)
     # the Branch of the POS shop it was made at; made in the back office: the user's branch
     analytic_account_id = fields.Many2one('account.analytic.account', string="Branch Location",
-                                          compute='_compute_branch', store=True, readonly=True)
+                                          compute='_compute_branch', store=True, readonly=True, index='btree_not_null')
 
     @api.depends('pos_analytic_account_id', 'user_id')
     def _compute_branch(self):

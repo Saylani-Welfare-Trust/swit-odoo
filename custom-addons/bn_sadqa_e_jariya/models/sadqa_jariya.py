@@ -273,6 +273,8 @@ class SadqaJariya(models.Model):
             ]
             if missing:
                 raise ValidationError(_('Please enter the following before completing the application: %s') % ', '.join(missing))
+        if self.filtered(lambda r: r.state != 'draft'):
+            raise ValidationError(_('Only Draft applications can be marked as Completed.'))
         # Disbursement Items come once the portal form is in (Form Filled), see action_send_for_inquiry
         self.write({'state': 'completed'})
 
@@ -328,6 +330,8 @@ class SadqaJariya(models.Model):
     def action_approve(self):
         self._check_role('bn_sadqa_e_jariya.group_sadqa_jariya_member', _('Member'))
         for record in self:
+            if record.state != 'mem_approve':
+                raise ValidationError(_('Only applications in Final Approval can be approved.'))
             if not record.member_remarks:
                 raise ValidationError(_('Please enter Member Remarks!'))
             if not record.line_ids:
@@ -339,6 +343,8 @@ class SadqaJariya(models.Model):
 
     def action_reject(self):
         for rec in self:
+            if rec.state in ('draft', 'disbursed', 'reject'):
+                raise ValidationError(_('%s cannot be rejected in this status.') % rec.display_name)
             if not rec.rejection_remarks:
                 raise ValidationError(_('Please enter Rejection Remarks before rejection.'))
             rec.state = 'reject'
@@ -347,6 +353,9 @@ class SadqaJariya(models.Model):
         for rec in self:
             if rec.order_type != 'recurring':
                 raise ValidationError(_('This request does not belong to recurring order.'))
+            # once: an approved application becomes Recurring (pressing again would duplicate the lines)
+            if rec.state != 'approve':
+                raise ValidationError(_('Recurring orders are created once, from an Approved application.'))
             for line in rec.line_ids.filtered('recurring_duration'):
                 months = int(line.recurring_duration.split('_')[0])
                 self.env['sadqa.jariya.recurring.line'].create([{

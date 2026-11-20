@@ -13,6 +13,30 @@ APPROVAL_GROUPS = {
     'approval_2': 'bn_advance_donation.group_adv_don_approval_2',
 }
 
+# The terms of a donation: set in Draft, fixed once it is sent for approval
+# (what the approvers approved is what is paid and disbursed)
+TERM_FIELDS = {
+    'donor_id', 'category_id', 'contract_type', 'payment_type', 'total_no_of_product',
+    'contract_frequency', 'product_id', 'amount_percentage', 'no_of_product',
+    'contract_start_date', 'contract_end_date', 'no_of_days', 'no_of_weeks',
+    'service_charges', 'service_charge_product_id', 'service_charge_amount',
+}
+
+
+def changed_fields(record, vals, names):
+    """The fields of ``names`` that ``vals`` really changes on ``record``."""
+    changed = set()
+    for name in names & set(vals):
+        field = record._fields[name]
+        new = vals[name]
+        old = record[name].id if field.type == 'many2one' else record[name]
+        if field.type == 'many2one':
+            new = new or False
+        if (old or False) != (new or False):
+            changed.add(name)
+    return changed
+
+
 # An open contract is one amount: no frequency, no date range
 OPEN_CONTRACT_EMPTY = {
     'contract_frequency': False,
@@ -546,6 +570,14 @@ class AdvanceDonation(models.Model):
                 })
 
     def write(self, vals):
+        if not self.env.su:
+            for rec in self.filtered(lambda r: r.state != 'draft'):
+                changed = changed_fields(rec, vals, TERM_FIELDS)
+                if changed:
+                    raise UserError(_('The terms of %(name)s can only be changed in Draft (status: %(state)s). '
+                                      'Changed: %(fields)s.') % {
+                        'name': rec.name, 'state': STATE_LABELS.get(rec.state, rec.state),
+                        'fields': ', '.join(sorted(rec._fields[f].string for f in changed))})
         if vals.get('contract_type') == 'open_contract':
             vals = dict(vals, **OPEN_CONTRACT_EMPTY)
         # Only handle donation_slip_ids changes, don't unlink usage lines for other field updates

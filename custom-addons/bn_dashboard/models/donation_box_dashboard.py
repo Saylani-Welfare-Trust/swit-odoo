@@ -161,19 +161,18 @@ class DonationBoxDashboard(models.TransientModel):
         elif current_3m_sum > 0:
             diff_pct = 100
 
+        # installations of the last 6 months: one grouped query instead of one per month
         today_chart = date.today()
-        months = []
-        counts = []
-        for i in range(5, -1, -1):
-            d = today_chart - relativedelta(months=i)
-            month_start = d.replace(day=1)
-            month_end = d.replace(day=calendar.monthrange(d.year, d.month)[1])
-            months.append(d.strftime('%b %Y'))
-            count = Registration.search_count(reg_domain + [
-                ('installation_date', '>=', month_start.strftime('%Y-%m-%d')),
-                ('installation_date', '<=', month_end.strftime('%Y-%m-%d'))
-            ])
-            counts.append(count)
+        month_days = [(today_chart - relativedelta(months=i)).replace(day=1) for i in range(5, -1, -1)]
+        last_day = today_chart.replace(day=calendar.monthrange(today_chart.year, today_chart.month)[1])
+        per_month = {
+            month.strftime('%Y-%m'): count for month, count in Registration._read_group(reg_domain + [
+                ('installation_date', '>=', month_days[0]),
+                ('installation_date', '<=', last_day),
+            ], ['installation_date:month'], ['__count']) if month
+        }
+        months = [d.strftime('%b %Y') for d in month_days]
+        counts = [per_month.get(d.strftime('%Y-%m'), 0) for d in month_days]
 
         installs_by_month = {'labels': months, 'data': counts}
 

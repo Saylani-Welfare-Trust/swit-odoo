@@ -39,7 +39,7 @@ class WelfareRecurringLine(models.Model):
         
     donee_id = fields.Many2one('res.partner', string="Donee", related='welfare_id.donee_id', store=True)
     product_id = fields.Many2one('product.product', string="Product")
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch")
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", index='btree_not_null')
     analytic_account_domain = fields.Char('Analytic Account Domain', compute='_compute_analytic_account_domain', default="[]", store=True)
     disbursement_category_id = fields.Many2one('disbursement.category', string="Disbursement Category")
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id)

@@ -45,8 +45,9 @@ class DonationInKind(models.Model):
         return False
     
     donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'), tracking=True)
-    product_id = fields.Many2one('product.product', string="Product", tracking=True)
-    picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'))
+    product_id = fields.Many2one('product.product', string="Product", tracking=True, domain=[('is_donation_in_kind', '=', True)])
+    picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'),
+                                      domain=[('program_type', '=', 'donation_in_kind')])
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))
     previous_location_id = fields.Many2one('stock.location', string='Previous Location', readonly=True, copy=False)
     journal_id = fields.Many2one('account.journal', string='Journal', default=lambda self: self.default_set_value('journal_id'))
@@ -210,6 +211,9 @@ May Allah bless you!
             record.state = 'validate'
     def action_cancel(self):
         # "Not Delivered": the truck never brought it
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_donation_in_kind.donation_in_kind_manager_group',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         self._check_din_state(('delivered',), _('Not Delivered'))
         for record in self:
             previous_location = record.previous_location_id or False

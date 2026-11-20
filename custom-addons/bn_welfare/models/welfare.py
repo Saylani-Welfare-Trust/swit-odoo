@@ -255,7 +255,8 @@ class Welfare(models.Model):
 
             # Delete existing images for this document type
             existing_images = self.document_image_ids.filtered(lambda img: img.document_type == doc_type)
-            existing_images.unlink()
+            # the portal sync replaces them (only Welfare Admins delete documents by hand)
+            existing_images.sudo().unlink()
 
             for url in urls:
                 try:

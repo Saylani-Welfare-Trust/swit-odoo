@@ -1,7 +1,8 @@
 from markupsafe import Markup
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 PRESCRIPTION_STATES = [
     ('draft', 'Draft'),
@@ -23,7 +24,7 @@ class MedicalPrescription(models.Model):
         default=lambda self: _('New'))
     partner_id = fields.Many2one(
         'res.partner', 'Patient', required=True, index=True, tracking=True,
-        domain="[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Medical'), ('state', '=', 'register')]")
+        domain=tag_domain('donee', 'patient', registered=True))
     registration_id = fields.Char(related='partner_id.primary_registration_id', string='Registration No.')
     cnic_no = fields.Char(related='partner_id.cnic_no', string='CNIC No.')
     mobile = fields.Char(related='partner_id.mobile', string='Mobile No.')
@@ -69,6 +70,9 @@ class MedicalPrescription(models.Model):
     # ------------------------------------------------------------------
 
     def action_approve(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_medical_pos.group_medical_manager',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         for prescription in self:
             if prescription.state != 'draft':
                 raise UserError(_("Only draft prescriptions can be approved."))
@@ -81,11 +85,17 @@ class MedicalPrescription(models.Model):
         })
 
     def action_cancel(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_medical_pos.group_medical_manager',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         if any(prescription.state == 'billed' for prescription in self):
             raise UserError(_("A billed prescription can't be cancelled; refund its bill instead."))
         self.write({'state': 'cancel'})
 
     def action_draft(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_medical_pos.group_medical_manager',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         if any(prescription.state != 'cancel' for prescription in self):
             raise UserError(_("Only cancelled prescriptions can be reset to draft."))
         self.write({'state': 'draft', 'approved_by_id': False, 'approved_date': False})

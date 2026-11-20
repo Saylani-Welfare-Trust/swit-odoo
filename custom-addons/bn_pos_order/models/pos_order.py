@@ -46,7 +46,7 @@ class POSOrder(models.Model):
                        ('refund', 'Refunded'), ('reject', 'Reject')],
         ondelete={'cfo_approval': 'set default', 'refund': 'set default', 'reject': 'set default'})
     
-    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", compute="_set_employee_branch", store=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string="Branch", compute="_set_employee_branch", store=True, index='btree_not_null')
     
 
     # ------------------------------------------------------------------

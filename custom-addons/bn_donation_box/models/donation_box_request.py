@@ -32,7 +32,7 @@ class DonationBoxRequest(models.Model):
     picking_type_id = fields.Many2one(
         'stock.picking.type', string="Operation Type", tracking=True,
         default=lambda self: self._default_picking_type_id(),
-        domain="['|', ('warehouse_id', '=', warehouse_id), ('warehouse_id', '=', False)]",
+        domain="[('program_type', '=', 'donation_box'), '|', ('warehouse_id', '=', warehouse_id), ('warehouse_id', '=', False)]",
         help="Defaults to the Donation Box operation type configured on the warehouse.")
     source_location_id = fields.Many2one(
         'stock.location', string="Source Location",
@@ -104,8 +104,14 @@ class DonationBoxRequest(models.Model):
 
     @api.constrains('picking_type_id', 'warehouse_id')
     def _check_picking_type_warehouse(self):
+        legacy = self.env.ref('bn_donation_box.donation_box_stock_picking_type', raise_if_not_found=False)
         for request in self:
             picking_type = request.picking_type_id
+            # only a Donation Box operation type (or the historical global one)
+            if picking_type and picking_type.program_type != 'donation_box' and picking_type != legacy:
+                raise ValidationError(_(
+                    'The operation type "%(type)s" is not a Donation Box operation type.'
+                ) % {'type': picking_type.display_name})
             if picking_type.warehouse_id and request.warehouse_id and picking_type.warehouse_id != request.warehouse_id:
                 raise ValidationError(_(
                     'The operation type "%(type)s" does not belong to warehouse "%(warehouse)s".'

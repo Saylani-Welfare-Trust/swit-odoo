@@ -1,5 +1,5 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -441,6 +441,9 @@ class BankReconciliationMaster(models.Model):
         })
 
     def action_cancel_reconciliation(self):
+        # the button is the group's: also refused over RPC
+        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_bank_reconciliation.bank_reconciliation_manager_group',)):
+            raise AccessError(_('You are not allowed to do this action.'))
         self.ensure_one()
         if self.state == 'completed':
             raise UserError(_('Cannot cancel a completed reconciliation.'))
