@@ -148,7 +148,7 @@ class SadqaJariya(models.Model):
         channels = []
         if company.institution_login_whatsapp_template and company.institution_login_whatsapp_namespace:
             channels.append('WhatsApp')
-        if self.env['ir.config_parameter'].sudo().get_param('bn_sms_whatsapp.sms_api_key'):
+        if self.env['sms.service']._api_key():
             channels.append('SMS')
         return channels
 
