@@ -52,7 +52,8 @@
                         <field name="document_type"/>
                         <field name="image_data" filename="image_filename"/>
                         <field name="image_filename" invisible="1"/>
-                        <field name="source_url" widget="url"/>
+                        <field name="source_url" widget="url" invisible="not source_url"/>
+                        <field name="uploaded_from"/>
                     </group>
                 </sheet>
             </form>
@@ -184,9 +185,11 @@
                         </page>
                         <page name="documents" string="Documents">
                             <field name="document_ids" nolabel="1">
+                                <!-- portal photos come in here too: viewed, removed and added to like any document -->
                                 <tree default_group_by="document_type">
                                     <field name="document_type"/>
                                     <field name="image_filename" string="File Name"/>
+                                    <field name="uploaded_from"/>
                                     <field name="display_image" widget="html"/>
                                 </tree>
                             </field>
@@ -270,13 +273,6 @@
                                     <field name="donee_form_committee_members"/>
                                     <field name="donee_form_monthly_meetings"/>
                                 </group>
-                            </group>
-                            <group string="Photos">
-                                <field name="donee_form_application_image" widget="image" options="{'size': [180, 180]}" invisible="not donee_form_application_image"/>
-                                <field name="donee_form_institution_image" widget="image" options="{'size': [180, 180]}" invisible="not donee_form_institution_image"/>
-                                <field name="donee_form_assembly_image" widget="image" options="{'size': [180, 180]}" invisible="not donee_form_assembly_image"/>
-                                <field name="donee_form_students_studying_image" widget="image" options="{'size': [180, 180]}" invisible="not donee_form_students_studying_image"/>
-                                <field name="donee_form_mealtime_image" widget="image" options="{'size': [180, 180]}" invisible="not donee_form_mealtime_image"/>
                             </group>
                             <group string="Masjid Information" invisible="institution_type != 'masjid'">
                                 <group>
@@ -403,13 +399,6 @@
                                     <field name="officer_form_committee_members"/>
                                     <field name="officer_form_monthly_meetings"/>
                                 </group>
-                            </group>
-                            <group string="Photos">
-                                <field name="officer_form_application_image" widget="image" options="{'size': [180, 180]}" invisible="not officer_form_application_image"/>
-                                <field name="officer_form_institution_image" widget="image" options="{'size': [180, 180]}" invisible="not officer_form_institution_image"/>
-                                <field name="officer_form_assembly_image" widget="image" options="{'size': [180, 180]}" invisible="not officer_form_assembly_image"/>
-                                <field name="officer_form_students_studying_image" widget="image" options="{'size': [180, 180]}" invisible="not officer_form_students_studying_image"/>
-                                <field name="officer_form_mealtime_image" widget="image" options="{'size': [180, 180]}" invisible="not officer_form_mealtime_image"/>
                             </group>
                             <group string="Masjid Information" invisible="institution_type != 'masjid'">
                                 <group>

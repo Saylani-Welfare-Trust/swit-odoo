@@ -94,12 +94,24 @@ class SadqaJariyaDocument(models.Model):
         ('cnic', 'CNIC'),
         ('registration', 'Registration / Ilhaq'),
         ('land_documents', 'Land Documents'),
+        # the portal form's photos (also added by hand)
+        ('application_photo', 'Application Photo'),
+        ('institution_photo', 'Institution Photo'),
+        ('assembly_photo', 'Assembly Photo'),
+        ('students_studying_photo', 'Students During Lessons'),
+        ('mealtime_photo', 'Students at Mealtime'),
         ('pictures', 'Pictures'),
         ('other', 'Other'),
     ], string='Document Type', required=True)
     image_data = fields.Binary('File', attachment=True)
     image_filename = fields.Char('Filename')
     source_url = fields.Char('Source URL')
+    uploaded_from = fields.Selection([
+        ('odoo', 'Odoo'),
+        ('donee', 'Donee (Portal)'),
+        ('officer', 'Inquiry Officer (Portal)'),
+    ], string='Uploaded From', default='odoo', readonly=True)
+    form_id = fields.Many2one('sadqa.jariya.form', string='Portal Form', ondelete='set null', readonly=True)
     display_image = fields.Html(string='Preview', compute='_compute_display_image', sanitize=False)
 
     @api.depends('image_data', 'source_url', 'document_type')

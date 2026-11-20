@@ -1,5 +1,6 @@
 import base64
 import logging
+from urllib.parse import urlparse
 
 import requests
 
@@ -7,6 +8,7 @@ from odoo import models, fields, _
 from odoo.exceptions import UserError
 
 from .sadqa_jariya import FORM_KINDS
+from .sadqa_jariya_form import PHOTO_DOCUMENT_TYPES
 
 _logger = logging.getLogger(__name__)
 
@@ -86,17 +88,7 @@ class SadqaJariyaFetchLog(models.Model):
                 continue
             value = form[key]
             field_type = Model._fields[field_name].type
-            if field_type == 'binary':
-                # signed URL valid 15 minutes: a failed download fails the import, the row is not acknowledged
-                # and the next sync gets a fresh URL
-                if not value:
-                    continue
-                try:
-                    value = self._portal_picture(value)
-                except Exception as e:
-                    raise UserError(_("Photo %(photo)s could not be downloaded (%(error)s); the form is imported again on the next sync.",
-                                      photo=key, error=e)) from e
-            elif field_type == 'integer':
+            if field_type == 'integer':
                 value = self._as_int(value)
             elif field_type == 'float':
                 value = self._as_float(value)
@@ -109,9 +101,35 @@ class SadqaJariyaFetchLog(models.Model):
             vals[field_name] = value
         return vals
 
+    def _portal_photo_documents(self, application, submission, form):
+        """Documents of the form's photos (signed URLs valid 15 minutes): a failed download fails the import,
+        the row is not acknowledged and the next sync gets fresh URLs"""
+        vals_list = []
+        for key, (document_type, _label) in PHOTO_DOCUMENT_TYPES.items():
+            value = form.get(key)
+            if not value:
+                continue
+            try:
+                data = self._portal_picture(value)
+            except Exception as e:
+                raise UserError(_("Photo %(photo)s could not be downloaded (%(error)s); the form is imported again on the next sync.",
+                                  photo=key, error=e)) from e
+            url = value.get('url') if isinstance(value, dict) else value
+            filename = urlparse(url).path.rsplit('/', 1)[-1] if isinstance(url, str) and url.startswith('http') else ''
+            vals_list.append({
+                'application_id': application.id,
+                'document_type': document_type,
+                'image_data': data,
+                'image_filename': filename or f'{document_type}.jpg',
+                'uploaded_from': submission,
+            })
+        return vals_list
+
     def _create_portal_form(self, application, submission, form, row, submitted_at, report=None):
         institution_type = row.get('institutionType')
-        self.env['sadqa.jariya.form'].create(dict(
+        # the photos go to the application's Documents (viewed, removed and added to there)
+        photo_documents = self._portal_photo_documents(application, submission, form)
+        portal_form = self.env['sadqa.jariya.form'].create(dict(
             self._portal_form_vals(form),
             application_id=application.id,
             submission=submission,
@@ -120,6 +138,7 @@ class SadqaJariyaFetchLog(models.Model):
             institution_type=institution_type if institution_type in ('masjid', 'madrasa') else application.institution_type,
             submitted_at=self._as_datetime(submitted_at),
         ))
+        self.env['sadqa.jariya.document'].create([dict(vals, form_id=portal_form.id) for vals in photo_documents])
 
     def _import_form_row(self, application, row):
         """Submitted form of a getSubmittedForms row, True when imported now (False: imported before)"""
