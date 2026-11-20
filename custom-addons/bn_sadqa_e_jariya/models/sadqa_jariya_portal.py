@@ -148,6 +148,15 @@ class SadqaJariya(models.Model):
             return 'WhatsApp'
         return 'SMS'
 
+    def _check_portal_login_channel(self):
+        """Before a new password goes to the portal: if it can't reach the donee, they're locked out"""
+        if self._portal_login_channel() == 'SMS' and \
+                not self.env['ir.config_parameter'].sudo().get_param('bn_sms_whatsapp.sms_api_key'):
+            raise UserError(_(
+                "SMS is not set up on this server, so the donee could not get the new password; nothing was changed.\n"
+                "Set the System Parameter bn_sms_whatsapp.sms_api_key (Settings > Technical > System Parameters), "
+                "or the Portal Login WhatsApp Template in the Company settings."))
+
     def _portal_login_sms(self, login, password_text):
         lines = [_("Assalam-o-Alaikum %s,") % self.donee_id.name, _("Your Sadqa e Jariya portal login:")]
         if self.env.company.institution_portal_login_url:
@@ -200,6 +209,7 @@ class SadqaJariya(models.Model):
         login = donee.sadqa_portal_login
         new_login = not login
         if new_login:
+            self._check_portal_login_channel()
             login = self._portal_login_email(domain)
         password = self._generate_portal_password()
         payload = {
@@ -237,6 +247,7 @@ class SadqaJariya(models.Model):
         donee = self.donee_id
         if not donee.sadqa_portal_login:
             raise UserError(_("Donee %s has no portal login yet, use Send Form.") % donee.name)
+        self._check_portal_login_channel()
         password = self._generate_portal_password()
         self._portal_call('resetDoneePassword', {'doneeOdooId': donee.id, 'password': password})
         channel = self._portal_login_channel()
