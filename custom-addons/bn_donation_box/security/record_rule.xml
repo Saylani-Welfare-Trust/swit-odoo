@@ -15,6 +15,8 @@
          - everyone: only the registrations they are the Installer of (user level);
          - the staff working on the boxes of their city (complaints here; keys,
            rider shifts and the dashboard add their groups in their modules): their City;
+         Complaint Admin / Process / Resolve work on the complaints of their City (and on
+         those not linked to a box yet), not on every city's.
          - Managers / Audit (and Key Management Managers / Audit): every city. -->
     <record id="donation_box_registration_own_city_rule" model="ir.rule">
         <field name="name">Registration: My Installations</field>
@@ -75,7 +77,7 @@
     <record id="donation_box_complain_center_resolve_rule" model="ir.rule">
         <field name="name">Complain Center: Resolve</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">['|', ('city_id', '=', False), ('city_id.city_id', 'in', user.city_access_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_resolve_complain_group')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -86,7 +88,7 @@
     <record id="complain_center_process_complain_rule" model="ir.rule">
         <field name="name">Complain Center: Process</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">['|', ('city_id', '=', False), ('city_id.city_id', 'in', user.city_access_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_process_complain_group')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
@@ -97,7 +99,7 @@
     <record id="complain_center_admin_rule" model="ir.rule">
         <field name="name">Complain Center: Admin</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_complain_center"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="domain_force">['|', ('city_id', '=', False), ('city_id.city_id', 'in', user.city_access_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_admin_group')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>

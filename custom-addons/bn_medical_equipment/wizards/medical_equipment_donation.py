@@ -35,43 +35,45 @@ class MedicalEquipmentDonation(models.TransientModel):
         if not journal:
             raise ValidationError(_("Please configure a General Journal."))
 
+        income_account = (
+            self.product_id.property_account_income_id
+            or self.product_id.categ_id.property_account_income_categ_id
+        )
+        expense_account = (
+            security_product.property_account_expense_id
+            or security_product.categ_id.property_account_expense_categ_id
+        )
+        if not income_account or not expense_account:
+            raise ValidationError(_(
+                "Set an income account on %(product)s and an expense account on the security deposit product.",
+                product=self.product_id.display_name or _('the donation product')))
+
+        # the deposit of each equipment line; the amount of the wizard, when given,
+        # is the part of the whole deposit that is donated: posted once, not per line
+        deposits = [(line.product_id, line.security_deposit * line.quantity)
+                    for line in self.medical_equipment_id.medical_equipment_line_ids
+                    if line.security_deposit * line.quantity]
+        total_deposit = sum(amount for _product, amount in deposits)
+        if self.amount:
+            if self.amount < 0 or self.currency_id.compare_amounts(self.amount, total_deposit) > 0:
+                raise ValidationError(_(
+                    "The donated amount must be positive and not more than the security deposit (%s).",
+                    total_deposit))
+            deposits = [(self.product_id or security_product, self.amount)]
+
         line_vals = []
-
-        for line in self.medical_equipment_id.medical_equipment_line_ids:
-            product = line.product_id
-            amount = line.security_deposit * line.quantity
-
-            if not amount:
-                continue
-
-            income_account = (
-                self.product_id.property_account_income_id
-                or self.product_id.categ_id.property_account_income_categ_id
-            )
-            expense_account = (
-                security_product.property_account_expense_id
-                or security_product.categ_id.property_account_expense_categ_id
-            )
-
-            if not income_account or not expense_account:
-                raise ValidationError(
-                    _(f"Income or Expense account missing for product {product.display_name}")
-                )
-
-            # Debit → Expense
+        for product, amount in deposits:
             line_vals.append((0, 0, {
                 'name': f"Donation Expense - {product.name}",
                 'account_id': expense_account.id,
-                'debit': self.amount if self.amount else amount,
+                'debit': amount,
                 'credit': 0.0,
             }))
-
-            # Credit → Income
             line_vals.append((0, 0, {
                 'name': f"Donation Income - {product.name}",
                 'account_id': income_account.id,
                 'debit': 0.0,
-                'credit': self.amount if self.amount else amount,
+                'credit': amount,
             }))
 
         if not line_vals:
@@ -85,7 +87,7 @@ class MedicalEquipmentDonation(models.TransientModel):
             'line_ids': line_vals,
         }
 
-        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self.medical_equipment_id._name, self.medical_equipment_id.id)).create(move_vals)
+        move = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self.medical_equipment_id._name, self.medical_equipment_id.id)).create(move_vals)
         # DO NOT POST → parked entry
 
         self.medical_equipment_id.state = 'donate'

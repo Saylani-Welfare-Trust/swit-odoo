@@ -10,15 +10,16 @@
     <record id="scope_pos_dd_report_rule" model="ir.rule">
         <field name="name">POS + DD Report: allowed locations' analytic accounts</field>
         <field name="model_id" ref="bn_dashboard.model_pos_dd_report"/>
-        <field name="domain_force">['|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <!-- global: it narrows the report's own rule (whose "nothing configured" means every branch) -->
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.has_group('base.group_system') or user.has_group('bn_stock_location.stock_scope_unrestricted_group')) else ['|', ('user_id', '=', user.id), '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
     </record>
 
     <record id="scope_pos_dd_report_unrestricted_rule" model="ir.rule">
         <field name="name">POS + DD Report: unrestricted</field>
         <field name="model_id" ref="bn_dashboard.model_pos_dd_report"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system')])]"/>
     </record>
 
 </odoo>

@@ -138,16 +138,19 @@ class WelfareRecurringLine(models.Model):
         if not account:
             # Get default payable account
             account = self.env['account.account'].search([
-                ('account_type', '=', 'expense')
+                ('account_type', '=', 'expense'),
+                ('company_id', '=', self.env.company.id),
             ], limit=1)
         
         invoice_line_vals = {
             'product_id': self.product_id.id,
             'name': self.product_id.name or 'Welfare Payment',
             'quantity': self.quantity,
-            'price_unit': self.amount,
+            # amount is the total of the line (see welfare.action_create_recurring_order)
+            'price_unit': self.amount / self.quantity if self.quantity else self.amount,
             'account_id': account.id if account else False,
-            'analytic_account_id': self.analytic_account_id.id if self.analytic_account_id else False,
+            # journal items carry the branch as an analytic distribution
+            'analytic_distribution': {str(self.analytic_account_id.id): 100} if self.analytic_account_id else False,
         }
         
         bill_vals = {
@@ -160,7 +163,7 @@ class WelfareRecurringLine(models.Model):
             'recurring_line_id': self.id,
         }
         
-        bill = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
+        bill = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
         self.bill_id = bill.id
         
         # Auto-post the bill

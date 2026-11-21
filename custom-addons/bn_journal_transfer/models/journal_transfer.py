@@ -68,6 +68,9 @@ class JournalTransfer(models.Model):
                 raise UserError(_('Set a destination journal different from the source on %s.') % rec.name)
             if not rec.source_journal_id.default_account_id or not rec.dest_journal_id.default_account_id:
                 raise UserError(_('Both journals of %s need a default account.') % rec.name)
+            if (rec.currency_id or rec.env.company.currency_id).compare_amounts(rec.amount, 0) <= 0:
+                raise UserError(_('The amount of %s must be more than zero.') % rec.name)
+            analytic = {str(rec.analytic_account_id.id): 100} if rec.analytic_account_id else False
 
             move_line_vals = [
                 {
@@ -76,6 +79,7 @@ class JournalTransfer(models.Model):
                     'debit': rec.amount,
                     'credit': 0.0,
                     'name': f'Transfer from {rec.source_journal_id.name}',
+                    'analytic_distribution': analytic,
                 },
                 {
                     'account_id': rec.source_journal_id.default_account_id.id,
@@ -83,6 +87,7 @@ class JournalTransfer(models.Model):
                     'debit': 0.0,
                     'credit': rec.amount,
                     'name': f'Transfer to {rec.dest_journal_id.name}',
+                    'analytic_distribution': analytic,
                 },
             ]
 
@@ -93,7 +98,7 @@ class JournalTransfer(models.Model):
                 'ref': f'Transfer {rec.amount} from {rec.source_journal_id.name} to {rec.dest_journal_id.name}'
             }
 
-            move = rec.env['account.move'].with_context(default_source_ref='%s,%s' % (rec._name, rec.id)).create(move_vals)
+            move = rec.env['account.move'].with_context(default_source_record_ref='%s,%s' % (rec._name, rec.id)).create(move_vals)
             rec.move_id = move.id
             move.action_post()
 

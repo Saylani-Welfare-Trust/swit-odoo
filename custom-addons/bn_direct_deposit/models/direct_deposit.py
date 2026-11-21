@@ -307,6 +307,11 @@ May Allah bless you!
 
         line_vals = []
         total_amount = 0.0
+        # the donor and the branch on every journal item
+        common = {
+            "partner_id": self.donor_id.id or False,
+            "analytic_distribution": {str(self.analytic_account_id.id): 100} if self.analytic_account_id else False,
+        }
 
         for line in non_donor_lines:
             credit_account = (
@@ -325,6 +330,7 @@ May Allah bless you!
                 "debit": 0,
                 "company_id": self.env.company.id,
                 "date_maturity": fields.Date.today(),
+                **common,
             }))
             total_amount += line_amount
 
@@ -343,6 +349,7 @@ May Allah bless you!
             "credit": 0,
             "company_id": self.env.company.id,
             "date_maturity": fields.Date.today(),
+            **common,
         }))
 
         self.move_id = self.env["account.move"].create({

@@ -593,7 +593,7 @@ class ImportDonation(models.Model):
         ]
         lines = self.gateway_config_id._balance_entry_lines([debit] + credits, currency, self.name)
 
-        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).sudo().create({
+        move = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self._name, self.id)).sudo().create({
             'move_type': 'entry',
             'journal_id': journal.id,
             'ref': self.name,

@@ -1,3 +1,4 @@
+from odoo.tools import html2plaintext
 from odoo import models, fields, api, _
 from odoo.exceptions import AccessError, UserError
 from odoo.tools.sql import column_exists
@@ -37,6 +38,8 @@ class DonationReceipt(models.Model):
     cheque_date = fields.Date(string='Cheque Date')
     bounced_reason = fields.Html(string='Reason')
     remarks = fields.Text(string='Remarks') 
+    deposit_move_id = fields.Many2one('account.move', string='Deposit Entry', readonly=True, copy=False,
+                                      help='Entry posted when the cheque was deposited; reversed if it bounces.')
     product_name = fields.Char(string='Product Name')  # If you want a separate text field
     payment_type = fields.Selection([
     ('cash', 'Cash'),
@@ -102,7 +105,7 @@ class DonationReceipt(models.Model):
             line = {'name': rec.name, 'partner_id': rec.donor_id.id,
                     'currency_id': rec.currency_id.id if rec.currency_id else None}
             # the deposit entry is part of the receipt, not an accounting task
-            move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (rec._name, rec.id)).sudo().create({
+            move = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (rec._name, rec.id)).sudo().create({
                 'ref': rec.name,
                 'partner_id': rec.donor_id.id,
                 'line_ids': [
@@ -113,7 +116,19 @@ class DonationReceipt(models.Model):
                 'move_type': 'entry',
             })
             move.action_post()
+            rec.deposit_move_id = move.id
         self.write({'state': 'pending'})
+
+    def _get_deposit_move(self):
+        """The posted deposit entry of the cheque (receipts deposited before the
+        link was kept are found by their reference)."""
+        self.ensure_one()
+        if self.deposit_move_id:
+            return self.deposit_move_id
+        return self.env['account.move'].sudo().search([
+            ('ref', '=', self.name), ('move_type', '=', 'entry'), ('state', '=', 'posted'),
+            ('partner_id', '=', self.donor_id.id), ('reversal_move_id', '=', False),
+        ], limit=1)
 
 
     def action_bounced(self):
@@ -122,6 +137,14 @@ class DonationReceipt(models.Model):
         for rec in self:
             if not rec.bounced_reason:
                 raise UserError(_('Please provide reason'))
+        for rec in self:
+            # the money never came: the income posted at deposit is taken back
+            move = rec._get_deposit_move()
+            if move and move.state == 'posted' and not move.reversal_move_id:
+                move.sudo()._reverse_moves(default_values_list=[{
+                    'ref': _('Bounced cheque %s: %s') % (rec.name, html2plaintext(rec.bounced_reason or '').strip()[:200]),
+                    'date': fields.Date.context_today(rec),
+                }], cancel=True)
         self.write({'state': 'bounced'})
 
 

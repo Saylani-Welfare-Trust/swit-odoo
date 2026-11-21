@@ -179,7 +179,7 @@ class POSCheque(models.Model):
         analytic_dist = {str(self.analytic_account_id.id): 100} if self.analytic_account_id else {}
         partner_id = self.donor_id.id or False
         label = _("Cheque Deposit %s") % self.name
-        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).sudo().create({
+        move = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self[:1]._name, self[:1].id)).sudo().create({
             'move_type': 'entry',
             'journal_id': self.bank_id.id,
             'date': fields.Date.context_today(self),
@@ -199,13 +199,20 @@ class POSCheque(models.Model):
         # the clearing account allows it and such a line exists.
         if clearing_account.reconcile:
             clearing_line = move.line_ids.filtered(lambda l: l.account_id == clearing_account)
-            pos_line = self.env['account.move.line'].sudo().search([
+            domain = [
                 ('account_id', '=', clearing_account.id),
                 ('partner_id', '=', partner_id),
                 ('debit', '=', self.amount),
                 ('reconciled', '=', False),
                 ('parent_state', '=', 'posted'),
-            ], limit=1)
+            ]
+            # the line of this cheque's own session closing first, not another
+            # cheque of the same donor and amount
+            session_move = order.session_id.move_id
+            pos_line = session_move and self.env['account.move.line'].sudo().search(
+                domain + [('move_id', '=', session_move.id)], limit=1)
+            if not pos_line:
+                pos_line = self.env['account.move.line'].sudo().search(domain, order='date, id', limit=1)
             if pos_line:
                 (clearing_line + pos_line).reconcile()
 
