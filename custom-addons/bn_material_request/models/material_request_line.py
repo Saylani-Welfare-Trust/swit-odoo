@@ -55,6 +55,16 @@ class MemberApprovalLine(models.Model):
             line.subtotal = line.quantity * line.unit_price
 
     @api.constrains('product_id', 'approval_id')
+    def _check_product_category(self):
+        """The requester's Allowed Categories (and their sub-categories), as the picker offers them."""
+        for line in self.filtered('product_id'):
+            allowed = line.approval_id.user_id.allowed_product_category_ids
+            if allowed and not self.env['product.product'].sudo().search_count(
+                    [('id', '=', line.product_id.id), ('categ_id', 'child_of', allowed.ids)]):
+                raise ValidationError(_("%(product)s is not in the product categories allowed to %(user)s.") % {
+                    'product': line.product_id.display_name, 'user': line.approval_id.user_id.display_name})
+
+    @api.constrains('product_id', 'approval_id')
     def _check_unique_product_per_request(self):
         for line in self:
             duplicate = line.approval_id.line_ids.filtered(

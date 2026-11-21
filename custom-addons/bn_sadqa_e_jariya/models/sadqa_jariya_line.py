@@ -92,13 +92,18 @@ class SadqaJariyaLine(models.Model):
                 domain.append(('categ_id', 'child_of', product_category.id))
             rec.product_domain = str(domain)
 
-    @api.constrains('product_id', 'is_hod')
+    @api.constrains('product_id', 'is_hod', 'application_type_id')
     def _check_sadqa_jariya_product(self):
         # HOD lines are added at HOD Approval from the Is Sadqa-e-Jaria HOD products
         for line in self.filtered(lambda l: l.product_id and not l.is_hod):
             if not line.product_id.is_sadqa_jariya:
                 raise ValidationError(_("%s is not a Sadqa-e-Jaria product: tick 'Is Sadqa-e-Jaria' on the product first.")
                                       % line.product_id.display_name)
+            category = line.application_type_id.product_category_id
+            if category and not self.env['product.product'].sudo().search_count(
+                    [('id', '=', line.product_id.id), ('categ_id', 'child_of', category.id)]):
+                raise ValidationError(_("%(product)s is not in the category %(category)s of the application type.") % {
+                    'product': line.product_id.display_name, 'category': category.display_name})
 
     @api.depends('application_type_id')
     def _compute_analytic_account_domain(self):
