@@ -618,7 +618,16 @@ class MedicalEquipment(models.Model):
             raise UserError(_('%s is already validated.') % self.name)
 
         operation_type = self.env['stock.warehouse']._get_program_type('medical_equipment')
-        
+        source = operation_type.default_location_src_id
+        # the serials (reserved for this application when it was completed) must be in that location
+        for line in self.medical_equipment_line_ids.filtered('lot_ids'):
+            missing = line.lot_ids.filtered(lambda lot: not self.env['stock.quant'].sudo().search_count([
+                ('lot_id', '=', lot.id), ('location_id', 'child_of', source.id), ('quantity', '>', 0)]))
+            if missing:
+                raise UserError(_('%(lots)s of %(product)s are not in %(location)s, where the equipment is shipped from.') % {
+                    'lots': ', '.join(missing.mapped('name')), 'product': line.product_id.display_name,
+                    'location': source.display_name})
+
         # Prepare stock picking values
         picking_vals = {
             'picking_type_id': operation_type.id,

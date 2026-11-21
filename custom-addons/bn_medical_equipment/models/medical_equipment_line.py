@@ -12,6 +12,8 @@ class DonationHomeServiceLine(models.Model):
     product_id = fields.Many2one('product.product', string="Product",related='medical_equipment_category_id.product_id', store=True )
     currency_id = fields.Many2one('res.currency', related='medical_equipment_id.currency_id')
     lot_ids = fields.Many2many('stock.lot', string="Product No./Lot")
+    # the serials the line can take: on hand in the location the equipment is shipped from
+    allowed_lot_ids = fields.Many2many('stock.lot', string="Allowed Lots", compute='_compute_allowed_lot_ids')
 
     quantity = fields.Integer('Quantity', default=1)
     base_security_deposit = fields.Monetary(
@@ -24,10 +26,32 @@ class DonationHomeServiceLine(models.Model):
         compute='_compute_on_hand_qty'
     )
     
+    @api.model
+    def _source_location(self):
+        """Where Medical Equipment is shipped from: the source of the Medical
+        Equipment operation type of the user's warehouse (as Validate uses it)."""
+        picking_type = self.env['stock.warehouse']._get_program_type('medical_equipment')
+        return picking_type.default_location_src_id
+
+    @api.model
+    def _lots_on_hand_domain(self, product, location):
+        return [('product_id', '=', product.id), ('lot_consume', '=', False),
+                ('quant_ids', 'any', [('location_id', 'child_of', location.id), ('quantity', '>', 0)])]
+
     @api.depends('product_id')
     def _compute_on_hand_qty(self):
-        for rec in self:    
-            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
+        location = self._source_location()
+        for rec in self:
+            rec.on_hand_qty = rec.product_id.with_context(location=location.id).qty_available \
+                if rec.product_id and location else 0.0
+
+    @api.depends('product_id')
+    def _compute_allowed_lot_ids(self):
+        location = self._source_location()
+        Lot = self.env['stock.lot']
+        for rec in self:
+            rec.allowed_lot_ids = Lot.search(self._lots_on_hand_domain(rec.product_id, location)) \
+                if rec.product_id and location else Lot
     actual_deposit_percentage = fields.Float(
         string='Actual Deposit Percentage (%)',
         related='medical_equipment_id.actual_deposit_percentage',
@@ -76,8 +100,8 @@ class DonationHomeServiceLine(models.Model):
         in the source location (e.g., WH/Stock) for internal transfers.
         """
         if self.product_id and self.product_id.detailed_type != 'service':
-            # Determine source location (use stock location by default)
-            source_location = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
+            # the location the equipment is shipped from
+            source_location = self._source_location()
 
             if source_location:
                 # Get available quantity for the product at source location
