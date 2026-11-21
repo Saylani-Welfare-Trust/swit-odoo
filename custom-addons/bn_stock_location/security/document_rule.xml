@@ -73,46 +73,55 @@
         <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
     </record>
 
+    <!--
+        POS shops / sessions / orders (and in their modules: material requests,
+        direct deposits, POS cheques, journal transfers) have other rules too
+        ("own orders", dashboards ...). Rules of different groups add up (OR), so
+        a location rule for the internal users would widen them: these location
+        rules are global (they narrow every other rule) and keep the user's own
+        records. Settings administrators, Unrestricted Access and portal users
+        are exempt.
+    -->
     <record id="scope_pos_config_rule" model="ir.rule">
         <field name="name">Point of Sale: allowed warehouses / locations</field>
         <field name="model_id" ref="point_of_sale.model_pos_config"/>
-        <field name="domain_force">['|', ('warehouse_id', 'in', user.scope_warehouse_ids.ids), '&amp;', ('warehouse_id', '=', False), '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.has_group('base.group_system') or user.has_group('bn_stock_location.stock_scope_unrestricted_group')) else ['|', ('user_ids', 'in', [user.id]), '|', ('warehouse_id', 'in', user.scope_warehouse_ids.ids), '&amp;', ('warehouse_id', '=', False), '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
     </record>
 
     <record id="scope_pos_config_unrestricted_rule" model="ir.rule">
         <field name="name">Point of Sale: unrestricted</field>
         <field name="model_id" ref="point_of_sale.model_pos_config"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system')])]"/>
     </record>
 
     <record id="scope_pos_session_rule" model="ir.rule">
         <field name="name">POS Session: allowed warehouses / locations</field>
         <field name="model_id" ref="point_of_sale.model_pos_session"/>
-        <field name="domain_force">['|', ('config_id.warehouse_id', 'in', user.scope_warehouse_ids.ids), '&amp;', ('config_id.warehouse_id', '=', False), '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.has_group('base.group_system') or user.has_group('bn_stock_location.stock_scope_unrestricted_group')) else ['|', ('user_id', '=', user.id), '|', ('config_id.warehouse_id', 'in', user.scope_warehouse_ids.ids), '&amp;', ('config_id.warehouse_id', '=', False), '|', ('analytic_account_id', '=', False), ('analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
     </record>
 
     <record id="scope_pos_session_unrestricted_rule" model="ir.rule">
         <field name="name">POS Session: unrestricted</field>
         <field name="model_id" ref="point_of_sale.model_pos_session"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system')])]"/>
     </record>
 
     <record id="scope_pos_order_rule" model="ir.rule">
         <field name="name">POS Order: allowed warehouses / locations</field>
         <field name="model_id" ref="point_of_sale.model_pos_order"/>
-        <field name="domain_force">['|', ('session_id.config_id.warehouse_id', 'in', user.scope_warehouse_ids.ids), '&amp;', ('session_id.config_id.warehouse_id', '=', False), '|', ('session_id.analytic_account_id', '=', False), ('session_id.analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.has_group('base.group_system') or user.has_group('bn_stock_location.stock_scope_unrestricted_group')) else ['|', ('user_id', '=', user.id), '|', ('session_id.config_id.warehouse_id', 'in', user.scope_warehouse_ids.ids), '&amp;', ('session_id.config_id.warehouse_id', '=', False), '|', ('session_id.analytic_account_id', '=', False), ('session_id.analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
     </record>
 
     <record id="scope_pos_order_unrestricted_rule" model="ir.rule">
         <field name="name">POS Order: unrestricted</field>
         <field name="model_id" ref="point_of_sale.model_pos_order"/>
         <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(6, 0, [ref('base.group_system'), ref('bn_stock_location.stock_scope_unrestricted_group')])]"/>
+        <field name="groups" eval="[(6, 0, [ref('base.group_system')])]"/>
     </record>
 
 </odoo>

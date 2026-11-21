@@ -66,12 +66,25 @@ class TestBranchScope(TransactionCase):
         self.employee.analytic_account_id = False
         self.user.allowed_location_ids = self.other_store
         self.assertEqual(self.user.scope_analytic_account_ids, self.other_branch)
-        # a sub-location of an allowed location brings its analytic account
-        sub = self.env['stock.location'].create({
+        # the tag of a sub-location does not count (only what the user is given)
+        self.env['stock.location'].create({
             'name': 'Scope Sub', 'usage': 'internal', 'location_id': self.other_store.id,
             'analytic_account_id': self.other_city.id})
         self.user.invalidate_recordset(['scope_analytic_account_ids'])
-        self.assertEqual(self.user.scope_analytic_account_ids, self.other_branch | sub.analytic_account_id)
+        self.assertEqual(self.user.scope_analytic_account_ids, self.other_branch)
+
+    def test_branch_user_does_not_get_the_sibling_branches(self):
+        """The City location of a Branch user holds the other branches of the city:
+        their accounts are not the user's (a City user's are)."""
+        Account = self.env['account.analytic.account']
+        sibling = Account.create({'name': 'Scope Sibling Branch', 'plan_id': self.branch.plan_id.id,
+                                  'location_option_id': self.branch.location_option_id.id, 'parent_id': self.city.id})
+        self.env['stock.location'].create({'name': 'Scope Sibling Store', 'usage': 'internal',
+                                           'location_id': self.city_store.id, 'analytic_account_id': sibling.id})
+        self.user.invalidate_recordset(['scope_analytic_account_ids'])
+        self.city_user.invalidate_recordset(['scope_analytic_account_ids'])
+        self.assertNotIn(sibling, self.user.scope_analytic_account_ids)
+        self.assertIn(sibling, self.city_user.scope_analytic_account_ids)
 
     def test_branch_picker(self):
         """With branch_scope, a branch picker offers only the analytic accounts in scope."""
