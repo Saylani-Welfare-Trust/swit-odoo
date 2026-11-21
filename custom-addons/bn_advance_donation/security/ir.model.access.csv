@@ -1,6 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_advance_donation,advance.donation,model_advance_donation,base.group_user,1,1,1,0
-access_advance_donation_line,advance.donation.lines,model_advance_donation_lines,base.group_user,1,1,1,0
+access_advance_donation,advance.donation,model_advance_donation,base.group_user,1,0,0,0
+access_advance_donation_line,advance.donation.lines,model_advance_donation_lines,base.group_user,1,1,0,0
 access_advance_donation_line_menu,advance.donation.lines menu,model_advance_donation_lines,group_adv_don_menu,1,1,1,1
 access_advance_donation_receipt,advance.donation.receipt,model_advance_donation_receipt,base.group_user,1,1,1,0
 access_advance_donation_receipt_menu,advance.donation.receipt menu,model_advance_donation_receipt,group_adv_don_menu,1,1,1,1
