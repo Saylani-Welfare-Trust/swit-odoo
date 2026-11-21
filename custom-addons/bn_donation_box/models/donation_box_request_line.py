@@ -75,7 +75,9 @@ class DonationBoxRequestLine(models.Model):
                 ('lot_consume', '=', False),
             ]
             if location.usage == 'internal':
-                domain.append(('location_id', 'child_of', location.id))
+                # boxes on hand in the source location (the lot's own "location" is
+                # only set when all of its stock is in one place)
+                domain.append(('quant_ids', 'any', [('location_id', 'child_of', location.id), ('quantity', '>', 0)]))
             line.allowed_lot_ids = Lot.search(domain)
 
     # ------------------------------------------------------------------

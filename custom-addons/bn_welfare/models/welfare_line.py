@@ -359,6 +359,20 @@ class WelfareLine(models.Model):
             self.env.add_to_compute(self._fields['product_domain'], lines)
             lines.flush_recordset(['product_domain'])
 
+    @api.constrains('product_id', 'is_hod', 'disbursement_application_type_id')
+    def _check_welfare_product(self):
+        """What the product picker offers, also on save (import / RPC). HOD lines are
+        added at HOD Approval from the HOD products."""
+        for line in self.filtered(lambda l: l.product_id and not l.is_hod):
+            if not line.product_id.is_welfare:
+                raise ValidationError(_("%s is not a Welfare product: tick 'Is Welfare' on the product first.")
+                                      % line.product_id.display_name)
+            category = line.disbursement_application_type_id.product_category_id
+            if category and not self.env['product.product'].sudo().search_count(
+                    [('id', '=', line.product_id.id), ('categ_id', 'child_of', category.id)]):
+                raise ValidationError(_("%(product)s is not in the category %(category)s of the application type.") % {
+                    'product': line.product_id.display_name, 'category': category.display_name})
+
     @api.depends('disbursement_application_type_id.product_category_id')
     def _compute_product_domain(self):
         for rec in self:

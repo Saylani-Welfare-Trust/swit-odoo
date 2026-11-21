@@ -12,6 +12,7 @@ class TestWelfare(TransactionCase):
         ref = cls.env.ref
         cls.donee = cls.env['res.partner'].create({'name': 'Welfare Donee T'})
         cls.product = cls.env['product.product'].create({'name': 'Ration T', 'list_price': 100})
+        cls.product.product_tmpl_id.is_welfare = True  # welfare lines take Is Welfare products
         cls.cash = ref('bn_welfare.disbursement_category_Cash')
 
         def user(login, *groups):
@@ -94,3 +95,21 @@ class TestWelfare(TransactionCase):
             welfare.with_user(self.user).action_reject()
         welfare.with_user(self.hod).action_reject()
         self.assertEqual(welfare.state, 'reject')
+
+    def test_line_products_of_the_programme(self):
+        """A welfare line takes an Is Welfare product of its application type's
+        category, also when saved by import / RPC."""
+        welfare = self.env['welfare'].create({'donee_id': self.donee.id, 'order_type': 'one_time'})
+        Line = self.env['welfare.line']
+        other = self.env['product.product'].create({'name': 'Not Welfare T'})
+        with self.assertRaises(ValidationError):
+            Line.create({'welfare_id': welfare.id, 'product_id': other.id, 'quantity': 1, 'amount': 1})
+        food = self.env['product.category'].create({'name': 'WF Food'})
+        app_type = self.env['disbursement.application.type'].create({'name': 'WF Food Type', 'product_category_id': food.id})
+        with self.assertRaises(ValidationError):  # Is Welfare, but not in the type's category
+            Line.create({'welfare_id': welfare.id, 'product_id': self.product.id, 'quantity': 1, 'amount': 1,
+                         'disbursement_application_type_id': app_type.id})
+        rice = self.env['product.category'].create({'name': 'WF Rice', 'parent_id': food.id})
+        self.product.categ_id = rice  # sub-category of the type's category
+        Line.create({'welfare_id': welfare.id, 'product_id': self.product.id, 'quantity': 1, 'amount': 1,
+                     'disbursement_application_type_id': app_type.id})
