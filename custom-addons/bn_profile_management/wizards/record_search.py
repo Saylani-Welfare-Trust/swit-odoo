@@ -34,6 +34,13 @@ class RecordSearch(models.TransientModel):
     mobile_no = fields.Char('Mobile No.', size=10)
     cnic_no = fields.Char('CNIC No.', size=15)
     program_locked = fields.Boolean(string="Program Locked")
+    program_kind = fields.Selection(
+        selection=[
+            ('individual', 'Individual'),
+            ('institution', 'Institution'),
+        ],
+        string="Program Kind",
+    )
     
     country_code_id = fields.Many2one('res.country', string="Country Code")
     microfinance_scheme_id = fields.Many2one('microfinance.scheme', string="Microfinance Scheme")
