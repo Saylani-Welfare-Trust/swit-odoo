@@ -101,7 +101,7 @@ class LivestockSlaughter(models.Model):
             return
         # Retrieve the 'Slaughter Stock' location
         location = None
-
+        
         if self.is_meat_depart:
             location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
         elif self.is_goat_depart:
