@@ -600,7 +600,7 @@ class Microfinance(models.Model):
         }
         # Accounting document created as superuser: the Microfinance group
         # checked above is the gate.
-        bill = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self._name, self.id)).sudo().create(move_vals)
+        bill = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self._name, self.id)).sudo().create(move_vals)
         # Optionally, you can post the bill automatically:
         # bill.action_post()
 

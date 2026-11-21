@@ -461,23 +461,45 @@ May Allah bless you!
             if not record.journal_id:
                 raise ValidationError('Please Select Journal')
             
-            # value of the box: each item at its own price
-            amount = sum(line.quantity * line.avg_price for line in record.donation_in_kind_line_ids)
+            # value of the box: each item at its own price, on the stock account
+            # of the item's own category (not the box product's)
+            amount = 0.0
+            stock_debits = {}
+            for line in record.donation_in_kind_line_ids:
+                value = self.env.company.currency_id.round(line.quantity * line.avg_price)
+                if not value:
+                    continue
+                categ = line.product_id.categ_id
+                if categ.property_valuation == 'real_time':
+                    # the receipt already debited the stock account (against Stock
+                    # Input): this entry clears Stock Input, it doesn't add stock again
+                    stock_account = categ.property_stock_account_input_categ_id
+                else:
+                    stock_account = (categ.property_stock_valuation_account_id
+                                     or record.product_id.categ_id.property_stock_valuation_account_id)
+                if not stock_account:
+                    raise ValidationError(_('Set a Stock Valuation Account on the category of %s.') % line.product_id.display_name)
+                stock_debits[stock_account] = stock_debits.get(stock_account, 0.0) + value
+                amount += value
             if not amount:
                 raise ValidationError(_('The items of %s have no value.') % record.name)
+            income_account = (record.product_id.property_account_income_id
+                              or record.product_id.categ_id.property_account_income_categ_id)
+            if not income_account:
+                raise ValidationError(_('Set an Income Account on %s or its category.') % record.product_id.display_name)
             box_lines = [
                 {
-                    'account_id': record.product_id.categ_id.property_stock_valuation_account_id.id,
+                    'account_id': stock_account.id,
                     'partner_id': record.donor_id.id,
-                    'journal_id': record.journal_id.id,
                     'name': f'Donation In Kind {record.name}',
-                    'debit': amount,
+                    'debit': value,
                     'credit': 0.0,
-                },
+                }
+                for stock_account, value in stock_debits.items()
+            ] + [
                 {
-                    'account_id': record.product_id.property_account_income_id.id or record.product_id.categ_id.property_account_income_categ_id.id,
+                    'account_id': income_account.id,
                     'partner_id': record.donor_id.id,
-                    'journal_id': record.journal_id.id,
                     'name': f'Donation In Kind {record.name}',
                     'debit': 0.0,
                     'credit': amount,
@@ -492,7 +514,7 @@ May Allah bless you!
                 'line_ids': box_lines_tuples,
             }
             
-            account_move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (record._name, record.id)).sudo().create(vals)
+            account_move = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (record._name, record.id)).sudo().create(vals)
             
             if account_move:
                 account_move.action_post()

@@ -258,7 +258,7 @@ class WelfareLine(models.Model):
             'quantity': self.quantity,
             'price_unit': unit_price,
             'account_id': account.id if account else False,
-            # 'analytic_account_id': self.analytic_account_id.id if self.analytic_account_id else False,
+            'analytic_distribution': {str(self.analytic_account_id.id): 100} if self.analytic_account_id else False,
         }
         
         bill_vals = {
@@ -271,7 +271,7 @@ class WelfareLine(models.Model):
             'welfare_line_id': self.id,
         }
         
-        bill = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
+        bill = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(bill_vals)
         self.bill_id = bill.id
         
         # Auto-post the bill
@@ -610,6 +610,7 @@ class WelfareLine(models.Model):
                     'name': f'Return from {self.welfare_id.donee_id.name}',
                     'account_id': cash_account.id,
                     'debit': self.total_amount,  # Money IN - Cash increases
+                    'analytic_distribution': {str(self.analytic_account_id.id): 100} if self.analytic_account_id else False,
                     'credit': 0,
                     'partner_id': self.welfare_id.donee_id.id,
                 }),
@@ -618,12 +619,13 @@ class WelfareLine(models.Model):
                     'account_id': expense_account.id,
                     'debit': 0,
                     'credit': self.total_amount,  # Reduce expense/record return
+                    'analytic_distribution': {str(self.analytic_account_id.id): 100} if self.analytic_account_id else False,
                     'partner_id': self.welfare_id.donee_id.id,
                 }),
             ]
         }
         
-        move = self.env['account.move'].with_context(default_source_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(move_vals)
+        move = self.env['account.move'].with_context(default_source_record_ref='%s,%s' % (self[:1]._name, self[:1].id)).create(move_vals)
         move.action_post()
         
         _logger.info(f"Created return journal entry {move.name} for amount {self.total_amount}")
