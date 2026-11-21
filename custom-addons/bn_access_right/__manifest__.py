@@ -10,7 +10,8 @@
         'mail',
         'hr',
         'contacts',
-        'hr_expense',   
+        'hr_expense',
+        'sale'   
         # 'spreadsheet_dashboard'
     ],
     'data': [
