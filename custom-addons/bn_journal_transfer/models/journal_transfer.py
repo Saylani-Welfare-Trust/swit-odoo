@@ -42,11 +42,11 @@ class JournalTransfer(models.Model):
     amount = fields.Monetary('Amount', currency_field='currency_id')
     
 
-    # @api.constrains('source_journal_id','dest_journal_id')
-    # def _check_journals(self):
-    #     for rec in self:
-    #         if rec.source_journal_id == rec.dest_journal_id:
-    #             raise UserError("Source and Destination journals must be different.")
+    @api.constrains('source_journal_id','dest_journal_id')
+    def _check_journals(self):
+        for rec in self:
+            if rec.source_journal_id == rec.dest_journal_id:
+                raise UserError("Source and Destination journals must be different.")
 
     def action_transfer(self):
         for rec in self:
