@@ -279,7 +279,6 @@ class MonthlyPlanning(models.Model):
             ('state', '=', 'active'),
             ('is_locked', '=', False),
             ('location_dest_id', '!=', False),
-            ('to_date', '<=', tomorrow),
         ])
 
         _logger.info(
@@ -294,7 +293,8 @@ class MonthlyPlanning(models.Model):
                 for line in getattr(plan, o2m_name):
                     if (not line.transfer_picking_id
                             and line.product_id
-                            and (line.quantity or 0.0) > 0):
+                            and (line.quantity or 0.0) > 0
+                            and line.date and line.date <= tomorrow):
                         pending.append(line)
 
             if not pending:
