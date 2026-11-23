@@ -99,7 +99,6 @@ class DonationHomeService(models.Model):
                 # In some versions, it might return an action dict
                 return_picking_id = action_result.get('res_id')
             
-            # raise UserError(pprint.pformat(return_picking_id))
             return_picking = self.env['stock.picking'].browse(return_picking_id)
             
             return_picking.action_confirm()

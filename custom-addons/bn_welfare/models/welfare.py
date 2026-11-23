@@ -238,7 +238,6 @@ class Welfare(models.Model):
     driving_license = fields.Selection(selection=general_selection, string="Driving License")
 
     # Request Details
-    # loan_request_amount = fields.Float('Loan Request Amount')
 
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     def _save_portal_images_to_document_model(self):
@@ -323,7 +322,6 @@ class Welfare(models.Model):
         compute="_compute_show_disburse_button",
         store=False
     )
-    # employee_domain = fields.Char(compute="_compute_employee_domain")
         # Inquiry Committee Questions Fields
     donee_house_status = fields.Char(
         string="Residential Status", 
@@ -531,7 +529,6 @@ class Welfare(models.Model):
     
     def _make_sadqa_api_call(self, endpoint, method='POST', data=None):
         """Make API call to Sadqa Jaria portal"""
-        # base_url = 'https://backend.switsjmm.com'
         url = f"{self.env.company.welfare_url}{endpoint}"
         headers = self._get_sadqa_api_headers()
 
@@ -554,13 +551,11 @@ class Welfare(models.Model):
             response.raise_for_status()
             result = response.json()
             _logger.info(f" URL: {url} Data: {data}  api response : {result}")
-            # raise ValidationError(str(result))
 
             
             if not result.get('json', {}):
                 error_msg = result.get('error', 'Unknown error occurred')
                 raise Exception(f"Portal API Error: {error_msg}")
-            # raise exceptions.ValidationError(str("result",result))
                 
             return result.get('json', {})
             
@@ -896,13 +891,11 @@ class Welfare(models.Model):
                 "area" : self.donee_id.area.name if self.donee_id.area else '',
             }
         }
-        # raise UserError(str(data))
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
         return result
 
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
-        # self.ensure_one()
         data = {
             "json": {
                 "applicationData": {
@@ -947,7 +940,6 @@ class Welfare(models.Model):
                 }
             }
         }
-        # raise UserError(str(data))
         result = self._make_sadqa_api_call(
             self.env.company.create_application_endpoint,  # endpoint from res.company
             'POST',
@@ -1331,7 +1323,6 @@ class Welfare(models.Model):
                         'payment_type': line.payment_type,
                         'assigned_officer_id': line.assigned_officer_id.id,
                         'amount': line.total_amount,
-                        # 'advance_donation_id': line.advance_donation_id.id if line.advance_donation_id.id else None,
                     }
                     
                     self.env['welfare.recurring.line'].create(recurring_line_vals)
@@ -1439,16 +1430,12 @@ class Welfare(models.Model):
         for line in self.welfare_line_ids:
             # Check amount limit
             if line.total_amount > limit.max_amount_limit:
-                # self.state = 'mem_approve'
                 return False
-                # , _(
 
             # Check product limit only if allowed products are set
             if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
-                # self.state = 'mem_approve'
 
                 return False
-                # , _(
 
         return True
 

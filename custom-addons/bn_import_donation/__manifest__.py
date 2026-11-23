@@ -1,6 +1,6 @@
 {
     'name': 'Import Donation',
-    'version': '17.0.1.7.3',
+    'version': '17.0.1.7.4',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

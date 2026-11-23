@@ -494,7 +494,8 @@ class ImportDonation(models.Model):
 
         journal = self.gateway_config_id._get_journal(self.company_id)
         if not journal:
-            raise ValidationError(_("No Bank journal found for company %s.") % self.company_id.display_name)
+            raise ValidationError(_("Set the Journal of the gateway %(gateway)s (for %(company)s) first.") % {
+                'gateway': self.gateway_config_id.display_name, 'company': self.company_id.display_name})
 
         if not self.gateway_config_id.account_id:
             raise ValidationError(_(

@@ -1,6 +1,6 @@
 {
     'name': 'Direct Deposit',
-    'version': '17.0.1.2.5',
+    'version': '17.0.1.2.6',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

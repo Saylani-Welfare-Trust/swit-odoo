@@ -14,7 +14,7 @@ API_AMOUNT_SQL = """(CASE
     ELSE 0 END)""".replace('%(n)s', _NUMBER)
 
 
-class DonationInflowDashboard(models.TransientModel):
+class DonationInflowDashboard(models.AbstractModel):
     _name = 'donation.inflow.dashboard'
     _description = 'Donation Inflow Dashboard'
 

@@ -78,7 +78,6 @@ class PurchaseOrder(models.Model):
     def action_open_comparative_analysis(self):
         purchase_ids = self.requisition_id.purchase_ids.filtered(lambda p: p.id != self.id)
 
-        # raise ValidationError(str(purchase_ids))
 
         return {
             'type': 'ir.actions.act_window',

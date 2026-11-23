@@ -1,6 +1,6 @@
 {
     'name': 'Medical & Health',
-    'version': '1.0',
+    'version': '1.1',
     'summary': 'Medical & Health POS counters: patients (registered donees tagged Medical) are the customers',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',

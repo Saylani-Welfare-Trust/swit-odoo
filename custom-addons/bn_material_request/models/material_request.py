@@ -594,7 +594,6 @@ class MemberApproval(models.Model):
         }
 
         
-    #     self.state = 'committee_approval'
 
 
     def _default_program_type(self, user):

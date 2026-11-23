@@ -92,7 +92,6 @@ class WelfareLine(models.Model):
         for rec in self:
             rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
     
-    # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
         'res.company',
         string='Company',
@@ -243,11 +242,8 @@ class WelfareLine(models.Model):
                   self.product_id.categ_id.property_account_expense_categ_id
         
         if not account:
-            # Get default payable account
-            account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', self.company_id.id)
-            ], limit=1)
+            # never the first expense account found: the product says where it goes
+            raise UserError(_('Set an expense account on %s or its category.') % self.product_id.display_name)
         
         # Calculate unit price from total_amount to respect custom amounts
         unit_price = self.total_amount / self.quantity if self.quantity else self.total_amount
@@ -580,25 +576,18 @@ class WelfareLine(models.Model):
         Create a journal entry for money returned from Donee
         This INCREASES company cash (money coming IN)
         """
-        # The cash journal and its own account: money comes back in cash
-        journal = self.env['account.journal'].search([
-            ('type', '=', 'cash'),
-            ('company_id', '=', self.company_id.id)
-        ], limit=1)
+        # the configured Welfare Return Journal and its own account
+        journal = (self.company_id or self.env.company)._get_welfare_return_journal()
         cash_account = journal.default_account_id
         if not cash_account:
-            raise ValidationError(_("No cash journal with a default account found to process return."))
+            raise ValidationError(_("The Welfare Return Journal %s has no default account.") % journal.display_name)
         
         # Find expense/income account for the product
         expense_account = self.product_id.property_account_expense_id or \
                         self.product_id.categ_id.property_account_expense_categ_id
         
         if not expense_account:
-            # Fallback to a default expense account
-            expense_account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', self.company_id.id)
-            ], limit=1)
+            raise UserError(_('Set an expense account on %s or its category.') % self.product_id.display_name)
         
         move_vals = {
             'move_type': 'entry',

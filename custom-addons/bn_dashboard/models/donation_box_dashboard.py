@@ -3,7 +3,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import calendar
 
-class DonationBoxDashboard(models.TransientModel):
+class DonationBoxDashboard(models.AbstractModel):
     _name = 'donation.box.dashboard'
     _description = 'Donation Box Dashboard'
 

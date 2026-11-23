@@ -1,6 +1,6 @@
 {
     'name': 'Medical Equipment',
-    'version': '17.0.1.3.6',
+    'version': '17.0.1.3.7',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -31,6 +31,7 @@
         'views/medical_security_deposit.xml',
         'views/res_partner.xml',
         'views/medical_equipment_category.xml',
+        'views/res_config_settings.xml',
         'views/medical_record_search_views.xml',
         
         'wizards/medical_equipment_donation.xml',

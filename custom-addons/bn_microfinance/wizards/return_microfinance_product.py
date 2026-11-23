@@ -58,7 +58,6 @@ class ReturnMicrofinanceProduct(models.TransientModel):
         self.microfinance_id.write({
             'recovered_location_id': self.destination_location_id.id,
             'recovery_remarks': self.remarks,
-            # 'state': 'recover',
             'picking_ids': [(4, picking.id)]
             
         })

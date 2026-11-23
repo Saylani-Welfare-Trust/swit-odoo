@@ -38,8 +38,8 @@ class TestImportDonation(TransactionCase):
         cls.income = Account.search([('account_type', '=', 'income'), ('company_id', '=', company.id)], limit=1)
         cls.bank = Account.search([('account_type', '=', 'asset_cash'), ('company_id', '=', company.id)], limit=1)
         cls.fees = Account.search([('account_type', '=', 'expense'), ('company_id', '=', company.id)], limit=1)
-        if not env['account.journal'].search([('type', '=', 'bank'), ('company_id', '=', company.id)], limit=1):
-            env['account.journal'].create({'name': 'Test Bank', 'code': 'TBNK', 'type': 'bank'})
+        cls.journal = env['account.journal'].search([('type', '=', 'bank'), ('company_id', '=', company.id)], limit=1) \
+            or env['account.journal'].create({'name': 'Test Bank', 'code': 'TBNK', 'type': 'bank'})
         Product = env['product.product']
         cls.zakat = Product.create({'name': 'Zakat T', 'type': 'service',
                                     'property_account_income_id': cls.income.id})
@@ -48,7 +48,7 @@ class TestImportDonation(TransactionCase):
         header_types = {name: HeaderType.search([('name', '=', name)], limit=1) or HeaderType.create({'name': name})
                         for name in HEADERS}
         cls.gateway = env['gateway.config'].create({
-            'name': 'Test Gateway', 'type': 'gateway', 'account_id': cls.bank.id,
+            'name': 'Test Gateway', 'type': 'gateway', 'account_id': cls.bank.id, 'journal_id': cls.journal.id,
             # Position -1: the column is found by its header in the file.
             'gateway_config_header_ids': [(0, 0, {'name': name, 'header_type_id': header_types[name].id, 'position': -1})
                                           for name in HEADERS],
@@ -181,7 +181,7 @@ class TestImportDonation(TransactionCase):
         if gateway:
             gateway.name = 'Web API (before test)'
         self.env['gateway.config'].create({
-            'name': 'Web API', 'type': 'api', 'bank_charges_account_id': self.fees.id,
+            'name': 'Web API', 'type': 'api', 'bank_charges_account_id': self.fees.id, 'journal_id': self.journal.id,
             'gateway_config_currency_ids': [(0, 0, {'currency_id': currency.id, 'account_id': self.bank.id})],
             'gateway_config_line_ids': [(0, 0, {'name': 'zakatgeneralone-time', 'product_id': self.zakat.id})]})
         self.env.company.sudo().write({'url': 'https://example.test', 'client_id': 'id', 'client_secret': 'secret'})
@@ -262,3 +262,10 @@ class TestImportDonation(TransactionCase):
         self.assertAlmostEqual(sum(l[2]['debit'] for l in balanced), sum(l[2]['credit'] for l in balanced))
         # already balanced: nothing added
         self.assertEqual(len(gateway._balance_entry_lines(lines[:2] + [(0, 0, {'account_id': accounts[1].id, 'credit': 6.667})], currency, 'Test')), 3)
+
+    def test_gateway_without_journal_is_refused(self):
+        """No journal is taken by chance: a gateway without a Journal gets none."""
+        gateway = self.env['gateway.config'].create({'name': 'No Journal Gateway', 'type': 'gateway'})
+        self.assertFalse(gateway._get_journal(self.env.company))
+        gateway.journal_id = self.journal
+        self.assertEqual(gateway._get_journal(self.env.company), self.journal)

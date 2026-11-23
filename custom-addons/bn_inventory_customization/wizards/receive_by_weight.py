@@ -143,7 +143,6 @@ class ReceiveByWeight(models.TransientModel):
         # Example: "7000 RED" → "red"
         weight_name = weight_attr.name.lower()
         color = weight_name.split()[-1]  # safest extraction
-        # var_and_color=[]
         # STEP 4: Find matching variant from templates
         for tmpl in templates:
             for variant in tmpl.product_variant_ids:
@@ -152,13 +151,11 @@ class ReceiveByWeight(models.TransientModel):
                 variant_name = variant.display_name.lower()
                 if color in variant_name:
                     matched_variant = variant
-                    # matched_attr_val = weight_attr
                     break
 
             if matched_variant:
                 break
 
-        # raise UserError(f"Variant and color combinations: {var_and_color}")
 
         # STEP 5: Final check
         if not matched_variant:

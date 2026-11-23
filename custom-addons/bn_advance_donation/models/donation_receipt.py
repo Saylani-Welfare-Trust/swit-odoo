@@ -114,6 +114,7 @@ class DonationReceipt(models.Model):
                 ],
                 'date': fields.Date.today(),
                 'move_type': 'entry',
+                'journal_id': self.env.company._get_advance_donation_journal().id,
             })
             move.action_post()
             rec.deposit_move_id = move.id

@@ -14,5 +14,3 @@ class MedicalEquipmentCategory(models.Model):
     is_medical_approval = fields.Boolean('Is Medical Approval')
 
     security_deposit = fields.Monetary('Security Deposit', currency_field='currency_id')
-
-    # recovery_period = fields.Integer('Recovery Period')

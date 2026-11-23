@@ -193,11 +193,11 @@ class APIDonationWizard(models.TransientModel):
 
         self.create_fetch_log(history.id, "Processing page data", "Processing", f"Records: {len(donations_info)}")
 
-        journal = self.env['account.journal'].search(
-            [('type', '=', 'bank'), ('company_id', '=', company.id)], limit=1)
         gateway_config = self.env['gateway.config'].search([('name', '=', 'Web API')], limit=1)
         if not gateway_config:
             gateway_config = self.env['gateway.config'].search([('type', '=', 'api')], limit=1)
+        # the journal set on the API gateway (no journal: stored without entry, logged below)
+        journal = gateway_config._get_journal(company) if gateway_config else self.env['account.journal']
         if not gateway_config:
             self.create_fetch_log(history.id, "No API gateway configuration ('Web API')", "Error",
                                   "Donations are stored without journal entry or stock transfer")
@@ -496,7 +496,7 @@ class APIDonationWizard(models.TransientModel):
             else:
                 donation_vals.update({
                     'journal_status': 'not_in_entry',
-                    'journal_note': _('No bank journal or no API gateway configuration.'),
+                    'journal_note': _('No API gateway configuration, or no Journal set on it.'),
                 })
             donations_to_create.append(donation_vals)
 

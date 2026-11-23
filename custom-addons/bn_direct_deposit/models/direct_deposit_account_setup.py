@@ -1,4 +1,5 @@
-from odoo import models, fields, api
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class DirectDepositAccountSetup(models.Model):
@@ -7,6 +8,13 @@ class DirectDepositAccountSetup(models.Model):
 
 
     name = fields.Char(string="Name", default="Account Prefix")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # one setup only: a second record would leave the choice to chance
+        if self.sudo().search_count([]) + len(vals_list) > 1:
+            raise UserError(_("There is already a Direct Deposit Account Setup: edit it instead of adding another."))
+        return super().create(vals_list)
 
     @api.model
     def _setup_default_prefix(self):

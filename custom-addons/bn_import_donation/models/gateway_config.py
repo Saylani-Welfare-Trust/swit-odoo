@@ -25,7 +25,7 @@ class GatewayConfig(models.Model):
 
     journal_id = fields.Many2one(
         'account.journal', string="Journal", tracking=True, domain=[('type', 'in', ('bank', 'cash'))],
-        help="Journal of the entry created when an import is confirmed. Empty: the company's first Bank journal.")
+        help="Journal of the entry created when an import of this gateway is confirmed (required to post).")
     account_id = fields.Many2one('account.account', string="Debit Account", tracking=True)
     product_id = fields.Many2one(
         'product.product', string="Fee Product", tracking=True,
@@ -91,8 +91,11 @@ class GatewayConfig(models.Model):
 
     def _get_journal(self, company):
         self.ensure_one()
-        return self.journal_id or self.env['account.journal'].sudo().search(
-            [('type', '=', 'bank'), ('company_id', '=', company.id)], limit=1)
+        # the gateway's own journal only, never a journal found by chance
+        journal = self.journal_id
+        if journal and journal.company_id != company:
+            return self.env['account.journal']
+        return journal
 
     def _get_product(self, name):
         """Product of a file line: the Fee Product of a student fees file,
@@ -132,3 +135,9 @@ class GatewayConfig(models.Model):
         if default_donor:
             self.search([('default_partner_id', '=', False)]).write(
                 {'default_partner_id': default_donor.id})
+        # gateways without a journal used the company's first bank journal:
+        # that journal is now set on them, and can be changed there
+        journal = self.env['account.journal'].sudo().search(
+            [('type', '=', 'bank'), ('company_id', '=', self.env.company.id)], order='sequence, id', limit=1)
+        if journal:
+            self.search([('journal_id', '=', False)]).write({'journal_id': journal.id})

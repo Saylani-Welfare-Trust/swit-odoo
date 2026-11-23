@@ -14,6 +14,9 @@ class TestAdvanceDonation(TransactionCase):
         cls.product = cls.env['product.product'].create({'name': 'Goat T', 'list_price': 1000, 'is_advance_donation': True})
         cls.category = cls.env['advance.donation.category'].create({'name': 'Cat T'})
         cls.donor = cls.env['res.partner'].create({'name': 'Donor T'})
+        # deposit entries and refunds go to the configured Advance Donation Journal
+        cls.env.company.advance_donation_journal_id = cls.env['account.journal'].create(
+            {'name': 'AD Test Bank', 'code': 'ADTB', 'type': 'bank', 'company_id': cls.env.company.id})
 
         Users = cls.env['res.users']
         # products are limited to the user's categories when that rule is installed

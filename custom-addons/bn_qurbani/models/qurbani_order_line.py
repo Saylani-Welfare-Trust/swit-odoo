@@ -45,7 +45,6 @@ class QurbaniOrderLine(models.Model):
                 if pos_order:
                     line = pos_order.lines.filtered(lambda l:l.customer_note == self.hissa_name and l.product_id.id == self.product_id.id and l.qty == self.quantity)
 
-                    # raise ValidationError(str(self.hissa_name))
                     if line:
                         line.customer_note = vals.get('hissa_name')
             else:

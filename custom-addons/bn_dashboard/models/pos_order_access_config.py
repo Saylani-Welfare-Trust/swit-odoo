@@ -68,7 +68,6 @@ class PosOrderAccessConfig(models.Model):
 
     def _sync_user(self):
         user_grp = self.env.ref('bn_dashboard.group_pos_order_dashboard_user').sudo()
-        # report_grp = self.env.ref('bn_dashboard.group_pos_dd_report_user').sudo()
 
         for rec in self:
             user = rec.user_id.sudo()

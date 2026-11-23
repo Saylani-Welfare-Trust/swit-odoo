@@ -51,7 +51,6 @@ class AdvanceDonation(models.Model):
     _name = 'advance.donation'
     _description = "Advance Donation"
     _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
-    # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     # only donors registered for Advance Donation (Record Search > Donor Account)
@@ -306,7 +305,6 @@ class AdvanceDonation(models.Model):
     def onchange_donor_id(self):
         """Refresh balance when donor changes"""
         self._compute_total_balance()
-        # self._compute_available_balance()
 
     @api.onchange('contract_start_date', 'contract_end_date', 'contract_frequency')
     def compute_no_of_days(self):
@@ -348,7 +346,6 @@ class AdvanceDonation(models.Model):
     def action_refresh_balance(self):
         """Refresh total balance computation"""
         self._compute_total_balance()
-        # self._compute_available_balance()
         return True
 
     def action_approved(self):
@@ -458,13 +455,7 @@ class AdvanceDonation(models.Model):
         
         # Create Customer Payment (Sent) for the cancelled amount
         if cancelled_amount > 0 and self.donor_id:
-            journal = self.env['account.journal'].sudo().search([
-                ('type', '=', 'bank'),
-                ('company_id', '=', self.env.company.id)
-            ], limit=1)
-            if not journal:
-                raise UserError(_('No bank journal is configured for %s: the refund payment of the '
-                                  'cancelled amount cannot be created.') % self.env.company.name)
+            journal = self.env.company._get_advance_donation_journal()
             payment_vals = {
                 'payment_type': 'outbound',
                 'partner_type': 'customer',

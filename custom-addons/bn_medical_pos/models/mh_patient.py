@@ -20,7 +20,8 @@ class MedicalPatient(models.Model):
     mobile = fields.Char('Mobile No.', readonly=True)
     date_of_birth = fields.Date('Date of Birth', readonly=True)
     registered_on = fields.Datetime('Registered On', readonly=True)
-    image_128 = fields.Image(related='partner_id.image_128', string='Photo')
+    # a SQL view has no write dates for Image fields: the partner's photo as a plain binary
+    image_128 = fields.Binary(related='partner_id.image_128', string='Photo')
     # the photo widget keys its cache on it
     write_date = fields.Datetime('Last Updated on', readonly=True)
     age = fields.Integer('Age', compute='_compute_age')

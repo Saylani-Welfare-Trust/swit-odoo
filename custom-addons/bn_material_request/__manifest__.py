@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Material Request',
-    'version': '17.0.1.3.4',
+    'version': '17.0.1.3.5',
     'category': 'BytesNode/Material Request',
     'summary': 'Internal Transfer Request with Budget Check and Multi-level Approval',
     'description': """

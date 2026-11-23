@@ -144,13 +144,6 @@ May Allah bless you!
             if not record.quantity:
                 raise ValidationError('Quantity is missing or invalid.')
 
-    def name_get(self):
-        result = []
-        for record in self:
-            name = f'{record.product_id.name}'
-            result.append((record.id, name))
-        return result
-
     def _check_din_state(self, allowed, action):
         labels = dict(status_selection)
         for rec in self:
