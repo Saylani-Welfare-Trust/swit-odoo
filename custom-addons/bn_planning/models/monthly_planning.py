@@ -175,10 +175,9 @@ class MonthlyPlanning(models.Model):
 
     @api.model
     def _default_source_location(self):
-        # the stock of the user's warehouse
-        warehouse = self.env['stock.warehouse'].sudo().search([], limit=1) and \
-            self.env['stock.warehouse']._warehouse_for()
-        return warehouse.lot_stock_id.id if warehouse else False
+        wh = self.env['stock.warehouse'].search(
+            [('company_id', '=', self.env.company.id)], limit=1)
+        return wh.lot_stock_id.id if wh else False
     
     # ─── Internal transfer generation ─────────────────────
     def _create_internal_transfer_for_lines(self, line_list, dest_location):
