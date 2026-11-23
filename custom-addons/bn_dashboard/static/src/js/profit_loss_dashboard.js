@@ -26,7 +26,6 @@ export class ProfitLossDashboard extends Component {
         });
 
         // Re-render the charts AFTER every DOM patch (initial mount + each filter change).
-        // The canvas elements only exist when state.loading === false && state.data !== null.
         useEffect(() => {
             if (this.state.loading || !this.state.data) {
                 this.destroyCharts();
@@ -39,7 +38,6 @@ export class ProfitLossDashboard extends Component {
 
     async loadChartJs() {
         // Odoo 17+ ships Chart.js 4.x inside the `web.chartjs_lib` bundle.
-        // Odoo 16 and below use the legacy /web/static/lib/Chart/Chart.js path.
         try {
             await loadBundle("web.chartjs_lib");
         } catch (e) {
@@ -67,25 +65,15 @@ export class ProfitLossDashboard extends Component {
         }
     }
 
-    /**
-     * Defensive normalisation so the chart never silently breaks because of:
-     *  - negative expense balances (Odoo stores expense as credit = negative)
-     *  - formatted strings like "1,234.56" or dicts coming back from Python
-     *  - mismatched array lengths between labels/income/expense
-     */
     normalizeData(raw) {
-        if (!raw) {
-            return null;
-        }
+        if (!raw) return null;
 
         const toNum = (v) => {
             if (v === null || v === undefined) return 0;
             if (typeof v === "object" && v !== null) {
                 v = v.amount ?? v.value ?? 0;
             }
-            if (typeof v === "string") {
-                v = v.replace(/,/g, "").trim();
-            }
+            if (typeof v === "string") v = v.replace(/,/g, "").trim();
             const n = Number(v);
             return isNaN(n) ? 0 : n;
         };
@@ -94,7 +82,6 @@ export class ProfitLossDashboard extends Component {
         const income = (raw.trend_income || []).map(toNum);
         const expense = (raw.trend_expense || []).map((v) => Math.abs(toNum(v)));
 
-        // Pad with zeros so all series have the same length as the labels
         while (income.length < labels.length) income.push(0);
         while (expense.length < labels.length) expense.push(0);
         income.length = labels.length;
@@ -149,7 +136,7 @@ export class ProfitLossDashboard extends Component {
 
         this.destroyCharts();
 
-        // 1. Trend chart (Income bars + Expense line on a separate y-axis)
+        // 1. Trend chart — grouped bars (Income + Expense side by side)
         if (this.trendChartRef.el) {
             this.charts.trend = new Chart(this.trendChartRef.el, {
                 type: "bar",
@@ -161,22 +148,21 @@ export class ProfitLossDashboard extends Component {
                             label: "Income",
                             data: this.state.data.trend_income,
                             backgroundColor: "#28a745",
+                            borderColor: "#1e7e34",
+                            borderWidth: 1,
                             borderRadius: 4,
-                            yAxisID: "y",
+                            // yAxisID: "y1",   // uncomment together with the y1 scale below
+                            //                  // if Expense bars are tiny next to Income bars
                         },
                         {
-                            type: "line",
+                            type: "bar",
                             label: "Expense",
                             data: this.state.data.trend_expense,
-                            borderColor: "#dc3545",
                             backgroundColor: "#dc3545",
-                            borderWidth: 3,
-                            tension: 0.3,
-                            pointRadius: 5,
-                            pointHoverRadius: 7,
-                            fill: false,
-                            yAxisID: "y1",
-                            clip: false,
+                            borderColor: "#a71d2a",
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            // yAxisID: "y1",
                         },
                     ],
                 },
@@ -208,21 +194,25 @@ export class ProfitLossDashboard extends Component {
                         },
                     },
                     scales: {
+                        x: {
+                            grid: { display: false },
+                        },
                         y: {
                             type: "linear",
                             display: true,
                             position: "left",
                             beginAtZero: true,
-                            title: { display: true, text: "Income (Rs)" },
+                            title: { display: true, text: "Amount (Rs)" },
                         },
-                        y1: {
-                            type: "linear",
-                            display: true,
-                            position: "right",
-                            beginAtZero: true,
-                            grid: { drawOnChartArea: false },
-                            title: { display: true, text: "Expense (Rs)" },
-                        },
+                        // --- Optional dual axis (uncomment + set yAxisID on datasets) ---
+                        // y1: {
+                        //     type: "linear",
+                        //     display: true,
+                        //     position: "right",
+                        //     beginAtZero: true,
+                        //     grid: { drawOnChartArea: false },
+                        //     title: { display: true, text: "Expense (Rs)" },
+                        // },
                     },
                 },
             });
