@@ -1,86 +1,199 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="profit_loss_dashboard.ProfitLossTemplate">
+        <style>
+            @media print {
+                .o_profit_loss_dashboard { background: #fff !important; }
+                .d-print-none { display: none !important; }
+                .card { break-inside: avoid; }
+            }
+            .o_pl_preset .btn { white-space: nowrap; }
+            .o_pl_kpi { transition: transform .15s ease; }
+            .o_pl_kpi:hover { transform: translateY(-2px); }
+        </style>
+
         <div class="o_profit_loss_dashboard w-100 h-100 p-4" style="background-color: #f8f9fa; overflow-y: auto;">
-            
-            <!-- Header & Filters -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
                 <h2 class="m-0">Profit &amp; Loss Dashboard</h2>
-                <div class="d-flex gap-3 align-items-center bg-white p-2 rounded shadow-sm">
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="fw-bold m-0">From:</label>
-                        <input type="date" class="form-control" name="date_from" t-model="state.date_from" t-on-change="applyFilter"/>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <label class="fw-bold m-0">To:</label>
-                        <input type="date" class="form-control" name="date_to" t-model="state.date_to" t-on-change="applyFilter"/>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" t-on-click="refresh" title="Refresh">
+                        <i class="fa fa-refresh"/> Refresh
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" t-on-click="print" title="Print / Save as PDF">
+                        <i class="fa fa-print"/> Print
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card shadow-sm border-0 mb-4 d-print-none">
+                <div class="card-body py-2">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <div class="o_pl_preset btn-group btn-group-sm" role="group" aria-label="Date presets">
+                            <button t-attf-class="btn #{state.active_preset === 'this_month' ? 'btn-primary' : 'btn-outline-primary'}"
+                                    data-preset="this_month" t-on-click="applyPreset">This Month</button>
+                            <button t-attf-class="btn #{state.active_preset === 'last_month' ? 'btn-primary' : 'btn-outline-primary'}"
+                                    data-preset="last_month" t-on-click="applyPreset">Last Month</button>
+                            <button t-attf-class="btn #{state.active_preset === 'this_quarter' ? 'btn-primary' : 'btn-outline-primary'}"
+                                    data-preset="this_quarter" t-on-click="applyPreset">This Quarter</button>
+                            <button t-attf-class="btn #{state.active_preset === 'ytd' ? 'btn-primary' : 'btn-outline-primary'}"
+                                    data-preset="ytd" t-on-click="applyPreset">YTD</button>
+                            <button t-attf-class="btn #{state.active_preset === 'last_year' ? 'btn-primary' : 'btn-outline-primary'}"
+                                    data-preset="last_year" t-on-click="applyPreset">Last Year</button>
+                        </div>
+                        <div class="ms-auto d-flex gap-2 align-items-center">
+                            <label class="fw-bold m-0 small">From:</label>
+                            <input type="date" class="form-control form-control-sm"
+                                   name="date_from" t-model="state.date_from" t-on-change="applyFilter"/>
+                            <label class="fw-bold m-0 small">To:</label>
+                            <input type="date" class="form-control form-control-sm"
+                                   name="date_to" t-model="state.date_to" t-on-change="applyFilter"/>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Loading State -->
+            <!-- Loading -->
             <div t-if="state.loading" class="text-center mt-5">
                 <div class="spinner-border text-primary" role="status"></div>
                 <p class="mt-2">Loading financial data...</p>
             </div>
 
-            <!-- Dashboard Content -->
+            <!-- Content -->
             <t t-elif="state.data">
-                <!-- KPI Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card shadow-sm border-0 border-start border-4 border-success">
+
+                <!-- KPI cards (4 across) -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0 border-start border-4 border-success o_pl_kpi h-100">
                             <div class="card-body">
-                                <h6 class="text-muted text-uppercase mb-2">Total Income</h6>
+                                <h6 class="text-muted text-uppercase mb-2 small">Total Income</h6>
                                 <h3 class="m-0 text-success">
                                     Rs <t t-esc="formatCurrency(state.data.total_income)"/>
                                 </h3>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0 border-start border-4 border-danger o_pl_kpi h-100">
                             <div class="card-body">
-                                <h6 class="text-muted text-uppercase mb-2">Total Expenses</h6>
+                                <h6 class="text-muted text-uppercase mb-2 small">Total Expenses</h6>
                                 <h3 class="m-0 text-danger">
                                     Rs <t t-esc="formatCurrency(state.data.total_expense)"/>
                                 </h3>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card shadow-sm border-0 border-start border-4 border-primary">
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0 border-start border-4 border-primary o_pl_kpi h-100">
                             <div class="card-body">
-                                <h6 class="text-muted text-uppercase mb-2">Net Profit</h6>
-                                <h3 t-attf-class="m-0 #{state.data.net_profit &gt;= 0 ? 'text-primary' : 'text-danger'}">
+                                <h6 class="text-muted text-uppercase mb-2 small">Net Profit</h6>
+                                <h3 t-attf-class="m-0 #{state.data.net_profit >= 0 ? 'text-primary' : 'text-danger'}">
                                     Rs <t t-esc="formatCurrency(state.data.net_profit)"/>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card shadow-sm border-0 border-start border-4 border-info o_pl_kpi h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h6 class="text-muted text-uppercase mb-2 small">Profit Margin</h6>
+                                    <span t-attf-class="badge #{marginHealth.cls}">
+                                        <t t-esc="marginHealth.label"/>
+                                    </span>
+                                </div>
+                                <h3 class="m-0 text-info">
+                                    <t t-esc="formatMargin()"/> %
                                 </h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Charts Area -->
-                <div class="row">
-                    <!-- Trend Chart -->
-                    <div class="col-md-8 mb-4">
+                <!-- Trend + Expense doughnut -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-8">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white fw-bold">Income vs Expenses Trend</div>
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Income vs Expenses Trend</span>
+                                <div class="btn-group btn-group-sm d-print-none">
+                                    <button t-attf-class="btn #{state.chart_mode === 'bars' ? 'btn-primary' : 'btn-outline-primary'}"
+                                            data-mode="bars" t-on-click="setChartMode">Bars</button>
+                                    <button t-attf-class="btn #{state.chart_mode === 'lines' ? 'btn-primary' : 'btn-outline-primary'}"
+                                            data-mode="lines" t-on-click="setChartMode">Lines</button>
+                                    <button t-attf-class="btn #{state.chart_mode === 'mixed' ? 'btn-primary' : 'btn-outline-primary'}"
+                                            data-mode="mixed" t-on-click="setChartMode">Mixed</button>
+                                </div>
+                            </div>
                             <div class="card-body" style="position: relative; height: 350px;">
                                 <canvas t-ref="trendChart"></canvas>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Breakdown Chart -->
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-4">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white fw-bold">Top Expense Breakdown</div>
+                            <div class="card-header bg-white fw-bold">Expense Breakdown</div>
                             <div class="card-body" style="position: relative; height: 350px;">
                                 <canvas t-ref="breakdownChart"></canvas>
-                                <div t-if="state.data.expense_breakdown.length == 0" class="text-center text-muted mt-5">
+                                <div t-if="!state.data.expense_breakdown.length" class="text-center text-muted mt-5">
                                     No expenses recorded in this period.
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense categories table -->
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Expense Categories</span>
+                                <span class="text-muted small">
+                                    <t t-esc="state.data.expense_breakdown.length"/> categories
+                                </span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div t-if="!state.data.expense_breakdown.length" class="text-center text-muted p-4">
+                                    No expenses recorded in this period.
+                                </div>
+                                <table t-else="" class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 40px;">#</th>
+                                            <th>Category</th>
+                                            <th class="text-end" style="width: 200px;">Amount</th>
+                                            <th class="text-end" style="width: 120px;">% of Total</th>
+                                            <th style="width: 200px;" class="d-print-none">Share</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="state.data.expense_breakdown" t-as="item" t-key="item_index">
+                                            <td class="text-muted"><t t-esc="item_index + 1"/></td>
+                                            <td><t t-esc="item.name"/></td>
+                                            <td class="text-end fw-bold">Rs <t t-esc="formatCurrency(item.amount)"/></td>
+                                            <td class="text-end"><t t-esc="formatPct(item.amount)"/>%</td>
+                                            <td class="d-print-none">
+                                                <div class="progress" style="height: 8px;">
+                                                    <div class="progress-bar bg-danger" role="progressbar"
+                                                         t-attf-style="width: #{formatPct(item.amount)}%;"/>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot class="table-light fw-bold">
+                                        <tr>
+                                            <td></td>
+                                            <td>Total</td>
+                                            <td class="text-end">Rs <t t-esc="formatCurrency(state.data.total_expense)"/></td>
+                                            <td class="text-end">100.0%</td>
+                                            <td class="d-print-none"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
                         </div>
                     </div>
