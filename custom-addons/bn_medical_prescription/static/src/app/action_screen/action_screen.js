@@ -4,11 +4,10 @@ import { ActionScreen } from "@bn_pos_custom_action/app/action_screen/action_scr
 import { patch } from "@web/core/utils/patch";
 import { PrescriptionListPopup } from "@bn_medical_prescription/app/popups/prescription_list_popup";
 
-/** Actions > Prescriptions: the approved prescriptions waiting for their bill,
- *  billed from here at the billing counter, cancelled at the prescription desk */
+/** Actions > Prescriptions: the approved prescriptions waiting for their bill */
 patch(ActionScreen.prototype, {
     get isMedicalCounter() {
-        return Boolean(this.pos.medicalCounter);
+        return this.pos.isMedicalCounter;
     },
 
     async clickPrescriptions() {

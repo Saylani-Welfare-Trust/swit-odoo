@@ -4,7 +4,7 @@ import { ProductScreen } from "@point_of_sale/app/screens/product_screen/product
 import { patch } from "@web/core/utils/patch";
 import { _t } from "@web/core/l10n/translation";
 
-// The quantities and prices of a prescription were approved at the prescription desk: the billing counter can't change them
+// The quantities and prices of an approved prescription can't be changed at the counter
 patch(ProductScreen.prototype, {
     get selectedPrescriptionLine() {
         const line = this.pos.get_order()?.get_selected_orderline();
@@ -23,7 +23,7 @@ patch(ProductScreen.prototype, {
         if (this.selectedPrescriptionLine) {
             this.numberBuffer.reset();
             this.notification.add(
-                _t("Approved prescription lines can't be changed: the prescription desk has to change the prescription."),
+                _t("Approved prescription lines can't be changed at the counter."),
                 4000
             );
             return;

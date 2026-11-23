@@ -1,19 +1,20 @@
 {
     'name': 'Medical Prescription Billing',
-    'version': '1.3',
-    'summary': 'Prescription desk approves the products for a patient, the billing counter bills them',
+    'version': '1.4',
+    'summary': 'One Medical & Health counter: paid till with a doctor, prescription approved on stock, then its bill',
     'description': """
-Flow on Medical & Health POS counters:
+Flow on a Medical & Health POS counter:
 
-1. The patient is registered (Donee + Medical) and sees the doctor.
-2. Prescription Desk POS: select the patient, add the prescribed products, Approve.
-3. Billing Counter POS: select the patient, the approved products are loaded, take the payment.
+1. Select the patient and the product, Approve, choose the doctor of that product, take the payment: a till is made and a draft prescription is created with the product as its Category.
+2. Prescriptions: the doctor or a Medical & Health user adds the products and approves (refused when a product's on hand quantity is 0 or less).
+3. Counter: the approved prescription loads for the patient and is billed.
 """,
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
     'category': 'BytesNode/Medical & Health',
-    'depends': ['bn_stock_location', 
+    'depends': ['bn_stock_location',
+        'bn_master_setup',
         'bn_medical_pos',
         'bn_pos_order',
     ],
@@ -23,8 +24,8 @@ Flow on Medical & Health POS counters:
 
         'data/sequence.xml',
 
+        'views/medical_doctor.xml',
         'views/medical_prescription.xml',
-        'views/pos_config.xml',
         'views/pos_order.xml',
         'views/patient.xml',
     ],

@@ -12,8 +12,9 @@ class MedicalPatient(models.Model):
         partners = self.partner_id
         prescriptions = dict(Prescription._read_group(
             [('partner_id', 'in', partners.ids)], ['partner_id'], ['__count']))
-        bills = dict(Prescription._read_group(
-            [('partner_id', 'in', partners.ids), ('pos_order_id', '!=', False)], ['partner_id'], ['__count']))
+        bills = dict(self.env['pos.order']._read_group(
+            [('partner_id', 'in', partners.ids), '|', ('medical_prescription_id', '!=', False),
+             ('medical_doctor_id', '!=', False)], ['partner_id'], ['__count']))
         for patient in self:
             patient.prescription_count = prescriptions.get(patient.partner_id, 0)
             patient.bill_count = bills.get(patient.partner_id, 0)
@@ -28,5 +29,6 @@ class MedicalPatient(models.Model):
     def action_view_bills(self):
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id('bn_medical_prescription.action_mh_bills')
-        action['domain'] = [('medical_prescription_id.partner_id', '=', self.partner_id.id)]
+        action['domain'] = [('partner_id', '=', self.partner_id.id), '|', ('medical_prescription_id', '!=', False),
+                            ('medical_doctor_id', '!=', False)]
         return action

@@ -11,9 +11,11 @@
                 <field name="registration_id" optional="show"/>
                 <field name="cnic_no" optional="hide"/>
                 <field name="mobile" optional="hide"/>
-                <field name="doctor_name" optional="show"/>
+                <field name="doctor_id" optional="show"/>
+                <field name="category_name" optional="show"/>
                 <field name="approved_date" optional="show"/>
                 <field name="desk_config_id" optional="hide"/>
+                <field name="intake_order_id" optional="hide"/>
                 <field name="pos_order_id" optional="show"/>
                 <field name="billing_config_id" optional="hide"/>
                 <field name="billed_date" optional="hide"/>
@@ -32,7 +34,7 @@
             <form string="Prescription">
                 <header>
                     <button name="action_approve" type="object" string="Approve" class="btn-primary" invisible="state != 'draft'"
-                            groups="bn_medical_pos.group_medical_manager"/>
+                            groups="bn_medical_pos.group_medical_user"/>
                     <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft', 'approved')"
                             groups="bn_medical_pos.group_medical_manager" confirm="Cancel this prescription?"/>
                     <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancel'"
@@ -45,6 +47,13 @@
                                 invisible="not partner_id">
                             <div class="o_stat_info">
                                 <span class="o_stat_text">Patient</span>
+                            </div>
+                        </button>
+                        <button name="action_open_till" type="object" class="oe_stat_button" icon="fa-ticket"
+                                invisible="not intake_order_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_value"><field name="intake_order_id" readonly="1" options="{'no_open': True}"/></span>
+                                <span class="o_stat_text">Till</span>
                             </div>
                         </button>
                         <button name="action_open_bill" type="object" class="oe_stat_button" icon="fa-file-text-o"
@@ -63,13 +72,18 @@
                     </div>
                     <group>
                         <group string="Patient" name="patient">
-                            <field name="partner_id" readonly="state != 'draft'" options="{'no_create': True}"/>
+                            <field name="partner_id" readonly="intake_order_id or state != 'draft'" options="{'no_create': True}"/>
                             <field name="registration_id" invisible="not partner_id"/>
                             <field name="cnic_no" invisible="not partner_id"/>
                             <field name="mobile" invisible="not partner_id" widget="phone"/>
                         </group>
-                        <group string="Prescription Desk" name="desk">
-                            <field name="doctor_name" readonly="state != 'draft'" placeholder="Doctor's name"/>
+                        <group string="Doctor" name="desk">
+                            <field name="doctor_id" readonly="intake_order_id or state != 'draft'" options="{'no_create': True}"/>
+                            <field name="doctor_name" readonly="1" invisible="doctor_id or not doctor_name"/>
+                            <field name="category_name" invisible="not intake_order_id"/>
+                            <field name="category_product_ids" widget="many2many_tags" options="{'no_create': True}"
+                                   invisible="intake_order_id" readonly="state != 'draft'"
+                                   groups="bn_medical_pos.group_medical_manager"/>
                             <field name="desk_config_id" invisible="not desk_config_id"/>
                             <field name="approved_by_id" invisible="not approved_by_id" widget="many2one_avatar_user"/>
                             <field name="approved_date" invisible="not approved_date"/>
@@ -91,8 +105,9 @@
                                     <field name="product_id" options="{'no_create': True}"/>
                                     <field name="note" optional="show"/>
                                     <field name="qty"/>
-                                    <field name="price_unit"/>
-                                    <field name="discount" optional="hide"/>
+                                    <field name="can_edit_price" column_invisible="True"/>
+                                    <field name="price_unit" readonly="not can_edit_price" force_save="1"/>
+                                    <field name="discount" optional="hide" readonly="not can_edit_price" force_save="1"/>
                                     <field name="price_subtotal"/>
                                     <field name="currency_id" column_invisible="True"/>
                                 </tree>
@@ -102,7 +117,7 @@
                             </group>
                         </page>
                         <page string="Remarks" name="remarks">
-                            <field name="note" readonly="state != 'draft'" placeholder="Remarks of the prescription desk..."/>
+                            <field name="note" readonly="state != 'draft'" placeholder="Remarks..."/>
                         </page>
                     </notebook>
                 </sheet>
@@ -124,9 +139,11 @@
                 <field name="registration_id"/>
                 <field name="cnic_no"/>
                 <field name="mobile"/>
-                <field name="doctor_name"/>
+                <field name="doctor_id"/>
+                <field name="category_name"/>
                 <field name="line_ids" string="Product" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
                 <field name="pos_order_id"/>
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="filter_approved" string="Waiting for Bill" domain="[('state', '=', 'approved')]"/>
                 <filter name="filter_billed" string="Billed" domain="[('state', '=', 'billed')]"/>
                 <filter name="filter_cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
@@ -134,7 +151,8 @@
                 <filter name="filter_approved_date" string="Approved On" date="approved_date"/>
                 <group expand="0" string="Group By">
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
-                    <filter name="group_desk" string="Prescription Desk" context="{'group_by': 'desk_config_id'}"/>
+                    <filter name="group_doctor" string="Doctor" context="{'group_by': 'doctor_id'}"/>
+                    <filter name="group_desk" string="Counter" context="{'group_by': 'desk_config_id'}"/>
                     <filter name="group_approved_date" string="Approved On" context="{'group_by': 'approved_date:day'}"/>
                 </group>
             </search>
@@ -148,16 +166,16 @@
         <field name="search_view_id" ref="medical_prescription_view_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No prescription yet</p>
-            <p>Prescriptions are approved for patients at the prescription desk POS and billed at the billing counter POS.</p>
+            <p>A paid till at the Medical &amp; Health counter makes a draft prescription: add its products and approve it, then the counter bills it.</p>
         </field>
     </record>
 
-    <!-- Bills: the POS orders of the billing counters -->
+    <!-- Bills: the tills and the prescription bills of the counters -->
     <record id="action_mh_bills" model="ir.actions.act_window">
         <field name="name">Bills</field>
         <field name="res_model">pos.order</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('medical_prescription_id', '!=', False)]</field>
+        <field name="domain">['|', ('medical_prescription_id', '!=', False), ('medical_doctor_id', '!=', False)]</field>
         <field name="context">{'create': False}</field>
         <field name="search_view_id" ref="point_of_sale.view_pos_order_filter"/>
         <field name="view_ids" eval="[(5, 0, 0),
@@ -165,7 +183,7 @@
             (0, 0, {'view_mode': 'form', 'view_id': ref('point_of_sale.view_pos_pos_form')})]"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">No bill yet</p>
-            <p>Prescriptions paid at a billing counter are listed here.</p>
+            <p>The tills and prescriptions paid at the Medical &amp; Health counters are listed here.</p>
         </field>
     </record>
 

@@ -2,12 +2,19 @@
 
 import { Order, Orderline } from "@point_of_sale/app/store/models";
 import { patch } from "@web/core/utils/patch";
+import { _t } from "@web/core/l10n/translation";
 
 patch(Order.prototype, {
     async pay() {
-        if (this.pos.isPrescriptionDesk) {
-            // the desk approves the products, the patient pays at the billing counter
-            return this.pos.approveMedicalPrescription(this);
+        // an order without a prescription is the till of the first phase: it needs its doctor
+        if (
+            this.pos.isMedicalCounter &&
+            this.canPay() &&
+            !this.medical_prescription_id &&
+            !this.getHasRefundLines() &&
+            !(await this.pos.selectMedicalDoctor(this))
+        ) {
+            return;
         }
         return super.pay(...arguments);
     },
@@ -16,18 +23,33 @@ patch(Order.prototype, {
         super.init_from_JSON(...arguments);
         this.medical_prescription_id = json.medical_prescription_id || false;
         this.medical_prescription_name = json.medical_prescription_name || false;
+        this.medical_doctor_id = json.medical_doctor_id || false;
+        this.medical_doctor_name = json.medical_doctor_name || false;
+        this.medical_note = json.medical_note || false;
+        this.medical_till_name = json.medical_till_name || false;
     },
 
     export_as_JSON() {
         const json = super.export_as_JSON(...arguments);
         json.medical_prescription_id = this.medical_prescription_id || false;
         json.medical_prescription_name = this.medical_prescription_name || false;
+        json.medical_doctor_id = this.medical_doctor_id || false;
+        json.medical_doctor_name = this.medical_doctor_name || false;
+        json.medical_note = this.medical_note || false;
+        json.medical_till_name = this.medical_till_name || false;
         return json;
     },
 
     export_for_printing() {
         const result = super.export_for_printing(...arguments);
         result.medical_prescription_name = this.medical_prescription_name || false;
+        result.medical_doctor_name = this.medical_doctor_name || false;
+        result.medical_receipt_number = this.medical_prescription_name || this.medical_till_name || false;
+        result.medical_receipt_title = this.medical_prescription_name
+            ? _t("Medical Bill")
+            : this.medical_doctor_id
+            ? _t("Medical Till")
+            : false;
         if (result.partner && this.partner) {
             result.partner = { ...result.partner, registration_id: this.partner.primary_registration_id || "" };
         }

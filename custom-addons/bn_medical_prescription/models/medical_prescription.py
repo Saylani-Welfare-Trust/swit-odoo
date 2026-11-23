@@ -11,9 +11,21 @@ PRESCRIPTION_STATES = [
     ('cancel', 'Cancelled'),
 ]
 
+MEDICAL_USER = 'bn_medical_pos.group_medical_user'
+MEDICAL_MANAGER = 'bn_medical_pos.group_medical_manager'
+# changed by the workflow buttons and the POS only
+WORKFLOW_FIELDS = {
+    'state', 'approved_by_id', 'approved_date', 'desk_config_id', 'intake_order_id', 'pos_order_id', 'billed_date',
+    'pos_session_id', 'pos_config_id', 'pos_reference', 'pos_cashier_id',
+}
+# fixed by the paid till: only an administrator corrects them
+TILL_FIELDS = {'partner_id', 'doctor_id', 'category_product_ids', 'company_id'}
+# what is worked on while the prescription is a draft
+DRAFT_FIELDS = {'line_ids', 'note', 'doctor_name'}
+
 
 class MedicalPrescription(models.Model):
-    """Products approved for a patient at the prescription desk, billed at the billing counter"""
+    """Made by the paid till of a patient, filled and approved by the doctor's side, then billed at the counter"""
     _name = 'medical.prescription'
     _description = 'Medical Prescription'
     _inherit = ['mail.thread', 'pos.link.mixin']
@@ -28,7 +40,14 @@ class MedicalPrescription(models.Model):
     registration_id = fields.Char(related='partner_id.primary_registration_id', string='Registration No.')
     cnic_no = fields.Char(related='partner_id.cnic_no', string='CNIC No.')
     mobile = fields.Char(related='partner_id.mobile', string='Mobile No.')
-    doctor_name = fields.Char('Doctor', tracking=True)
+    doctor_id = fields.Many2one('medical.doctor', 'Doctor', index=True, tracking=True, ondelete='restrict')
+    doctor_name = fields.Char('Doctor (old)', tracking=True, help="Doctor typed on prescriptions made before the doctors list")
+    category_product_ids = fields.Many2many(
+        'product.product', 'medical_prescription_category_product_rel', 'prescription_id', 'product_id', 'Category',
+        help="The product(s) selected and paid at the counter")
+    # shown as text: the user's Allowed Categories may not include the paid product
+    category_name = fields.Char('Category', compute='_compute_category_name', store=True, compute_sudo=True)
+    intake_order_id = fields.Many2one('pos.order', 'Till', readonly=True, copy=False, index='btree_not_null')
     note = fields.Text('Remarks')
 
     line_ids = fields.One2many('medical.prescription.line', 'prescription_id', 'Products', copy=True)
@@ -41,12 +60,17 @@ class MedicalPrescription(models.Model):
         PRESCRIPTION_STATES, 'Status', required=True, default='draft', index=True, copy=False, tracking=True)
     approved_by_id = fields.Many2one('res.users', 'Approved By', readonly=True, copy=False)
     approved_date = fields.Datetime('Approved On', readonly=True, copy=False)
-    desk_config_id = fields.Many2one('pos.config', 'Prescription Desk', readonly=True, copy=False)
+    desk_config_id = fields.Many2one('pos.config', 'Counter', readonly=True, copy=False)
     # the bill (pos.link.mixin: with its session, POS and cashier once paid;
-    # before that the prescription desk's session where it was approved)
+    # before that the session of its till)
     pos_order_id = fields.Many2one('pos.order', 'Bill', readonly=True, copy=False, index='btree_not_null')
     billed_date = fields.Datetime('Billed On', readonly=True, copy=False)
     billing_config_id = fields.Many2one(related='pos_order_id.config_id', string='Billing Counter')
+
+    @api.depends('category_product_ids')
+    def _compute_category_name(self):
+        for prescription in self:
+            prescription.category_name = ', '.join(prescription.category_product_ids.mapped('display_name')) or False
 
     @api.depends('line_ids.price_subtotal')
     def _compute_amount_total(self):
@@ -60,6 +84,16 @@ class MedicalPrescription(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code('medical.prescription') or _('New')
         return super().create(vals_list)
 
+    def write(self, vals):
+        if not self.env.su:
+            if WORKFLOW_FIELDS & set(vals):
+                raise AccessError(_("The status of a prescription only changes with its buttons."))
+            if TILL_FIELDS & set(vals) and not self.env.user.has_group(MEDICAL_MANAGER):
+                raise AccessError(_("The patient, doctor and category come from the paid till."))
+            if DRAFT_FIELDS & set(vals) and any(prescription.state != 'draft' for prescription in self):
+                raise UserError(_("Only a draft prescription can be changed."))
+        return super().write(vals)
+
     def unlink(self):
         if any(prescription.state != 'draft' for prescription in self):
             raise UserError(_("Only draft prescriptions can be deleted; cancel the others."))
@@ -69,16 +103,52 @@ class MedicalPrescription(models.Model):
     # Workflow
     # ------------------------------------------------------------------
 
+    @api.model
+    def _create_from_till(self, pos_order, note=False):
+        """The paid till of the first phase makes the draft prescription (once, an order can be synced again)"""
+        return self.search([('intake_order_id', '=', pos_order.id)], limit=1) or self.create({
+            'partner_id': pos_order.partner_id.id,
+            'doctor_id': pos_order.medical_doctor_id.id,
+            'category_product_ids': [(6, 0, pos_order.lines.product_id.ids)],
+            'note': (note or '').strip() or False,
+            'company_id': pos_order.company_id.id,
+            'desk_config_id': pos_order.config_id.id,
+            'intake_order_id': pos_order.id,
+            'pos_session_id': pos_order.session_id.id,
+            'pos_config_id': pos_order.config_id.id,
+            # no pos_reference: pos.link.mixin would take the till for the bill of the prescription
+            'pos_cashier_id': pos_order.user_id.id,
+        })
+
+    def _check_on_hand(self):
+        """Stock-tracked products must be on hand at the counter's location (anywhere in the company without a counter)"""
+        for prescription in self.sudo():
+            location = prescription.desk_config_id.picking_type_id.default_location_src_id
+            context = {'location': location.id, 'compute_child': True} if location else {}
+            products = prescription.line_ids.product_id.filtered(lambda p: p.detailed_type == 'product')
+            empty = products.with_company(prescription.company_id).with_context(**context).filtered(
+                lambda p: p.qty_available <= 0)
+            if empty:
+                raise UserError(_(
+                    "%(name)s can't be approved: no stock on hand for\n%(products)s",
+                    name=prescription.name,
+                    products='\n'.join('- %s (on hand: %s)' % (p.display_name, p.qty_available) for p in empty),
+                ))
+
     def action_approve(self):
-        # the button is the group's: also refused over RPC
-        if not self.env.su and not any(self.env.user.has_group(group) for group in ('bn_medical_pos.group_medical_manager',)):
-            raise AccessError(_('You are not allowed to do this action.'))
+        # the button is the group's: also refused over RPC, and only on the user's doctors (record rules)
+        if not self.env.su:
+            if not self.env.user.has_group(MEDICAL_USER):
+                raise AccessError(_('You are not allowed to do this action.'))
+            self.check_access_rights('write')
+            self.check_access_rule('write')
         for prescription in self:
             if prescription.state != 'draft':
                 raise UserError(_("Only draft prescriptions can be approved."))
             if not prescription.line_ids:
                 raise UserError(_("Add the prescribed products to %s before approving it.", prescription.name))
-        self.write({
+        self._check_on_hand()
+        self.sudo().write({
             'state': 'approved',
             'approved_by_id': self.env.user.id,
             'approved_date': fields.Datetime.now(),
@@ -90,7 +160,7 @@ class MedicalPrescription(models.Model):
             raise AccessError(_('You are not allowed to do this action.'))
         if any(prescription.state == 'billed' for prescription in self):
             raise UserError(_("A billed prescription can't be cancelled; refund its bill instead."))
-        self.write({'state': 'cancel'})
+        self.sudo().write({'state': 'cancel'})
 
     def action_draft(self):
         # the button is the group's: also refused over RPC
@@ -98,7 +168,7 @@ class MedicalPrescription(models.Model):
             raise AccessError(_('You are not allowed to do this action.'))
         if any(prescription.state != 'cancel' for prescription in self):
             raise UserError(_("Only cancelled prescriptions can be reset to draft."))
-        self.write({'state': 'draft', 'approved_by_id': False, 'approved_date': False})
+        self.sudo().write({'state': 'draft', 'approved_by_id': False, 'approved_date': False})
 
     def _mark_billed(self, pos_order):
         """Called when the bill of the prescription is paid at the billing counter"""
@@ -134,6 +204,13 @@ class MedicalPrescription(models.Model):
         return {
             'type': 'ir.actions.act_window', 'name': _('Bill'), 'res_model': 'pos.order',
             'res_id': self.pos_order_id.id, 'view_mode': 'form', 'views': [(False, 'form')],
+        }
+
+    def action_open_till(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window', 'name': _('Till'), 'res_model': 'pos.order',
+            'res_id': self.intake_order_id.id, 'view_mode': 'form', 'views': [(False, 'form')],
         }
 
     def _note_bill_differences(self, pos_order):
@@ -173,7 +250,7 @@ class MedicalPrescription(models.Model):
                 'id': prescription.id,
                 'name': prescription.name,
                 'state': prescription.state,
-                'doctor_name': prescription.doctor_name or '',
+                'doctor_name': prescription.doctor_id.name or prescription.doctor_name or '',
                 'note': prescription.note or '',
                 'amount_total': prescription.amount_total,
                 'approved_date': approved_date.strftime('%d-%m-%Y %H:%M') if approved_date else '',
@@ -203,7 +280,8 @@ class MedicalPrescriptionLine(models.Model):
         'medical.prescription', 'Prescription', required=True, ondelete='cascade', index=True)
     sequence = fields.Integer(default=10)
     product_id = fields.Many2one(
-        'product.product', 'Product', required=True, domain="[('sale_ok', '=', True)]")
+        'product.product', 'Product', required=True,
+        domain="[('sale_ok', '=', True), ('available_in_pos', '=', True)]")
     qty = fields.Float('Quantity', required=True, default=1.0, digits='Product Unit of Measure')
     price_unit = fields.Float('Unit Price', digits='Product Price')
     discount = fields.Float('Discount (%)', digits='Discount')
@@ -212,10 +290,48 @@ class MedicalPrescriptionLine(models.Model):
     state = fields.Selection(related='prescription_id.state')
     company_id = fields.Many2one(related='prescription_id.company_id', store=True, index=True)
     currency_id = fields.Many2one(related='prescription_id.currency_id')
+    can_edit_price = fields.Boolean(compute='_compute_can_edit_price')
 
     _sql_constraints = [
         ('qty_positive', 'CHECK(qty > 0)', 'The prescribed quantity must be positive.'),
     ]
+
+    @api.depends_context('uid')
+    def _compute_can_edit_price(self):
+        can_edit = self.env.su or self.env.user.has_group(MEDICAL_MANAGER)
+        for line in self:
+            line.can_edit_price = can_edit
+
+    def _keeps_list_price(self):
+        """Doctors and users add products at their sales price, only an administrator changes it"""
+        return not self.env.su and not self.env.user.has_group(MEDICAL_MANAGER)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if not self.env.su:
+            prescriptions = self.env['medical.prescription'].browse(
+                {vals['prescription_id'] for vals in vals_list if vals.get('prescription_id')})
+            if any(prescription.state != 'draft' for prescription in prescriptions):
+                raise UserError(_("Only a draft prescription can be changed."))
+        if self._keeps_list_price():
+            for vals in vals_list:
+                vals['price_unit'] = self.env['product.product'].sudo().browse(vals['product_id']).lst_price
+                vals['discount'] = 0
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if not self.env.su and any(line.prescription_id.state != 'draft' for line in self):
+            raise UserError(_("Only a draft prescription can be changed."))
+        if self._keeps_list_price():
+            vals = {key: value for key, value in vals.items() if key not in ('price_unit', 'discount')}
+            if vals.get('product_id'):
+                vals.update(price_unit=self.env['product.product'].sudo().browse(vals['product_id']).lst_price, discount=0)
+        return super().write(vals)
+
+    def unlink(self):
+        if not self.env.su and any(line.prescription_id.state != 'draft' for line in self):
+            raise UserError(_("Only a draft prescription can be changed."))
+        return super().unlink()
 
     @api.depends('qty', 'price_unit', 'discount')
     def _compute_price_subtotal(self):

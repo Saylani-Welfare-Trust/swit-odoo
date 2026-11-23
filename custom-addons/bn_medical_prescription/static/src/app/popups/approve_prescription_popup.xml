@@ -4,7 +4,7 @@
     <t t-name="bn_medical_prescription.ApprovePrescriptionPopup">
         <div class="popup popup-selection">
             <div class="modal-header drag-handle">
-                <h4 class="modal-title">Approve Prescription</h4>
+                <h4 class="modal-title">Select Doctor</h4>
             </div>
             <main class="modal-body text-start">
                 <div class="mb-3">
@@ -25,7 +25,6 @@
                             <tr t-foreach="lines" t-as="line" t-key="line.id">
                                 <td>
                                     <t t-esc="line.name"/>
-                                    <div t-if="line.note" class="small text-muted"><i class="fa fa-sticky-note-o me-1"/><t t-esc="line.note"/></div>
                                 </td>
                                 <td class="text-end text-nowrap"><t t-esc="line.qty"/> <t t-esc="line.unit"/></td>
                                 <td class="text-end text-nowrap" t-esc="line.amount"/>
@@ -40,8 +39,11 @@
                 <div class="row mb-2 align-items-center">
                     <label class="col-4 fw-semibold" for="prescription_doctor">Doctor</label>
                     <div class="col-8">
-                        <input id="prescription_doctor" t-ref="doctorInput" type="text" class="form-control"
-                               t-model="state.doctor_name" placeholder="Optional"/>
+                        <select id="prescription_doctor" t-ref="doctorInput" class="form-select" t-on-change="onDoctorChange">
+                            <option value="">Select a doctor...</option>
+                            <option t-foreach="props.doctors" t-as="doctor" t-key="doctor.id" t-att-value="doctor.id"
+                                    t-att-selected="isSelected(doctor)" t-esc="doctor.name"/>
+                        </select>
                     </div>
                 </div>
                 <div class="row align-items-center">
@@ -53,8 +55,8 @@
                 </div>
             </main>
             <footer class="footer modal-footer">
-                <button type="button" class="button confirm btn btn-lg btn-primary" t-on-click="confirm">
-                    <i class="fa fa-check me-1"/>Approve
+                <button type="button" class="button confirm btn btn-lg btn-primary" t-att-disabled="!state.doctor_id" t-on-click="confirm">
+                    <i class="fa fa-check me-1"/>Continue to Payment
                 </button>
                 <button type="button" class="button cancel btn btn-lg btn-secondary" t-on-click="cancel">Back</button>
             </footer>

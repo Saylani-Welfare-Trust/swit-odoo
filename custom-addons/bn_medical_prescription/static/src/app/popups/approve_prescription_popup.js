@@ -5,10 +5,11 @@ import { useService } from "@web/core/utils/hooks";
 import { onMounted, useRef, useState } from "@odoo/owl";
 
 /**
- * Prescription desk: review the products of the order before approving them for the patient.
- * Resolves with { doctor_name, note }.
+ * First phase of the Medical & Health counter: choose the doctor of the selected products
+ * before the payment of the till. Resolves with { doctor_id, doctor_name, note }.
  *
  * @props order
+ * @props doctors - [{ id, name }] the doctors of the selected products
  */
 export class ApprovePrescriptionPopup extends AbstractAwaitablePopup {
     static template = "bn_medical_prescription.ApprovePrescriptionPopup";
@@ -20,8 +21,22 @@ export class ApprovePrescriptionPopup extends AbstractAwaitablePopup {
         // Own the numpad buffer while open, so keystrokes can't edit the order line underneath
         useService("number_buffer").use();
         this.doctorInput = useRef("doctorInput");
-        this.state = useState({ doctor_name: "", note: "" });
+        const { order, doctors } = this.props;
+        const preselected = doctors.find((doctor) => doctor.id === order.medical_doctor_id) ||
+            (doctors.length === 1 ? doctors[0] : null);
+        this.state = useState({
+            doctor_id: preselected ? String(preselected.id) : "",
+            note: order.medical_note || "",
+        });
         onMounted(() => this.doctorInput.el?.focus());
+    }
+
+    isSelected(doctor) {
+        return String(doctor.id) === this.state.doctor_id;
+    }
+
+    onDoctorChange(ev) {
+        this.state.doctor_id = ev.target.value;
     }
 
     get partner() {
@@ -35,7 +50,6 @@ export class ApprovePrescriptionPopup extends AbstractAwaitablePopup {
             qty: line.get_quantity_str(),
             unit: line.get_unit()?.name || "",
             amount: this.env.utils.formatCurrency(line.get_price_with_tax()),
-            note: line.get_customer_note() || "",
         }));
     }
 
@@ -44,6 +58,7 @@ export class ApprovePrescriptionPopup extends AbstractAwaitablePopup {
     }
 
     async getPayload() {
-        return { doctor_name: this.state.doctor_name.trim(), note: this.state.note.trim() };
+        const doctor = this.props.doctors.find((doctor) => String(doctor.id) === this.state.doctor_id);
+        return { doctor_id: doctor.id, doctor_name: doctor.name, note: this.state.note.trim() };
     }
 }
