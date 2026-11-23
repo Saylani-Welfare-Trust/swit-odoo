@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-    <t t-name="bn_dashboard.LivestockDashboardTemplate">
+    <t t-name="bn_livestock_slaugther.LivestockDashboardTemplate">
         <style>
             @media print {
                 .o_livestock_dashboard { background: #fff !important; }
