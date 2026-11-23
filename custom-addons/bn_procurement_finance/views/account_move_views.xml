@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+
+    <record id="view_invoice_tree_inherit_bn_procurement_finance" model="ir.ui.view">
+        <field name="name">account.move.tree.inherit.bn.procurement.finance</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <!-- optional="show" makes it visible by default but lets users hide it -->
+                <field name="grn_reference" optional="show"/>
+            </field>
+        </field>
+    </record>
+
     <record id="account_move_view_form_inherit_bn_procurement_finance" model="ir.ui.view">
         <field name="name">account.move.view.form.inherit.bn.procurement.finance</field>
         <field name="model">account.move</field>
