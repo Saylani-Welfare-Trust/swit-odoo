@@ -511,16 +511,10 @@ class MonthlyPlanningLineBase(models.AbstractModel):
                         % (rec.date, plan.from_date, plan.to_date)
                     )
 
-    @api.depends('product_id', 'monthly_planning_id.source_location_id')
+    @api.depends('product_id')
     def _compute_on_hand_qty(self):
-        default_loc = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         for rec in self:
-            loc = rec.monthly_planning_id.source_location_id or default_loc
-            if rec.product_id and loc:
-                rec.on_hand_qty = rec.product_id.with_context(
-                    location=loc.id).qty_available
-            else:
-                rec.on_hand_qty = 0.0
+            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
 
     def write(self, vals):
         for rec in self:
