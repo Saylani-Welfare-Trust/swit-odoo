@@ -12,6 +12,7 @@ PRESCRIPTION_STATES = [
 ]
 
 MEDICAL_USER = 'bn_medical_pos.group_medical_user'
+MEDICAL_DOCTOR = 'bn_medical_pos.group_medical_doctor'
 MEDICAL_MANAGER = 'bn_medical_pos.group_medical_manager'
 # changed by the workflow buttons and the POS only
 WORKFLOW_FIELDS = {
@@ -48,6 +49,8 @@ class MedicalPrescription(models.Model):
     # shown as text: the user's Allowed Categories may not include the paid product
     category_name = fields.Char('Category', compute='_compute_category_name', store=True, compute_sudo=True)
     intake_order_id = fields.Many2one('pos.order', 'Till', readonly=True, copy=False, index='btree_not_null')
+    # for the views: a doctor has no rights on the POS orders
+    has_till = fields.Boolean(compute='_compute_has_till', compute_sudo=True)
     note = fields.Text('Remarks')
 
     line_ids = fields.One2many('medical.prescription.line', 'prescription_id', 'Products', copy=True)
@@ -66,6 +69,11 @@ class MedicalPrescription(models.Model):
     pos_order_id = fields.Many2one('pos.order', 'Bill', readonly=True, copy=False, index='btree_not_null')
     billed_date = fields.Datetime('Billed On', readonly=True, copy=False)
     billing_config_id = fields.Many2one(related='pos_order_id.config_id', string='Billing Counter')
+
+    @api.depends('intake_order_id')
+    def _compute_has_till(self):
+        for prescription in self:
+            prescription.has_till = bool(prescription.intake_order_id)
 
     @api.depends('category_product_ids')
     def _compute_category_name(self):
@@ -138,7 +146,7 @@ class MedicalPrescription(models.Model):
     def action_approve(self):
         # the button is the group's: also refused over RPC, and only on the user's doctors (record rules)
         if not self.env.su:
-            if not self.env.user.has_group(MEDICAL_USER):
+            if not any(self.env.user.has_group(group) for group in (MEDICAL_USER, MEDICAL_DOCTOR)):
                 raise AccessError(_('You are not allowed to do this action.'))
             self.check_access_rights('write')
             self.check_access_rule('write')

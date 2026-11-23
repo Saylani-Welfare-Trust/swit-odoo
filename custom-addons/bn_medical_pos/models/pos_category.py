@@ -11,6 +11,14 @@ class PosCategory(models.Model):
         string="Medical & Health",
         help="The products of this category (and of its sub-categories) are shown at the Medical & Health counters.",
     )
+    # ticked, or under a ticked category: what the doctors can prescribe (record rule on the products)
+    mh_medical_scope = fields.Boolean(
+        string="In Medical & Health", compute='_compute_mh_medical_scope', store=True, recursive=True, index=True)
+
+    @api.depends('mh_medical', 'parent_id.mh_medical_scope')
+    def _compute_mh_medical_scope(self):
+        for category in self:
+            category.mh_medical_scope = category.mh_medical or category.parent_id.mh_medical_scope
 
     @api.model_create_multi
     def create(self, vals_list):

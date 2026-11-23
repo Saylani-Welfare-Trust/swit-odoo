@@ -19,4 +19,4 @@ class MedicalDoctor(models.Model):
         'res.users', 'medical_doctor_user_rel', 'doctor_id', 'user_id', 'Users',
         domain="[('share', '=', False)]",
         help="The doctor's login and the staff working with them: they see this doctor's prescriptions, "
-             "add the products and approve them. They also need the Medical & Health / User group.")
+             "add the products and approve them. Give the doctor the Medical & Health groups Doctor and Menu.")

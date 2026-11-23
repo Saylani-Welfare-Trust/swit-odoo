@@ -16,6 +16,8 @@ class TestMedicalFlow(TransactionCase):
         Product = env['product.product']
         services = env['product.category'].create({'name': 'MH Services'})
         medicines = env['product.category'].create({'name': 'MH Medicines'})
+        pos_medical = env['pos.category'].create({'name': 'MH POS', 'mh_medical': True})
+        pos_medicines = env['pos.category'].create({'name': 'MH POS Medicines', 'parent_id': pos_medical.id})
         cls.consultation = Product.create({
             'name': 'OPD Consultation', 'detailed_type': 'service', 'available_in_pos': True, 'lst_price': 200,
             'categ_id': services.id})
@@ -24,21 +26,26 @@ class TestMedicalFlow(TransactionCase):
             'categ_id': services.id})
         cls.medicine = Product.create({
             'name': 'Paracetamol', 'detailed_type': 'product', 'available_in_pos': True, 'lst_price': 50,
-            'categ_id': medicines.id})
+            'categ_id': medicines.id, 'pos_categ_ids': [(6, 0, pos_medicines.ids)]})
+        cls.non_medical = Product.create({
+            'name': 'Donation Item', 'detailed_type': 'consu', 'available_in_pos': True, 'categ_id': services.id})
         journal = env['account.journal'].create({'name': 'Cash MH', 'code': 'MHC', 'type': 'cash'})
         method = env['pos.payment.method'].create({'name': 'Cash MH', 'journal_id': journal.id})
+        plan = env['account.analytic.plan'].create({'name': 'MH Branches'})
+        branch = env['account.analytic.account'].create({'name': 'MH Branch', 'plan_id': plan.id})
         cls.counter = env['pos.config'].create({
-            'name': 'MH Counter', 'is_medical_pos': True, 'payment_method_ids': [(6, 0, method.ids)]})
+            'name': 'MH Counter', 'is_medical_pos': True, 'payment_method_ids': [(6, 0, method.ids)],
+            'analytic_account_id': branch.id})
         cls.session = env['pos.session'].create({'config_id': cls.counter.id, 'user_id': env.uid})
         cls.location = cls.counter.picking_type_id.default_location_src_id
 
-        groups = [env.ref('base.group_user').id, env.ref('bn_medical_pos.group_medical_user').id]
+        # a doctor only has the groups Doctor and Menu: no POS, branch or Allowed Categories
+        groups = [env.ref('base.group_user').id, env.ref('bn_medical_pos.group_medical_doctor').id,
+                  env.ref('bn_medical_pos.group_medical_menu').id]
         cls.doctor_user = env['res.users'].create({
-            'name': 'Doctor User', 'login': 'mh_doctor_user', 'groups_id': [(6, 0, groups)],
-            'allowed_product_category_ids': [(6, 0, medicines.ids)]})
+            'name': 'Doctor User', 'login': 'mh_doctor_user', 'groups_id': [(6, 0, groups)]})
         cls.other_user = env['res.users'].create({
-            'name': 'Other User', 'login': 'mh_other_user', 'groups_id': [(6, 0, groups)],
-            'allowed_product_category_ids': [(6, 0, medicines.ids)]})
+            'name': 'Other User', 'login': 'mh_other_user', 'groups_id': [(6, 0, groups)]})
         cls.doctor = env['medical.doctor'].create({
             'name': 'Dr. A', 'product_ids': [(6, 0, cls.consultation.ids)], 'user_ids': [(6, 0, cls.doctor_user.ids)]})
         cls.other_doctor = env['medical.doctor'].create({
@@ -120,6 +127,24 @@ class TestMedicalFlow(TransactionCase):
             prescription.with_user(self.doctor_user).write({'state': 'approved'})
         with self.assertRaises(AccessError):
             prescription.with_user(self.doctor_user).write({'doctor_id': self.other_doctor.id})
+
+    def test_doctor_with_only_doctor_and_menu_groups(self):
+        _order, prescription = self._till()
+        self.assertTrue(prescription.pos_analytic_account_id, "made at a branch the doctor isn't scoped on")
+        as_doctor = prescription.with_user(self.doctor_user)
+        self.assertEqual(self.env['medical.prescription'].with_user(self.doctor_user).search([]), prescription)
+        self.assertTrue(as_doctor.has_till)
+        Product = self.env['product.product'].with_user(self.doctor_user)
+        self.assertIn(self.medicine, Product.search([]), "products of a sub-category of a Medical & Health category")
+        self.assertNotIn(self.non_medical, Product.search([]))
+        for model in ('pos.order', 'pos.session'):
+            self.assertFalse(self.env[model].with_user(self.doctor_user).check_access_rights('read', False))
+        with self.assertRaises(AccessError):
+            self.env['medical.prescription'].with_user(self.doctor_user).create({'partner_id': self.patient.id})
+        as_doctor.write({'line_ids': [(0, 0, {'product_id': self.medicine.id, 'qty': 1})]})
+        self._stock(1)
+        as_doctor.action_approve()
+        self.assertEqual(prescription.state, 'approved')
 
     def test_bill_of_the_approved_prescription(self):
         _order, prescription = self._till()

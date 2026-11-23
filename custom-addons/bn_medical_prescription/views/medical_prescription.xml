@@ -14,10 +14,10 @@
                 <field name="doctor_id" optional="show"/>
                 <field name="category_name" optional="show"/>
                 <field name="approved_date" optional="show"/>
-                <field name="desk_config_id" optional="hide"/>
-                <field name="intake_order_id" optional="hide"/>
-                <field name="pos_order_id" optional="show"/>
-                <field name="billing_config_id" optional="hide"/>
+                <field name="desk_config_id" optional="hide" groups="bn_medical_pos.group_medical_user"/>
+                <field name="intake_order_id" optional="hide" groups="bn_medical_pos.group_medical_user"/>
+                <field name="pos_order_id" optional="show" groups="bn_medical_pos.group_medical_user"/>
+                <field name="billing_config_id" optional="hide" groups="bn_medical_pos.group_medical_user"/>
                 <field name="billed_date" optional="hide"/>
                 <field name="amount_total" sum="Total" decoration-bf="1"/>
                 <field name="currency_id" column_invisible="True"/>
@@ -34,7 +34,7 @@
             <form string="Prescription">
                 <header>
                     <button name="action_approve" type="object" string="Approve" class="btn-primary" invisible="state != 'draft'"
-                            groups="bn_medical_pos.group_medical_user"/>
+                            groups="bn_medical_pos.group_medical_user,bn_medical_pos.group_medical_doctor"/>
                     <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft', 'approved')"
                             groups="bn_medical_pos.group_medical_manager" confirm="Cancel this prescription?"/>
                     <button name="action_draft" type="object" string="Reset to Draft" invisible="state != 'cancel'"
@@ -43,20 +43,20 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_open_patient" type="object" class="oe_stat_button" icon="fa-user"
+                        <button name="action_open_patient" type="object" class="oe_stat_button" icon="fa-user" groups="bn_medical_pos.group_medical_user"
                                 invisible="not partner_id">
                             <div class="o_stat_info">
                                 <span class="o_stat_text">Patient</span>
                             </div>
                         </button>
-                        <button name="action_open_till" type="object" class="oe_stat_button" icon="fa-ticket"
+                        <button name="action_open_till" type="object" class="oe_stat_button" icon="fa-ticket" groups="bn_medical_pos.group_medical_user"
                                 invisible="not intake_order_id">
                             <div class="o_stat_info">
                                 <span class="o_stat_value"><field name="intake_order_id" readonly="1" options="{'no_open': True}"/></span>
                                 <span class="o_stat_text">Till</span>
                             </div>
                         </button>
-                        <button name="action_open_bill" type="object" class="oe_stat_button" icon="fa-file-text-o"
+                        <button name="action_open_bill" type="object" class="oe_stat_button" icon="fa-file-text-o" groups="bn_medical_pos.group_medical_user"
                                 invisible="not pos_order_id">
                             <div class="o_stat_info">
                                 <span class="o_stat_value"><field name="pos_order_id" readonly="1" options="{'no_open': True}"/></span>
@@ -72,25 +72,26 @@
                     </div>
                     <group>
                         <group string="Patient" name="patient">
-                            <field name="partner_id" readonly="intake_order_id or state != 'draft'" options="{'no_create': True}"/>
+                            <field name="has_till" invisible="1"/>
+                            <field name="partner_id" readonly="has_till or state != 'draft'" options="{'no_create': True, 'no_open': True}"/>
                             <field name="registration_id" invisible="not partner_id"/>
                             <field name="cnic_no" invisible="not partner_id"/>
                             <field name="mobile" invisible="not partner_id" widget="phone"/>
                         </group>
                         <group string="Doctor" name="desk">
-                            <field name="doctor_id" readonly="intake_order_id or state != 'draft'" options="{'no_create': True}"/>
+                            <field name="doctor_id" readonly="has_till or state != 'draft'" options="{'no_create': True, 'no_open': True}"/>
                             <field name="doctor_name" readonly="1" invisible="doctor_id or not doctor_name"/>
-                            <field name="category_name" invisible="not intake_order_id"/>
+                            <field name="category_name" invisible="not has_till"/>
                             <field name="category_product_ids" widget="many2many_tags" options="{'no_create': True}"
-                                   invisible="intake_order_id" readonly="state != 'draft'"
+                                   invisible="has_till" readonly="state != 'draft'"
                                    groups="bn_medical_pos.group_medical_manager"/>
-                            <field name="desk_config_id" invisible="not desk_config_id"/>
+                            <field name="desk_config_id" invisible="not desk_config_id" groups="bn_medical_pos.group_medical_user"/>
                             <field name="approved_by_id" invisible="not approved_by_id" widget="many2one_avatar_user"/>
                             <field name="approved_date" invisible="not approved_date"/>
                             <field name="company_id" groups="base.group_multi_company" readonly="state != 'draft'"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group string="Billing" name="billing" invisible="not pos_order_id">
+                        <group string="Billing" name="billing" invisible="not pos_order_id" groups="bn_medical_pos.group_medical_user">
                             <field name="billing_config_id"/>
                             <field name="pos_session_id"/>
                             <field name="pos_cashier_id" widget="many2one_avatar_user"/>
@@ -142,7 +143,7 @@
                 <field name="doctor_id"/>
                 <field name="category_name"/>
                 <field name="line_ids" string="Product" filter_domain="[('line_ids.product_id', 'ilike', self)]"/>
-                <field name="pos_order_id"/>
+                <field name="pos_order_id" groups="bn_medical_pos.group_medical_user"/>
                 <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <filter name="filter_approved" string="Waiting for Bill" domain="[('state', '=', 'approved')]"/>
                 <filter name="filter_billed" string="Billed" domain="[('state', '=', 'billed')]"/>
@@ -152,7 +153,7 @@
                 <group expand="0" string="Group By">
                     <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
                     <filter name="group_doctor" string="Doctor" context="{'group_by': 'doctor_id'}"/>
-                    <filter name="group_desk" string="Counter" context="{'group_by': 'desk_config_id'}"/>
+                    <filter name="group_desk" string="Counter" context="{'group_by': 'desk_config_id'}" groups="bn_medical_pos.group_medical_user"/>
                     <filter name="group_approved_date" string="Approved On" context="{'group_by': 'approved_date:day'}"/>
                 </group>
             </search>
@@ -188,8 +189,10 @@
     </record>
 
     <menuitem id="menu_medical_prescriptions" name="Prescriptions" parent="bn_medical_pos.menu_medical_root"
-              action="medical_prescription_action" sequence="20"/>
+              action="medical_prescription_action" sequence="20"
+              groups="bn_medical_pos.group_medical_user,bn_medical_pos.group_medical_doctor"/>
     <menuitem id="menu_medical_bills" name="Bills" parent="bn_medical_pos.menu_medical_root"
-              action="action_mh_bills" sequence="30"/>
+              action="action_mh_bills" sequence="30"
+              groups="bn_medical_pos.group_medical_user"/>
 
 </odoo>

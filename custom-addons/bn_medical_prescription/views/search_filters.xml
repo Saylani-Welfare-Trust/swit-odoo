@@ -8,22 +8,23 @@
         <field name="inherit_id" ref="bn_medical_prescription.medical_prescription_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="/search" position="inside">
-                <field name="pos_session_id"/>
-                <field name="pos_config_id"/>
-                <field name="pos_reference"/>
-                <field name="pos_cashier_id"/>
-                <field name="pos_employee_id"/>
-                <field name="pos_analytic_account_id"/>
+                <!-- POS fields: a doctor has no rights on them -->
+                <field name="pos_session_id" groups="bn_medical_pos.group_medical_user"/>
+                <field name="pos_config_id" groups="bn_medical_pos.group_medical_user"/>
+                <field name="pos_reference" groups="bn_medical_pos.group_medical_user"/>
+                <field name="pos_cashier_id" groups="bn_medical_pos.group_medical_user"/>
+                <field name="pos_employee_id" groups="bn_medical_pos.group_medical_user"/>
+                <field name="pos_analytic_account_id" groups="bn_medical_pos.group_medical_user"/>
                 <field name="approved_by_id"/>
-                <field name="desk_config_id"/>
+                <field name="desk_config_id" groups="bn_medical_pos.group_medical_user"/>
                 <separator/>
                 <filter name="bn_state_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
                 <group expand="0" string="Group By">
-                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
-                    <filter name="bn_groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
-                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
-                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
-                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}" groups="bn_medical_pos.group_medical_user"/>
+                    <filter name="bn_groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}" groups="bn_medical_pos.group_medical_user"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}" groups="bn_medical_pos.group_medical_user"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}" groups="bn_medical_pos.group_medical_user"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}" groups="bn_medical_pos.group_medical_user"/>
                     <filter name="bn_groupby_partner_id" string="Patient" context="{'group_by': 'partner_id'}"/>
                     <filter name="bn_groupby_approved_by_id" string="Approved By" context="{'group_by': 'approved_by_id'}"/>
                 </group>
