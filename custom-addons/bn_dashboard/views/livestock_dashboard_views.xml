@@ -17,6 +17,6 @@
               parent="bn_livestock_slaugther.menu_livestock_root"
               action="action_livestock_dashboard"
               sequence="5"
-              groups="bn_livestock_slaugther.livestock_slaugther_user_group"/>
+              groups="bn_dashboard.livestock_slaugther_user_group"/>
 
 </odoo>
