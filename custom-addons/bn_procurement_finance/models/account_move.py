@@ -32,22 +32,53 @@ class AccountMove(models.Model):
         string='Receipt Count', 
         compute='_compute_grn_ids'
     )
+    grn_reference = fields.Char(
+        string='GRN Reference', 
+        compute='_compute_grn_ids',
+        store=True,       # <--- ADDED: Required for tracking
+        tracking=True,    # <--- ADDED: This posts the change to the chatter
+        help="Comma-separated references of the related Goods Receipt Notes."
+    )
 
     @api.depends('line_ids.purchase_line_id.order_id.picking_ids')
     def _compute_grn_ids(self):
         for move in self:
             if move.move_type == 'in_invoice':
-                # Get all Purchase Orders linked to the bill's lines
                 orders = move.line_ids.purchase_line_id.order_id
-                # Fetch the related incoming receipts (GRNs) that are completed (done)
                 pickings = orders.mapped('picking_ids').filtered(
                     lambda p: p.picking_type_code == 'incoming' and p.state == 'done'
                 )
                 move.grn_ids = pickings
                 move.grn_count = len(pickings)
+                move.grn_reference = ', '.join(pickings.mapped('name'))
             else:
                 move.grn_ids = False
                 move.grn_count = 0
+                move.grn_reference = False
+
+    def action_finance_confirm_and_post(self):
+        """Finance matches the draft bill against the physical vendor invoice, then posts it."""
+        self.ensure_one()
+        if self.move_type != 'in_invoice':
+            raise ValidationError(_('This action only applies to vendor bills.'))
+        if not self.env.user.has_group('bn_procurement_finance.group_finance'):
+            raise ValidationError(_('Only Finance users can confirm vendor bills.'))
+ 
+        self.write({
+            'finance_confirmed': True,
+            'finance_confirmed_by': self.env.user.id,
+            'finance_confirmed_date': fields.Datetime.now(),
+        })
+        
+        # Post a specific message to the chatter with the GRN reference
+        grn_msg = _("Finance Confirmed & Posted.")
+        if self.grn_reference:
+            grn_msg += _(" Linked GRN(s): %s", self.grn_reference)
+        
+        self.message_post(body=grn_msg)
+        
+        self.action_post()
+        return True
 
     def action_view_grn(self):
         """Action to open the list of linked Goods Receipt Notes."""

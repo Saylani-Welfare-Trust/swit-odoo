@@ -31,6 +31,7 @@
                     <group>
                         <group string="Finance">
                             <field name="vendor_invoice_reference" readonly="finance_confirmed"/>
+                            <field name="grn_reference" readonly="1"/>
                             <field name="finance_match_remarks" readonly="finance_confirmed"/>
                             <field name="finance_confirmed" widget="boolean_toggle" readonly="1"/>
                             <field name="finance_confirmed_by" readonly="1"/>
