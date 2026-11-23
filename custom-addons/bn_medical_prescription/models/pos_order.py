@@ -13,9 +13,9 @@ class PosOrder(models.Model):
         Prescription = self.env['medical.prescription'].sudo()
         prescription = Prescription.browse(int(ui_order.get('medical_prescription_id') or 0)).exists()
         vals['medical_prescription_id'] = prescription.id
-        if prescription:
-            # a medicine bill, not a donation
-            vals['is_non_donation_receipt'] = True
+        # if prescription:
+        #     # a medicine bill, not a donation
+        #     vals['is_non_donation_receipt'] = True
 
         # an order that can't be synced is stuck in the POS: drop links to lines that don't exist anymore
         order_lines = [line[2] for line in vals.get('lines') or [] if line[2].get('medical_prescription_line_id')]
