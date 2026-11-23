@@ -32,11 +32,12 @@ class AccountMove(models.Model):
         string='Receipt Count', 
         compute='_compute_grn_ids'
     )
+    # stored (and tracked) on its own: a GRN validated after the bill updates it
     grn_reference = fields.Char(
-        string='GRN Reference', 
-        compute='_compute_grn_ids',
-        store=True,       # <--- ADDED: Required for tracking
-        tracking=True,    # <--- ADDED: This posts the change to the chatter
+        string='GRN Reference',
+        compute='_compute_grn_reference',
+        store=True,
+        tracking=True,
         help="Comma-separated references of the related Goods Receipt Notes."
     )
 
@@ -50,11 +51,15 @@ class AccountMove(models.Model):
                 )
                 move.grn_ids = pickings
                 move.grn_count = len(pickings)
-                move.grn_reference = ', '.join(pickings.mapped('name'))
             else:
                 move.grn_ids = False
                 move.grn_count = 0
-                move.grn_reference = False
+
+    @api.depends('move_type', 'line_ids.purchase_line_id.order_id.picking_ids.state',
+                 'line_ids.purchase_line_id.order_id.picking_ids.name')
+    def _compute_grn_reference(self):
+        for move in self:
+            move.grn_reference = ', '.join(move.grn_ids.mapped('name')) if move.move_type == 'in_invoice' else False
 
     def action_finance_confirm_and_post(self):
         """Finance matches the draft bill against the physical vendor invoice, then posts it."""
@@ -88,22 +93,6 @@ class AccountMove(models.Model):
         action['domain'] = [('id', 'in', self.grn_ids.ids)]
         action['context'] = {}
         return action
-
-    def action_finance_confirm_and_post(self):
-        """Finance matches the draft bill against the physical vendor invoice, then posts it."""
-        self.ensure_one()
-        if self.move_type != 'in_invoice':
-            raise ValidationError(_('This action only applies to vendor bills.'))
-        if not self.env.user.has_group('bn_procurement_finance.group_finance'):
-            raise ValidationError(_('Only Finance users can confirm vendor bills.'))
- 
-        self.write({
-            'finance_confirmed': True,
-            'finance_confirmed_by': self.env.user.id,
-            'finance_confirmed_date': fields.Datetime.now(),
-        })
-        self.action_post()
-        return True
 
     def _post(self, soft=True):
         posted = super()._post(soft)

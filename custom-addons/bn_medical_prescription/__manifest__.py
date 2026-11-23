@@ -1,7 +1,7 @@
 {
     'name': 'Medical Prescription Billing',
-    'version': '1.4',
-    'summary': 'Prescription desk approves the products for a patient, the billing counter bills them',
+    'version': '1.5',
+    'summary': 'One Medical & Health counter: paid till with a doctor, prescription approved on stock, then its bill',
     'description': """
 Flow on a Medical & Health POS counter:
 
