@@ -2,8 +2,9 @@
 """One Medical & Health counter: paid till with a doctor, draft prescription filled and
 approved on stock by the doctor's side, then billed at the counter."""
 from odoo import fields
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
+from odoo.tools.safe_eval import safe_eval
 
 
 @tagged('post_install', '-at_install')
@@ -163,6 +164,18 @@ class TestMedicalFlow(TransactionCase):
         self.assertEqual(Prescription.with_user(admin).search([('id', 'in', everything.ids)]), everything)
         self.doctor_user.groups_id = [(4, self.env.ref('bn_medical_pos.group_medical_manager').id)]
         self.assertEqual(Prescription.with_user(self.doctor_user).search([('id', 'in', everything.ids)]), everything)
+
+    def test_product_line_follows_the_pos_categories(self):
+        _order, prescription = self._till()
+        domain = safe_eval(self.env['medical.prescription.line']._fields['product_id'].domain)
+        offered = self.env['product.product'].search(domain)
+        self.assertIn(self.medicine, offered, "in a sub-category of a Medical & Health category")
+        self.assertNotIn(self.non_medical, offered)
+        # a doctor has no POS rights: the dropdown still has to work for them
+        self.assertEqual(self.env['product.product'].with_user(self.doctor_user).search(domain) & self.medicine, self.medicine)
+        with self.assertRaises(ValidationError):
+            prescription.write({'line_ids': [(0, 0, {'product_id': self.non_medical.id, 'qty': 1})]})
+        self.assertFalse(prescription.line_ids)
 
     def test_bill_of_the_approved_prescription(self):
         _order, prescription = self._till()

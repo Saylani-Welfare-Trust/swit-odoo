@@ -9,3 +9,4 @@ access_medical_doctor_master_admin,medical.doctor.master.admin,model_medical_doc
 access_medical_doctor_medical_manager,medical.doctor.medical.manager,model_medical_doctor,bn_medical_pos.group_medical_manager,1,1,1,1
 access_medical_prescription_doctor,medical.prescription.doctor,model_medical_prescription,bn_medical_pos.group_medical_doctor,1,1,0,0
 access_medical_prescription_line_doctor,medical.prescription.line.doctor,model_medical_prescription_line,bn_medical_pos.group_medical_doctor,1,1,1,1
+access_pos_category_medical_doctor,pos.category.medical.doctor,point_of_sale.model_pos_category,bn_medical_pos.group_medical_doctor,1,0,0,0

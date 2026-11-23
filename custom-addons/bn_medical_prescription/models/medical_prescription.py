@@ -289,7 +289,8 @@ class MedicalPrescriptionLine(models.Model):
     sequence = fields.Integer(default=10)
     product_id = fields.Many2one(
         'product.product', 'Product', required=True,
-        domain="[('sale_ok', '=', True), ('available_in_pos', '=', True)]")
+        domain="[('sale_ok', '=', True), ('available_in_pos', '=', True), ('pos_categ_ids.mh_medical_scope', '=', True)]",
+        help="Products of the categories switched on in Medical & Health > Configuration > Categories.")
     qty = fields.Float('Quantity', required=True, default=1.0, digits='Product Unit of Measure')
     price_unit = fields.Float('Unit Price', digits='Product Price')
     discount = fields.Float('Discount (%)', digits='Discount')
@@ -350,6 +351,17 @@ class MedicalPrescriptionLine(models.Model):
     def _onchange_product_id(self):
         if self.product_id:
             self.price_unit = self.product_id.lst_price
+
+    @api.constrains('product_id')
+    def _check_product_allowed_in_pos(self):
+        # as superuser: the user's Allowed Categories don't change what the counter can sell
+        for line in self.sudo():
+            product = line.product_id
+            if not (product.sale_ok and product.available_in_pos
+                    and any(product.pos_categ_ids.mapped('mh_medical_scope'))):
+                raise ValidationError(_(
+                    "%s can't be prescribed: its Point of Sale category isn't switched on in "
+                    "Medical & Health > Configuration > Categories.", product.display_name))
 
     @api.constrains('discount', 'price_unit')
     def _check_price(self):
