@@ -14,17 +14,18 @@
     </record>
 
     <!-- Global rules, so they apply on top of the branch rules (group rules only add up):
-         a user works on the prescriptions of the doctors they are listed on in Master Setup -->
+         a user works on the prescriptions of the doctors they are listed on in Master Setup.
+         Medical Administrators see everything, and so do Settings users unless they are marked Doctor. -->
     <record id="medical_prescription_doctor_rule" model="ir.rule">
         <field name="name">Medical Prescription: the user's doctors</field>
         <field name="model_id" ref="model_medical_prescription"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('bn_medical_pos.group_medical_manager') or user.has_group('base.group_system') else [('doctor_id.user_ids', 'in', user.ids)]</field>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('bn_medical_pos.group_medical_manager') or (user.has_group('base.group_system') and not user.has_group('bn_medical_pos.group_medical_doctor')) else [('doctor_id.user_ids', 'in', user.ids)]</field>
     </record>
 
     <record id="medical_prescription_line_doctor_rule" model="ir.rule">
         <field name="name">Medical Prescription Line: the user's doctors</field>
         <field name="model_id" ref="model_medical_prescription_line"/>
-        <field name="domain_force">[(1, '=', 1)] if user.has_group('bn_medical_pos.group_medical_manager') or user.has_group('base.group_system') else [('prescription_id.doctor_id.user_ids', 'in', user.ids)]</field>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('bn_medical_pos.group_medical_manager') or (user.has_group('base.group_system') and not user.has_group('bn_medical_pos.group_medical_doctor')) else [('prescription_id.doctor_id.user_ids', 'in', user.ids)]</field>
     </record>
 
     <!-- A doctor needs no branch: added to the branch rules, the global rules above still apply -->

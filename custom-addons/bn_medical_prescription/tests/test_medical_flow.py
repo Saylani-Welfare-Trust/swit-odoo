@@ -146,6 +146,24 @@ class TestMedicalFlow(TransactionCase):
         as_doctor.action_approve()
         self.assertEqual(prescription.state, 'approved')
 
+    def test_doctor_stays_limited_with_settings_rights(self):
+        _order, mine = self._till()
+        others = self.env['medical.prescription'].create({'partner_id': self.patient.id, 'doctor_id': self.other_doctor.id})
+        no_doctor = self.env['medical.prescription'].create({'partner_id': self.patient.id})
+        everything = mine | others | no_doctor
+        Prescription = self.env['medical.prescription']
+        settings = self.env.ref('base.group_system')
+        self.doctor_user.groups_id = [(4, settings.id)]
+        self.assertEqual(Prescription.with_user(self.doctor_user).search([('id', 'in', everything.ids)]), mine)
+        # Settings with a Medical group but not Doctor, and Medical Administrators, keep seeing everything
+        admin = self.env['res.users'].create({
+            'name': 'Settings User', 'login': 'mh_settings_user',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, settings.id,
+                                  self.env.ref('bn_medical_pos.group_medical_user').id])]})
+        self.assertEqual(Prescription.with_user(admin).search([('id', 'in', everything.ids)]), everything)
+        self.doctor_user.groups_id = [(4, self.env.ref('bn_medical_pos.group_medical_manager').id)]
+        self.assertEqual(Prescription.with_user(self.doctor_user).search([('id', 'in', everything.ids)]), everything)
+
     def test_bill_of_the_approved_prescription(self):
         _order, prescription = self._till()
         prescription.write({'line_ids': [(0, 0, {'product_id': self.medicine.id, 'qty': 1, 'price_unit': 50})]})
