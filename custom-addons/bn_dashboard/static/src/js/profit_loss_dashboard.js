@@ -92,6 +92,10 @@ export class ProfitLossDashboard extends Component {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index', // <-- Shows both values when hovering over a month
+                        intersect: false,
+                    },
                     plugins: { 
                         legend: { position: 'top' },
                         tooltip: {
@@ -102,7 +106,11 @@ export class ProfitLossDashboard extends Component {
                                         label += ': ';
                                     }
                                     if (context.parsed.y !== null) {
-                                        label += 'Rs ' + new Intl.NumberFormat('en-US').format(context.parsed.y);
+                                        // ADDED minimumFractionDigits to show original exact value
+                                        label += 'Rs ' + new Intl.NumberFormat('en-US', { 
+                                            minimumFractionDigits: 2, 
+                                            maximumFractionDigits: 2 
+                                        }).format(context.parsed.y);
                                     }
                                     return label;
                                 }
@@ -129,7 +137,7 @@ export class ProfitLossDashboard extends Component {
                                 text: 'Expense (Rs)'
                             },
                             beginAtZero: true,
-                            min: 0, // <-- ADD THIS LINE
+                            min: 0,
                             grid: {
                                 drawOnChartArea: false, 
                             },
@@ -139,7 +147,7 @@ export class ProfitLossDashboard extends Component {
             });
         }
 
-        // 2. Breakdown Chart (Doughnut) - No changes needed here
+        // 2. Breakdown Chart (Doughnut)
         if (this.breakdownChartRef.el && this.charts.breakdown) {
             this.charts.breakdown.destroy();
         }
@@ -161,7 +169,26 @@ export class ProfitLossDashboard extends Component {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right' } },
+                    plugins: { 
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += 'Rs ' + new Intl.NumberFormat('en-US', { 
+                                            minimumFractionDigits: 2, 
+                                            maximumFractionDigits: 2 
+                                        }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
                     cutout: '70%'
                 }
             });
