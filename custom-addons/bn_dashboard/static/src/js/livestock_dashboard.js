@@ -240,7 +240,7 @@ export class LivestockDashboard extends Component {
     openStateList(stateKey) {
         const stateLabels = {
             'not_received': 'Draft',
-            'received': 'Received',
+            'slaughtered': 'Slaughtered',
             'cutting': 'Cutting',
             'material_request': 'Material Request',
             'done': 'Done',
@@ -266,7 +266,7 @@ export class LivestockDashboard extends Component {
     stateBadgeClass(key) {
         return {
             not_received: "text-bg-secondary",
-            received: "text-bg-info",
+            slaughtered: "text-bg-info",
             cutting: "text-bg-warning",
             material_request: "text-bg-primary",
             done: "text-bg-success",

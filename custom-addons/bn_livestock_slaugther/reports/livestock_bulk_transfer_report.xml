@@ -7,6 +7,7 @@
                 <t t-set="company" t-value="docs[:1].env.company"/>
                 <t t-set="destinations" t-value="docs.mapped('transfer_location')"/>
                 <t t-set="pickings" t-value="docs.mapped('transfer_picking_id')"/>
+                <t t-set="trucks" t-value="list(dict.fromkeys(r for r in docs.mapped('truck_number') if r))"/>
                 <t t-set="user_branch" t-value="user.sudo().employee_id.analytic_account_id.name"/>
                 <div class="page">
                     <h3 class="text-center mb-3">Livestock Bulk Transfer</h3>
@@ -14,6 +15,7 @@
                     <div class="row mb-3">
                         <div class="col-6">
                             <div><strong>Destination Location:</strong> <t t-esc="', '.join(destinations.mapped('display_name')) or '-'"/></div>
+                            <div><strong>Truck Number:</strong> <t t-esc="', '.join(trucks) or '-'"/></div>
                         </div>
                         <div class="col-6 text-end">
                             <div><strong>Transfer #:</strong> <t t-esc="', '.join(pickings.mapped('name')) or '-'"/></div>

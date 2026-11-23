@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from odoo import models, fields, _
 from odoo.exceptions import ValidationError, UserError
 
@@ -10,12 +12,12 @@ class LivestockSlaugtherWizard(models.TransientModel):
     def _default_source_location(self):
         return self.env['stock.location'].search([('name', 'ilike', 'Livestock Slaugther')], limit=1)
 
-    source_location_id = fields.Many2one('stock.location', string='Source Location', default=_default_source_location, readonly=True)
     dest_location_id = fields.Many2one('stock.location', string='Destination Location')
     livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaugther')
     livestock_slaughter_ids = fields.Many2many('livestock.slaugther', string='Selected Livestock')
     is_bulk = fields.Boolean('Bulk Transfer')
     remarks = fields.Text('Remarks')
+    truck_number = fields.Char('Truck Number')
     total_quantity = fields.Integer('Total Quantity', compute='_compute_total_quantity')
 
     def _compute_total_quantity(self):
@@ -26,8 +28,9 @@ class LivestockSlaugtherWizard(models.TransientModel):
         return self.livestock_slaughter_ids or self.livestock_slaughter_id
 
     def action_do_transfer(self):
-        """Create an internal picking from 'Livestock Slaugther' to chosen destination,
-        move the product and quantity of every selected slaughter record and validate it."""
+        """Move the selected slaughter records from the POS location of their
+        order to the chosen destination: one validated picking per POS location.
+        Records without a POS keep the 'Livestock Slaugther' location."""
         self.ensure_one()
         records = self._get_records()
 
@@ -36,20 +39,47 @@ class LivestockSlaugtherWizard(models.TransientModel):
             raise ValidationError(_('No records selected for transfer.'))
         if not self.dest_location_id:
             raise ValidationError(_('Please select the destination location.'))
-        transferred = records.filtered('transfer_bool')
-        if transferred:
-            raise ValidationError(_('Already transferred: %s') % ', '.join(transferred.mapped('name')))
+        if not (self.truck_number or '').strip():
+            raise ValidationError(_('Please enter the truck number.'))
+        records._check_order_transfer()
         for rec in records:
             if not rec.product_id:
                 raise ValidationError(_('Record %s has no product set.') % rec.name)
             if not rec.quantity or rec.quantity <= 0:
                 raise ValidationError(_('Quantity must be greater than 0 (%s).') % rec.name)
 
-        # source location named "Livestock Slaugther"
-        src_loc = self.source_location_id or self._default_source_location()
-        if not src_loc:
-            raise UserError(_('Source location "Livestock Slaugther" not found. Please create it or rename appropriately.'))
+        default_location = self._default_source_location()
+        records_by_location = defaultdict(lambda: self.env['livestock.slaugther'])
+        for rec in records:
+            src_loc = rec._pos_source_location() or default_location
+            if not src_loc:
+                raise UserError(_('Source location "Livestock Slaugther" not found. Please create it or rename appropriately.'))
+            if src_loc == self.dest_location_id:
+                raise ValidationError(_('%s is already at %s. Please select another destination.')
+                                      % (rec.name, src_loc.display_name))
+            records_by_location[src_loc] |= rec
 
+        pickings = self.env['stock.picking']
+        for src_loc, location_records in records_by_location.items():
+            pickings |= self._create_transfer(src_loc, location_records)
+
+        if self.is_bulk:
+            # Print the bulk transfer slip and close the wizard
+            action = self.env.ref('bn_livestock_slaugther.action_report_livestock_bulk_transfer').report_action(records)
+            action['close_on_report_download'] = True
+            return action
+
+        # Return action to open the picking (optional)
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'stock.picking',
+            'view_mode': 'form',
+            'res_id': pickings.id,
+            'target': 'current',
+        }
+
+    def _create_transfer(self, src_loc, records):
+        """One validated picking moving ``records`` out of ``src_loc``."""
         # choose internal picking type for the company (fallback to any internal if company-specific not found)
         picking_type = self.env['stock.warehouse']._get_program_type('livestock', src_loc)
         if not picking_type:
@@ -110,19 +140,6 @@ class LivestockSlaugtherWizard(models.TransientModel):
             'transfer_picking_id': picking.id,
             'transfer_bool': True,
             'transfer_remarks': self.remarks,
+            'truck_number': self.truck_number.strip(),
         })
-
-        if self.is_bulk:
-            # Print the bulk transfer slip and close the wizard
-            action = self.env.ref('bn_livestock_slaugther.action_report_livestock_bulk_transfer').report_action(records)
-            action['close_on_report_download'] = True
-            return action
-
-        # Return action to open the picking (optional)
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'stock.picking',
-            'view_mode': 'form',
-            'res_id': picking.id,
-            'target': 'current',
-        }
+        return picking

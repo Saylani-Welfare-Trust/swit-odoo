@@ -5,7 +5,7 @@ from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_doma
 
 state_selection = [
     ('not_received', 'Draft'),
-    ('received', 'Received'),
+    ('slaughtered', 'Slaughtered'),
     ('cutting', 'Cutting'),
     ('material_request', 'Material Request'),
     ('done', 'Done')
@@ -37,6 +37,7 @@ class LivestockSlaughter(models.Model):
     source_location_id = fields.Many2one('stock.location', string='Source Location')
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
+    truck_number = fields.Char('Truck Number', copy=False, readonly=True)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
@@ -102,7 +103,38 @@ class LivestockSlaughter(models.Model):
                     vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
                 else:
                     vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for record in records.filtered(lambda r: not r.source_location_id):
+            location = record._pos_source_location()
+            if location:
+                record.sudo().source_location_id = location.id
+        return records
+
+    def _pos_source_location(self):
+        """The stock location of the POS the order was created at (empty for
+        a record that does not come from a POS). Read as superuser: livestock
+        users do not need access to the POS configuration."""
+        self.ensure_one()
+        record = self.sudo()
+        config = record.pos_order_id.config_id or record.pos_session_id.config_id or record.pos_config_id
+        return config.picking_type_id.default_location_src_id.with_env(self.env)
+
+    def _check_order_transfer(self):
+        """Only slaughtered lines that are not transferred yet can be transferred."""
+        if not self:
+            raise ValidationError(_("Please select the records to transfer."))
+        transferred = self.filtered('transfer_bool')
+        if transferred:
+            raise ValidationError(
+                _("These records are already transferred:\n%s")
+                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
+            )
+        not_slaughtered = self.filtered(lambda r: r.state != 'slaughtered')
+        if not_slaughtered:
+            raise ValidationError(
+                _("Only slaughtered records can be transferred:\n%s")
+                % "\n".join(not_slaughtered.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
+            )
 
     def action_confirm(self):
         self.ensure_one()
@@ -127,10 +159,12 @@ class LivestockSlaughter(models.Model):
         if not location:
             raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
 
-        # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
+        # Retrieve the internal transfer operation type of the POS warehouse
+        source_location = self._pos_source_location()
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock', source_location)
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        source_location = source_location or picking_type.default_location_src_id
 
         # Retrieve the product based on the product code
         product = self.product_id
@@ -140,7 +174,7 @@ class LivestockSlaughter(models.Model):
         # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
-            'location_id': picking_type.default_location_src_id.id,
+            'location_id': source_location.id,
             'location_dest_id': location.id,
             'origin': self.name or 'Live Stock Slaughter',
             'source_record_ref': '%s,%s' % (self._name, self.id),
@@ -168,12 +202,12 @@ class LivestockSlaughter(models.Model):
         picking.button_validate()
 
         self.confirm_hide = True
-        self.state = 'received'
+        self.state = 'slaughtered'
 
     def action_cutting(self):
         self.ensure_one()
-        if self.state != 'received':
-            raise ValidationError("Cutting can only be started after confirmation.")
+        if self.state != 'slaughtered':
+            raise ValidationError("Cutting can only be started after the animal is slaughtered.")
         if not self.product_id:
             raise ValidationError("Please select a product before starting cutting.")
 
@@ -181,15 +215,17 @@ class LivestockSlaughter(models.Model):
         if not location:
             raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
 
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
+        source_location = self._pos_source_location()
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock', source_location)
         if not picking_type:
             raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        source_location = source_location or picking_type.default_location_src_id
 
         product = self.product_id
 
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
-            'location_id': picking_type.default_location_src_id.id,
+            'location_id': source_location.id,
             'location_dest_id': location.id,
             'origin': self.name or '',
             'source_record_ref': '%s,%s' % (self._name, self.id),
@@ -312,9 +348,10 @@ class LivestockSlaughter(models.Model):
         """Open a transient wizard to choose destination location"""
         
         self.ensure_one()
-        
+        self._check_order_transfer()
+
         return {
-            'name': _('Transfer from Slaughter Stock'),
+            'name': _('Order Transfer'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther.wizard',
             'view_mode': 'form',
@@ -324,17 +361,10 @@ class LivestockSlaughter(models.Model):
 
     def action_open_bulk_transfer(self):
         """Open the transfer wizard for all selected records at once"""
-        if not self:
-            raise ValidationError(_("Please select the records to transfer."))
-        transferred = self.filtered('transfer_bool')
-        if transferred:
-            raise ValidationError(
-                _("These records are already transferred:\n%s")
-                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
-            )
+        self._check_order_transfer()
 
         return {
-            'name': _('Bulk Transfer from Slaughter Stock'),
+            'name': _('Order Transfer'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther.wizard',
             'view_mode': 'form',

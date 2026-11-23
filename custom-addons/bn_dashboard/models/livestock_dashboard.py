@@ -7,15 +7,15 @@ from odoo import api, fields, models
 from odoo.osv import expression
 
 NEXT_ACTION = {
-    'not_received': 'Waiting for receipt',
-    'received': 'Start Cutting',
+    'not_received': 'Waiting for slaughter',
+    'slaughtered': 'Start Cutting',
     'cutting': 'Create Material Request',
     'material_request': 'End Cutting',
     'done': 'Completed',
 }
 STATE_COLOR = {
     'not_received': '#6c757d',
-    'received': '#17a2b8',
+    'slaughtered': '#17a2b8',
     'cutting': '#fd7e14',
     'material_request': '#6f42c1',
     'done': '#28a745',
@@ -27,7 +27,7 @@ class LivestockDashboard(models.TransientModel):
     _description = 'Livestock Dashboard'
 
     @api.model
-    def get_dashboard_data(self, date_from=False, date_to=False, department=False, province_id=False, city_id=False, zone_id=False, segment_id=False):
+    def get_dashboard_data(self, date_from=False, date_to=False, department=False, province_id=False, city_id=False, zone_id=False, segment_id=False, segment_type=False):
         Slaughter = self.env['livestock.slaugther']
 
         # ---- domains ----
@@ -104,9 +104,9 @@ class LivestockDashboard(models.TransientModel):
         recent = Slaughter.search(base, limit=15, order='create_date desc')
         recent_data = [self._serialize(r) for r in recent]
 
-        # ---- pending actions (received or material_request) ----
+        # ---- pending actions (slaughtered or material_request) ----
         pending = Slaughter.search(
-            base + [('state', 'in', ('received', 'material_request'))],
+            base + [('state', 'in', ('slaughtered', 'material_request'))],
             limit=15, order='create_date asc',
         )
         pending_data = [self._serialize(r) for r in pending]
@@ -126,7 +126,7 @@ class LivestockDashboard(models.TransientModel):
         return {
             'kpis': {
                 'total': total,
-                'pending': state_counts['not_received'] + state_counts['received'],
+                'pending': state_counts['not_received'] + state_counts['slaughtered'],
                 'in_progress': state_counts['cutting'] + state_counts['material_request'],
                 'done': state_counts['done'],
                 'total_value': total_value,

@@ -13,11 +13,11 @@
                         <label for="dest_location_id"/>
                         <h1><field name="dest_location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" class="oe_inline" required="1" /></h1>
                     </div>
-                    <group invisible="not is_bulk">
+                    <group>
                         <group>
-                            <field name="source_location_id" options="{'no_open': True}" force_save="1" invisible="1" />
+                            <field name="truck_number" required="1" />
                         </group>
-                        <group>
+                        <group invisible="not is_bulk">
                             <field name="total_quantity" />
                         </group>
                     </group>
