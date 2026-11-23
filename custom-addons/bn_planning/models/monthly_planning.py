@@ -280,7 +280,7 @@ class MonthlyPlanning(models.Model):
             ('state', '=', 'active'),
             ('is_locked', '=', False),
             ('location_dest_id', '!=', False),
-            # ('to_date', '<=', tomorrow),
+            ('to_date', '<=', tomorrow),      # <-- NEW: ends today or tomorrow
         ])
 
         _logger.info(
