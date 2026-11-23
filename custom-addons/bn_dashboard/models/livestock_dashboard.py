@@ -4,6 +4,7 @@ from datetime import timedelta
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models
+from odoo.osv import expression
 
 NEXT_ACTION = {
     'not_received': 'Waiting for receipt',
@@ -26,7 +27,7 @@ class LivestockDashboard(models.TransientModel):
     _description = 'Livestock Dashboard'
 
     @api.model
-    def get_dashboard_data(self, date_from=False, date_to=False, department=False):
+    def get_dashboard_data(self, date_from=False, date_to=False, department=False, province_id=False, city_id=False, zone_id=False, segment_id=False):
         Slaughter = self.env['livestock.slaugther']
 
         # ---- domains ----
@@ -44,7 +45,22 @@ class LivestockDashboard(models.TransientModel):
         elif department == 'chicken':
             dept_domain.append(('is_chicken_depart', '=', True))
 
-        base = date_domain + dept_domain
+        # ---- location domain ----
+        loc_domain = []
+        active_ids = [i for i in (province_id, city_id, zone_id, segment_id) if i]
+        if active_ids:
+            for a_id in active_ids:
+                loc_domain = expression.OR([
+                    loc_domain,
+                    [
+                        '|', '|',
+                        ('pos_order_id.config_id.analytic_account_id', 'child_of', a_id),
+                        ('pos_order_id.session_id.analytic_account_id', 'child_of', a_id),
+                        ('direct_deposit_line_id.direct_deposit_id.analytic_account_id', 'child_of', a_id)
+                    ]
+                ])
+
+        base = date_domain + dept_domain + loc_domain
 
         # ---- state counts ----
         states = [k for k, _l in Slaughter._fields['state'].selection]
@@ -77,7 +93,7 @@ class LivestockDashboard(models.TransientModel):
             m_domain = [
                 ('create_date', '>=', str(m_start) + ' 00:00:00'),
                 ('create_date', '<=', str(m_end) + ' 23:59:59'),
-            ] + dept_domain
+            ] + dept_domain + loc_domain
             trend.append({
                 'label': m_start.strftime('%b %y'),
                 'total': Slaughter.search_count(m_domain),

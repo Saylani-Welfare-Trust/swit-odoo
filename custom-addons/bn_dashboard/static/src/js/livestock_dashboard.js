@@ -22,12 +22,30 @@ export class LivestockDashboard extends Component {
             date_to: this._iso(today),
             active_preset: "ytd",
             department: "",
+            
+            // Location hierarchy filters
+            province_id: null,
+            city_id: null,
+            zone_id: null,
+            segment_l1: null,
+            segment_l2: null,
+            segment_l3: null,
+            segment_l4: null,
+            segment_type: "",
+            provinces: [],
+            cities: [],
+            zones: [],
+            segments_l1: [],
+            segments_l2: [],
+            segments_l3: [],
+            segments_l4: [],
         });
 
         this.charts = {};
 
         onWillStart(async () => {
             await this._loadChartJs();
+            await this.fetch_dropdowns();
             await this.loadData();
         });
 
@@ -56,13 +74,74 @@ export class LivestockDashboard extends Component {
         }
     }
 
+    async fetch_dropdowns() {
+        try {
+            // Use the existing location hierarchy method from pos.order
+            const hierarchy = await this.orm.call('pos.order', 'get_location_hierarchy', []);
+            this.state.provinces = hierarchy.provinces || [];
+            this.state.cities = hierarchy.cities || [];
+            this.state.zones = hierarchy.zones || [];
+            this.state.segments_l1 = hierarchy.segments_l1 || [];
+            this.state.segments_l2 = hierarchy.segments_l2 || [];
+            this.state.segments_l3 = hierarchy.segments_l3 || [];
+            this.state.segments_l4 = hierarchy.segments_l4 || [];
+        } catch (err) {
+            console.error("Failed to load location hierarchy:", err);
+        }
+    }
+
+    get filteredCities() {
+        if (!this.state.province_id) return this.state.cities;
+        const pId = parseInt(this.state.province_id, 10);
+        return this.state.cities.filter(c => c.province_id === pId);
+    }
+
+    get filteredZones() {
+        if (!this.state.city_id) return this.state.zones;
+        const cId = parseInt(this.state.city_id, 10);
+        return this.state.zones.filter(z => z.city_id === cId);
+    }
+
+    get filteredSegmentsL2() {
+        if (!this.state.segment_l1) return [];
+        const pId = parseInt(this.state.segment_l1, 10);
+        return this.state.segments_l2.filter(s => s.parent_id === pId);
+    }
+
+    get filteredSegmentsL3() {
+        if (!this.state.segment_l2) return [];
+        const pId = parseInt(this.state.segment_l2, 10);
+        return this.state.segments_l3.filter(s => s.parent_id === pId);
+    }
+
+    get filteredSegmentsL4() {
+        if (!this.state.segment_l3) return [];
+        const pId = parseInt(this.state.segment_l3, 10);
+        return this.state.segments_l4.filter(s => s.parent_id === pId);
+    }
+
     async loadData() {
         this.state.loading = true;
         try {
+            let effective_segment_id = null;
+            if (this.state.segment_l4) effective_segment_id = parseInt(this.state.segment_l4, 10);
+            else if (this.state.segment_l3) effective_segment_id = parseInt(this.state.segment_l3, 10);
+            else if (this.state.segment_l2) effective_segment_id = parseInt(this.state.segment_l2, 10);
+            else if (this.state.segment_l1) effective_segment_id = parseInt(this.state.segment_l1, 10);
+
             this.state.data = await this.orm.call(
                 "livestock.dashboard",
                 "get_dashboard_data",
-                [this.state.date_from || false, this.state.date_to || false, this.state.department || false]
+                [
+                    this.state.date_from || false, 
+                    this.state.date_to || false, 
+                    this.state.department || false,
+                    this.state.province_id ? parseInt(this.state.province_id, 10) : false,
+                    this.state.city_id ? parseInt(this.state.city_id, 10) : false,
+                    this.state.zone_id ? parseInt(this.state.zone_id, 10) : false,
+                    effective_segment_id || false,
+                    this.state.segment_type || false
+                ]
             );
         } catch (err) {
             console.error("[Livestock Dashboard] failed:", err);
@@ -76,7 +155,42 @@ export class LivestockDashboard extends Component {
         if (ev.target.name === "date_from") this.state.date_from = ev.target.value;
         else if (ev.target.name === "date_to") this.state.date_to = ev.target.value;
         else if (ev.target.name === "department") this.state.department = ev.target.value;
+        else if (ev.target.name === "segment_l4") this.state.segment_l4 = ev.target.value;
+        
         this.state.active_preset = null;
+        await this.loadData();
+    }
+
+    async onchange_province() {
+        this.state.city_id = null;
+        this.state.zone_id = null;
+        await this.loadData();
+    }
+
+    async onchange_city() {
+        this.state.zone_id = null;
+        await this.loadData();
+    }
+
+    async onchange_zone() {
+        await this.loadData();
+    }
+
+    async onchange_segment_l1() {
+        this.state.segment_l2 = null;
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.loadData();
+    }
+
+    async onchange_segment_l2() {
+        this.state.segment_l3 = null;
+        this.state.segment_l4 = null;
+        await this.loadData();
+    }
+
+    async onchange_segment_l3() {
+        this.state.segment_l4 = null;
         await this.loadData();
     }
 

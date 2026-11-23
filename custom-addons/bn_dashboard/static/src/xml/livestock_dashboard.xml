@@ -32,7 +32,8 @@
             <!-- filters -->
             <div class="card shadow-sm border-0 mb-4 d-print-none">
                 <div class="card-body py-2">
-                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <!-- Row 1: Dates -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center mb-2 pb-2 border-bottom">
                         <div class="btn-group btn-group-sm">
                             <button t-attf-class="btn #{state.active_preset === 'this_month' ? 'btn-primary' : 'btn-outline-primary'}"
                                     data-preset="this_month" t-on-click="applyPreset">This Month</button>
@@ -53,15 +54,89 @@
                             <label class="fw-bold m-0 small">To:</label>
                             <input type="date" class="form-control form-control-sm"
                                    name="date_to" t-model="state.date_to" t-on-change="applyFilter"/>
-                            <label class="fw-bold m-0 small ms-2">Dept:</label>
-                            <select class="form-select form-select-sm" name="department"
-                                    t-model="state.department" t-on-change="applyFilter">
-                                <option value="">All</option>
-                                <option value="meat">Meat</option>
-                                <option value="goat">Goat</option>
-                                <option value="chicken">Chicken</option>
-                            </select>
                         </div>
+                    </div>
+
+                    <!-- Row 2: Location and Department Filters -->
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <label class="fw-bold m-0 small">Dept:</label>
+                        <select class="form-select form-select-sm" style="width: auto;" name="department"
+                                t-model="state.department" t-on-change="applyFilter">
+                            <option value="">All</option>
+                            <option value="meat">Meat</option>
+                            <option value="goat">Goat</option>
+                            <option value="chicken">Chicken</option>
+                        </select>
+
+                        <label class="fw-bold m-0 small ms-2">Province:</label>
+                        <select class="form-select form-select-sm" style="width: auto;" name="province_id"
+                                t-model="state.province_id" t-on-change="onchange_province">
+                            <option value="">All</option>
+                            <t t-foreach="state.provinces" t-as="p" t-key="p.id">
+                                <option t-att-value="p.id" t-esc="p.name"/>
+                            </t>
+                        </select>
+
+                        <label class="fw-bold m-0 small ms-2">City:</label>
+                        <select class="form-select form-select-sm" style="width: auto;" name="city_id"
+                                t-model="state.city_id" t-on-change="onchange_city">
+                            <option value="">All</option>
+                            <t t-foreach="filteredCities" t-as="c" t-key="c.id">
+                                <option t-att-value="c.id" t-esc="c.name"/>
+                            </t>
+                        </select>
+
+                        <label class="fw-bold m-0 small ms-2">Zone:</label>
+                        <select class="form-select form-select-sm" style="width: auto;" name="zone_id"
+                                t-model="state.zone_id" t-on-change="onchange_zone">
+                            <option value="">All</option>
+                            <t t-foreach="filteredZones" t-as="z" t-key="z.id">
+                                <option t-att-value="z.id" t-esc="z.name"/>
+                            </t>
+                        </select>
+
+                        <!-- Segments -->
+                        <label class="fw-bold m-0 small ms-2">Segment L1:</label>
+                        <select class="form-select form-select-sm" style="width: auto;" name="segment_l1"
+                                t-model="state.segment_l1" t-on-change="onchange_segment_l1">
+                            <option value="">All</option>
+                            <t t-foreach="state.segments_l1" t-as="s" t-key="s.id">
+                                <option t-att-value="s.id" t-esc="s.name"/>
+                            </t>
+                        </select>
+                        
+                        <t t-if="state.segment_l1">
+                            <label class="fw-bold m-0 small ms-2">L2:</label>
+                            <select class="form-select form-select-sm" style="width: auto;" name="segment_l2"
+                                    t-model="state.segment_l2" t-on-change="onchange_segment_l2">
+                                <option value="">All</option>
+                                <t t-foreach="filteredSegmentsL2" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </t>
+                        
+                        <t t-if="state.segment_l2">
+                            <label class="fw-bold m-0 small ms-2">L3:</label>
+                            <select class="form-select form-select-sm" style="width: auto;" name="segment_l3"
+                                    t-model="state.segment_l3" t-on-change="onchange_segment_l3">
+                                <option value="">All</option>
+                                <t t-foreach="filteredSegmentsL3" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </t>
+                        
+                        <t t-if="state.segment_l3">
+                            <label class="fw-bold m-0 small ms-2">L4:</label>
+                            <select class="form-select form-select-sm" style="width: auto;" name="segment_l4"
+                                    t-model="state.segment_l4" t-on-change="applyFilter">
+                                <option value="">All</option>
+                                <t t-foreach="filteredSegmentsL4" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </t>
                     </div>
                 </div>
             </div>
