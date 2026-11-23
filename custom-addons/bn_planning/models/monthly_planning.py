@@ -280,7 +280,7 @@ class MonthlyPlanning(models.Model):
             ('state', '=', 'active'),
             ('is_locked', '=', False),
             ('location_dest_id', '!=', False),
-            ('to_date', '<=', tomorrow),      # <-- NEW: ends today or tomorrow
+            ('to_date', '<=', tomorrow),
         ])
 
         _logger.info(
@@ -512,14 +512,21 @@ class MonthlyPlanningLineBase(models.AbstractModel):
                         % (rec.date, plan.from_date, plan.to_date)
                     )
 
-    @api.depends('product_id')
+    @api.depends('product_id', 'monthly_planning_id.source_location_id')
     def _compute_on_hand_qty(self):
-        source_loc = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         for rec in self:
-            if rec.product_id and source_loc:
-                rec.on_hand_qty = rec.product_id.with_context(
-                    location=source_loc.id
-                ).qty_available
+            # Try to get the plan's source location, otherwise just show global stock
+            source_loc = rec.monthly_planning_id.source_location_id
+            
+            if rec.product_id:
+                if source_loc:
+                    # Shows quantity in the specific source location of the plan
+                    rec.on_hand_qty = rec.product_id.with_context(
+                        location=source_loc.id
+                    ).qty_available
+                else:
+                    # Shows global quantity (matches the smart button on the product form)
+                    rec.on_hand_qty = rec.product_id.qty_available
             else:
                 rec.on_hand_qty = 0.0
 
