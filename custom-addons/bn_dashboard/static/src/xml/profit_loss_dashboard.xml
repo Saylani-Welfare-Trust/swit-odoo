@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="profit_loss_dashboard.ProfitLossTemplate">
+        <div class="o_profit_loss_dashboard w-100 h-100 p-4" style="background-color: #f8f9fa; overflow-y: auto;">
+            
+            <!-- Header & Filters -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="m-0">Profit &amp; Loss Dashboard</h2>
+                <div class="d-flex gap-3 align-items-center bg-white p-2 rounded shadow-sm">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-bold m-0">From:</label>
+                        <input type="date" class="form-control" name="date_from" t-model="state.date_from" t-on-change="applyFilter"/>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="fw-bold m-0">To:</label>
+                        <input type="date" class="form-control" name="date_to" t-model="state.date_to" t-on-change="applyFilter"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div t-if="state.loading" class="text-center mt-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2">Loading financial data...</p>
+            </div>
+
+            <!-- Dashboard Content -->
+            <t t-elif="state.data">
+                <!-- KPI Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 border-start border-4 border-success">
+                            <div class="card-body">
+                                <h6 class="text-muted text-uppercase mb-2">Total Income</h6>
+                                <h3 class="m-0 text-success">
+                                    Rs <t t-esc="formatCurrency(state.data.total_income)"/>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 border-start border-4 border-danger">
+                            <div class="card-body">
+                                <h6 class="text-muted text-uppercase mb-2">Total Expenses</h6>
+                                <h3 class="m-0 text-danger">
+                                    Rs <t t-esc="formatCurrency(state.data.total_expense)"/>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 border-start border-4 border-primary">
+                            <div class="card-body">
+                                <h6 class="text-muted text-uppercase mb-2">Net Profit</h6>
+                                <h3 t-attf-class="m-0 #{state.data.net_profit &gt;= 0 ? 'text-primary' : 'text-danger'}">
+                                    Rs <t t-esc="formatCurrency(state.data.net_profit)"/>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Area -->
+                <div class="row">
+                    <!-- Trend Chart -->
+                    <div class="col-md-8 mb-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Income vs Expenses Trend</div>
+                            <div class="card-body" style="position: relative; height: 350px;">
+                                <canvas t-ref="trendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Breakdown Chart -->
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Top Expense Breakdown</div>
+                            <div class="card-body" style="position: relative; height: 350px;">
+                                <canvas t-ref="breakdownChart"></canvas>
+                                <div t-if="state.data.expense_breakdown.length == 0" class="text-center text-muted mt-5">
+                                    No expenses recorded in this period.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

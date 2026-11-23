@@ -29,6 +29,7 @@
         'views/pos_dd_report_views.xml',
         'views/pos_dd_report_access_views.xml',
         'views/search_filters.xml',
+        'views/profit_loss_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -48,6 +49,10 @@
             'bn_dashboard/static/src/css/pos_dashboard_v2.scss',
             'bn_dashboard/static/src/search/pos_dd_report_filters.js',
             'bn_dashboard/static/src/search/pos_dd_report_filters.xml',
+            'bn_dashboard/static/src/js/profit_loss_dashboard.js',
+            'bn_dashboard/static/src/xml/profit_loss_dashboard.xml',
+            
+            
         ],
     },
     'installable': True,
