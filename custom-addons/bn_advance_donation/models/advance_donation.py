@@ -458,6 +458,13 @@ class AdvanceDonation(models.Model):
         
         # Create Customer Payment (Sent) for the cancelled amount
         if cancelled_amount > 0 and self.donor_id:
+            journal = self.env['account.journal'].sudo().search([
+                ('type', '=', 'bank'),
+                ('company_id', '=', self.env.company.id)
+            ], limit=1)
+            if not journal:
+                raise UserError(_('No bank journal is configured for %s: the refund payment of the '
+                                  'cancelled amount cannot be created.') % self.env.company.name)
             payment_vals = {
                 'payment_type': 'outbound',
                 'partner_type': 'customer',
@@ -466,13 +473,12 @@ class AdvanceDonation(models.Model):
                 'currency_id': self.currency_id.id,
                 'date': fields.Date.today(),
                 'ref': f'Cancelled payment for {self.name}',
-                'journal_id': self.env['account.journal'].search([
-                    ('type', '=', 'bank'),
-                    ('company_id', '=', self.env.company.id)
-                ], limit=1).id,
+                'journal_id': journal.id,
             }
-            
-            self.env['account.payment'].create(payment_vals)
+
+            # Advance Donation users cancel payments (the button's group) but have no
+            # accounting rights: the refund payment is created on their behalf
+            self.env['account.payment'].sudo().create(payment_vals)
         
         # Reload the form view
         return {

@@ -27,6 +27,11 @@
         </record>
     
     </data>
-    
+
+    <!-- Noupdate above: a database installed with an earlier version keeps that
+         version's code (without the service charges). Set again on every
+         install / upgrade. -->
+    <function model="ir.actions.server" name="write"
+              eval="[[ref('bn_donation_home_service.donation_home_service_action_server')], {'code': 'for record in records:\n    record.calculate_amount()\n    record.calculate_service_charges()\n'}]"/>
 
 </odoo>

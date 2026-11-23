@@ -14,4 +14,11 @@
         </record>
     </data>
 
+    <!-- The cron above is noupdate: a database installed with an earlier version
+         keeps that version's code, which called a method since renamed
+         (_cron_pull_pos_entries). Its code is set again on every install /
+         upgrade; schedule and other settings are left as configured. -->
+    <function model="ir.cron" name="write"
+              eval="[[ref('bn_journal_transfer.pos_journal_transfer_cron')], {'code': 'model._pull_pos_entries()'}]"/>
+
 </odoo>

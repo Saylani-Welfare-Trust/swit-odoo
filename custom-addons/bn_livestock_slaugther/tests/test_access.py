@@ -52,6 +52,8 @@ class TestLivestockAccess(TransactionCase):
         for method in ('action_issue_purchase_requisition', 'action_issue_delivery_note', 'action_welfare_approve'):
             with self.assertRaises(UserError, msg=method):
                 getattr(center.with_user(self.user), method)()
+        # Welfare approves Jahaiz requests whose items are selected
+        center.write({'type': 'jahaiz', 'state': 'item_selected'})
         center.with_user(self.welfare).action_welfare_approve()
         self.assertEqual(center.state, 'welfare_approved')
 
