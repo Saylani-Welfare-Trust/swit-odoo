@@ -46,6 +46,13 @@ class DonationInKind(models.Model):
     
     donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'), tracking=True)
     product_id = fields.Many2one('product.product', string="Product", tracking=True, domain=[('is_donation_in_kind', '=', True)])
+    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
+    
+    # ADD THIS ONCHANGE METHOD:
+    @api.onchange('product_id')
+    def _onchange_product_id_uom(self):
+        if self.product_id:
+            self.product_uom_id = self.product_id.uom_id
     picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'),
                                       domain=[('program_type', '=', 'donation_in_kind')])
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))
@@ -74,6 +81,7 @@ class DonationInKind(models.Model):
     def _build_din_receipt_message(self):
         donation_items = ""
         for line in self.donation_in_kind_line_ids:
+            uom_name = line.product_uom_id.name or line.product_id.uom_id.name
             donation_items += f"{line.quantity} x {line.product_id.name}\n"
 
         return f"""Dear {self.donor_id[:1].name},
@@ -181,6 +189,7 @@ May Allah bless you!
                     'description_picking': record.product_id.name,
                     'name': record.product_id.name,
                     'product_uom_qty': record.quantity,
+                    'product_uom': record.product_uom_id.id or record.product_id.uom_id.id,
                     'location_dest_id': record.location_id.id,
                     'location_id': vendor_location_id,
                 }))
@@ -382,7 +391,9 @@ May Allah bless you!
         self.ensure_one()
         net = {}
         for line in self.donation_in_kind_line_ids:
-            net[line.product_id] = net.get(line.product_id, 0.0) + line.quantity
+            # Convert quantity to the product's base UoM to correctly calculate net stock
+            qty = line.product_uom_id._compute_quantity(line.quantity, line.product_id.uom_id) if line.product_uom_id else line.quantity
+            net[line.product_id] = net.get(line.product_id, 0.0) + qty
         if self.picking_id.state == 'done':
             for move in self.picking_id.move_ids.filtered(lambda m: m.state == 'done'):
                 net[move.product_id] = net.get(move.product_id, 0.0) - move.quantity
@@ -459,7 +470,8 @@ May Allah bless you!
             amount = 0.0
             stock_debits = {}
             for line in record.donation_in_kind_line_ids:
-                value = self.env.company.currency_id.round(line.quantity * line.avg_price)
+                qty = line.product_uom_id._compute_quantity(line.quantity, line.product_id.uom_id) if line.product_uom_id else line.quantity
+                value = self.env.company.currency_id.round(qty * line.avg_price)
                 if not value:
                     continue
                 categ = line.product_id.categ_id
@@ -523,7 +535,7 @@ May Allah bless you!
         WhatsApp first, SMS fallback (donor.notifier). A failed message
         never stops the validation."""
         self.ensure_one()
-        items = ', '.join('%s x %g' % (line.product_id.display_name, line.quantity)
+        items = ', '.join('%s %s x %s' % (line.quantity, line.product_uom_id.name or line.product_id.uom_id.name, line.product_id.display_name)
                           for line in self.donation_in_kind_line_ids)
         message = (f"Dear {self.donor_id.name},\n\nThank you for your donation in kind!\n\n"
                    f"Reference: {self.name}\nItems: {items or '-'}\n\nMay Allah bless you!\n\n- SWIT")
@@ -620,11 +632,12 @@ May Allah bless you!
             din = self.create({
                 'donor_id': data['donor_id'],
                 'product_id': line['product_id'],
+                'product_uom_id': self.env['product.product'].browse(line['product_id']).uom_id.id, # <--- ADD THIS
                 'quantity': line['quantity'],
                 'donation_in_kind_line_ids': [(0, 0, {
                     'product_id': line['product_id'],
+                    'product_uom_id': self.env['product.product'].browse(line['product_id']).uom_id.id, # <--- ADD THIS
                     'quantity': line['quantity'],
-                    # valued by the valuation committee when it has no cost
                     'avg_price': self.env['product.product'].browse(line['product_id']).standard_price,
                     'remarks': line.get('remarks') or '',
                 })]
