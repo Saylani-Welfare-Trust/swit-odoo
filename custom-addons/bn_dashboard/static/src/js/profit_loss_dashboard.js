@@ -93,7 +93,21 @@ export class ProfitLossDashboard extends Component {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { 
-                        legend: { position: 'top' } 
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += 'Rs ' + new Intl.NumberFormat('en-US').format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         y: {
@@ -115,8 +129,9 @@ export class ProfitLossDashboard extends Component {
                                 text: 'Expense (Rs)'
                             },
                             beginAtZero: true,
+                            min: 0, // <-- ADD THIS LINE
                             grid: {
-                                drawOnChartArea: false, // Prevents grid lines from overlapping
+                                drawOnChartArea: false, 
                             },
                         }
                     }
