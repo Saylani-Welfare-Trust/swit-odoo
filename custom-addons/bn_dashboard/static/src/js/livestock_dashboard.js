@@ -123,6 +123,25 @@ export class LivestockDashboard extends Component {
         });
     }
 
+    openStateList(stateKey) {
+        const stateLabels = {
+            'not_received': 'Draft',
+            'received': 'Received',
+            'cutting': 'Cutting',
+            'material_request': 'Material Request',
+            'done': 'Done',
+        };
+        const label = stateLabels[stateKey] || 'Livestock';
+        this.actionService.doAction({
+            type: "ir.actions.act_window",
+            name: `${label} Slaughters`,
+            res_model: "livestock.slaugther",
+            view_mode: "tree,form",
+            domain: [["state", "=", stateKey]],
+            target: "current",
+        });
+    }
+
     formatCurrency(v) {
         if (v === undefined || v === null) return "0.00";
         return new Intl.NumberFormat("en-US", {
@@ -238,6 +257,16 @@ export class LivestockDashboard extends Component {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const stateKey = d.state_chart[index].key;
+                            this.openStateList(stateKey);
+                        }
+                    },
+                    onHover: (event, elements) => {
+                        event.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+                    },
                     scales: {
                         x: { beginAtZero: true, ticks: { precision: 0 } },
                         y: { grid: { display: false } },

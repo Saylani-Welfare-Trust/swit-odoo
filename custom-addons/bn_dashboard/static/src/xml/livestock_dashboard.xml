@@ -10,6 +10,7 @@
             }
             .o_livestock_dashboard .o_ls_kpi { transition: transform .15s ease; }
             .o_livestock_dashboard .o_ls_kpi:hover { transform: translateY(-2px); }
+            .o_livestock_dashboard .cursor-pointer { cursor: pointer; }
         </style>
 
         <div class="o_livestock_dashboard w-100 h-100 p-4"
@@ -73,46 +74,26 @@
 
             <!-- content -->
             <t t-elif="state.data">
-                <!-- KPI cards -->
+                
+                <!-- KPI cards (Dynamic loop for each state) -->
                 <div class="row g-3 mb-4">
-                    <div class="col-md-3">
-                        <div class="card shadow-sm border-0 border-start border-4 border-primary o_ls_kpi h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted text-uppercase small mb-2">Total Animals</h6>
-                                <h3 class="m-0 text-primary"><t t-esc="state.data.kpis.total"/></h3>
-                                <small class="text-muted">
-                                    Value: Rs <t t-esc="formatCurrency(state.data.kpis.total_value)"/>
-                                </small>
+                    <t t-foreach="state.data.state_chart" t-as="s" t-key="s.key">
+                        <div class="col" style="min-width: 180px; flex: 1;">
+                            <div class="card shadow-sm border-0 border-start border-4 o_ls_kpi h-100 cursor-pointer"
+                                 t-attf-style="border-left-color: #{s.color} !important;"
+                                 t-on-click="() => this.openStateList(s.key)">
+                                <div class="card-body p-3">
+                                    <h6 class="text-muted text-uppercase small mb-2" t-esc="s.label"/>
+                                    <h3 class="m-0 fw-bold" t-attf-style="color: #{s.color};">
+                                        <t t-esc="s.count"/>
+                                    </h3>
+                                    <small class="text-muted mt-1 d-block" style="font-size: 0.75rem;">
+                                        Click to view list <i class="fa fa-arrow-right ms-1"/>
+                                    </small>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card shadow-sm border-0 border-start border-4 border-secondary o_ls_kpi h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted text-uppercase small mb-2">Pending</h6>
-                                <h3 class="m-0 text-secondary"><t t-esc="state.data.kpis.pending"/></h3>
-                                <small class="text-muted">Not received + Received</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card shadow-sm border-0 border-start border-4 border-warning o_ls_kpi h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted text-uppercase small mb-2">In Progress</h6>
-                                <h3 class="m-0 text-warning"><t t-esc="state.data.kpis.in_progress"/></h3>
-                                <small class="text-muted">Cutting + Material Request</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card shadow-sm border-0 border-start border-4 border-success o_ls_kpi h-100">
-                            <div class="card-body">
-                                <h6 class="text-muted text-uppercase small mb-2">Completed</h6>
-                                <h3 class="m-0 text-success"><t t-esc="state.data.kpis.done"/></h3>
-                                <small class="text-muted">Ready for distribution</small>
-                            </div>
-                        </div>
-                    </div>
+                    </t>
                 </div>
 
                 <!-- trend + department -->
