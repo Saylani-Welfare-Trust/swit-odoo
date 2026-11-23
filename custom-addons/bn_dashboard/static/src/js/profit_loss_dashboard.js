@@ -77,26 +77,54 @@ export class ProfitLossDashboard extends Component {
                             label: 'Income',
                             data: this.state.data.trend_income,
                             backgroundColor: '#28a745',
-                            borderRadius: 4
+                            borderRadius: 4,
+                            yAxisID: 'y', // Uses Left Axis
                         },
                         {
                             label: 'Expense',
                             data: this.state.data.trend_expense,
                             backgroundColor: '#dc3545',
-                            borderRadius: 4
+                            borderRadius: 4,
+                            yAxisID: 'y1', // Uses Right Axis
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
-                    scales: { y: { beginAtZero: true } }
+                    plugins: { 
+                        legend: { position: 'top' } 
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Income (Rs)'
+                            },
+                            beginAtZero: true
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Expense (Rs)'
+                            },
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false, // Prevents grid lines from overlapping
+                            },
+                        }
+                    }
                 }
             });
         }
 
-        // 2. Breakdown Chart
+        // 2. Breakdown Chart (Doughnut) - No changes needed here
         if (this.breakdownChartRef.el && this.charts.breakdown) {
             this.charts.breakdown.destroy();
         }

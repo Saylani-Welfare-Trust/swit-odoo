@@ -3,7 +3,7 @@
     <data>
         <!-- 1. Client Action -->
         <record id="action_profit_loss_dashboard" model="ir.actions.client">
-            <field name="name">Profit &amp; Loss</field>
+            <field name="name">Profit &amp; Loss Dashboard</field>
             <field name="tag">profit_loss_dashboard</field>
         </record>
 
