@@ -16,13 +16,6 @@ class DonationInKindLine(models.Model):
         return False
 
     product_id = fields.Many2one('product.product', string="Product", domain=[('is_donation_in_kind', '=', True)])
-    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    
-    # ADD THIS ONCHANGE METHOD:
-    @api.onchange('product_id')
-    def _onchange_product_id_line_uom(self):
-        if self.product_id:
-            self.product_uom_id = self.product_id.uom_id
     donation_in_kind_id = fields.Many2one('donation.in.kind', string="Donation In Kind")
     location_id = fields.Many2one('stock.location', string='Location', required=True, domain="[('usage', '=', 'internal')]", default=lambda self: self.default_set_value('location_id'))
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)

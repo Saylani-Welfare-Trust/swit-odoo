@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 
 class DonationInKindConfig(models.Model):
     _name = 'donation.in.kind.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Donation In Kind Config"
 
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_branch_kitchen_request" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.search.filters</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="inherit_id" ref="bn_kitchen.search_branch_kitchen_request"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_type" string="Type" context="{'group_by': 'type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

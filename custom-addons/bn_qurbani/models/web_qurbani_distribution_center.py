@@ -2,6 +2,7 @@ from odoo import models, fields
 
 class QurbaniDistributionCenter(models.Model):
     _name = 'web.qurbani.distribution.center'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Qurbani Distribution Center"
 
 

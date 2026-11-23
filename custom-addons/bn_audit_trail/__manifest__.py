@@ -1,6 +1,6 @@
 {
     'name': 'Audit Trail',
-    'version': '17.0.2.5.0',
+    'version': '17.0.2.5.1',
     'category': 'BytesNode/Audit Trail',
     'summary': 'Track create, update, view and delete activity across all Odoo models by default (standard & custom)',
     'description': """
@@ -34,6 +34,7 @@ Key features
         'views/audit_log_views.xml',
         'views/menu.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
     ],
     'installable': True,
     'application': True,

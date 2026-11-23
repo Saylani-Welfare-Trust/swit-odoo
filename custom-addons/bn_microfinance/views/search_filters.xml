@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_microfinance_line" model="ir.ui.view">
+        <field name="name">microfinance.line.search.filters</field>
+        <field name="model">microfinance.line</field>
+        <field name="inherit_id" ref="bn_microfinance.view_microfinance_line_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="cheque_no"/>
+                <field name="installment_number"/>
+                <separator/>
+                <filter name="bn_date_due_date" string="Due Date" date="due_date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_microfinance" model="ir.ui.view">
+        <field name="name">microfinance.search.filters</field>
+        <field name="model">microfinance</field>
+        <field name="inherit_id" ref="bn_microfinance.search_microfinance"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="company_phone"/>
+                <field name="home_phone_no"/>
+                <field name="landlord_cnic_no"/>
+                <field name="landlord_mobile"/>
+                <separator/>
+                <filter name="bn_date_delivery_date" string="Delivery Date" date="delivery_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_installment_type" string="Installment Type" context="{'group_by': 'installment_type'}"/>
+                    <filter name="bn_groupby_asset_type" string="Asset Type" context="{'group_by': 'asset_type'}"/>
+                    <filter name="bn_groupby_residence_type" string="Residence Type" context="{'group_by': 'residence_type'}"/>
+                    <filter name="bn_groupby_delivery_date_month" string="Delivery Date (Month)" context="{'group_by': 'delivery_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_microfinance_installment" model="ir.ui.view">
+        <field name="name">microfinance.installment.search.filters</field>
+        <field name="model">microfinance.installment</field>
+        <field name="inherit_id" ref="bn_microfinance.search_microfinance_installment"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="cheque_no"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_payment_type" string="Payment Type" context="{'group_by': 'payment_type'}"/>
+                    <filter name="bn_groupby_payment_method" string="Payment Method" context="{'group_by': 'payment_method'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_microfinance_scheme" model="ir.ui.view">
+        <field name="name">microfinance.scheme.search.filters</field>
+        <field name="model">microfinance.scheme</field>
+        <field name="inherit_id" ref="bn_microfinance.search_microfinance_scheme"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="prefix"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_installment_type" string="Installment Type" context="{'group_by': 'installment_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

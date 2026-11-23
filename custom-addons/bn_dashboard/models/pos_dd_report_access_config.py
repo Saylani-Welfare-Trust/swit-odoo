@@ -3,6 +3,7 @@ from odoo import api, fields, models
 
 class PosDdReportAccessConfig(models.Model):
     _name = 'pos.dd.report.access.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'POS & Direct Deposits Report Access'
     _rec_name = 'user_id'
 

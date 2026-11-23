@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError
 
 class SegmentTransferRule(models.Model):
     _name = 'segment.transfer.rule'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Segment Transfer Rules'
     _rec_name = 'source_segment_id'
     _order = 'source_segment_id'

@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class Area(models.Model):
     _name = 'area'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Area"
 
 

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_shariah_law" model="ir.ui.view">
+        <field name="name">shariah.law.form</field>
+        <field name="model">shariah.law</field>
+        <field name="arch" type="xml">
+            <form string="Shariah Law Aggregated Totals" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="parent_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" invisible="1"/>
+                        <field name="analytic_account_id" string="Segment" domain="[('plan_id.name', '=', 'Segment')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        <field name="opening_balance" widget="monetary"/>
+                        <field name="pos_donation_amount" widget="monetary"/>
+                        <field name="api_donation_amount" widget="monetary"/>
+                        <field name="dik_amount" widget="monetary"/>
+                        <field name="po_amount" widget="monetary"/>
+                        <field name="welfare_amount" widget="monetary"/>
+                        <field name="microfinance_amount" widget="monetary"/>
+                        <field name="expense_amount" widget="monetary"/>
+                        <field name="transfer_amount" widget="monetary"/>
+                        <field name="closing_balance" widget="monetary"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="bn_shariah_law.shariah_law_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_shariah_law_person" model="ir.ui.view">
+        <field name="name">shariah.law.person.form</field>
+        <field name="model">shariah.law.person</field>
+        <field name="arch" type="xml">
+            <form string="Shariah Law Person" delete="0">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_shariah_law_person" model="ir.ui.view">
+        <field name="name">shariah.law.person.tree.open.form</field>
+        <field name="model">shariah.law.person</field>
+        <field name="inherit_id" ref="bn_shariah_law.view_shariah_law_person_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_shariah_law.shariah_law_person_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_shariah_law_blocker" model="ir.ui.view">
+        <field name="name">shariah.law.blocker.form</field>
+        <field name="model">shariah.law.blocker</field>
+        <field name="arch" type="xml">
+            <form string="Shariah Law Blocker" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="company_id"/>
+                        <field name="enable_pos" widget="boolean_toggle"/>
+                        <field name="enable_donations" widget="boolean_toggle"/>
+                        <field name="enable_dik" widget="boolean_toggle"/>
+                        <field name="enable_expense" widget="boolean_toggle"/>
+                        <field name="enable_purchase" widget="boolean_toggle"/>
+                        <field name="enable_material_request" widget="boolean_toggle"/>
+                        <field name="enable_welfare" widget="boolean_toggle"/>
+                        <field name="enable_microfinance" widget="boolean_toggle"/>
+                        <field name="enable_transfer" widget="boolean_toggle"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_shariah_law_blocker" model="ir.ui.view">
+        <field name="name">shariah.law.blocker.tree.open.form</field>
+        <field name="model">shariah.law.blocker</field>
+        <field name="inherit_id" ref="bn_shariah_law.view_shariah_law_blocker_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_shariah_law.shariah_law_blocker_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

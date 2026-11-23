@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_donation_box_complain_center" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.search.filters</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_complain_center_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="return_picking_id"/>
+                <field name="scrap_return_picking_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_donation_box_registration_installation" model="ir.ui.view">
+        <field name="name">donation.box.registration.installation.search.filters</field>
+        <field name="model">donation.box.registration.installation</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_box_status" string="Box Status" context="{'group_by': 'box_status'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_donation_box_request" model="ir.ui.view">
+        <field name="name">donation.box.request.search.filters</field>
+        <field name="model">donation.box.request</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="rider_id"/>
+                <field name="picking_id"/>
+                <field name="picking_type_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_rider_id" string="Installer" context="{'group_by': 'rider_id'}"/>
+                    <filter name="bn_groupby_picking_type_id" string="Operation Type" context="{'group_by': 'picking_type_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

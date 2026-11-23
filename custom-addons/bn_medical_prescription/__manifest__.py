@@ -1,7 +1,11 @@
 {
     'name': 'Medical Prescription Billing',
     'version': '1.4',
+<<<<<<< Updated upstream
     'summary': 'One Medical & Health counter: paid till with a doctor, prescription approved on stock, then its bill',
+=======
+    'summary': 'Prescription desk approves the products for a patient, the billing counter bills them',
+>>>>>>> Stashed changes
     'description': """
 Flow on a Medical & Health POS counter:
 
@@ -28,6 +32,7 @@ Flow on a Medical & Health POS counter:
         'views/medical_prescription.xml',
         'views/pos_order.xml',
         'views/patient.xml',
+        'views/search_filters.xml',
     ],
     'auto_install': False,
     'application': False,

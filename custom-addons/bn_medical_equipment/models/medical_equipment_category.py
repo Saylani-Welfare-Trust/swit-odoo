@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class MedicalEquipmentCategory(models.Model):
     _name = 'medical.equipment.category'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Medical Equipment Category"
 
 

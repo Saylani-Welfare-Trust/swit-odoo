@@ -175,9 +175,10 @@ class MonthlyPlanning(models.Model):
 
     @api.model
     def _default_source_location(self):
-        wh = self.env['stock.warehouse'].search(
-            [('company_id', '=', self.env.company.id)], limit=1)
-        return wh.lot_stock_id.id if wh else False
+        # the stock of the user's warehouse
+        warehouse = self.env['stock.warehouse'].sudo().search([], limit=1) and \
+            self.env['stock.warehouse']._warehouse_for()
+        return warehouse.lot_stock_id.id if warehouse else False
     
     # ─── Internal transfer generation ─────────────────────
     def _create_internal_transfer_for_lines(self, line_list, dest_location):
@@ -279,6 +280,7 @@ class MonthlyPlanning(models.Model):
             ('state', '=', 'active'),
             ('is_locked', '=', False),
             ('location_dest_id', '!=', False),
+            ('to_date', '<=', tomorrow),      # <-- NEW: ends today or tomorrow
         ])
 
         _logger.info(
@@ -293,8 +295,7 @@ class MonthlyPlanning(models.Model):
                 for line in getattr(plan, o2m_name):
                     if (not line.transfer_picking_id
                             and line.product_id
-                            and (line.quantity or 0.0) > 0
-                            and line.date and line.date <= tomorrow):
+                            and (line.quantity or 0.0) > 0):
                         pending.append(line)
 
             if not pending:
@@ -513,8 +514,14 @@ class MonthlyPlanningLineBase(models.AbstractModel):
 
     @api.depends('product_id')
     def _compute_on_hand_qty(self):
+        source_loc = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         for rec in self:
-            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
+            if rec.product_id and source_loc:
+                rec.on_hand_qty = rec.product_id.with_context(
+                    location=source_loc.id
+                ).qty_available
+            else:
+                rec.on_hand_qty = 0.0
 
     def write(self, vals):
         for rec in self:

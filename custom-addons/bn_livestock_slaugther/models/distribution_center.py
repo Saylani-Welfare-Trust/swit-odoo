@@ -21,6 +21,7 @@ type_selection = [
 
 class DistributionCenter(models.Model):
     _name = 'distribution.center'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Distribution Center"
 
 

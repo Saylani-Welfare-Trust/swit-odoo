@@ -3,6 +3,7 @@ from odoo import models, fields, api
 
 class Bank(models.Model):
     _name = 'bank'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Bank"
 
 

@@ -2,6 +2,7 @@ from odoo import fields, models, api
 
 class ShariahLawBlocker(models.Model):
     _name = 'shariah.law.blocker'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Shariah Law Blocker'
     _rec_name = 'company_id'
 

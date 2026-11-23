@@ -1,6 +1,6 @@
 {
     'name': 'Key Management',
-    'version': '17.0.1.6.0',
+    'version': '17.0.1.6.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -26,6 +26,7 @@
         'views/donation_box_request.xml',
         'views/donation_box_registration_installation.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
     ],
     'auto_install': False,
     'application': False,

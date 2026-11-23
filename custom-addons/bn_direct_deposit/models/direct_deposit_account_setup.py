@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 
 class DirectDepositAccountSetup(models.Model):
     _name = 'direct.deposit.account.setup'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Direct Deposit Account Setup'
 
 

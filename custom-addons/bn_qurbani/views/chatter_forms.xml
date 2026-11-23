@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_qurbani_day" model="ir.ui.view">
+        <field name="name">qurbani.day.form</field>
+        <field name="model">qurbani.day</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani Day" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="web_qurbani_day"/>
+                        <field name="date"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_qurbani_day" model="ir.ui.view">
+        <field name="name">qurbani.day.tree.open.form</field>
+        <field name="model">qurbani.day</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_day_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.qurbani_day_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_chand_raat" model="ir.ui.view">
+        <field name="name">chand.raat.form</field>
+        <field name="model">chand.raat</field>
+        <field name="arch" type="xml">
+            <form string="Chand Raat" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="date_time"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_chand_raat" model="ir.ui.view">
+        <field name="name">chand.raat.tree.open.form</field>
+        <field name="model">chand.raat</field>
+        <field name="inherit_id" ref="bn_qurbani.chand_raat_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.chand_raat_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_city_schedule" model="ir.ui.view">
+        <field name="name">city.schedule.form</field>
+        <field name="model">city.schedule</field>
+        <field name="arch" type="xml">
+            <form string="City Schedule">
+                <sheet>
+                    <group>
+                        <field name="inventory_product_name" invisible="1"/>
+                        <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                        <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                        <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                        <field name="pos_product_ids" widget="many2many_tags" domain="[('name', 'ilike', inventory_product_name), ('type', '=', 'product'), ('is_pos_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" required="1"/>
+                        <field name="location_id" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                        <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                        <field name="distribution_location_ids" widget="many2many_tags" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" required="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_city_schedule" model="ir.ui.view">
+        <field name="name">city.schedule.tree.open.form</field>
+        <field name="model">city.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.city_schedule_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.city_schedule_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_slaughter_schedule" model="ir.ui.view">
+        <field name="name">slaughter.schedule.form</field>
+        <field name="model">slaughter.schedule</field>
+        <field name="arch" type="xml">
+            <form string="Slaughter Schedule" create="0" edit="0">
+                <sheet>
+                    <group>
+                        <field name="inventory_product_name" invisible="1"/>
+                        <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="start_time" widget="float_time" readonly="1"/>
+                        <field name="end_time" widget="float_time" readonly="1"/>
+                        <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="city_location_id" readonly="1" domain="[('location_option_id.name', '=', 'City')]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        <field name="location_id" readonly="1" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.slaughter_schedule_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_distribution_schedule" model="ir.ui.view">
+        <field name="name">distribution.schedule.form</field>
+        <field name="model">distribution.schedule</field>
+        <field name="arch" type="xml">
+            <form string="Distribution Schedule" create="0">
+                <sheet>
+                    <group>
+                        <field name="inventory_product_name" invisible="1"/>
+                        <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="start_time" widget="float_time" readonly="1"/>
+                        <field name="end_time" widget="float_time" readonly="1"/>
+                        <field name="inventory_product_id" domain="[('type', '=', 'product'), ('is_qurbani_inventory', '=', True), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="pos_product_ids" widget="many2many_tags" domain="[('name', 'ilike', inventory_product_name), ('type', '=', 'product'), ('is_qurbani_inventory', '=', False), ('is_livestock', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        <field name="slaughter_schedule_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="location_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_distribution_schedule" model="ir.ui.view">
+        <field name="name">distribution.schedule.tree.open.form</field>
+        <field name="model">distribution.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.view_distribution_master_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.action_distribution_schedule" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_qurbani_goat_slaughter" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.form</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani Goat Slaughter" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="video_file_name" invisible="1"/>
+                        <field name="image_file_name" invisible="1"/>
+                        <field name="name" readonly="1"/>
+                        <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="start_time" widget="float_time" readonly="1"/>
+                        <field name="end_time" widget="float_time" readonly="1"/>
+                        <field name="slaughter_location_id" string="Location" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="qurbani_order_no" readonly="1"/>
+                        <field name="qurbani_order_line_no" readonly="1"/>
+                        <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hissa_name" readonly="1"/>
+                        <field name="video" filename="video_file_name"/>
+                        <field name="image" filename="image_file_name"/>
+                        <field name="state" widget="badge"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_qurbani_goat_slaughter" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.tree.open.form</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_slaughter_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.qurbani_goat_slaughter_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_qurbani_cow_distribution" model="ir.ui.view">
+        <field name="name">qurbani.cow.distribution.form</field>
+        <field name="model">qurbani.cow.distribution</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani Cow Distribution" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="slaughter_start_time" widget="float_time" readonly="1"/>
+                        <field name="slaughter_end_time" widget="float_time" readonly="1"/>
+                        <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="start_time" widget="float_time" readonly="1"/>
+                        <field name="end_time" widget="float_time" readonly="1"/>
+                        <field name="distribution_location_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="qurbani_order_no" readonly="1"/>
+                        <field name="qurbani_order_line_no" readonly="1"/>
+                        <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hissa_name" readonly="1"/>
+                        <field name="remarks"/>
+                        <field name="state" widget="badge"/>
+                        <field name="max_distribution" invisible="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_qurbani_cow_distribution" model="ir.ui.view">
+        <field name="name">qurbani.cow.distribution.tree.open.form</field>
+        <field name="model">qurbani.cow.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_cow_distribution_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.qurbani_cow_distribution_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_qurbani_goat_distribution" model="ir.ui.view">
+        <field name="name">qurbani.goat.distribution.form</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani Goat Distribution" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="day_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hijri_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="slaughter_start_time" widget="float_time" readonly="1"/>
+                        <field name="slaughter_end_time" widget="float_time" readonly="1"/>
+                        <field name="slaughter_location_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="start_time" widget="float_time" readonly="1"/>
+                        <field name="end_time" widget="float_time" readonly="1"/>
+                        <field name="distribution_location_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="qurbani_order_no" readonly="1"/>
+                        <field name="qurbani_order_line_no" readonly="1"/>
+                        <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="1"/>
+                        <field name="hissa_name" readonly="1"/>
+                        <field name="remarks"/>
+                        <field name="state" widget="badge"/>
+                        <field name="max_distribution" invisible="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_qurbani_goat_distribution" model="ir.ui.view">
+        <field name="name">qurbani.goat.distribution.tree.open.form</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_distribution_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.qurbani_goat_distribution_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_web_qurbani_distribution_center" model="ir.ui.view">
+        <field name="name">web.qurbani.distribution.center.form</field>
+        <field name="model">web.qurbani.distribution.center</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani Distribution Center">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="distribution_center_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_web_qurbani_distribution_center" model="ir.ui.view">
+        <field name="name">web.qurbani.distribution.center.tree.open.form</field>
+        <field name="model">web.qurbani.distribution.center</field>
+        <field name="inherit_id" ref="bn_qurbani.web_qurbani_distribution_center_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.action_web_qurbani_distribution_center" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_web_qurbani_slaughter_center" model="ir.ui.view">
+        <field name="name">web.qurbani.slaughter.center.form</field>
+        <field name="model">web.qurbani.slaughter.center</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani Distribution Center">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="slaughter_center_id" domain="[('is_slaughter_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        <field name="distribution_center_id" domain="[('is_distribution_location', '=', True)]" options="{'no_create': True, 'no_edit': True, 'no_open': True}" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_web_qurbani_slaughter_center" model="ir.ui.view">
+        <field name="name">web.qurbani.slaughter.center.tree.open.form</field>
+        <field name="model">web.qurbani.slaughter.center</field>
+        <field name="inherit_id" ref="bn_qurbani.web_qurbani_slaughter_center_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.action_web_qurbani_slaughter_center" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_qurbani_city" model="ir.ui.view">
+        <field name="name">qurbani.city.form</field>
+        <field name="model">qurbani.city</field>
+        <field name="arch" type="xml">
+            <form string="Qurbani City">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="city_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_qurbani_city" model="ir.ui.view">
+        <field name="name">qurbani.city.tree.open.form</field>
+        <field name="model">qurbani.city</field>
+        <field name="inherit_id" ref="bn_qurbani.web_qurbani_city"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_qurbani.action_qurbani_city" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

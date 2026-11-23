@@ -1,6 +1,6 @@
 {
     'name': 'Procurement Workflow',
-    'version': '17.0.1.3.1',
+    'version': '17.0.1.3.2',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -34,6 +34,8 @@
         'views/rfq_price_wizard_views.xml',
         'views/master_cxo_approver_views.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
+        'views/chatter_forms.xml',
     ],
     'installable': True,
     'auto_install': False,

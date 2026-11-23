@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_direct_deposit" model="ir.ui.view">
+        <field name="name">direct.deposit.search.filters</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.direct_deposit_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="move_id"/>
+                <field name="picking_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_payment_type" string="Payment Type" context="{'group_by': 'payment_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

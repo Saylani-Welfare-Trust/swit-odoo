@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_advance_donation" model="ir.ui.view">
+        <field name="name">advance.donation.search.filters</field>
+        <field name="model">advance.donation</field>
+        <field name="inherit_id" ref="bn_advance_donation.advance_donation_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <separator/>
+                <filter name="bn_date_contract_start_date" string="Start Date" date="contract_start_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_contract_frequency" string="Frequency" context="{'group_by': 'contract_frequency'}"/>
+                    <filter name="bn_groupby_contract_start_date_month" string="Start Date (Month)" context="{'group_by': 'contract_start_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_advance_donation_receipt" model="ir.ui.view">
+        <field name="name">advance.donation.receipt.search.filters</field>
+        <field name="model">advance.donation.receipt</field>
+        <field name="inherit_id" ref="bn_advance_donation.view_advance_donation_receipt_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="category_id"/>
+                <field name="deposit_move_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_category_id" string="Category" context="{'group_by': 'category_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

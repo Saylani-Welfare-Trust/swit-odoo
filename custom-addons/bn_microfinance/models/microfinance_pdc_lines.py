@@ -9,6 +9,7 @@ state_cheque_selection = [
 
 class MicrofinancePDCLine(models.Model):
     _name = 'microfinance.pdc.line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Microfinance PDC Line"
     _rec_name = 'installment_number'
 

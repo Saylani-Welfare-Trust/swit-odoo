@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_pos_cheque" model="ir.ui.view">
+        <field name="name">pos.cheque.form</field>
+        <field name="model">pos.cheque</field>
+        <field name="arch" type="xml">
+            <form string="POS Cheque" create="0" edit="1" delete="0">
+                <sheet>
+                    <group>
+                        <field name="order_reference" readonly="1"/>
+                        <field name="donor_id" readonly="1"/>
+                        <field name="amount" readonly="1"/>
+                        <field name="analytic_account_id" string="Branch" readonly="1"/>
+                        <field name="bank_id" string="Deposit to Bank" readonly="state not in ('draft', 'bounce')"/>
+                        <field name="create_uid" readonly="1"/>
+                        <field name="create_date" readonly="1"/>
+                        <field name="name" string="Cheque No." readonly="1"/>
+                        <field name="bank_name" readonly="1"/>
+                        <field name="date" readonly="1"/>
+                        <field name="bounce_count" readonly="1"/>
+                        <field name="move_id" readonly="1"/>
+                        <field name="state" widget="badge" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_pos_cheque" model="ir.ui.view">
+        <field name="name">pos.cheque.tree.open.form</field>
+        <field name="model">pos.cheque</field>
+        <field name="inherit_id" ref="bn_pos_cheque.pos_cheque_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_pos_cheque.pos_cheque_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

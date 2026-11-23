@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class WelfareApprovalLimit(models.Model):
     _name = 'welfare.approval.limit'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Welfare Approval Limits"
     _rec_name = 'group_id'
 

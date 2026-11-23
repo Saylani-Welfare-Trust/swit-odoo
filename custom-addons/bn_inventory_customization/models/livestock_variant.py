@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class LiveStockVariant(models.Model):
     _name = 'livestock.variant'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Livestock Variant'
 
     name = fields.Char(

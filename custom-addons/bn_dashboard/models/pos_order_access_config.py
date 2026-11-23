@@ -2,6 +2,7 @@ from odoo import api, fields, models
 
 class PosOrderAccessConfig(models.Model):
     _name = 'pos.order.access.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'POS Order Dashboard Access'
     _rec_name = 'user_id'
 

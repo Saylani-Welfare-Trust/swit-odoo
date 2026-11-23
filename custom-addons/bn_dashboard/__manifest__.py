@@ -1,6 +1,6 @@
 {
     'name': 'Dashboard',
-    'version': '17.0.1.0.4',
+    'version': '17.0.1.0.5',
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
     'website': 'https://bytesnode.com/',
@@ -28,6 +28,7 @@
         'views/donation_box_access_config_views.xml',
         'views/pos_dd_report_views.xml',
         'views/pos_dd_report_access_views.xml',
+        'views/search_filters.xml',
     ],
     'assets': {
         'web.assets_backend': [

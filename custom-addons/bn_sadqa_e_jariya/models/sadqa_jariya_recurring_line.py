@@ -19,6 +19,7 @@ state_selection = [
 
 class SadqaJariyaRecurringLine(models.Model):
     _name = 'sadqa.jariya.recurring.line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Recurring Line'
     _order = 'collection_date, id'
 

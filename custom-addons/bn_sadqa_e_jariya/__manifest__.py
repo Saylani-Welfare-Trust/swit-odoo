@@ -1,6 +1,6 @@
 {
     'name': 'Sadqa e Jariya',
-    'version': '17.0.2.16',
+    'version': '17.0.2.17',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',
@@ -47,6 +47,8 @@
         'wizards/record_search_views.xml',
 
         'views/menu.xml',
+        'views/search_filters.xml',
+        'views/chatter_forms.xml',
     ],
     'assets': {
         'point_of_sale._assets_pos': [

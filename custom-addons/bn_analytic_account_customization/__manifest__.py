@@ -1,6 +1,6 @@
 {
     'name': 'Analytical Account Enhancement',
-    'version': '17.0.1.3.1',
+    'version': '17.0.1.3.2',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -19,6 +19,7 @@
         'views/analytic_distribution_model.xml',
         'views/hr_employee.xml',
         'views/search_views.xml',
+        'views/chatter_forms.xml',
     ],
     'auto_install': False,
     'application': False,

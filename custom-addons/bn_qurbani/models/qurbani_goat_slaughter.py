@@ -10,6 +10,7 @@ state_selection = [
 
 class QurbaniGoatSlaughter(models.Model):
     _name = 'qurbani.goat.slaughter'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Qurbani Goat Slaughter"
 
 

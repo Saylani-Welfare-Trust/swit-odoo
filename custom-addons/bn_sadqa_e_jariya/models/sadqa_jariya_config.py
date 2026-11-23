@@ -6,6 +6,7 @@ from odoo.exceptions import UserError
 
 class SadqaJariyaDisbursementCategory(models.Model):
     _name = 'sadqa.jariya.disbursement.category'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Disbursement Category'
 
     # 'Bank' and 'In Kind' drive the payout (bills / deliveries), matched by name
@@ -14,6 +15,7 @@ class SadqaJariyaDisbursementCategory(models.Model):
 
 class SadqaJariyaArea(models.Model):
     _name = 'sadqa.jariya.area'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Area'
     _order = 'name'
 
@@ -26,6 +28,7 @@ class SadqaJariyaArea(models.Model):
 class SadqaJariyaCommitteeMember(models.Model):
     """Committee member (an employee), added to each application that moves to Committee Approval"""
     _name = 'sadqa.jariya.committee.member'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Committee Member'
     _order = 'name'
 
@@ -42,6 +45,7 @@ class SadqaJariyaCommitteeMember(models.Model):
 
 class SadqaJariyaApplicationType(models.Model):
     _name = 'sadqa.jariya.application.type'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Disbursement Application Type'
 
     name = fields.Char('Name', required=True)
@@ -63,6 +67,7 @@ class SadqaJariyaApplicationType(models.Model):
 
 class SadqaJariyaApprovalLimit(models.Model):
     _name = 'sadqa.jariya.approval.limit'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Approval Limit'
     _rec_name = 'group_id'
 

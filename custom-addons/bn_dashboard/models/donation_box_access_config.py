@@ -2,6 +2,7 @@ from odoo import api, fields, models
 
 class DonationBoxAccessConfig(models.Model):
     _name = 'donation.box.access.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Donation Box Dashboard Access'
     _rec_name = 'user_id'
 

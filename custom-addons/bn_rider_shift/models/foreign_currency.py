@@ -15,6 +15,7 @@ state_selection = [
 
 class ForeignCurrency(models.Model):
     _name = 'foreign.currency'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Foreign Currency"
 
 

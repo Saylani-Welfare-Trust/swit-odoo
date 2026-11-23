@@ -3,6 +3,7 @@ from odoo import api, fields, models
 
 class TreasuryAccessConfig(models.Model):
     _name = 'treasury.access.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Treasury Dashboard Access'
     _rec_name = 'user_id'
 

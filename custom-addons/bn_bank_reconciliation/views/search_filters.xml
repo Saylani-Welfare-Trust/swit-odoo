@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_bank_reconciliation_master" model="ir.ui.view">
+        <field name="name">bank.reconciliation.master.search.filters</field>
+        <field name="model">bank.reconciliation.master</field>
+        <field name="inherit_id" ref="bn_bank_reconciliation.view_bank_reconciliation_master_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="posted_account_id"/>
+                <field name="move_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_bank_reconciliation_transaction" model="ir.ui.view">
+        <field name="name">bank.reconciliation.transaction.search.filters</field>
+        <field name="model">bank.reconciliation.transaction</field>
+        <field name="inherit_id" ref="bn_bank_reconciliation.view_bank_reconciliation_transaction_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="payment_reference"/>
+                <field name="invoice_number"/>
+                <field name="matched_move_id"/>
+                <field name="previous_account_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_adjustment_type" string="Adjustment Type" context="{'group_by': 'adjustment_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_bank_statement_config" model="ir.ui.view">
+        <field name="name">bank.statement.config.search.filters</field>
+        <field name="model">bank.statement.config</field>
+        <field name="inherit_id" ref="bn_bank_reconciliation.search_bank_statement_config"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="journal_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_journal_id" string="Journal" context="{'group_by': 'journal_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

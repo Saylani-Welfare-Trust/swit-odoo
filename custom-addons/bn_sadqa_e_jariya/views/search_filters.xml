@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_sadqa_jariya" model="ir.ui.view">
+        <field name="name">sadqa.jariya.search.filters</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="employee_id"/>
+                <field name="account_number"/>
+                <separator/>
+                <filter name="bn_state_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="bn_state_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="bn_state_form_sent" string="Form Sent" domain="[('state', '=', 'form_sent')]"/>
+                <filter name="bn_state_form_filled" string="Form Filled" domain="[('state', '=', 'form_filled')]"/>
+                <filter name="bn_state_send_for_inquiry" string="Send for Inquiry" domain="[('state', '=', 'send_for_inquiry')]"/>
+                <filter name="bn_state_inquiry" string="Inquiry Officer" domain="[('state', '=', 'inquiry')]"/>
+                <filter name="bn_state_hod_approve" string="HOD Approval" domain="[('state', '=', 'hod_approve')]"/>
+                <filter name="bn_state_committee_approval" string="Committee Approval" domain="[('state', '=', 'committee_approval')]"/>
+                <filter name="bn_state_mem_approve" string="Final Approval" domain="[('state', '=', 'mem_approve')]"/>
+                <filter name="bn_state_approve" string="Approved" domain="[('state', '=', 'approve')]"/>
+                <filter name="bn_state_recurring" string="Recurring" domain="[('state', '=', 'recurring')]"/>
+                <filter name="bn_state_disbursed" string="Disbursed" domain="[('state', '=', 'disbursed')]"/>
+                <filter name="bn_state_reject" string="Rejected" domain="[('state', '=', 'reject')]"/>
+                <filter name="bn_state_return" string="Returned" domain="[('state', '=', 'return')]"/>
+                <separator/>
+                <filter name="bn_date_date" string="Date" date="date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_order_type" string="Order Type" context="{'group_by': 'order_type'}"/>
+                    <filter name="bn_groupby_donee_id" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="bn_groupby_employee_id" string="Inquiry Officer" context="{'group_by': 'employee_id'}"/>
+                    <filter name="bn_groupby_institution_type" string="Portal Form Section" context="{'group_by': 'institution_type'}"/>
+                    <filter name="bn_groupby_date_month" string="Date (Month)" context="{'group_by': 'date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_sadqa_jariya_application_type" model="ir.ui.view">
+        <field name="name">sadqa.jariya.application.type.search.filters</field>
+        <field name="model">sadqa.jariya.application.type</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_application_type_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_product_category_id" string="Product Category" context="{'group_by': 'product_category_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_sadqa_jariya_committee_member" model="ir.ui.view">
+        <field name="name">sadqa.jariya.committee.member.search.filters</field>
+        <field name="model">sadqa.jariya.committee.member</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_committee_member_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_employee_id" string="Employee" context="{'group_by': 'employee_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_sadqa_jariya_line" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.search.filters</field>
+        <field name="model">sadqa.jariya.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="analytic_account_id"/>
+                <field name="bill_id"/>
+                <field name="return_bill_id"/>
+                <field name="returned_by"/>
+                <field name="pos_session_id"/>
+                <field name="pos_config_id"/>
+                <field name="pos_reference"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <separator/>
+                <filter name="bn_state_delivered" string="Delivery Created" domain="[('state', '=', 'delivered')]"/>
+                <filter name="bn_state_pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="bn_state_collected" string="Collected" domain="[('state', '=', 'collected')]"/>
+                <filter name="bn_state_return" string="Returned" domain="[('state', '=', 'return')]"/>
+                <filter name="bn_state_cancel" string="Cancelled" domain="[('state', '=', 'cancel')]"/>
+                <separator/>
+                <filter name="bn_date_collection_date" string="Collection Date" date="collection_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_donee_id" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="bn_groupby_order_type" string="Order Type" context="{'group_by': 'order_type'}"/>
+                    <filter name="bn_groupby_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_groupby_collection_point" string="Collection Point" context="{'group_by': 'collection_point'}"/>
+                    <filter name="bn_groupby_analytic_account_id" string="Branch" context="{'group_by': 'analytic_account_id'}"/>
+                    <filter name="bn_groupby_recurring_duration" string="Recurring Duration" context="{'group_by': 'recurring_duration'}"/>
+                    <filter name="bn_groupby_returned_by" string="Returned By" context="{'group_by': 'returned_by'}"/>
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_collection_date_month" string="Collection Date (Month)" context="{'group_by': 'collection_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_sadqa_jariya_recurring_line" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.search.filters</field>
+        <field name="model">sadqa.jariya.recurring.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_recurring_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="name"/>
+                <field name="bill_id"/>
+                <field name="pos_session_id"/>
+                <field name="pos_config_id"/>
+                <field name="pos_reference"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <separator/>
+                <filter name="bn_state_delivered" string="Delivery Created" domain="[('state', '=', 'delivered')]"/>
+                <filter name="bn_state_pending" string="Pending" domain="[('state', '=', 'pending')]"/>
+                <filter name="bn_state_collected" string="Collected" domain="[('state', '=', 'collected')]"/>
+                <filter name="bn_state_return" string="Returned" domain="[('state', '=', 'return')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_donee_id" string="Donee" context="{'group_by': 'donee_id'}"/>
+                    <filter name="bn_groupby_product_id" string="Product" context="{'group_by': 'product_id'}"/>
+                    <filter name="bn_groupby_collection_point" string="Collection Point" context="{'group_by': 'collection_point'}"/>
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_config_id" string="Point of Sale" context="{'group_by': 'pos_config_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

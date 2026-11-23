@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_medical_security_deposit" model="ir.ui.view">
+        <field name="name">medical.security.deposit.form</field>
+        <field name="model">medical.security.deposit</field>
+        <field name="arch" type="xml">
+            <form string="Medical Security Deposit" create="0" edit="0">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="payment_method"/>
+                        <field name="donee_id"/>
+                        <field name="cnic_no"/>
+                        <field name="bank_name"/>
+                        <field name="cheque_no"/>
+                        <field name="cheque_date"/>
+                        <field name="amount"/>
+                        <field name="state" widget="badge"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="bn_medical_equipment.medical_security_deposit_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_medical_equipment_category" model="ir.ui.view">
+        <field name="name">medical.equipment.category.form</field>
+        <field name="model">medical.equipment.category</field>
+        <field name="arch" type="xml">
+            <form string="Medical Equipment Category">
+                <sheet>
+                    <group>
+                        <field name="name" string="Product"/>
+                        <field name="product_id" string="System Product"/>
+                        <field name="is_medical_approval" invisible="1"/>
+                        <field name="security_deposit"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_medical_equipment_category" model="ir.ui.view">
+        <field name="name">medical.equipment.category.tree.open.form</field>
+        <field name="model">medical.equipment.category</field>
+        <field name="inherit_id" ref="bn_medical_equipment.medical_equipment_category_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_medical_equipment.medical_equipment_category_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

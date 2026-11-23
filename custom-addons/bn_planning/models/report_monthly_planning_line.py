@@ -90,8 +90,14 @@ class ReportMonthlyPlanningLine(models.Model):
 
     @api.depends('product_id')
     def _compute_on_hand_qty(self):
+        source_loc = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         for rec in self:
-            rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
+            if rec.product_id and source_loc:
+                rec.on_hand_qty = rec.product_id.with_context(
+                    location=source_loc.id
+                ).qty_available
+            else:
+                rec.on_hand_qty = 0.0
 
     @api.depends('quantity', 'planned_qty')
     def _compute_qty_diff(self):

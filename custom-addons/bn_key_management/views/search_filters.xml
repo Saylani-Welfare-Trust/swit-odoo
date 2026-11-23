@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_key_issuance" model="ir.ui.view">
+        <field name="name">key.issuance.search.filters</field>
+        <field name="model">key.issuance</field>
+        <field name="inherit_id" ref="bn_key_management.key_issuance_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_action_type" string="Action Type" context="{'group_by': 'action_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
-    _inherit = ['pos.link.mixin']
+    _inherit = ['pos.link.mixin', 'mail.thread', 'mail.activity.mixin']
     _description = "Advance Donation Receipt"
 
     def init(self):

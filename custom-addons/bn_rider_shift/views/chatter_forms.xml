@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_counterfeit_notes" model="ir.ui.view">
+        <field name="name">counterfeit.notes.form</field>
+        <field name="model">counterfeit.notes</field>
+        <field name="arch" type="xml">
+            <form string="Counterfiet Notes" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="rider_name" string="Rider"/>
+                        <field name="lot_id" string="Box No."/>
+                        <field name="submission_time"/>
+                        <field name="amount"/>
+                        <field name="state" widget="badge"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="bn_rider_shift.counterfeit_notes_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_foreign_currency" model="ir.ui.view">
+        <field name="name">foreign.currency.form</field>
+        <field name="model">foreign.currency</field>
+        <field name="arch" type="xml">
+            <form string="Foreign Currency" create="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="currency_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}"/>
+                        <field name="rider_log"/>
+                        <field name="amount" readonly="1" groups="!bn_rider_shift.group_foreign_currency_collection" string="Foreign Amount"/>
+                        <field name="amount" groups="bn_rider_shift.group_foreign_currency_collection" string="Foreign Amount"/>
+                        <field name="conversion_rate"/>
+                        <field name="foreign_notes"/>
+                        <field name="exchanged_amount" string="PKR Amount" readonly="1"/>
+                        <field name="rider_id" readonly="1"/>
+                        <field name="lot_id" string="Box No." readonly="1"/>
+                        <field name="state" widget="badge" readonly="1"/>
+                        <field name="attachment_ids" widget="many2many_binary" readonly="0"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_foreign_currency" model="ir.ui.view">
+        <field name="name">foreign.currency.tree.open.form</field>
+        <field name="model">foreign.currency</field>
+        <field name="inherit_id" ref="bn_rider_shift.foreign_currency_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_rider_shift.foreign_currency_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

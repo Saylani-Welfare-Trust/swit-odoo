@@ -1,6 +1,6 @@
 {
     'name': 'POS Cheque',
-    'version': '17.0.1.4.4',
+    'version': '17.0.1.4.5',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -26,6 +26,8 @@
         'data/res_company.xml',
         'views/pos_link_views.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
+        'views/chatter_forms.xml',
     ],
     'auto_install': False,
     'application': False,

@@ -45,7 +45,7 @@ recurring_duration_selection = [
 
 class WelfareLine(models.Model):
     _name = 'welfare.line'
-    _inherit = ['pos.link.mixin']
+    _inherit = ['pos.link.mixin', 'mail.thread', 'mail.activity.mixin']
     _description = "Welfare Line"
 
     return_date = fields.Datetime('Return Date', readonly=True)

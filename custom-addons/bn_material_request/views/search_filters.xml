@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_material_request" model="ir.ui.view">
+        <field name="name">material.request.search.filters</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="bn_material_request.material_request_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="picking_id"/>
+                <field name="shortage_picking_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_request_type" string="Request Type" context="{'group_by': 'request_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_purchase_requisition_line_deletion_log" model="ir.ui.view">
+        <field name="name">purchase.requisition.line.deletion.log.search.filters</field>
+        <field name="model">purchase.requisition.line.deletion.log</field>
+        <field name="inherit_id" ref="bn_material_request.purchase_requisition_line_deletion_log_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <separator/>
+                <filter name="bn_date_deleted_date" string="Deleted On" date="deleted_date"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

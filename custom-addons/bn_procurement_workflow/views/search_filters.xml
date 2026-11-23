@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_master_cxo_approver" model="ir.ui.view">
+        <field name="name">master.cxo.approver.search.filters</field>
+        <field name="model">master.cxo.approver</field>
+        <field name="inherit_id" ref="bn_procurement_workflow.search_master_cxo_approver"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="employee_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_employee_id" string="Employee" context="{'group_by': 'employee_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

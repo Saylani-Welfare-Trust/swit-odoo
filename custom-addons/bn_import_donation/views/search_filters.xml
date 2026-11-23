@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_api_donation" model="ir.ui.view">
+        <field name="name">api.donation.search.filters</field>
+        <field name="model">api.donation</field>
+        <field name="inherit_id" ref="bn_import_donation.api_donation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="referer"/>
+                <field name="response_code"/>
+                <field name="blinq_notification_number"/>
+                <separator/>
+                <filter name="bn_date_created_at" string="Created at" date="created_at"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_journal_status" string="Accounting" context="{'group_by': 'journal_status'}"/>
+                    <filter name="bn_groupby_created_at_month" string="Created at (Month)" context="{'group_by': 'created_at:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_donation" model="ir.ui.view">
+        <field name="name">donation.search.filters</field>
+        <field name="model">donation</field>
+        <field name="inherit_id" ref="bn_import_donation.donation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_journal_id" string="Journal" context="{'group_by': 'journal_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_gateway_config" model="ir.ui.view">
+        <field name="name">gateway.config.search.filters</field>
+        <field name="model">gateway.config</field>
+        <field name="inherit_id" ref="bn_import_donation.search_gateway_config"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="journal_id"/>
+                <field name="account_id"/>
+                <field name="bank_charges_account_id"/>
+                <field name="difference_account_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_type" string="Type" context="{'group_by': 'type'}"/>
+                    <filter name="bn_groupby_journal_id" string="Journal" context="{'group_by': 'journal_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_import_donation" model="ir.ui.view">
+        <field name="name">import.donation.search.filters</field>
+        <field name="model">import.donation</field>
+        <field name="inherit_id" ref="bn_import_donation.import_donation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="picking_type_id"/>
+                <field name="journal_entry_id"/>
+                <field name="picking_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_picking_type_id" string="Operation Type" context="{'group_by': 'picking_type_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

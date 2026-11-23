@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_donation_in_kind" model="ir.ui.view">
+        <field name="name">donation.in.kind.search.filters</field>
+        <field name="model">donation.in.kind</field>
+        <field name="inherit_id" ref="bn_donation_in_kind.search_donation_in_kind"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="picking_type_id"/>
+                <field name="journal_id"/>
+                <field name="account_move_id"/>
+                <field name="picking_id"/>
+                <field name="reversal_picking_id"/>
+                <field name="box_return_picking_id"/>
+                <field name="truk_number"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_picking_type_id" string="Operations Types" context="{'group_by': 'picking_type_id'}"/>
+                    <filter name="bn_groupby_journal_id" string="Journal" context="{'group_by': 'journal_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_donation_in_kind_config" model="ir.ui.view">
+        <field name="name">donation.in.kind.config.search.filters</field>
+        <field name="model">donation.in.kind.config</field>
+        <field name="inherit_id" ref="bn_donation_in_kind.search_donation_in_kind_config"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="picking_type_id"/>
+                <field name="journal_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_picking_type_id" string="Operations Types" context="{'group_by': 'picking_type_id'}"/>
+                    <filter name="bn_groupby_journal_id" string="Journal" context="{'group_by': 'journal_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

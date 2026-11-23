@@ -27,6 +27,7 @@ recurring_duration_selection = [
 
 class SadqaJariyaLine(models.Model):
     _name = 'sadqa.jariya.line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Disbursement Line'
 
     application_id = fields.Many2one('sadqa.jariya', string='Application', ondelete='cascade')

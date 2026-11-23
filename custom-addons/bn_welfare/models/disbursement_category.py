@@ -3,6 +3,7 @@ from odoo import api, models, fields
 
 class DisbursementCategory(models.Model):
     _name = 'disbursement.category'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Disbursement Category'
 
 

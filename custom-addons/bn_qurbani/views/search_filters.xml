@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_qurbani_order" model="ir.ui.view">
+        <field name="name">qurbani.order.search.filters</field>
+        <field name="model">qurbani.order</field>
+        <field name="inherit_id" ref="bn_qurbani.search_qurbani_order"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="dn_number"/>
+                <field name="donor_phone"/>
+                <field name="donor_cnic"/>
+                <separator/>
+                <filter name="bn_date_api_created_at" string="API Created At" date="api_created_at"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_api_created_at_month" string="API Created At (Month)" context="{'group_by': 'api_created_at:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_chand_raat" model="ir.ui.view">
+        <field name="name">chand.raat.search.filters</field>
+        <field name="model">chand.raat</field>
+        <field name="inherit_id" ref="bn_qurbani.search_chand_raat"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <separator/>
+                <filter name="bn_date_date_time" string="Date Time" date="date_time"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_date_time_month" string="Date Time (Month)" context="{'group_by': 'date_time:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

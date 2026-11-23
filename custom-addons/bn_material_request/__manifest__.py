@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Material Request',
-    'version': '17.0.1.3.5',
+    'version': '17.0.1.3.6',
     'category': 'BytesNode/Material Request',
     'summary': 'Internal Transfer Request with Budget Check and Multi-level Approval',
     'description': """
@@ -43,6 +43,7 @@
         'data/program_types.xml',
         'wizards/material_request_revert_wizard_views.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
     ],
     'installable': True,
     'application': True,

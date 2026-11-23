@@ -33,7 +33,7 @@ state_selection = [
 
 class RiderCollection(models.Model):
     _name = 'rider.collection'
-    _inherit = ['pos.link.mixin']
+    _inherit = ['pos.link.mixin', 'mail.thread', 'mail.activity.mixin']
     _description = "Rider Collection"
     _rec_name = "shop_name"
 
