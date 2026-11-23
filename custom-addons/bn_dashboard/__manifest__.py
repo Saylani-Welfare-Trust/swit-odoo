@@ -30,6 +30,7 @@
         'views/pos_dd_report_access_views.xml',
         'views/search_filters.xml',
         'views/profit_loss_views.xml',
+        'views/livestock_dashboard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -51,8 +52,8 @@
             'bn_dashboard/static/src/search/pos_dd_report_filters.xml',
             'bn_dashboard/static/src/js/profit_loss_dashboard.js',
             'bn_dashboard/static/src/xml/profit_loss_dashboard.xml',
-            
-            
+            'bn_dashboard/static/src/js/livestock_dashboard.js',
+            'bn_dashboard/static/src/xml/livestock_dashboard.xml',
         ],
     },
     'installable': True,

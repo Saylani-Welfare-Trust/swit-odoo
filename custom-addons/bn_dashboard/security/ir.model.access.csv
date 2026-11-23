@@ -27,3 +27,6 @@ access_dash_treasury_dashboard_pos_cheque,pos.cheque read (group_treasury_dashbo
 
 
 access_profit_loss_dashboard_user,profit.loss.dashboard user,model_profit_loss_dashboard,bn_dashboard.group_profit_loss_dashboard_user,1,1,1,1
+
+access_livestock_dashboard_user,livestock.dashboard user,model_livestock_dashboard,bn_dashboard.group_livestock_dashboard_user,1,1,1,1
+access_dash_livestock_dashboard_livestock_slaughter,livestock.slaugther read (group_livestock_dashboard_user),bn_livestock_slaugther.model_livestock_slaugther,bn_dashboard.group_livestock_dashboard_user,1,0,0,0

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_livestock_dashboard" model="ir.actions.client">
+        <field name="name">Livestock Dashboard</field>
+        <field name="tag">livestock_dashboard</field>
+    </record>
+
+    <!--
+        Adjust the `parent` below to the root menu of your module.
+        Common values: bn_livestock_slaugther.menu_livestock_root
+                       bn_livestock_slaugther.menu_livestock_slaugther_root
+                       stock.menu_stock_root
+    -->
+    <menuitem id="menu_livestock_dashboard"
+              name="Dashboard"
+              parent="bn_livestock_slaugther.menu_livestock_root"
+              action="action_livestock_dashboard"
+              sequence="5"
+              groups="bn_livestock_slaugther.livestock_slaugther_user_group"/>
+
+</odoo>

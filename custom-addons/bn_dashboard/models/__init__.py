@@ -4,6 +4,7 @@ from . import pos_order
 from . import donation_in_kind_dashboard
 from . import donation_inflow_dashboard
 from . import profit_loss_dashboard
+from . import livestock_dashboard
 
 from . import treasury_access_config
 from . import pos_order_access_config

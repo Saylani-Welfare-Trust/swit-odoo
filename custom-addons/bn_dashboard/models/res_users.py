@@ -38,3 +38,12 @@ class ResUsers(models.Model):
         readonly=True,
         help="Empty = all categories.",
     )
+    
+    livestock_analytic_ids = fields.Many2many(
+        'account.analytic.account',
+        relation='res_users_livestock_analytic_rel',
+        column1='user_id', column2='account_id',
+        string='Livestock Dashboard Locations',
+        help="Locations this user can see on the Livestock Dashboard. "
+             "Leave empty to see every location.",
+    )
