@@ -31,7 +31,7 @@
         <field name="name">Registration: Own City</field>
         <field name="model_id" ref="bn_donation_box.model_donation_box_registration_installation"/>
         <field name="domain_force">[('city_id.city_id', 'in', user.city_access_ids.ids)]</field>
-        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.complain_center_admin_group'), ref('bn_donation_box.complain_center_process_complain_group'), ref('bn_donation_box.complain_center_resolve_complain_group')])]"/>
+        <field name="groups" eval="[(6, 0, [ref('bn_donation_box.donation_box_user_group'), ref('bn_donation_box.complain_center_admin_group'), ref('bn_donation_box.complain_center_process_complain_group'), ref('bn_donation_box.complain_center_resolve_complain_group')])]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="True"/>
         <field name="perm_create" eval="False"/>
