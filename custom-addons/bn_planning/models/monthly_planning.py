@@ -514,19 +514,12 @@ class MonthlyPlanningLineBase(models.AbstractModel):
 
     @api.depends('product_id', 'monthly_planning_id.source_location_id')
     def _compute_on_hand_qty(self):
+        default_loc = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         for rec in self:
-            # Try to get the plan's source location, otherwise just show global stock
-            source_loc = rec.monthly_planning_id.source_location_id
-            
-            if rec.product_id:
-                if source_loc:
-                    # Shows quantity in the specific source location of the plan
-                    rec.on_hand_qty = rec.product_id.with_context(
-                        location=source_loc.id
-                    ).qty_available
-                else:
-                    # Shows global quantity (matches the smart button on the product form)
-                    rec.on_hand_qty = rec.product_id.qty_available
+            loc = rec.monthly_planning_id.source_location_id or default_loc
+            if rec.product_id and loc:
+                rec.on_hand_qty = rec.product_id.with_context(
+                    location=loc.id).qty_available
             else:
                 rec.on_hand_qty = 0.0
 
