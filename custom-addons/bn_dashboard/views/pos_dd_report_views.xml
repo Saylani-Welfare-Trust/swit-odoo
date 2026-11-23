@@ -7,10 +7,8 @@
         <field name="model">pos.dd.report</field>
         <field name="arch" type="xml">
             <pivot sample="1" display_quantity="true">
-                <!-- Default rows -->
                 <field name="source_model" type="row"/>
-                
-                <!-- Available-to-drag rows (hidden by default, drag them in) -->
+
                 <field name="province_id" type="row" invisible="1"/>
                 <field name="city_id" type="row" invisible="1"/>
                 <field name="zone_id" type="row" invisible="1"/>
@@ -22,10 +20,8 @@
                 <field name="state" type="row" invisible="1"/>
                 <field name="user_id" type="row" invisible="1"/>
 
-                <!-- Default column: date grouped by month -->
                 <field name="date" type="col" interval="month"/>
 
-                <!-- Measures -->
                 <field name="amount" type="measure"/>
                 <field name="amount_paid" type="measure"/>
             </pivot>
@@ -61,6 +57,7 @@
                        decoration-info="source_model == 'direct.deposit'"/>
                 <field name="reference"/>
                 <field name="partner_id"/>
+                <field name="partner_phone" optional="show"/>
                 <field name="product_id" optional="show"/>
                 <field name="category_id" optional="hide"/>
                 <field name="province_id" optional="hide"/>
@@ -107,6 +104,7 @@
                             <field name="reference"/>
                             <field name="date"/>
                             <field name="partner_id"/>
+                            <field name="partner_phone"/>
                             <field name="user_id"/>
                             <field name="state"/>
                         </group>
@@ -157,11 +155,11 @@
             <search>
                 <field name="reference"/>
                 <field name="partner_id"/>
+                <field name="partner_phone"/>
                 <field name="transaction_ref"/>
                 <field name="config_id"/>
                 <field name="bank_id"/>
-                
-                <!-- Location filters (dropdowns limited to the right hierarchy level) -->
+
                 <field name="province_id"/>
                 <field name="city_id"
                        domain="[('plan_id.name', '=', 'Location'), ('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]"/>
@@ -169,9 +167,6 @@
                 <field name="analytic_account_id" string="Branch"
                        domain="[('plan_id.name', '=', 'Location'), ('parent_id.parent_id.parent_id', '!=', False)]"/>
 
-                <!-- Date range: type a date, pick "Date From" / "Date To" (both inclusive);
-                     "Date Range", "City" and "Branch" popups are added to the Filters list
-                     by static/src/search/pos_dd_report_filters.js -->
                 <field name="date_day" string="Date From" operator="&gt;="/>
                 <field name="date_day" string="Date To" operator="&lt;="/>
                 <field name="product_id"/>
@@ -186,7 +181,7 @@
                 <filter name="filter_this_month" string="This Month" domain="[('date', '>=', (context_today() + relativedelta(day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <filter name="filter_this_year" string="This Year" domain="[('date', '>=', (context_today() + relativedelta(month=1, day=1)).strftime('%Y-%m-%d 00:00:00'))]"/>
                 <separator/>
-                
+
                 <group expand="0" string="Group By">
                     <filter name="group_source" string="Source" context="{'group_by': 'source_model'}"/>
                     <filter name="group_province" string="Province" context="{'group_by': 'province_id'}"/>
@@ -215,7 +210,6 @@
     <record id="action_pos_dd_report" model="ir.actions.act_window">
         <field name="name">Reporting</field>
         <field name="res_model">pos.dd.report</field>
-        <!-- Pivot stays the default; the list is available from the view switcher -->
         <field name="view_mode">pivot,graph,tree,form</field>
         <field name="search_view_id" ref="view_pos_dd_report_search"/>
         <field name="help" type="html">

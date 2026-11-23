@@ -24,6 +24,7 @@ class PosDdReport(models.Model):
     ], string='Source', readonly=True)
     source_id = fields.Integer('Source ID', readonly=True)
     partner_id = fields.Many2one('res.partner', 'Customer / Donor', readonly=True)
+    partner_phone = fields.Char('Contact Number', readonly=True)
     user_id = fields.Many2one('res.users', 'Cashier / User', readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', readonly=True)
     amount = fields.Monetary('Amount', currency_field='currency_id', readonly=True)
@@ -113,6 +114,7 @@ class PosDdReport(models.Model):
                 po.name AS reference,
                 po.date_order AS date,
                 po.partner_id,
+                COALESCE(NULLIF(rp.phone, ''), NULLIF(rp.mobile, ''), '')::varchar AS partner_phone,
                 po.user_id,
                 rc.currency_id,
                 pol.price_subtotal_incl AS amount,
@@ -152,6 +154,7 @@ class PosDdReport(models.Model):
                  ORDER BY (e.company_id = po.company_id) DESC, e.id LIMIT 1
             ) emp ON TRUE
             LEFT JOIN res_company rc ON rc.id = po.company_id
+            LEFT JOIN res_partner rp ON rp.id = po.partner_id
             LEFT JOIN product_product pp ON pp.id = pol.product_id
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
             LEFT JOIN loc_tree lt ON lt.id = COALESCE(pc.analytic_account_id, ps.analytic_account_id, emp.analytic_account_id)
@@ -165,6 +168,7 @@ class PosDdReport(models.Model):
                 dd.name AS reference,
                 dd.create_date AS date,
                 dd.donor_id AS partner_id,
+                COALESCE(NULLIF(rp.phone, ''), NULLIF(rp.mobile, ''), '')::varchar AS partner_phone,
                 dd.user_id AS user_id,
                 dd.currency_id AS currency_id,
                 (COALESCE(ddl.amount, 0) * COALESCE(ddl.quantity, 1))::numeric AS amount,
@@ -190,6 +194,7 @@ class PosDdReport(models.Model):
                 pt.categ_id::integer AS category_id
             FROM direct_deposit_line ddl
             INNER JOIN direct_deposit dd ON dd.id = ddl.direct_deposit_id
+            LEFT JOIN res_partner rp ON rp.id = dd.donor_id
             LEFT JOIN product_product pp ON pp.id = ddl.product_id
             LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
             LEFT JOIN loc_tree lt ON lt.id = dd.analytic_account_id
@@ -197,9 +202,6 @@ class PosDdReport(models.Model):
 
     # ------------------------------------------------------------------
     # ACCESS HELPERS
-    # ------------------------------------------------------------------
-    # ------------------------------------------------------------------
-    # FILTER POPUPS (City / Branch) - see static/src/search/pos_dd_report_filters.js
     # ------------------------------------------------------------------
     @api.model
     def get_location_filter_options(self):
