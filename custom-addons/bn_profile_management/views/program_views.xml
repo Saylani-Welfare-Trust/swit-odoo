@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Record Search programmes (tags with a Record Search code), e.g. Sadqa e Jariya -->
+    <record id="res_partner_category_view_form_program" model="ir.ui.view">
+        <field name="name">res.partner.category.form.record.search.program</field>
+        <field name="model">res.partner.category</field>
+        <field name="inherit_id" ref="base.view_partner_category_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="after">
+                <group string="Record Search Programme" name="record_search_program">
+                    <group>
+                        <field name="registration_program_code"/>
+                        <field name="registration_program_active" invisible="not registration_program_code"/>
+                        <field name="registration_role" invisible="not registration_program_code"/>
+                        <field name="registration_kind" invisible="not registration_program_code"/>
+                    </group>
+                    <group>
+                        <field name="registration_required_field_ids" widget="many2many_tags"
+                               invisible="not registration_program_code" options="{'no_create': True}"/>
+                        <field name="program_menu_ids" widget="many2many_tags" invisible="not program_menu_ids"/>
+                    </group>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Record Search opened by a programme's menu: the programme is set and locked -->
+    <record id="record_search_view_form_program" model="ir.ui.view">
+        <field name="name">record.search.view.form.program</field>
+        <field name="model">record.search</field>
+        <field name="inherit_id" ref="bn_profile_management.record_search_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='registration_type']" position="attributes">
+                <attribute name="readonly">is_microfinance or is_welfare or is_medical or program_id</attribute>
+            </xpath>
+            <xpath expr="//field[@name='donee_registration_type']" position="attributes">
+                <attribute name="invisible">registration_type != 'donee' or program_id</attribute>
+            </xpath>
+            <xpath expr="//field[@name='donee_registration_type']" position="before">
+                <field name="program_id" invisible="not program_id" readonly="program_locked" options="{'no_create': True, 'no_open': True}"/>
+                <field name="program_locked" invisible="1"/>
+                <field name="program_kind" invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='category']" position="attributes">
+                <attribute name="invisible">registration_type != 'donee' or is_microfinance or is_medical or program_kind in ('individual', 'institution')</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Anchor of the company settings other modules (Sadqa e Jariya) extend: the
+         Welfare API page itself comes from bn_res_company, applied before it. -->
+    <record id="base_view_company_form_inherit_bn_profile_management" model="ir.ui.view">
+        <field name="name">base.view.company.form.inherit.bn.profile.management</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside"/>
+        </field>
+    </record>
+
+</odoo>

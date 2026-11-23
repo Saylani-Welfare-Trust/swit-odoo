@@ -1,6 +1,6 @@
 {
     'name': 'Profile Management',
-    'version': '1.1',
+    'version': '1.2',
     'summary': 'Layer above Contacts',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com/',
@@ -29,6 +29,7 @@
         'wizards/confirm_search.xml',
         'wizards/record_search.xml',
         'wizards/microfinance_application_wizard.xml',
+        'views/program_views.xml',
     ],
     'auto_install': False,
     'application': True,

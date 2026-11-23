@@ -1,6 +1,6 @@
 {
     'name': 'SMS & WhatsApp Integration',
-    'version': '1.0',
+    'version': '1.1',
     'author': 'Labeeb Farooq',
     'website': 'https://bytesnode.com/',
     'license': 'LGPL-3',

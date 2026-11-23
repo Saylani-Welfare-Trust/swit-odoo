@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <!-- Profile form of a Sadqa e Jariya donee: Print Info and Send Profile Form use it instead of the User Profile -->
+    <template id="report_sadqa_jariya_donee_profile">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="donee">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <style>
+                            .profile-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                            .profile-table td { border: 1px solid #000; padding: 7px 8px; vertical-align: top; }
+                            .profile-table td.label { width: 20%; font-weight: bold; background-color: #f2f2f2; }
+                            .profile-table td.value { width: 30%; }
+                        </style>
+                        <table style="width: 100%; margin-bottom: 14px;">
+                            <tr>
+                                <td style="vertical-align: middle;">
+                                    <h4 class="fw-bold text-uppercase" style="margin: 0;">Sadqa e Jariya Donee Profile</h4>
+                                    <div style="font-size: 13px; margin-top: 4px;"><t t-esc="donee.name"/></div>
+                                </td>
+                                <td t-if="donee.image_1920" style="width: 110px; text-align: right;">
+                                    <img t-att-src="image_data_uri(donee.image_1920)" style="max-width: 100px; max-height: 110px; border: 1px solid #000;" alt="Photo"/>
+                                </td>
+                            </tr>
+                        </table>
+                        <table class="profile-table">
+                            <tr>
+                                <td class="label">Date</td>
+                                <td class="value"><t t-esc="context_timestamp(datetime.datetime.now())" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/></td>
+                                <td class="label">Registration No.</td>
+                                <td class="value"><t t-esc="donee.primary_registration_id"/></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Institution</td>
+                                <td class="value"><t t-esc="donee.name"/></td>
+                                <td class="label">Status</td>
+                                <td class="value"><span t-field="donee.state"/></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Contact Person / Manager</td>
+                                <td class="value"><t t-esc="donee.sadqa_contact_person"/></td>
+                                <td class="label">Date Of Birth</td>
+                                <td class="value">
+                                    <t t-if="donee.date_of_birth">
+                                        <t t-esc="donee.date_of_birth" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/> (<t t-esc="donee.age"/> years)
+                                    </t>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label">CNIC No.</td>
+                                <td class="value"><t t-esc="donee.cnic_no"/></td>
+                                <td class="label">Mobile</td>
+                                <td class="value"><t t-if="donee.country_code_id.phone_code">+<t t-esc="donee.country_code_id.phone_code"/> </t><t t-esc="donee.mobile"/></td>
+                            </tr>
+                            <tr>
+                                <td class="label">WhatsApp</td>
+                                <td class="value"><t t-esc="donee.whatsapp"/></td>
+                                <td class="label">Email</td>
+                                <td class="value"><t t-esc="donee.email"/></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Address</td>
+                                <td class="value"><t t-esc="', '.join(part for part in (donee.street, donee.street2) if part)"/></td>
+                                <td class="label">City</td>
+                                <td class="value"><t t-esc="donee.city"/></td>
+                            </tr>
+                            <tr>
+                                <td class="label">Area</td>
+                                <td class="value"><t t-esc="donee.sadqa_area_id.name"/></td>
+                                <td class="label">Nearest Land Mark</td>
+                                <td class="value"><t t-esc="donee.nearest_land_mark"/></td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <record id="action_report_sadqa_jariya_donee_profile" model="ir.actions.report">
+        <field name="name">Sadqa e Jariya Donee Profile</field>
+        <field name="model">res.partner</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_sadqa_e_jariya.report_sadqa_jariya_donee_profile</field>
+        <field name="report_file">bn_sadqa_e_jariya.report_sadqa_jariya_donee_profile</field>
+        <field name="print_report_name">'Profile - %s' % object.name</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Where Welfare still fetches institutions (pre_production): Sadqa e Jariya takes over -->
+    <function model="sadqa.jariya" name="_take_over_welfare_institutions"/>
+</odoo>

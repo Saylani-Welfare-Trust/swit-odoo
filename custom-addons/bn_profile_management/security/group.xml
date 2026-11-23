@@ -25,4 +25,11 @@
         <field name="name">Profile Management / Edit Donor</field>
     </record>
 
+    <!-- Record Search programmes (e.g. Sadqa e Jariya) give their users this group:
+         see and create / update contacts from Record Search. -->
+    <record id="profile_management_user_group" model="res.groups">
+        <field name="name">Profile Management / User</field>
+        <field name="implied_ids" eval="[(6, 0, [ref('bn_profile_management.profile_management_group'), ref('bn_profile_management.profile_management_create_access_group'), ref('bn_profile_management.profile_management_write_access_group'), ref('bn_profile_management.profile_management_read_access_group')])]"/>
+    </record>
+
 </odoo>

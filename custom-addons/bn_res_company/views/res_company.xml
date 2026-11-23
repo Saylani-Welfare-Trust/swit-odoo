@@ -29,8 +29,7 @@
                         <group name="welfare_api_auth_endpoints_col_1" string="Auth">
                             <field name="welfare_url" />
                             <field name="odoo_auth_key" password="True" />
-                            <field name="welfare_instituiton_url" />
-                            <field name="odoo_auth_institution_key" password="True" />
+                            <!-- Welfare Institution URL / Auth Key: shown by Sadqa e Jariya -->
                         </group>
                         <group name="welfare_api_auth_endpoints_col_2" string="Endpoints">
                             <field name="create_application_endpoint" />
