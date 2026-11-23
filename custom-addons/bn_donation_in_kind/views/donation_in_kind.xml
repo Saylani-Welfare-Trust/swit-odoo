@@ -64,6 +64,7 @@
                             <field name="donor_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="favor" readonly="1" invisible="not favor" />
                             <field name="product_id" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                            <field name="product_uom_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" />
                             <field name="picking_type_id" domain="[('program_type', '=', 'donation_in_kind')]" style="pointer-events: none;" readonly="state in ['validate', 'box_open', 'valuation_committee', 'approval', 'box_validate', 'cancel']" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                             <field name="check_bool" invisible="1" />
                         </group>
@@ -80,6 +81,7 @@
                             <field name="donation_in_kind_line_ids" readonly="state in ['draft', 'validate', 'valuation_committee','approval', 'box_validate', 'cancel'] or check_bool in ['yes', 'no']">
                                 <tree editable="bottom">
                                     <field name="product_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
+                                    <field name="product_uom_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
                                     <field name="quantity" />
                                     <field name="price_bool" column_invisible="True" />
                                     <field name="check_price_bool" column_invisible="True" />
