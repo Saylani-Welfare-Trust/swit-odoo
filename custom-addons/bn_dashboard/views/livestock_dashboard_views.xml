@@ -6,17 +6,11 @@
         <field name="tag">livestock_dashboard</field>
     </record>
 
-    <!--
-        Adjust the `parent` below to the root menu of your module.
-        Common values: bn_livestock_slaugther.menu_livestock_root
-                       bn_livestock_slaugther.menu_livestock_slaugther_root
-                       stock.menu_stock_root
-    -->
     <menuitem id="menu_livestock_dashboard"
-              name="Dashboard"
-              parent="bn_livestock_slaugther.menu_livestock_root"
+              name="Livestock Dashboard"
+              parent="bn_dashboard.menu_dashboard_root"
               action="action_livestock_dashboard"
-              sequence="5"
-              groups="bn_dashboard.livestock_slaugther_user_group"/>
+              sequence="20"
+              groups="bn_dashboard.group_livestock_dashboard_user"/>
 
 </odoo>
