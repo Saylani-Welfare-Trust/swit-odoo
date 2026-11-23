@@ -57,6 +57,11 @@ export class ReceivingPopup extends AbstractAwaitablePopup {
         }
     }
 
+    // Close as confirmed, without this popup's own confirm() (used by bn_welfare's popup)
+    _closeConfirmed() {
+        return super.confirm();
+    }
+
     /**
      * Main confirm method - handles medical equipment record processing
      */

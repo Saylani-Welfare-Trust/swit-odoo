@@ -571,7 +571,9 @@ patch(PaymentScreen.prototype, {
                 }
         }
         // ========== WELFARE DISBURSEMENT ==========
-        if (currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
+        // bn_welfare pays welfare orders itself (its own PaymentScreen patch, _welfarePayment):
+        // this older handling only runs when that Welfare is not installed.
+        if (!this._welfarePayment && currentOrder && currentOrder.extra_data && currentOrder.extra_data.welfare) {
             const welfareData = currentOrder.extra_data.welfare;
             
             // Only process if it's a welfare order and not already completed

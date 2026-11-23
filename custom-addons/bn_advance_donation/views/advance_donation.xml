@@ -171,7 +171,6 @@
                                     <field name="advance_amount"/>
                                     <field name="disbursed_record"/>
                                     <field name="disbursed_amount"/>
-                                    <field name="welfare_id"/>
                                     <!-- <field name="recurring_line_id"/> -->
                                     <field name="microfinance_id" />
                                     <button name="action_print_line_non_cash_disbursement_report" string="Print Non-Cash Report" type="object" class="btn-link" icon="fa-print"/>
@@ -185,8 +184,8 @@
                                         <field name="advance_amount" readonly="1"/>
                                         <field name="disbursed_amount" readonly="1"/>
                                     </group>
-                                    <group>
-                                        <field name="welfare_id" readonly="1"/>
+                                    <!-- source_links: the Welfare link is added by bn_welfare -->
+                                    <group name="source_links">
                                         <!-- <field name="recurring_line_id" readonly="1"/> -->
                                         <field name="microfinance_id" readonly="1"/>
                                     </group>

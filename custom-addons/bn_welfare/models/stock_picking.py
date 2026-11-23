@@ -1,5 +1,4 @@
-from odoo import models, api, fields
-from odoo.exceptions import UserError as Warning
+from odoo import models, fields
 
 class StockPicking(models.Model):
     _inherit = 'stock.picking'
@@ -17,10 +16,8 @@ class StockPicking(models.Model):
                 if welfare:
                     # Only disburse recurring line linked to this picking
                     if picking.recurring_line_id and picking.recurring_line_id.state == 'delivered':
-                        # raise Warning(f"Recurring line: {picking.recurring_line_id}\nWelfare name: {welfare.name}")
                         picking.recurring_line_id.action_disbursed()
                     # CASE 2: No recurring line → use welfare_line_id
                     elif picking.welfare_line_id and picking.welfare_line_id.state == 'delivered':
-                        # raise Warning(f"Welfare line: {picking.welfare_line_id}\nWelfare name: {welfare.name}")
                         picking.welfare_line_id.action_disbursed()
         return res

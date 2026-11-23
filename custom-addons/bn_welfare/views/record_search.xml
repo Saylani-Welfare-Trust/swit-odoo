@@ -5,7 +5,7 @@
         <field name="name">Donee</field>
         <field name="res_model">res.partner</field>
         <field name="view_mode">kanban,tree,form</field>
-        <field name="domain">[('category_id.name', '=', 'Donee'), ('category_id.name', '=', 'Welfare')]</field>
+        <field name="domain" eval="[('category_id', 'in', [ref('bn_profile_management.donee_partner_category')]), ('category_id', 'in', [ref('bn_profile_management.welfare_partner_category')])]"/>
         <field name="context">{
             'create': 0,
             'delete': 0,
@@ -29,6 +29,11 @@
         parent="welfare_menu"
         sequence="2"/>
 
+    <!-- Folder menu: clear any old action, see welfare_menu in welfare.xml -->
+    <record id="welfare_profile_management_menu" model="ir.ui.menu">
+        <field name="action" eval="False"/>
+    </record>
+
     <menuitem
         id="record_search_menu"
         name="Record Search"
@@ -45,4 +50,9 @@
         parent="welfare_profile_management_menu"
         sequence="1"/>
 
+
+    <!-- These menus follow the programme tag (Profile Management > Tags): hidden while
+         the programme is disabled. Linked on every install / upgrade. -->
+    <function model="res.partner.category" name="_link_program_menus"
+              eval="['welfare', ['bn_welfare.welfare_profile_management_menu']]"/>
 </odoo>

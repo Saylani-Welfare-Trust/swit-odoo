@@ -10,6 +10,7 @@ order_type_selection = [
 
 class DisbursementApplicationType(models.Model):
     _name = 'disbursement.application.type'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Disbursement Application Type"
 
 

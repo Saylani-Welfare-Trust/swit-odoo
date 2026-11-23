@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_welfare_line" model="ir.ui.view">
+        <field name="name">welfare.line.search.filters</field>
+        <field name="model">welfare.line</field>
+        <field name="inherit_id" ref="bn_welfare.view_welfare_consolidated_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="return_bill_id"/>
+                <field name="assigned_officer_id"/>
+                <field name="bill_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_order_type" string="Order Type" context="{'group_by': 'order_type'}"/>
+                    <filter name="bn_groupby_collection_point" string="Collection Point" context="{'group_by': 'collection_point'}"/>
+                    <filter name="bn_groupby_payment_type" string="Payment Type" context="{'group_by': 'payment_type'}"/>
+                    <filter name="bn_groupby_assigned_officer_id" string="Assigned Officer (Marfat)" context="{'group_by': 'assigned_officer_id'}"/>
+                    <filter name="bn_groupby_recurring_duration" string="Recurring Duration" context="{'group_by': 'recurring_duration'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_disbursement_application_type" model="ir.ui.view">
+        <field name="name">disbursement.application.type.search.filters</field>
+        <field name="model">disbursement.application.type</field>
+        <field name="inherit_id" ref="bn_welfare.search_disbursement_application_type"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="product_category_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_order_type" string="Order Type" context="{'group_by': 'order_type'}"/>
+                    <filter name="bn_groupby_product_category_id" string="Product Category" context="{'group_by': 'product_category_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_welfare" model="ir.ui.view">
+        <field name="name">welfare.search.filters</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.search_welfare"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="employee_id"/>
+                <field name="father_cnic_no"/>
+                <field name="family_cnic_name"/>
+                <field name="company_phone"/>
+                <field name="home_phone_no"/>
+                <field name="landlord_cnic_no"/>
+                <field name="landlord_mobile"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_order_type" string="Order Type" context="{'group_by': 'order_type'}"/>
+                    <filter name="bn_groupby_employee_id" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="bn_groupby_portal_sync_status" string="Portal Sync Status" context="{'group_by': 'portal_sync_status'}"/>
+                    <filter name="bn_groupby_residence_type" string="Residence Type" context="{'group_by': 'residence_type'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
