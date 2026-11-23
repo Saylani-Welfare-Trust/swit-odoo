@@ -74,18 +74,23 @@ export class ProfitLossDashboard extends Component {
                     labels: this.state.data.trend_labels,
                     datasets: [
                         {
+                            type: 'bar',
                             label: 'Income',
                             data: this.state.data.trend_income,
                             backgroundColor: '#28a745',
                             borderRadius: 4,
-                            yAxisID: 'y', // Uses Left Axis
                         },
                         {
+                            type: 'line', // <--- Changed to Line so it's visible at the bottom
                             label: 'Expense',
                             data: this.state.data.trend_expense,
-                            backgroundColor: '#dc3545',
-                            borderRadius: 4,
-                            yAxisID: 'y1', // Uses Right Axis
+                            borderColor: '#dc3545', // Red line
+                            backgroundColor: '#dc3545', // Red dots
+                            borderWidth: 3,
+                            tension: 0.3, // Smooth curve
+                            pointRadius: 5, // Show the exact points
+                            pointHoverRadius: 7,
+                            fill: false,
                         }
                     ]
                 },
@@ -93,7 +98,7 @@ export class ProfitLossDashboard extends Component {
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: {
-                        mode: 'index', // <-- Shows both values when hovering over a month
+                        mode: 'index', 
                         intersect: false,
                     },
                     plugins: { 
@@ -106,7 +111,6 @@ export class ProfitLossDashboard extends Component {
                                         label += ': ';
                                     }
                                     if (context.parsed.y !== null) {
-                                        // ADDED minimumFractionDigits to show original exact value
                                         label += 'Rs ' + new Intl.NumberFormat('en-US', { 
                                             minimumFractionDigits: 2, 
                                             maximumFractionDigits: 2 
@@ -118,29 +122,16 @@ export class ProfitLossDashboard extends Component {
                         }
                     },
                     scales: {
+                        // SINGLE AXIS FOR BOTH
                         y: {
                             type: 'linear',
                             display: true,
                             position: 'left',
                             title: {
                                 display: true,
-                                text: 'Income (Rs)'
+                                text: 'Amount (Rs)'
                             },
                             beginAtZero: true
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'Expense (Rs)'
-                            },
-                            beginAtZero: true,
-                            min: 0,
-                            grid: {
-                                drawOnChartArea: false, 
-                            },
                         }
                     }
                 }
