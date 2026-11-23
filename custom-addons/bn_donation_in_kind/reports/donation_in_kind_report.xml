@@ -132,10 +132,13 @@
                                 </div>
                             </div>
 
+                            <!-- ===== PRODUCT TABLE ===== -->
                             <table class="table table-bordered">
                                 <thead>
                                     <tr>
                                         <th>Product</th>
+                                        <!-- ADDED UOM HEADER -->
+                                        <th class="text-center">UoM</th>
                                         <th class="text-end">Qty</th>
                                     </tr>
                                 </thead>
@@ -144,6 +147,8 @@
                                         <t t-foreach="record.donation_in_kind_line_ids" t-as="line">
                                             <tr>
                                                 <td><t t-esc="line.product_id.display_name"/></td>
+                                                <!-- ADDED UOM VALUE -->
+                                                <td class="text-center"><t t-esc="line.product_uom_id.name or line.product_id.uom_id.name"/></td>
                                                 <td class="text-end"><t t-esc="'{:,}'.format(int(line.quantity) or 0) or 0"/></td>
                                             </tr>
                                         </t>
@@ -153,7 +158,7 @@
 
                             <hr style="margin:4px 0"/>
 
-                            <!-- ===== TOTALS ===== -->
+                            <!-- ===== TOTALS & BOTTOM SUMMARY ===== -->
                             <table style="width:100%; margin-top:10px; font-size:10px;">
                                 <tr>
                                     <td style="text-align:left; padding:0;">Entered by: <strong><t t-esc="o.create_uid.name"/></strong></td>
@@ -171,7 +176,8 @@
                                         <strong>Products:</strong>
                                         <t t-foreach="receipt_docs" t-as="record">
                                             <t t-foreach="record.donation_in_kind_line_ids" t-as="l">
-                                                <div><t t-esc="count"/>. <t t-esc="l.product_id.display_name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/></div>
+                                                <!-- ADDED UOM HERE -->
+                                                <div><t t-esc="count"/>. <t t-esc="l.product_id.display_name"/> - <t t-esc="'{:,}'.format(int(l.quantity) or 0) or 0"/> <t t-esc="l.product_uom_id.name or l.product_id.uom_id.name"/></div>
                                                 <t t-set="count" t-value="count + 1"/>
                                             </t>
                                         </t>
