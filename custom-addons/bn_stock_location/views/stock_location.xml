@@ -9,6 +9,11 @@
             <xpath expr="//field[@name='replenish_location']" position="after">
                 <field name="is_slaughter_location" />
                 <field name="is_distribution_location" />
+                <field name="is_meat_location" />
+                <field name="is_goat_location" />
+                <field name="is_chicken_location" />
+                <field name="is_cutting_location" />
+                <field name="is_kitchen_location" />
                 <field name="analytic_account_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" domain="[('location_option_id.name', 'in', ('City', 'Zone', 'Branch'))]" invisible="usage not in ('internal', 'view')" />
                 <field name="location_option_id" options="{'no_create': True, 'no_edit': True, 'no_open': True}" />
             </xpath>

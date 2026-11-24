@@ -1,6 +1,6 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '17.0.1.10.0',
+    'version': '17.0.1.11.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -33,7 +33,6 @@
         'views/package_type.xml',
         'views/meat_management.xml',
         'views/distribution_center.xml',
-        'views/stock_warehouse.xml',
         
         'wizards/livestock_slaugther.xml',
         'data/program_types.xml',

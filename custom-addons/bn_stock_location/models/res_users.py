@@ -149,6 +149,20 @@ class ResUsersNodes(models.Model):
         string='Branch / Site Access', compute='_compute_node_access',
         help="The user's access comes from their Branches / Sites (group Branch / Site Access).")
 
+    def _default_node(self):
+        """The Branch / Site a new document of this user belongs to by default:
+        their own branch (employee) when it is one of theirs, else their only
+        Allowed Branch / Site; several and no own branch: none (chosen)."""
+        self.ensure_one()
+        user = self.sudo()
+        Account = self.env['account.analytic.account']
+        branch = user.employee_ids[:1].analytic_account_id
+        if branch and (user.all_nodes or branch in user.node_scope_ids):
+            return branch.sudo(False)
+        if not user.all_nodes and len(user.allowed_node_ids) == 1:
+            return user.allowed_node_ids.sudo(False)
+        return Account
+
     @api.depends('groups_id')
     def _compute_node_access(self):
         group = self.env.ref(NODE_ACCESS_GROUP, raise_if_not_found=False)

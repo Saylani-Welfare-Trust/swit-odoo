@@ -1,4 +1,4 @@
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class WelfareNode(models.Model):
@@ -12,6 +12,8 @@ class WelfareNode(models.Model):
 
 class WelfareLineNode(models.Model):
     _inherit = 'welfare.line'
+    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model
     def _node_sources(self):
@@ -20,6 +22,8 @@ class WelfareLineNode(models.Model):
 
 class WelfareRecurringLineNode(models.Model):
     _inherit = 'welfare.recurring.line'
+    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model
     def _node_sources(self):

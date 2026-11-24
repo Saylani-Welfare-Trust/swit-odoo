@@ -36,17 +36,19 @@ class BranchKitchenRequest(models.Model):
 
 
     branch_id = fields.Many2one('stock.location', string="Branch")
-    # the kitchen that cooks for the branch: its stock gives the ingredients, its kitchen location the dishes
-    kitchen_warehouse_id = fields.Many2one(
-        'stock.warehouse', string="Kitchen Warehouse", default=lambda self: self._default_kitchen_warehouse(),
-        help="The warehouse whose kitchen produces this request: ingredients from its stock, "
-             "dishes into its Kitchen Location.")
+    # the kitchen that cooks for the branch (a location marked Is Kitchen Location; a
+    # warehouse may hold several): ingredients from its warehouse's stock, dishes into it
+    kitchen_location_id = fields.Many2one(
+        'stock.location', string="Kitchen", domain="[('is_kitchen_location', '=', True)]",
+        default=lambda self: self._default_kitchen_location(),
+        help="The kitchen that produces this request (a location marked Is Kitchen Location): the "
+             "ingredients come from the stock of its warehouse.")
 
     @api.model
-    def _default_kitchen_warehouse(self):
-        """The only warehouse with a Kitchen Location, else none (chosen on the request)."""
-        kitchens = self.env['stock.warehouse'].sudo().search([('kitchen_location_id', '!=', False)])
-        return kitchens.sudo(False) if len(kitchens) == 1 else self.env['stock.warehouse']
+    def _default_kitchen_location(self):
+        """The only kitchen (several: chosen on the request)."""
+        kitchens = self.env['stock.location'].sudo()._role_locations('is_kitchen_location')
+        return kitchens.sudo(False) if len(kitchens) == 1 else self.env['stock.location']
 
     type = fields.Selection(selection=type_selection, string="Type")
 
@@ -78,12 +80,13 @@ class BranchKitchenRequest(models.Model):
         if self.state != 'approve':
             raise UserError(_('Only an approved kitchen request can be manufactured.'))
         Production = self.env['mrp.production']
-        if not self.kitchen_warehouse_id:
-            raise UserError(_('Choose the Kitchen Warehouse of %s.') % (self.name or self.branch_id.display_name))
-        # the kitchen warehouse: ingredients from its stock, dishes into its kitchen
-        kitchen = self.kitchen_warehouse_id
-        kitchen_loc = kitchen._kitchen_location()
-        warehouse_loc = kitchen.lot_stock_id
+        if not self.kitchen_location_id:
+            raise UserError(_('Choose the Kitchen of %s.') % (self.name or self.branch_id.display_name))
+        # the kitchen: ingredients from its warehouse's stock, dishes into it
+        kitchen_loc = self.kitchen_location_id
+        warehouse_loc = kitchen_loc.warehouse_id.lot_stock_id
+        if not warehouse_loc:
+            raise UserError(_('The kitchen %s is not in a warehouse.') % kitchen_loc.display_name)
 
         mo_ids = []
 

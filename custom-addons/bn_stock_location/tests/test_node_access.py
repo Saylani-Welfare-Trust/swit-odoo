@@ -71,3 +71,31 @@ class TestNodeAccess(TransactionCase):
         self.assertEqual(self._warehouses(self.city_user), self.wh_gulshan | self.wh_johar)
         self.wh_lahore.node_id = self.johar  # cached rules are refreshed
         self.assertEqual(self._warehouses(self.city_user), self.ours)
+
+    # ------------------------------------------------------------------
+    # T6: pickers and defaults
+    # ------------------------------------------------------------------
+    def test_default_node_and_warehouse(self):
+        Warehouse = self.env['stock.warehouse']
+        self.assertEqual(self.branch_user._default_node(), self.gulshan, "the only Allowed Branch / Site")
+        self.assertEqual(Warehouse.with_user(self.branch_user)._warehouse_for(), self.wh_gulshan)
+        several = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'na several', 'login': 'na_several',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.group.id])],
+            'allowed_node_ids': [(6, 0, (self.gulshan | self.lahore).ids)]})
+        self.assertFalse(several._default_node(), "several, no own branch: chosen")
+        self.env['hr.employee'].create({'name': 'na several', 'user_id': several.id,
+                                        'analytic_account_id': self.lahore.id})
+        several.invalidate_recordset()
+        self.assertEqual(several._default_node(), self.lahore, "their own branch")
+        self.assertEqual(Warehouse.with_user(several)._warehouse_for(), self.wh_lahore)
+
+    def test_branch_picker(self):
+        Account = self.env['account.analytic.account'].with_context(branch_scope=True)
+        ours = self.karachi | self.gulshan | self.johar | self.lahore
+        self.assertEqual(Account.with_user(self.city_user).search([('id', 'in', ours.ids)]),
+                         self.karachi | self.gulshan | self.johar)
+        self.assertEqual(Account.with_user(self.national).search([('id', 'in', ours.ids)]), ours)
+        welfare_field = self.env.registry.get('welfare.line')
+        if welfare_field is not None:
+            self.assertTrue(self.env['welfare.line']._fields['analytic_account_id'].context.get('branch_scope'))

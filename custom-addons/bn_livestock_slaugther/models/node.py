@@ -42,7 +42,7 @@ class LivestockCuttingNode(models.Model):
 
     @api.model
     def _node_sources(self):
-        return super()._node_sources() + ['warehouse_id', 'slaughter_location_id', 'picking_id']
+        return super()._node_sources() + ['cutting_location_id', 'slaughter_location_id', 'picking_id']
 
 
 class LivestockCuttingMaterialNode(models.Model):
@@ -51,4 +51,4 @@ class LivestockCuttingMaterialNode(models.Model):
 
     @api.model
     def _node_sources(self):
-        return super()._node_sources() + ['warehouse_id', 'livestock_slaughter_id']
+        return super()._node_sources() + ['cutting_location_id', 'livestock_slaughter_id']

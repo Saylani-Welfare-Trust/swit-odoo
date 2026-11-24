@@ -47,7 +47,11 @@
                             <field name="price" />
                         </group>
                         <group name="livestock_cutting_col_2">
-                            <field name="warehouse_id" readonly="1"/>
+                            <field name="cutting_location_id" options="{'no_create': True, 'no_edit': True}" readonly="inventory_updated or state == 'done'"/>
+                            <field name="meat_location_id" options="{'no_create': True, 'no_edit': True}" readonly="materials_sent"/>
+                            <field name="goat_location_id" options="{'no_create': True, 'no_edit': True}" readonly="materials_sent"/>
+                            <field name="materials_sent" invisible="1"/>
+                            <field name="warehouse_id"/>
                             <field name="node_id"/>
                             <field name="start_time" />
                             <field name="end_time" />

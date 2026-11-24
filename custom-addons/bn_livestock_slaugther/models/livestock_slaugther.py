@@ -35,12 +35,22 @@ class LivestockSlaughter(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
-    # where the animal is slaughtered: one of the locations marked "Is Slaughter Location"
+    # where Slaughtered puts the animal: a location marked "Is Slaughter Location",
+    # or for the Meat / Goat / Chicken departments "Is Meat / Goat / Chicken Location"
     slaughter_location_id = fields.Many2one(
         'stock.location', string='Slaughter Location', copy=False,
-        domain="[('is_slaughter_location', '=', True)]",
-        help="Where the animal is slaughtered (a location marked Is Slaughter Location). "
-             "Filled when the animal's warehouse has a single slaughter location.")
+        domain="[('id', 'in', slaughter_location_option_ids)]",
+        help="Where Slaughtered puts the animal: a location marked Is Slaughter Location, or for the "
+             "Meat / Goat / Chicken departments one marked Is Meat / Goat / Chicken Location. "
+             "Filled when the animal's warehouse has only one.")
+    slaughter_location_option_ids = fields.Many2many(
+        'stock.location', string='Slaughter Location Options', compute='_compute_location_options')
+    # where Cutting puts the animal: a location marked "Is Cutting Location"
+    cutting_location_id = fields.Many2one(
+        'stock.location', string='Cutting Location', copy=False,
+        domain="[('is_cutting_location', '=', True)]",
+        help="Where Cutting puts the animal (a location marked Is Cutting Location). "
+             "Filled when the warehouse has only one.")
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
     truck_number = fields.Char('Truck Number', copy=False, readonly=True)
@@ -117,21 +127,43 @@ class LivestockSlaughter(models.Model):
             location = record._pos_source_location()
             if location:
                 record.sudo().source_location_id = location.id
-        for record in records.filtered(lambda r: not r.slaughter_location_id):
-            slaughter = record._default_slaughter_location()
-            if slaughter:
-                record.sudo().slaughter_location_id = slaughter.id
+        records._fill_default_locations()
         return records
 
-    def _default_slaughter_location(self):
-        """The only slaughter location of the animal's warehouse (several: chosen by hand)."""
+    def _slaughter_role(self):
+        """The location role the animal's Slaughtered destination must have."""
         self.ensure_one()
-        try:
-            warehouse = self._livestock_warehouse()
-        except Exception:
-            return self.env['stock.location']
-        locations = self.env['stock.location'].sudo()._slaughter_locations(warehouse)
-        return locations if len(locations) == 1 else self.env['stock.location']
+        return ('is_meat_location' if self.is_meat_depart else 'is_goat_location' if self.is_goat_depart
+                else 'is_chicken_location' if self.is_chicken_depart else 'is_slaughter_location')
+
+    @api.depends('is_meat_depart', 'is_goat_depart', 'is_chicken_depart')
+    def _compute_location_options(self):
+        Location = self.env['stock.location']
+        for record in self:
+            record.slaughter_location_option_ids = Location._role_locations(record._slaughter_role())
+
+    @api.onchange('slaughter_location_id')
+    def _onchange_slaughter_location_id(self):
+        if self.slaughter_location_id and (not self.cutting_location_id or
+                                           self.cutting_location_id.warehouse_id != self.slaughter_location_id.warehouse_id):
+            self.cutting_location_id = self.env['stock.location']._single_role_location(
+                'is_cutting_location', self.slaughter_location_id.warehouse_id)
+
+    def _fill_default_locations(self):
+        """Empty locations get their warehouse's only one of that role (several:
+        the user chooses on the record)."""
+        Location = self.env['stock.location']
+        for record in self.sudo():
+            if not record.slaughter_location_id and record.state == 'not_received':
+                try:
+                    warehouse = record._livestock_warehouse()
+                except Exception:
+                    warehouse = self.env['stock.warehouse']
+                record.slaughter_location_id = Location._single_role_location(record._slaughter_role(), warehouse)
+            if not record.cutting_location_id and record.state in ('not_received', 'slaughtered') \
+                    and not record.transfer_bool:
+                warehouse = record.slaughter_location_id.warehouse_id
+                record.cutting_location_id = Location._single_role_location('is_cutting_location', warehouse)
 
     def _pos_source_location(self):
         """The stock location of the POS the order was created at (empty for
@@ -153,15 +185,16 @@ class LivestockSlaughter(models.Model):
             self._pos_source_location() or record.source_location_id or None, branch=self.node_id)
 
     def _department_location(self):
-        """The location a slaughtered animal goes to: its department's (Meat, Goat,
-        Chicken) in the slaughter location's warehouse, else its slaughter location."""
+        """Where Slaughtered puts the animal: its Slaughter Location (for a
+        department animal, its Meat / Goat / Chicken location)."""
         self.ensure_one()
-        kind = ('meat' if self.is_meat_depart else 'goat' if self.is_goat_depart
-                else 'chicken' if self.is_chicken_depart else None)
-        if kind:
-            return self._livestock_warehouse()._livestock_location(kind)
         if not self.slaughter_location_id:
             raise ValidationError(_("Choose the Slaughter Location of %s.") % self.name)
+        role = self._slaughter_role()
+        if not self.slaughter_location_id[role]:
+            raise ValidationError(_("%(location)s is not marked %(role)s (%(record)s).",
+                                    location=self.slaughter_location_id.display_name,
+                                    role=self.env['stock.location']._fields[role].string, record=self.name))
         return self.slaughter_location_id
 
     def _slaughtered_location(self):
@@ -272,7 +305,11 @@ class LivestockSlaughter(models.Model):
 
         # from where Slaughtered put the animal into the Cutting location of the same warehouse
         source_location = self._slaughtered_location()
-        location = self._livestock_warehouse()._livestock_location('cutting')
+        if not self.cutting_location_id:
+            self._fill_default_locations()
+        if not self.cutting_location_id:
+            raise ValidationError(_("Choose the Cutting Location of %s.") % self.name)
+        location = self.cutting_location_id
         picking_type = self.env['stock.warehouse']._get_program_type(
             'livestock', source_location, branch=self.node_id)
 
@@ -315,7 +352,7 @@ class LivestockSlaughter(models.Model):
                 'state': 'received',
                 'start_time': self.start_time,
                 'livestock_slaughter_id': self.id,
-                'warehouse_id': self._livestock_warehouse().id,
+                'cutting_location_id': self.cutting_location_id.id,
             })
             self.cutting_material_id = cutting_record.id
         else:
@@ -349,7 +386,7 @@ class LivestockSlaughter(models.Model):
                 'code': self.code,
                 'state': 'not_received',
                 'livestock_slaughter_id': self.id,
-                'warehouse_id': self._livestock_warehouse().id,
+                'cutting_location_id': self.cutting_location_id.id,
             })
             self.material_request_id = material_request.id
         bom = material_request._get_product_bom()

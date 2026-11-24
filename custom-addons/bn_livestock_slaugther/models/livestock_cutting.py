@@ -28,29 +28,42 @@ class LivestockCutting(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
     is_picking = fields.Boolean('Is Picking')
-    # the animal moves from its slaughter location to the Livestock Cutting location of the warehouse
+    # the animal moves from its slaughter location to a cutting location (a warehouse may hold several of each)
     slaughter_location_id = fields.Many2one(
         'stock.location', string='Slaughter Location', domain="[('is_slaughter_location', '=', True)]",
+        default=lambda self: self._default_role_location('is_slaughter_location'),
         help="Where the animal was slaughtered (a location marked Is Slaughter Location).")
+    cutting_location_id = fields.Many2one(
+        'stock.location', string='Cutting Location', domain="[('is_cutting_location', '=', True)]",
+        default=lambda self: self._default_role_location('is_cutting_location'),
+        help="Where the animal is cut (a location marked Is Cutting Location).")
     warehouse_id = fields.Many2one(
-        'stock.warehouse', string='Warehouse', default=lambda self: self._default_warehouse(),
-        help="The animal is cut in this warehouse's Livestock Cutting location.")
+        'stock.warehouse', string='Warehouse', compute='_compute_warehouse_id', store=True, readonly=True,
+        help="The warehouse of the cutting location.")
+
+    @api.depends('cutting_location_id', 'slaughter_location_id')
+    def _compute_warehouse_id(self):
+        for record in self:
+            record.warehouse_id = (record.cutting_location_id.warehouse_id
+                                   or record.slaughter_location_id.warehouse_id or record.warehouse_id)
 
     @api.onchange('slaughter_location_id')
     def _onchange_slaughter_location_id(self):
-        if self.slaughter_location_id.warehouse_id:
-            self.warehouse_id = self.slaughter_location_id.warehouse_id
+        warehouse = self.slaughter_location_id.warehouse_id
+        if warehouse and (not self.cutting_location_id or self.cutting_location_id.warehouse_id != warehouse):
+            self.cutting_location_id = self.env['stock.location']._single_role_location('is_cutting_location', warehouse)
 
     @api.model
-    def _default_warehouse(self):
+    def _default_role_location(self, role):
+        """The only ``role`` location of the user's Branch / Site warehouse."""
         user = self.env.user
-        branch = user.employee_ids[:1].analytic_account_id
         try:
-            return self.env['stock.warehouse']._warehouse_for(branch=branch, user=user)
+            warehouse = self.env['stock.warehouse']._warehouse_for(
+                branch=user.employee_ids[:1].analytic_account_id, user=user)
         except Exception:
             # several warehouses without a default: the user chooses
-            return self.env['stock.warehouse']
-
+            return self.env['stock.location']
+        return self.env['stock.location']._single_role_location(role, warehouse)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -71,23 +84,22 @@ class LivestockCutting(models.Model):
             raise ValidationError(_('The picking of %s is already validated.') % self.name)
         if not self.slaughter_location_id:
             raise ValidationError(_('Please choose the slaughter location of %s.') % self.name)
-        if not self.warehouse_id:
-            raise ValidationError(_('Please choose the warehouse of %s.') % self.name)
+        if not self.cutting_location_id:
+            raise ValidationError(_('Please choose the cutting location of %s.') % self.name)
         product_pro = self.product_id
-        warehouse = self.warehouse_id
 
         cutting_record = self.env['livestock.cutting.material'].create({
             'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
             'code': self.code,
-            'warehouse_id': warehouse.id,
+            'cutting_location_id': self.cutting_location_id.id,
         })
 
-        # from the slaughter location into the warehouse's Livestock Cutting location
+        # from the slaughter location into the cutting location
         slaughter_location = self.slaughter_location_id
-        cutting_location = warehouse._livestock_location('cutting')
-        picking_type = warehouse._program_type('livestock')
+        cutting_location = self.cutting_location_id
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock', cutting_location)
 
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,

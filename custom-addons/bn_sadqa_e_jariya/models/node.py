@@ -1,4 +1,4 @@
-from odoo import api, models
+from odoo import api, fields, models
 
 
 class SadqaJariyaNode(models.Model):
@@ -12,6 +12,8 @@ class SadqaJariyaNode(models.Model):
 
 class SadqaJariyaLineNode(models.Model):
     _inherit = 'sadqa.jariya.line'
+    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model
     def _node_sources(self):
@@ -20,6 +22,8 @@ class SadqaJariyaLineNode(models.Model):
 
 class SadqaJariyaRecurringLineNode(models.Model):
     _inherit = 'sadqa.jariya.recurring.line'
+    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model
     def _node_sources(self):

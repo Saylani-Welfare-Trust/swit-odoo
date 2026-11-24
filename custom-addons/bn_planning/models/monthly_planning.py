@@ -1,5 +1,5 @@
 from odoo import _, models, fields, api
-from odoo.exceptions import AccessError, ValidationError
+from odoo.exceptions import UserError, AccessError, ValidationError
 from datetime import timedelta
 import logging
 
@@ -120,9 +120,20 @@ class MonthlyPlanning(models.Model):
         """
         user = self.env.user
 
-        # 1. Explicitly allowed location on the user
-        if 'scope_location_ids' in user._fields and user.scope_location_ids:
-            return user.scope_location_ids[0].id
+        # Branch / Site Access: the stock of the user's own Branch / Site warehouse
+        if 'node_access' in user._fields and user.node_access:
+            try:
+                warehouse = self.env['stock.warehouse']._warehouse_for(user=user)
+            except UserError:
+                warehouse = self.env['stock.warehouse']
+            if warehouse:
+                return warehouse.lot_stock_id.id
+
+        # 1. Explicitly allowed location on the user (an internal one: the field offers only those)
+        if 'scope_location_ids' in user._fields:
+            internal = user.scope_location_ids.filtered(lambda l: l.usage == 'internal')
+            if internal:
+                return internal[0].id
 
         # 2. Match by the employee's branch — safe only if the field exists
         employee = self.env['hr.employee'].search(

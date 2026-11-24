@@ -25,6 +25,7 @@
                 <field name="pos_order_id" optional="show" />
                 <field name="source_location_id" column_invisible="1" />
                 <field name="slaughter_location_id" optional="show" />
+                <field name="cutting_location_id" optional="hide" />
                 <field name="transfer_location" optional="show" />
                 <field name="truck_number" optional="show" />
                 <field name="transfer_picking_id" optional="hide" />
@@ -77,8 +78,12 @@
                             <field name="quantity" />
                             <field name="price" />
                             <field name="source_location_id" invisible="1" />
+                            <field name="slaughter_location_option_ids" invisible="1"/>
                             <field name="slaughter_location_id" options="{'no_create': True, 'no_edit': True}"
-                                   readonly="state != 'not_received'" required="state == 'not_received' and not (is_meat_depart or is_goat_depart or is_chicken_depart)"/>
+                                   readonly="state != 'not_received'" required="state == 'not_received'"/>
+                            <field name="cutting_location_id" options="{'no_create': True, 'no_edit': True}"
+                                   readonly="state not in ('not_received', 'slaughtered') or transfer_bool"
+                                   required="state == 'slaughtered' and not transfer_bool"/>
                             <field name="order_transfer_location_id" invisible="not order_transfer_location_id" />
                             <field name="order_transfer_picking_id" invisible="not order_transfer_picking_id" />
                             <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
