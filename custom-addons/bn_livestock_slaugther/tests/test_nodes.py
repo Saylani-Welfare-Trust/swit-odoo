@@ -203,8 +203,7 @@ class TestLivestockNodes(TransactionCase):
             record.with_user(self.manager).action_cutting()
 
     def test_document_rule(self):
-        """T4: a switched user sees the documents of their Branches / Sites and their own."""
-        group = self.env.ref('bn_stock_location.group_node_access')
+        """A user sees the documents of their Branches / Sites and their own."""
         Requisition = self.env['livestock.requisition']
         karachi_doc = Requisition.create({'destination_location_id': self.wh_karachi.lot_stock_id.id})
         lahore_doc = Requisition.create({'destination_location_id': self.wh_lahore.lot_stock_id.id})
@@ -213,12 +212,8 @@ class TestLivestockNodes(TransactionCase):
             'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
                                   self.env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group').id,
                                   self.env.ref('bn_livestock_slaugther.livestock_slaugther_admin_group').id])],
-            'allowed_node_ids': [(6, 0, self.lahore.ids)],
-            # the old, location-based access: both warehouses
-            'allowed_location_ids': [(6, 0, (self.wh_karachi.lot_stock_id | self.wh_lahore.lot_stock_id).ids)]})
+            'allowed_node_ids': [(6, 0, self.lahore.ids)]})
         both = karachi_doc | lahore_doc
-        self.assertEqual(Requisition.with_user(user).search([('id', 'in', both.ids)]), both, "not switched yet")
-        user.groups_id = [(4, group.id)]
         own = Requisition.with_user(user).create({})
         visible = Requisition.with_user(user).search([('id', 'in', (both | own).ids)])
         self.assertEqual(visible, lahore_doc | own, "its Branch / Site and its own")

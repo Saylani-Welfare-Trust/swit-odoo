@@ -2,8 +2,8 @@
 <odoo>
 
     <!-- City access (everything except Requests): a user only sees the records whose
-         City analytic (rolled up to City level) is a City of the user: the City of the analytic account
-         of their assigned locations (Allowed Location) or of their employee's Branch (res.users city_access_ids).
+         City analytic (rolled up to City level) is a City of the user: the Cities of their Branches / Sites
+         (res.users city_access_ids).
          Records without a City stay hidden.
          Create is left out so flows can still create records that get their City later.
          Managers / Admins / Audit see every city (bn_key_management adds its

@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <!--
-        Branch / Site access (bn_stock_location, group "Branch / Site Access"):
-        a switched user sees the documents of their Branches / Sites and the ones
-        they created. Global (it narrows every other rule of the model); no effect
-        for users not switched yet, or with All Branches / Sites.
+        Branch / Site access (bn_stock_location): a user sees the documents of
+        their Branches / Sites (and everything under them), the city-wide
+        documents of the nodes above them (their zone, city, province), and the
+        ones they created. Global (it narrows every
+        other rule of the model); All Branches / Sites and portal users: no effect.
     -->
     <record id="node_rule_advance_donation" model="ir.rule">
         <field name="name">Advance Donation: Branch / Site</field>
         <field name="model_id" ref="bn_advance_donation.model_advance_donation"/>
-        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.all_nodes) else ['|', '|', ('node_id', 'in', user.node_scope_ids.ids), ('node_id', 'parent_of', user.allowed_node_ids.ids), ('create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(5, 0, 0)]"/>
     </record>
 
     <record id="node_rule_advance_donation_receipt" model="ir.rule">
         <field name="name">Advance Donation Receipt: Branch / Site</field>
         <field name="model_id" ref="bn_advance_donation.model_advance_donation_receipt"/>
-        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.all_nodes) else ['|', '|', ('node_id', 'in', user.node_scope_ids.ids), ('node_id', 'parent_of', user.allowed_node_ids.ids), ('create_uid', '=', user.id)]</field>
         <field name="groups" eval="[(5, 0, 0)]"/>
     </record>
 

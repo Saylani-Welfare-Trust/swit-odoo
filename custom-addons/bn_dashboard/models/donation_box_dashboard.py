@@ -307,7 +307,7 @@ class DonationBoxDashboard(models.AbstractModel):
     @api.model
     def _get_allowed_location_ids(self):
         """Return (allowed_ids, visible_ids) or (None, None) if unrestricted."""
-        locations, unrestricted = self.env.user._dashboard_locations('donation_box_analytic_ids')
+        locations, unrestricted = self.env.user._dashboard_locations()
         if unrestricted:
             return None, None
         allowed = set()

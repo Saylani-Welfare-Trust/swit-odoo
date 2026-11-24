@@ -12,7 +12,7 @@ class SadqaJariyaNode(models.Model):
 
 class SadqaJariyaLineNode(models.Model):
     _inherit = 'sadqa.jariya.line'
-    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    # Branch picker: only the user's branches (their Branches / Sites)
     analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model
@@ -22,7 +22,7 @@ class SadqaJariyaLineNode(models.Model):
 
 class SadqaJariyaRecurringLineNode(models.Model):
     _inherit = 'sadqa.jariya.recurring.line'
-    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    # Branch picker: only the user's branches (their Branches / Sites)
     analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model

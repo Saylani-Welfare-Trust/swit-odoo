@@ -112,50 +112,15 @@ class MonthlyPlanning(models.Model):
     # ─── Default destination ──────────────────────────────
     @api.model
     def _default_location_dest(self):
-        """Pick the destination location from the current user, in this order:
-        1. The first location in the user's scope (user.scope_location_ids[0])
-        2. A stock.location whose analytic_account_id matches the user's employee branch
-        (only if stock.location actually has that field in your DB)
-        3. The standard stock location fallback
-        """
-        user = self.env.user
-
-        # Branch / Site Access: the stock of the user's own Branch / Site warehouse
-        if 'node_access' in user._fields and user.node_access:
-            try:
-                warehouse = self.env['stock.warehouse']._warehouse_for(user=user)
-            except UserError:
-                warehouse = self.env['stock.warehouse']
-            if warehouse:
-                return warehouse.lot_stock_id.id
-
-        # 1. Explicitly allowed location on the user (an internal one: the field offers only those)
-        if 'scope_location_ids' in user._fields:
-            internal = user.scope_location_ids.filtered(lambda l: l.usage == 'internal')
-            if internal:
-                return internal[0].id
-
-        # 2. Match by the employee's branch — safe only if the field exists
-        employee = self.env['hr.employee'].search(
-            [('user_id', '=', user.id)], limit=1
-        )
-        if (employee and employee.analytic_account_id
-                and 'analytic_account_id' in self.env['stock.location']._fields):
-            location = self.env['stock.location'].search(
-                [
-                    ('analytic_account_id', '=', employee.analytic_account_id.id),
-                    ('usage', 'in', ['internal']),
-                ],
-                order='id',
-                limit=1,
-            )
-            if location:
-                return location.id
-
-        # 3. Fallback
-        fallback = self.env.ref(
-            'stock.stock_location_stock', raise_if_not_found=False
-        )
+        """The stock of the user's warehouse (of their own Branch / Site, else their
+        first one), else the standard stock location."""
+        try:
+            warehouse = self.env['stock.warehouse']._warehouse_for(user=self.env.user)
+        except UserError:
+            warehouse = self.env['stock.warehouse']
+        if warehouse:
+            return warehouse.lot_stock_id.id
+        fallback = self.env.ref('stock.stock_location_stock', raise_if_not_found=False)
         return fallback.id if fallback else False
 
     location_dest_id = fields.Many2one(
@@ -163,8 +128,7 @@ class MonthlyPlanning(models.Model):
         string='Destination Location',
         domain="[('usage', 'in', ['internal'])]",
         default=lambda self: self._default_location_dest(),
-        help='Auto-filled from the analytical account (Branch Location) '
-             'tagged on the employee linked to the current user.',
+        help="Defaults to the stock of the user's warehouse (of their own Branch / Site).",
     )
 
     show_kitchen   = fields.Boolean(related='planning_type_id.kitchen',   string='Show Kitchen',   store=False)

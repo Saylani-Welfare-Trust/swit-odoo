@@ -3,8 +3,8 @@ from odoo.tests import TransactionCase, tagged
 
 @tagged('post_install', '-at_install')
 class TestNodeAccess(TransactionCase):
-    """T4: users in "Branch / Site Access" get their access from their Branches /
-    Sites; the others keep the location-based access."""
+    """Every user's access comes from their Branches / Sites (or All Branches /
+    Sites): warehouses, locations, branches and program documents."""
 
     @classmethod
     def setUpClass(cls):
@@ -23,25 +23,21 @@ class TestNodeAccess(TransactionCase):
         cls.wh_lahore = Warehouse.create({'name': 'NA WH Lahore', 'code': 'NAL', 'node_id': cls.lahore.id})
         cls.point = env['stock.location'].create({'name': 'NA Karachi Slaughter Point', 'usage': 'internal',
                                                   'analytic_account_id': cls.karachi.id})
-        cls.group = env.ref('bn_stock_location.group_node_access')
         base = [env.ref('base.group_user').id, env.ref('stock.group_stock_user').id]
 
-        def user(login, switched=True, **vals):
-            groups = base + ([cls.group.id] if switched else [])
+        def user(login, **vals):
+            groups = base
             return env['res.users'].with_context(no_reset_password=True).create(
                 dict({'name': login, 'login': login, 'groups_id': [(6, 0, groups)]}, **vals))
         cls.branch_user = user('na_branch', allowed_node_ids=[(6, 0, cls.gulshan.ids)])
         cls.city_user = user('na_city', allowed_node_ids=[(6, 0, cls.karachi.ids)])
         cls.national = user('na_national', all_nodes=True)
-        cls.old_user = user('na_old', switched=False, allowed_warehouse_ids=[(6, 0, cls.wh_lahore.ids)],
-                            allowed_node_ids=[(6, 0, cls.gulshan.ids)])
         cls.ours = cls.wh_gulshan | cls.wh_johar | cls.wh_lahore
 
     def _warehouses(self, user):
         return self.env['stock.warehouse'].with_user(user).search([('id', 'in', self.ours.ids)])
 
     def test_branch_user(self):
-        self.assertTrue(self.branch_user.node_access)
         self.assertEqual(self._warehouses(self.branch_user), self.wh_gulshan)
         self.assertIn(self.gulshan, self.branch_user.scope_analytic_account_ids)
         self.assertNotIn(self.johar, self.branch_user.scope_analytic_account_ids)
@@ -56,16 +52,13 @@ class TestNodeAccess(TransactionCase):
     def test_national(self):
         self.assertEqual(self._warehouses(self.national), self.ours)
 
-    def test_not_switched_user_keeps_the_old_access(self):
-        self.assertFalse(self.old_user.node_access)
-        self.assertEqual(self._warehouses(self.old_user), self.wh_lahore, "Allowed Warehouses, not the nodes")
-
-    def test_switch_back(self):
-        self.branch_user.groups_id = [(3, self.group.id)]
-        self.branch_user.allowed_warehouse_ids = self.wh_lahore
-        self.assertEqual(self._warehouses(self.branch_user), self.wh_lahore)
-        self.branch_user.groups_id = [(4, self.group.id)]
-        self.assertEqual(self._warehouses(self.branch_user), self.wh_gulshan)
+    def test_no_branch_site_sees_nothing(self):
+        nobody = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'na nobody', 'login': 'na_nobody',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.env.ref('stock.group_stock_user').id])]})
+        self.assertFalse(self._warehouses(nobody), "no Branch / Site: no warehouse (not every one)")
+        nobody.allowed_node_ids = self.lahore
+        self.assertEqual(self._warehouses(nobody), self.wh_lahore, "rules refreshed at once")
 
     def test_moving_a_warehouse(self):
         self.assertEqual(self._warehouses(self.city_user), self.wh_gulshan | self.wh_johar)
@@ -81,7 +74,7 @@ class TestNodeAccess(TransactionCase):
         self.assertEqual(Warehouse.with_user(self.branch_user)._warehouse_for(), self.wh_gulshan)
         several = self.env['res.users'].with_context(no_reset_password=True).create({
             'name': 'na several', 'login': 'na_several',
-            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.group.id])],
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],
             'allowed_node_ids': [(6, 0, (self.gulshan | self.lahore).ids)]})
         self.assertFalse(several._default_node(), "several, no own branch: chosen")
         self.env['hr.employee'].create({'name': 'na several', 'user_id': several.id,
@@ -99,3 +92,25 @@ class TestNodeAccess(TransactionCase):
         welfare_field = self.env.registry.get('welfare.line')
         if welfare_field is not None:
             self.assertTrue(self.env['welfare.line']._fields['analytic_account_id'].context.get('branch_scope'))
+
+    def test_national_groups(self):
+        """Joining a national group gives All Branches / Sites; a module's
+        Administrator is not national through the Audit tier it includes."""
+        Users = self.env['res.users'].with_context(no_reset_password=True)
+        base = self.env.ref('base.group_user')
+        accountant = Users.create({'name': 'na acc', 'login': 'na_acc', 'groups_id': [
+            (6, 0, [base.id, self.env.ref('account.group_account_manager').id])]})
+        self.assertTrue(accountant.all_nodes)
+        auditor_group = self.env.ref('bn_welfare.group_welfare_audit', raise_if_not_found=False)
+        admin_group = self.env.ref('bn_welfare.group_welfare_admin', raise_if_not_found=False)
+        if auditor_group and admin_group and auditor_group in admin_group.trans_implied_ids:
+            module_admin = Users.create({'name': 'na wadm', 'login': 'na_wadm', 'groups_id': [
+                (6, 0, [base.id, admin_group.id])]})
+            self.assertFalse(module_admin.all_nodes, "its Audit tier comes with Administrator")
+            auditor = Users.create({'name': 'na aud', 'login': 'na_aud', 'groups_id': [
+                (6, 0, [base.id, auditor_group.id])]})
+            self.assertTrue(auditor.all_nodes, "an auditor")
+        plain = Users.create({'name': 'na plain', 'login': 'na_plain', 'groups_id': [(6, 0, [base.id])]})
+        self.assertFalse(plain.all_nodes)
+        plain.groups_id = [(4, self.env.ref('bn_stock_location.stock_scope_unrestricted_group').id)]
+        self.assertTrue(plain.all_nodes, "given a national group later")

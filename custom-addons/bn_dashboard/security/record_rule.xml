@@ -13,12 +13,12 @@
         <field name="groups" eval="[(4, ref('bn_dashboard.group_livestock_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if (user.all_nodes if user.node_access else not user.livestock_analytic_ids)
+            if user.all_nodes
             else [
                 '|', '|', '|',
-                ('pos_order_id.config_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.livestock_analytic_ids).ids),
-                ('pos_order_id.session_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.livestock_analytic_ids).ids),
-                ('direct_deposit_line_id.direct_deposit_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.livestock_analytic_ids).ids),
+                ('pos_order_id.config_id.analytic_account_id', 'child_of', user.node_scope_ids.ids),
+                ('pos_order_id.session_id.analytic_account_id', 'child_of', user.node_scope_ids.ids),
+                ('direct_deposit_line_id.direct_deposit_id.analytic_account_id', 'child_of', user.node_scope_ids.ids),
                 '&amp;', ('pos_order_id', '=', False), ('direct_deposit_line_id', '=', False)
             ]
         )</field>

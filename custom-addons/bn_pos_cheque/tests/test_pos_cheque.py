@@ -12,11 +12,11 @@ class TestPosCheque(TransactionCase):
         ref = cls.env.ref
         cls.bank = cls.env['account.journal'].search([('type', '=', 'bank')], limit=1)
         Users = cls.env['res.users']
-        cls.treasury = Users.create({'name': 'Treasury T', 'login': 'chq_t_treasury', 'groups_id': [
+        cls.treasury = Users.create({'name': 'Treasury T', 'login': 'chq_t_treasury', 'all_nodes': True, 'groups_id': [
             (6, 0, [ref('base.group_user').id, ref('bn_pos_cheque.pos_cheque_menu_group').id])]})
-        cls.cashier = Users.create({'name': 'Cashier T', 'login': 'chq_t_cashier', 'groups_id': [
+        cls.cashier = Users.create({'name': 'Cashier T', 'login': 'chq_t_cashier', 'all_nodes': True, 'groups_id': [
             (6, 0, [ref('point_of_sale.group_pos_user').id, ref('bn_pos_cheque.pos_cheque_pos_action_group').id])]})
-        cls.user = Users.create({'name': 'User T', 'login': 'chq_t_user', 'groups_id': [(6, 0, [ref('base.group_user').id])]})
+        cls.user = Users.create({'name': 'User T', 'login': 'chq_t_user', 'all_nodes': True, 'groups_id': [(6, 0, [ref('base.group_user').id])]})
 
     def _cheque(self, name):
         return self.env['pos.cheque'].create({'name': name, 'bank_id': self.bank.id})

@@ -109,7 +109,7 @@ class PosOrder(models.Model):
                           segment_id=None, segment_type=None):
         domain = []
 
-        # ⚡ Enforce user access (city/province/zone from pos.order.access.config)
+        # ⚡ Enforce user access (the user's Branches / Sites)
         domain.extend(self._get_user_access_domain())
 
         if config_id:
@@ -1088,7 +1088,7 @@ class PosOrder(models.Model):
         }
         
     # ------------------------------------------------------------------
-    # User access restriction (from pos.order.access.config)
+    # User access restriction (the user's Branches / Sites)
     # ------------------------------------------------------------------
     def _user_pos_accounts(self):
         """
@@ -1097,18 +1097,11 @@ class PosOrder(models.Model):
         nothing gets a record that matches nothing.
         """
         user = self.env.user
-        if 'pos_analytic_ids' not in user._fields:
-            return self.env['account.analytic.account']
         Account = self.env['account.analytic.account']
 
-        allowed, unrestricted = user._dashboard_locations('pos_analytic_ids')
+        allowed, unrestricted = user._dashboard_locations()
         if unrestricted:
-            # Empty list -> unrestricted (full_access tick, or no config); All Branches / Sites
-            return Account
-
-        # Explicit "All Locations" config -> unrestricted (not for Branch / Site Access users)
-        if not user.node_access and self.env['pos.order.access.config'].sudo().search_count(
-                [('user_id', '=', user.id), ('full_access', '=', True)]):
+            # All Branches / Sites
             return Account
 
         # Expand to descendants (city -> zones -> branches)

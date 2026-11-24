@@ -70,8 +70,8 @@ class DonationBoxRequest(models.Model):
 
     @api.model
     def _default_warehouse_id(self):
-        # the user's warehouse: of their own Branch / Site (Branch / Site Access),
-        # else their first allowed one, else the company's
+        # the user's warehouse: of their own Branch / Site, else their first one,
+        # else the company's
         try:
             return self.env['stock.warehouse']._warehouse_for().id
         except UserError:

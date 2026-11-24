@@ -44,9 +44,9 @@ class TestMedicalFlow(TransactionCase):
         groups = [env.ref('base.group_user').id, env.ref('bn_medical_pos.group_medical_doctor').id,
                   env.ref('bn_medical_pos.group_medical_menu').id]
         cls.doctor_user = env['res.users'].create({
-            'name': 'Doctor User', 'login': 'mh_doctor_user', 'groups_id': [(6, 0, groups)]})
+            'name': 'Doctor User', 'login': 'mh_doctor_user', 'groups_id': [(6, 0, groups)], 'all_nodes': True})
         cls.other_user = env['res.users'].create({
-            'name': 'Other User', 'login': 'mh_other_user', 'groups_id': [(6, 0, groups)]})
+            'name': 'Other User', 'login': 'mh_other_user', 'groups_id': [(6, 0, groups)], 'all_nodes': True})
         cls.doctor = env['medical.doctor'].create({
             'name': 'Dr. A', 'product_ids': [(6, 0, cls.consultation.ids)], 'user_ids': [(6, 0, cls.doctor_user.ids)]})
         cls.other_doctor = env['medical.doctor'].create({
@@ -158,7 +158,7 @@ class TestMedicalFlow(TransactionCase):
         self.assertEqual(Prescription.with_user(self.doctor_user).search([('id', 'in', everything.ids)]), mine)
         # Settings with a Medical group but not Doctor, and Medical Administrators, keep seeing everything
         admin = self.env['res.users'].create({
-            'name': 'Settings User', 'login': 'mh_settings_user',
+            'name': 'Settings User', 'login': 'mh_settings_user', 'all_nodes': True,
             'groups_id': [(6, 0, [self.env.ref('base.group_user').id, settings.id,
                                   self.env.ref('bn_medical_pos.group_medical_user').id])]})
         self.assertEqual(Prescription.with_user(admin).search([('id', 'in', everything.ids)]), everything)

@@ -71,32 +71,12 @@
         <field name="arch" type="xml">
             <form string="Branch / Site Set-up Check">
                 <p class="text-muted">
-                    Access does not change yet: this checks the Branch / Site set-up before the switch.
+                    What every user sees comes from their Branches / Sites: this lists what to correct.
                     "Fill from current set-up" only fills what is still empty (warehouses' Branch / Site from their
-                    locations' tags, users' Allowed Branches / Sites from their locations, warehouses, branch and
-                    dashboard access, national access for Administrators, Accounts, Audit and CFO).
+                    locations' tags, users' Allowed Branches / Sites from their employee's branch, national access for
+                    Administrators, Accounts, Audit and CFO).
                 </p>
                 <field name="report_html" nolabel="1"/>
-                <h3 class="mt-4">Roll out Branch / Site Access</h3>
-                <p class="text-muted">
-                    One province (or city, zone) at a time: Preview shows, for each of its users, the warehouses
-                    and documents they see today and after the switch (a trial that is undone). Switch adds them
-                    to Branch / Site Access; Switch back gives them the location-based access again.
-                </p>
-                <group>
-                    <field name="rollout_node_id" options="{'no_create': True}"/>
-                </group>
-                <div class="d-flex gap-2 mb-3">
-                    <button name="action_rollout_preview" type="object" string="Preview" class="btn-secondary"
-                            invisible="not rollout_node_id"/>
-                    <button name="action_rollout_switch" type="object" string="Switch these users" class="btn-primary"
-                            invisible="not rollout_node_id"
-                            confirm="The users of this node get their access from their Branches / Sites. Continue?"/>
-                    <button name="action_rollout_back" type="object" string="Switch back" class="btn-secondary"
-                            invisible="not rollout_node_id"
-                            confirm="The users of this node go back to the location-based access. Continue?"/>
-                </div>
-                <field name="rollout_html" nolabel="1" invisible="not rollout_html"/>
                 <footer>
                     <button name="action_fill" type="object" string="Fill from current set-up" class="btn-primary"/>
                     <button name="action_update_documents" type="object" string="Update documents"

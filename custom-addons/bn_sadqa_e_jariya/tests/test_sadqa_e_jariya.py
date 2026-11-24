@@ -26,6 +26,7 @@ class TestSadqaEJariya(TransactionCase):
 
         def user(login, *groups):
             return cls.env['res.users'].create({
+                'all_nodes': True,
                 'name': login, 'login': login,
                 'groups_id': [(6, 0, [ref('base.group_user').id] + [ref(g).id for g in groups])]})
         cls.user = user('sq_user', 'bn_sadqa_e_jariya.group_institutional_disbursement')
@@ -169,7 +170,7 @@ class TestSadqaEJariya(TransactionCase):
     def test_role_steps_need_their_role(self):
         """HOD / Committee / Member steps are refused to a plain User, even over RPC."""
         hod = self.env['res.users'].create({
-            'name': 'sq_hod', 'login': 'sq_hod',
+            'name': 'sq_hod', 'login': 'sq_hod', 'all_nodes': True,
             'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
                                   self.env.ref('bn_sadqa_e_jariya.group_sadqa_jariya_hod').id])]})
         application = self.env['sadqa.jariya'].create({

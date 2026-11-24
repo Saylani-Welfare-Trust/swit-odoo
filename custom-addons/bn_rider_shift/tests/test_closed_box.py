@@ -359,6 +359,8 @@ class TestVisibility(BoxFlowCase):
             'groups_id': [(6, 0, [self.env.ref('base.group_user').id] + [self.env.ref(g).id for g in groups])]})
         employee = employee or self.env['hr.employee'].create({'name': login, 'cnic_no': '42101-55%05d-1' % user.id})
         employee.write({'user_id': user.id, 'analytic_account_id': (account or self.zone).id})
+        # their branch is their Branch / Site
+        user.allowed_node_ids = account or self.zone
         return user
 
     def test_installer_sees_own_registrations(self):
@@ -376,7 +378,10 @@ class TestVisibility(BoxFlowCase):
             'name': 'Lahore', 'plan_id': self.city.plan_id.id, 'location_option_id': self.city.location_option_id.id})
         far_key_user = self._user('far_key_vis', ['bn_key_management.key_management_user_group'], account=other_city)
         self.assertFalse(Registration.with_user(far_key_user).search([('id', '=', registration.id)]))
+        # a Manager sees every box of their Branches / Sites: another city's only with that city
         manager = self._user('mgr_vis', ['bn_donation_box.donation_box_manager_group'], account=other_city)
+        self.assertFalse(Registration.with_user(manager).search([('id', '=', registration.id)]))
+        manager.all_nodes = True
         self.assertEqual(Registration.with_user(manager).search([('id', '=', registration.id)]), registration)
 
     def test_bunch_city_level(self):
@@ -427,35 +432,16 @@ class TestBrokenBoxScrap(BoxFlowCase):
         self.assertFalse(Quant.search([('lot_id', '=', self.lot.id), ('location_id', '=', self.warehouse.lot_stock_id.id),
                                        ('quantity', '>', 0)]))
 
-    def test_city_from_assigned_location(self):
-        """No employee Branch: the City comes from the analytic account of the
-        locations assigned to the user (Allowed Location)."""
+    def test_city_from_branches_sites(self):
+        """The City comes from the user's Branches / Sites (a zone gives its city)."""
         registration = self._install('L1')
         Registration = self.env['donation.box.registration.installation']
-        shop = self.env['stock.location'].create({
-            'name': 'Saddar Shop', 'usage': 'internal', 'analytic_account_id': self.zone.id})
         user = self.env['res.users'].create({
-            'name': 'loc_vis', 'login': 'loc_vis',
+            'name': 'node_vis', 'login': 'node_vis',
             'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
                                   self.env.ref('bn_key_management.key_management_user_group').id])]})
         self.assertFalse(Registration.with_user(user).search([('id', '=', registration.id)]), 'no City yet')
-        user.allowed_location_ids = [(6, 0, shop.ids)]
+        user.allowed_node_ids = [(6, 0, self.zone.ids)]
         self.assertEqual(user.city_access_ids, self.city)
         self.assertEqual(Registration.with_user(user).search([('id', '=', registration.id)]), registration)
         self.assertIn(self.bunch, self.env['key.bunch'].with_user(user).search([]))
-
-    def test_city_from_allowed_warehouse(self):
-        """The City also comes from the locations of the user's Allowed
-        Warehouses (the same scope as the Branch-level rules)."""
-        registration = self._install('L2')
-        Registration = self.env['donation.box.registration.installation']
-        warehouse = self.env['stock.warehouse'].create({'name': 'Saddar WH', 'code': 'SDWH'})
-        warehouse.view_location_id.analytic_account_id = self.zone
-        user = self.env['res.users'].create({
-            'name': 'wh_vis', 'login': 'wh_vis',
-            'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
-                                  self.env.ref('bn_key_management.key_management_user_group').id])]})
-        self.assertFalse(user.city_access_ids)
-        user.allowed_warehouse_ids = [(6, 0, warehouse.ids)]
-        self.assertEqual(user.city_access_ids, self.city)
-        self.assertEqual(Registration.with_user(user).search([('id', '=', registration.id)]), registration)

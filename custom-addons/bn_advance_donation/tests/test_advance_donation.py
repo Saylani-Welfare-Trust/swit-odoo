@@ -24,7 +24,7 @@ class TestAdvanceDonation(TransactionCase):
                       if 'allowed_product_category_ids' in Users._fields else {})
 
         def user(login, *groups):
-            return Users.create(dict(categories, name=login, login=login, groups_id=[
+            return Users.create(dict(categories, name=login, login=login, all_nodes=True, groups_id=[
                 (6, 0, [ref('base.group_user').id] + [ref(g).id for g in groups])]))
         cls.user = user('ad_t_user', 'bn_advance_donation.group_adv_don_menu')
         cls.approver_1 = user('ad_t_ap1', 'bn_advance_donation.group_adv_don_approval_1')

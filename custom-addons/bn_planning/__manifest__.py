@@ -1,6 +1,6 @@
 {
     'name': 'Planning',
-    'version': '17.0.1.3.10',
+    'version': '17.0.1.3.11',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',

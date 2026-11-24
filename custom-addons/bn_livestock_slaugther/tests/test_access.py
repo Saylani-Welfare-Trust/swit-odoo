@@ -18,6 +18,7 @@ class TestLivestockAccess(TransactionCase):
 
         def user(login, *tiers):
             return cls.env['res.users'].create({
+                'all_nodes': True,
                 'name': login, 'login': login,
                 'groups_id': [(6, 0, [cls.env.ref('base.group_user').id] + [cls.env.ref(G % t).id for t in tiers])]})
         cls.user = user('ls_user', 'menu', 'user')

@@ -169,24 +169,21 @@ class StockWarehouse(models.Model):
     @api.model
     def _warehouse_for(self, location=None, user=None, branch=None):
         """The warehouse a program document works in: the warehouse of its
-        location, else of its branch, else the user's (Branch / Site Access:
-        of their own Branch / Site; else their first allowed warehouse), else
-        the company's first warehouse."""
+        location, else of its branch, else the user's (of their own Branch /
+        Site, else their first warehouse), else the company's first warehouse."""
         warehouse = location.warehouse_id if location else self.browse()
         if not warehouse and branch:
             warehouse = self._warehouse_for_branch(branch)
         if not warehouse:
             user = user or self.env.user
             company = self.env.company
-            if 'node_access' in user._fields and user.node_access:
-                # Branch / Site Access: the warehouse of the user's own Branch / Site,
-                # else their only warehouse (several: the first, as for the others)
-                node = user._default_node()
-                if node:
-                    try:
-                        warehouse = self._warehouse_for_branch(node)
-                    except UserError:
-                        warehouse = self.browse()  # several warehouses, no default: below
+            # the warehouse of the user's own Branch / Site, else their first one
+            node = user._default_node()
+            if node:
+                try:
+                    warehouse = self._warehouse_for_branch(node)
+                except UserError:
+                    warehouse = self.browse()  # several warehouses, no default: below
             if not warehouse and 'scope_warehouse_ids' in user._fields:
                 warehouse = user.sudo().scope_warehouse_ids.filtered(lambda w: w.company_id == company)[:1]
         if not warehouse:

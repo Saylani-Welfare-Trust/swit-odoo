@@ -1,6 +1,6 @@
 {
     'name': 'Rider Shift',
-    'version': '17.0.1.6.8',
+    'version': '17.0.1.6.9',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

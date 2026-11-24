@@ -12,7 +12,7 @@ class WelfareNode(models.Model):
 
 class WelfareLineNode(models.Model):
     _inherit = 'welfare.line'
-    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    # Branch picker: only the user's branches (their Branches / Sites)
     analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model
@@ -22,7 +22,7 @@ class WelfareLineNode(models.Model):
 
 class WelfareRecurringLineNode(models.Model):
     _inherit = 'welfare.recurring.line'
-    # Branch picker: only the user's branches (Branch / Site Access: their Branches / Sites)
+    # Branch picker: only the user's branches (their Branches / Sites)
     analytic_account_id = fields.Many2one(context={'branch_scope': True})
 
     @api.model

@@ -61,26 +61,43 @@ class TestNodes(TransactionCase):
         self.assertEqual(self.branch_store_user.node_warehouse_ids, self.wh_central, "Johar has none, plus the store")
         self.assertTrue(set((self.wh_gulshan | self.wh_central).ids) <= set(self.national_user.node_warehouse_ids.ids))
 
-    def test_fill_from_current_setup(self):
+    def _old_relation(self, table, column, user, ids):
+        """The previous versions' Allowed Locations / Warehouses table (gone on a
+        new database; the upgrade reads it before it is dropped)."""
+        cr = self.env.cr
+        cr.execute('CREATE TABLE IF NOT EXISTS "%s" (res_users_id integer, "%s" integer)' % (table, column))
+        for other_id in ids:
+            cr.execute('INSERT INTO "%s" (res_users_id, "%s") VALUES (%%s, %%s)' % (table, column), (user.id, other_id))
+
+    def test_fill_from_previous_setup(self):
         Setup = self.env['node.setup']
         untagged = self.env['stock.warehouse'].create({'name': 'N WH Untagged', 'code': 'NWU'})
         untagged.view_location_id.analytic_account_id = self.johar
-        located = self.env['res.users'].with_context(no_reset_password=True).create({
-            'name': 'n_located', 'login': 'n_located',
-            'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],
-            'allowed_location_ids': [(6, 0, (self.wh_gulshan.lot_stock_id | self.wh_central.lot_stock_id).ids)]})
+
+        def user(login):
+            return self.env['res.users'].with_context(no_reset_password=True).create({
+                'name': login, 'login': login, 'groups_id': [(6, 0, [self.env.ref('base.group_user').id])]})
+        located = user('n_located')
+        self._old_relation('res_users_stock_location_rel', 'stock_location_id', located,
+                           (self.wh_gulshan.lot_stock_id | self.wh_central.lot_stock_id).ids)
         self.wh_gulshan.lot_stock_id.analytic_account_id = self.gulshan
         self.wh_central.lot_stock_id.analytic_account_id = self.central
+        # an untagged location counts for its warehouse's Branch / Site
+        untagged_user = user('n_untagged')
+        self._old_relation('res_users_stock_location_rel', 'stock_location_id', untagged_user,
+                           self.wh_karachi.lot_stock_id.ids)
+        warehouse_user = user('n_warehouse')
+        self._old_relation('res_users_stock_warehouse_rel', 'stock_warehouse_id', warehouse_user,
+                           self.wh_central.ids)
+        employee_user = user('n_employee')
+        self.env['hr.employee'].create({'name': 'n employee', 'user_id': employee_user.id,
+                                        'analytic_account_id': self.johar.id})
         stats = Setup._fill()
         self.assertEqual(untagged.node_id, self.johar)
         self.assertEqual(located.allowed_node_ids, self.gulshan | self.central)
-        # an untagged location counts for its warehouse's Branch / Site
-        untagged_user = self.env['res.users'].with_context(no_reset_password=True).create({
-            'name': 'n_untagged', 'login': 'n_untagged',
-            'groups_id': [(6, 0, [self.env.ref('base.group_user').id])],
-            'allowed_location_ids': [(6, 0, self.wh_karachi.lot_stock_id.ids)]})
-        Setup._fill()
         self.assertEqual(untagged_user.allowed_node_ids, self.karachi)
+        self.assertEqual(warehouse_user.allowed_node_ids, self.central)
+        self.assertEqual(employee_user.allowed_node_ids, self.johar, "the employee's branch")
         self.assertTrue(stats['warehouses'] >= 1)
         # a node under another one of the set adds nothing
         self.assertEqual(Setup._top_nodes(self.karachi | self.gulshan | self.johar), self.karachi)

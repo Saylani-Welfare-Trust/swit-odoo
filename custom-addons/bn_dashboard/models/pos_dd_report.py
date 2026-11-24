@@ -212,7 +212,7 @@ class PosDdReport(models.Model):
         city_domain = location + [('parent_id', '!=', False), ('parent_id.parent_id', '=', False)]
         branch_domain = location + [('parent_id.parent_id.parent_id', '!=', False)]
 
-        allowed, unrestricted = self.env.user._dashboard_locations('pos_dd_report_analytic_ids')
+        allowed, unrestricted = self.env.user._dashboard_locations()
         if not unrestricted:
             # cities above or inside the user's allowed locations; branches inside them
             city_domain += ['|', ('id', 'parent_of', allowed.ids), ('id', 'child_of', allowed.ids)]
@@ -244,7 +244,7 @@ class PosDdReport(models.Model):
     @api.model
     def _get_user_location_domain(self):
         """Location-restriction domain for the current user ([] = unrestricted)."""
-        allowed, unrestricted = self.env.user._dashboard_locations('pos_dd_report_analytic_ids')
+        allowed, unrestricted = self.env.user._dashboard_locations()
         if unrestricted:
             return []
         return [('analytic_account_id', 'child_of', allowed.ids)]
