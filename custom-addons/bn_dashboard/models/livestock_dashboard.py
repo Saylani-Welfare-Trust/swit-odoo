@@ -22,7 +22,9 @@ STATE_COLOR = {
 }
 
 
-class LivestockDashboard(models.TransientModel):
+class LivestockDashboard(models.AbstractModel):
+    """Figures of the Livestock Dashboard: no records of its own, read with the
+    user's rights (record rules of the slaughters apply)."""
     _name = 'livestock.dashboard'
     _description = 'Livestock Dashboard'
 
@@ -45,26 +47,35 @@ class LivestockDashboard(models.TransientModel):
         elif department == 'chicken':
             dept_domain.append(('is_chicken_depart', '=', True))
 
-        # ---- location domain ----
+        # ---- location domain: the most precise level chosen (zone > city > province),
+        # matched on the branch of the POS / direct deposit the animal came from ----
         loc_domain = []
-        active_ids = [i for i in (province_id, city_id, zone_id, segment_id) if i]
-        if active_ids:
-            for a_id in active_ids:
-                loc_domain = expression.OR([
-                    loc_domain,
-                    [
-                        '|', '|',
-                        ('pos_order_id.config_id.analytic_account_id', 'child_of', a_id),
-                        ('pos_order_id.session_id.analytic_account_id', 'child_of', a_id),
-                        ('direct_deposit_line_id.direct_deposit_id.analytic_account_id', 'child_of', a_id)
-                    ]
-                ])
+        location_id = zone_id or city_id or province_id
+        if location_id:
+            location_id = int(location_id)
+            loc_domain = [
+                '|', '|',
+                ('pos_order_id.config_id.analytic_account_id', 'child_of', location_id),
+                ('pos_order_id.session_id.analytic_account_id', 'child_of', location_id),
+                ('direct_deposit_line_id.direct_deposit_id.analytic_account_id', 'child_of', location_id),
+            ]
+        # ---- segment: carried by the product (as on the POS dashboard) ----
+        if segment_id or segment_type:
+            segment_domain = []
+            if segment_id:
+                segment_domain.append(('id', 'child_of', int(segment_id)))
+            if segment_type:
+                segment_domain.append(('name', 'ilike', '(%s)' % segment_type))
+            segments = self.env['account.analytic.account'].sudo().search(segment_domain)
+            loc_domain = expression.AND([
+                loc_domain, [('product_id.product_tmpl_id.analytic_account_id', 'in', segments.ids)]])
 
         base = date_domain + dept_domain + loc_domain
 
         # ---- state counts ----
         states = [k for k, _l in Slaughter._fields['state'].selection]
-        state_counts = {k: Slaughter.search_count(base + [('state', '=', k)]) for k in states}
+        counts = dict(Slaughter._read_group(base, ['state'], ['__count']))
+        state_counts = {k: counts.get(k, 0) for k in states}
         total = sum(state_counts.values())
 
         # ---- department split ----
@@ -80,8 +91,7 @@ class LivestockDashboard(models.TransientModel):
         src_donation = Slaughter.search_count(base + [('donation_id', '!=', False)])
 
         # ---- total value ----
-        groups = Slaughter.read_group(base, ['price:sum'], [])
-        total_value = (groups[0].get('price') or 0.0) if groups else 0.0
+        total_value = Slaughter._read_group(base, [], ['price:sum'])[0][0] or 0.0
 
         # ---- monthly trend, last 12 months, honouring the department filter ----
         today = fields.Date.context_today(self)
@@ -112,28 +122,25 @@ class LivestockDashboard(models.TransientModel):
         pending_data = [self._serialize(r) for r in pending]
 
         # ---- top donees ----
-        donees = {}
-        for r in Slaughter.search(base):
-            if not r.donee_id:
-                continue
-            d = donees.setdefault(r.donee_id.id, {
-                'name': r.donee_id.name, 'count': 0, 'value': 0.0,
-            })
-            d['count'] += 1
-            d['value'] += r.price or 0.0
-        top_donees = sorted(donees.values(), key=lambda d: d['count'], reverse=True)[:5]
+        # grouped in the database: no need to load every slaughter
+        top_donees = [
+            {'name': donee.name, 'count': count, 'value': value or 0.0}
+            for donee, count, value in Slaughter._read_group(
+                base + [('donee_id', '!=', False)], ['donee_id'], ['__count', 'price:sum'],
+                order='__count desc', limit=5)
+        ]
 
         return {
             'kpis': {
                 'total': total,
-                'pending': state_counts['not_received'] + state_counts['slaughtered'],
-                'in_progress': state_counts['cutting'] + state_counts['material_request'],
-                'done': state_counts['done'],
+                'pending': state_counts.get('not_received', 0) + state_counts.get('slaughtered', 0),
+                'in_progress': state_counts.get('cutting', 0) + state_counts.get('material_request', 0),
+                'done': state_counts.get('done', 0),
                 'total_value': total_value,
             },
             'state_chart': [
                 {'key': k, 'label': dict(Slaughter._fields['state'].selection)[k],
-                 'count': state_counts[k], 'color': STATE_COLOR[k]}
+                 'count': state_counts[k], 'color': STATE_COLOR.get(k, '#6c757d')}
                 for k in states
             ],
             'department_chart': [

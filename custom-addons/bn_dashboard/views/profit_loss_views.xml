@@ -12,6 +12,7 @@
                   name="Profit &amp; Loss"
                   parent="menu_dashboard_root"
                   action="action_profit_loss_dashboard"
-                  sequence="10"/>
+                  sequence="10"
+                  groups="bn_dashboard.group_profit_loss_dashboard_user"/>
     </data>
 </odoo>

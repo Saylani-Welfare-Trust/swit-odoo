@@ -12,3 +12,4 @@ from . import donation_box_access_config
 from . import res_users
 from . import pos_dd_report
 from . import pos_dd_report_access_config
+from . import livestock_access_config

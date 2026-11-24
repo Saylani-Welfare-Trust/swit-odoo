@@ -1,6 +1,6 @@
 {
     'name': 'Dashboard',
-    'version': '17.0.1.0.5',
+    'version': '17.0.1.0.6',
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
     'website': 'https://bytesnode.com/',
@@ -31,6 +31,7 @@
         'views/search_filters.xml',
         'views/profit_loss_views.xml',
         'views/livestock_dashboard_views.xml',
+        'views/livestock_access_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
