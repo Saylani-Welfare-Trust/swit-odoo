@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 import base64
 import datetime
 from io import BytesIO
@@ -656,6 +656,9 @@ class ImportDonation(models.Model):
     # FETCH DONOR NAME FROM EXCEL (match by transaction_id / Id)
     # =========================================================
     def action_fetch_donor_name_from_excel(self):
+        # the names are written as superuser: import users only (not Audit), also over RPC
+        if not self.env.su and not self.env.user.has_group('bn_import_donation.import_donation_user_group'):
+            raise AccessError(_("You are not allowed to fetch donor names."))
         for rec in self:
             headers, rows = rec._read_rows()
             headers = [rec._norm_text(h) for h in headers]

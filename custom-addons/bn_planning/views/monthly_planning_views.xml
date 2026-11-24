@@ -243,64 +243,6 @@
         </field>
     </record>
 
-    <!-- ═══════════════ READ-ONLY LINE VIEW (Reporting) ═══════════════ -->
-    <record id="view_monthly_planning_reporting_form" model="ir.ui.view">
-        <field name="name">monthly.planning.reporting.form</field>
-        <field name="model">monthly.planning</field>
-        <field name="arch" type="xml">
-            <form create="false" edit="false" delete="false">
-                <sheet>
-                    <div class="oe_title">
-                        <h1>
-                            <field name="name" class="oe_inline" readonly="1"/>
-                        </h1>
-                    </div>
-
-                    <group>
-                        <group>
-                            <field name="planning_type_id" readonly="1"/>
-                            <field name="created_by" readonly="1"/>
-                            <field name="from_date" readonly="1"/>
-                            <field name="to_date" readonly="1"/>
-                        </group>
-                        <group>
-                            <field name="location_dest_id" readonly="1"/>
-                            <field name="state" readonly="1"/>
-                        </group>
-                    </group>
-
-                    <field name="show_kitchen"   invisible="1"/>
-                    <field name="show_madaris"   invisible="1"/>
-                    <field name="show_medical"   invisible="1"/>
-                    <field name="show_livestock" invisible="1"/>
-                    <field name="show_food"      invisible="1"/>
-                    <field name="show_ration"    invisible="1"/>
-                    <field name="show_meat"      invisible="1"/>
-
-                    <notebook>
-                        <page name="kitchen" string="Kitchen Planning"
-                            invisible="not show_kitchen">
-                            <field name="kitchen_line_ids" readonly="1">
-                                <tree create="false" edit="false" delete="false">
-                                    <field name="date"/>
-                                    <field name="product_id"/>
-                                    <field name="on_hand_qty"/>
-                                    <field name="quantity"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <!-- repeat for the other tabs as in your original -->
-                    </notebook>
-                </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="activity_ids"/>
-                    <field name="message_ids"/>
-                </div>
-            </form>
-        </field>
-    </record>
-
     <!-- ═══════════════════ MENUS ═══════════════════ -->
     <menuitem
         id="planning_root_menu"

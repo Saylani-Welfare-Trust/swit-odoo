@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -54,6 +55,9 @@ class PosOrder(models.Model):
     def action_sync_advance_donation_receipts(self):
         """Backfill advance.donation.receipt records for cash POS orders that
         sold an advance-donation product but never got a receipt."""
+        # the receipts are created as superuser: Advance Donation managers only (also over RPC)
+        if not self.env.su and not self.env.user.has_group('bn_advance_donation.group_adv_don_manager'):
+            raise AccessError(_("Only Advance Donation managers can sync the missing receipts."))
         orders = self if self else self.search([
             ('lines.product_id.is_advance_donation', '=', True),
             ('state', 'in', ['paid', 'done', 'invoiced']),

@@ -36,15 +36,4 @@
         </field>
     </record>
 
-    <record id="view_monthly_planning_reporting_form_form_node" model="ir.ui.view">
-        <field name="name">monthly.planning.reporting.form.node</field>
-        <field name="model">monthly.planning</field>
-        <field name="inherit_id" ref="bn_planning.view_monthly_planning_reporting_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="(//sheet//field[@name='to_date'])[1]" position="after">
-                <field name="node_id"/>
-            </xpath>
-        </field>
-    </record>
-
 </odoo>

@@ -120,15 +120,6 @@ class NodeSetup(models.AbstractModel):
         return filled
 
     @api.model
-    def _national_groups(self):
-        """The groups giving All Branches / Sites: Administrators, Accounts,
-        Unrestricted Custom Access, and the Audit / CFO groups of the modules."""
-        groups = self.env['res.groups']
-        for xmlid in NATIONAL_GROUP_XMLIDS:
-            groups |= self.env.ref(xmlid, raise_if_not_found=False) or self.env['res.groups']
-        return groups | self._named_national_groups()
-
-    @api.model
     def _named_national_groups(self):
         data = self.env['ir.model.data'].sudo().search([('model', '=', 'res.groups'), ('module', '=like', 'bn\\_%')])
         return self.env['res.groups'].sudo().browse(
