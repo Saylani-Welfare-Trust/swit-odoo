@@ -123,8 +123,8 @@ class VendorSelectionWizard(models.TransientModel):
 
     def action_create_rfqs(self):
         # RFQs of an open Purchase Request only (as its button shows)
-        if self.source_requisition_id and self.source_requisition_id.state not in ('in_progress', 'open'):
-            raise ValidationError(_('RFQs are only created for an open Purchase Request (%s).') % self.source_requisition_id.display_name)
+        if self.source_requisition_id and self.source_requisition_id.state != 'procurement_approval':
+            raise ValidationError(_('RFQs are only created for an procurement manager approval Purchase Request (%s).') % self.source_requisition_id.display_name)
         """Create one consolidated RFQ (Purchase Order) per selected vendor
         from every selected line across all three pages. Lines for the same
         product are summed into a single RFQ line; the RFQ is tagged with
