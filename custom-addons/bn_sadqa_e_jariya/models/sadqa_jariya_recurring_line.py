@@ -144,8 +144,9 @@ class SadqaJariyaRecurringLine(models.Model):
         for line in self.filtered(lambda l: l.disbursement_category_id.name == 'In Kind'):
             if line.state != 'draft':
                 raise ValidationError(_('A delivery is only created for a Draft line (%s).') % line.display_name)
-            # the Sadqa e Jariya Delivery operation type of the user's warehouse
-            picking_type = self.env['stock.warehouse']._get_program_type('sadqa_jariya')
+            # the Sadqa e Jariya Delivery operation type of the line's branch warehouse (else the user's)
+            picking_type = self.env['stock.warehouse']._get_program_type(
+                'sadqa_jariya', branch=line.pos_analytic_account_id or line.analytic_account_id)
             location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
             location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
             picking = self.env['stock.picking'].create({

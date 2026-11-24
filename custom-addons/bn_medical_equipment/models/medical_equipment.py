@@ -617,7 +617,8 @@ class MedicalEquipment(models.Model):
         if self.picking_id:
             raise UserError(_('%s is already validated.') % self.name)
 
-        operation_type = self.env['stock.warehouse']._get_program_type('medical_equipment')
+        operation_type = self.env['stock.warehouse']._get_program_type(
+            'medical_equipment', branch=self.pos_analytic_account_id)
         source = operation_type.default_location_src_id
         # the serials (reserved for this application when it was completed) must be in that location
         for line in self.medical_equipment_line_ids.filtered('lot_ids'):

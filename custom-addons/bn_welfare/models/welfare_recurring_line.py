@@ -268,7 +268,8 @@ class WelfareRecurringLine(models.Model):
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
                 
-                picking_type, location_src, location_dest = self.env['welfare.line']._get_delivery_locations()
+                picking_type, location_src, location_dest = self.env['welfare.line']._get_delivery_locations(
+                    self.analytic_account_id)
                 
                 picking_vals = {
                     'partner_id': self.donee_id.id,

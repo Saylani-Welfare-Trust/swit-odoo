@@ -205,6 +205,10 @@ class TestMicrofinance(TransactionCase):
         loan.action_proceed()
         self.assertEqual(loan.state, 'wfd')
         picking = loan.sudo().picking_ids.with_user(self.storekeeper)
+        # the warehouse's own Microfinance Delivery operation type, from the chosen location
+        self.assertEqual(picking.sudo().picking_type_id.program_type, 'microfinance_delivery')
+        self.assertEqual(picking.sudo().picking_type_id.warehouse_id, self.warehouse)
+        self.assertEqual(picking.sudo().location_id, self.warehouse.lot_stock_id)
         picking.move_ids.write({'quantity': 1, 'picked': True})
         picking.with_context(skip_sms=True).button_validate()
         self.assertEqual(loan.state, 'done')

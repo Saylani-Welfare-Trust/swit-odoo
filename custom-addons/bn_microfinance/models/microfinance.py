@@ -639,8 +639,12 @@ class Microfinance(models.Model):
 
         # Sale order and delivery created as superuser: the Microfinance group
         # checked by the calling action is the gate.
+        # the warehouse the asset leaves from (else the company's default one)
+        location = self.recovered_location_id if self.in_recovery else self.warehouse_location_id
+        warehouse = self.env['stock.warehouse']._warehouse_for(location or None)
         sale_order = self.env['sale.order'].sudo().create({
             'partner_id': self.donee_id.id,
+            'warehouse_id': warehouse.id,
             'origin': self.name,
             'date_order': fields.Datetime.now(),
             'commitment_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
@@ -654,7 +658,8 @@ class Microfinance(models.Model):
         })
 
         # Confirm SO — this auto-generates the delivery picking
-        sale_order.action_confirm()
+        # the delivery gets the warehouse's Microfinance Delivery operation type (stock.rule)
+        sale_order.with_context(program_picking_type='microfinance_delivery').action_confirm()
 
         # ← Write origin back AFTER confirm as action_confirm() overwrites it
         sale_order.write({'origin': self.name})

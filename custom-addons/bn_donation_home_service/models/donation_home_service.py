@@ -138,9 +138,6 @@ class DonationHomeService(models.Model):
         """Confirm donation and create stock picking if stockable product lines exist."""
         StockPicking = self.env['stock.picking']
         StockMove = self.env['stock.move']
-        # the DHS Gate Out operation type of the user's warehouse: from its stock
-        PickingType = self.env['stock.warehouse']._get_program_type('dhs_gate_out')
-        StockLocation = PickingType.default_location_src_id
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_out_location')
 
         self._check_dhs_state(('draft',), _('Gate Out'))
@@ -153,6 +150,12 @@ class DonationHomeService(models.Model):
             # Skip if picking already exists
             if record.picking_id:
                 continue
+
+            # the DHS Gate Out operation type of the warehouse of the service's
+            # branch (POS where it was booked), else the user's: from its stock
+            PickingType = self.env['stock.warehouse']._get_program_type(
+                'dhs_gate_out', branch=record.pos_analytic_account_id)
+            StockLocation = PickingType.default_location_src_id
 
             # Only NON-service product lines
             stockable_lines = record.donation_home_service_line_ids.filtered(
@@ -219,10 +222,13 @@ class DonationHomeService(models.Model):
         StockMove = self.env['stock.move']
         StockLocation = self.env.ref('bn_donation_home_service.gate_out_location')
         GateOutLocation = self.env.ref('bn_donation_home_service.gate_in_location')
-        PickingType = self.env['stock.warehouse']._get_program_type('dhs_gate_in')
 
         self._check_dhs_state(('gate_out',), _('Gate In'))
         for record in self:
+            # back into the warehouse the items left at Gate Out
+            PickingType = self.env['stock.warehouse']._get_program_type(
+                'dhs_gate_in', location=record.picking_id.location_id or None,
+                branch=record.pos_analytic_account_id)
 
             # Skip if picking already exists
             if record.second_picking_id:

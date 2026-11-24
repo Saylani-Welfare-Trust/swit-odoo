@@ -135,11 +135,32 @@ class StockWarehouse(models.Model):
         return picking_type.sudo(False)
 
     @api.model
-    def _warehouse_for(self, location=None, user=None):
+    def _warehouse_for_branch(self, branch):
+        """The warehouse of a branch: the one whose locations are tagged with the
+        branch or, failing that, with the closest of its parents (city, province)."""
+        if not branch:
+            return self.browse()
+        branch = branch.sudo()
+        company = self.env.company
+        warehouses = self.sudo().search([('company_id', '=', company.id)])
+        # the branch first, then its parents up the tree
+        chain = self.env['account.analytic.account'].sudo().browse(
+            [int(part) for part in reversed((getattr(branch, 'parent_path', '') or '').strip('/').split('/')) if part]) or branch
+        for account in chain:
+            found = warehouses.filtered(lambda w: account in (
+                w.view_location_id.analytic_account_id | w.lot_stock_id.analytic_account_id))
+            if found:
+                return found[:1].sudo(False)
+        return self.browse()
+
+    @api.model
+    def _warehouse_for(self, location=None, user=None, branch=None):
         """The warehouse a program document works in: the warehouse of its
-        location, else the first allowed warehouse of the user, else the
-        company's first warehouse."""
+        location, else of its branch, else the first allowed warehouse of the
+        user, else the company's first warehouse."""
         warehouse = location.warehouse_id if location else self.browse()
+        if not warehouse and branch:
+            warehouse = self._warehouse_for_branch(branch)
         if not warehouse:
             user = user or self.env.user
             company = self.env.company
@@ -152,8 +173,10 @@ class StockWarehouse(models.Model):
         return warehouse
 
     @api.model
-    def _get_program_type(self, program, location=None, user=None):
-        return self._warehouse_for(location, user)._program_type(program)
+    def _get_program_type(self, program, location=None, user=None, branch=None):
+        """The operation type of `program` in the warehouse of the document: of its
+        location, else of its branch (analytic account), else of the user."""
+        return self._warehouse_for(location, user, branch)._program_type(program)
 
     @api.model
     def _setup_program_types(self):

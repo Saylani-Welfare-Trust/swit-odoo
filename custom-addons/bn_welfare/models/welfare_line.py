@@ -457,10 +457,10 @@ class WelfareLine(models.Model):
         lines.write({'state': 'cancel'})
         return True
 
-    def _get_delivery_locations(self):
-        """The Welfare Delivery operation type of the user's warehouse, with
-        its source and customer locations."""
-        picking_type = self.env['stock.warehouse']._get_program_type('welfare')
+    def _get_delivery_locations(self, branch=None):
+        """The Welfare Delivery operation type of the warehouse of the line's
+        branch (else the user's), with its source and customer locations."""
+        picking_type = self.env['stock.warehouse']._get_program_type('welfare', branch=branch)
         location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
         location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
         return picking_type, location_src, location_dest
@@ -479,7 +479,8 @@ class WelfareLine(models.Model):
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
                 
-                picking_type, location_src, location_dest = self._get_delivery_locations()
+                picking_type, location_src, location_dest = self._get_delivery_locations(
+                    self.pos_analytic_account_id or self.analytic_account_id)
 
                 picking_vals = {
                     'partner_id': self.welfare_id.donee_id.id,
