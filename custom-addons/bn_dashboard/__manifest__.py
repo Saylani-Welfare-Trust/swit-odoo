@@ -9,7 +9,8 @@
                 'bn_donation_box','bn_profile_management','hr',
                 'bn_direct_deposit', 'account_analytic_parent',
                 # models the dashboards extend or read
-                'bn_donation_in_kind', 'bn_rider_shift', 'bn_journal_transfer', 'bn_import_donation','bn_livestock_slaugther',],
+                'bn_donation_in_kind', 'bn_rider_shift', 'bn_journal_transfer', 'bn_import_donation','bn_livestock_slaugther',
+                'bn_shariah_law'],
     'data': [
         'security/dashboard_security.xml',
         'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
