@@ -25,6 +25,17 @@ class LivestockSlaughterSync(models.Model):
         help="Amount from the advance donation line allocated to this slaughter",
     )
 
+    def action_confirm(self):
+        """Slaughtered: the advance donation line funding the animal is disbursed
+        (fully once all the animals of the line are slaughtered)."""
+        self.ensure_one()
+        was_draft = self.state == 'not_received'
+        res = super().action_confirm()
+        if was_draft and self.state != 'not_received' and self.advance_donation_line_id:
+            self.advance_donation_line_id.sudo()._register_disbursement(
+                self.advance_donation_amount, self.price, record_name=self.name)
+        return res
+
     def action_select_advance_donation(self):
         return {
             'name': _('Select Advance Donation'),
