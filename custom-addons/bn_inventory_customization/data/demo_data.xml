@@ -2,18 +2,6 @@
 <odoo>
     <data noupdate="1">
 
-        <!-- Livestock Variants -->
-        <record id="livestock_variant_sadqa" model="livestock.variant">
-            <field name="name">Sadqa</field>
-        </record>
-
-        <record id="livestock_variant_aqiqa" model="livestock.variant">
-            <field name="name">Aqiqa</field>
-        </record>
-
-        <record id="livestock_variant_qurbani" model="livestock.variant">
-            <field name="name">Qurbani</field>
-        </record>
 
         <!-- Product Attribute for Weight Range -->
         <record id="product_attribute_weight_range" model="product.attribute">

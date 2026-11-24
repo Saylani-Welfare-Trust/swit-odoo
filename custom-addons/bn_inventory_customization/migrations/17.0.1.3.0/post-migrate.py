@@ -14,8 +14,8 @@ def _column(cr, table, column):
 def migrate(cr, version):
     """The weight bands were set on the products (Purchase Product, Livestock
     Variant, Main Attribute) and on the attribute values (From / To kg). They
-    become the bands of the Livestock Variants: one per product variant of each
-    configured template, with the weight range of its attribute value."""
+    become the weight bands of the purchase product: one per product variant of
+    each configured template, with the weight range of its attribute value."""
     if not all(_column(cr, *c) for c in (('product_template', 'purchase_product'),
                                          ('product_template', 'livestock_variant'),
                                          ('product_attribute_value', 'from_kg'),
@@ -41,7 +41,8 @@ def migrate(cr, version):
     Band = env['livestock.variant.line']
     created = skipped = 0
     for variant_id, purchase_id, product_id, from_kg, to_kg in rows:
-        if Band.search_count([('variant_id', '=', variant_id), ('purchase_product_id', '=', purchase_id),
+        # (since 17.0.1.4.0 a band belongs to the product only: one band per weight)
+        if Band.search_count([('purchase_product_id', '=', purchase_id),
                               ('from_kg', '<', to_kg), ('to_kg', '>', from_kg)]):
             skipped += 1
             _logger.warning("Livestock band %s-%s kg of product %s overlaps an existing band: not created.",
@@ -50,7 +51,7 @@ def migrate(cr, version):
         purchase = env['product.product'].browse(purchase_id)
         if not purchase.check_stock:
             purchase.check_stock = True
-        Band.create({'variant_id': variant_id, 'purchase_product_id': purchase_id,
+        Band.create({'purchase_product_id': purchase_id,
                      'from_kg': from_kg, 'to_kg': to_kg, 'product_id': product_id})
         created += 1
     _logger.info("Livestock weight bands migrated: %s created, %s skipped (overlapping).", created, skipped)

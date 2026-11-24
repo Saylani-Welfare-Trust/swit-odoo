@@ -17,14 +17,13 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Livestock" name="livestock" invisible="not check_stock">
                     <p class="text-muted">
-                        Bought by unit, each unit is weighed on its receipt and received as the product of
-                        its livestock variant's weight band. The bands are also managed in
-                        Inventory &gt; Configuration &gt; Livestock.
+                        The general product used on Purchase Orders and Material Requests. On its receipt
+                        (Receive by Weight) its units are distributed over the product variants below by their
+                        weight. Also in Inventory &gt; Configuration &gt; Livestock Weight Bands.
                     </p>
                     <field name="livestock_band_ids" context="{'default_purchase_product_id': product_variant_id}">
                         <tree editable="bottom">
-                            <field name="variant_id" options="{'no_create': True}"/>
-                            <field name="purchase_product_id" options="{'no_create': True}"/>
+                            <field name="purchase_product_id" column_invisible="1"/>
                             <field name="from_kg"/>
                             <field name="to_kg"/>
                             <field name="product_id" options="{'no_create': True}"/>

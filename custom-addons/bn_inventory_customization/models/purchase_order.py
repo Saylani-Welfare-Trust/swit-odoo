@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo.exceptions import ValidationError
+from odoo import _, api, fields, models
 
 
 class PurchaseOrder(models.Model):
@@ -138,6 +139,20 @@ class PurchaseOrderLine(models.Model):
 
         # Now let Odoo compute subtotal/taxes normally
         super(PurchaseOrderLine, self)._compute_amount()
+
+    @api.constrains('product_id')
+    def _check_livestock_variant_not_bought(self):
+        """A product variant of a livestock product (Cow - 12) is what a weighed unit
+        is received as: livestock is bought as the general product (Cow), then
+        weighed on its receipt."""
+        Band = self.env['livestock.variant.line'].sudo()
+        for line in self.filtered(lambda l: l.product_id and not l.product_id.check_stock):
+            band = Band.search([('product_id', '=', line.product_id.id)], limit=1)
+            if band:
+                raise ValidationError(_(
+                    "%(variant)s is received by weight: buy %(product)s instead, its units are received "
+                    "as %(variant)s by their weight.",
+                    variant=line.product_id.display_name, product=band.purchase_product_id.display_name))
 
     def _livestock_moves(self):
         """The received moves of the weighed units of this (livestock) line."""
