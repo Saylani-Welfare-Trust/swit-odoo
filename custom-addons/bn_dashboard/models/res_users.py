@@ -45,5 +45,15 @@ class ResUsers(models.Model):
         column1='user_id', column2='account_id',
         string='Livestock Dashboard Locations',
         readonly=True,
-        help="Set from Dashboard > Configuration > Livestock Access. Empty = every location.",
+        help="Locations this user can see on the Livestock Dashboard. "
+             "Leave empty to see every location.",
+    )
+    
+    shariah_analytic_ids = fields.Many2many(
+        'account.analytic.account',
+        relation='res_users_shariah_analytic_rel',
+        column1='user_id', column2='account_id',
+        string='Shariah Dashboard Segments',
+        help="Segments this user can see on the Shariah Dashboard. "
+             "Leave empty to see every segment.",
     )

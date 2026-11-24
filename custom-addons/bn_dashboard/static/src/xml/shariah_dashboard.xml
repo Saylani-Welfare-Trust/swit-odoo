@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="bn_dashboard.ShariahDashboardTemplate">
+        <style>
+            @media print { .o_shariah_dashboard { background: #fff !important; } .d-print-none { display: none !important; } .card { break-inside: avoid; } }
+            .o_shariah_dashboard .o_sl_kpi { transition: transform .15s ease; }
+            .o_shariah_dashboard .o_sl_kpi:hover { transform: translateY(-2px); }
+        </style>
+
+        <div class="o_shariah_dashboard w-100 h-100 p-4" style="background-color: #f8f9fa; overflow-y: auto;">
+
+            <div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
+                <h2 class="m-0">Shariah Law Dashboard</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary btn-sm" t-on-click="refresh"><i class="fa fa-refresh"/> Refresh</button>
+                    <button class="btn btn-outline-secondary btn-sm" t-on-click="print"><i class="fa fa-print"/> Print</button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card shadow-sm border-0 mb-4 d-print-none">
+                <div class="card-body py-2">
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <div class="btn-group btn-group-sm">
+                            <button t-attf-class="btn #{state.active_preset === 'this_month' ? 'btn-primary' : 'btn-outline-primary'}" data-preset="this_month" t-on-click="applyPreset">This Month</button>
+                            <button t-attf-class="btn #{state.active_preset === 'last_month' ? 'btn-primary' : 'btn-outline-primary'}" data-preset="last_month" t-on-click="applyPreset">Last Month</button>
+                            <button t-attf-class="btn #{state.active_preset === 'this_quarter' ? 'btn-primary' : 'btn-outline-primary'}" data-preset="this_quarter" t-on-click="applyPreset">This Quarter</button>
+                            <button t-attf-class="btn #{state.active_preset === 'ytd' ? 'btn-primary' : 'btn-outline-primary'}" data-preset="ytd" t-on-click="applyPreset">YTD</button>
+                            <button t-attf-class="btn #{state.active_preset === 'all_time' ? 'btn-primary' : 'btn-outline-primary'}" data-preset="all_time" t-on-click="applyPreset">All Time</button>
+                        </div>
+
+                        <div class="ms-auto d-flex gap-2 align-items-center">
+                            <label class="fw-bold m-0 small">From:</label>
+                            <input type="date" class="form-control form-control-sm" name="date_from" t-model="state.date_from" t-on-change="applyFilter"/>
+                            <label class="fw-bold m-0 small">To:</label>
+                            <input type="date" class="form-control form-control-sm" name="date_to" t-model="state.date_to" t-on-change="applyFilter"/>
+                            
+                            <label class="fw-bold m-0 small ms-2">Segment:</label>
+                            <select class="form-select form-select-sm" style="width: auto;" name="analytic_id" t-model="state.analytic_id" t-on-change="applyFilter">
+                                <option value="">All</option>
+                                <t t-foreach="state.segments" t-as="s" t-key="s.id">
+                                    <option t-att-value="s.id" t-esc="s.name"/>
+                                </t>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div t-if="state.loading" class="text-center mt-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2">Loading Shariah data...</p>
+            </div>
+
+            <t t-elif="state.data">
+                <!-- KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 border-start border-4 border-primary o_sl_kpi h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted text-uppercase small mb-2">Total Closing Balance</h6>
+                                <h3 class="m-0 text-primary">Rs <t t-esc="formatCurrency(state.data.kpis.total_closing)"/></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 border-start border-4 border-success o_sl_kpi h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted text-uppercase small mb-2">Total Inflows</h6>
+                                <h3 class="m-0 text-success">Rs <t t-esc="formatCurrency(state.data.kpis.total_inflow)"/></h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card shadow-sm border-0 border-start border-4 border-danger o_sl_kpi h-100">
+                            <div class="card-body">
+                                <h6 class="text-muted text-uppercase small mb-2">Total Outflows</h6>
+                                <h3 class="m-0 text-danger">Rs <t t-esc="formatCurrency(state.data.kpis.total_outflow)"/></h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-6">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Inflows vs Outflows (Last 12 Months)</div>
+                            <div class="card-body" style="position: relative; height: 300px;"><canvas t-ref="trendChart"/></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Inflow Breakdown</div>
+                            <div class="card-body" style="position: relative; height: 300px;">
+                                <canvas t-ref="inflowChart"/>
+                                <div t-if="state.data.kpis.total_inflow === 0" class="text-center text-muted mt-5">No inflows.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Outflow Breakdown</div>
+                            <div class="card-body" style="position: relative; height: 300px;">
+                                <canvas t-ref="outflowChart"/>
+                                <div t-if="state.data.kpis.total_outflow === 0" class="text-center text-muted mt-5">No outflows.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tables -->
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Segment Balances</div>
+                            <div class="card-body p-0">
+                                <div t-if="!state.data.segments.length" class="text-center text-muted p-4">No segment data available.</div>
+                                <table t-else="" class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Segment</th>
+                                            <th class="text-end">Inflows</th>
+                                            <th class="text-end">Outflows</th>
+                                            <th class="text-end">Closing Balance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="state.data.segments" t-as="seg" t-key="seg.name">
+                                            <td class="fw-bold"><t t-esc="seg.name"/></td>
+                                            <td class="text-end text-success">Rs <t t-esc="formatCurrency(seg.inflow)"/></td>
+                                            <td class="text-end text-danger">Rs <t t-esc="formatCurrency(seg.outflow)"/></td>
+                                            <td class="text-end fw-bold text-primary">Rs <t t-esc="formatCurrency(seg.closing_balance)"/></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white fw-bold">Recent Transfers</div>
+                            <div class="card-body p-0">
+                                <div t-if="!state.data.recent_transfers.length" class="text-center text-muted p-4">No transfers found.</div>
+                                <ul t-else="" class="list-group list-group-flush">
+                                    <li t-foreach="state.data.recent_transfers" t-as="t" t-key="t_index" class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="badge text-bg-light border"><t t-esc="t.date"/></span>
+                                            <span class="fw-bold text-primary">Rs <t t-esc="formatCurrency(t.amount)"/></span>
+                                        </div>
+                                        <div class="small">
+                                            <span class="text-muted"><t t-esc="t.source"/></span>
+                                            <i class="fa fa-arrow-right mx-1 text-muted"/>
+                                            <span class="text-muted"><t t-esc="t.destination"/></span>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+</templates>

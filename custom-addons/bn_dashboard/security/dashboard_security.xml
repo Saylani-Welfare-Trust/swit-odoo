@@ -55,7 +55,10 @@
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
-    <!-- Manager groups REMOVED -->
+    <record id="group_shariah_dashboard_user" model="res.groups">
+        <field name="name">Dashboard / Shariah Law</field>
+        <field name="category_id" ref="module_category_bn_dashboard"/>
+    </record>
 
     <!-- ========================================== -->
     <!-- 2. RECORD RULES                            -->

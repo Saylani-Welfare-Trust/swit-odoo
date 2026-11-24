@@ -32,6 +32,7 @@
         'views/profit_loss_views.xml',
         'views/livestock_dashboard_views.xml',
         'views/livestock_access_views.xml',
+        'views/shariah_dashboard_views.xml',
     ],
     'assets': {
         'web.assets_backend': [
@@ -55,6 +56,8 @@
             'bn_dashboard/static/src/xml/profit_loss_dashboard.xml',
             'bn_dashboard/static/src/js/livestock_dashboard.js',
             'bn_dashboard/static/src/xml/livestock_dashboard.xml',
+            'bn_dashboard/static/src/js/shariah_dashboard.js',
+            'bn_dashboard/static/src/xml/shariah_dashboard.xml',
         ],
     },
     'installable': True,

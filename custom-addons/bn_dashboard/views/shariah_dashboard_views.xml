@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_shariah_dashboard" model="ir.actions.client">
+        <field name="name">Shariah Dashboard</field>
+        <field name="tag">shariah_dashboard</field>
+    </record>
+
+    <menuitem id="menu_shariah_dashboard"
+              name="Shariah Dashboard"
+              parent="bn_dashboard.menu_dashboard_root"
+              action="action_shariah_dashboard"
+              sequence="25"
+              groups="bn_dashboard.group_shariah_dashboard_user"/>
+
+</odoo>
