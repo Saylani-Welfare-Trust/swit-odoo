@@ -69,8 +69,8 @@
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if not user.treasury_analytic_ids
-            else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]
+            if (user.all_nodes if user.node_access else not user.treasury_analytic_ids)
+            else [('analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.treasury_analytic_ids).ids)]
         )</field>
     </record>
 
@@ -80,8 +80,8 @@
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if not user.treasury_analytic_ids
-            else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]
+            if (user.all_nodes if user.node_access else not user.treasury_analytic_ids)
+            else [('analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.treasury_analytic_ids).ids)]
         )</field>
     </record>
 
@@ -91,8 +91,8 @@
         <field name="groups" eval="[(4, ref('group_treasury_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if not user.treasury_analytic_ids
-            else [('analytic_account_id', 'child_of', user.treasury_analytic_ids.ids)]
+            if (user.all_nodes if user.node_access else not user.treasury_analytic_ids)
+            else [('analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.treasury_analytic_ids).ids)]
         )</field>
     </record>
 
@@ -102,12 +102,12 @@
         <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if not user.pos_analytic_ids
+            if (user.all_nodes if user.node_access else not user.pos_analytic_ids)
             else [
                 '|', '|',
-                ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
-                ('session_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
-                ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)
+                ('config_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_analytic_ids).ids),
+                ('session_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_analytic_ids).ids),
+                ('user_id.employee_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_analytic_ids).ids)
             ]
         )</field>
     </record>
@@ -118,11 +118,11 @@
         <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if not user.pos_analytic_ids
+            if (user.all_nodes if user.node_access else not user.pos_analytic_ids)
             else [
                 '|',
-                ('config_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids),
-                ('user_id.employee_id.analytic_account_id', 'child_of', user.pos_analytic_ids.ids)
+                ('config_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_analytic_ids).ids),
+                ('user_id.employee_id.analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_analytic_ids).ids)
             ]
         )</field>
     </record>
@@ -133,8 +133,8 @@
         <field name="groups" eval="[(4, ref('group_pos_order_dashboard_user'))]"/>
         <field name="domain_force">(
             [(1, '=', 1)]
-            if not user.pos_analytic_ids
-            else [('analytic_account_id', 'child_of', user.pos_analytic_ids.ids)]
+            if (user.all_nodes if user.node_access else not user.pos_analytic_ids)
+            else [('analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_analytic_ids).ids)]
         )</field>
     </record>
 

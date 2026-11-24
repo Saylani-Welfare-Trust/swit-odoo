@@ -7,4 +7,4 @@ class QurbaniDistributionCenter(models.Model):
 
 
     name = fields.Char('Name')  
-    distribution_center_id = fields.Many2one('stock.location', string="Distribution Center")
+    distribution_center_id = fields.Many2one('stock.location', string="Distribution Center", domain="[('is_distribution_location', '=', True)]")

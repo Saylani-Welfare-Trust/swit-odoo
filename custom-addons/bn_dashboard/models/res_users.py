@@ -1,6 +1,8 @@
 from odoo import fields, models
 
 
+
+
 class ResUsers(models.Model):
     _inherit = 'res.users'
 
@@ -57,3 +59,21 @@ class ResUsers(models.Model):
         help="Segments this user can see on the Shariah Dashboard. "
              "Leave empty to see every segment.",
     )
+
+    def _dashboard_locations(self, field):
+        """The analytic accounts a dashboard limits this user to, and whether the
+        user is unrestricted.
+
+        - "Branch / Site Access" users (T4/T5): their Branches / Sites and
+          everything under them; All Branches / Sites is unrestricted. The
+          dashboard's own access list is not used.
+        - Other users: the dashboard's access list (``field``); empty is
+          unrestricted, as before."""
+        self.ensure_one()
+        user = self.sudo()
+        if 'node_access' in user._fields and user.node_access:
+            if user.all_nodes:
+                return self.env['account.analytic.account'], True
+            return user.node_scope_ids, False
+        accounts = user[field]
+        return accounts, not accounts

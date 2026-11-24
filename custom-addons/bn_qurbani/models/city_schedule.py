@@ -15,9 +15,9 @@ class CitySchedule(models.Model):
     name = fields.Char('Name', default="New")
     inventory_product_name = fields.Char(related='inventory_product_id.name', string="Inentory Product Name")
 
-    slaughter_location_id = fields.Many2one('stock.location', string='Slaughter Location', tracking=True)
+    slaughter_location_id = fields.Many2one('stock.location', string='Slaughter Location', tracking=True, domain="[('is_slaughter_location', '=', True)]")
 
-    distribution_location_ids = fields.Many2many('stock.location', string="Distribution Locations", tracking=True)
+    distribution_location_ids = fields.Many2many('stock.location', string="Distribution Locations", tracking=True, domain="[('is_distribution_location', '=', True)]")
     pos_product_ids = fields.Many2many('product.product', string="POS Products", tracking=True)
 
 

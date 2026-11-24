@@ -6,8 +6,8 @@
         <field name="groups" eval="[(4, ref('bn_dashboard.group_pos_dd_report_user'))]"/>
         <field name="domain_force">(
             ([(1, '=', 1)]
-             if not user.pos_dd_report_analytic_ids
-             else [('analytic_account_id', 'child_of', user.pos_dd_report_analytic_ids.ids)])
+             if (user.all_nodes if user.node_access else not user.pos_dd_report_analytic_ids)
+             else [('analytic_account_id', 'child_of', (user.node_scope_ids if user.node_access else user.pos_dd_report_analytic_ids).ids)])
             +
             ([] if not user.pos_dd_report_category_ids
              else [('category_id', 'child_of', user.pos_dd_report_category_ids.ids)])

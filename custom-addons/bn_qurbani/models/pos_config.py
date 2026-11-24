@@ -6,4 +6,4 @@ class POSConfig(models.Model):
 
     
     city_id = fields.Many2one('stock.location', string="City")
-    distribution_id = fields.Many2one('stock.location', string="Distribution")
+    distribution_id = fields.Many2one('stock.location', string="Distribution", domain="[('is_distribution_location', '=', True)]")

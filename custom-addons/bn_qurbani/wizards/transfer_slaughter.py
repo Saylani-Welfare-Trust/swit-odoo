@@ -15,7 +15,7 @@ class TransferSlaughter(models.TransientModel):
 
     option = fields.Selection(selection=option_selection, string="Option", default="single")
     
-    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
+    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", domain="[('is_slaughter_location', '=', True)]")
 
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')

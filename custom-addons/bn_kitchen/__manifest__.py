@@ -1,6 +1,6 @@
 {
     'name': 'Kitchen',
-    'version': '17.0.1.3.4',
+    'version': '17.0.1.4.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -26,6 +26,7 @@
         'views/search_views.xml',
         'views/search_filters.xml',
         'views/node_views.xml',
+        'views/stock_warehouse.xml',
         'security/node_rules.xml',
     ],
     'auto_install': False,

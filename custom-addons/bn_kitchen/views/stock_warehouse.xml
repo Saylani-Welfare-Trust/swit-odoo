@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="stock_view_warehouse_inherit_bn_kitchen" model="ir.ui.view">
+        <field name="name">stock.view.warehouse.inherit.bn.kitchen</field>
+        <field name="model">stock.warehouse</field>
+        <field name="inherit_id" ref="stock.view_warehouse"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="kitchen" string="Kitchen" groups="stock.group_stock_manager">
+                    <field name="view_location_id" invisible="1"/>
+                    <group>
+                        <field name="kitchen_location_id" options="{'no_create': True}"
+                               domain="[('id', 'child_of', view_location_id), ('usage', '=', 'internal')]"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,6 +1,6 @@
 {
     'name': 'Qurbani',
-    'version': '17.0.1.7.7',
+    'version': '17.0.1.7.8',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',

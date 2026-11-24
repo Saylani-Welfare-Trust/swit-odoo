@@ -19,6 +19,10 @@
         <field name="arch" type="xml">
             <form>
                 <sheet>
+                    <div class="alert alert-info" role="status">
+                        Users in <b>Branch / Site Access</b> see this dashboard for their Allowed Branches / Sites
+                        (All Branches / Sites: everything); this list applies to the other users only.
+                    </div>
                     <group>
                         <field name="user_id"/>
                         <field name="full_access"/>

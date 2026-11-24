@@ -1,4 +1,4 @@
-from odoo import _, models, fields
+from odoo import _, api, models, fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 
@@ -36,6 +36,17 @@ class BranchKitchenRequest(models.Model):
 
 
     branch_id = fields.Many2one('stock.location', string="Branch")
+    # the kitchen that cooks for the branch: its stock gives the ingredients, its kitchen location the dishes
+    kitchen_warehouse_id = fields.Many2one(
+        'stock.warehouse', string="Kitchen Warehouse", default=lambda self: self._default_kitchen_warehouse(),
+        help="The warehouse whose kitchen produces this request: ingredients from its stock, "
+             "dishes into its Kitchen Location.")
+
+    @api.model
+    def _default_kitchen_warehouse(self):
+        """The only warehouse with a Kitchen Location, else none (chosen on the request)."""
+        kitchens = self.env['stock.warehouse'].sudo().search([('kitchen_location_id', '!=', False)])
+        return kitchens.sudo(False) if len(kitchens) == 1 else self.env['stock.warehouse']
 
     type = fields.Selection(selection=type_selection, string="Type")
 
@@ -67,10 +78,12 @@ class BranchKitchenRequest(models.Model):
         if self.state != 'approve':
             raise UserError(_('Only an approved kitchen request can be manufactured.'))
         Production = self.env['mrp.production']
-        kitchen_loc = self.env['stock.location'].search([('usage', '=', 'internal'), ('name', 'ilike', 'kitchen')], limit=1)
-        warehouse_loc = self.env['stock.location'].search([('usage', '=', 'internal'), ('name', 'ilike', 'stock')],limit=1)
-        if not kitchen_loc or not warehouse_loc:
-            raise UserError(_('The Kitchen and Stock locations must exist to manufacture.'))
+        if not self.kitchen_warehouse_id:
+            raise UserError(_('Choose the Kitchen Warehouse of %s.') % (self.name or self.branch_id.display_name))
+        # the kitchen warehouse: ingredients from its stock, dishes into its kitchen
+        kitchen = self.kitchen_warehouse_id
+        kitchen_loc = kitchen._kitchen_location()
+        warehouse_loc = kitchen.lot_stock_id
 
         mo_ids = []
 

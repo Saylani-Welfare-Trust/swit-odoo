@@ -7,4 +7,4 @@ class BranchKitchenRequestNode(models.Model):
 
     @api.model
     def _node_sources(self):
-        return super()._node_sources() + ['branch_id']
+        return super()._node_sources() + ['branch_id', 'kitchen_warehouse_id']
