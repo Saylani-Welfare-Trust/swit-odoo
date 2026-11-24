@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="donation_box_complain_center_view_search_search_node" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.search.node</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_complain_center_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_complain_center_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.tree.node</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_complain_center_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_complain_center_view_form_form_node" model="ir.ui.view">
+        <field name="name">donation.box.complain.center.view.form.node</field>
+        <field name="model">donation.box.complain.center</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_complain_center_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='donation_box_complain_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_registration_installation_view_search_search_node" model="ir.ui.view">
+        <field name="name">donation.box.registration.installation.view.search.node</field>
+        <field name="model">donation.box.registration.installation</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_registration_installation_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">donation.box.registration.installation.view.tree.node</field>
+        <field name="model">donation.box.registration.installation</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_registration_installation_view_form_form_node" model="ir.ui.view">
+        <field name="name">donation.box.registration.installation.view.form.node</field>
+        <field name="model">donation.box.registration.installation</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_registration_installation_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='donation_box_registration_installation_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_request_view_search_search_node" model="ir.ui.view">
+        <field name="name">donation.box.request.view.search.node</field>
+        <field name="model">donation.box.request</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_request_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">donation.box.request.view.tree.node</field>
+        <field name="model">donation.box.request</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_box_request_view_form_form_node" model="ir.ui.view">
+        <field name="name">donation.box.request.view.form.node</field>
+        <field name="model">donation.box.request</field>
+        <field name="inherit_id" ref="bn_donation_box.donation_box_request_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='donation_box_request_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

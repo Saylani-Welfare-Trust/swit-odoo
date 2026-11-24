@@ -48,7 +48,7 @@ class ResUsers(models.Model):
         help="Locations this user can see on the Livestock Dashboard. "
              "Leave empty to see every location.",
     )
-    
+
     shariah_analytic_ids = fields.Many2many(
         'account.analytic.account',
         relation='res_users_shariah_analytic_rel',

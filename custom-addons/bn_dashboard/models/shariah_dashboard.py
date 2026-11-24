@@ -1,135 +1,180 @@
 # -*- coding: utf-8 -*-
-from datetime import timedelta
+from datetime import date
+
 from dateutil.relativedelta import relativedelta
 
-from odoo import api, fields, models
-from odoo.osv import expression
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError
+
+SHARIAH_GROUP = 'bn_dashboard.group_shariah_dashboard_user'
+INFLOW_FIELDS = ('pos_donation_amount', 'api_donation_amount', 'dik_amount')
+# outflows are stored as negative amounts
+OUTFLOW_FIELDS = ('po_amount', 'welfare_amount', 'microfinance_amount', 'expense_amount')
 
 
-class ShariahDashboard(models.TransientModel):
+class ShariahDashboard(models.AbstractModel):
+    """Figures of the Shariah Law Dashboard (no records of its own)."""
     _name = 'shariah.dashboard'
     _description = 'Shariah Law Dashboard'
 
     @api.model
+    def _check_access(self):
+        if not (self.env.su or self.env.user.has_group(SHARIAH_GROUP) or self.env.user.has_group('base.group_system')):
+            raise AccessError(_("You are not allowed to see the Shariah Law Dashboard."))
+
+    @api.model
+    def _allowed_segments(self):
+        """The segments the user may see (Users > Shariah Dashboard Segments, with
+        everything under them); False = every segment."""
+        allowed = self.env.user.sudo().shariah_analytic_ids
+        if not allowed:
+            return False
+        return self.env['account.analytic.account'].sudo().search([('id', 'child_of', allowed.ids)])
+
+    @api.model
+    def get_segments(self):
+        """The segments offered in the dashboard's filter: those with Shariah Law
+        figures, limited to the user's allowed segments."""
+        self._check_access()
+        accounts = self.env['shariah.law'].sudo()._read_group([], ['analytic_account_id'])
+        accounts = self.env['account.analytic.account'].sudo().browse(
+            [account.id for account, in accounts if account]).sorted('name')
+        allowed = self._allowed_segments()
+        if allowed is not False:
+            accounts &= allowed
+        return [{'id': account.id, 'name': account.display_name} for account in accounts]
+
+    @api.model
     def get_dashboard_data(self, date_from=False, date_to=False, analytic_id=False):
-        Law = self.env['shariah.law']
-        Transfer = self.env['shariah.transfer']
+        """Inflows, outflows, transfers and closing balances of the period, for one
+        segment (with the segments under it) or all the user's segments. The
+        figures are read as superuser, so the dashboard group and the user's
+        segments are checked here."""
+        self._check_access()
+        Law = self.env['shariah.law'].sudo()
+        Transfer = self.env['shariah.transfer'].sudo()
+        Account = self.env['account.analytic.account'].sudo()
 
-        # ---- Domains ----
-        date_domain = []
-        if date_from:
-            date_domain.append(('date', '>=', date_from))
-        if date_to:
-            date_domain.append(('date', '<=', date_to))
-
-        loc_domain = []
-        if analytic_id:
-            loc_domain.append(('analytic_account_id', 'child_of', analytic_id))
-
-        base = date_domain + loc_domain
-
-        # ---- Total Closing Balance (Latest record per account in range) ----
-        records = Law.search(base)
-        accounts = records.mapped('analytic_account_id')
-        total_closing = 0.0
-        for acc in accounts:
-            latest = Law.search([('analytic_account_id', '=', acc.id)] + date_domain, order='date desc', limit=1)
-            if latest:
-                total_closing += latest.closing_balance
-
-        # ---- Inflows & Outflows (For KPIs & Charts) ----
-        pos = sum(records.mapped('pos_donation_amount'))
-        api = sum(records.mapped('api_donation_amount'))
-        dik = sum(records.mapped('dik_amount'))
-        
-        # Outflows are stored as negative values in the model, we use abs() for visual clarity
-        po = abs(sum(records.mapped('po_amount')))
-        welfare = abs(sum(records.mapped('welfare_amount')))
-        micro = abs(sum(records.mapped('microfinance_amount')))
-        expense = abs(sum(records.mapped('expense_amount')))
-
-        # Transfers can be in or out depending on the segment
-        transfers = Transfer.search(loc_domain + [('state', '=', 'posted')])
-        if analytic_id:
-            transfer_in = sum(transfers.filtered(lambda t: t.destination_analytic_account_id.id == analytic_id).mapped('amount'))
-            transfer_out = sum(transfers.filtered(lambda t: t.source_analytic_account_id.id == analytic_id).mapped('amount'))
-        else:
-            transfer_in = sum(transfers.mapped('amount'))
-            transfer_out = sum(transfers.mapped('amount'))
-
-        total_inflow = pos + api + dik + transfer_in
-        total_outflow = po + welfare + micro + expense + transfer_out
-
-        # ---- Trend (Last 12 Months) ----
         today = fields.Date.context_today(self)
+        date_from = fields.Date.to_date(date_from) or False
+        date_to = fields.Date.to_date(date_to) or False
+
+        # ---- segments in scope ----
+        allowed = self._allowed_segments()
+        if analytic_id:
+            segments = Account.search([('id', 'child_of', int(analytic_id))])
+            if allowed is not False:
+                if int(analytic_id) not in allowed.ids:
+                    raise AccessError(_("You are not allowed to see this segment."))
+                segments &= allowed
+        else:
+            segments = allowed  # False: every segment
+
+        segment_domain = [('analytic_account_id', 'in', segments.ids)] if segments is not False else []
+        date_domain = ([('date', '>=', date_from)] if date_from else []) + ([('date', '<=', date_to)] if date_to else [])
+        domain = segment_domain + date_domain
+
+        # ---- inflows and outflows of the period ----
+        aggregates = ['%s:sum' % name for name in INFLOW_FIELDS + OUTFLOW_FIELDS]
+        totals = dict(zip(INFLOW_FIELDS + OUTFLOW_FIELDS, Law._read_group(domain, [], aggregates)[0]))
+        totals = {name: value or 0.0 for name, value in totals.items()}
+        pos, api_amount, dik = (totals[name] for name in INFLOW_FIELDS)
+        po, welfare, micro, expense = (abs(totals[name]) for name in OUTFLOW_FIELDS)
+
+        # ---- transfers of the period ----
+        transfer_domain = [('state', '=', 'posted')] + date_domain
+        if segments is not False:
+            transfer_domain += ['|', ('source_analytic_account_id', 'in', segments.ids),
+                                ('destination_analytic_account_id', 'in', segments.ids)]
+        transfers = Transfer.search(transfer_domain)
+        if segments is not False:
+            # only what crosses the edge of the segments in scope: a move inside them is neither in nor out
+            transfer_in = sum(transfers.filtered(
+                lambda t: t.destination_analytic_account_id in segments
+                and t.source_analytic_account_id not in segments).mapped('amount'))
+            transfer_out = sum(transfers.filtered(
+                lambda t: t.source_analytic_account_id in segments
+                and t.destination_analytic_account_id not in segments).mapped('amount'))
+        else:
+            # between segments of the trust: they move money, they bring none in or out
+            transfer_in = transfer_out = 0.0
+
+        # ---- closing balance: the last figure of each segment up to the end of the period ----
+        # (one row per segment, in the database: the daily figures can be many)
+        Law.flush_model(['analytic_account_id', 'date', 'closing_balance'])
+        where, params = ['analytic_account_id IS NOT NULL'], []
+        if segments is not False:
+            where.append('analytic_account_id = ANY(%s)')
+            params.append(segments.ids or [0])
+        if date_to:
+            where.append('date <= %s')
+            params.append(date_to)
+        self.env.cr.execute("""
+            SELECT DISTINCT ON (analytic_account_id) analytic_account_id, closing_balance
+              FROM shariah_law
+             WHERE %s
+          ORDER BY analytic_account_id, date DESC, id DESC
+        """ % ' AND '.join(where), params)
+        latest = {Account.browse(account_id): balance or 0.0 for account_id, balance in self.env.cr.fetchall()}
+        total_closing = sum(latest.values())
+
+        # ---- trend: last 12 months ----
         first_this_month = today.replace(day=1)
+        start = first_this_month - relativedelta(months=11)
+        monthly = Law._read_group(segment_domain + [('date', '>=', start), ('date', '<=', today)],
+                                  ['date:month'], aggregates)
+        by_month = {month: values for month, *values in monthly}
         trend = []
-        for i in range(11, -1, -1):
-            m_start = first_this_month - relativedelta(months=i)
-            m_end = m_start + relativedelta(months=1) - timedelta(days=1)
-            
-            m_domain = [
-                ('date', '>=', str(m_start)),
-                ('date', '<=', str(m_end)),
-            ] + loc_domain
-                
-            m_records = Law.search(m_domain)
-            m_in = sum(m_records.mapped('pos_donation_amount')) + sum(m_records.mapped('api_donation_amount')) + sum(m_records.mapped('dik_amount'))
-            m_out = abs(sum(m_records.mapped('po_amount')) + sum(m_records.mapped('welfare_amount')) + sum(m_records.mapped('microfinance_amount')) + sum(m_records.mapped('expense_amount')))
-            
+        for i in range(12):
+            month = start + relativedelta(months=i)
+            values = dict(zip(INFLOW_FIELDS + OUTFLOW_FIELDS, by_month.get(month) or [0.0] * len(aggregates)))
             trend.append({
-                'label': m_start.strftime('%b %y'),
-                'inflow': m_in,
-                'outflow': m_out,
+                'label': month.strftime('%b %y'),
+                'inflow': sum(values[name] or 0.0 for name in INFLOW_FIELDS),
+                'outflow': abs(sum(values[name] or 0.0 for name in OUTFLOW_FIELDS)),
             })
 
-        # ---- Segment Breakdown Table ----
+        # ---- by segment ----
+        per_segment = Law._read_group(domain, ['analytic_account_id'], aggregates)
+        flows = {account: values for account, *values in per_segment}
         segments_data = []
-        for acc in accounts:
-            latest = Law.search([('analytic_account_id', '=', acc.id)] + date_domain, order='date desc', limit=1)
-            if not latest:
-                continue
-            
-            acc_records = records.filtered(lambda r: r.analytic_account_id.id == acc.id)
-            acc_in = sum(acc_records.mapped('pos_donation_amount')) + sum(acc_records.mapped('api_donation_amount')) + sum(acc_records.mapped('dik_amount'))
-            acc_out = abs(sum(acc_records.mapped('po_amount')) + sum(acc_records.mapped('welfare_amount')) + sum(acc_records.mapped('microfinance_amount')) + sum(acc_records.mapped('expense_amount')))
-            
+        for account in set(flows) | set(latest):
+            values = dict(zip(INFLOW_FIELDS + OUTFLOW_FIELDS, flows.get(account) or [0.0] * len(aggregates)))
             segments_data.append({
-                'name': acc.name,
-                'inflow': acc_in,
-                'outflow': acc_out,
-                'closing_balance': latest.closing_balance,
+                'id': account.id,
+                'name': account.display_name,
+                'inflow': sum(values[name] or 0.0 for name in INFLOW_FIELDS),
+                'outflow': abs(sum(values[name] or 0.0 for name in OUTFLOW_FIELDS)),
+                'closing_balance': latest.get(account, 0.0),
             })
-        segments_data = sorted(segments_data, key=lambda x: x['closing_balance'], reverse=True)
-
-        # ---- Recent Transfers ----
-        recent_transfers = [{
-            'date': t.date,
-            'source': t.source_analytic_account_id.name,
-            'destination': t.destination_analytic_account_id.name,
-            'amount': t.amount,
-        } for t in transfers[:10]]
+        segments_data.sort(key=lambda item: item['closing_balance'], reverse=True)
 
         return {
             'kpis': {
                 'total_closing': total_closing,
-                'total_inflow': total_inflow,
-                'total_outflow': total_outflow,
+                'total_inflow': pos + api_amount + dik + transfer_in,
+                'total_outflow': po + welfare + micro + expense + transfer_out,
             },
             'inflows': [
-                {'label': 'POS', 'amount': pos, 'color': '#007bff'},
-                {'label': 'API / Wallet', 'amount': api, 'color': '#6f42c1'},
-                {'label': 'DIK', 'amount': dik, 'color': '#20c997'},
-                {'label': 'Transfers In', 'amount': transfer_in, 'color': '#17a2b8'},
+                {'label': _('POS'), 'amount': pos, 'color': '#007bff'},
+                {'label': _('API / Wallet'), 'amount': api_amount, 'color': '#6f42c1'},
+                {'label': _('DIK'), 'amount': dik, 'color': '#20c997'},
+                {'label': _('Transfers In'), 'amount': transfer_in, 'color': '#17a2b8'},
             ],
             'outflows': [
-                {'label': 'Purchase Orders', 'amount': po, 'color': '#dc3545'},
-                {'label': 'Welfare', 'amount': welfare, 'color': '#fd7e14'},
-                {'label': 'Microfinance', 'amount': micro, 'color': '#ffc107'},
-                {'label': 'Expenses', 'amount': expense, 'color': '#6c757d'},
-                {'label': 'Transfers Out', 'amount': transfer_out, 'color': '#343a40'},
+                {'label': _('Purchase Orders'), 'amount': po, 'color': '#dc3545'},
+                {'label': _('Welfare'), 'amount': welfare, 'color': '#fd7e14'},
+                {'label': _('Microfinance'), 'amount': micro, 'color': '#ffc107'},
+                {'label': _('Expenses'), 'amount': expense, 'color': '#6c757d'},
+                {'label': _('Transfers Out'), 'amount': transfer_out, 'color': '#343a40'},
             ],
             'trend': trend,
             'segments': segments_data,
-            'recent_transfers': recent_transfers,
+            'recent_transfers': [{
+                'id': t.id,
+                'date': fields.Date.to_string(t.date),
+                'source': t.source_analytic_account_id.display_name,
+                'destination': t.destination_analytic_account_id.display_name,
+                'amount': t.amount,
+            } for t in transfers[:10]],
         }

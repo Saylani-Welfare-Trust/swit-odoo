@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="advance_donation_search_search_node" model="ir.ui.view">
+        <field name="name">advance.donation.search.node</field>
+        <field name="model">advance.donation</field>
+        <field name="inherit_id" ref="bn_advance_donation.advance_donation_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="advance_donation_tree_tree_node" model="ir.ui.view">
+        <field name="name">advance.donation.tree.node</field>
+        <field name="model">advance.donation</field>
+        <field name="inherit_id" ref="bn_advance_donation.advance_donation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="advance_donation_form_form_node" model="ir.ui.view">
+        <field name="name">advance.donation.form.node</field>
+        <field name="model">advance.donation</field>
+        <field name="inherit_id" ref="bn_advance_donation.advance_donation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='is_fully_disbursed'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_advance_donation_receipt_search_search_node" model="ir.ui.view">
+        <field name="name">view.advance.donation.receipt.search.node</field>
+        <field name="model">advance.donation.receipt</field>
+        <field name="inherit_id" ref="bn_advance_donation.view_advance_donation_receipt_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_advance_donation_receipt_tree_tree_node" model="ir.ui.view">
+        <field name="name">view.advance.donation.receipt.tree.node</field>
+        <field name="model">advance.donation.receipt</field>
+        <field name="inherit_id" ref="bn_advance_donation.view_advance_donation_receipt_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_advance_donation_receipt_form_form_node" model="ir.ui.view">
+        <field name="name">view.advance.donation.receipt.form.node</field>
+        <field name="model">advance.donation.receipt</field>
+        <field name="inherit_id" ref="bn_advance_donation.view_advance_donation_receipt_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='update_used_amount'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

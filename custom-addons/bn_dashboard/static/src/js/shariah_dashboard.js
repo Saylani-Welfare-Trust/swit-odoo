@@ -59,12 +59,8 @@ export class ShariahDashboard extends Component {
 
     async fetch_dropdowns() {
         try {
-            // Fetch segments (analytic accounts) - matching the 'Segment' plan
-            const segments = await this.orm.searchRead(
-                "account.analytic.account",
-                [["plan_id.name", "=", "Segment"]],
-                ["id", "name"]
-            );
+            // the segments with Shariah figures that the user may see
+            const segments = await this.orm.call("shariah.dashboard", "get_segments", []);
             this.state.segments = segments;
         } catch (err) {
             console.error("Failed to load segments:", err);

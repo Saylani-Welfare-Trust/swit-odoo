@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_donation_in_kind_search_node" model="ir.ui.view">
+        <field name="name">donation.in.kind.search.node</field>
+        <field name="model">donation.in.kind</field>
+        <field name="inherit_id" ref="bn_donation_in_kind.search_donation_in_kind"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donaiton_in_kind_tree_view_tree_node" model="ir.ui.view">
+        <field name="name">donation.in.kind.tree.view.node</field>
+        <field name="model">donation.in.kind</field>
+        <field name="inherit_id" ref="bn_donation_in_kind.donaiton_in_kind_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="pos_donation_in_kind_tree_view_tree_node" model="ir.ui.view">
+        <field name="name">pos.donation.in.kind.tree.view.node</field>
+        <field name="model">donation.in.kind</field>
+        <field name="inherit_id" ref="bn_donation_in_kind.pos_donation_in_kind_tree_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donaiton_in_kind_form_view_form_node" model="ir.ui.view">
+        <field name="name">donation.in.kind.form.view.node</field>
+        <field name="model">donation.in.kind</field>
+        <field name="inherit_id" ref="bn_donation_in_kind.donaiton_in_kind_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='check_bool'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

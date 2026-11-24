@@ -18,6 +18,8 @@ class LivestockCuttingMaterial(models.Model):
 
     product_id = fields.Many2one('product.product', string="Product")
     livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaughter', copy=False)
+    # the warehouse the animal is cut in (of its slaughter record, or chosen on a Livestock Cutting)
+    warehouse_id = fields.Many2one('stock.warehouse', string='Warehouse', copy=False)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
     name = fields.Char(related='product_id.name', string="Product Name")
@@ -134,16 +136,23 @@ class LivestockCuttingMaterial(models.Model):
         move._action_done()
         return move
 
+    def _livestock_warehouse(self):
+        """The warehouse the animal is cut in: its own, else its slaughter
+        record's, else its Branch / Site's."""
+        self.ensure_one()
+        if self.warehouse_id:
+            return self.warehouse_id
+        if self.livestock_slaughter_id:
+            return self.livestock_slaughter_id._livestock_warehouse()
+        return self.env['stock.warehouse']._warehouse_for(branch=self.node_id)
+
     def _cutting_location(self):
-        location = self.env['stock.location'].search([('name', 'ilike', 'Livestock Cutting')], limit=1)
-        if not location:
-            raise ValidationError("No such location as (Livestock Cutting) found!")
-        return location
+        return self._livestock_warehouse()._livestock_location('cutting')
 
     def action_update_inventory(self):
         """The materials of the cutting enter the Cutting location (once)."""
-        cutting_loc = self._cutting_location()
         for record in self:
+            cutting_loc = record._cutting_location()
             if record.state != 'not_received':
                 raise ValidationError("Inventory can only be updated before the material is received.")
             if record.inventory_updated:
@@ -156,12 +165,11 @@ class LivestockCuttingMaterial(models.Model):
 
     def action_send_to_goat_and_meat(self):
         """The materials go from the Cutting location to Meat (meat products) or Goat (once)."""
-        cutting_loc = self._cutting_location()
-        goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
-        meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
-        if not goat_loc or not meat_loc:
-            raise ValidationError("Cutting, Goat, or Meat location not properly set!")
         for record in self:
+            warehouse = record._livestock_warehouse()
+            cutting_loc = warehouse._livestock_location('cutting')
+            goat_loc = warehouse._livestock_location('goat')
+            meat_loc = warehouse._livestock_location('meat')
             if record.state != 'not_received':
                 raise ValidationError("Materials can only be sent before the material is received.")
             if not record.inventory_updated:

@@ -79,6 +79,8 @@
                 <field name="report_html" nolabel="1"/>
                 <footer>
                     <button name="action_fill" type="object" string="Fill from current set-up" class="btn-primary"/>
+                    <button name="action_update_documents" type="object" string="Update documents"
+                            confirm="Every program document takes its Branch / Site again from its POS, location, warehouse or creator. Continue?"/>
                     <button name="action_refresh" type="object" string="Refresh"/>
                     <button string="Close" special="cancel" class="btn-secondary"/>
                 </footer>

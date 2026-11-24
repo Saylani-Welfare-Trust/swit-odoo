@@ -1,6 +1,6 @@
 {
     'name': 'Dashboard',
-    'version': '17.0.1.0.6',
+    'version': '17.0.1.0.7',
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
     'website': 'https://bytesnode.com/',
@@ -9,8 +9,7 @@
                 'bn_donation_box','bn_profile_management','hr',
                 'bn_direct_deposit', 'account_analytic_parent',
                 # models the dashboards extend or read
-                'bn_donation_in_kind', 'bn_rider_shift', 'bn_journal_transfer', 'bn_import_donation','bn_livestock_slaugther',
-                'bn_shariah_law'],
+                'bn_donation_in_kind', 'bn_rider_shift', 'bn_journal_transfer', 'bn_import_donation', 'bn_livestock_slaugther', 'bn_shariah_law'],
     'data': [
         'security/dashboard_security.xml',
         'security/ir.model.access.csv', 'security/analytic_scope_rule.xml',
@@ -34,6 +33,7 @@
         'views/livestock_dashboard_views.xml',
         'views/livestock_access_views.xml',
         'views/shariah_dashboard_views.xml',
+        'views/res_users_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

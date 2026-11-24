@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="key_view_search_search_node" model="ir.ui.view">
+        <field name="name">key.view.search.node</field>
+        <field name="model">key</field>
+        <field name="inherit_id" ref="bn_key_management.key_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">key.view.tree.node</field>
+        <field name="model">key</field>
+        <field name="inherit_id" ref="bn_key_management.key_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_view_form_form_node" model="ir.ui.view">
+        <field name="name">key.view.form.node</field>
+        <field name="model">key</field>
+        <field name="inherit_id" ref="bn_key_management.key_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='key_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_bunch_view_search_search_node" model="ir.ui.view">
+        <field name="name">key.bunch.view.search.node</field>
+        <field name="model">key.bunch</field>
+        <field name="inherit_id" ref="bn_key_management.key_bunch_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_bunch_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">key.bunch.view.tree.node</field>
+        <field name="model">key.bunch</field>
+        <field name="inherit_id" ref="bn_key_management.key_bunch_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_bunch_view_form_form_node" model="ir.ui.view">
+        <field name="name">key.bunch.view.form.node</field>
+        <field name="model">key.bunch</field>
+        <field name="inherit_id" ref="bn_key_management.key_bunch_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='key_bunch_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_issuance_view_search_search_node" model="ir.ui.view">
+        <field name="name">key.issuance.view.search.node</field>
+        <field name="model">key.issuance</field>
+        <field name="inherit_id" ref="bn_key_management.key_issuance_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_issuance_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">key.issuance.view.tree.node</field>
+        <field name="model">key.issuance</field>
+        <field name="inherit_id" ref="bn_key_management.key_issuance_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="key_issuance_view_form_form_node" model="ir.ui.view">
+        <field name="name">key.issuance.view.form.node</field>
+        <field name="model">key.issuance</field>
+        <field name="inherit_id" ref="bn_key_management.key_issuance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='key_inssuance_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

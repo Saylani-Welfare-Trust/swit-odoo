@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_microfinance_search_node" model="ir.ui.view">
+        <field name="name">microfinance.search.node</field>
+        <field name="model">microfinance</field>
+        <field name="inherit_id" ref="bn_microfinance.search_microfinance"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="microfinance_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">microfinance.view.tree.node</field>
+        <field name="model">microfinance</field>
+        <field name="inherit_id" ref="bn_microfinance.microfinance_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="microfinance_view_form_form_node" model="ir.ui.view">
+        <field name="name">microfinance.view.form.node</field>
+        <field name="model">microfinance</field>
+        <field name="inherit_id" ref="bn_microfinance.microfinance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='microfinance_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_microfinance_installment_search_node" model="ir.ui.view">
+        <field name="name">microfinance.installment.search.node</field>
+        <field name="model">microfinance.installment</field>
+        <field name="inherit_id" ref="bn_microfinance.search_microfinance_installment"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="microfinance_installment_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">microfinance.installment.view.tree.node</field>
+        <field name="model">microfinance.installment</field>
+        <field name="inherit_id" ref="bn_microfinance.microfinance_installment_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_microfinance_installment_form_node" model="ir.ui.view">
+        <field name="name">microfinance.installment.form.node</field>
+        <field name="model">microfinance.installment</field>
+        <field name="inherit_id" ref="bn_microfinance.chatter_form_microfinance_installment"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

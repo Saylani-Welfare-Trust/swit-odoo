@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="rider_collection_view_search_search_node" model="ir.ui.view">
+        <field name="name">rider.collection.view.search.node</field>
+        <field name="model">rider.collection</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_collection_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="rider_collection_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">rider.collection.view.tree.node</field>
+        <field name="model">rider.collection</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_collection_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="rider_collection_view_form_form_node" model="ir.ui.view">
+        <field name="name">rider.ollection.view.form.node</field>
+        <field name="model">rider.collection</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_collection_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='rider_collection_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="rider_shift_view_search_search_node" model="ir.ui.view">
+        <field name="name">rider.shift.view.search.node</field>
+        <field name="model">rider.shift</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_shift_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="rider_shift_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">rider.shift.view.tree.node</field>
+        <field name="model">rider.shift</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_shift_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="rider_shift_view_form_form_node" model="ir.ui.view">
+        <field name="name">rider.shift.view.form.node</field>
+        <field name="model">rider.shift</field>
+        <field name="inherit_id" ref="bn_rider_shift.rider_shift_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='rider_shift_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

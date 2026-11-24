@@ -4,6 +4,7 @@ from collections import Counter
 from markupsafe import Markup, escape
 
 from odoo import _, api, fields, models
+from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
 
@@ -133,6 +134,7 @@ class NodeSetup(models.AbstractModel):
             'no_default': [],
             'pos': [],
             'users': [],
+            'documents': [],
         }
         for warehouse in warehouses.filtered('node_id'):
             locations = self.env['stock.location'].sudo().search([
@@ -146,6 +148,12 @@ class NodeSetup(models.AbstractModel):
             for config in self.env['pos.config'].sudo().search([]):
                 if config.analytic_account_id and config.node_id and config.analytic_account_id != config.node_id:
                     data['pos'].append(config)
+        Mixin = self.env['node.document.mixin']
+        for name in Mixin._node_document_models():
+            Model = self.env[name].sudo().with_context(active_test=False)
+            missing = Model.search_count([('node_id', '=', False)])
+            if missing:
+                data['documents'].append((Model._description or name, missing))
         for user in self.env['res.users'].sudo().search([('share', '=', False)]):
             if user.has_group('base.group_system'):
                 continue
@@ -196,6 +204,11 @@ class NodeSetup(models.AbstractModel):
                         [[u.display_name, _('All (Pakistan)') if u.all_nodes else names(u.allowed_node_ids),
                           names(gain), names(lose) if (lose or not u.node_warehouse_ids) else Markup('&mdash;')]
                          for u, gain, lose in data['users']])
+        html += section(_('Documents without a Branch / Site'),
+                        _('Their POS, location, warehouse and creator give none. Correct the set-up above, '
+                          'then press "Update documents".'),
+                        [_('Document'), _('Count')],
+                        [[label, count] for label, count in data['documents']])
         return html + Markup('</div>')
 
 
@@ -218,6 +231,17 @@ class NodeSetupWizard(models.TransientModel):
         wizard.report_html = Markup('<div class="alert alert-info">%s</div>') % _(
             "Filled: %(w)s warehouses, %(u)s users, %(n)s national users.",
             w=stats['warehouses'], u=stats['users'], n=stats['national']) + wizard.report_html
+        return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': wizard.id,
+                'view_mode': 'form', 'target': 'new', 'name': _('Branch / Site Set-up Check')}
+
+    def action_update_documents(self):
+        """After a correction of the set-up: every document takes its Branch / Site again."""
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError(_('Only an administrator can update the Branch / Site of the documents.'))
+        counts = self.env['node.document.mixin'].sudo()._update_documents()
+        wizard = self.create({})
+        wizard.report_html = Markup('<div class="alert alert-info">%s</div>') % _(
+            "Branch / Site updated on %(count)s documents.", count=sum(counts.values())) + wizard.report_html
         return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': wizard.id,
                 'view_mode': 'form', 'target': 'new', 'name': _('Branch / Site Set-up Check')}
 

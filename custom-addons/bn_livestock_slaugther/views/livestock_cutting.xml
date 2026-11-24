@@ -41,6 +41,8 @@
                         </group>
                         <group name="livestock_cutting_col_2">
                             <field name="code" />
+                            <field name="warehouse_id" options="{'no_create': True}" readonly="is_picking" required="not is_picking"/>
+                            <field name="node_id"/>
                         </group>
                     </group>
                 </sheet>

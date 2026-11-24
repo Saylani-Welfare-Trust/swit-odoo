@@ -18,3 +18,4 @@ from . import api_qurbani_item
 from . import res_company
 from . import program_types
 from . import account_move
+from . import node

@@ -38,9 +38,6 @@ class LivestockSlaughter(models.Model):
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
     truck_number = fields.Char('Truck Number', copy=False, readonly=True)
-    # Order Transfer (Draft lines): the animal is brought from this location into the POS location
-    order_transfer_location_id = fields.Many2one('stock.location', string='Order Transfer Location', copy=False, readonly=True)
-    order_transfer_picking_id = fields.Many2one('stock.picking', string='Order Transfer', copy=False, readonly=True)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
@@ -122,28 +119,46 @@ class LivestockSlaughter(models.Model):
         config = record.pos_order_id.config_id or record.pos_session_id.config_id or record.pos_config_id
         return config.picking_type_id.default_location_src_id.with_env(self.env)
 
-    def _check_transfer_ready(self, bulk):
-        """Order Transfer: Draft lines not order transferred yet.
-        Bulk Transfer: Slaughtered lines not bulk transferred yet."""
+    def _livestock_warehouse(self):
+        """The warehouse the animal is handled in: of the POS it was sold at,
+        else of its Branch / Site (else the user's)."""
+        self.ensure_one()
+        return self.env['stock.warehouse']._warehouse_for(
+            self._pos_source_location() or self.sudo().source_location_id or None, branch=self.node_id)
+
+    def _department_location(self):
+        """The location a slaughtered animal goes to: its department's
+        (Meat, Goat, Chicken) else Slaughter Stock, of its own warehouse."""
+        self.ensure_one()
+        kind = ('meat' if self.is_meat_depart else 'goat' if self.is_goat_depart
+                else 'chicken' if self.is_chicken_depart else 'slaughter')
+        return self._livestock_warehouse()._livestock_location(kind)
+
+    def _slaughtered_location(self):
+        """Where the animal is now: the destination of its Slaughtered transfer
+        (records slaughtered before the per-warehouse locations included),
+        else its department location."""
+        self.ensure_one()
+        picking = self.env['stock.picking'].sudo().search([
+            ('source_record_ref', '=', '%s,%s' % (self._name, self.id)), ('state', '=', 'done'),
+            ('location_dest_id.usage', 'in', ('internal', 'transit'))], order='id', limit=1)
+        return picking.location_dest_id.sudo(False) or self._department_location()
+
+    def _check_order_transfer(self):
+        """Only slaughtered lines that are not transferred yet can be transferred."""
         if not self:
             raise ValidationError(_("Please select the records to transfer."))
-        state_labels = dict(self._fields['state']._description_selection(self.env))
-        not_ready = []
-        for rec in self:
-            if bulk and rec.transfer_bool:
-                reason = _('already bulk transferred')
-            elif not bulk and rec.order_transfer_picking_id:
-                reason = _('already order transferred')
-            elif rec.state != ('slaughtered' if bulk else 'not_received'):
-                reason = state_labels.get(rec.state, rec.state)
-            else:
-                continue
-            not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
-        if not_ready:
-            message = (_("Bulk Transfer is only for Slaughtered lines that are not bulk transferred yet.") if bulk
-                       else _("Order Transfer is only for Draft lines that are not order transferred yet."))
+        transferred = self.filtered('transfer_bool')
+        if transferred:
             raise ValidationError(
-                _("%s Remove these lines from your selection:\n%s") % (message, "\n".join(not_ready))
+                _("These records are already transferred:\n%s")
+                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
+            )
+        not_slaughtered = self.filtered(lambda r: r.state != 'slaughtered')
+        if not_slaughtered:
+            raise ValidationError(
+                _("Only slaughtered records can be transferred:\n%s")
+                % "\n".join(not_slaughtered.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
             )
 
     def action_confirm(self):
@@ -154,26 +169,11 @@ class LivestockSlaughter(models.Model):
         
         if self.state != 'not_received':
             return
-        # Retrieve the 'Slaughter Stock' location
-        location = None
-
-        if self.is_meat_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
-        elif self.is_goat_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Goat')], limit=1)
-        elif self.is_chicken_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Chicken')], limit=1)
-        else:
-            location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
-        
-        if not location:
-            raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
-
-        # Retrieve the internal transfer operation type of the POS warehouse
+        # the department location of the animal's own warehouse
+        location = self._department_location()
         source_location = self._pos_source_location()
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock', source_location)
-        if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        picking_type = self.env['stock.warehouse']._get_program_type(
+            'livestock', source_location, branch=self.node_id)
         source_location = source_location or picking_type.default_location_src_id
 
         # Retrieve the product based on the product code
@@ -218,18 +218,16 @@ class LivestockSlaughter(models.Model):
         self.ensure_one()
         if self.state != 'slaughtered':
             raise ValidationError("Cutting can only be started after the animal is slaughtered.")
+        if self.transfer_bool:
+            raise ValidationError(_("%s was sent away by Order Transfer: it cannot be cut here.") % self.name)
         if not self.product_id:
             raise ValidationError("Please select a product before starting cutting.")
 
-        location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
-        if not location:
-            raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
-
-        source_location = self._pos_source_location()
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock', source_location)
-        if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
-        source_location = source_location or picking_type.default_location_src_id
+        # from where Slaughtered put the animal into the Cutting location of the same warehouse
+        source_location = self._slaughtered_location()
+        location = self._livestock_warehouse()._livestock_location('cutting')
+        picking_type = self.env['stock.warehouse']._get_program_type(
+            'livestock', source_location, branch=self.node_id)
 
         product = self.product_id
 
@@ -270,6 +268,7 @@ class LivestockSlaughter(models.Model):
                 'state': 'received',
                 'start_time': self.start_time,
                 'livestock_slaughter_id': self.id,
+                'warehouse_id': self._livestock_warehouse().id,
             })
             self.cutting_material_id = cutting_record.id
         else:
@@ -303,6 +302,7 @@ class LivestockSlaughter(models.Model):
                 'code': self.code,
                 'state': 'not_received',
                 'livestock_slaughter_id': self.id,
+                'warehouse_id': self._livestock_warehouse().id,
             })
             self.material_request_id = material_request.id
         bom = material_request._get_product_bom()
@@ -355,10 +355,10 @@ class LivestockSlaughter(models.Model):
 
     
     def action_open_wizard(self):
-        """Form: Order Transfer of this Draft line"""
+        """Open a transient wizard to choose destination location"""
         
         self.ensure_one()
-        self._check_transfer_ready(bulk=False)
+        self._check_order_transfer()
 
         return {
             'name': _('Order Transfer'),
@@ -369,27 +369,12 @@ class LivestockSlaughter(models.Model):
             'context': {'default_livestock_slaughter_id': self.id},
         }
 
-    def action_open_order_transfer(self):
-        """List header: bring the selected Draft lines into their POS location (Send)"""
-        self._check_transfer_ready(bulk=False)
-        if len(self) == 1:
-            return self.action_open_wizard()
+    def action_open_bulk_transfer(self):
+        """Open the transfer wizard for all selected records at once"""
+        self._check_order_transfer()
 
         return {
             'name': _('Order Transfer'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'livestock.slaugther.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_livestock_slaughter_ids': [(6, 0, self.ids)]},
-        }
-
-    def action_open_bulk_transfer(self):
-        """List header: send the selected Slaughtered lines out of their POS location and print the slip"""
-        self._check_transfer_ready(bulk=True)
-
-        return {
-            'name': _('Bulk Transfer'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther.wizard',
             'view_mode': 'form',

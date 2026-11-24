@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="material_request_view_search_search_node" model="ir.ui.view">
+        <field name="name">material.request.view.search.node</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="bn_material_request.material_request_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="material_request_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">material.request.view.tree.node</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="bn_material_request.material_request_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="material_request_view_form_form_node" model="ir.ui.view">
+        <field name="name">material.request.view.form.node</field>
+        <field name="model">material.request</field>
+        <field name="inherit_id" ref="bn_material_request.material_request_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='request_info']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

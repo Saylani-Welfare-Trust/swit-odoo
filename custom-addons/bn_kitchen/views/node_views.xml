@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_branch_kitchen_request_search_node" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.search.node</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="inherit_id" ref="bn_kitchen.search_branch_kitchen_request"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="branch_kitchen_request_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.view.tree.node</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="inherit_id" ref="bn_kitchen.branch_kitchen_request_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="branch_kitchen_request_view_form_form_node" model="ir.ui.view">
+        <field name="name">branch.kitchen.request.view.form.node</field>
+        <field name="model">branch.kitchen.request</field>
+        <field name="inherit_id" ref="bn_kitchen.branch_kitchen_request_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='branch_kitchen_request_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

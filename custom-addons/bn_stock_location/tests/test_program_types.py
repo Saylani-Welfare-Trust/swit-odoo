@@ -18,6 +18,9 @@ class TestProgramTypes(TransactionCase):
         cls.branch_b = Account.create({'name': 'Prog Branch B', 'plan_id': plan.id, 'parent_id': cls.city.id})
         cls.branch_c = Account.create({'name': 'Prog Branch C', 'plan_id': plan.id, 'parent_id': cls.city.id})
         Warehouse = env['stock.warehouse']
+        # these tests cover the set-up before the Branch / Site switch (location tags):
+        # no warehouse has its Branch / Site yet, whatever the database holds
+        Warehouse.with_context(active_test=False).search([]).write({'node_id': False})
         cls.wh_a = Warehouse.create({'name': 'Prog WH A', 'code': 'PWA'})
         cls.wh_b = Warehouse.create({'name': 'Prog WH B', 'code': 'PWB'})
         cls.wh_a.view_location_id.analytic_account_id = cls.branch_a

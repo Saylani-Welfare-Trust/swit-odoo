@@ -1,0 +1,141 @@
+from odoo.exceptions import ValidationError
+from odoo.tests import TransactionCase, tagged
+
+
+@tagged('post_install', '-at_install')
+class TestLivestockNodes(TransactionCase):
+    """Documents carry their Branch / Site; livestock uses the locations of its
+    own warehouse, never the first location of a name."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        env = cls.env
+        Plan = env['account.analytic.plan']
+        cls.plan = Plan.search([('name', '=', 'Location')], limit=1) or Plan.create({'name': 'Location'})
+        cls.segment_plan = Plan.create({'name': 'LN Segment'})
+        Account = env['account.analytic.account']
+        cls.karachi = Account.create({'name': 'LN Karachi', 'plan_id': cls.plan.id})
+        cls.gulshan = Account.create({'name': 'LN Gulshan', 'plan_id': cls.plan.id, 'parent_id': cls.karachi.id})
+        cls.lahore = Account.create({'name': 'LN Lahore', 'plan_id': cls.plan.id})
+        cls.segment = Account.create({'name': 'LN Livestock Segment', 'plan_id': cls.segment_plan.id})
+        Warehouse = env['stock.warehouse']
+        cls.wh_karachi = Warehouse.create({'name': 'LN WH Karachi', 'code': 'LNK', 'node_id': cls.gulshan.id})
+        cls.wh_lahore = Warehouse.create({'name': 'LN WH Lahore', 'code': 'LNL', 'node_id': cls.lahore.id})
+        cls.product = env['product.product'].create({'name': 'LN Goat', 'type': 'product'})
+        cls.manager = env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'ln manager', 'login': 'ln_manager',
+            'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('stock.group_stock_manager').id,
+                                  env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group').id,
+                                  env.ref('bn_livestock_slaugther.livestock_slaugther_admin_group').id,
+                                  env.ref('bn_stock_location.stock_scope_unrestricted_group').id])]})
+        env['hr.employee'].create({'name': 'ln manager', 'user_id': cls.manager.id,
+                                   'analytic_account_id': cls.lahore.id})
+
+    # ------------------------------------------------------------------
+    # Branch / Site of a document
+    # ------------------------------------------------------------------
+    def test_node_from_location(self):
+        requisition = self.env['livestock.requisition'].create({
+            'destination_location_id': self.wh_karachi.lot_stock_id.id,
+            'source_location_id': self.wh_lahore.lot_stock_id.id,
+        })
+        self.assertEqual(requisition.node_id, self.gulshan, "the destination's warehouse comes first")
+        requisition.destination_location_id = False
+        self.assertEqual(requisition.node_id, self.lahore, "then the source's")
+
+    def test_node_of_location_outside_warehouses(self):
+        parent = self.env['stock.location'].create({'name': 'LN Qurbani City', 'usage': 'view',
+                                                    'analytic_account_id': self.karachi.id})
+        child = self.env['stock.location'].create({'name': 'LN Slaughter Point', 'usage': 'internal',
+                                                   'location_id': parent.id})
+        meat = self.env['livestock.meat.management'].create({'location_id': child.id})
+        self.assertEqual(meat.node_id, self.karachi, "no warehouse: the closest tag up the locations")
+
+    def test_segment_is_never_a_node(self):
+        Mixin = self.env['node.document.mixin']
+        self.assertFalse(Mixin._node_of(self.segment))
+        self.assertEqual(Mixin._node_of(self.gulshan), self.gulshan)
+
+    def test_node_from_creator(self):
+        cutting = self.env['livestock.cutting'].with_user(self.manager).create({'product_id': self.product.id})
+        self.assertEqual(cutting.warehouse_id, self.wh_lahore, "the user's Branch / Site warehouse")
+        self.assertEqual(cutting.node_id, self.lahore)
+        center = self.env['distribution.center'].with_user(self.manager).create({})
+        self.assertEqual(center.node_id, self.lahore, "no source: the creator's Branch / Site")
+
+    def test_update_documents(self):
+        requisition = self.env['livestock.requisition'].create({
+            'destination_location_id': self.wh_karachi.lot_stock_id.id})
+        self.assertEqual(requisition.node_id, self.gulshan)
+        self.wh_karachi.node_id = self.karachi  # a correction of the set-up
+        self.assertEqual(requisition.node_id, self.gulshan, "kept as it was made")
+        counts = self.env['node.document.mixin']._update_documents(['livestock.requisition'])
+        self.assertTrue(counts['livestock.requisition'])
+        requisition.invalidate_recordset()
+        self.assertEqual(requisition.node_id, self.karachi)
+
+    def test_all_documents_have_their_sources(self):
+        Mixin = self.env['node.document.mixin']
+        models = Mixin._node_document_models()
+        self.assertIn('livestock.slaugther', models)
+        self.assertIn('welfare.line', models)
+        for name in models:
+            Model = self.env[name]
+            self.assertIn('node_id', Model._fields)
+            for path in Model._node_sources():
+                self.assertIn(path.split('.')[0], Model._fields, "%s: unknown source %s" % (name, path))
+
+    # ------------------------------------------------------------------
+    # Livestock locations per warehouse
+    # ------------------------------------------------------------------
+    def test_livestock_locations_per_warehouse(self):
+        karachi_meat = self.wh_karachi._livestock_location('meat')
+        lahore_meat = self.wh_lahore._livestock_location('meat')
+        self.assertNotEqual(karachi_meat, lahore_meat)
+        self.assertEqual(karachi_meat.warehouse_id, self.wh_karachi)
+        self.assertEqual(self.wh_karachi.livestock_meat_location_id, karachi_meat, "kept on the warehouse")
+        self.assertEqual(self.wh_karachi._livestock_location('meat'), karachi_meat, "made once")
+        # an existing location of that name in the warehouse is used
+        cutting = self.env['stock.location'].create({'name': 'livestock cutting', 'usage': 'internal',
+                                                     'location_id': self.wh_lahore.view_location_id.id})
+        self.assertEqual(self.wh_lahore._livestock_location('cutting'), cutting)
+        with self.assertRaises(ValidationError):
+            self.wh_karachi.livestock_goat_location_id = lahore_meat  # another warehouse's location
+
+    def test_slaughter_flow_stays_in_its_warehouse(self):
+        record = self.env['livestock.slaugther'].create({
+            'product_id': self.product.id, 'quantity': 1, 'is_goat_depart': True,
+            'source_location_id': self.wh_karachi.lot_stock_id.id,
+        })
+        self.assertEqual(record._livestock_warehouse(), self.wh_karachi)
+        record.with_user(self.manager).action_confirm()
+        goat = self.wh_karachi.livestock_goat_location_id
+        self.assertTrue(goat, "the Goat department of the animal's warehouse")
+        self.assertEqual(record._slaughtered_location(), goat)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, goat), 1)
+
+        record.with_user(self.manager).action_cutting()
+        cutting = self.wh_karachi.livestock_cutting_location_id
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, goat), 0,
+                         "cutting takes the animal from where Slaughtered put it")
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, cutting), 1)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.wh_karachi.lot_stock_id, allow_negative=True), -1,
+                         "only the Slaughtered transfer left the source location")
+        self.assertEqual(record.cutting_material_id.warehouse_id, self.wh_karachi)
+        self.assertFalse(self.wh_lahore.livestock_cutting_location_id, "Lahore is untouched")
+
+    def test_no_cutting_after_order_transfer(self):
+        record = self.env['livestock.slaugther'].create({
+            'product_id': self.product.id, 'quantity': 1,
+            'source_location_id': self.wh_karachi.lot_stock_id.id,
+        })
+        record.with_user(self.manager).action_confirm()
+        wizard = self.env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_id': record.id, 'dest_location_id': self.wh_lahore.lot_stock_id.id,
+            'truck_number': 'LN-1'})
+        wizard.with_user(self.manager).action_do_transfer()
+        self.assertEqual(record.transfer_picking_id.location_id, self.wh_karachi.livestock_slaughter_location_id,
+                         "sent from where Slaughtered put it")
+        with self.assertRaises(ValidationError):
+            record.with_user(self.manager).action_cutting()

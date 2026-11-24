@@ -1,6 +1,6 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '17.0.1.9.0',
+    'version': '17.0.1.8.1',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -33,6 +33,7 @@
         'views/package_type.xml',
         'views/meat_management.xml',
         'views/distribution_center.xml',
+        'views/stock_warehouse.xml',
         
         'wizards/livestock_slaugther.xml',
         'data/program_types.xml',
@@ -40,7 +41,13 @@
         'views/pos_link_views.xml',
         'views/search_views.xml',
         'views/search_filters.xml',
+        'views/node_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'bn_livestock_slaugther/static/src/js/livestock_slaughter_list.js',
+        ],
+    },
     'auto_install': False,
     'application': True,
 }

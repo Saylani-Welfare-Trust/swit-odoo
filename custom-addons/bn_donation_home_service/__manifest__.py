@@ -1,6 +1,6 @@
 {
     'name': 'Donation Home Service',
-    'version': '17.0.1.3.5',
+    'version': '17.0.1.3.6',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -28,6 +28,7 @@
         'views/pos_link_views.xml',
         'views/search_views.xml',
         'views/search_filters.xml',
+        'views/node_views.xml',
     ],
     'auto_install': False,
     'application': False,

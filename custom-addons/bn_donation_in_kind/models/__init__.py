@@ -7,3 +7,4 @@ from . import product_template
 from . import product_product
 from . import pos_session
 from . import program_types
+from . import node

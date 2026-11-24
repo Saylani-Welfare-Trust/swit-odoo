@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="pos_cheque_view_search_search_node" model="ir.ui.view">
+        <field name="name">pos.cheque.view.search.node</field>
+        <field name="model">pos.cheque</field>
+        <field name="inherit_id" ref="bn_pos_cheque.pos_cheque_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="pos_cheque_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">pos.cheque.view.tree.node</field>
+        <field name="model">pos.cheque</field>
+        <field name="inherit_id" ref="bn_pos_cheque.pos_cheque_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_pos_cheque_form_node" model="ir.ui.view">
+        <field name="name">pos.cheque.form.node</field>
+        <field name="model">pos.cheque</field>
+        <field name="inherit_id" ref="bn_pos_cheque.chatter_form_pos_cheque"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

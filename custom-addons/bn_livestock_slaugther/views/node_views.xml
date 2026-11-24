@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_distribution_center_search_node" model="ir.ui.view">
+        <field name="name">distribution.center.search.node</field>
+        <field name="model">distribution.center</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.search_distribution_center"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="distribution_center_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">distribution.center.view.tree.node</field>
+        <field name="model">distribution.center</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.distribution_center_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="distribution_center_view_form_form_node" model="ir.ui.view">
+        <field name="name">distribution.center.view.form.node</field>
+        <field name="model">distribution.center</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.distribution_center_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='distribution_center_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="livestock_cutting_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">livestock.cutting.view.tree.node</field>
+        <field name="model">livestock.cutting</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_cutting_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_livestock_cutting_material_search_node" model="ir.ui.view">
+        <field name="name">livestock.cutting.material.search.node</field>
+        <field name="model">livestock.cutting.material</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.search_livestock_cutting_material"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="livestock_cutting_material_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">livestock.cutting.material.view.tree.node</field>
+        <field name="model">livestock.cutting.material</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_cutting_material_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_livestock_requisition_search_node" model="ir.ui.view">
+        <field name="name">livestock.requisition.search.node</field>
+        <field name="model">livestock.requisition</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.search_livestock_requisition"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="livestock_requisition_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">livestock.requisition.view.tree.node</field>
+        <field name="model">livestock.requisition</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_requisition_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="livestock_requisition_view_form_form_node" model="ir.ui.view">
+        <field name="name">livestock.requisition.view.form.node</field>
+        <field name="model">livestock.requisition</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_requisition_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='livestock_requisition_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_livestock_slaugther_search_node" model="ir.ui.view">
+        <field name="name">livestock.slaugther.search.node</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.search_livestock_slaugther"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="livestock_slaugther_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">livestock.slaugther.view.tree.node</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_slaugther_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="livestock_slaugther_view_form_form_node" model="ir.ui.view">
+        <field name="name">livestock.slaugther.view.form.node</field>
+        <field name="model">livestock.slaugther</field>
+        <field name="inherit_id" ref="bn_livestock_slaugther.livestock_slaugther_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='livestock_slaugther_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

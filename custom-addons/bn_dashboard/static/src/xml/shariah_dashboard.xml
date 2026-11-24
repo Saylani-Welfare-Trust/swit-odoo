@@ -128,7 +128,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr t-foreach="state.data.segments" t-as="seg" t-key="seg.name">
+                                        <tr t-foreach="state.data.segments" t-as="seg" t-key="seg.id">
                                             <td class="fw-bold"><t t-esc="seg.name"/></td>
                                             <td class="text-end text-success">Rs <t t-esc="formatCurrency(seg.inflow)"/></td>
                                             <td class="text-end text-danger">Rs <t t-esc="formatCurrency(seg.outflow)"/></td>
