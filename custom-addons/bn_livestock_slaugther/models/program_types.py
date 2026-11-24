@@ -26,7 +26,6 @@ class StockWarehouse(models.Model):
 # the livestock locations of a warehouse: field, name of a new one, names an
 # existing location of the warehouse may already have
 LIVESTOCK_LOCATIONS = {
-    'slaughter': ('livestock_slaughter_location_id', 'Slaughter Stock', ('Slaughter Stock', 'Livestock Slaugther')),
     'meat': ('livestock_meat_location_id', 'Meat', ('Meat',)),
     'goat': ('livestock_goat_location_id', 'Goat', ('Goat',)),
     'chicken': ('livestock_chicken_location_id', 'Chicken', ('Chicken',)),
@@ -35,13 +34,12 @@ LIVESTOCK_LOCATIONS = {
 
 
 class StockWarehouseLivestock(models.Model):
-    """Each warehouse has its own livestock locations: an animal of one Branch /
-    Site never goes into another city's location."""
+    """Each warehouse has its own department and cutting locations: an animal of
+    one Branch / Site never goes into another city's location. Slaughter
+    locations are the locations marked "Is Slaughter Location" (there can be
+    several): each animal names its own."""
     _inherit = 'stock.warehouse'
 
-    livestock_slaughter_location_id = fields.Many2one(
-        'stock.location', string='Slaughter Stock', check_company=True,
-        help="Where a slaughtered animal (no department) goes.")
     livestock_meat_location_id = fields.Many2one(
         'stock.location', string='Meat Department', check_company=True,
         help="Where a slaughtered animal of the Meat department goes, and the meat products after cutting.")
@@ -88,3 +86,15 @@ class StockWarehouseLivestock(models.Model):
                 })
             warehouse[field] = location
         return location.sudo(False)
+
+
+class StockLocationSlaughter(models.Model):
+    _inherit = 'stock.location'
+
+    @api.model
+    def _slaughter_locations(self, warehouse=None):
+        """The slaughter locations (marked "Is Slaughter Location"), of ``warehouse`` when given."""
+        domain = [('is_slaughter_location', '=', True), ('usage', 'in', ('internal', 'transit'))]
+        if warehouse:
+            domain.append(('id', 'child_of', warehouse.view_location_id.id))
+        return self.search(domain)

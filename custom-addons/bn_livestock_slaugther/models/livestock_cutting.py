@@ -28,10 +28,18 @@ class LivestockCutting(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
     is_picking = fields.Boolean('Is Picking')
-    # the warehouse the animal is cut in: its Slaughter Stock and Cutting locations
+    # the animal moves from its slaughter location to the Livestock Cutting location of the warehouse
+    slaughter_location_id = fields.Many2one(
+        'stock.location', string='Slaughter Location', domain="[('is_slaughter_location', '=', True)]",
+        help="Where the animal was slaughtered (a location marked Is Slaughter Location).")
     warehouse_id = fields.Many2one(
         'stock.warehouse', string='Warehouse', default=lambda self: self._default_warehouse(),
-        help="The animal moves from this warehouse's Slaughter Stock to its Livestock Cutting location.")
+        help="The animal is cut in this warehouse's Livestock Cutting location.")
+
+    @api.onchange('slaughter_location_id')
+    def _onchange_slaughter_location_id(self):
+        if self.slaughter_location_id.warehouse_id:
+            self.warehouse_id = self.slaughter_location_id.warehouse_id
 
     @api.model
     def _default_warehouse(self):
@@ -61,6 +69,8 @@ class LivestockCutting(models.Model):
         # once: a second run would create a second cutting material and transfer
         if self.is_picking:
             raise ValidationError(_('The picking of %s is already validated.') % self.name)
+        if not self.slaughter_location_id:
+            raise ValidationError(_('Please choose the slaughter location of %s.') % self.name)
         if not self.warehouse_id:
             raise ValidationError(_('Please choose the warehouse of %s.') % self.name)
         product_pro = self.product_id
@@ -74,8 +84,8 @@ class LivestockCutting(models.Model):
             'warehouse_id': warehouse.id,
         })
 
-        # within the warehouse: from its Slaughter Stock into its Livestock Cutting location
-        slaughter_location = warehouse._livestock_location('slaughter')
+        # from the slaughter location into the warehouse's Livestock Cutting location
+        slaughter_location = self.slaughter_location_id
         cutting_location = warehouse._livestock_location('cutting')
         picking_type = warehouse._program_type('livestock')
 

@@ -23,6 +23,13 @@ class TestLivestockNodes(TransactionCase):
         cls.wh_karachi = Warehouse.create({'name': 'LN WH Karachi', 'code': 'LNK', 'node_id': cls.gulshan.id})
         cls.wh_lahore = Warehouse.create({'name': 'LN WH Lahore', 'code': 'LNL', 'node_id': cls.lahore.id})
         cls.product = env['product.product'].create({'name': 'LN Goat', 'type': 'product'})
+        Location = env['stock.location']
+        cls.karachi_slaughter = Location.create({'name': 'LN Karachi Slaughter', 'usage': 'internal',
+                                                 'location_id': cls.wh_karachi.view_location_id.id,
+                                                 'is_slaughter_location': True})
+        cls.lahore_slaughter = Location.create({'name': 'LN Lahore Slaughter', 'usage': 'internal',
+                                                'location_id': cls.wh_lahore.view_location_id.id,
+                                                'is_slaughter_location': True})
         cls.manager = env['res.users'].with_context(no_reset_password=True).create({
             'name': 'ln manager', 'login': 'ln_manager',
             'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('stock.group_stock_manager').id,
@@ -58,9 +65,15 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(Mixin._node_of(self.gulshan), self.gulshan)
 
     def test_node_from_creator(self):
-        cutting = self.env['livestock.cutting'].with_user(self.manager).create({'product_id': self.product.id})
+        cutting = self.env['livestock.cutting'].with_user(self.manager).create({
+            'product_id': self.product.id, 'slaughter_location_id': self.lahore_slaughter.id})
         self.assertEqual(cutting.warehouse_id, self.wh_lahore, "the user's Branch / Site warehouse")
         self.assertEqual(cutting.node_id, self.lahore)
+        cutting.with_user(self.manager).action_validate_picking()
+        Quant = self.env['stock.quant']
+        self.assertEqual(Quant._get_available_quantity(self.product, self.wh_lahore.livestock_cutting_location_id), 1,
+                         "from its slaughter location into the warehouse's Cutting location")
+        self.assertEqual(Quant._get_available_quantity(self.product, self.lahore_slaughter, allow_negative=True), -1)
         center = self.env['distribution.center'].with_user(self.manager).create({})
         self.assertEqual(center.node_id, self.lahore, "no source: the creator's Branch / Site")
 
@@ -102,6 +115,24 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(self.wh_lahore._livestock_location('cutting'), cutting)
         with self.assertRaises(ValidationError):
             self.wh_karachi.livestock_goat_location_id = lahore_meat  # another warehouse's location
+
+    def test_slaughter_location(self):
+        record = self.env['livestock.slaugther'].create({
+            'product_id': self.product.id, 'quantity': 1, 'source_location_id': self.wh_karachi.lot_stock_id.id})
+        self.assertEqual(record.slaughter_location_id, self.karachi_slaughter, "the warehouse's only one")
+        # a second slaughter location: chosen by hand
+        second = self.env['stock.location'].create({'name': 'LN Karachi Slaughter 2', 'usage': 'internal',
+                                                    'location_id': self.wh_karachi.view_location_id.id,
+                                                    'is_slaughter_location': True})
+        other = self.env['livestock.slaugther'].create({
+            'product_id': self.product.id, 'quantity': 1, 'source_location_id': self.wh_karachi.lot_stock_id.id})
+        self.assertFalse(other.slaughter_location_id)
+        with self.assertRaises(ValidationError):
+            other.with_user(self.manager).action_confirm()
+        other.slaughter_location_id = second
+        other.with_user(self.manager).action_confirm()
+        self.assertEqual(other._slaughtered_location(), second)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, second), 1)
 
     def test_slaughter_flow_stays_in_its_warehouse(self):
         record = self.env['livestock.slaugther'].create({
@@ -150,9 +181,8 @@ class TestLivestockNodes(TransactionCase):
             'livestock_slaughter_ids': [(6, 0, record.ids)], 'is_bulk': True,
             'dest_location_id': self.wh_lahore.lot_stock_id.id, 'truck_number': 'LN-1',
         }).with_user(self.manager).action_do_transfer()
-        slaughter_stock = self.wh_karachi.livestock_slaughter_location_id
-        self.assertEqual(record.transfer_picking_id.location_id, slaughter_stock)
-        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, slaughter_stock), 0)
+        self.assertEqual(record.transfer_picking_id.location_id, self.karachi_slaughter)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.karachi_slaughter), 0)
         with self.assertRaises(ValidationError):
             record.with_user(self.manager).action_cutting()
 

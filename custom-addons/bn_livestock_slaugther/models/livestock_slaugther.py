@@ -35,6 +35,12 @@ class LivestockSlaughter(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
+    # where the animal is slaughtered: one of the locations marked "Is Slaughter Location"
+    slaughter_location_id = fields.Many2one(
+        'stock.location', string='Slaughter Location', copy=False,
+        domain="[('is_slaughter_location', '=', True)]",
+        help="Where the animal is slaughtered (a location marked Is Slaughter Location). "
+             "Filled when the animal's warehouse has a single slaughter location.")
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
     truck_number = fields.Char('Truck Number', copy=False, readonly=True)
@@ -111,7 +117,21 @@ class LivestockSlaughter(models.Model):
             location = record._pos_source_location()
             if location:
                 record.sudo().source_location_id = location.id
+        for record in records.filtered(lambda r: not r.slaughter_location_id):
+            slaughter = record._default_slaughter_location()
+            if slaughter:
+                record.sudo().slaughter_location_id = slaughter.id
         return records
+
+    def _default_slaughter_location(self):
+        """The only slaughter location of the animal's warehouse (several: chosen by hand)."""
+        self.ensure_one()
+        try:
+            warehouse = self._livestock_warehouse()
+        except Exception:
+            return self.env['stock.location']
+        locations = self.env['stock.location'].sudo()._slaughter_locations(warehouse)
+        return locations if len(locations) == 1 else self.env['stock.location']
 
     def _pos_source_location(self):
         """The stock location of the POS the order was created at (empty for
@@ -123,19 +143,26 @@ class LivestockSlaughter(models.Model):
         return config.picking_type_id.default_location_src_id.with_env(self.env)
 
     def _livestock_warehouse(self):
-        """The warehouse the animal is handled in: of the POS it was sold at,
-        else of its Branch / Site (else the user's)."""
+        """The warehouse the animal is handled in: of its slaughter location,
+        else of the POS it was sold at, else of its Branch / Site (else the user's)."""
         self.ensure_one()
+        record = self.sudo()
+        if record.slaughter_location_id.warehouse_id:
+            return record.slaughter_location_id.warehouse_id.sudo(False)
         return self.env['stock.warehouse']._warehouse_for(
-            self._pos_source_location() or self.sudo().source_location_id or None, branch=self.node_id)
+            self._pos_source_location() or record.source_location_id or None, branch=self.node_id)
 
     def _department_location(self):
-        """The location a slaughtered animal goes to: its department's
-        (Meat, Goat, Chicken) else Slaughter Stock, of its own warehouse."""
+        """The location a slaughtered animal goes to: its department's (Meat, Goat,
+        Chicken) in the slaughter location's warehouse, else its slaughter location."""
         self.ensure_one()
         kind = ('meat' if self.is_meat_depart else 'goat' if self.is_goat_depart
-                else 'chicken' if self.is_chicken_depart else 'slaughter')
-        return self._livestock_warehouse()._livestock_location(kind)
+                else 'chicken' if self.is_chicken_depart else None)
+        if kind:
+            return self._livestock_warehouse()._livestock_location(kind)
+        if not self.slaughter_location_id:
+            raise ValidationError(_("Choose the Slaughter Location of %s.") % self.name)
+        return self.slaughter_location_id
 
     def _slaughtered_location(self):
         """Where the animal is now: the destination of its Slaughtered transfer
