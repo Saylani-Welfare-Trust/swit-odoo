@@ -38,6 +38,9 @@ class LivestockSlaughter(models.Model):
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
     truck_number = fields.Char('Truck Number', copy=False, readonly=True)
+    # Order Transfer (Draft lines): the animal is brought from this location into the POS location
+    order_transfer_location_id = fields.Many2one('stock.location', string='Order Transfer Location', copy=False, readonly=True)
+    order_transfer_picking_id = fields.Many2one('stock.picking', string='Order Transfer', copy=False, readonly=True)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
@@ -139,26 +142,44 @@ class LivestockSlaughter(models.Model):
         (records slaughtered before the per-warehouse locations included),
         else its department location."""
         self.ensure_one()
+        # (its Order Transfer, made before, and Bulk Transfer, made after, are not that transfer)
         picking = self.env['stock.picking'].sudo().search([
             ('source_record_ref', '=', '%s,%s' % (self._name, self.id)), ('state', '=', 'done'),
+            ('id', 'not in', (self.order_transfer_picking_id | self.transfer_picking_id).ids),
             ('location_dest_id.usage', 'in', ('internal', 'transit'))], order='id', limit=1)
         return picking.location_dest_id.sudo(False) or self._department_location()
 
-    def _check_order_transfer(self):
-        """Only slaughtered lines that are not transferred yet can be transferred."""
+    def _slaughter_source_location(self):
+        """Where the animal waits for slaughter, and where Order Transfer brings it:
+        the location of the POS it was sold at, else the livestock operation
+        type's source location in its own warehouse."""
+        self.ensure_one()
+        return self._pos_source_location() or self.env['stock.warehouse']._get_program_type(
+            'livestock', branch=self.node_id, location=self._livestock_warehouse().lot_stock_id
+        ).default_location_src_id
+
+    def _check_transfer_ready(self, bulk):
+        """Order Transfer: Draft lines not order transferred yet.
+        Bulk Transfer: Slaughtered lines not bulk transferred yet."""
         if not self:
             raise ValidationError(_("Please select the records to transfer."))
-        transferred = self.filtered('transfer_bool')
-        if transferred:
+        state_labels = dict(self._fields['state']._description_selection(self.env))
+        not_ready = []
+        for rec in self:
+            if bulk and rec.transfer_bool:
+                reason = _('already bulk transferred')
+            elif not bulk and rec.order_transfer_picking_id:
+                reason = _('already order transferred')
+            elif rec.state != ('slaughtered' if bulk else 'not_received'):
+                reason = state_labels.get(rec.state, rec.state)
+            else:
+                continue
+            not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
+        if not_ready:
+            message = (_("Bulk Transfer is only for Slaughtered lines that are not bulk transferred yet.") if bulk
+                       else _("Order Transfer is only for Draft lines that are not order transferred yet."))
             raise ValidationError(
-                _("These records are already transferred:\n%s")
-                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
-            )
-        not_slaughtered = self.filtered(lambda r: r.state != 'slaughtered')
-        if not_slaughtered:
-            raise ValidationError(
-                _("Only slaughtered records can be transferred:\n%s")
-                % "\n".join(not_slaughtered.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
+                _("%s Remove these lines from your selection:\n%s") % (message, "\n".join(not_ready))
             )
 
     def action_confirm(self):
@@ -171,10 +192,9 @@ class LivestockSlaughter(models.Model):
             return
         # the department location of the animal's own warehouse
         location = self._department_location()
-        source_location = self._pos_source_location()
+        source_location = self._slaughter_source_location()
         picking_type = self.env['stock.warehouse']._get_program_type(
             'livestock', source_location, branch=self.node_id)
-        source_location = source_location or picking_type.default_location_src_id
 
         # Retrieve the product based on the product code
         product = self.product_id
@@ -355,10 +375,10 @@ class LivestockSlaughter(models.Model):
 
     
     def action_open_wizard(self):
-        """Open a transient wizard to choose destination location"""
+        """Form: Order Transfer of this Draft line"""
         
         self.ensure_one()
-        self._check_order_transfer()
+        self._check_transfer_ready(bulk=False)
 
         return {
             'name': _('Order Transfer'),
@@ -369,12 +389,27 @@ class LivestockSlaughter(models.Model):
             'context': {'default_livestock_slaughter_id': self.id},
         }
 
-    def action_open_bulk_transfer(self):
-        """Open the transfer wizard for all selected records at once"""
-        self._check_order_transfer()
+    def action_open_order_transfer(self):
+        """List header: bring the selected Draft lines into their POS location (Send)"""
+        self._check_transfer_ready(bulk=False)
+        if len(self) == 1:
+            return self.action_open_wizard()
 
         return {
             'name': _('Order Transfer'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_livestock_slaughter_ids': [(6, 0, self.ids)]},
+        }
+
+    def action_open_bulk_transfer(self):
+        """List header: send the selected Slaughtered lines out of their POS location and print the slip"""
+        self._check_transfer_ready(bulk=True)
+
+        return {
+            'name': _('Bulk Transfer'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther.wizard',
             'view_mode': 'form',

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Branch / Site access (bn_stock_location, group "Branch / Site Access"):
+        a switched user sees the documents of their Branches / Sites and the ones
+        they created. Global (it narrows every other rule of the model); no effect
+        for users not switched yet, or with All Branches / Sites.
+    -->
+    <record id="node_rule_distribution_center" model="ir.rule">
+        <field name="name">Distribution Center: Branch / Site</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_distribution_center"/>
+        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_livestock_cutting" model="ir.rule">
+        <field name="name">Livestock Cutting: Branch / Site</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_cutting"/>
+        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_livestock_cutting_material" model="ir.rule">
+        <field name="name">Livestock Cutting Material: Branch / Site</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_cutting_material"/>
+        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_livestock_meat_management" model="ir.rule">
+        <field name="name">Livestock Meat Management: Branch / Site</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_meat_management"/>
+        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_livestock_requisition" model="ir.rule">
+        <field name="name">Livestock Requisition: Branch / Site</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_requisition"/>
+        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_livestock_slaugther" model="ir.rule">
+        <field name="name">Livestock Slaugther: Branch / Site</field>
+        <field name="model_id" ref="bn_livestock_slaugther.model_livestock_slaugther"/>
+        <field name="domain_force">[(1, '=', 1)] if (not user.node_access or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('create_uid', '=', user.id)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+</odoo>

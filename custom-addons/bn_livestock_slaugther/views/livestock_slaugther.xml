@@ -5,9 +5,10 @@
         <field name="name">livestock.slaugther.view.tree</field>
         <field name="model">livestock.slaugther</field>
         <field name="arch" type="xml">
-            <tree delete="0" js_class="livestock_slaughter_list">
+            <tree delete="0">
                 <header>
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Order Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" invisible="context.get('hide_order_transfer', False)" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Order Transfer" name="action_open_order_transfer" type="object" class="btn-primary" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Bulk Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
                 </header>
                 <field name="is_meat_depart" column_invisible="1" />
                 <field name="is_chicken_depart" column_invisible="1" />
@@ -26,11 +27,12 @@
                 <field name="transfer_location" optional="show" />
                 <field name="truck_number" optional="show" />
                 <field name="transfer_picking_id" optional="hide" />
+                <field name="order_transfer_picking_id" optional="hide" />
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'slaughtered'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
 
                 <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Slaughtered" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
-                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'slaughtered'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or transfer_bool or state != 'slaughtered'" />
                 <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
             </tree>
         </field>
@@ -50,10 +52,10 @@
 
                 <header>
                     <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Slaughtered" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or state != 'slaughtered'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or transfer_bool or state != 'slaughtered'" />
                     <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
                     <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="End Cutting" name="action_end_cutting" type="object" class="oe_highlight" invisible="state not in ['material_request', 'cutting']" />
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Order Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="transfer_bool or state != 'slaughtered'" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Order Transfer" name="action_open_wizard" type="object" class="oe_highlight" invisible="order_transfer_picking_id or state != 'not_received'" />
 
                     <field name="state" widget="statusbar" statusbar_visible="not_received,slaughtered,cutting,material_request,done"/>
                 </header>
@@ -74,6 +76,8 @@
                             <field name="quantity" />
                             <field name="price" />
                             <field name="source_location_id" invisible="1" />
+                            <field name="order_transfer_location_id" invisible="not order_transfer_location_id" />
+                            <field name="order_transfer_picking_id" invisible="not order_transfer_picking_id" />
                             <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
                             <field name="truck_number" invisible="not truck_number" />
                             <field name="transfer_picking_id" invisible="not transfer_picking_id" />

@@ -9,7 +9,9 @@ from odoo.exceptions import AccessError
 _logger = logging.getLogger(__name__)
 
 # the users of these groups get every Branch / Site (national access)
-NATIONAL_GROUP_XMLIDS = ('base.group_system', 'account.group_account_manager', 'account.group_account_user')
+# (Unrestricted Custom Access sees every warehouse today: national keeps it so)
+NATIONAL_GROUP_XMLIDS = ('base.group_system', 'account.group_account_manager', 'account.group_account_user',
+                         'bn_stock_location.stock_scope_unrestricted_group')
 NATIONAL_GROUP_NAME_PARTS = ('audit', 'cfo')
 # the dashboards' access lists (bn_dashboard): read from their tables when they exist
 DASHBOARD_RELATIONS = (
@@ -135,6 +137,7 @@ class NodeSetup(models.AbstractModel):
             'pos': [],
             'users': [],
             'documents': [],
+            'switched_without_nodes': [],
         }
         for warehouse in warehouses.filtered('node_id'):
             locations = self.env['stock.location'].sudo().search([
@@ -148,6 +151,11 @@ class NodeSetup(models.AbstractModel):
             for config in self.env['pos.config'].sudo().search([]):
                 if config.analytic_account_id and config.node_id and config.analytic_account_id != config.node_id:
                     data['pos'].append(config)
+        group = self.env.ref('bn_stock_location.group_node_access', raise_if_not_found=False)
+        if group:
+            data['switched_without_nodes'] = group.users.filtered(
+                lambda u: not u.share and not u.all_nodes and not u.allowed_node_ids)
+            data['switched'] = len(group.users.filtered(lambda u: not u.share))
         Mixin = self.env['node.document.mixin']
         for name in Mixin._node_document_models():
             Model = self.env[name].sudo().with_context(active_test=False)
@@ -204,6 +212,10 @@ class NodeSetup(models.AbstractModel):
                         [[u.display_name, _('All (Pakistan)') if u.all_nodes else names(u.allowed_node_ids),
                           names(gain), names(lose) if (lose or not u.node_warehouse_ids) else Markup('&mdash;')]
                          for u, gain, lose in data['users']])
+        html += section(_('Users with Branch / Site Access but no Branch / Site'),
+                        _('They see only the documents they created: give them Allowed Branches / Sites, '
+                          'or All Branches / Sites (%s users have Branch / Site Access).') % data.get('switched', 0),
+                        [_('User')], [[u.display_name] for u in data['switched_without_nodes']])
         html += section(_('Documents without a Branch / Site'),
                         _('Their POS, location, warehouse and creator give none. Correct the set-up above, '
                           'then press "Update documents".'),

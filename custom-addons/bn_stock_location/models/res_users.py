@@ -1,5 +1,7 @@
 from odoo import api, fields, models
 
+NODE_ACCESS_GROUP = 'bn_stock_location.group_node_access'
+
 
 class ResUser(models.Model):
     _inherit = 'res.users'
@@ -65,8 +67,10 @@ class ResUser(models.Model):
 
     @api.model
     def _scope_changed(self):
-        """Record rule domains are cached per user."""
+        """Record rule domains are cached per user, and the users' computed scope
+        in the current transaction."""
         self.env.registry.clear_cache()
+        self.env['res.users'].invalidate_model()
 
     def write(self, vals):
         res = super().write(vals)
@@ -117,8 +121,14 @@ class ResUsersNodes(models.Model):
                 warehouses = Warehouse.search([('node_id', 'in', nodes.ids)]) if nodes else Warehouse
             user.node_scope_ids = nodes
             user.node_warehouse_ids = warehouses
-            user.node_location_ids = self.env['stock.location'].sudo().search(
-                [('id', 'child_of', warehouses.view_location_id.ids)]) if warehouses else self.env['stock.location']
+            Location = self.env['stock.location'].sudo()
+            locations = Location.search([('id', 'child_of', warehouses.view_location_id.ids)]) if warehouses else Location
+            if nodes:
+                # locations outside any warehouse (e.g. Qurbani city / slaughter points): by their own tag
+                tagged = Location.search([('warehouse_id', '=', False), ('analytic_account_id', 'in', nodes.ids)])
+                if tagged:
+                    locations |= Location.search([('id', 'child_of', tagged.ids)])
+            user.node_location_ids = locations
             user.node_picking_type_ids = self.env['stock.picking.type'].sudo().search(
                 [('warehouse_id', 'in', warehouses.ids)]) if warehouses else self.env['stock.picking.type']
 
@@ -127,6 +137,51 @@ class ResUsersNodes(models.Model):
         if {'all_nodes', 'allowed_node_ids'} & set(vals):
             self._scope_changed()
         return res
+
+    # ------------------------------------------------------------------
+    # T4: users in "Branch / Site Access" get their scope from their
+    # Branches / Sites. Every location, warehouse, branch and city rule reads
+    # these scope fields, so it follows the new basis; the documents' own rule
+    # (node_id) is in each module (security/node_rules.xml). Other users keep
+    # the location-based scope until they are switched.
+    # ------------------------------------------------------------------
+    node_access = fields.Boolean(
+        string='Branch / Site Access', compute='_compute_node_access',
+        help="The user's access comes from their Branches / Sites (group Branch / Site Access).")
+
+    @api.depends('groups_id')
+    def _compute_node_access(self):
+        group = self.env.ref(NODE_ACCESS_GROUP, raise_if_not_found=False)
+        for user in self:
+            user.node_access = bool(group) and group in user.sudo().groups_id
+
+    @api.depends('allowed_location_ids', 'allowed_warehouse_ids', 'employee_ids.analytic_account_id',
+                 'groups_id', 'all_nodes', 'allowed_node_ids')
+    @api.depends_context('company')
+    def _compute_scope(self):
+        switched = self.filtered('node_access')
+        super(ResUsersNodes, self - switched)._compute_scope()
+        for user in switched:
+            if user.all_nodes:
+                user.scope_location_ids = self.env['stock.location'].sudo().with_context(active_test=False).search(
+                    [('usage', 'in', ('internal', 'view'))])
+                user.scope_warehouse_ids = self.env['stock.warehouse'].sudo().with_context(active_test=False).search([])
+            else:
+                user.scope_location_ids = user.node_location_ids
+                user.scope_warehouse_ids = user.node_warehouse_ids
+
+    @api.depends('scope_location_ids', 'scope_warehouse_ids', 'employee_ids.analytic_account_id',
+                 'groups_id', 'all_nodes', 'allowed_node_ids')
+    @api.depends_context('company')
+    def _compute_scope_analytic_accounts(self):
+        switched = self.filtered('node_access')
+        super(ResUsersNodes, self - switched)._compute_scope_analytic_accounts()
+        for user in switched:
+            if user.all_nodes:
+                user.scope_analytic_account_ids = self.env['account.analytic.account'].sudo().with_context(
+                    active_test=False).search([])
+            else:
+                user.scope_analytic_account_ids = user.node_scope_ids
 
 
 class PosConfigNode(models.Model):

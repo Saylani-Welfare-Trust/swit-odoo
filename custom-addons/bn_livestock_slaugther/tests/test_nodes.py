@@ -125,17 +125,56 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(record.cutting_material_id.warehouse_id, self.wh_karachi)
         self.assertFalse(self.wh_lahore.livestock_cutting_location_id, "Lahore is untouched")
 
-    def test_no_cutting_after_order_transfer(self):
+    def test_order_transfer_then_bulk_transfer(self):
         record = self.env['livestock.slaugther'].create({
             'product_id': self.product.id, 'quantity': 1,
             'source_location_id': self.wh_karachi.lot_stock_id.id,
         })
+        pen = self.env['stock.location'].create({'name': 'LN Pen', 'usage': 'internal',
+                                                 'location_id': self.wh_karachi.view_location_id.id})
+        waiting = record._slaughter_source_location()
+        self.assertEqual(waiting.warehouse_id, self.wh_karachi)
+        # Order Transfer (Draft): the animal is brought to where it waits for slaughter
+        self.env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_id': record.id, 'dest_location_id': pen.id,
+        }).with_user(self.manager).action_do_transfer()
+        self.assertEqual(record.order_transfer_picking_id.location_dest_id, waiting)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, waiting), 1)
+        with self.assertRaises(ValidationError):
+            record._check_transfer_ready(bulk=False)  # once
+        # Slaughtered takes it from there: nothing left behind
         record.with_user(self.manager).action_confirm()
-        wizard = self.env['livestock.slaugther.wizard'].create({
-            'livestock_slaughter_id': record.id, 'dest_location_id': self.wh_lahore.lot_stock_id.id,
-            'truck_number': 'LN-1'})
-        wizard.with_user(self.manager).action_do_transfer()
-        self.assertEqual(record.transfer_picking_id.location_id, self.wh_karachi.livestock_slaughter_location_id,
-                         "sent from where Slaughtered put it")
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, waiting), 0)
+        # Bulk Transfer: sent from where Slaughtered put it, then it cannot be cut
+        self.env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_ids': [(6, 0, record.ids)], 'is_bulk': True,
+            'dest_location_id': self.wh_lahore.lot_stock_id.id, 'truck_number': 'LN-1',
+        }).with_user(self.manager).action_do_transfer()
+        slaughter_stock = self.wh_karachi.livestock_slaughter_location_id
+        self.assertEqual(record.transfer_picking_id.location_id, slaughter_stock)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, slaughter_stock), 0)
         with self.assertRaises(ValidationError):
             record.with_user(self.manager).action_cutting()
+
+    def test_document_rule(self):
+        """T4: a switched user sees the documents of their Branches / Sites and their own."""
+        group = self.env.ref('bn_stock_location.group_node_access')
+        Requisition = self.env['livestock.requisition']
+        karachi_doc = Requisition.create({'destination_location_id': self.wh_karachi.lot_stock_id.id})
+        lahore_doc = Requisition.create({'destination_location_id': self.wh_lahore.lot_stock_id.id})
+        user = self.env['res.users'].with_context(no_reset_password=True).create({
+            'name': 'ln lahore', 'login': 'ln_lahore',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
+                                  self.env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group').id,
+                                  self.env.ref('bn_livestock_slaugther.livestock_slaugther_admin_group').id])],
+            'allowed_node_ids': [(6, 0, self.lahore.ids)],
+            # the old, location-based access: both warehouses
+            'allowed_location_ids': [(6, 0, (self.wh_karachi.lot_stock_id | self.wh_lahore.lot_stock_id).ids)]})
+        both = karachi_doc | lahore_doc
+        self.assertEqual(Requisition.with_user(user).search([('id', 'in', both.ids)]), both, "not switched yet")
+        user.groups_id = [(4, group.id)]
+        own = Requisition.with_user(user).create({})
+        visible = Requisition.with_user(user).search([('id', 'in', (both | own).ids)])
+        self.assertEqual(visible, lahore_doc | own, "its Branch / Site and its own")
+        user.all_nodes = True
+        self.assertEqual(Requisition.with_user(user).search([('id', 'in', both.ids)]), both, "national")

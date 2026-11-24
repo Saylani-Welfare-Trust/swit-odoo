@@ -145,3 +145,34 @@ class PosLinkMixinNode(models.AbstractModel):
     @api.model
     def _node_sources(self):
         return ['pos_config_id', 'pos_session_id', 'pos_analytic_account_id'] + super()._node_sources()
+
+
+class StockWarehouseNodeRules(models.Model):
+    """Record rules are cached per user: a warehouse moved to another Branch /
+    Site changes what the switched users see."""
+    _inherit = 'stock.warehouse'
+
+    def write(self, vals):
+        res = super().write(vals)
+        if 'node_id' in vals:
+            self.env['res.users']._scope_changed()
+        return res
+
+
+class AccountAnalyticAccountNodeRules(models.Model):
+    """A Branch / Site added to or moved in the Location tree changes what the
+    users of the nodes above it see (cached record rules)."""
+    _inherit = 'account.analytic.account'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        accounts = super().create(vals_list)
+        if any(vals.get('parent_id') for vals in vals_list):
+            self.env['res.users']._scope_changed()
+        return accounts
+
+    def write(self, vals):
+        res = super().write(vals)
+        if {'parent_id', 'active'} & set(vals):
+            self.env['res.users']._scope_changed()
+        return res

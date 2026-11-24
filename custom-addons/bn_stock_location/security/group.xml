@@ -18,4 +18,14 @@
         <field name="comment">Sees every warehouse, location, operation type and product category, whatever is set on the user (e.g. central inventory or finance). Settings administrators are always unrestricted.</field>
     </record>
 
+    <!-- T4: the user's access comes from their Branches / Sites (users form > Inventory).
+         Rolled out user by user (e.g. one province first); removing the group
+         gives back the location-based access at once. -->
+    <record id="group_node_access" model="res.groups">
+        <field name="name">Branch / Site Access</field>
+        <field name="category_id" ref="base.module_category_inventory_inventory"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Warehouses, locations, operation types, branches, cities and program documents come from the user's Allowed Branches / Sites (or All Branches / Sites), instead of their Allowed Locations / Warehouses and employee branch. Program documents: those of the user's Branches / Sites, and the ones they created.</field>
+    </record>
+
 </odoo>
