@@ -26,29 +26,21 @@
         <record id="product_attribute_value_small" model="product.attribute.value">
             <field name="name">Red</field>
             <field name="attribute_id" ref="product_attribute_weight_range"/>
-            <field name="from_kg">10</field>
-            <field name="to_kg">20</field>
         </record>
 
         <record id="product_attribute_value_medium" model="product.attribute.value">
             <field name="name">Blue</field>
             <field name="attribute_id" ref="product_attribute_weight_range"/>
-            <field name="from_kg">20</field>
-            <field name="to_kg">30</field>
         </record>
 
         <record id="product_attribute_value_large" model="product.attribute.value">
             <field name="name">Green</field>
             <field name="attribute_id" ref="product_attribute_weight_range"/>
-            <field name="from_kg">30</field>
-            <field name="to_kg">50</field>
         </record>
 
         <record id="product_attribute_value_xlarge" model="product.attribute.value">
             <field name="name">Yellow</field>
             <field name="attribute_id" ref="product_attribute_weight_range"/>
-            <field name="from_kg">50</field>
-            <field name="to_kg">100</field>
         </record>
 
     </data>

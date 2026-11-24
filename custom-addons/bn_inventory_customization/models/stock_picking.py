@@ -45,8 +45,8 @@ class StockPicking(models.Model):
 
     def _compute_show_receive_by_weight(self):
         for picking in self:
-            picking.show_receive_by_weight = any(
-                move.product_id.check_stock for move in picking.move_ids if move.product_id
+            picking.show_receive_by_weight = picking.picking_type_code == 'incoming' and any(
+                move.product_id.check_stock and move.state not in ('done', 'cancel') for move in picking.move_ids
             )
 
     def open_receive_by_weight_wizard(self):
@@ -72,18 +72,10 @@ class StockPicking(models.Model):
                 'res_id': existing.id,
             }
 
-        # No existing wizard — build initial lines and create a new one
-        lines = []
-        s_no = 1
-        for move in self.move_ids:
-            qty = int(move.product_uom_qty or 0)
-            for _unit in range(qty):
-                lines.append((0, 0, {
-                    's_no': s_no,
-                    'product_id': move.product_id.id,
-                    'quantity': 1.0,
-                }))
-                s_no += 1
+        # No existing wizard: one line per unit of the livestock moves
+        lines = Wizard._unit_lines(self)
+        if not lines:
+            raise UserError(_('There is no livestock unit left to receive on %s.') % self.name)
 
         wizard = Wizard.create({
             'picking_id': self.id,

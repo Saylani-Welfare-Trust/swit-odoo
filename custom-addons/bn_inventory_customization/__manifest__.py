@@ -1,6 +1,6 @@
 {
     'name': 'Inventory Customization',
-    'version': '17.0.1.2.3',
+    'version': '17.0.1.3.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -27,7 +27,6 @@
         'reports/purchase_order_report.xml',
         
         'views/livestock_variant.xml',
-        'views/product_attribute_value.xml',
         'views/product_template.xml',
         'views/product_product.xml',
         'views/purchase_order.xml',

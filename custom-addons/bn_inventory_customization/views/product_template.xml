@@ -13,17 +13,24 @@
                 </span>
             </xpath>
             
-            <!-- Add Livestock Configuration section in General Information tab -->
-            <xpath expr="//group[@name='group_general']" position="after">
-                <group string="Livestock Configuration" name="livestock_config" invisible="check_stock == False">
-                    <group>
-                        <field name="livestock_variant" options="{'no_create': True, 'no_open': True}"/>
-                        <field name="purchase_product" options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                    <group>
-                        <field name="main_attribute_id" options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                </group>
+            <!-- Livestock page: the weight bands this purchase product is received by -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Livestock" name="livestock" invisible="not check_stock">
+                    <p class="text-muted">
+                        Bought by unit, each unit is weighed on its receipt and received as the product of
+                        its livestock variant's weight band. The bands are also managed in
+                        Inventory &gt; Configuration &gt; Livestock.
+                    </p>
+                    <field name="livestock_band_ids" context="{'default_purchase_product_id': product_variant_id}">
+                        <tree editable="bottom">
+                            <field name="variant_id" options="{'no_create': True}"/>
+                            <field name="purchase_product_id" options="{'no_create': True}"/>
+                            <field name="from_kg"/>
+                            <field name="to_kg"/>
+                            <field name="product_id" options="{'no_create': True}"/>
+                        </tree>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

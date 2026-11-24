@@ -14,19 +14,7 @@
                     <label for="check_stock"/>
                 </span>
             </xpath>
-            
-            <!-- Add Livestock Configuration section in General Information tab -->
-            <xpath expr="//group[@name='group_general']" position="after">
-                <group string="Livestock Configuration" name="livestock_config" invisible="check_stock == False">
-                    <group>
-                        <field name="livestock_variant" options="{'no_create': True, 'no_open': True}"/>
-                        <field name="purchase_product" options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                    <group>
-                        <field name="main_attribute_id" options="{'no_create': True, 'no_open': True}"/>
-                    </group>
-                </group>
-            </xpath>
+
         </field>
     </record>
 

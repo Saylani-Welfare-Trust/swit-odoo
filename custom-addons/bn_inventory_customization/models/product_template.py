@@ -3,30 +3,13 @@ from odoo import fields, models
 
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
-    
+
     check_stock = fields.Boolean(
         string='Is Livestock Product',
         default=False,
         tracking=True,
-        help='Enable weight-based receiving for livestock products. '
-             'When checked, this product will use the Receive by Weight wizard.'
-    )
-    
-    livestock_variant = fields.Many2one(
-        comodel_name='livestock.variant',
-        string='Livestock Variant',
-        required=False
-    )
-
-    purchase_product = fields.Many2one(
-        comodel_name='product.product',
-        string='Purchase Product',
-        help='Product you will make PO',
-        required=False
-    )
-
-    main_attribute_id = fields.Many2one(
-        comodel_name='product.attribute',
-        string='Main Attribute',
-        help='When set, only this attribute\'s values are used to determine the highest to_kg.'
-    )
+        help='Bought by unit and received by weight: on its receipt each unit is weighed '
+             'and received as the product of its weight band (Livestock Variants).')
+    # the weight bands this product is the purchase product of (Livestock page)
+    livestock_band_ids = fields.One2many(
+        'livestock.variant.line', 'purchase_template_id', string='Weight Bands')
