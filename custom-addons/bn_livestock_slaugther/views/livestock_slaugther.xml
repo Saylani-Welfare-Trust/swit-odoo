@@ -5,9 +5,9 @@
         <field name="name">livestock.slaugther.view.tree</field>
         <field name="model">livestock.slaugther</field>
         <field name="arch" type="xml">
-            <tree delete="0" js_class="livestock_slaughter_list">
+            <tree delete="0">
                 <header>
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Order Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" invisible="context.get('hide_order_transfer', False)" />
+                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Order Transfer" name="action_open_bulk_transfer" type="object" class="btn-primary" />
                 </header>
                 <field name="is_meat_depart" column_invisible="1" />
                 <field name="is_chicken_depart" column_invisible="1" />

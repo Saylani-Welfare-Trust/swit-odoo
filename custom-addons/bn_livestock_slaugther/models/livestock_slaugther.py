@@ -123,17 +123,20 @@ class LivestockSlaughter(models.Model):
         """Only slaughtered lines that are not transferred yet can be transferred."""
         if not self:
             raise ValidationError(_("Please select the records to transfer."))
-        transferred = self.filtered('transfer_bool')
-        if transferred:
+        state_labels = dict(self._fields['state']._description_selection(self.env))
+        not_ready = []
+        for rec in self:
+            if rec.transfer_bool:
+                reason = _('already transferred')
+            elif rec.state != 'slaughtered':
+                reason = state_labels.get(rec.state, rec.state)
+            else:
+                continue
+            not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
+        if not_ready:
             raise ValidationError(
-                _("These records are already transferred:\n%s")
-                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
-            )
-        not_slaughtered = self.filtered(lambda r: r.state != 'slaughtered')
-        if not_slaughtered:
-            raise ValidationError(
-                _("Only slaughtered records can be transferred:\n%s")
-                % "\n".join(not_slaughtered.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
+                _("Only Slaughtered lines that are not transferred yet can be transferred. "
+                  "Remove these lines from your selection:\n%s") % "\n".join(not_ready)
             )
 
     def action_confirm(self):
