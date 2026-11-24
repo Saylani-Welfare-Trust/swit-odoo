@@ -1,6 +1,6 @@
 {
     'name': 'Procurement Workflow',
-    'version': '17.0.1.3.2',
+    'version': '17.0.1.3.3',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
