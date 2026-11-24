@@ -2,6 +2,7 @@
 from datetime import timedelta
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -16,9 +17,12 @@ class TestLivestockAdvanceDonation(TransactionCase):
         ref = cls.env.ref
         cls.goat = cls.env['product.product'].create({
             'name': 'Goat AD', 'list_price': 1000, 'detailed_type': 'product',
-            'is_advance_donation': True, 'is_livestock': True})
+            'is_advance_donation': True})
+        # the product variant's flags follow the template
+        cls.goat.product_tmpl_id.write({'is_livestock': True, 'is_advance_donation': True})
         cls.rice = cls.env['product.product'].create({
-            'name': 'Rice AD', 'list_price': 100, 'is_advance_donation': True})
+            'name': 'Rice AD', 'list_price': 100})
+        cls.rice.product_tmpl_id.is_advance_donation = True
         cls.category = cls.env['advance.donation.category'].create({'name': 'Cat AD'})
         cls.donor = cls.env['res.partner'].create({'name': 'Donor AD'})
         Users = cls.env['res.users']
@@ -36,6 +40,7 @@ class TestLivestockAdvanceDonation(TransactionCase):
         cls.butcher = user('ls_ad_user', 'bn_livestock_slaugther.livestock_slaugther_user_group',
                            'stock.group_stock_user', 'bn_stock_location.stock_scope_unrestricted_group')
         cls.Slaughter = cls.env['livestock.slaugther']
+        assert cls.goat.is_livestock and not cls.rice.is_livestock
 
     def _approved(self, product, contract_type='product', **vals):
         donation = self.env['advance.donation'].create(dict({
@@ -91,7 +96,7 @@ class TestLivestockAdvanceDonation(TransactionCase):
         today = fields.Date.today()
         donation = self._approved(self.goat, 'frequency', contract_frequency='daily', no_of_product=3,
                                   contract_start_date=today, contract_end_date=today + timedelta(days=1))
-        line = donation.advance_donation_lines.sorted('date')[0]
+        line, tomorrow_line = donation.advance_donation_lines.sorted('date')
         self.assertEqual((len(donation.advance_donation_lines), line.quantity), (2, 3))
         animals = self.Slaughter.search([('advance_donation_line_id', '=', line.id)])
         self.assertEqual(len(animals), 3)
@@ -101,6 +106,14 @@ class TestLivestockAdvanceDonation(TransactionCase):
             animal.with_user(self.butcher).action_confirm()
             self.assertEqual(line.is_disbursed, index == 2)
         self.assertAlmostEqual(line.disbursed_amount, line.amount)
+
+        # tomorrow's animals are not slaughtered before their date
+        tomorrow_animal = self.Slaughter.search([('advance_donation_line_id', '=', tomorrow_line.id)], limit=1)
+        self.assertEqual(tomorrow_animal.advance_donation_date, today + timedelta(days=1))
+        with self.assertRaises(UserError):
+            tomorrow_animal.with_user(self.butcher).action_confirm()
+        self.assertEqual(tomorrow_animal.state, 'not_received')
+        self.assertFalse(tomorrow_line.disbursed_amount)
 
     def test_not_livestock_and_open_contract(self):
         donation = self._approved(self.rice)

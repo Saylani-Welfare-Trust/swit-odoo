@@ -23,6 +23,7 @@
                        invisible="not advance_donation_id"/>
                 <field name="advance_donation_line_id" readonly="1"
                        invisible="not advance_donation_line_id"/>
+                <field name="advance_donation_date" invisible="not advance_donation_date"/>
                 <field name="advance_donation_amount" readonly="1"
                        invisible="not advance_donation_amount"/>
             </xpath>
@@ -38,6 +39,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='pos_order_id']" position="after">
                 <field name="advance_donation_id" optional="show"/>
+                <field name="advance_donation_date" optional="show"/>
             </xpath>
         </field>
     </record>
