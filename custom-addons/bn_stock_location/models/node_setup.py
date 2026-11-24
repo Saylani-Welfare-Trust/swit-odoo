@@ -4,12 +4,13 @@ from collections import Counter
 from markupsafe import Markup, escape
 
 from odoo import _, api, fields, models
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError
 
 _logger = logging.getLogger(__name__)
 
 # the users of these groups get every Branch / Site (national access)
 # (Unrestricted Custom Access sees every warehouse today: national keeps it so)
+NODE_ACCESS_GROUP_XMLID = 'bn_stock_location.group_node_access'
 NATIONAL_GROUP_XMLIDS = ('base.group_system', 'account.group_account_manager', 'account.group_account_user',
                          'bn_stock_location.stock_scope_unrestricted_group')
 NATIONAL_GROUP_NAME_PARTS = ('audit', 'cfo')
@@ -224,11 +225,135 @@ class NodeSetup(models.AbstractModel):
         return html + Markup('</div>')
 
 
+class _PreviewRollback(Exception):
+    """Undoes the trial switch of the rollout preview."""
+
+
+class NodeRollout(models.AbstractModel):
+    """T7: switch the users of a province (or city, zone...) to Branch / Site
+    Access, after an exact preview of what each of them will see."""
+    _inherit = 'node.setup'
+
+    # besides the program documents: what users notice first
+    ROLLOUT_EXTRA_MODELS = ('stock.warehouse', 'stock.picking', 'stock.quant', 'pos.order')
+
+    @api.model
+    def _rollout_users(self, node):
+        """(to switch, without Branch / Site) of ``node``: internal users whose
+        Allowed Branches / Sites are all under it, not switched yet; and its
+        users (by employee branch) who have none."""
+        group = self.env.ref(NODE_ACCESS_GROUP_XMLID)
+        Users = self.env['res.users'].sudo()
+        nodes = self.env['account.analytic.account'].sudo().search([('id', 'child_of', node.ids)])
+        candidates = Users.search([('share', '=', False), ('all_nodes', '=', False)])
+        ready = candidates.filtered(lambda u: u.allowed_node_ids and not (u.allowed_node_ids - nodes)
+                                    and group not in u.groups_id)
+        missing = candidates.filtered(lambda u: not u.allowed_node_ids
+                                      and u.employee_ids[:1].analytic_account_id in nodes)
+        return ready, missing
+
+    @api.model
+    def _rollout_models(self):
+        return self.env['node.document.mixin']._node_document_models() + list(self.ROLLOUT_EXTRA_MODELS)
+
+    @api.model
+    def _visible_counts(self, user, models):
+        counts = {}
+        for name in models:
+            Model = self.env[name].with_user(user)
+            if not Model.check_access_rights('read', raise_exception=False):
+                continue
+            counts[name] = Model.with_context(active_test=False).search_count([])
+        return counts
+
+    @api.model
+    def _rollout_preview(self, users):
+        """Per user: warehouses gained / lost and the documents seen before and
+        after the switch, measured with the real rules in a trial switch that
+        is rolled back (nothing changes)."""
+        group = self.env.ref(NODE_ACCESS_GROUP_XMLID)
+        models = self._rollout_models()
+        before = {user: (user.scope_warehouse_ids, self._visible_counts(user, models)) for user in users}
+        after = {}
+        try:
+            with self.env.cr.savepoint():
+                users.write({'groups_id': [(4, group.id)]})
+                self.env['res.users']._scope_changed()
+                self.env.invalidate_all()
+                for user in users:
+                    after[user] = (user.scope_warehouse_ids, self._visible_counts(user, models))
+                raise _PreviewRollback()
+        except _PreviewRollback:
+            pass
+        self.env['res.users']._scope_changed()
+        self.env.invalidate_all()
+        preview = []
+        for user in users:
+            (wh_before, docs_before), (wh_after, docs_after) = before[user], after[user]
+            changes = [(self.env[name]._description or name, docs_before.get(name, 0), docs_after.get(name, 0))
+                       for name in models if docs_before.get(name, 0) != docs_after.get(name, 0)]
+            preview.append({'user': user, 'gains': wh_after - wh_before, 'loses': wh_before - wh_after,
+                            'changes': changes})
+        return preview
+
+    @api.model
+    def _rollout_html(self, node):
+        ready, missing = self._rollout_users(node)
+        preview = self._rollout_preview(ready)
+
+        def names(records):
+            return escape(', '.join(records.mapped('display_name'))) or Markup('&mdash;')
+
+        rows = Markup('')
+        for item in preview:
+            changes = Markup('<br/>').join(
+                Markup('%s: %s &rarr; <b>%s</b>') % (label, old, new) for label, old, new in item['changes']
+            ) or Markup('<span class="text-success">%s</span>') % _('no change')
+            rows += Markup('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>') % (
+                item['user'].display_name, names(item['user'].allowed_node_ids),
+                names(item['gains']), names(item['loses']), changes)
+        if not preview:
+            rows = Markup('<tr><td colspan="5" class="text-muted">%s</td></tr>') % _('No user to switch under this node.')
+        html = Markup('<h4>%s</h4><p class="text-muted">%s</p>') % (
+            _('Rollout of %s: %s users to switch') % (node.display_name, len(ready)),
+            _('Measured with the real rules in a trial switch that was undone: nothing has changed yet. '
+              'Documents: what each user sees today \u2192 after the switch.'))
+        html += Markup('<table class="table table-sm table-bordered"><thead><tr><th>%s</th><th>%s</th><th>%s</th>'
+                       '<th>%s</th><th>%s</th></tr></thead><tbody>%s</tbody></table>') % (
+            _('User'), _('Allowed Branches / Sites'), _('Gains warehouses'), _('Loses warehouses'),
+            _('Documents seen (today \u2192 after)'), rows)
+        if missing:
+            html += Markup('<div class="alert alert-warning">%s %s</div>') % (
+                _('Not switched: no Allowed Branch / Site (they would see only their own documents):'),
+                names(missing))
+        return html
+
+    @api.model
+    def _rollout_switch(self, node, on=True):
+        """Switch the users of ``node`` to Branch / Site Access (or back)."""
+        group = self.env.ref(NODE_ACCESS_GROUP_XMLID)
+        if on:
+            users, _missing = self._rollout_users(node)
+            users.write({'groups_id': [(4, group.id)]})
+        else:
+            nodes = self.env['account.analytic.account'].sudo().search([('id', 'child_of', node.ids)])
+            users = group.users.filtered(lambda u: not u.all_nodes and u.allowed_node_ids
+                                         and not (u.allowed_node_ids - nodes))
+            users.write({'groups_id': [(3, group.id)]})
+        _logger.info("Branch / Site Access %s for %s users of %s: %s", 'on' if on else 'off', len(users),
+                     node.display_name, users.mapped('login'))
+        return users
+
+
 class NodeSetupWizard(models.TransientModel):
     _name = 'node.setup.wizard'
     _description = 'Branch / Site Set-up Check'
 
     report_html = fields.Html(readonly=True, sanitize=False)
+    rollout_node_id = fields.Many2one(
+        'account.analytic.account', string='Roll out to', domain="[('plan_id.name', '=', 'Location')]",
+        help="A province, city or zone: its users are switched to Branch / Site Access.")
+    rollout_html = fields.Html(readonly=True, sanitize=False)
 
     @api.model
     def default_get(self, fields_list):
@@ -260,3 +385,42 @@ class NodeSetupWizard(models.TransientModel):
     def action_refresh(self):
         return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': self.create({}).id,
                 'view_mode': 'form', 'target': 'new', 'name': _('Branch / Site Set-up Check')}
+
+    def _check_admin(self):
+        if not self.env.user.has_group('base.group_system'):
+            raise AccessError(_('Only an administrator can roll out Branch / Site Access.'))
+
+    def _reopen(self):
+        return {'type': 'ir.actions.act_window', 'res_model': self._name, 'res_id': self.id,
+                'view_mode': 'form', 'target': 'new', 'name': _('Branch / Site Set-up Check')}
+
+    def action_rollout_preview(self):
+        self._check_admin()
+        if not self.rollout_node_id:
+            raise UserError(_('Choose the province, city or zone to roll out to.'))
+        self.rollout_html = self.env['node.setup'].sudo()._rollout_html(self.rollout_node_id)
+        return self._reopen()
+
+    def action_rollout_switch(self):
+        self._check_admin()
+        if not self.rollout_node_id:
+            raise UserError(_('Choose the province, city or zone to roll out to.'))
+        users = self.env['node.setup'].sudo()._rollout_switch(self.rollout_node_id, on=True)
+        self.rollout_html = Markup('<div class="alert alert-success">%s</div>') % _(
+            "%(count)s users of %(node)s now use Branch / Site Access: %(users)s",
+            count=len(users), node=self.rollout_node_id.display_name,
+            users=', '.join(users.mapped('name')) or '-')
+        self.report_html = self.env['node.setup']._report_html()
+        return self._reopen()
+
+    def action_rollout_back(self):
+        self._check_admin()
+        if not self.rollout_node_id:
+            raise UserError(_('Choose the province, city or zone to switch back.'))
+        users = self.env['node.setup'].sudo()._rollout_switch(self.rollout_node_id, on=False)
+        self.rollout_html = Markup('<div class="alert alert-warning">%s</div>') % _(
+            "%(count)s users of %(node)s are back on the location-based access: %(users)s",
+            count=len(users), node=self.rollout_node_id.display_name,
+            users=', '.join(users.mapped('name')) or '-')
+        return self._reopen()
+
