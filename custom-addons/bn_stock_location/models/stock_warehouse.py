@@ -63,6 +63,12 @@ class StockPickingType(models.Model):
 class StockWarehouse(models.Model):
     _inherit = 'stock.warehouse'
 
+    node_id = fields.Many2one(
+        'account.analytic.account', string='Branch / Site', index=True,
+        help="The node of the Location tree (Province > City > Zone > Branch / Site) this warehouse "
+             "belongs to: a branch, or a site of its own (central store, slaughterhouse ...). "
+             "Users see it when it is under their Allowed Branches / Sites.")
+
     program_picking_type_ids = fields.One2many(
         'stock.picking.type', 'warehouse_id', string='Program Operation Types',
         domain=[('program_type', '!=', False)])
@@ -136,16 +142,23 @@ class StockWarehouse(models.Model):
 
     @api.model
     def _warehouse_for_branch(self, branch):
-        """The warehouse of a branch: the one whose locations are tagged with the
-        branch or, failing that, with the closest of its parents (city, province)."""
+        """The warehouse of a Branch / Site for a document without a location: the
+        node's Default Warehouse or only warehouse, else the closest parent's
+        (a branch without a warehouse of its own uses its city's). Until the
+        warehouses have their Branch / Site, the location tags are used."""
         if not branch:
             return self.browse()
         branch = branch.sudo()
-        company = self.env.company
-        warehouses = self.sudo().search([('company_id', '=', company.id)])
-        # the branch first, then its parents up the tree
         chain = self.env['account.analytic.account'].sudo().browse(
             [int(part) for part in reversed((getattr(branch, 'parent_path', '') or '').strip('/').split('/')) if part]) or branch
+        company = self.env.company
+        if self.sudo().search_count([('node_id', '!=', False), ('company_id', '=', company.id)]):
+            for node in chain:
+                warehouse = node._node_warehouse()
+                if warehouse:
+                    return warehouse
+            return self.browse()
+        warehouses = self.sudo().search([('company_id', '=', company.id)])
         for account in chain:
             found = warehouses.filtered(lambda w: account in (
                 w.view_location_id.analytic_account_id | w.lot_stock_id.analytic_account_id))

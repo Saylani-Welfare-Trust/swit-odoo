@@ -73,3 +73,64 @@ class ResUser(models.Model):
         if {'allowed_location_ids', 'allowed_warehouse_ids', 'allowed_product_category_ids'} & set(vals):
             self._scope_changed()
         return res
+
+
+class ResUsersNodes(models.Model):
+    """Branch / Site access (Location tree: Province > City > Zone > Branch / Site).
+    One setting per user; their warehouses, locations and operation types are
+    computed from it. Not used by the record rules yet (switch-over phase)."""
+    _inherit = 'res.users'
+
+    all_nodes = fields.Boolean(
+        string='All Branches / Sites (Pakistan)',
+        help="National access: every province, city, zone, branch and site "
+             "(Administrators, Accounts, Audit, CFO).")
+    allowed_node_ids = fields.Many2many(
+        'account.analytic.account', 'res_users_allowed_node_rel', 'user_id', 'node_id',
+        string='Allowed Branches / Sites',
+        help="Any level of the Location tree: a province, city or zone gives everything under it.")
+    node_scope_ids = fields.Many2many(
+        'account.analytic.account', string='Branches / Sites in Scope', compute='_compute_node_scope',
+        compute_sudo=True, help="The allowed nodes and everything under them.")
+    node_warehouse_ids = fields.Many2many(
+        'stock.warehouse', string='Warehouses (from Branches / Sites)', compute='_compute_node_scope',
+        compute_sudo=True)
+    node_location_ids = fields.Many2many(
+        'stock.location', string='Locations (from Branches / Sites)', compute='_compute_node_scope',
+        compute_sudo=True)
+    node_picking_type_ids = fields.Many2many(
+        'stock.picking.type', string='Operation Types (from Branches / Sites)', compute='_compute_node_scope',
+        compute_sudo=True)
+
+    @api.depends('all_nodes', 'allowed_node_ids')
+    @api.depends_context('company')
+    def _compute_node_scope(self):
+        Account = self.env['account.analytic.account'].sudo()
+        Warehouse = self.env['stock.warehouse'].sudo()
+        for user in self:
+            if user.all_nodes:
+                # national: the whole Location tree and every warehouse
+                nodes = Account.search([('plan_id.name', '=', 'Location')])
+                warehouses = Warehouse.search([])
+            else:
+                nodes = Account.search([('id', 'child_of', user.allowed_node_ids.ids)]) if user.allowed_node_ids else Account
+                warehouses = Warehouse.search([('node_id', 'in', nodes.ids)]) if nodes else Warehouse
+            user.node_scope_ids = nodes
+            user.node_warehouse_ids = warehouses
+            user.node_location_ids = self.env['stock.location'].sudo().search(
+                [('id', 'child_of', warehouses.view_location_id.ids)]) if warehouses else self.env['stock.location']
+            user.node_picking_type_ids = self.env['stock.picking.type'].sudo().search(
+                [('warehouse_id', 'in', warehouses.ids)]) if warehouses else self.env['stock.picking.type']
+
+    def write(self, vals):
+        res = super().write(vals)
+        if {'all_nodes', 'allowed_node_ids'} & set(vals):
+            self._scope_changed()
+        return res
+
+
+class PosConfigNode(models.Model):
+    _inherit = 'pos.config'
+
+    # one warehouse per POS: its orders belong to the warehouse's Branch / Site
+    node_id = fields.Many2one(related='warehouse_id.node_id', string='Branch / Site', store=True, index=True)

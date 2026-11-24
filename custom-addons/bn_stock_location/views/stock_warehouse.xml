@@ -6,6 +6,10 @@
         <field name="model">stock.warehouse</field>
         <field name="inherit_id" ref="stock.view_warehouse"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='code']" position="after">
+                <field name="node_id" required="1" options="{'no_create': True}"
+                       domain="[('plan_id.name', '=', 'Location')]"/>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page name="program_types" string="Program Operation Types" groups="stock.group_stock_manager">
                     <field name="program_picking_type_ids" context="{'active_test': False}">
@@ -23,6 +27,75 @@
             </xpath>
         </field>
     </record>
+
+    <record id="stock_view_warehouse_tree_inherit_bn_stock_location" model="ir.ui.view">
+        <field name="name">stock.view.warehouse.tree.inherit.bn.stock.location</field>
+        <field name="model">stock.warehouse</field>
+        <field name="inherit_id" ref="stock.view_warehouse_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Branch / Site: its warehouses and the one programs use by default -->
+    <record id="analytic_account_form_inherit_bn_stock_location_node" model="ir.ui.view">
+        <field name="name">account.analytic.account.form.inherit.bn.stock.location.node</field>
+        <field name="model">account.analytic.account</field>
+        <field name="inherit_id" ref="analytic.view_account_analytic_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <notebook>
+                    <page name="warehouses" string="Warehouses" groups="stock.group_stock_user">
+                        <group>
+                            <field name="default_warehouse_id" options="{'no_create': True}"
+                                   help="Needed only when this Branch / Site has several warehouses."/>
+                        </group>
+                        <field name="warehouse_ids" readonly="1">
+                            <tree>
+                                <field name="name"/>
+                                <field name="code"/>
+                                <field name="view_location_id"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="node_setup_wizard_form" model="ir.ui.view">
+        <field name="name">node.setup.wizard.form</field>
+        <field name="model">node.setup.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Branch / Site Set-up Check">
+                <p class="text-muted">
+                    Access does not change yet: this checks the Branch / Site set-up before the switch.
+                    "Fill from current set-up" only fills what is still empty (warehouses' Branch / Site from their
+                    locations' tags, users' Allowed Branches / Sites from their locations, warehouses, branch and
+                    dashboard access, national access for Administrators, Accounts, Audit and CFO).
+                </p>
+                <field name="report_html" nolabel="1"/>
+                <footer>
+                    <button name="action_fill" type="object" string="Fill from current set-up" class="btn-primary"/>
+                    <button name="action_refresh" type="object" string="Refresh"/>
+                    <button string="Close" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_node_setup_wizard" model="ir.actions.act_window">
+        <field name="name">Branch / Site Set-up Check</field>
+        <field name="res_model">node.setup.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_node_setup_wizard" name="Branch / Site Set-up Check"
+              parent="stock.menu_stock_config_settings" action="action_node_setup_wizard"
+              sequence="99" groups="base.group_system"/>
 
     <!-- Inventory Administrators choose which operation type a program uses -->
     <record id="stock_view_picking_type_form_inherit_bn_stock_location" model="ir.ui.view">

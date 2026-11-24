@@ -1,6 +1,6 @@
 {
     'name': 'Stock Location Customization',
-    'version': '17.0.1.5.4',
+    'version': '17.0.1.6.0',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -15,6 +15,7 @@
     ],
     'data': [
         'security/group.xml',
+        'security/ir.model.access.csv',
         'security/record_rule.xml',
         'security/document_rule.xml',
         'views/res_users.xml',
