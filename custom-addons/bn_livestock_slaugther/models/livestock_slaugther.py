@@ -299,12 +299,12 @@ class LivestockSlaughter(models.Model):
         if self.state != 'slaughtered':
             raise ValidationError("Cutting can only be started after the animal is slaughtered.")
         if self.transfer_bool:
-            raise ValidationError(_("%s was sent away by Order Transfer: it cannot be cut here.") % self.name)
+            raise ValidationError(_("%s was sent away by Bulk Transfer: it cannot be cut here.") % self.name)
         if not self.product_id:
             raise ValidationError("Please select a product before starting cutting.")
 
-        # from where Slaughtered put the animal into the Cutting location of the same warehouse
-        source_location = self._slaughtered_location()
+        # from the source location (the POS location the animal was sold at) into the Cutting location
+        source_location = self._slaughter_source_location()
         if not self.cutting_location_id:
             self._fill_default_locations()
         if not self.cutting_location_id:

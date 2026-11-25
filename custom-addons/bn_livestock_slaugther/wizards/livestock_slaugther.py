@@ -52,8 +52,9 @@ class LivestockSlaugtherWizard(models.TransientModel):
 
         records_by_location = defaultdict(lambda: self.env['livestock.slaugther'])
         for rec in records:
-            # Bulk: where Slaughtered put the animal; Order Transfer: where it waits for slaughter
-            site_loc = rec._slaughtered_location() if self.is_bulk else rec._slaughter_source_location()
+            # the source location: the POS location the animal was sold at
+            # (Order Transfer brings it there, Bulk Transfer sends it from there)
+            site_loc = rec._slaughter_source_location()
             if site_loc == self.dest_location_id:
                 raise ValidationError(_('%s: %s is where the animal already is (or goes). Please select another location.')
                                       % (rec.name, site_loc.display_name))
@@ -149,8 +150,9 @@ class LivestockSlaugtherWizard(models.TransientModel):
         picking.button_validate()
 
         if self.is_bulk:
+            # the source location stays the POS location the record was made with
+            records.filtered(lambda r: not r.source_location_id).write({'source_location_id': site_loc.id})
             records.write({
-                'source_location_id': site_loc.id,
                 'transfer_location': self.dest_location_id.id,
                 'transfer_picking_id': picking.id,
                 'transfer_bool': True,

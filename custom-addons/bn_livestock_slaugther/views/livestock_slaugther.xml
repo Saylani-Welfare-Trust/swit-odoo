@@ -23,7 +23,7 @@
                 <field name="quantity" />
                 <field name="price" />
                 <field name="pos_order_id" optional="show" />
-                <field name="source_location_id" column_invisible="1" />
+                <field name="source_location_id" optional="hide" />
                 <field name="slaughter_location_id" optional="show" />
                 <field name="cutting_location_id" optional="hide" />
                 <field name="transfer_location" optional="show" />
@@ -77,7 +77,7 @@
                         <group name="livestock_slaugther_col_2">
                             <field name="quantity" />
                             <field name="price" />
-                            <field name="source_location_id" invisible="1" />
+                            <field name="source_location_id" readonly="1" invisible="not source_location_id" />
                             <field name="slaughter_location_option_ids" invisible="1"/>
                             <field name="slaughter_location_id" options="{'no_create': True, 'no_edit': True}"
                                    readonly="state != 'not_received'" required="state == 'not_received'"/>

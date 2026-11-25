@@ -160,11 +160,12 @@ class TestLivestockNodes(TransactionCase):
 
         record.with_user(self.manager).action_cutting()
         cutting = self.karachi_cutting
-        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, goat), 0,
-                         "cutting takes the animal from where Slaughtered put it")
+        self.assertEqual(record._slaughter_source_location(), self.wh_karachi.lot_stock_id)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, goat), 1,
+                         "cutting takes the animal from the source location, not from where Slaughtered put it")
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, cutting), 1)
-        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.wh_karachi.lot_stock_id, allow_negative=True), -1,
-                         "only the Slaughtered transfer left the source location")
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.wh_karachi.lot_stock_id, allow_negative=True), -2,
+                         "Slaughtered and Cutting both take from the source location")
         material = record.cutting_material_id
         self.assertEqual(material.cutting_location_id, cutting)
         self.assertEqual((material.meat_location_id, material.goat_location_id), (self.karachi_meat, self.karachi_goat))
@@ -192,15 +193,52 @@ class TestLivestockNodes(TransactionCase):
         # Slaughtered takes it from there: nothing left behind
         record.with_user(self.manager).action_confirm()
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, waiting), 0)
-        # Bulk Transfer: sent from where Slaughtered put it, then it cannot be cut
+        # Bulk Transfer: sent from the source location, then it cannot be cut
         self.env['livestock.slaugther.wizard'].create({
             'livestock_slaughter_ids': [(6, 0, record.ids)], 'is_bulk': True,
             'dest_location_id': self.wh_lahore.lot_stock_id.id, 'truck_number': 'LN-1',
         }).with_user(self.manager).action_do_transfer()
-        self.assertEqual(record.transfer_picking_id.location_id, self.karachi_slaughter)
-        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.karachi_slaughter), 0)
+        self.assertEqual(record.transfer_picking_id.location_id, waiting, "sent from the source location")
+        self.assertEqual(record.source_location_id, self.wh_karachi.lot_stock_id, "the source location is kept")
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.karachi_slaughter), 1,
+                         "what Slaughtered put there stays")
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, waiting, allow_negative=True), -1)
         with self.assertRaises(ValidationError):
             record.with_user(self.manager).action_cutting()
+
+    def test_pos_location_is_the_source(self):
+        """Slaughtered, Cutting and Bulk Transfer all take the animal from the
+        location of the POS the order line came from, which stays its Source Location."""
+        env = self.env
+        pos_location = env['stock.location'].create({'name': 'LN Karachi POS', 'usage': 'internal',
+                                                     'location_id': self.wh_karachi.view_location_id.id})
+        picking_type = self.wh_karachi.out_type_id.copy({'name': 'LN POS Orders', 'sequence_code': 'LNPOS',
+                                                         'default_location_src_id': pos_location.id})
+        journal = env['account.journal'].create({'name': 'LN Cash', 'code': 'LNC', 'type': 'cash'})
+        method = env['pos.payment.method'].create({'name': 'LN Cash', 'journal_id': journal.id})
+        config = env['pos.config'].create({'name': 'LN Shop', 'picking_type_id': picking_type.id,
+                                           'payment_method_ids': [(6, 0, method.ids)]})
+        cut, sent = env['livestock.slaugther'].create([
+            {'product_id': self.product.id, 'quantity': 1, 'is_goat_depart': True, 'pos_config_id': config.id}
+            for _i in range(2)])
+        self.assertEqual((cut.source_location_id, sent.source_location_id), (pos_location, pos_location))
+        self.assertEqual(cut._slaughter_source_location(), pos_location)
+
+        def qty(location):
+            return env['stock.quant']._get_available_quantity(self.product, location, allow_negative=True)
+        cut.with_user(self.manager).action_confirm()
+        sent.with_user(self.manager).action_confirm()
+        self.assertEqual((qty(pos_location), qty(self.karachi_goat)), (-2, 2), "Slaughtered: from the POS location")
+        cut.with_user(self.manager).action_cutting()
+        self.assertEqual((qty(pos_location), qty(self.karachi_cutting)), (-3, 1), "Cutting: from the POS location")
+        env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_ids': [(6, 0, sent.ids)], 'is_bulk': True,
+            'dest_location_id': self.wh_lahore.lot_stock_id.id, 'truck_number': 'LN-2',
+        }).with_user(self.manager).action_do_transfer()
+        self.assertEqual(sent.transfer_picking_id.location_id, pos_location, "Bulk Transfer: from the POS location")
+        self.assertEqual(qty(pos_location), -4)
+        self.assertEqual((cut.source_location_id, sent.source_location_id), (pos_location, pos_location),
+                         "the Source Location stays the POS location")
 
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites and their own."""
