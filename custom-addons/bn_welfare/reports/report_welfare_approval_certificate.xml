@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Printed when a welfare is approved: Move to Member within the HOD limit, or Final Approval -->
+    <template id="report_welfare_approval_certificate">
+        <t t-call="web.basic_layout">
+            <style>
+                .wac { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #222; }
+                .wac table { width: 100%; border-collapse: collapse; }
+                .wac td { padding: 0; vertical-align: bottom; }
+                .wac-rule { border-bottom: 1.5px solid #222; }
+                .wac-title-box { border: 2px solid #222; text-align: center; padding: 10px 10px 14px; margin: 14px 0 12px; }
+                .wac-title { font-size: 22px; font-weight: bold; margin: 0; }
+                .wac-subtitle { color: #777; font-size: 12px; margin: 4px 0 10px; }
+                .wac-badge { display: inline-block; background: #28a745; color: #fff; font-weight: bold;
+                             font-size: 15px; padding: 5px 34px; border-radius: 4px; }
+                .wac-box { border: 1.5px solid #222; padding: 8px 14px 12px; margin-top: 12px; }
+                .wac-box-title { font-weight: bold; font-size: 14px; border-bottom: 1.5px solid #222; padding-bottom: 5px; }
+                .wac-field td { padding-top: 12px; }
+                .wac-label { white-space: nowrap; width: 1%; padding-right: 8px !important; }
+                .wac-value { border-bottom: 1px solid #aaa; }
+                .wac-summary { border: 2px solid #888; background: #f7f7f7; padding: 10px 22px 12px; margin: 22px 6px 0; }
+                .wac-summary-title { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 6px; }
+                .wac-summary-row td { padding: 9px 0; border-bottom: 1px dashed #ccc; vertical-align: top; }
+                .wac-summary-row:last-child td { border-bottom: 0; }
+                .wac-summary-label { font-weight: bold; white-space: nowrap; width: 1%; padding-right: 8px !important; }
+                .wac-terms { margin: 22px 8px 0; font-size: 11px; }
+                .wac-terms ul { margin: 4px 0 0; padding-left: 18px; }
+                .wac-note { text-align: center; color: #777; font-size: 10px; margin-top: 18px; }
+            </style>
+            <t t-foreach="docs" t-as="welfare">
+                <t t-set="company" t-value="welfare.env.company"/>
+                <t t-set="currency" t-value="welfare.currency_id or company.currency_id"/>
+                <t t-set="cert" t-value="welfare._approval_certificate_values()"/>
+                <div class="page wac">
+                    <!-- Header: logo / trust name and country -->
+                    <table class="wac-rule">
+                        <tr>
+                            <td style="padding-bottom: 8px;">
+                                <img t-if="company.logo" t-att-src="image_data_uri(company.logo)" style="max-height: 50px; max-width: 200px;" alt="Logo"/>
+                            </td>
+                            <td style="text-align: right; padding-bottom: 8px; font-size: 13px;">
+                                <div t-esc="company.name"/>
+                                <div t-if="company.country_id" t-esc="company.country_id.name"/>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <div class="wac-title-box">
+                        <div class="wac-title">WELFARE APPROVAL CERTIFICATE</div>
+                        <div class="wac-subtitle">Official Approval Document</div>
+                        <span class="wac-badge">APPROVED</span>
+                    </div>
+
+                    <table style="font-weight: bold; font-size: 13px;">
+                        <tr>
+                            <td>Reference: <t t-esc="welfare.name"/></td>
+                            <td style="text-align: right;">Date: <t t-esc="cert['date']" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/></td>
+                        </tr>
+                    </table>
+
+                    <!-- Applicant Information -->
+                    <div class="wac-box">
+                        <div class="wac-box-title">Applicant Information</div>
+                        <table class="wac-field"><tr><td class="wac-label">Donee Name:</td><td class="wac-value" t-esc="welfare.donee_id.name or ''"/></tr></table>
+                        <table class="wac-field"><tr><td class="wac-label">CNIC #:</td><td class="wac-value" t-esc="welfare.cnic_no or ''"/></tr></table>
+                        <table class="wac-field"><tr><td class="wac-label">Phone:</td><td class="wac-value" t-esc="cert['phone']"/></tr></table>
+                        <table class="wac-field"><tr><td class="wac-label">Address:</td><td class="wac-value" t-esc="cert['address']"/></tr></table>
+                    </div>
+
+                    <!-- Approval Summary: Cash lines as Cash Disbursement, the other lines as Ration -->
+                    <div class="wac-summary">
+                        <div class="wac-summary-title">Approval Summary</div>
+                        <table>
+                            <tr class="wac-summary-row">
+                                <td class="wac-summary-label">Approved Assistance:</td>
+                                <td t-esc="cert['assistance']"/>
+                            </tr>
+                            <tr class="wac-summary-row" t-if="cert['has_cash']">
+                                <td class="wac-summary-label">Cash Amount:</td>
+                                <td>
+                                    <t t-esc="cert['cash_amount']" t-options="{'widget': 'monetary', 'display_currency': currency}"/>
+                                    <t t-if="cert['recurring']"> per month</t>
+                                </td>
+                            </tr>
+                            <tr class="wac-summary-row" t-if="cert['has_ration']">
+                                <td class="wac-summary-label">Ration:</td>
+                                <td>
+                                    <t t-esc="cert['ration_qty']"/>
+                                    <t t-if="cert['recurring']"> per month</t>
+                                </td>
+                            </tr>
+                            <tr class="wac-summary-row" t-if="cert['has_ration']">
+                                <td class="wac-summary-label">Ration Name:</td>
+                                <td t-esc="cert['ration_names']"/>
+                            </tr>
+                            <tr class="wac-summary-row" t-if="cert['recurring'] and cert['duration']">
+                                <td class="wac-summary-label">Duration:</td>
+                                <td t-esc="cert['duration']"/>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div class="wac-terms">
+                        <strong>Terms &amp; Conditions:</strong>
+                        <ul>
+                            <li>Cash and ration will be disbursed as per the delivery date.</li>
+                            <li>Beneficiary must present original CNIC when receiving.</li>
+                            <li>Valid only for this application; non-transferable.</li>
+                        </ul>
+                    </div>
+
+                    <div class="wac-note">
+                        Computer-generated certificate. Print Date: <t t-esc="cert['date']" t-options="{'widget': 'date', 'format': 'dd-MM-yyyy'}"/>
+                    </div>
+                </div>
+                <div t-if="not welfare_last" style="page-break-after: always;"/>
+            </t>
+            <!-- wkhtmltopdf repeats it at the bottom of every page; it is rendered apart from the page, so inline styles -->
+            <div class="footer">
+                <div style="font-family: Arial, Helvetica, sans-serif; text-align: center; font-size: 12px; border-top: 1.5px solid #222; padding-top: 6px;">
+                    <div t-esc="docs.env.company.website or 'http://saylaniwelfare.com'"/>
+                    <div style="color: #777; font-size: 10px; margin-top: 4px;">Page: <span class="page"/> / <span class="topage"/></div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <record id="paperformat_welfare_approval_certificate" model="report.paperformat">
+        <field name="name">A5 - Welfare Approval Certificate</field>
+        <field name="format">A5</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">8</field>
+        <field name="margin_bottom">20</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_welfare_approval_certificate" model="ir.actions.report">
+        <field name="name">Welfare Approval Certificate</field>
+        <field name="model">welfare</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_welfare.report_welfare_approval_certificate</field>
+        <field name="report_file">bn_welfare.report_welfare_approval_certificate</field>
+        <field name="print_report_name">'Approval Certificate - %s' % (object.name or '').replace('/', '-')</field>
+        <field name="paperformat_id" ref="paperformat_welfare_approval_certificate"/>
+        <!-- Printed by Move to Member / Approve only, not from the Print menu -->
+        <field name="binding_model_id" eval="False"/>
+    </record>
+</odoo>

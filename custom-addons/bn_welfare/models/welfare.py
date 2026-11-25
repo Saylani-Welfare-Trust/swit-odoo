@@ -1282,8 +1282,41 @@ class Welfare(models.Model):
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
             record.state = 'approve' if record._check_amount_within_hod_limit() else 'mem_approve'
+        approved = self.filtered(lambda r: r.state == 'approve')
+        if not approved:
+            return
         # HOD lines may all have been disbursed from POS already
-        self.filtered(lambda r: r.state == 'approve')._auto_disburse_if_all_lines_delivered()
+        approved._auto_disburse_if_all_lines_delivered()
+        # Approved within the HOD limit: print the certificate (Final Approval prints it otherwise)
+        return approved._print_approval_certificate()
+
+    def _print_approval_certificate(self):
+        return self.env.ref('bn_welfare.action_report_welfare_approval_certificate').report_action(self)
+
+    def _approval_certificate_values(self):
+        """Welfare Approval Certificate: Cash lines are the Cash Disbursement, the other (In Kind) lines the Ration"""
+        self.ensure_one()
+        lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        cash = lines.filtered('is_cash_category')
+        ration = lines - cash
+        recurring = self.order_type == 'recurring'
+        durations = dict(lines._fields['recurring_duration'].selection)
+        ration_qty = sum(ration.mapped('quantity'))
+        partner = self.donee_id
+        return {
+            'date': fields.Date.context_today(self),
+            'phone': partner.mobile or partner.phone or '',
+            'address': ', '.join(filter(None, [partner.street, partner.street2, partner.area.name, partner.city])),
+            'assistance': ' + '.join(label for label, found in ((_('Cash Disbursement'), cash), (_('Ration'), ration)) if found) or '-',
+            'has_cash': bool(cash),
+            'cash_amount': sum(cash.mapped('total_amount')),
+            'has_ration': bool(ration),
+            'ration_qty': '%g %s' % (ration_qty, _('Ration Pack') if ration_qty == 1 else _('Ration Packs')),
+            'ration_names': ', '.join(dict.fromkeys(ration.mapped('product_id.name'))),
+            'recurring': recurring,
+            'duration': ', '.join(dict.fromkeys(durations.get(d, d) for d in lines.mapped('recurring_duration') if d)) if recurring else '',
+        }
+
     def action_approve(self):
         """Final approval logic"""
         self._check_welfare_state(('mem_approve',), _('Approve'))
@@ -1296,8 +1329,7 @@ class Welfare(models.Model):
         # HOD lines may all have been disbursed from POS during Final Approval already
         self._auto_disburse_if_all_lines_delivered()
 
-        # Print report
-        return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
+        return self._print_approval_certificate()
     
 
     def action_reject(self):

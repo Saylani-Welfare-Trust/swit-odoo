@@ -1,6 +1,6 @@
 {
     'name': 'Welfare',
-    'version': '17.0.1.6.20',
+    'version': '17.0.1.6.21',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -25,6 +25,7 @@
         'data/disbursement_category.xml',
         
         'reports/report_welfare_collection_document.xml',
+        'reports/report_welfare_approval_certificate.xml',
         
         'views/welfare.xml',
         'views/product_product.xml',
