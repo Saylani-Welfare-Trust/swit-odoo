@@ -19,6 +19,7 @@ PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so pa
 
 WF = 'bn_welfare.%s'
 # Change Inquiry Officer / Reopen Inquiry: the portal's institutional operations, also used for Welfare
+# (the portal has no individual route for them). Full path on the portal server, see _welfare_inquiry_endpoint.
 WELFARE_INQUIRY_RPC = '/rpc/odoo/institutional/'
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
@@ -1133,6 +1134,16 @@ class Welfare(models.Model):
             summary = "No records processed."
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
+    def _welfare_inquiry_endpoint(self, operation):
+        """WELFARE_INQUIRY_RPC + operation relative to the Welfare URL, which usually already ends with /rpc
+        (https://<portal>/rpc + /odoo/institutional/<operation>, not /rpc/rpc/...)"""
+        base = self.clean_url(self.env.company.welfare_url or '').rstrip('/')
+        path = WELFARE_INQUIRY_RPC + operation
+        for prefix in ('/rpc/odoo/institutional', '/rpc/odoo', '/rpc'):
+            if base.endswith(prefix):
+                return path[len(prefix):]
+        return path
+
     def _welfare_officer_call(self, operation, officer):
         """changeInquiryOfficer / reopenInquiry for ``officer`` (by Badge ID); the application is identified by its
         portal ID, Welfare and Sadqa e Jariya Odoo IDs overlap"""
@@ -1146,7 +1157,7 @@ class Welfare(models.Model):
             raise UserError(_("Inquiry Officer %s has no Badge ID, the portal identifies the officer by it.") % officer.name)
         data = {'json': {'applicationId': self.portal_application_id, 'employeeId': employee_id}}
         try:
-            return self._make_sadqa_api_call(WELFARE_INQUIRY_RPC + operation, 'POST', data) or {}
+            return self._make_sadqa_api_call(self._welfare_inquiry_endpoint(operation), 'POST', data) or {}
         except Exception as e:
             # oRPC error kept by _make_sadqa_api_call: ... | Portal response: {"json": {"code": ..., "message": ...}}
             detail = str(e)
