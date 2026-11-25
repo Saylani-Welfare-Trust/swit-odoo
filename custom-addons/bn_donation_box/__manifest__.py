@@ -1,6 +1,6 @@
 {
     'name': 'Donation Box',
-    'version': '17.0.1.6.12',
+    'version': '17.0.1.6.13',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

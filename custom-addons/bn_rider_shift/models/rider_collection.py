@@ -229,6 +229,7 @@ class RiderCollection(models.Model):
 
     @api.model
     def get_rider_collection(self):
+        self.env['key.issuance']._check_pos_box_access()
         collection_ids = self.sudo().search([('amount', '!=', 0), ('state', '=', 'donation_submit')])
 
         if not collection_ids:

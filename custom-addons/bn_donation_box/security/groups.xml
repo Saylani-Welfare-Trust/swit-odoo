@@ -23,8 +23,15 @@
     <record id="donation_box_manager_group" model="res.groups">
         <field name="name">Manager</field>
         <field name="category_id" ref="module_donation_box"/>
-        <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, Complain Center resolution, and the POS donation-box action.</field>
+        <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, and Complain Center resolution. The POS donation-box action is its own group (POS Action).</field>
         <field name="implied_ids" eval="[(6, 0, [ref('donation_box_user_group')])]"/>
+    </record>
+
+    <record id="donation_box_pos_action_group" model="res.groups">
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_donation_box"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: the Donation Box button of the Point of Sale (collect what the riders brought from the boxes). Gives no access to the Donation Box app itself.</field>
     </record>
 
     <record id="donation_box_audit_group" model="res.groups">
