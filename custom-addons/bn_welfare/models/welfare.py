@@ -25,6 +25,8 @@ WELFARE_OFFICER_ROUTES = {
     # no Welfare route shared yet: the institutional one only finds Sadqa e Jariya applications (NOT_FOUND)
     'reopenInquiry': '/rpc/odoo/institutional/reopenInquiry',
 }
+# the Approval Certificate can be printed again from these statuses (HOD lines only in mem_approve)
+APPROVAL_CERTIFICATE_STATES = ('mem_approve', 'approve', 'recurring', 'disbursed')
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
 # Who acts on a welfare in each status (send on, revert, reject).
@@ -1286,8 +1288,27 @@ class Welfare(models.Model):
         if approved:
             # HOD lines may all have been disbursed from POS already
             approved._auto_disburse_if_all_lines_delivered()
-        # the certificate is printed on every Move to Member (also when it goes on to Final Approval)
-        return self._print_approval_certificate()
+        # the certificate is printed on every Move to Member (also when it goes on to Final Approval,
+        # for its HOD lines); nothing approved yet (no HOD line): no certificate
+        printable = self.filtered(lambda r: r._has_approved_lines())
+        return printable._print_approval_certificate() if printable else True
+
+    def _has_approved_lines(self):
+        """Something on the Approval Certificate: every line once approved, the HOD lines while
+        it waits for Final Approval."""
+        self.ensure_one()
+        lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        if self.state == 'mem_approve':
+            lines = lines.filtered('is_hod')
+        return bool(lines)
+
+    def action_print_approval_certificate(self):
+        """Print the Approval Certificate again, as it was given: after the Final Approval without the
+        HOD lines already paid at the POS."""
+        self.ensure_one()
+        if self.state not in APPROVAL_CERTIFICATE_STATES or not self._has_approved_lines():
+            raise UserError(_("This welfare has no approved line yet: there is no Approval Certificate to print."))
+        return self._print_approval_certificate(skip_paid_hod=self.state != 'mem_approve' and bool(self.member_remarks))
 
     def _print_approval_certificate(self, skip_paid_hod=False):
         # options travel in the report's data (the web client drops the action context when downloading a PDF)

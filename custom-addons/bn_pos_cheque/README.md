@@ -35,7 +35,7 @@ flowchart LR
 | Group | Can |
 | --- | --- |
 | *Treasury* | Treasury > POS Cheque: deposit bank, Clear, Bounce |
-| *Cheque / POS Action* | POS Cheques screen: list, Re-Deposit, Settle |
+| *POS Cheque Action* | POS Cheques screen: list, Re-Deposit, Settle |
 
 Every internal user can read cheques; nobody can create or delete them by
 hand (they come from the POS).
