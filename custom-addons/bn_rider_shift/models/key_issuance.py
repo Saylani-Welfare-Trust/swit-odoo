@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import AccessError
 from odoo.tools import float_compare
+
+# who may use the Donation Box button of the POS (the button and these calls)
+POS_BOX_GROUPS = ('bn_donation_box.donation_box_pos_action_group', 'bn_donation_box.donation_box_manager_group')
 
 
 class KeyIssuance(models.Model):
@@ -33,10 +37,24 @@ class KeyIssuance(models.Model):
     # POS RPC entry point
     # ------------------------------------------------------------------
     @api.model
+    def _can_use_pos_box(self):
+        """The Donation Box button of the POS: its POS Action group (or a
+        Donation Box Manager)."""
+        user = self.env.user
+        return self.env.su or any(user.has_group(group) for group in POS_BOX_GROUPS)
+
+    @api.model
+    def _check_pos_box_access(self):
+        if not self._can_use_pos_box():
+            raise AccessError(_('Only the users of "Donation Box / POS Action" can collect donation boxes '
+                                'at the Point of Sale.'))
+
+    @api.model
     def set_donation_amount(self, data):
         """POS Donation Box screen. With check_validation (the popup) the box
         is only checked and its donor returned; the collection is closed when
         the POS order is saved (pos.order._process_order), never before."""
+        self._check_pos_box_access()
         result, collection, issuance = self._check_donation_box(data)
         if result.get('status') != 'success' or (data or {}).get('check_validation'):
             return result

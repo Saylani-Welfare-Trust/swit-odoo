@@ -18,9 +18,15 @@ PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
 PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
 
 WF = 'bn_welfare.%s'
-# Change Inquiry Officer / Reopen Inquiry: the portal's institutional operations, also used for Welfare
-# (the portal has no individual route for them). Full path on the portal server, see _welfare_inquiry_endpoint.
-WELFARE_INQUIRY_RPC = '/rpc/odoo/institutional/'
+# Change Inquiry Officer / Reopen Inquiry: full path on the portal server, see _welfare_inquiry_endpoint
+WELFARE_OFFICER_ROUTES = {
+    # Welfare (individual) route: the portal looks the application up in Welfare
+    'changeInquiryOfficer': '/rpc/odoo/changeInquiryOfficer',
+    # no Welfare route shared yet: the institutional one only finds Sadqa e Jariya applications (NOT_FOUND)
+    'reopenInquiry': '/rpc/odoo/institutional/reopenInquiry',
+}
+# the Approval Certificate can be printed again from these statuses (HOD lines only in mem_approve)
+APPROVAL_CERTIFICATE_STATES = ('mem_approve', 'approve', 'recurring', 'disbursed')
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
 # Who acts on a welfare in each status (send on, revert, reject).
@@ -1135,12 +1141,12 @@ class Welfare(models.Model):
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     def _welfare_inquiry_endpoint(self, operation):
-        """WELFARE_INQUIRY_RPC + operation relative to the Welfare URL, which usually already ends with /rpc
-        (https://<portal>/rpc + /odoo/institutional/<operation>, not /rpc/rpc/...)"""
+        """The portal path of ``operation`` relative to the Welfare URL, which usually already ends with /rpc
+        (https://<portal>/rpc + /odoo/changeInquiryOfficer, not /rpc/rpc/...)"""
         base = self.clean_url(self.env.company.welfare_url or '').rstrip('/')
-        path = WELFARE_INQUIRY_RPC + operation
-        for prefix in ('/rpc/odoo/institutional', '/rpc/odoo', '/rpc'):
-            if base.endswith(prefix):
+        path = WELFARE_OFFICER_ROUTES[operation]
+        for prefix in ('/rpc/odoo', '/rpc'):
+            if base.endswith(prefix) and path.startswith(prefix + '/'):
                 return path[len(prefix):]
         return path
 
@@ -1278,8 +1284,67 @@ class Welfare(models.Model):
             if not record.hod_remarks:
                 raise ValidationError('Please enter HOD Remarks!')
             record.state = 'approve' if record._check_amount_within_hod_limit() else 'mem_approve'
-        # HOD lines may all have been disbursed from POS already
-        self.filtered(lambda r: r.state == 'approve')._auto_disburse_if_all_lines_delivered()
+        approved = self.filtered(lambda r: r.state == 'approve')
+        if approved:
+            # HOD lines may all have been disbursed from POS already
+            approved._auto_disburse_if_all_lines_delivered()
+        # the certificate is printed on every Move to Member (also when it goes on to Final Approval,
+        # for its HOD lines); nothing approved yet (no HOD line): no certificate
+        printable = self.filtered(lambda r: r._has_approved_lines())
+        return printable._print_approval_certificate() if printable else True
+
+    def _has_approved_lines(self):
+        """Something on the Approval Certificate: every line once approved, the HOD lines while
+        it waits for Final Approval."""
+        self.ensure_one()
+        lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        if self.state == 'mem_approve':
+            lines = lines.filtered('is_hod')
+        return bool(lines)
+
+    def action_print_approval_certificate(self):
+        """Print the Approval Certificate again, as it was given: after the Final Approval without the
+        HOD lines already paid at the POS."""
+        self.ensure_one()
+        if self.state not in APPROVAL_CERTIFICATE_STATES or not self._has_approved_lines():
+            raise UserError(_("This welfare has no approved line yet: there is no Approval Certificate to print."))
+        return self._print_approval_certificate(skip_paid_hod=self.state != 'mem_approve' and bool(self.member_remarks))
+
+    def _print_approval_certificate(self, skip_paid_hod=False):
+        # options travel in the report's data (the web client drops the action context when downloading a PDF)
+        data = {'skip_paid_hod': True} if skip_paid_hod else None
+        return self.env.ref('bn_welfare.action_report_welfare_approval_certificate').report_action(self, data=data)
+
+    def _approval_certificate_values(self, skip_paid_hod=False):
+        """Welfare Approval Certificate: Cash lines are the Cash Disbursement, the other (In Kind) lines the Ration.
+        Moved on to Final Approval (over the HOD limit): only the HOD lines are approved yet; approved: all lines,
+        less (Final Approve, ``skip_paid_hod``) the HOD lines already paid at the POS."""
+        self.ensure_one()
+        lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        if self.state == 'mem_approve':
+            lines = lines.filtered('is_hod')
+        elif skip_paid_hod:
+            lines = lines.filtered(lambda l: not (l.is_hod and l.state in ('disbursed', 'collected')))
+        cash = lines.filtered('is_cash_category')
+        ration = lines - cash
+        recurring = self.order_type == 'recurring'
+        durations = dict(lines._fields['recurring_duration'].selection)
+        ration_qty = sum(ration.mapped('quantity'))
+        partner = self.donee_id
+        return {
+            'date': fields.Date.context_today(self),
+            'phone': partner.mobile or partner.phone or '',
+            'address': ', '.join(filter(None, [partner.street, partner.street2, partner.area.name, partner.city])),
+            'assistance': ' + '.join(label for label, found in ((_('Cash Disbursement'), cash), (_('Ration'), ration)) if found) or '-',
+            'has_cash': bool(cash),
+            'cash_amount': sum(cash.mapped('total_amount')),
+            'has_ration': bool(ration),
+            'ration_qty': '%g %s' % (ration_qty, _('Ration Pack') if ration_qty == 1 else _('Ration Packs')),
+            'ration_names': ', '.join(dict.fromkeys(ration.mapped('product_id.name'))),
+            'recurring': recurring,
+            'duration': ', '.join(dict.fromkeys(durations.get(d, d) for d in lines.mapped('recurring_duration') if d)) if recurring else '',
+        }
+
     def action_approve(self):
         """Final approval logic"""
         self._check_welfare_state(('mem_approve',), _('Approve'))
@@ -1292,9 +1357,9 @@ class Welfare(models.Model):
         # HOD lines may all have been disbursed from POS during Final Approval already
         self._auto_disburse_if_all_lines_delivered()
 
-        # Print report
-        return self.env.ref('bn_welfare.action_report_welfare_collection_document').report_action(self)
-    
+        # HOD lines already paid at the POS during Final Approval are left off the certificate
+        return self._print_approval_certificate(skip_paid_hod=True)
+
 
     def action_reject(self):
         self._check_welfare_state(tuple(STEP_GROUPS), _('Reject and Close'))

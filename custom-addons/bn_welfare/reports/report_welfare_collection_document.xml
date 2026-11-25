@@ -91,6 +91,7 @@
                             <div class="flex-column"><div class="signature-line"/>Received By (Donee)</div>
                             <div class="flex-column" style="text-align: right;"><div class="signature-line" style="margin-left: auto;"/>Authorized Signature</div>
                         </div>
+                        <div style="text-align: center; font-size: 10px; color: #666; margin-top: 10px;">Powered by BytesNode</div>
                     </div>
                 </t>
             </main>
@@ -102,5 +103,8 @@
         <field name="report_type">qweb-pdf</field>
         <field name="report_name">bn_welfare.report_welfare_collection_document</field>
         <field name="report_file">welfare_collection</field>
+        <!-- No longer printed by the Final Approval (it prints the Approval Certificate): from the Print menu -->
+        <field name="binding_model_id" ref="model_welfare"/>
+        <field name="binding_type">report</field>
     </record>
 </odoo>

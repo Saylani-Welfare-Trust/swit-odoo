@@ -67,6 +67,7 @@
                     <button string="Return" name="action_return_to_pos" type="object" class="oe_highlight"  invisible='1' groups = "bn_welfare.group_bn_welfare_user"/>
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']" groups="bn_welfare.group_bn_welfare_user,bn_welfare.group_bn_welfare_committee,bn_welfare.group_welfare_hod,bn_welfare.group_welfare_member"/>
                     <button string="Print Info" name="action_print_info" type="object" class="btn-secondary"/>
+                    <button string="Approval Certificate" name="action_print_approval_certificate" type="object" class="btn-secondary" invisible="state not in ('mem_approve', 'approve', 'recurring', 'disbursed')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>   
 

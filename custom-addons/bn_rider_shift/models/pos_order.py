@@ -15,7 +15,12 @@ class POSOrder(models.Model):
         order_id = super()._process_order(order, draft, existing_order)
         box_data = ((order.get('data') or {}).get('extra_data') or {}).get('donation_box')
         pos_order = self.browse(order_id)
-        if box_data and pos_order.state in ('paid', 'done', 'invoiced'):
+        if box_data and pos_order.state in ('paid', 'done', 'invoiced') \
+                and not self.env['key.issuance']._can_use_pos_box():
+            # the button is not shown to them: the order stays, the box is left open
+            _logger.warning("POS order %s: donation box not closed: %s is not in Donation Box / POS Action",
+                            pos_order.name, self.env.user.login)
+        elif box_data and pos_order.state in ('paid', 'done', 'invoiced'):
             KeyIssuance = self.env['key.issuance'].sudo()
             result, collection, issuance = KeyIssuance._check_donation_box(box_data)
             if result.get('status') == 'success':

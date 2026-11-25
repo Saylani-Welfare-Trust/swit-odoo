@@ -113,3 +113,39 @@ class TestWelfare(TransactionCase):
         self.product.categ_id = rice  # sub-category of the type's category
         Line.create({'welfare_id': welfare.id, 'product_id': self.product.id, 'quantity': 1, 'amount': 1,
                      'disbursement_application_type_id': app_type.id})
+
+    def test_approval_certificate(self):
+        """Move to Member prints the Approval Certificate; it renders, can be printed
+        again once approved, never before, and never empty."""
+        welfare = self._welfare()
+        with self.assertRaises(UserError):
+            welfare.action_print_approval_certificate()  # Draft: nothing approved
+        self._to_hod(welfare)
+        welfare.hod_remarks = 'ok'
+        action = welfare.with_user(self.hod).action_move_to_member()
+        certificate = self.env.ref('bn_welfare.action_report_welfare_approval_certificate')
+        self.assertEqual(action.get('report_name'), certificate.report_name)
+        if welfare.state == 'mem_approve':
+            welfare.member_remarks = 'ok'
+            action = welfare.with_user(self.member).action_approve()
+            self.assertEqual(action.get('report_name'), certificate.report_name)
+            self.assertTrue(action['data']['skip_paid_hod'], "after the Final Approval, without the HOD lines paid")
+        html = certificate._render_qweb_html(certificate.report_name, welfare.ids,
+                                              data=action.get('data'))[0].decode()
+        self.assertIn('WELFARE APPROVAL CERTIFICATE', html)
+        self.assertIn(self.donee.name, html)
+        again = welfare.with_user(self.user).action_print_approval_certificate()
+        self.assertEqual(again.get('report_name'), certificate.report_name)
+
+        # waiting for the Final Approval without any HOD line: nothing approved, nothing printed
+        pending = self._welfare()
+        pending.write({'state': 'mem_approve'})
+        pending.welfare_line_ids.filtered('is_hod').unlink()
+        self.assertFalse(pending._has_approved_lines())
+        with self.assertRaises(UserError):
+            pending.action_print_approval_certificate()
+
+    def test_collection_document_in_print_menu(self):
+        """The Final Approval prints the certificate: the collection document stays in the Print menu."""
+        report = self.env.ref('bn_welfare.action_report_welfare_collection_document')
+        self.assertEqual(report.binding_model_id.model, 'welfare')
