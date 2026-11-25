@@ -11,52 +11,52 @@
     <!-- 1. BASE USER GROUPS                        -->
     <!-- ========================================== -->
     <record id="group_treasury_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Treasury</field>
+        <field name="name">Treasury</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_pos_order_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / POS Order</field>
+        <field name="name">POS Order</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_pos_dd_report_user" model="res.groups">
-        <field name="name">Report / POS &amp; Direct Deposits</field>
+        <field name="name">POS &amp; Direct Deposits Report</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_donation_box_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Donation Box</field>
+        <field name="name">Donation Box</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_profile_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Profile Management</field>
+        <field name="name">Profile Management</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_din_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Donation In Kind</field>
+        <field name="name">Donation In Kind</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_donation_inflow_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Donation Inflows</field>
+        <field name="name">Donation Inflows</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_profit_loss_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Profit &amp; Loss</field>
+        <field name="name">Profit &amp; Loss</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_livestock_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Livestock</field>
+        <field name="name">Livestock</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 
     <record id="group_shariah_dashboard_user" model="res.groups">
-        <field name="name">Dashboard / Shariah Law</field>
+        <field name="name">Shariah Law</field>
         <field name="category_id" ref="module_category_bn_dashboard"/>
     </record>
 

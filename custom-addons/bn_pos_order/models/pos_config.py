@@ -12,6 +12,6 @@ class PosConfig(models.Model):
         # a write that leaves the shop as it is needs no right
         if 'active' in vals and not self.env.su and not self.env.user.has_group(ARCHIVE_GROUP):
             if self.filtered(lambda config: config.active != bool(vals['active'])):
-                raise AccessError(_('Only users in the "POS / Archive and Unarchived" group '
+                raise AccessError(_('Only users in the "Archive and Unarchived POS Shops" group '
                                     'can archive or restore a shop.'))
         return super().write(vals)
