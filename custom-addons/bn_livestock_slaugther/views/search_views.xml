@@ -96,9 +96,9 @@
                 <field name="cutting_line_ids" string="Line Product" filter_domain="[('cutting_line_ids.product_id', 'ilike', self)]"/>
                 <separator/>
                 <filter name="filter_state_not_received" string="Draft" domain="[('state', '=', 'not_received')]"/>
-                <filter name="filter_state_slaughtered" string="Slaughtered" domain="[('state', '=', 'slaughtered')]"/>
+                <filter name="filter_state_slaughtered" string="Slaughter" domain="[('state', '=', 'slaughtered')]"/>
                 <filter name="filter_state_cutting" string="Cutting" domain="[('state', '=', 'cutting')]"/>
-                <filter name="filter_state_material_request" string="Material Request" domain="[('state', '=', 'material_request')]"/>
+                <filter name="filter_state_material_request" string="Split" domain="[('state', '=', 'material_request')]"/>
                 <filter name="filter_state_done" string="Done" domain="[('state', '=', 'done')]"/>
                 <separator/>
                 <filter name="filter_meat_depart" string="Meat Department" domain="[('is_meat_depart', '=', True)]"/>

@@ -240,9 +240,9 @@ export class LivestockDashboard extends Component {
     openStateList(stateKey) {
         const stateLabels = {
             'not_received': 'Draft',
-            'slaughtered': 'Slaughtered',
+            'slaughtered': 'Slaughter',
             'cutting': 'Cutting',
-            'material_request': 'Material Request',
+            'material_request': 'Split',
             'done': 'Done',
         };
         const label = stateLabels[stateKey] || 'Livestock';

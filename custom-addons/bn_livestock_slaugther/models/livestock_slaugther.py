@@ -5,9 +5,9 @@ from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_doma
 
 state_selection = [
     ('not_received', 'Draft'),
-    ('slaughtered', 'Slaughtered'),
+    ('slaughtered', 'Slaughter'),
     ('cutting', 'Cutting'),
-    ('material_request', 'Material Request'),
+    ('material_request', 'Split'),
     ('done', 'Done')
 ]
 
@@ -31,7 +31,7 @@ class LivestockSlaughter(models.Model):
         string='Cutting Lines',
         readonly=True,
     )
-    material_request_id = fields.Many2one('livestock.cutting.material', string='Material Request', copy=False)
+    material_request_id = fields.Many2one('livestock.cutting.material', string='Split', copy=False)
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
@@ -247,7 +247,7 @@ class LivestockSlaughter(models.Model):
                 continue
             not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
         if not_ready:
-            message = (_("Bulk Transfer is only for Slaughtered lines that are not bulk transferred yet.") if bulk
+            message = (_("Bulk Transfer is only for lines in Slaughter that are not bulk transferred yet.") if bulk
                        else _("Order Transfer is only for Draft lines that are not order transferred yet."))
             raise ValidationError(
                 _("%s Remove these lines from your selection:\n%s") % (message, "\n".join(not_ready))
@@ -429,7 +429,7 @@ class LivestockSlaughter(models.Model):
             not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
         if not_ready:
             raise ValidationError(
-                _("Bulk Cutting is only for Slaughtered lines that are not bulk transferred. "
+                _("Bulk Cutting is only for lines in Slaughter that are not bulk transferred. "
                   "Remove these lines from your selection:\n%s") % "\n".join(not_ready))
         self._fill_default_locations()
         no_location = self.filtered(lambda r: not r.cutting_location_id)
@@ -451,9 +451,9 @@ class LivestockSlaughter(models.Model):
         """Lines cut before the material request was made with the cutting."""
         self.ensure_one()
         if self.state != 'cutting':
-            raise ValidationError("Material Request can only be opened during cutting.")
+            raise ValidationError("Split can only be opened during cutting.")
         if not self.product_id:
-            raise ValidationError("Please select a product before opening the material request.")
+            raise ValidationError("Please select a product before opening the split.")
         material_request = self._create_material_request()
         self.state = 'material_request'
         return {

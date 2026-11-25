@@ -53,7 +53,7 @@
                     </group>
 
                     <notebook>
-                        <page name="material_request" string="Material Request">
+                        <page name="material_request" string="Split">
                             <field name="livestock_cutting_material_line_ids" editable="bottom">
                                 <tree>
                                     <field name="product_id" />
@@ -73,12 +73,12 @@
     </record>
 
     <record id="livestock_cutting_material_action" model="ir.actions.act_window">
-        <field name="name">Material Request</field>
+        <field name="name">Split</field>
         <field name="res_model">livestock.cutting.material</field>
         <field name="view_mode">tree,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                Let's add a new livestock cutting material request...
+                Let's add a new livestock split...
             </p>
         </field>
     </record>
@@ -86,7 +86,7 @@
     <menuitem
         id="livestock_cutting_material_menu"
         groups="bn_livestock_slaugther.livestock_slaugther_user_group,bn_livestock_slaugther.livestock_slaugther_audit_group"
-        name="Material Request"
+        name="Split"
         action="livestock_cutting_material_action"
         parent="bn_livestock_slaugther.livestock_menu"
         sequence="2"/>
