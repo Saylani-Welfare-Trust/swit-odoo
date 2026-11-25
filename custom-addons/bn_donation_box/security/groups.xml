@@ -23,7 +23,7 @@
     <record id="donation_box_manager_group" model="res.groups">
         <field name="name">Manager</field>
         <field name="category_id" ref="module_donation_box"/>
-        <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject, Complain Center resolution, and the POS donation-box action.</field>
+        <field name="comment">Everything User can do, plus every area's approve/resolve/process action: Registration approval and change requests, Request approve/reject and Complain Center resolution.</field>
         <field name="implied_ids" eval="[(6, 0, [ref('donation_box_user_group')])]"/>
     </record>
 
@@ -39,6 +39,18 @@
         <field name="category_id" ref="module_donation_box"/>
         <field name="comment">Full control: everything Manager can do, plus delete rights and Installation Category / Donation Products configuration.</field>
         <field name="implied_ids" eval="[(6, 0, [ref('donation_box_manager_group'), ref('donation_box_audit_group')])]"/>
+    </record>
+
+    <!-- POS "Donation Box" action (rider collections paid at the Point of
+         Sale). Standalone, like the other modules' POS Action groups: give it
+         to cashiers; it opens no backend menu. Not the retired
+         donation_box_pos_action_group below, whose existence bn_rider_shift
+         uses to recognise a pre_production database. -->
+    <record id="donation_box_pos_group" model="res.groups">
+        <field name="name">POS Action</field>
+        <field name="category_id" ref="module_donation_box"/>
+        <field name="implied_ids" eval="[(5, 0, 0)]"/>
+        <field name="comment">Cashiers: the Donation Box action at the Point of Sale, to pay rider collections.</field>
     </record>
 
     <record id="complain_center_admin_group" model="res.groups">
@@ -60,16 +72,23 @@
     </record>
 
     <!-- Groups of earlier versions (pre_production): their users keep the access
-         they had before those groups are removed by the upgrade. POS Action was
-         implied by User (and implied it back), so its users become Users: the POS
-         "Donation Box" button is for Managers here, give them that group if they
-         need the button. Donation Products / Inventory showed the products on hand,
+         they had before those groups are removed by the upgrade. The old POS
+         Action was implied by User (and implied it back), so its users become
+         Users and keep the POS button through the new POS Action group.
+         Donation Products / Inventory showed the products on hand,
          which the read-only Audit group sees. Stock Location's Location Menu group
          became Locations Menu. Nothing to move on a database that never had them. -->
     <function model="res.groups" name="_move_retired_group_users" eval="[{
-        'bn_donation_box.donation_box_pos_action_group': ['bn_donation_box.donation_box_user_group', 'bn_donation_box.donation_box_root_group'],
+        'bn_donation_box.donation_box_pos_action_group': ['bn_donation_box.donation_box_user_group', 'bn_donation_box.donation_box_root_group', 'bn_donation_box.donation_box_pos_group'],
         'bn_donation_box.donation_product_onhand_group': ['bn_donation_box.donation_box_audit_group', 'bn_donation_box.donation_box_root_group'],
         'bn_stock_location.inventory_location_menu_group': 'bn_stock_location.stock_location_user_group',
     }]"/>
+
+    <!-- Until POS Action existed the POS button was shown to Managers: on the
+         first upgrade with it they get the group, so nobody loses the button.
+         Remove a Manager from POS Action afterwards if they should not use it. -->
+    <function model="res.groups" name="_move_retired_group_users" eval="[{
+        'bn_donation_box.donation_box_manager_group': 'bn_donation_box.donation_box_pos_group',
+    }, 'bn_donation_box.pos_group']"/>
 
 </odoo>
