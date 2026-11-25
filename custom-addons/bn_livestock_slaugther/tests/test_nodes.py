@@ -1,4 +1,4 @@
-from odoo.exceptions import ValidationError
+from odoo.exceptions import AccessError, ValidationError
 from odoo.tests import TransactionCase, tagged
 
 
@@ -277,12 +277,18 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(record.source_location_id, self.wh_karachi.lot_stock_id, "the source stays")
         self.assertEqual(seen_by((karachi_user, lahore_user)), (False, True), "the receiving location's users")
 
-        # a Destination Location without an analytic account: no one (but unrestricted users)
+        # a Destination Location without an analytic account: its warehouse's Branch / Site
         record = Slaughter.create({'product_id': self.product.id, 'quantity': 1,
                                    'source_location_id': self.karachi_cutting.id})
         self.assertFalse(self.karachi_cutting.analytic_account_id)
-        self.assertEqual(seen_by((karachi_user, lahore_user)), (False, False))
+        self.assertEqual(seen_by((karachi_user, lahore_user)), (True, False), "the warehouse's Branch / Site")
         self.assertTrue(Slaughter.with_user(self.manager).search([('id', '=', record.id)]), "unrestricted")
+        # a location without an analytic account outside any warehouse: national users only
+        point = self.env['stock.location'].create({'name': 'LN Point', 'usage': 'internal'})
+        record = Slaughter.create({'product_id': self.product.id, 'quantity': 1, 'source_location_id': point.id})
+        self.assertEqual(seen_by((karachi_user, lahore_user)), (False, False))
+        karachi_user.all_nodes = True
+        self.assertEqual(seen_by((karachi_user,)), (True,), "national")
 
         unsourced = Slaughter.create({'product_id': self.product.id, 'quantity': 1})
         self.assertTrue(unsourced.source_location_id, "a line not from a POS waits in its warehouse")
@@ -345,7 +351,8 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(qty(no_bom, self.karachi_cutting), 0)
 
     def test_document_rule(self):
-        """A user sees the documents of their Branches / Sites and their own."""
+        """A user sees the documents of their Branches / Sites, not the ones they
+        created elsewhere."""
         Requisition = self.env['livestock.requisition']
         karachi_doc = Requisition.create({'destination_location_id': self.wh_karachi.lot_stock_id.id})
         lahore_doc = Requisition.create({'destination_location_id': self.wh_lahore.lot_stock_id.id})
@@ -357,7 +364,50 @@ class TestLivestockNodes(TransactionCase):
             'allowed_node_ids': [(6, 0, self.lahore.ids)]})
         both = karachi_doc | lahore_doc
         own = Requisition.with_user(user).create({})
+        self.assertEqual(own.node_id, self.lahore, "no location yet: its creator's only Branch / Site")
         visible = Requisition.with_user(user).search([('id', 'in', (both | own).ids)])
-        self.assertEqual(visible, lahore_doc | own, "its Branch / Site and its own")
+        self.assertEqual(visible, lahore_doc | own, "its Branch / Site")
+        # made for another Branch / Site: its creator cannot keep it
+        with self.assertRaises(AccessError):
+            Requisition.with_user(user).create({'destination_location_id': self.wh_karachi.lot_stock_id.id})
+        moved = Requisition.with_user(user).create({'destination_location_id': self.wh_lahore.lot_stock_id.id})
+        moved.sudo().destination_location_id = self.wh_karachi.lot_stock_id
+        self.assertEqual(moved.node_id, self.gulshan)
+        self.assertFalse(Requisition.with_user(user).search([('id', '=', moved.id)]), "created by them: not enough")
+        for model in ('livestock.cutting', 'livestock.cutting.material', 'livestock.meat.management',
+                      'distribution.center', 'livestock.requisition'):
+            rule = self.env['ir.rule'].search([('model_id.model', '=', model), ('global', '=', True)])
+            self.assertTrue(rule)
+            self.assertNotIn('create_uid', ''.join(rule.mapped('domain_force')), model)
         user.all_nodes = True
         self.assertEqual(Requisition.with_user(user).search([('id', 'in', both.ids)]), both, "national")
+
+    def test_branch_user_bulk_transfer(self):
+        """A branch user (no national access) sends a slaughtered line within
+        their Branch / Site: the transfer runs under the rules, the line stays
+        theirs, and other branches still do not see it."""
+        self.wh_karachi.lot_stock_id.analytic_account_id = self.gulshan
+        Slaughter = self.env['livestock.slaugther']
+        record = Slaughter.create({'product_id': self.product.id, 'quantity': 1,
+                                   'source_location_id': self.wh_karachi.lot_stock_id.id})
+        record.state = 'slaughtered'
+
+        def user(login, node):
+            return self.env['res.users'].with_context(no_reset_password=True).create({
+                'name': login, 'login': login,
+                'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.env.ref('stock.group_stock_user').id,
+                                      self.env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group').id,
+                                      self.env.ref('bn_livestock_slaugther.livestock_slaugther_admin_group').id])],
+                'allowed_node_ids': [(6, 0, node.ids)],
+                'allowed_product_category_ids': [(6, 0, self.product.categ_id.ids)]})
+        sender, other = user('ln_sender', self.gulshan), user('ln_other', self.lahore)
+        self.assertFalse(sender.all_nodes or other.all_nodes)
+        self.env['livestock.slaugther.wizard'].with_user(sender).create({
+            'livestock_slaughter_ids': [(6, 0, record.ids)], 'is_bulk': True,
+            'dest_location_id': self.karachi_meat.id, 'truck_number': 'LN-4',
+        }).action_do_transfer()
+        self.assertEqual(record.transfer_location, self.karachi_meat)
+        self.assertFalse(self.karachi_meat.analytic_account_id)
+        self.assertTrue(Slaughter.with_user(sender).search([('id', '=', record.id)]),
+                        "no analytic account on the location: its warehouse's Branch / Site")
+        self.assertFalse(Slaughter.with_user(other).search([('id', '=', record.id)]))

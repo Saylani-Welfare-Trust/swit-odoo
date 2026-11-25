@@ -61,3 +61,22 @@ class TestDashboardNodes(TransactionCase):
         self.assertIn(self.gulshan, Order.with_user(self.city)._user_pos_accounts())
         options = self.env['pos.dd.report'].with_user(self.city).get_location_filter_options()
         self.assertNotIn(self.lahore.id, [c['id'] for c in options['cities']])
+
+    def test_livestock_lines_follow_their_destination(self):
+        """The Livestock dashboard counts the lines of the user's Branches / Sites
+        by their Destination Location, like the slaughter list: no rule of its own."""
+        rules = self.env['ir.rule'].search([('model_id.model', '=', 'livestock.slaugther')])
+        self.assertEqual(rules.mapped('global'), [True], "one rule, the Destination Location's analytic account")
+        Warehouse = self.env['stock.warehouse']
+        wh_gulshan = Warehouse.create({'name': 'DN WH Gulshan', 'code': 'DNG', 'node_id': self.gulshan.id})
+        wh_lahore = Warehouse.create({'name': 'DN WH Lahore', 'code': 'DNL', 'node_id': self.lahore.id})
+        product = self.env['product.product'].create({'name': 'DN Goat', 'type': 'product'})
+        line = self.env['livestock.slaugther'].create({'product_id': product.id, 'quantity': 1,
+                                                       'source_location_id': wh_gulshan.lot_stock_id.id})
+        Slaughter = self.env['livestock.slaugther']
+
+        def sees(user):
+            return bool(Slaughter.with_user(user).search([('id', '=', line.id)]))
+        self.assertEqual((sees(self.city), sees(self.lahore_user)), (True, False))
+        line.transfer_location = wh_lahore.lot_stock_id  # sent to Lahore
+        self.assertEqual((sees(self.city), sees(self.lahore_user)), (False, True))

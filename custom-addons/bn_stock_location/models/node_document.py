@@ -87,7 +87,11 @@ class NodeDocumentMixin(models.AbstractModel):
         if model == 'hr.employee':
             return self._node_of(record.analytic_account_id)
         if model == 'res.users':
-            return self._node_of(record.employee_ids[:1])
+            # their employee's branch, else their only Allowed Branch / Site
+            node = self._node_of(record.employee_ids[:1])
+            if not node and not record.all_nodes and len(record.allowed_node_ids) == 1:
+                node = self._node_of(record.allowed_node_ids)
+            return node
         if 'node_id' in record._fields:
             return record.node_id
         return Account
