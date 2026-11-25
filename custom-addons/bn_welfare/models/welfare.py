@@ -18,9 +18,13 @@ PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
 PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
 
 WF = 'bn_welfare.%s'
-# Change Inquiry Officer / Reopen Inquiry: the portal's institutional operations, also used for Welfare
-# (the portal has no individual route for them). Full path on the portal server, see _welfare_inquiry_endpoint.
-WELFARE_INQUIRY_RPC = '/rpc/odoo/institutional/'
+# Change Inquiry Officer / Reopen Inquiry: full path on the portal server, see _welfare_inquiry_endpoint
+WELFARE_OFFICER_ROUTES = {
+    # Welfare (individual) route: the portal looks the application up in Welfare
+    'changeInquiryOfficer': '/rpc/odoo/changeInquiryOfficer',
+    # no Welfare route shared yet: the institutional one only finds Sadqa e Jariya applications (NOT_FOUND)
+    'reopenInquiry': '/rpc/odoo/institutional/reopenInquiry',
+}
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
 # Who acts on a welfare in each status (send on, revert, reject).
@@ -1143,12 +1147,12 @@ class Welfare(models.Model):
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     def _welfare_inquiry_endpoint(self, operation):
-        """WELFARE_INQUIRY_RPC + operation relative to the Welfare URL, which usually already ends with /rpc
-        (https://<portal>/rpc + /odoo/institutional/<operation>, not /rpc/rpc/...)"""
+        """The portal path of ``operation`` relative to the Welfare URL, which usually already ends with /rpc
+        (https://<portal>/rpc + /odoo/changeInquiryOfficer, not /rpc/rpc/...)"""
         base = self.clean_url(self.env.company.welfare_url or '').rstrip('/')
-        path = WELFARE_INQUIRY_RPC + operation
-        for prefix in ('/rpc/odoo/institutional', '/rpc/odoo', '/rpc'):
-            if base.endswith(prefix):
+        path = WELFARE_OFFICER_ROUTES[operation]
+        for prefix in ('/rpc/odoo', '/rpc'):
+            if base.endswith(prefix) and path.startswith(prefix + '/'):
                 return path[len(prefix):]
         return path
 
