@@ -240,6 +240,49 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual((cut.source_location_id, sent.source_location_id), (pos_location, pos_location),
                          "the Source Location stays the POS location")
 
+    def test_destination_rule(self):
+        """A line is seen by the users whose analytic accounts include the one of its
+        Destination Location: its Source (POS) location until a Bulk Transfer sends
+        it elsewhere."""
+        Slaughter = self.env['livestock.slaugther']
+        self.wh_karachi.lot_stock_id.analytic_account_id = self.gulshan
+        self.wh_lahore.lot_stock_id.analytic_account_id = self.lahore
+        record = Slaughter.create({'product_id': self.product.id, 'quantity': 1,
+                                   'source_location_id': self.wh_karachi.lot_stock_id.id})
+        self.assertEqual(record.transfer_location, record.source_location_id, "it starts at its source")
+
+        def user(login, node):
+            return self.env['res.users'].with_context(no_reset_password=True).create({
+                'name': login, 'login': login,
+                'groups_id': [(6, 0, [self.env.ref('base.group_user').id,
+                                      self.env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group').id,
+                                      self.env.ref('bn_livestock_slaugther.livestock_slaugther_user_group').id])],
+                'allowed_node_ids': [(6, 0, node.ids)]})
+        karachi_user, lahore_user = user('ln_dest_k', self.gulshan), user('ln_dest_l', self.lahore)
+
+        def seen_by(users):
+            return tuple(bool(Slaughter.with_user(u).search([('id', '=', record.id)])) for u in users)
+        self.assertEqual(seen_by((karachi_user, lahore_user)), (True, False), "the POS branch")
+        record.state = 'slaughtered'
+        self.env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_ids': [(6, 0, record.ids)], 'is_bulk': True,
+            'dest_location_id': self.wh_lahore.lot_stock_id.id, 'truck_number': 'LN-3',
+        }).with_user(self.manager).action_do_transfer()
+        self.assertEqual(record.transfer_location, self.wh_lahore.lot_stock_id)
+        self.assertEqual(record.source_location_id, self.wh_karachi.lot_stock_id, "the source stays")
+        self.assertEqual(seen_by((karachi_user, lahore_user)), (False, True), "the receiving location's users")
+
+        # a Destination Location without an analytic account: no one (but unrestricted users)
+        record = Slaughter.create({'product_id': self.product.id, 'quantity': 1,
+                                   'source_location_id': self.karachi_cutting.id})
+        self.assertFalse(self.karachi_cutting.analytic_account_id)
+        self.assertEqual(seen_by((karachi_user, lahore_user)), (False, False))
+        self.assertTrue(Slaughter.with_user(self.manager).search([('id', '=', record.id)]), "unrestricted")
+
+        unsourced = Slaughter.create({'product_id': self.product.id, 'quantity': 1})
+        self.assertTrue(unsourced.source_location_id, "a line not from a POS waits in its warehouse")
+        self.assertEqual(unsourced.transfer_location, unsourced.source_location_id)
+
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites and their own."""
         Requisition = self.env['livestock.requisition']

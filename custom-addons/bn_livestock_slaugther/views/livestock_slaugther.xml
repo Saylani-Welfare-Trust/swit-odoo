@@ -86,7 +86,7 @@
                                    required="state == 'slaughtered' and not transfer_bool"/>
                             <field name="order_transfer_location_id" invisible="not order_transfer_location_id" />
                             <field name="order_transfer_picking_id" invisible="not order_transfer_picking_id" />
-                            <field name="transfer_location" readonly="1" invisible="not transfer_bool" />
+                            <field name="transfer_location" readonly="1" invisible="not transfer_location" />
                             <field name="truck_number" invisible="not truck_number" />
                             <field name="transfer_picking_id" invisible="not transfer_picking_id" />
                             <field name="transfer_remarks" readonly="1" invisible="not transfer_remarks" />

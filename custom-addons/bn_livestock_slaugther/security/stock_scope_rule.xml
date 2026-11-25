@@ -3,10 +3,16 @@
 
     <!-- Same scope as bn_stock_location (security/record_rule.xml): only the warehouses / locations set on the user; a document without one yet stays visible. -->
 
+    <!-- Livestock Slaughter: only the lines whose Destination Location has one of the
+         user's analytic accounts (Analytic Accounts in Scope, from their Allowed Branches /
+         Sites). The Destination Location starts as the Source Location (the POS location of
+         the order line) and changes with the Bulk Transfer: the receiving location's users
+         see it then. A location without an analytic account is seen by nobody but the
+         unrestricted users below. -->
     <record id="scope_livestock_slaugther_rule" model="ir.rule">
-        <field name="name">Livestock Slaughter: allowed warehouses / locations</field>
+        <field name="name">Livestock Slaughter: Destination Location analytic account</field>
         <field name="model_id" ref="bn_livestock_slaugther.model_livestock_slaugther"/>
-        <field name="domain_force">['|', '|', ('source_location_id', '=', False), ('source_location_id', 'child_of', user.scope_location_ids.ids), ('transfer_location', 'child_of', user.scope_location_ids.ids)]</field>
+        <field name="domain_force">[('transfer_location.analytic_account_id', 'in', user.scope_analytic_account_ids.ids)]</field>
         <field name="groups" eval="[(6, 0, [ref('base.group_user')])]"/>
     </record>
 

@@ -1,5 +1,5 @@
 from odoo import models, fields, _, api
-from odoo.exceptions import ValidationError, AccessError
+from odoo.exceptions import ValidationError, AccessError, UserError
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
@@ -127,8 +127,25 @@ class LivestockSlaughter(models.Model):
             location = record._pos_source_location()
             if location:
                 record.sudo().source_location_id = location.id
+        records._init_destination()
         records._fill_default_locations()
         return records
+
+    def _init_destination(self):
+        """Source Location: the POS location the line came from (a line not from
+        a POS: where it waits for slaughter in its warehouse). The Destination
+        Location starts the same and changes with the Bulk Transfer; users see
+        the lines whose Destination Location has one of their analytic accounts."""
+        for record in self.sudo():
+            source = record.source_location_id
+            if not source:
+                try:
+                    source = record._slaughter_source_location()
+                except UserError:  # no warehouse to wait in
+                    continue
+                record.source_location_id = source
+            if source and not record.transfer_location:
+                record.transfer_location = source
 
     def _slaughter_role(self):
         """The location role the animal's Slaughtered destination must have."""
