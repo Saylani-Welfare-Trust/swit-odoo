@@ -61,7 +61,7 @@
         <field name="name">Livestock Cutting</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('state', '=', 'cutting')]</field>
+        <field name="domain">[('state', 'in', ('cutting', 'material_request'))]</field>
         <field name="context">{
             'create': 0,
             'edit': 0,

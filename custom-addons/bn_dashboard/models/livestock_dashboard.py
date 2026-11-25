@@ -10,7 +10,7 @@ NEXT_ACTION = {
     'not_received': 'Waiting for slaughter',
     'slaughtered': 'Start Cutting',
     'cutting': 'Create Material Request',
-    'material_request': 'End Cutting',
+    'material_request': 'Send to Goat & Meat',
     'done': 'Completed',
 }
 STATE_COLOR = {

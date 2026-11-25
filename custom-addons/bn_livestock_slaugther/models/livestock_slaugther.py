@@ -355,35 +355,47 @@ class LivestockSlaughter(models.Model):
         picking.action_assign()
         picking.button_validate()
 
-        self.start_time = fields.Datetime.now()
-        self.state = 'cutting'
+        # the material request is made with the cutting, from the product's BOM
+        self.state = 'material_request'
         self.cutting_hide = True
-
-        cutting_record = self.cutting_material_id
-        if not cutting_record:
-            cutting_record = self.env['livestock.cutting.material'].create({
-                'product_id': self.product_id.id,
-                'quantity': self.quantity,
-                'price': self.price,
-                'code': self.code,
-                'state': 'received',
-                'start_time': self.start_time,
-                'livestock_slaughter_id': self.id,
-                'cutting_location_id': self.cutting_location_id.id,
-            })
-            self.cutting_material_id = cutting_record.id
-        else:
-            cutting_record.write({
-                'livestock_cutting_material_line_ids': [(5, 0, 0)],
-            })
+        material_request = self._create_material_request()
+        self.cutting_material_id = material_request.id
 
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.cutting.material',
-            'res_id': cutting_record.id,
+            'res_id': material_request.id,
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def _create_material_request(self):
+        """The material request of the cut animal: the components of its product's BOM."""
+        self.ensure_one()
+        material_request = self.material_request_id
+        if not material_request:
+            material_request = self.env['livestock.cutting.material'].create({
+                'product_id': self.product_id.id,
+                'quantity': self.quantity,
+                'price': self.price,
+                'code': self.code,
+                'state': 'not_received',
+                'livestock_slaughter_id': self.id,
+                'cutting_location_id': self.cutting_location_id.id,
+            })
+            self.material_request_id = material_request.id
+        if not material_request._get_product_bom():
+            raise ValidationError(
+                "No BOM found for %s. Create the BOM for this exact product or its product template."
+                % self.product_id.display_name
+            )
+        material_request._populate_bom_lines(self)
+        if not material_request.livestock_cutting_material_line_ids:
+            raise ValidationError(
+                "The BOM for %s has no component products. Add BOM lines first."
+                % self.product_id.display_name
+            )
+        return material_request
 
     def action_bulk_cutting(self):
         """List header: start Cutting for all the selected Slaughtered lines."""
@@ -414,75 +426,23 @@ class LivestockSlaughter(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.cutting.material',
             'view_mode': 'tree,form',
-            'domain': [('id', 'in', self.mapped('cutting_material_id').ids)],
+            'domain': [('id', 'in', self.mapped('material_request_id').ids)],
             'target': 'current',
         }
 
     def action_material_request(self):
+        """Lines cut before the material request was made with the cutting."""
         self.ensure_one()
         if self.state != 'cutting':
             raise ValidationError("Material Request can only be opened during cutting.")
         if not self.product_id:
             raise ValidationError("Please select a product before opening the material request.")
-
-        material_request = self.material_request_id
-        if material_request == self.cutting_material_id:
-            material_request = self.env['livestock.cutting.material']
-        if not material_request:
-            material_request = self.env['livestock.cutting.material'].create({
-                'product_id': self.product_id.id,
-                'quantity': self.quantity,
-                'price': self.price,
-                'code': self.code,
-                'state': 'not_received',
-                'livestock_slaughter_id': self.id,
-                'cutting_location_id': self.cutting_location_id.id,
-            })
-            self.material_request_id = material_request.id
-        bom = material_request._get_product_bom()
-        if not bom:
-            material_request.unlink()
-            raise ValidationError(
-                "No BOM found for %s. Create the BOM for this exact product or its product template."
-                % self.product_id.display_name
-            )
-
-        material_request._populate_bom_lines(self)
-        if not material_request.livestock_cutting_material_line_ids:
-            material_request.unlink()
-            raise ValidationError(
-                "The BOM for %s has no component products. Add BOM lines first."
-                % self.product_id.display_name
-            )
-
+        material_request = self._create_material_request()
         self.state = 'material_request'
-
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.cutting.material',
             'res_id': material_request.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-
-    def action_end_cutting(self):
-        self.ensure_one()
-        if self.state != 'material_request':
-            raise ValidationError("End Cutting is available only after creating the material request.")
-        if not self.product_id:
-            raise ValidationError("Please select a product before ending cutting.")
-        if not self.material_request_id:
-            self.action_material_request()
-        elif not self.material_request_id.livestock_cutting_material_line_ids:
-            self.material_request_id._populate_bom_lines(self)
-            if not self.material_request_id.livestock_cutting_material_line_ids:
-                raise ValidationError("The selected product BOM has no component products.")
-        self.end_time = fields.Datetime.now()
-        self.state = 'done'
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'livestock.cutting.material',
-            'res_id': self.material_request_id.id,
             'view_mode': 'form',
             'target': 'current',
         }

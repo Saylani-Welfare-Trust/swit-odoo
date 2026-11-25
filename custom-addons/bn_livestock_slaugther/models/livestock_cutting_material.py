@@ -214,6 +214,13 @@ class LivestockCuttingMaterial(models.Model):
                 raise ValidationError("Inventory can only be updated before the material is received.")
             if record.inventory_updated:
                 raise ValidationError("The inventory of %s is already updated." % (record.name or record.code))
+            # the cut animal is used up: it leaves the Cutting location (its material
+            # request was made with the cutting, which put it there)
+            slaughter = record.livestock_slaughter_id
+            if slaughter and slaughter.cutting_material_id == record and record.product_id:
+                animal = record.product_id
+                record._stock_move(animal, record.quantity, cutting_loc,
+                                   animal.with_company(self.env.company).property_stock_inventory)
             for material in record.livestock_cutting_material_line_ids:
                 product = material.product_id
                 record._stock_move(product, material.quantity,
@@ -236,37 +243,7 @@ class LivestockCuttingMaterial(models.Model):
                 product = material.product_id
                 target_loc = meat_loc if 'meat' in (product.name or '').lower() else goat_loc
                 record._stock_move(product, material.quantity, cutting_loc, target_loc)
-            record.materials_sent = True
-
-    def action_start_cutting(self):
-        for record in self:
-            if record.state != 'received':
-                raise ValidationError("Cutting can only be started after the material request is confirmed.")
-            record.state = 'in_progress'
-            record.start_time = record.start_time or fields.Datetime.now()
-            if record.livestock_slaughter_id:
-                record.livestock_slaughter_id.state = 'material_request'
-                record.livestock_slaughter_id.start_time = record.start_time
-
-    def action_end_cutting(self):
-        self.ensure_one()
-        if self.state != 'in_progress':
-            raise ValidationError("End Cutting is available only after cutting has started.")
-        if not self.product_id:
-            raise ValidationError("Please select a product before ending cutting.")
-        if not self.livestock_cutting_material_line_ids:
-            self._populate_bom_lines()
-        if not self.livestock_cutting_material_line_ids:
-            raise ValidationError(
-                "No BOM component products found for %s." % self.product_id.display_name
-            )
-
-        # the cut animal is used up: it leaves the Cutting location
-        product = self.product_id
-        self._stock_move(product, self.quantity, self._cutting_location(),
-                         product.with_company(self.env.company).property_stock_inventory)
-        self.state = 'done'
-        self.end_time = fields.Datetime.now()
-        if self.livestock_slaughter_id:
-            self.livestock_slaughter_id.end_time = self.end_time
-            self.livestock_slaughter_id.state = 'done'
+            # the last step: the request and its animal are done
+            record.write({'materials_sent': True, 'state': 'done'})
+            if record.livestock_slaughter_id.state in ('cutting', 'material_request'):
+                record.livestock_slaughter_id.state = 'done'

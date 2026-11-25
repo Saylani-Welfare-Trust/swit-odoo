@@ -14,13 +14,11 @@
                 <field name="pos_analytic_account_id"/>
                 <field name="transfer_picking_id"/>
                 <separator/>
-                <filter name="bn_date_start_time" string="Start Time" date="start_time"/>
                 <group expand="0" string="Group By">
                     <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
                     <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
                     <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
                     <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
-                    <filter name="bn_groupby_start_time_month" string="Start Time (Month)" context="{'group_by': 'start_time:month'}"/>
                 </group>
             </xpath>
         </field>
@@ -47,9 +45,7 @@
         <field name="arch" type="xml">
             <xpath expr="/search" position="inside">
                 <separator/>
-                <filter name="bn_date_start_time" string="Start Time" date="start_time"/>
                 <group expand="0" string="Group By">
-                    <filter name="bn_groupby_start_time_month" string="Start Time (Month)" context="{'group_by': 'start_time:month'}"/>
                 </group>
             </xpath>
         </field>

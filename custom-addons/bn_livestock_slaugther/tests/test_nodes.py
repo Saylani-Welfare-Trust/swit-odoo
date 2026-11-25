@@ -23,6 +23,10 @@ class TestLivestockNodes(TransactionCase):
         cls.wh_karachi = Warehouse.create({'name': 'LN WH Karachi', 'code': 'LNK', 'node_id': cls.gulshan.id})
         cls.wh_lahore = Warehouse.create({'name': 'LN WH Lahore', 'code': 'LNL', 'node_id': cls.lahore.id})
         cls.product = env['product.product'].create({'name': 'LN Goat', 'type': 'product'})
+        # cutting makes the material request from the product's BOM
+        cls.meat = env['product.product'].create({'name': 'LN Goat Meat', 'type': 'product'})
+        env['mrp.bom'].create({'product_tmpl_id': cls.product.product_tmpl_id.id, 'product_qty': 1,
+                               'bom_line_ids': [(0, 0, {'product_id': cls.meat.id, 'product_qty': 10})]})
         Location = env['stock.location']
         cls.karachi_slaughter = Location.create({'name': 'LN Karachi Slaughter', 'usage': 'internal',
                                                  'location_id': cls.wh_karachi.view_location_id.id,
@@ -297,13 +301,48 @@ class TestLivestockNodes(TransactionCase):
             (goats | draft).with_user(self.manager).action_bulk_cutting()
         self.assertEqual(set(goats.mapped('state')), {'slaughtered'}, "nothing is cut when a line is refused")
         action = goats.with_user(self.manager).action_bulk_cutting()
-        self.assertEqual(set(goats.mapped('state')), {'cutting'})
+        self.assertEqual(set(goats.mapped('state')), {'material_request'})
         self.assertEqual(goats.mapped('cutting_location_id'), self.karachi_cutting)
         self.assertEqual(len(goats.mapped('cutting_material_id')), 2)
-        self.assertEqual(action['domain'], [('id', 'in', goats.mapped('cutting_material_id').ids)])
+        self.assertEqual(action['domain'], [('id', 'in', goats.mapped('material_request_id').ids)])
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.karachi_cutting), 2)
         with self.assertRaisesRegex(ValidationError, 'Cutting'):
             goats.with_user(self.manager).action_bulk_cutting()
+
+    def test_cutting_makes_the_material_request(self):
+        """No Start / End Cutting: cutting makes the material request from the BOM;
+        Update Inventory uses up the animal, Send to Goat & Meat finishes it."""
+        record = self.env['livestock.slaugther'].create({
+            'product_id': self.product.id, 'quantity': 1, 'is_goat_depart': True,
+            'source_location_id': self.wh_karachi.lot_stock_id.id})
+        record.with_user(self.manager).action_confirm()
+        action = record.with_user(self.manager).action_cutting()
+        request = record.material_request_id
+        self.assertEqual(action['res_id'], request.id)
+        self.assertEqual(record.cutting_material_id, request, "one record: the material request")
+        self.assertEqual((record.state, request.state), ('material_request', 'not_received'))
+        self.assertEqual([(l.product_id, l.quantity) for l in request.livestock_cutting_material_line_ids], [(self.meat, 10)])
+
+        def qty(product, location):
+            return self.env['stock.quant']._get_available_quantity(product, location, allow_negative=True)
+        self.assertEqual(qty(self.product, self.karachi_cutting), 1)
+        request.with_user(self.manager).action_update_inventory()
+        self.assertEqual((qty(self.product, self.karachi_cutting), qty(self.meat, self.karachi_cutting)), (0, 10),
+                         "the animal is used up, its meat comes in")
+        request.with_user(self.manager).action_send_to_goat_and_meat()
+        self.assertEqual((qty(self.meat, self.karachi_cutting), qty(self.meat, self.karachi_meat)), (0, 10))
+        self.assertEqual((request.state, record.state), ('done', 'done'))
+
+        # no BOM: nothing is cut
+        no_bom = self.env['product.product'].create({'name': 'LN Calf', 'type': 'product'})
+        calf = self.env['livestock.slaugther'].create({
+            'product_id': no_bom.id, 'quantity': 1, 'is_goat_depart': True,
+            'source_location_id': self.wh_karachi.lot_stock_id.id})
+        calf.with_user(self.manager).action_confirm()
+        with self.assertRaisesRegex(ValidationError, 'No BOM'):
+            calf.with_user(self.manager).action_cutting()
+        self.assertEqual(calf.state, 'slaughtered')
+        self.assertEqual(qty(no_bom, self.karachi_cutting), 0)
 
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites and their own."""
