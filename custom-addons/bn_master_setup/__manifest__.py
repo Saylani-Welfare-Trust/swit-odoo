@@ -1,6 +1,6 @@
 {
     'name': 'Master Setup',
-    'version': '17.0.1.4.0',
+    'version': '17.0.1.4.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -24,6 +24,8 @@
         'views/area.xml',
         'views/source_document.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
+        'views/chatter_forms.xml',
     ],
     'auto_install': False,
     'application': True,

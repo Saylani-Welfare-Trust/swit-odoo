@@ -17,6 +17,7 @@ state_cheque_selection = [
 
 class MicrofinanceLine(models.Model):
     _name = 'microfinance.line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Microfinance Line"
 
 

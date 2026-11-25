@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_journal_transfer" model="ir.ui.view">
+        <field name="name">journal.transfer.search.filters</field>
+        <field name="model">journal.transfer</field>
+        <field name="inherit_id" ref="bn_journal_transfer.search_journal_transfer"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="pos_session_id"/>
+                <field name="pos_cashier_id"/>
+                <field name="pos_employee_id"/>
+                <field name="pos_analytic_account_id"/>
+                <field name="deposit_slip_no"/>
+                <field name="move_id"/>
+                <field name="source_journal_id"/>
+                <field name="dest_journal_id"/>
+                <field name="pos_move_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_pos_session_id" string="POS Session" context="{'group_by': 'pos_session_id'}"/>
+                    <filter name="bn_groupby_pos_cashier_id" string="Cashier" context="{'group_by': 'pos_cashier_id'}"/>
+                    <filter name="bn_groupby_pos_employee_id" string="Cashier (Employee)" context="{'group_by': 'pos_employee_id'}"/>
+                    <filter name="bn_groupby_pos_analytic_account_id" string="Branch (Shop)" context="{'group_by': 'pos_analytic_account_id'}"/>
+                    <filter name="bn_groupby_source_journal_id" string="Source Journal" context="{'group_by': 'source_journal_id'}"/>
+                    <filter name="bn_groupby_dest_journal_id" string="Destination Journal" context="{'group_by': 'dest_journal_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

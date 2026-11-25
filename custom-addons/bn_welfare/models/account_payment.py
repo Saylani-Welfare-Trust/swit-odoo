@@ -54,7 +54,6 @@ class AccountRegisterPayments(models.TransientModel):
                         bill.recurring_line_id.action_disbursed()
                     # Check if bill is linked to welfare line
                     elif bill.welfare_line_id and bill.welfare_line_id.state == 'delivered':
-                        # raise Warning("Debug: action_create_payments called. Check logs for details.")
                         bill.welfare_line_id.action_disbursed()
 
         return res

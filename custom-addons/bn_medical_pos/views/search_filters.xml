@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_mh_patient" model="ir.ui.view">
+        <field name="name">mh.patient.search.filters</field>
+        <field name="model">mh.patient</field>
+        <field name="inherit_id" ref="bn_medical_pos.mh_patient_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="partner_id"/>
+                <separator/>
+                <filter name="bn_date_date_of_birth" string="Date of Birth" date="date_of_birth"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

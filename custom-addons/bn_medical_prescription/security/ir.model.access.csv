@@ -1,5 +1,12 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_medical_prescription_user,medical.prescription.user,model_medical_prescription,bn_medical_pos.group_medical_user,1,0,0,0
+access_medical_prescription_user,medical.prescription.user,model_medical_prescription,bn_medical_pos.group_medical_user,1,1,0,0
 access_medical_prescription_manager,medical.prescription.manager,model_medical_prescription,bn_medical_pos.group_medical_manager,1,1,1,1
-access_medical_prescription_line_user,medical.prescription.line.user,model_medical_prescription_line,bn_medical_pos.group_medical_user,1,0,0,0
+access_medical_prescription_line_user,medical.prescription.line.user,model_medical_prescription_line,bn_medical_pos.group_medical_user,1,1,1,1
 access_medical_prescription_line_manager,medical.prescription.line.manager,model_medical_prescription_line,bn_medical_pos.group_medical_manager,1,1,1,1
+access_medical_doctor_internal,medical.doctor.internal,model_medical_doctor,base.group_user,1,0,0,0
+access_medical_doctor_master_manager,medical.doctor.master.manager,model_medical_doctor,bn_master_setup.master_setup_manager_group,1,1,1,0
+access_medical_doctor_master_admin,medical.doctor.master.admin,model_medical_doctor,bn_master_setup.master_setup_admin_group,1,1,1,1
+access_medical_doctor_medical_manager,medical.doctor.medical.manager,model_medical_doctor,bn_medical_pos.group_medical_manager,1,1,1,1
+access_medical_prescription_doctor,medical.prescription.doctor,model_medical_prescription,bn_medical_pos.group_medical_doctor,1,1,0,0
+access_medical_prescription_line_doctor,medical.prescription.line.doctor,model_medical_prescription_line,bn_medical_pos.group_medical_doctor,1,1,1,1
+access_pos_category_medical_doctor,pos.category.medical.doctor,point_of_sale.model_pos_category,bn_medical_pos.group_medical_doctor,1,0,0,0

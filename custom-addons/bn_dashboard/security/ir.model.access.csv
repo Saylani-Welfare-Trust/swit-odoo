@@ -1,12 +1,5 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_treasury_access_config,treasury.access.config,model_treasury_access_config,base.group_erp_manager,1,1,1,1
-access_pos_order_access_config,pos.order.access.config,model_pos_order_access_config,base.group_erp_manager,1,1,1,1
-access_donation_box_access_config,donation.box.access.config,model_donation_box_access_config,base.group_erp_manager,1,1,1,1
-
 access_pos_dd_report_user,pos.dd.report.user,model_pos_dd_report,bn_dashboard.group_pos_dd_report_user,1,0,0,0
-
-access_pos_dd_report_access_config,pos.dd.report.access.config,model_pos_dd_report_access_config,base.group_erp_manager,1,1,1,1
-
 access_dash_donation_inflow_dashboard_donation,donation read (group_donation_inflow_dashboard_user),bn_import_donation.model_donation,bn_dashboard.group_donation_inflow_dashboard_user,1,0,0,0
 access_dash_donation_inflow_dashboard_api_donation,api.donation read (group_donation_inflow_dashboard_user),bn_import_donation.model_api_donation,bn_dashboard.group_donation_inflow_dashboard_user,1,0,0,0
 access_dash_donation_box_dashboard_donation_box_registration_installation,donation.box.registration.installation read (group_donation_box_dashboard_user),bn_donation_box.model_donation_box_registration_installation,bn_dashboard.group_donation_box_dashboard_user,1,0,0,0
@@ -24,3 +17,4 @@ access_dash_pos_order_dashboard_pos_payment,pos.payment read (group_pos_order_da
 access_dash_pos_order_dashboard_pos_session,pos.session read (group_pos_order_dashboard_user),point_of_sale.model_pos_session,bn_dashboard.group_pos_order_dashboard_user,1,0,0,0
 access_dash_pos_order_dashboard_pos_config,pos.config read (group_pos_order_dashboard_user),point_of_sale.model_pos_config,bn_dashboard.group_pos_order_dashboard_user,1,0,0,0
 access_dash_treasury_dashboard_pos_cheque,pos.cheque read (group_treasury_dashboard_user),bn_pos_cheque.model_pos_cheque,bn_dashboard.group_treasury_dashboard_user,1,0,0,0
+access_dash_livestock_dashboard_livestock_slaughter,livestock.slaugther read (group_livestock_dashboard_user),bn_livestock_slaugther.model_livestock_slaugther,bn_dashboard.group_livestock_dashboard_user,1,0,0,0

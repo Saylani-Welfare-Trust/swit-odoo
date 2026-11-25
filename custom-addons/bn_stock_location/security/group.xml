@@ -18,4 +18,5 @@
         <field name="comment">Sees every warehouse, location, operation type and product category, whatever is set on the user (e.g. central inventory or finance). Settings administrators are always unrestricted.</field>
     </record>
 
+
 </odoo>

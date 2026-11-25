@@ -11,7 +11,7 @@ class QurbaniSlaughterDemand(models.Model):
     hijri_id = fields.Many2one("hijri", string="Hijri Date", tracking=True, domain=[('approved', '=', True)])
 
     city_location_id = fields.Many2one('stock.location', string="City Location", tracking=True)
-    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True)
+    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True, domain="[('is_slaughter_location', '=', True)]")
     inventory_product_id = fields.Many2one('product.product', string='Inventory Product', tracking=True)
     
     city_remaining_demand = fields.Integer('City Demand', compute="_compute_city_remaining_demand")

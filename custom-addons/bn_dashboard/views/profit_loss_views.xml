@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 1. Client Action -->
+        <record id="action_profit_loss_dashboard" model="ir.actions.client">
+            <field name="name">Profit &amp; Loss Dashboard</field>
+            <field name="tag">profit_loss_dashboard</field>
+        </record>
+
+        <!-- 2. Menu Item (Assuming root is menu_dashboard_root) -->
+        <menuitem id="menu_profit_loss_dashboard"
+                  name="Profit &amp; Loss"
+                  parent="menu_dashboard_root"
+                  action="action_profit_loss_dashboard"
+                  sequence="10"
+                  groups="bn_dashboard.group_profit_loss_dashboard_user"/>
+    </data>
+</odoo>

@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 class DonationReceipt(models.Model):
     _name = 'advance.donation.receipt'
-    _inherit = ['pos.link.mixin']
+    _inherit = ['pos.link.mixin', 'mail.thread', 'mail.activity.mixin']
     _description = "Advance Donation Receipt"
 
     def init(self):
@@ -114,6 +114,7 @@ class DonationReceipt(models.Model):
                 ],
                 'date': fields.Date.today(),
                 'move_type': 'entry',
+                'journal_id': self.env.company._get_advance_donation_journal().id,
             })
             move.action_post()
             rec.deposit_move_id = move.id

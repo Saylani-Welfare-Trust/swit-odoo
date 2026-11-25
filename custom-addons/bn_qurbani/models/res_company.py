@@ -10,4 +10,4 @@ class ResCompany(models.Model):
     third_para_halfnama = fields.Text('Third Halfnama')
 
     # used by web qurbani orders (formerly in bn_res_qurbani)
-    web_no_meat_distribution_location_id = fields.Many2one('stock.location', string="Web No-Meat Distribution Location")
+    web_no_meat_distribution_location_id = fields.Many2one('stock.location', string="Web No-Meat Distribution Location", domain="[('is_distribution_location', '=', True)]")

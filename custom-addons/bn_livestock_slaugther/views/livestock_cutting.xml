@@ -41,6 +41,10 @@
                         </group>
                         <group name="livestock_cutting_col_2">
                             <field name="code" />
+                            <field name="slaughter_location_id" options="{'no_create': True, 'no_edit': True}" readonly="is_picking" required="not is_picking"/>
+                            <field name="cutting_location_id" options="{'no_create': True, 'no_edit': True}" readonly="is_picking" required="not is_picking"/>
+                            <field name="warehouse_id"/>
+                            <field name="node_id"/>
                         </group>
                     </group>
                 </sheet>
@@ -57,7 +61,7 @@
         <field name="name">Livestock Cutting</field>
         <field name="res_model">livestock.slaugther</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('state', '=', 'cutting')]</field>
+        <field name="domain">[('state', 'in', ('cutting', 'material_request'))]</field>
         <field name="context">{
             'create': 0,
             'edit': 0,

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_city_schedule_search_node" model="ir.ui.view">
+        <field name="name">city.schedule.search.node</field>
+        <field name="model">city.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.search_city_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="city_schedule_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">city.schedule.view.tree.node</field>
+        <field name="model">city.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.city_schedule_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_city_schedule_form_node" model="ir.ui.view">
+        <field name="name">city.schedule.form.node</field>
+        <field name="model">city.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.chatter_form_city_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='distribution_location_ids'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_distribution_schedule_search_node" model="ir.ui.view">
+        <field name="name">distribution.schedule.search.node</field>
+        <field name="model">distribution.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.search_distribution_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_distribution_master_tree_tree_node" model="ir.ui.view">
+        <field name="name">distribution.schedule.tree.node</field>
+        <field name="model">distribution.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.view_distribution_master_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_distribution_schedule_form_node" model="ir.ui.view">
+        <field name="name">distribution.schedule.form.node</field>
+        <field name="model">distribution.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.chatter_form_distribution_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='location_id'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_qurbani_city_demand_search_node" model="ir.ui.view">
+        <field name="name">qurbani.city.demand.search.node</field>
+        <field name="model">qurbani.city.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.search_qurbani_city_demand"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_city_demand_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.city.demand.view.tree.node</field>
+        <field name="model">qurbani.city.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_city_demand_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_city_demand_view_form_form_node" model="ir.ui.view">
+        <field name="name">qurbani.city.demand.view.form.node</field>
+        <field name="model">qurbani.city.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_city_demand_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='qurbani_city_demand_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_qurbani_cow_distribution_search_node" model="ir.ui.view">
+        <field name="name">qurbani.cow.distribution.search.node</field>
+        <field name="model">qurbani.cow.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.search_qurbani_cow_distribution"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_cow_distribution_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.cow.distribution.view.tree.node</field>
+        <field name="model">qurbani.cow.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_cow_distribution_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_qurbani_cow_distribution_form_node" model="ir.ui.view">
+        <field name="name">qurbani.cow.distribution.form.node</field>
+        <field name="model">qurbani.cow.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.chatter_form_qurbani_cow_distribution"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='max_distribution'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_cow_slaughter_view_search_search_node" model="ir.ui.view">
+        <field name="name">qurbani.cow.slaughter.view.search.node</field>
+        <field name="model">qurbani.cow.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_cow_slaughter_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_cow_slaughter_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.cow.slaughter.view.tree.node</field>
+        <field name="model">qurbani.cow.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_cow_slaughter_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_cow_slaughter_view_form_form_node" model="ir.ui.view">
+        <field name="name">qurbani.cow.slaughter.view.form.node</field>
+        <field name="model">qurbani.cow.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_cow_slaughter_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='qurbani_cow_slaughter_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_goat_distribution_view_search_search_node" model="ir.ui.view">
+        <field name="name">qurbani.goat.distribution.view.search.node</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_distribution_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_goat_distribution_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.goat.distribution.view.tree.node</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_distribution_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_qurbani_goat_distribution_form_node" model="ir.ui.view">
+        <field name="name">qurbani.goat.distribution.form.node</field>
+        <field name="model">qurbani.goat.distribution</field>
+        <field name="inherit_id" ref="bn_qurbani.chatter_form_qurbani_goat_distribution"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='max_distribution'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_goat_slaughter_view_search_search_node" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.view.search.node</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_slaughter_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_goat_slaughter_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.view.tree.node</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_goat_slaughter_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_qurbani_goat_slaughter_form_node" model="ir.ui.view">
+        <field name="name">qurbani.goat.slaughter.form.node</field>
+        <field name="model">qurbani.goat.slaughter</field>
+        <field name="inherit_id" ref="bn_qurbani.chatter_form_qurbani_goat_slaughter"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_qurbani_order_search_node" model="ir.ui.view">
+        <field name="name">qurbani.order.search.node</field>
+        <field name="model">qurbani.order</field>
+        <field name="inherit_id" ref="bn_qurbani.search_qurbani_order"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_order_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.order.view.tree.node</field>
+        <field name="model">qurbani.order</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_order_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_order_view_form_form_node" model="ir.ui.view">
+        <field name="name">qurbani.order.view.form.node</field>
+        <field name="model">qurbani.order</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_order_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='currency_id'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_qurbani_slaughter_demand_search_node" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.demand.search.node</field>
+        <field name="model">qurbani.slaughter.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.search_qurbani_slaughter_demand"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_slaughter_demand_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.demand.view.tree.node</field>
+        <field name="model">qurbani.slaughter.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_slaughter_demand_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_slaughter_demand_view_form_form_node" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.demand.view.form.node</field>
+        <field name="model">qurbani.slaughter.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_slaughter_demand_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='qurbani_city_demand_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_qurbani_slaughter_slot_demand_search_node" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.slot.demand.search.node</field>
+        <field name="model">qurbani.slaughter.slot.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.search_qurbani_slaughter_slot_demand"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_slaughter_slot_demand_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.slot.demand.view.tree.node</field>
+        <field name="model">qurbani.slaughter.slot.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_slaughter_slot_demand_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="qurbani_slaughter_slot_demand_view_form_form_node" model="ir.ui.view">
+        <field name="name">qurbani.slaughter.slot.demand.view.form.node</field>
+        <field name="model">qurbani.slaughter.slot.demand</field>
+        <field name="inherit_id" ref="bn_qurbani.qurbani_slaughter_slot_demand_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='qurbani_city_demand_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_slaughter_schedule_search_node" model="ir.ui.view">
+        <field name="name">slaughter.schedule.search.node</field>
+        <field name="model">slaughter.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.search_slaughter_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="slaughter_schedule_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">slaughter.schedule.view.tree.node</field>
+        <field name="model">slaughter.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.slaughter_schedule_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_slaughter_schedule_form_node" model="ir.ui.view">
+        <field name="name">slaughter.schedule.form.node</field>
+        <field name="model">slaughter.schedule</field>
+        <field name="inherit_id" ref="bn_qurbani.chatter_form_slaughter_schedule"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='location_id'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

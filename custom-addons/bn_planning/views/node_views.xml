@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="view_monthly_planning_search_search_node" model="ir.ui.view">
+        <field name="name">monthly.planning.search.node</field>
+        <field name="model">monthly.planning</field>
+        <field name="inherit_id" ref="bn_planning.view_monthly_planning_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_monthly_planning_tree_tree_node" model="ir.ui.view">
+        <field name="name">monthly.planning.tree.node</field>
+        <field name="model">monthly.planning</field>
+        <field name="inherit_id" ref="bn_planning.view_monthly_planning_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_monthly_planning_form_form_node" model="ir.ui.view">
+        <field name="name">monthly.planning.form.node</field>
+        <field name="model">monthly.planning</field>
+        <field name="inherit_id" ref="bn_planning.view_monthly_planning_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='to_date'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

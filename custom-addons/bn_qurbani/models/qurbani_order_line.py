@@ -11,8 +11,8 @@ class QurbaniOrderLine(models.Model):
     product_id = fields.Many2one('product.product', string="Product")
     currency_id = fields.Many2one('res.currency', related='qurbani_order_id.currency_id')
     city_id = fields.Many2one('stock.location', string="City")
-    slaughter_id = fields.Many2one('stock.location', string="Slaughter")
-    distribution_id = fields.Many2one('stock.location', string="Distribution")
+    slaughter_id = fields.Many2one('stock.location', string="Slaughter", domain="[('is_slaughter_location', '=', True)]")
+    distribution_id = fields.Many2one('stock.location', string="Distribution", domain="[('is_distribution_location', '=', True)]")
     day_id = fields.Many2one('qurbani.day', string="Day")
     hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
 
@@ -45,7 +45,6 @@ class QurbaniOrderLine(models.Model):
                 if pos_order:
                     line = pos_order.lines.filtered(lambda l:l.customer_note == self.hissa_name and l.product_id.id == self.product_id.id and l.qty == self.quantity)
 
-                    # raise ValidationError(str(self.hissa_name))
                     if line:
                         line.customer_note = vals.get('hissa_name')
             else:

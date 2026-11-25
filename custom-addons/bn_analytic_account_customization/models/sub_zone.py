@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class SubZone(models.Model):
     _name = 'sub.zone'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Sub Zone"
 
 

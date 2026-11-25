@@ -7,6 +7,7 @@ _logger = logging.getLogger(__name__)
 
 class ShariahLaw(models.Model):
     _name = 'shariah.law'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Shariah Law Aggregated Totals"
     _rec_name = 'analytic_account_id'
     _order = 'date desc, analytic_account_id'

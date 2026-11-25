@@ -37,11 +37,7 @@
                                     <span class="fw-bold text-body" t-esc="formatCurrency(prescription.amount_total)"/>
                                 </div>
                             </div>
-                            <button t-if="isDesk" type="button" class="btn btn-outline-danger"
-                                    t-on-click="() => this.cancelPrescription(prescription)">
-                                <i class="fa fa-times me-1"/>Cancel
-                            </button>
-                            <button t-else="" type="button" class="btn btn-primary"
+                            <button type="button" class="btn btn-primary"
                                     t-on-click="() => this.bill(prescription)">
                                 <i class="fa fa-file-text-o me-1"/>Bill
                             </button>

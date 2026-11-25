@@ -1,6 +1,6 @@
 {
     'name': 'HR Expense Customization',
-    'version': '17.0.1.1.1',
+    'version': '17.0.1.2.1',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

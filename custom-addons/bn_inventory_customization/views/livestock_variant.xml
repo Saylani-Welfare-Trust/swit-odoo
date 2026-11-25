@@ -1,52 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Livestock Variant Tree View -->
-    <record id="livestock_variant_tree_view" model="ir.ui.view">
-        <field name="name">livestock.variant.tree</field>
-        <field name="model">livestock.variant</field>
+    <!-- Livestock weight bands: a general product (Is Livestock Product) and the
+         product variant each weight range of it is received as -->
+    <record id="livestock_variant_line_tree_view" model="ir.ui.view">
+        <field name="name">livestock.variant.line.tree</field>
+        <field name="model">livestock.variant.line</field>
         <field name="arch" type="xml">
-            <tree string="Livestock Variants">
-                <field name="name"/>
+            <tree string="Livestock Weight Bands" editable="bottom">
+                <field name="purchase_product_id" options="{'no_create': True}"/>
+                <field name="from_kg"/>
+                <field name="to_kg"/>
+                <field name="product_id" options="{'no_create': True}"/>
             </tree>
         </field>
     </record>
 
-    <!-- Livestock Variant Form View -->
-    <record id="livestock_variant_form_view" model="ir.ui.view">
-        <field name="name">livestock.variant.form</field>
-        <field name="model">livestock.variant</field>
+    <record id="livestock_variant_line_search_view" model="ir.ui.view">
+        <field name="name">livestock.variant.line.search</field>
+        <field name="model">livestock.variant.line</field>
         <field name="arch" type="xml">
-            <form string="Livestock Variant">
-                <sheet>
-                    <group>
-                        <field name="name" placeholder="e.g., Sadqa, Aqiqa, Qurbani"/>
-                    </group>
-                </sheet>
-            </form>
+            <search string="Livestock Weight Bands">
+                <field name="purchase_product_id"/>
+                <field name="product_id"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_purchase_product" string="Livestock Product"
+                            context="{'group_by': 'purchase_product_id'}"/>
+                </group>
+            </search>
         </field>
     </record>
 
-    <!-- Livestock Variant Action -->
-    <record id="action_livestock_variant" model="ir.actions.act_window">
-        <field name="name">Livestock Variants</field>
-        <field name="res_model">livestock.variant</field>
-        <field name="view_mode">tree,form</field>
+    <record id="action_livestock_variant_line" model="ir.actions.act_window">
+        <field name="name">Livestock Weight Bands</field>
+        <field name="res_model">livestock.variant.line</field>
+        <field name="view_mode">tree</field>
+        <field name="context">{'search_default_group_purchase_product': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Create your first livestock variant
-            </p>
-            <p>
-                Define livestock variant types like Sadqa, Aqiqa, Qurbani, etc.
-            </p>
+            <p class="o_view_nocontent_smiling_face">Configure your first weight band</p>
+            <p>For a livestock product (e.g. Cow), each weight range and the product variant
+               (e.g. Cow - 12) its units are received as.</p>
         </field>
     </record>
 
-    <!-- Menu Item under Inventory > Configuration -->
-    <menuitem id="menu_livestock_variant"
-              name="Livestock Variants"
-              parent="stock.menu_stock_config_settings"
-              action="action_livestock_variant"
-              sequence="100"/>
+    <menuitem id="menu_livestock_variant_line" name="Livestock Weight Bands" parent="stock.menu_stock_config_settings"
+              action="action_livestock_variant_line" sequence="100" groups="stock.group_stock_manager"/>
 
 </odoo>

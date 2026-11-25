@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_audit_trail_log" model="ir.ui.view">
+        <field name="name">audit.trail.log.search.filters</field>
+        <field name="model">audit.trail.log</field>
+        <field name="inherit_id" ref="bn_audit_trail.view_audit_trail_log_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="operation_ref"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

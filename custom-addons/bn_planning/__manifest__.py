@@ -1,6 +1,6 @@
 {
     'name': 'Planning',
-    'version': '17.0.1.3.4',
+    'version': '17.0.1.3.13',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -29,6 +29,9 @@
         'wizard/purchase_request_wizard.xml',
         'data/program_types.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
+        'views/node_views.xml',
+        'security/node_rules.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -55,7 +55,7 @@ class POSOrder(models.Model):
     def _check_refund_request(self, action):
         """``self`` must be draft refund orders, handled by a CFO approver."""
         if not self.env.su and not self.env.user.has_group('bn_pos_order.pos_order_cfo_approval_group'):
-            raise AccessError(_('Only "POS Order / CFO Approval" users can do "%s".') % action)
+            raise AccessError(_('Only "CFO Approval" users can do "%s".') % action)
         for order in self:
             if order.state != 'draft' or not order.refunded_order_ids:
                 raise UserError(_('"%(action)s" is only possible for a refund waiting for approval (%(order)s).')

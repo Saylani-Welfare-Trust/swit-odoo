@@ -18,13 +18,9 @@ PORTAL_SEARCH_PAGE_LIMIT = 100   # portal accepts 1-100 per page
 PORTAL_SEARCH_MAX_PAGES = 200    # safety stop (up to 20,000 applications) so paging can never loop forever
 
 WF = 'bn_welfare.%s'
-# Change Inquiry Officer / Reopen Inquiry: full path on the portal server, see _welfare_inquiry_endpoint
-WELFARE_OFFICER_ROUTES = {
-    # Welfare (individual) route: the portal looks the application up in Welfare
-    'changeInquiryOfficer': '/rpc/odoo/changeInquiryOfficer',
-    # no Welfare route shared yet: the institutional one only finds Sadqa e Jariya applications (NOT_FOUND)
-    'reopenInquiry': '/rpc/odoo/institutional/reopenInquiry',
-}
+# Change Inquiry Officer / Reopen Inquiry: the portal's institutional operations, also used for Welfare
+# (the portal has no individual route for them). Full path on the portal server, see _welfare_inquiry_endpoint.
+WELFARE_INQUIRY_RPC = '/rpc/odoo/institutional/'
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
 # Who acts on a welfare in each status (send on, revert, reject).
@@ -243,7 +239,6 @@ class Welfare(models.Model):
     driving_license = fields.Selection(selection=general_selection, string="Driving License")
 
     # Request Details
-    # loan_request_amount = fields.Float('Loan Request Amount')
 
     employee_domain = fields.Char('Employee Domain', compute='_compute_employee_domain')
     def _save_portal_images_to_document_model(self):
@@ -328,7 +323,6 @@ class Welfare(models.Model):
         compute="_compute_show_disburse_button",
         store=False
     )
-    # employee_domain = fields.Char(compute="_compute_employee_domain")
         # Inquiry Committee Questions Fields
     donee_house_status = fields.Char(
         string="Residential Status", 
@@ -536,7 +530,6 @@ class Welfare(models.Model):
     
     def _make_sadqa_api_call(self, endpoint, method='POST', data=None):
         """Make API call to Sadqa Jaria portal"""
-        # base_url = 'https://backend.switsjmm.com'
         url = f"{self.env.company.welfare_url}{endpoint}"
         headers = self._get_sadqa_api_headers()
 
@@ -559,13 +552,11 @@ class Welfare(models.Model):
             response.raise_for_status()
             result = response.json()
             _logger.info(f" URL: {url} Data: {data}  api response : {result}")
-            # raise ValidationError(str(result))
 
             
             if not result.get('json', {}):
                 error_msg = result.get('error', 'Unknown error occurred')
                 raise Exception(f"Portal API Error: {error_msg}")
-            # raise exceptions.ValidationError(str("result",result))
                 
             return result.get('json', {})
             
@@ -901,13 +892,11 @@ class Welfare(models.Model):
                 "area" : self.donee_id.area.name if self.donee_id.area else '',
             }
         }
-        # raise UserError(str(data))
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
         return result
 
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
-        # self.ensure_one()
         data = {
             "json": {
                 "applicationData": {
@@ -952,7 +941,6 @@ class Welfare(models.Model):
                 }
             }
         }
-        # raise UserError(str(data))
         result = self._make_sadqa_api_call(
             self.env.company.create_application_endpoint,  # endpoint from res.company
             'POST',
@@ -1147,12 +1135,12 @@ class Welfare(models.Model):
         
         return self._show_notification('Send for Inquiry Results', summary, 'info')
     def _welfare_inquiry_endpoint(self, operation):
-        """The portal path of ``operation`` relative to the Welfare URL, which usually already ends with /rpc
-        (https://<portal>/rpc + /odoo/changeInquiryOfficer, not /rpc/rpc/...)"""
+        """WELFARE_INQUIRY_RPC + operation relative to the Welfare URL, which usually already ends with /rpc
+        (https://<portal>/rpc + /odoo/institutional/<operation>, not /rpc/rpc/...)"""
         base = self.clean_url(self.env.company.welfare_url or '').rstrip('/')
-        path = WELFARE_OFFICER_ROUTES[operation]
-        for prefix in ('/rpc/odoo', '/rpc'):
-            if base.endswith(prefix) and path.startswith(prefix + '/'):
+        path = WELFARE_INQUIRY_RPC + operation
+        for prefix in ('/rpc/odoo/institutional', '/rpc/odoo', '/rpc'):
+            if base.endswith(prefix):
                 return path[len(prefix):]
         return path
 
@@ -1346,7 +1334,6 @@ class Welfare(models.Model):
                         'payment_type': line.payment_type,
                         'assigned_officer_id': line.assigned_officer_id.id,
                         'amount': line.total_amount,
-                        # 'advance_donation_id': line.advance_donation_id.id if line.advance_donation_id.id else None,
                     }
                     
                     self.env['welfare.recurring.line'].create(recurring_line_vals)
@@ -1454,16 +1441,12 @@ class Welfare(models.Model):
         for line in self.welfare_line_ids:
             # Check amount limit
             if line.total_amount > limit.max_amount_limit:
-                # self.state = 'mem_approve'
                 return False
-                # , _(
 
             # Check product limit only if allowed products are set
             if limit.allowed_product_ids and line.product_id not in limit.allowed_product_ids:
-                # self.state = 'mem_approve'
 
                 return False
-                # , _(
 
         return True
 

@@ -1,87 +1,61 @@
-from odoo import models, fields, api
+from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 
-import logging
-_logger = logging.getLogger(__name__)
-
-
 class ReceiveByWeight(models.TransientModel):
+    """The general livestock product of a receipt (e.g. "Cow", 100 units) is
+    received as product variants by weight: each line gives a weight and how
+    many units weighed that much; the weight band of the product (Livestock
+    page) gives the variant. Units not received stay on the receipt (backorder).
+    A unit is valued at its weight x the purchase line's price per kg."""
     _name = 'receive.by.weight'
     _description = "Receive By Weight"
 
-    picking_id = fields.Many2one('stock.picking', required=True, store=True)
+    picking_id = fields.Many2one('stock.picking', required=True, ondelete='cascade')
     line_ids = fields.One2many('receive.by.weight.line', 'wizard_id', string="Lines")
     is_received = fields.Boolean(string="Is Received", default=False)
-
     currency_id = fields.Many2one(
-        'res.currency',
-        string='Currency',
-        default=lambda self: self.env.company.currency_id.id,
-        readonly=True,
-    )
+        'res.currency', string='Currency', readonly=True,
+        default=lambda self: self.env.company.currency_id.id)
+    move_ids = fields.Many2many('stock.move', string='Livestock Lines', compute='_compute_move_ids')
+    total_quantity = fields.Float(string='Units', compute='_compute_totals', digits='Product Unit of Measure')
+    total_weight = fields.Float(string='Total Weight (kg)', compute='_compute_totals', digits='Stock Weight')
+    bill_amount = fields.Monetary(string='Bill Amount', currency_field='currency_id', compute='_compute_totals')
 
-    total_weight = fields.Float(
-        string='Total Weight (kg)',
-        compute='_compute_totals',
-        store=True,
-    )
-    bill_amount = fields.Monetary(
-        string='Bill Amount',
-        currency_field='currency_id',
-        compute='_compute_totals',
-        store=True,
-    )
-
-    @api.depends('line_ids.weight', 'line_ids.product_id')
-    def _compute_totals(self):
-        """Sum weights and compute bill as sum(weight * product_unit_price)."""
+    @api.depends('picking_id')
+    def _compute_move_ids(self):
         for rec in self:
-            total_w = 0.0
-            total_amt = 0.0
-            for line in rec.line_ids:
-                w = float(line.weight or 0.0)
-                total_w += w
+            rec.move_ids = rec._livestock_moves(rec.picking_id)
 
-                # choose the product price field you want to use for billing:
-                # - lst_price = sales price
-                # - standard_price = cost price
-                # - product.seller_ids / vendor price would be more complex
-                unit_price = line.product_id.lst_price or 0.0
-
-                total_amt += w * float(unit_price)
-
-            rec.total_weight = total_w
-            rec.bill_amount = total_amt
+    @api.depends('line_ids.quantity', 'line_ids.total_weight', 'line_ids.amount')
+    def _compute_totals(self):
+        for rec in self:
+            rec.total_quantity = sum(rec.line_ids.mapped('quantity'))
+            rec.total_weight = sum(rec.line_ids.mapped('total_weight'))
+            rec.bill_amount = sum(rec.line_ids.mapped('amount'))
 
     @api.model
-    def default_get(self, fields):
-        res = super().default_get(fields)
-        _logger.debug("%s", (">>> default_get called, context:", self.env.context,))
-        picking_id = self.env.context.get('default_picking_id')
+    def _livestock_moves(self, picking):
+        return picking.move_ids.filtered(lambda m: m.product_id.check_stock and m.state not in ('done', 'cancel'))
 
-        if picking_id:
-            picking = self.env['stock.picking'].browse(picking_id)
-            lines = []
-            s_no = 1
-            for move in picking.move_ids:
-                qty = int(move.product_uom_qty or 0)
-                _logger.debug("%s", (">>> Processing move:", move.product_id.display_name, "qty:", qty,))
-                for _ in range(qty):
-                    lines.append((0, 0, {
-                        's_no': s_no,
-                        'product_id': move.product_id.id,
-                        'quantity': 1.0,
-                    }))
-                    s_no += 1
-            res['line_ids'] = lines
-        else:
-            _logger.debug("%s", (">>> No picking_id in context",))
-        return res
+    @api.model
+    def _units(self, move):
+        """The units still to receive of a general-product move (a whole number)."""
+        units = move.product_uom._compute_quantity(move.product_uom_qty, move.product_id.uom_id)
+        if units != int(units):
+            raise UserError(_("%s is received by weight, unit by unit: its quantity (%s) must be a whole number.")
+                            % (move.product_id.display_name, move.product_uom_qty))
+        return int(units)
+
+    @api.model
+    def _unit_lines(self, picking):
+        """A first line per livestock product of the receipt, with all its units:
+        split it into lines of one weight each."""
+        return [(0, 0, {'move_id': move.id, 'quantity': self._units(move)})
+                for move in self._livestock_moves(picking) if self._units(move)]
 
     @api.onchange('line_ids')
     def _onchange_line_ids(self):
-        """Re-compute s_no for each line in display order."""
         for rec in self:
             for idx, line in enumerate(rec.line_ids, start=1):
                 line.s_no = idx
@@ -95,147 +69,94 @@ class ReceiveByWeight(models.TransientModel):
             'target': 'new',
         }
 
-    def _match_variant(self, line):
-        """The product variant a weighed unit is received as."""
-        ProductTemplate = self.env['product.template']
-        base_product = line.product_id  # dummy purchase product on the picking
-        weight = float(line.weight or 0.0)
-        livestock_variant = line.livestock_variant  # used to filter templates (not a variant record)
-
-        if not base_product or weight <= 0.0:
-            raise UserError("Please provide a valid product and weight for each line.")
-
-        # Find templates that reference this base purchase product and match the livestock_variant
-        templates = ProductTemplate.search([
-            ('purchase_product', '=', base_product.id),
-            ('livestock_variant', '=', livestock_variant.id if livestock_variant else False),
-        ])
-
-        if not templates:
-            raise UserError(
-                "No product template found that links purchase_product '%s' and livestock_variant '%s'."
-                % (base_product.display_name, (livestock_variant.display_name if livestock_variant else 'N/A'))
-            )
-
-        # Among these templates, inspect their product variants and try to match by attribute value ranges
-        matched_variant = None
-
-        # STEP 1: Get all attribute values having weight ranges
-        all_attr_vals = self.env['product.attribute.value'].search([
-            ('from_kg', '!=', False),
-            ('to_kg', '!=', False),
-        ])
-
-        # STEP 2: Find matching weight range
-        weight_attr = None
-        for attr_val in all_attr_vals:
-            try:
-                if float(attr_val.from_kg) <= weight <= float(attr_val.to_kg):
-                    weight_attr = attr_val
-                    break
-            except Exception:
-                continue
-
-        if not weight_attr:
-            raise UserError(f"No weight range found for weight {weight} kg")
-
-        # STEP 3: Extract color from weight range name
-        # Example: "7000 RED" → "red"
-        weight_name = weight_attr.name.lower()
-        color = weight_name.split()[-1]  # safest extraction
-        # var_and_color=[]
-        # STEP 4: Find matching variant from templates
-        for tmpl in templates:
-            for variant in tmpl.product_variant_ids:
-
-
-                variant_name = variant.display_name.lower()
-                if color in variant_name:
-                    matched_variant = variant
-                    # matched_attr_val = weight_attr
-                    break
-
-            if matched_variant:
-                break
-
-        # raise UserError(f"Variant and color combinations: {var_and_color}")
-
-        # STEP 5: Final check
-        if not matched_variant:
-            raise UserError(
-                f"No variant found matching color '{color}' for weight {weight} kg"
-            )
-        return matched_variant
+    def _check_lines(self):
+        errors = []
+        if not self.line_ids:
+            errors.append(_("Add a line per weight."))
+        for line in self.line_ids:
+            label = line.s_no or line.id
+            if line.move_id.picking_id != self.picking_id or line.move_id not in self.move_ids:
+                errors.append(_("Line %s: choose a livestock product of this receipt.") % label)
+            elif line.quantity <= 0 or line.quantity != int(line.quantity):
+                errors.append(_("Line %s: the quantity must be a whole number of units.") % label)
+            elif line.weight <= 0:
+                errors.append(_("Line %s: enter the weight of its units.") % label)
+            elif not line.band_id:
+                errors.append(_("Line %(n)s: no weight band of %(product)s holds %(w)s kg "
+                                "(product form > Livestock page).",
+                                n=label, product=line.product_id.display_name, w=line.weight))
+        for move in self.line_ids.move_id:
+            entered = sum(self.line_ids.filtered(lambda l: l.move_id == move).mapped('quantity'))
+            if entered > self._units(move):
+                errors.append(_("%(product)s: %(entered)s units entered, only %(units)s on the receipt.",
+                                product=move.product_id.display_name, entered=int(entered), units=self._units(move)))
+        if errors:
+            raise UserError('\n'.join(errors))
 
     def action_receive(self):
-        """Receive the weighed units: the receipt's placeholder (purchase product)
-        moves are replaced by moves of the matching variants, linked to the same
-        purchase order line. Stock enters (valued at the purchase price) when the
-        receipt is validated - nothing is added to stock here."""
+        """The general product's units on the receipt are replaced by moves of
+        the product variants of their weight, linked to the same purchase lines
+        and valued at what they weighed. Units not entered stay on the general
+        product's move (a backorder when the receipt is validated). Stock enters
+        when the receipt is validated."""
         self.ensure_one()
         picking = self.picking_id
         if self.is_received:
-            raise UserError("These units are already received.")
+            raise UserError(_("These units are already received."))
         if picking.state in ('done', 'cancel'):
-            raise UserError("Units can only be received on a receipt that is not done or cancelled.")
+            raise UserError(_("Units can only be received on a receipt that is not done or cancelled."))
+        self._check_lines()
 
-        # one line per unit
-        total_picking_qty = sum(picking.move_ids.filtered(lambda m: m.product_id.check_stock).mapped('product_uom_qty'))
-        if len(self.line_ids) < total_picking_qty:
-            raise UserError("Number of lines is less than total quantity in the picking. Please add more lines.")
-        if len(self.line_ids) > total_picking_qty:
-            raise UserError("Number of lines is greater than total quantity in the picking. Please remove lines.")
-
-        placeholder_moves = picking.move_ids.filtered(lambda m: m.product_id.check_stock)
-        purchase_line_of = {move.product_id: move.purchase_line_id for move in placeholder_moves}
-
-        # units per (variant, purchase line)
-        units = {}
+        # units grouped by (product variant, purchase line)
+        groups = {}
         for line in self.line_ids:
-            variant = self._match_variant(line)
-            key = (variant, purchase_line_of.get(line.product_id) or self.env['purchase.order.line'])
-            units[key] = units.get(key, 0.0) + 1.0
+            key = (line.received_product_id, line.move_id.purchase_line_id)
+            group = groups.setdefault(key, {'qty': 0.0, 'weight': 0.0, 'amount': 0.0})
+            group['qty'] += line.quantity
+            group['weight'] += line.total_weight
+            group['amount'] += line.amount
 
-        # the placeholder moves never entered stock: cancelled, then removed
-        placeholder_moves._action_cancel()
-        placeholder_moves.unlink()
+        # the general product's moves give up the units received as variants
+        for move in self.line_ids.move_id:
+            received = sum(self.line_ids.filtered(lambda l: l.move_id == move).mapped('quantity'))
+            remaining = self._units(move) - received
+            if remaining:
+                # what is left waits on the receipt (backorder at validation)
+                move.product_uom_qty = move.product_id.uom_id._compute_quantity(remaining, move.product_uom)
+                # not received now: never validated as the general product, it goes to a backorder
+                move.move_line_ids.unlink()
+                move.quantity = 0.0
+                move.picked = False
+            else:
+                # never entered stock: cancelled, then removed
+                move._action_cancel()
+                move.unlink()
 
         Move = self.env['stock.move']
         new_moves = Move
-        for (variant, purchase_line), qty in units.items():
+        for (product, purchase_line), group in groups.items():
             new_moves |= Move.create({
-                'name': variant.display_name,
-                'product_id': variant.id,
-                'product_uom_qty': qty,
-                'product_uom': variant.uom_id.id,
+                'name': product.display_name,
+                'product_id': product.id,
+                'product_uom_qty': group['qty'],
+                'product_uom': product.uom_id.id,
                 'picking_id': picking.id,
                 'location_id': picking.location_id.id,
                 'location_dest_id': picking.location_dest_id.id,
-                # valued at the purchase price, counted as received on the purchase order
                 'purchase_line_id': purchase_line.id or False,
                 'company_id': picking.company_id.id,
+                'livestock_weight': group['weight'],
+                'livestock_amount': group['amount'],
             })
         new_moves._action_confirm()
         new_moves._action_assign()
         for move in new_moves:
             move.quantity = move.product_uom_qty
 
-        # Finalize wizard/picking
         self.is_received = True
-        self.picking_id.bill_amount = self.bill_amount
-
-        # The bill amount is the price of the purchase line these units are
-        # received for (the receipt is valued with it when it is validated)
-        purchase_lines = self.env['purchase.order.line'].union(*[pl for (_v, pl) in units])
-        if self.bill_amount and len(purchase_lines) == 1:
-            purchase_lines.write({'price_unit': float(self.bill_amount) / (purchase_lines.product_qty or 1.0)})
-        elif self.bill_amount and purchase_lines:
-            picking.message_post(body="Bill amount %s not applied: the units belong to several purchase lines "
-                                      "(%s); set their prices on the purchase order."
-                                      % (self.bill_amount, ', '.join(purchase_lines.mapped('display_name'))))
-
+        picking.bill_amount = (picking.bill_amount or 0.0) + self.bill_amount
         return {
-            'name': 'Receive by Weight',
+            'name': _('Receive by Weight'),
             'type': 'ir.actions.act_window',
             'res_model': 'receive.by.weight',
             'res_id': self.id,

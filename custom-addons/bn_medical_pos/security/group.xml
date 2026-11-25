@@ -6,10 +6,22 @@
         <field name="sequence">60</field>
     </record>
 
+    <record id="group_medical_menu" model="res.groups">
+        <field name="name">Menu</field>
+        <field name="category_id" ref="module_category_medical_health"/>
+        <field name="comment">Shows the Medical &amp; Health app. What is inside depends on the Doctor, User or Administrator group.</field>
+    </record>
+
+    <record id="group_medical_doctor" model="res.groups">
+        <field name="name">Doctor</field>
+        <field name="category_id" ref="module_category_medical_health"/>
+        <field name="comment">Prescriptions only: sees the prescriptions of the doctors the user is listed on in Master Setup > Doctors, adds their products and approves them. Give it with Menu; no POS or stock rights are needed.</field>
+    </record>
+
     <record id="group_medical_user" model="res.groups">
         <field name="name">User</field>
         <field name="category_id" ref="module_category_medical_health"/>
-        <field name="implied_ids" eval="[(4, ref('point_of_sale.group_pos_user'))]"/>
+        <field name="implied_ids" eval="[(4, ref('point_of_sale.group_pos_user')), (4, ref('group_medical_menu'))]"/>
     </record>
 
     <record id="group_medical_manager" model="res.groups">

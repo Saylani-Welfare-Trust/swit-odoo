@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Branch / Site access (bn_stock_location): a user sees the documents of
+        their Branches / Sites (and everything under them), the city-wide
+        documents of the nodes above them (their zone, city, province); who created a document gives no access. Global (it narrows every
+        other rule of the model); All Branches / Sites and portal users: no effect.
+    -->
+    <record id="node_rule_sadqa_jariya" model="ir.rule">
+        <field name="name">Sadqa e Jariya Application: Branch / Site</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('node_id', 'parent_of', user.allowed_node_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_sadqa_jariya_line" model="ir.rule">
+        <field name="name">Sadqa e Jariya Disbursement Line: Branch / Site</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_line"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('node_id', 'parent_of', user.allowed_node_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+    <record id="node_rule_sadqa_jariya_recurring_line" model="ir.rule">
+        <field name="name">Sadqa e Jariya Recurring Line: Branch / Site</field>
+        <field name="model_id" ref="bn_sadqa_e_jariya.model_sadqa_jariya_recurring_line"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('node_id', 'parent_of', user.allowed_node_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+</odoo>

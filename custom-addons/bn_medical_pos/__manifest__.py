@@ -1,6 +1,6 @@
 {
     'name': 'Medical & Health',
-    'version': '1.0',
+    'version': '1.2',
     'summary': 'Medical & Health POS counters: patients (registered donees tagged Medical) are the customers',
     'author': 'BytesNode',
     'website': 'https://bytesnode.com/',
@@ -22,6 +22,7 @@
         'views/pos_actions.xml',
         'views/patient.xml',
         'views/menu.xml',
+        'views/search_filters.xml',
     ],
     'uninstall_hook': '_uninstall_hook',
     'auto_install': False,

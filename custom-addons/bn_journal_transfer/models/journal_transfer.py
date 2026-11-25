@@ -13,7 +13,7 @@ status_selection = [
 
 class JournalTransfer(models.Model):
     _name = "journal.transfer"
-    _inherit = ['pos.link.mixin']
+    _inherit = ['pos.link.mixin', 'mail.thread', 'mail.activity.mixin']
     _description = "Journal Transfer"
 
 

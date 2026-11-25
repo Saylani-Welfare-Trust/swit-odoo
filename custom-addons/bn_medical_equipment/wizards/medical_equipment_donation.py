@@ -22,18 +22,12 @@ class MedicalEquipmentDonation(models.TransientModel):
         if not self.medical_equipment_id.medical_equipment_line_ids:
             raise ValidationError(_("No medical equipment lines found."))
 
-        journal = self.env['account.journal'].search(
-            [('type', '=', 'general'), ('company_id', '=', self.env.company.id)],
-            limit=1
-        )
+        journal = self.env.company._get_medical_equipment_journal()
         
         security_product = self.env['product.product'].search(
             [('name', '=', self.env.company.medical_equipment_security_depsoit_product)],
             limit=1
         )
-
-        if not journal:
-            raise ValidationError(_("Please configure a General Journal."))
 
         income_account = (
             self.product_id.property_account_income_id

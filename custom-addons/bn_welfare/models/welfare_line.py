@@ -45,7 +45,7 @@ recurring_duration_selection = [
 
 class WelfareLine(models.Model):
     _name = 'welfare.line'
-    _inherit = ['pos.link.mixin']
+    _inherit = ['pos.link.mixin', 'mail.thread', 'mail.activity.mixin']
     _description = "Welfare Line"
 
     return_date = fields.Datetime('Return Date', readonly=True)
@@ -92,7 +92,6 @@ class WelfareLine(models.Model):
         for rec in self:
             rec.on_hand_qty = rec.product_id.qty_available if rec.product_id else 0.0
     
-    # manual_net_total = fields.Boolean(default=True)
     company_id = fields.Many2one(
         'res.company',
         string='Company',
@@ -243,11 +242,8 @@ class WelfareLine(models.Model):
                   self.product_id.categ_id.property_account_expense_categ_id
         
         if not account:
-            # Get default payable account
-            account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', self.company_id.id)
-            ], limit=1)
+            # never the first expense account found: the product says where it goes
+            raise UserError(_('Set an expense account on %s or its category.') % self.product_id.display_name)
         
         # Calculate unit price from total_amount to respect custom amounts
         unit_price = self.total_amount / self.quantity if self.quantity else self.total_amount
@@ -461,10 +457,10 @@ class WelfareLine(models.Model):
         lines.write({'state': 'cancel'})
         return True
 
-    def _get_delivery_locations(self):
-        """The Welfare Delivery operation type of the user's warehouse, with
-        its source and customer locations."""
-        picking_type = self.env['stock.warehouse']._get_program_type('welfare')
+    def _get_delivery_locations(self, branch=None):
+        """The Welfare Delivery operation type of the warehouse of the line's
+        branch (else the user's), with its source and customer locations."""
+        picking_type = self.env['stock.warehouse']._get_program_type('welfare', branch=branch)
         location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
         location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
         return picking_type, location_src, location_dest
@@ -483,7 +479,8 @@ class WelfareLine(models.Model):
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
                 
-                picking_type, location_src, location_dest = self._get_delivery_locations()
+                picking_type, location_src, location_dest = self._get_delivery_locations(
+                    self.pos_analytic_account_id or self.analytic_account_id)
 
                 picking_vals = {
                     'partner_id': self.welfare_id.donee_id.id,
@@ -580,25 +577,18 @@ class WelfareLine(models.Model):
         Create a journal entry for money returned from Donee
         This INCREASES company cash (money coming IN)
         """
-        # The cash journal and its own account: money comes back in cash
-        journal = self.env['account.journal'].search([
-            ('type', '=', 'cash'),
-            ('company_id', '=', self.company_id.id)
-        ], limit=1)
+        # the configured Welfare Return Journal and its own account
+        journal = (self.company_id or self.env.company)._get_welfare_return_journal()
         cash_account = journal.default_account_id
         if not cash_account:
-            raise ValidationError(_("No cash journal with a default account found to process return."))
+            raise ValidationError(_("The Welfare Return Journal %s has no default account.") % journal.display_name)
         
         # Find expense/income account for the product
         expense_account = self.product_id.property_account_expense_id or \
                         self.product_id.categ_id.property_account_expense_categ_id
         
         if not expense_account:
-            # Fallback to a default expense account
-            expense_account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', self.company_id.id)
-            ], limit=1)
+            raise UserError(_('Set an expense account on %s or its category.') % self.product_id.display_name)
         
         move_vals = {
             'move_type': 'entry',

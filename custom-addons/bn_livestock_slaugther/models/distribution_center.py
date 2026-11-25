@@ -21,6 +21,7 @@ type_selection = [
 
 class DistributionCenter(models.Model):
     _name = 'distribution.center'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Distribution Center"
 
 
@@ -133,10 +134,11 @@ class DistributionCenter(models.Model):
         if not purchase_order:
             raise ValidationError('Please validate one of the respected Purchase Requisition RFQ.')
 
-        warehouse_loc = self.env['stock.location'].search([
-            ('name', 'ilike', 'stock'),
-            ('usage', '=', 'internal'),
-        ], limit=1)
+        # the stock of the warehouse the purchase was received in
+        warehouse = purchase_order.picking_type_id.warehouse_id[:1]
+        if not warehouse:
+            raise ValidationError(_('The purchase order of %s has no warehouse to deliver from.') % self.name)
+        warehouse_loc = warehouse.lot_stock_id
         
         picking = self.env['stock.picking'].create({
             'origin': self.name,

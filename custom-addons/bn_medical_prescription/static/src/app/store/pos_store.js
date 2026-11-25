@@ -9,27 +9,21 @@ import { sprintf } from "@web/core/utils/strings";
 import { _t } from "@web/core/l10n/translation";
 
 patch(PosStore.prototype, {
-    /** "prescription" (Prescription Desk), "billing" (Billing Counter) or false */
-    get medicalCounter() {
-        return (this.config.is_medical_pos && this.config.medical_pos_role) || false;
-    },
-    get isPrescriptionDesk() {
-        return this.medicalCounter === "prescription";
-    },
-    get isBillingCounter() {
-        return this.medicalCounter === "billing";
+    /** A Medical & Health POS: one counter for the paid till and the bill of the approved prescription */
+    get isMedicalCounter() {
+        return Boolean(this.config.is_medical_pos);
     },
 
     notifyMedical(message, type = "info") {
         this.env.services.notification.add(message, { type });
     },
 
-    /** At the billing counter, selecting the patient loads their approved prescription */
+    /** Selecting the patient loads their approved prescription */
     async selectPartner() {
         const order = this.get_order();
         const previousId = order?.get_partner()?.id || false;
         const result = await super.selectPartner(...arguments);
-        if (!this.isBillingCounter || !order || order !== this.get_order()) {
+        if (!this.isMedicalCounter || !order || order !== this.get_order()) {
             return result;
         }
         const partner = order.get_partner();
@@ -56,7 +50,14 @@ patch(PosStore.prototype, {
     async offerMedicalPrescriptions(partner) {
         const prescriptions = await this.fetchMedicalPrescriptions({ partnerId: partner.id });
         if (!prescriptions.length) {
-            this.notifyMedical(sprintf(_t("No approved prescription is waiting for %s."), partner.name), "warning");
+            return;
+        }
+        if (this.get_order()?.get_orderlines().length) {
+            // the order is already a new till: don't mix the prescription into it
+            this.notifyMedical(
+                sprintf(_t("%s has an approved prescription: open Actions > Prescriptions to bill it."), partner.name),
+                "warning"
+            );
             return;
         }
         let prescription = prescriptions[0];
@@ -107,6 +108,10 @@ patch(PosStore.prototype, {
         if (order.medical_prescription_id) {
             this.removeMedicalPrescription(order);
         }
+        if (order.get_orderlines().length) {
+            // products of a till in progress: it stays as its own order
+            order = this.add_new_order();
+        }
         if (prescription.partner && order.get_partner()?.id !== prescription.partner.id) {
             this.addPartners([prescription.partner]);
             order.set_partner(this.db.get_partner_by_id(prescription.partner.id) || prescription.partner);
@@ -126,6 +131,8 @@ patch(PosStore.prototype, {
         }
         order.medical_prescription_id = prescription.id;
         order.medical_prescription_name = prescription.name;
+        order.medical_doctor_id = false;
+        order.medical_doctor_name = prescription.doctor_name || false;
         this.notifyMedical(
             sprintf(_t("Prescription %s loaded: %s product(s)."), prescription.name, prescription.lines.length),
             "success"
@@ -141,49 +148,51 @@ patch(PosStore.prototype, {
         }
         order.medical_prescription_id = false;
         order.medical_prescription_name = false;
+        order.medical_doctor_name = false;
     },
 
-    /** Prescription desk: the order becomes the approved prescription of the patient, nothing is paid */
-    async approveMedicalPrescription(order = this.get_order()) {
+    /**
+     * First phase: Approve asks for the doctor of the selected products, then the order is paid as usual.
+     * The paid till makes the draft prescription on the server.
+     * @returns {Promise<boolean>} whether the payment can go on
+     */
+    async selectMedicalDoctor(order = this.get_order()) {
         const partner = order.get_partner();
         const lines = order.get_orderlines();
         let error = "";
         if (!partner) {
             error = _t("Please select the patient first.");
-        } else if (!lines.length) {
-            error = _t("Add the prescribed products first.");
         } else if (lines.some((line) => line.get_quantity() <= 0)) {
             error = _t("Quantities must be positive.");
         }
         if (error) {
-            await this.popup.add(ErrorPopup, { title: _t("Can't approve the prescription"), body: error });
-            return;
+            await this.popup.add(ErrorPopup, { title: _t("Can't approve"), body: error });
+            return false;
         }
 
-        const { confirmed, payload } = await this.popup.add(ApprovePrescriptionPopup, { order });
-        if (!confirmed) {
-            return;
-        }
-        const prescription = await this.orm.call("pos.session", "pos_approve_medical_prescription", [
+        const products = [...new Set(lines.map((line) => line.get_product()))];
+        const doctors = await this.orm.call("pos.session", "pos_get_medical_doctors", [
             [this.pos_session.id],
-            {
-                partner_id: partner.id,
-                doctor_name: payload.doctor_name,
-                note: payload.note,
-                lines: lines.map((line) => ({
-                    product_id: line.get_product().id,
-                    qty: line.get_quantity(),
-                    price_unit: line.get_unit_price(),
-                    discount: line.get_discount(),
-                    note: line.get_customer_note() || "",
-                })),
-            },
+            products.map((product) => product.id),
         ]);
-        this.removeOrder(order);
-        this.add_new_order();
-        this.notifyMedical(
-            sprintf(_t("Prescription %s approved for %s: send the patient to the billing counter."), prescription.name, partner.name),
-            "success"
-        );
+        if (!doctors.length) {
+            await this.popup.add(ErrorPopup, {
+                title: _t("No doctor for these products"),
+                body: sprintf(
+                    _t("No doctor is listed on all of: %s. Add them in Master Setup > Doctors, or bill them separately."),
+                    products.map((product) => product.display_name).join(", ")
+                ),
+            });
+            return false;
+        }
+
+        const { confirmed, payload } = await this.popup.add(ApprovePrescriptionPopup, { order, doctors });
+        if (!confirmed) {
+            return false;
+        }
+        order.medical_doctor_id = payload.doctor_id;
+        order.medical_doctor_name = payload.doctor_name;
+        order.medical_note = payload.note;
+        return true;
     },
 });

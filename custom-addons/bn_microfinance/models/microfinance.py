@@ -111,7 +111,6 @@ class Microfinance(models.Model):
         string='Advance Donation',
         domain="[('state','=','approved'), ('product_id','=',product_id)]"
     )
-    # used_advance_donation_line_id = fields.Many2one('advance.donation.lines', string='Used Advance Donation Line', readonly=True, copy=False)
     advance_donation_amount = fields.Monetary(
         'Contribution by Donor',
         currency_field='currency_id',
@@ -274,7 +273,6 @@ class Microfinance(models.Model):
 
     def action_view_bill(self):
         """Open the picking form view"""
-        # self.ensure_one()
         if not self.bill_ids:
             raise ValidationError("No Bills found")
         
@@ -361,7 +359,6 @@ class Microfinance(models.Model):
             if not rec.product_id:
                 continue
 
-            # raise ValidationError('Hit')
 
             # Fetch lines related to selected scheme line
             line = self.env['loan.product.line'].search([
@@ -594,7 +591,6 @@ class Microfinance(models.Model):
                     'price_unit': self.total_amount,
                     # The loan amount is paid out as is: no purchase tax on it.
                     'tax_ids': [(5, 0, 0)],
-                    # 'account_id': expense_account.id,
                 })
             ]
         }
@@ -643,8 +639,12 @@ class Microfinance(models.Model):
 
         # Sale order and delivery created as superuser: the Microfinance group
         # checked by the calling action is the gate.
+        # the warehouse the asset leaves from (else the company's default one)
+        location = self.recovered_location_id if self.in_recovery else self.warehouse_location_id
+        warehouse = self.env['stock.warehouse']._warehouse_for(location or None)
         sale_order = self.env['sale.order'].sudo().create({
             'partner_id': self.donee_id.id,
+            'warehouse_id': warehouse.id,
             'origin': self.name,
             'date_order': fields.Datetime.now(),
             'commitment_date': datetime.combine(self.delivery_date, time(0, 0, 0)),
@@ -658,7 +658,8 @@ class Microfinance(models.Model):
         })
 
         # Confirm SO — this auto-generates the delivery picking
-        sale_order.action_confirm()
+        # the delivery gets the warehouse's Microfinance Delivery operation type (stock.rule)
+        sale_order.with_context(program_picking_type='microfinance_delivery').action_confirm()
 
         # ← Write origin back AFTER confirm as action_confirm() overwrites it
         sale_order.write({'origin': self.name})
@@ -697,12 +698,10 @@ class Microfinance(models.Model):
         else:
             if self.state != 'in_recovery':
                 return
-            # self.compute_recovery_installment()
             self._mf_set_state('recover')
 
     def action_view_picking(self):
         """Open the picking form view"""
-        # self.ensure_one()
         if not self.picking_ids:
             raise ValidationError("No delivery picking found for this record.")
         
@@ -754,8 +753,6 @@ class Microfinance(models.Model):
         if self.installment_amount <= 0 or self.installment_period <= 0 or self.total_amount <= 0:
             return
 
-        # Don't delete existing lines
-        # self.microfinance_line_ids.unlink()  # ← COMMENT THIS OUT
 
         total_covered = self.installment_amount * (self.installment_period - 1)
         remaining_amount = max(self.total_amount - total_covered, 0)

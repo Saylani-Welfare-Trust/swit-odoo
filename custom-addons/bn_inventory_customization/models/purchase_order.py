@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo.exceptions import ValidationError
+from odoo import _, api, fields, models
 
 
 class PurchaseOrder(models.Model):
@@ -41,18 +42,11 @@ class PurchaseOrderLine(models.Model):
     # store chosen to_kg multiplier
     to_kg_multiplier = fields.Float(string="To KG Multiplier", default=1.0)
 
-    main_attribute_id = fields.Many2one(
-        comodel_name="product.attribute",
-        related='product_id.product_tmpl_id.main_attribute_id',
-        string="Main Attribute",
-        help="The attribute used to calculate highest to_kg."
-    )
-
     @api.onchange('product_id')
     def onchange_product_id(self):
-        """Extend Odoo's product onchange: determine a reliable base price,
-           pick highest to_kg on selected main_attribute_id,
-           and set final price_unit = base * multiplier.
+        """Extend Odoo's product onchange for livestock: the price entered is per kg,
+           a unit is estimated at the heaviest weight band of the product
+           (Livestock Variants), price_unit = per-kg price x that weight.
         """
         super().onchange_product_id()
 
@@ -87,18 +81,8 @@ class PurchaseOrderLine(models.Model):
 
             line.x_base_price = float(base_price or 0.0)
 
-            # --- 2) Highest to_kg only on main_attribute_id ---
-            max_to_kg = 1.0
-            if line.main_attribute_id:
-                attr_values = self.env['product.attribute.value'].search([
-                    ('attribute_id', '=', line.main_attribute_id.id)
-                ])
-                if attr_values:
-                    max_to_kg = max(attr_values.mapped('to_kg') or [1.0])
-                else:
-                    max_to_kg = 1.0
-            else:
-                max_to_kg = 1.0
+            # --- 2) Heaviest configured weight band of this purchase product ---
+            max_to_kg = self.env['livestock.variant.line']._max_weight(line.product_id)
             line.to_kg_multiplier = float(max_to_kg or 1.0)
 
             # --- 3) Apply final unit price ---
@@ -156,15 +140,41 @@ class PurchaseOrderLine(models.Model):
         # Now let Odoo compute subtotal/taxes normally
         super(PurchaseOrderLine, self)._compute_amount()
 
+    @api.constrains('product_id')
+    def _check_livestock_variant_not_bought(self):
+        """A product variant of a livestock product (Cow - 12) is what a weighed unit
+        is received as: livestock is bought as the general product (Cow), then
+        weighed on its receipt."""
+        Band = self.env['livestock.variant.line'].sudo()
+        for line in self.filtered(lambda l: l.product_id and not l.product_id.check_stock):
+            band = Band.search([('product_id', '=', line.product_id.id)], limit=1)
+            if band:
+                raise ValidationError(_(
+                    "%(variant)s is received by weight: buy %(product)s instead, its units are received "
+                    "as %(variant)s by their weight.",
+                    variant=line.product_id.display_name, product=band.purchase_product_id.display_name))
+
+    def _livestock_moves(self):
+        """The received moves of the weighed units of this (livestock) line."""
+        self.ensure_one()
+        return self.move_ids.filtered(lambda m: m.state == 'done' and m.livestock_amount
+                                      and not m.origin_returned_move_id)
+
+    def _get_po_line_moves(self):
+        """The weighed units are received as the products of their weight bands,
+        not as the purchase product: they are this line's receipt all the same."""
+        moves = super()._get_po_line_moves()
+        if self.product_id.check_stock:
+            moves |= self.move_ids.filtered(lambda m: m.livestock_weight)
+        return moves
+
     def _prepare_account_move_line(self, move=False):
+        """A livestock line is billed at what its units weighed: the average
+        weighed amount per received unit of this line (not of the whole receipt)."""
         res = super(PurchaseOrderLine, self)._prepare_account_move_line(move)
-
-        product_id = res['product_id']
-        product = self.env['product.product'].browse(product_id)
-
-        if product and product.check_stock == True:
-            bill_amt = sum(self.move_ids.picking_id.mapped('bill_amount'))
-            qty = res.get('quantity') or 0.0
-            if bill_amt and qty:
-                res['price_unit'] = bill_amt / qty
+        if self.product_id.check_stock:
+            moves = self._livestock_moves()
+            units = sum(moves.mapped('product_uom_qty'))
+            if units:
+                res['price_unit'] = sum(moves.mapped('livestock_amount')) / units
         return res

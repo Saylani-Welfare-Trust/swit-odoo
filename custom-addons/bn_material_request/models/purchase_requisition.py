@@ -40,6 +40,13 @@ class PurchaseRequisition(models.Model):
     
 
     
+    def _can_create_rfqs(self):
+        """Whether RFQs can be created on this Purchase Request now (the vendor
+        selection wizard checks it). Base flow: an open request; the procurement
+        workflow (bn_procurement_workflow) has its own states."""
+        self.ensure_one()
+        return self.state in ('in_progress', 'open')
+
     def action_create_multi_vendor_rfqs(self):
         """Open wizard to create RFQs (Purchase Orders) for multiple vendors"""
         self.ensure_one()

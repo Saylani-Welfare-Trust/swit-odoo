@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_bank_cheque_config" model="ir.ui.view">
+        <field name="name">bank.cheque.config.search</field>
+        <field name="model">bank.cheque.config</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="bank_name"/>
+                <field name="journal_ids"/>
+                <separator/>
+                <filter name="bn_archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="search_filters_bank_double_cheque_config" model="ir.ui.view">
+        <field name="name">bank.double.cheque.config.search</field>
+        <field name="model">bank.double.cheque.config</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="bank_name"/>
+                <field name="journal_ids"/>
+                <separator/>
+                <filter name="bn_archived" string="Archived" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+</odoo>

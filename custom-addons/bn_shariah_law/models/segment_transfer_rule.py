@@ -4,6 +4,7 @@ from odoo.exceptions import ValidationError
 
 class SegmentTransferRule(models.Model):
     _name = 'segment.transfer.rule'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Segment Transfer Rules'
     _rec_name = 'source_segment_id'
     _order = 'source_segment_id'
@@ -120,16 +121,16 @@ class SegmentTransferRule(models.Model):
             return rule.destination_segment_ids
         return self.env['account.analytic.account']
 
-    def name_get(self):
-        result = []
+    @api.depends('source_segment_id.name', 'destination_names', 'max_transfer_amount', 'allowed')
+    def _compute_display_name(self):
+        # (Odoo 17 no longer calls name_get)
         for rec in self:
-            name = f"{rec.source_segment_id.name} → {rec.destination_names}"
+            name = f"{rec.source_segment_id.name or ''} → {rec.destination_names or ''}"
             if rec.max_transfer_amount > 0:
                 name += f" (Max: {rec.max_transfer_amount})"
             if not rec.allowed:
                 name += " [Disabled]"
-            result.append((rec.id, name))
-        return result
+            rec.display_name = name
 
     def toggle_active(self):
         """Toggle active status."""

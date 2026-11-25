@@ -3,7 +3,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import calendar
 
-class DonationBoxDashboard(models.TransientModel):
+class DonationBoxDashboard(models.AbstractModel):
     _name = 'donation.box.dashboard'
     _description = 'Donation Box Dashboard'
 
@@ -307,8 +307,8 @@ class DonationBoxDashboard(models.TransientModel):
     @api.model
     def _get_allowed_location_ids(self):
         """Return (allowed_ids, visible_ids) or (None, None) if unrestricted."""
-        locations = self.env.user.donation_box_analytic_ids
-        if not locations:
+        locations, unrestricted = self.env.user._dashboard_locations()
+        if unrestricted:
             return None, None
         allowed = set()
         def _walk(node):

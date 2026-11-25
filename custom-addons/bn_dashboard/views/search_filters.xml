@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_pos_dd_report" model="ir.ui.view">
+        <field name="name">pos.dd.report.search.filters</field>
+        <field name="model">pos.dd.report</field>
+        <field name="inherit_id" ref="bn_dashboard.view_pos_dd_report_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="user_id"/>
+                <field name="session_id"/>
+                <separator/>
+                <filter name="bn_date_date" string="Date" date="date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_session_id" string="Session" context="{'group_by': 'session_id'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

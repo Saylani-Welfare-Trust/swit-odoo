@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_shariah_law_config" model="ir.ui.view">
+        <field name="name">shariah.law.config.search.filters</field>
+        <field name="model">shariah.law.config</field>
+        <field name="inherit_id" ref="bn_shariah_law.search_shariah_law_config"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <separator/>
+                <filter name="bn_date_last_sync_date" string="Last Sync Date" date="last_sync_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_sync_frequency" string="Sync Frequency" context="{'group_by': 'sync_frequency'}"/>
+                    <filter name="bn_groupby_last_sync_date_month" string="Last Sync Date (Month)" context="{'group_by': 'last_sync_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_filters_shariah_law_sync_log" model="ir.ui.view">
+        <field name="name">shariah.law.sync.log.search.filters</field>
+        <field name="model">shariah.law.sync.log</field>
+        <field name="inherit_id" ref="bn_shariah_law.search_shariah_law_sync_log"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <separator/>
+                <filter name="bn_date_sync_date" string="Sync Date" date="sync_date"/>
+                <group expand="0" string="Group By">
+                    <filter name="bn_groupby_sync_date_month" string="Sync Date (Month)" context="{'group_by': 'sync_date:month'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

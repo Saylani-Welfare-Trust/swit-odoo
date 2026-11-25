@@ -12,14 +12,15 @@ state_selection = [
 
 class QurbaniGoatDistribution(models.Model):
     _name = 'qurbani.goat.distribution'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Qurbani Goat Distribution"
 
 
     hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
     day_id = fields.Many2one('qurbani.day', string="Day")
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
-    distribution_location_id = fields.Many2one('stock.location', string="Distribution Location")
-    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location")
+    distribution_location_id = fields.Many2one('stock.location', string="Distribution Location", domain="[('is_distribution_location', '=', True)]")
+    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", domain="[('is_slaughter_location', '=', True)]")
 
     start_time = fields.Float('Start Time')
     end_time = fields.Float('End Time')

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_city" model="ir.ui.view">
+        <field name="name">city.form</field>
+        <field name="model">city</field>
+        <field name="arch" type="xml">
+            <form string="City">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_city" model="ir.ui.view">
+        <field name="name">city.tree.open.form</field>
+        <field name="model">city</field>
+        <field name="inherit_id" ref="bn_master_setup.city_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_master_setup.city_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_bank" model="ir.ui.view">
+        <field name="name">bank.form</field>
+        <field name="model">bank</field>
+        <field name="arch" type="xml">
+            <form string="Bank">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_bank" model="ir.ui.view">
+        <field name="name">bank.tree.open.form</field>
+        <field name="model">bank</field>
+        <field name="inherit_id" ref="bn_master_setup.bank_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_master_setup.bank_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="chatter_form_area" model="ir.ui.view">
+        <field name="name">area.form</field>
+        <field name="model">area</field>
+        <field name="arch" type="xml">
+            <form string="Area">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="area_code"/>
+                        <field name="area_description"/>
+                        <field name="active_status"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- the list is edited in place: a button on each row opens the form (chatter) -->
+    <record id="chatter_open_form_area" model="ir.ui.view">
+        <field name="name">area.tree.open.form</field>
+        <field name="model">area</field>
+        <field name="inherit_id" ref="bn_master_setup.area_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="attributes">
+                <attribute name="open_form_view">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="bn_master_setup.area_action" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

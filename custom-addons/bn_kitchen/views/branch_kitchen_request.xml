@@ -36,6 +36,8 @@
                     <group>
                         <group name="branch_kitchen_request_col_1">
                             <field name="type" />
+                            <field name="kitchen_location_id" options="{'no_create': True, 'no_edit': True}"
+                                   readonly="state == 'done'" required="state == 'approve'"/>
                         </group>
                         <group name="branch_kitchen_request_col_2">
                             <field name="month" invisible="type != 'monthly'" />

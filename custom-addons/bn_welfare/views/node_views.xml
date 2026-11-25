@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_welfare_search_node" model="ir.ui.view">
+        <field name="name">welfare.search.node</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.search_welfare"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="welfare_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">welfare.view.tree.node</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.welfare_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="welfare_view_form_form_node" model="ir.ui.view">
+        <field name="name">welfare.view.form.node</field>
+        <field name="model">welfare</field>
+        <field name="inherit_id" ref="bn_welfare.welfare_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='welfare_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_welfare_consolidated_search_search_node" model="ir.ui.view">
+        <field name="name">welfare.line.search.node</field>
+        <field name="model">welfare.line</field>
+        <field name="inherit_id" ref="bn_welfare.view_welfare_consolidated_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_welfare_consolidated_tree_tree_node" model="ir.ui.view">
+        <field name="name">welfare.line.tree.node</field>
+        <field name="model">welfare.line</field>
+        <field name="inherit_id" ref="bn_welfare.view_welfare_consolidated_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_welfare_line_form_node" model="ir.ui.view">
+        <field name="name">welfare.line.form.node</field>
+        <field name="model">welfare.line</field>
+        <field name="inherit_id" ref="bn_welfare.chatter_form_welfare_line"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

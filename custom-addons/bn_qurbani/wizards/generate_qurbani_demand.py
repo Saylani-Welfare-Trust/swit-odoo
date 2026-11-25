@@ -10,7 +10,7 @@ class GenerateQurbaniDemand(models.TransientModel):
     hijri_id = fields.Many2one('hijri', string="Hijri", domain=[('approved', '=', True)])
     day_id = fields.Many2one('qurbani.day', string="Day")
 
-    slaughter_location_id = fields.Many2one('stock.location', string='Slaughter Location')
+    slaughter_location_id = fields.Many2one('stock.location', string='Slaughter Location', domain="[('is_slaughter_location', '=', True)]")
     inventory_product_id = fields.Many2one('product.product', string="Inventory Product")
 
 

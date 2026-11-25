@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Shariah Law Dashboard: the segments a user may see -->
+    <record id="view_users_form_inherit_bn_dashboard_shariah" model="ir.ui.view">
+        <field name="name">res.users.form.inherit.bn.dashboard.shariah</field>
+        <field name="model">res.users</field>
+        <field name="inherit_id" ref="base.view_users_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='access_rights']" position="after">
+                <page name="shariah_dashboard" string="Dashboards" groups="base.group_system">
+                    <group>
+                        <field name="pos_dd_report_category_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                        <field name="shariah_analytic_ids" widget="many2many_tags" options="{'no_create': True}"
+                               help="Segments this user sees on the Shariah Law Dashboard, with the segments under them. Empty: every segment."/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

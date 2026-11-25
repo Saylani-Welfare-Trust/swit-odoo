@@ -3,6 +3,7 @@ from odoo import models, fields, api
 
 class QurbaniDay(models.Model):
     _name = 'qurbani.day'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Qurbani Day'
 
 

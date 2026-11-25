@@ -6,22 +6,32 @@
         <field name="model">receive.by.weight</field>
         <field name="arch" type="xml">
             <form string="Receive by Weight">
+                <p class="text-muted">
+                    Enter a line per weight: the units of the livestock product that weighed that much. The product
+                    variant comes from the weight bands of the product (its Livestock page). Units you do not enter
+                    stay on the receipt (backorder).
+                </p>
                 <group>
                     <field name="picking_id" readonly="1" force_save="True"/>
                     <field name="is_received" invisible="1"/>
-                    <field name="total_weight" readonly="1" force_save="True"/>
-                    <field name="bill_amount" readonly="1" force_save="True"/>
-
-                    <field name="line_ids" readonly="is_received == True">
-                        <tree editable="bottom" create="0" delete="0">
-                            <field name="s_no" readonly="1" force_save="1"/>
-                            <field name="allowed_product_ids" column_invisible="1"/>
-                            <field name="product_id" options="{'no_create': True}" domain="[('id', 'in', allowed_product_ids)]" readonly="1" force_save="1"/>
-                            <field name="livestock_variant" options="{'no_create': True}" readonly="0" force_save="1"/>
-                            <field name="weight" sum="Total" force_save="1"/>
-                        </tree>
-                    </field>
+                    <field name="move_ids" invisible="1"/>
+                    <field name="total_quantity" readonly="1"/>
+                    <field name="total_weight" readonly="1"/>
+                    <field name="bill_amount" readonly="1"/>
                 </group>
+                <field name="line_ids" readonly="is_received == True">
+                    <tree editable="bottom">
+                        <field name="s_no" readonly="1" force_save="1" optional="hide"/>
+                        <field name="move_id" options="{'no_create': True, 'no_open': True}" required="1"/>
+                        <field name="product_id" column_invisible="1"/>
+                        <field name="weight" required="1"/>
+                        <field name="quantity" sum="Units" required="1"/>
+                        <field name="total_weight" sum="Total" optional="show"/>
+                        <field name="received_product_id" readonly="1"/>
+                        <field name="price_per_kg" readonly="1" optional="hide"/>
+                        <field name="amount" sum="Total" readonly="1"/>
+                    </tree>
+                </field>
                 <footer>
                     <button name="action_receive" type="object" string="Receive" class="btn-primary" invisible="is_received == True"/>
                     <button name="action_save_only"

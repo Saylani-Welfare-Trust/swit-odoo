@@ -89,22 +89,37 @@ class HRExpense(models.Model):
             expense.analytic_zone_id = zone
             expense.analytic_branch_id = branch
     
+    # the rules are checked when an expense is saved (form, import or API),
+    # not only when the field is changed on the form
+    MAX_AGE_DAYS = 90   # about 3 months
+
+    @api.constrains('date')
+    def _check_expense_date(self):
+        today = fields.Date.context_today(self)
+        for expense in self.filtered('date'):
+            if expense.date > today:
+                raise ValidationError(_('%s: an expense cannot be recorded on a future date.') % expense.name)
+            if expense.date < today - timedelta(days=self.MAX_AGE_DAYS):
+                raise ValidationError(_('%s: the expense date cannot be older than 3 months.') % expense.name)
+
+    @api.constrains('payment_mode')
+    def _check_payment_mode(self):
+        for expense in self:
+            if expense.payment_mode == 'company_account':
+                raise ValidationError(_(
+                    '%s: an expense is paid by the employee (to reimburse); '
+                    '"Company" cannot be chosen as Paid By.') % expense.name)
+
     @api.onchange('date')
     def _onchange_date(self):
+        # the same rule, shown as soon as the date is typed
         if self.date:
-            today = fields.Date.today()
-            three_months_ago = today - timedelta(days=90)  # roughly 3 months
+            self._check_expense_date()
 
-            if self.date > today:
-                raise ValidationError('Expense cannot be recorded on future dates.')
-
-            if self.date < three_months_ago:
-                raise ValidationError('Expense date cannot be older than 3 months.')
-    
     @api.onchange('payment_mode')
     def _onchange_payment_mode(self):
         if self.payment_mode == 'company_account':
-            raise ValidationError('Expense payment mode can be set as ( Company ).')
-        
+            self._check_payment_mode()
+
     def unlink(self):
         raise UserError(_('You cannot delete an expense.'))

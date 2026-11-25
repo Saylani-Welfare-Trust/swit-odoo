@@ -4,6 +4,7 @@ from odoo.exceptions import UserError
 
 class CounterFietNotes(models.Model):
     _name = 'counterfeit.notes'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Counterfiet Notes"
     _rec_name = 'rider_name'
 

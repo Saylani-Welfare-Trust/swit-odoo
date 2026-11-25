@@ -22,16 +22,12 @@
         <field name="arch" type="xml">
             <form>
                 <header>
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Confirm" name="action_confirm" type="object" class="oe_highlight" invisible="state != 'not_received'" />
                     <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Update Inventory" name="action_update_inventory" type="object" invisible="state != 'not_received' or inventory_updated" />
                     <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Send to Goat &amp; Meat" name="action_send_to_goat_and_meat" type="object" invisible="state != 'not_received' or not inventory_updated or materials_sent" />
                     <field name="inventory_updated" invisible="1"/>
                     <field name="materials_sent" invisible="1"/>
 
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Start Cutting" name="action_start_cutting" type="object" invisible="state != 'received'" />
-                    <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="End Cutting" name="action_end_cutting" type="object" invisible="state != 'in_progress'" />
-
-                    <field name="state" widget="statusbar" statusbar_visible="not_received, received, in_progress, done"/>
+                    <field name="state" widget="statusbar" statusbar_visible="not_received,done"/>
                 </header>
 
                 <sheet>
@@ -47,9 +43,12 @@
                             <field name="price" />
                         </group>
                         <group name="livestock_cutting_col_2">
-                            <field name="start_time" />
-                            <field name="end_time" />
-                            <field name="total_time" />
+                            <field name="cutting_location_id" options="{'no_create': True, 'no_edit': True}" readonly="inventory_updated or state == 'done'"/>
+                            <field name="meat_location_id" options="{'no_create': True, 'no_edit': True}" readonly="materials_sent"/>
+                            <field name="goat_location_id" options="{'no_create': True, 'no_edit': True}" readonly="materials_sent"/>
+                            <field name="materials_sent" invisible="1"/>
+                            <field name="warehouse_id"/>
+                            <field name="node_id"/>
                         </group>
                     </group>
 

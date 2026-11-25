@@ -1,4 +1,4 @@
-from odoo import models, fields, api
+from odoo import _, models, fields, api
 from odoo.exceptions import ValidationError
 
 
@@ -18,6 +18,62 @@ class LivestockCuttingMaterial(models.Model):
 
     product_id = fields.Many2one('product.product', string="Product")
     livestock_slaughter_id = fields.Many2one('livestock.slaugther', string='Livestock Slaughter', copy=False)
+    # where the animal is cut, and where its meat / other products go: locations
+    # marked Is Cutting / Is Meat / Is Goat Location (a warehouse may hold several)
+    cutting_location_id = fields.Many2one(
+        'stock.location', string='Cutting Location', copy=False, domain="[('is_cutting_location', '=', True)]")
+    meat_location_id = fields.Many2one(
+        'stock.location', string='Meat Location', copy=False, domain="[('is_meat_location', '=', True)]",
+        help="Where Send to Goat and Meat puts the meat products.")
+    goat_location_id = fields.Many2one(
+        'stock.location', string='Goat Location', copy=False, domain="[('is_goat_location', '=', True)]",
+        help="Where Send to Goat and Meat puts the other cut products.")
+    # the warehouse the animal is cut in: of its cutting location
+    warehouse_id = fields.Many2one('stock.warehouse', string='Warehouse', copy=False,
+                                   compute='_compute_warehouse_id', store=True, readonly=True)
+
+    @api.depends('cutting_location_id')
+    def _compute_warehouse_id(self):
+        for record in self:
+            record.warehouse_id = record.cutting_location_id.warehouse_id or record.warehouse_id
+
+    @api.onchange('cutting_location_id')
+    def _onchange_cutting_location_id(self):
+        warehouse = self.cutting_location_id.warehouse_id
+        Location = self.env['stock.location']
+        for field, role in (('meat_location_id', 'is_meat_location'), ('goat_location_id', 'is_goat_location')):
+            if warehouse and (not self[field] or self[field].warehouse_id != warehouse):
+                self[field] = Location._single_role_location(role, warehouse)
+
+    def _fill_default_locations(self):
+        """Empty locations get the only one of their role: the cutting location of
+        the slaughter record or of its warehouse, and the Meat / Goat locations
+        of the cutting location's warehouse."""
+        Location = self.env['stock.location']
+        for record in self.sudo():
+            if not record.cutting_location_id:
+                record.cutting_location_id = record.livestock_slaughter_id.cutting_location_id or \
+                    Location._single_role_location('is_cutting_location', record._livestock_warehouse())
+            warehouse = record.cutting_location_id.warehouse_id
+            if not record.meat_location_id:
+                record.meat_location_id = Location._single_role_location('is_meat_location', warehouse)
+            if not record.goat_location_id:
+                record.goat_location_id = Location._single_role_location('is_goat_location', warehouse)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._fill_default_locations()
+        return records
+
+    def _required_location(self, field):
+        self.ensure_one()
+        if not self[field]:
+            self._fill_default_locations()
+        if not self[field]:
+            raise ValidationError(_("Choose the %(field)s of %(record)s.",
+                                    field=self._fields[field].string, record=self.name or self.code))
+        return self[field]
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
 
     name = fields.Char(related='product_id.name', string="Product Name")
@@ -52,15 +108,20 @@ class LivestockCuttingMaterial(models.Model):
 
     def _get_product_bom(self):
         self.ensure_one()
-        if not self.product_id:
-            return self.env['mrp.bom']
+        return self._bom_for_product(self.product_id)
+
+    @api.model
+    def _bom_for_product(self, product):
+        """The BOM of ``product``: of the variant itself, else of its template."""
         bom_model = self.env['mrp.bom']
+        if not product:
+            return bom_model
         bom = bom_model.search([
-            ('product_id', '=', self.product_id.id),
+            ('product_id', '=', product.id),
         ], order='sequence, id', limit=1)
         if not bom:
             bom = bom_model.search([
-                ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+                ('product_tmpl_id', '=', product.product_tmpl_id.id),
                 ('product_id', '=', False),
             ], order='sequence, id', limit=1)
         return bom
@@ -134,20 +195,37 @@ class LivestockCuttingMaterial(models.Model):
         move._action_done()
         return move
 
+    def _livestock_warehouse(self):
+        """The warehouse the animal is cut in: of its cutting location, else its
+        slaughter record's, else its Branch / Site's."""
+        self.ensure_one()
+        if self.cutting_location_id.warehouse_id:
+            return self.cutting_location_id.warehouse_id
+        if self.livestock_slaughter_id:
+            return self.livestock_slaughter_id._livestock_warehouse()
+        try:
+            return self.env['stock.warehouse']._warehouse_for(branch=self.node_id)
+        except Exception:
+            return self.env['stock.warehouse']
+
     def _cutting_location(self):
-        location = self.env['stock.location'].search([('name', 'ilike', 'Livestock Cutting')], limit=1)
-        if not location:
-            raise ValidationError("No such location as (Livestock Cutting) found!")
-        return location
+        return self._required_location('cutting_location_id')
 
     def action_update_inventory(self):
         """The materials of the cutting enter the Cutting location (once)."""
-        cutting_loc = self._cutting_location()
         for record in self:
+            cutting_loc = record._cutting_location()
             if record.state != 'not_received':
                 raise ValidationError("Inventory can only be updated before the material is received.")
             if record.inventory_updated:
                 raise ValidationError("The inventory of %s is already updated." % (record.name or record.code))
+            # the cut animal is used up: it leaves the Cutting location (its material
+            # request was made with the cutting, which put it there)
+            slaughter = record.livestock_slaughter_id
+            if slaughter and slaughter.cutting_material_id == record and record.product_id:
+                animal = record.product_id
+                record._stock_move(animal, record.quantity, cutting_loc,
+                                   animal.with_company(self.env.company).property_stock_inventory)
             for material in record.livestock_cutting_material_line_ids:
                 product = material.product_id
                 record._stock_move(product, material.quantity,
@@ -156,12 +234,10 @@ class LivestockCuttingMaterial(models.Model):
 
     def action_send_to_goat_and_meat(self):
         """The materials go from the Cutting location to Meat (meat products) or Goat (once)."""
-        cutting_loc = self._cutting_location()
-        goat_loc = self.env['stock.location'].search([('name', 'ilike', 'Goat')], limit=1)
-        meat_loc = self.env['stock.location'].search([('name', 'ilike', 'Meat')], limit=1)
-        if not goat_loc or not meat_loc:
-            raise ValidationError("Cutting, Goat, or Meat location not properly set!")
         for record in self:
+            cutting_loc = record._required_location('cutting_location_id')
+            goat_loc = record._required_location('goat_location_id')
+            meat_loc = record._required_location('meat_location_id')
             if record.state != 'not_received':
                 raise ValidationError("Materials can only be sent before the material is received.")
             if not record.inventory_updated:
@@ -172,37 +248,7 @@ class LivestockCuttingMaterial(models.Model):
                 product = material.product_id
                 target_loc = meat_loc if 'meat' in (product.name or '').lower() else goat_loc
                 record._stock_move(product, material.quantity, cutting_loc, target_loc)
-            record.materials_sent = True
-
-    def action_start_cutting(self):
-        for record in self:
-            if record.state != 'received':
-                raise ValidationError("Cutting can only be started after the material request is confirmed.")
-            record.state = 'in_progress'
-            record.start_time = record.start_time or fields.Datetime.now()
-            if record.livestock_slaughter_id:
-                record.livestock_slaughter_id.state = 'material_request'
-                record.livestock_slaughter_id.start_time = record.start_time
-
-    def action_end_cutting(self):
-        self.ensure_one()
-        if self.state != 'in_progress':
-            raise ValidationError("End Cutting is available only after cutting has started.")
-        if not self.product_id:
-            raise ValidationError("Please select a product before ending cutting.")
-        if not self.livestock_cutting_material_line_ids:
-            self._populate_bom_lines()
-        if not self.livestock_cutting_material_line_ids:
-            raise ValidationError(
-                "No BOM component products found for %s." % self.product_id.display_name
-            )
-
-        # the cut animal is used up: it leaves the Cutting location
-        product = self.product_id
-        self._stock_move(product, self.quantity, self._cutting_location(),
-                         product.with_company(self.env.company).property_stock_inventory)
-        self.state = 'done'
-        self.end_time = fields.Datetime.now()
-        if self.livestock_slaughter_id:
-            self.livestock_slaughter_id.end_time = self.end_time
-            self.livestock_slaughter_id.state = 'done'
+            # the last step: the request and its animal are done
+            record.write({'materials_sent': True, 'state': 'done'})
+            if record.livestock_slaughter_id.state in ('cutting', 'material_request'):
+                record.livestock_slaughter_id.state = 'done'

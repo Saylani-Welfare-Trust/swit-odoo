@@ -182,14 +182,4 @@
             </form>
         </field>
     </record>
-    
-    <record id="action_welfare_fields_wizard" model="ir.actions.act_window">
-        <field name="name">Edit All Fields - Full View</field>
-        <field name="res_model">welfare.fields.wizard</field>
-        <field name="view_mode">form</field>
-        <field name="target">new</field>
-        <field name="binding_model_id" ref="model_welfare"/>
-        <field name="binding_view_types">form</field>
-        <field name="view_id" ref="view_welfare_fields_wizard_form"/>
-    </record>
 </odoo>

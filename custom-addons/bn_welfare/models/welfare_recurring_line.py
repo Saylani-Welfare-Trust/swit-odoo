@@ -1,5 +1,5 @@
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 import logging
 _logger = logging.getLogger(__name__)
 
@@ -136,11 +136,7 @@ class WelfareRecurringLine(models.Model):
                   self.product_id.categ_id.property_account_expense_categ_id
         
         if not account:
-            # Get default payable account
-            account = self.env['account.account'].search([
-                ('account_type', '=', 'expense'),
-                ('company_id', '=', self.env.company.id),
-            ], limit=1)
+            raise UserError(_('Set an expense account on %s or its category.') % self.product_id.display_name)
         
         invoice_line_vals = {
             'product_id': self.product_id.id,
@@ -272,7 +268,8 @@ class WelfareRecurringLine(models.Model):
                 StockMove = self.env['stock.move']
                 StockMoveLine = self.env['stock.move.line']
                 
-                picking_type, location_src, location_dest = self.env['welfare.line']._get_delivery_locations()
+                picking_type, location_src, location_dest = self.env['welfare.line']._get_delivery_locations(
+                    self.analytic_account_id)
                 
                 picking_vals = {
                     'partner_id': self.donee_id.id,

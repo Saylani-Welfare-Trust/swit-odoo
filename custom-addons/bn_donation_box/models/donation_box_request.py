@@ -70,14 +70,12 @@ class DonationBoxRequest(models.Model):
 
     @api.model
     def _default_warehouse_id(self):
-        Warehouse = self.env['stock.warehouse']
-        company = self.env.company
-        user = self.env.user
-        allowed = Warehouse
-        if 'scope_warehouse_ids' in user._fields:
-            allowed = user.scope_warehouse_ids.filtered(lambda w: w.company_id == company)
-        warehouse = allowed[:1] or Warehouse.search([('company_id', '=', company.id)], limit=1)
-        return warehouse.id
+        # the user's warehouse: of their own Branch / Site, else their first one,
+        # else the company's
+        try:
+            return self.env['stock.warehouse']._warehouse_for().id
+        except UserError:
+            return False
 
     @api.model
     def _default_picking_type_id(self):

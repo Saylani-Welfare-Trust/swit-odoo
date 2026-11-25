@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_inherit_bn_advance_donation" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.bn.advance.donation</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Advance Donation" string="Advance Donation" name="bn_advance_donation"
+                     groups="bn_advance_donation.group_adv_don_admin">
+                    <block title="Accounting" name="advance_donation_accounting">
+                        <setting string="Advance Donation Journal"
+                                 help="Cheque deposit entries and refund payments of cancelled amounts are posted in this journal.">
+                            <field name="advance_donation_journal_id" options="{'no_create': True}"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_advance_donation_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'bn_advance_donation', 'bin_size': False}</field>
+    </record>
+
+    <menuitem id="menu_advance_donation_settings"
+              name="Settings"
+              parent="bn_advance_donation.advance_donation_menu"
+              action="action_advance_donation_settings"
+              sequence="1"
+              groups="bn_advance_donation.group_adv_don_admin"/>
+
+    <!-- Upgrade / install: the journal used so far becomes the configured one -->
+    <function model="res.company" name="_set_default_advance_donation_journal"/>
+
+</odoo>

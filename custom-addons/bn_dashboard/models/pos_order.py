@@ -109,7 +109,7 @@ class PosOrder(models.Model):
                           segment_id=None, segment_type=None):
         domain = []
 
-        # ⚡ Enforce user access (city/province/zone from pos.order.access.config)
+        # ⚡ Enforce user access (the user's Branches / Sites)
         domain.extend(self._get_user_access_domain())
 
         if config_id:
@@ -1088,30 +1088,26 @@ class PosOrder(models.Model):
         }
         
     # ------------------------------------------------------------------
-    # User access restriction (from pos.order.access.config)
+    # User access restriction (the user's Branches / Sites)
     # ------------------------------------------------------------------
     def _user_pos_accounts(self):
         """
         Return the analytic accounts (incl. descendants) the *current* user
-        is allowed to see. Empty recordset == unrestricted.
+        is allowed to see. Empty recordset == unrestricted; a user limited to
+        nothing gets a record that matches nothing.
         """
         user = self.env.user
-        if 'pos_analytic_ids' not in user._fields:
-            return self.env['account.analytic.account']
+        Account = self.env['account.analytic.account']
 
-        allowed = user.pos_analytic_ids
-        if not allowed:
-            # Empty list -> unrestricted (full_access tick, or no config)
-            return self.env['account.analytic.account']
-
-        # Explicit "All Locations" config -> unrestricted
-        if self.env['pos.order.access.config'].sudo().search_count(
-                [('user_id', '=', user.id), ('full_access', '=', True)]):
-            return self.env['account.analytic.account']
+        allowed, unrestricted = user._dashboard_locations()
+        if unrestricted:
+            # All Branches / Sites
+            return Account
 
         # Expand to descendants (city -> zones -> branches)
-        return self.env['account.analytic.account'].search(
-            [('id', 'child_of', allowed.ids)])
+        accounts = Account.sudo().search([('id', 'child_of', allowed.ids)]) if allowed else Account
+        # no Branch / Site at all: nothing (an empty set would mean everything)
+        return accounts.sudo(False) or Account.browse([0])
 
     def _get_user_access_domain(self):
         """

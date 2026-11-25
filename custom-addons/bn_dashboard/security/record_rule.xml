@@ -7,4 +7,8 @@
         <field name="groups" eval="[(4, ref('bn_dashboard.group_donation_box_dashboard_user'))]"/>
     </record>
 
+    <!-- The Livestock dashboard reads the slaughter lines through their own rule
+         (bn_livestock_slaugther/security/node_rules.xml: the analytic account of the
+         Destination Location): the receiving branch sees what was sent to it. -->
+
 </odoo>

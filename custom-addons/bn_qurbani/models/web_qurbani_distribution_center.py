@@ -2,8 +2,9 @@ from odoo import models, fields
 
 class QurbaniDistributionCenter(models.Model):
     _name = 'web.qurbani.distribution.center'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Qurbani Distribution Center"
 
 
     name = fields.Char('Name')  
-    distribution_center_id = fields.Many2one('stock.location', string="Distribution Center")
+    distribution_center_id = fields.Many2one('stock.location', string="Distribution Center", domain="[('is_distribution_location', '=', True)]")

@@ -5,6 +5,7 @@
         <field name="name">Fetch Donor Name from Excel</field>
         <field name="model_id" ref="model_import_donation"/>
         <field name="binding_model_id" ref="model_import_donation"/>
+        <field name="groups_id" eval="[(6, 0, [ref('bn_import_donation.import_donation_user_group')])]"/>
         <field name="state">code</field>
         <field name="code">action = records.action_fetch_donor_name_from_excel()</field>
     </record>

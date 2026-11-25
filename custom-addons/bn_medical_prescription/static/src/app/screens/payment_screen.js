@@ -11,7 +11,7 @@ patch(PaymentScreen.prototype, {
         const order = this.currentOrder;
         if (order?.medical_prescription_id) {
             try {
-                // billed meanwhile at another counter, or cancelled by the prescription desk?
+                // billed meanwhile at another counter, or cancelled?
                 await this.env.services.orm.silent.call("pos.session", "pos_check_medical_prescription", [
                     [this.pos.pos_session.id],
                     order.medical_prescription_id,
@@ -29,5 +29,23 @@ patch(PaymentScreen.prototype, {
             }
         }
         return super.validateOrder(...arguments);
+    },
+
+    /** The paid till made its draft prescription on the server: print its number */
+    async afterOrderValidation() {
+        const order = this.currentOrder;
+        if (order?.medical_doctor_id && !order.medical_prescription_id && order.server_id) {
+            try {
+                order.medical_till_name = await this.env.services.orm.silent.call(
+                    "pos.session",
+                    "pos_get_till_prescription",
+                    [[this.pos.pos_session.id], order.server_id]
+                );
+            } catch (error) {
+                // the till is paid: it prints without the number
+                console.warn("Medical & Health: prescription number not loaded", error);
+            }
+        }
+        return super.afterOrderValidation(...arguments);
     },
 });

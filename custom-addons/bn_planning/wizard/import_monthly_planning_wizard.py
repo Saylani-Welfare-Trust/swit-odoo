@@ -1,5 +1,5 @@
-from odoo import models, fields
-from odoo.exceptions import ValidationError
+from odoo import _, models, fields
+from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, date
 import base64
 from io import BytesIO
@@ -41,6 +41,23 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
     )
 
     # ─────────────────── helpers ───────────────────
+    def _import_location(self, planning, value):
+        """The location of an imported row: its full name (WH/Stock/...), else its
+        name, in the planning's warehouse first. Never the first of several
+        locations of that name across the country."""
+        Location = self.env['stock.location']
+        locations = Location.search([('complete_name', '=ilike', value)])
+        if not locations:
+            locations = Location.search([('name', '=ilike', value)])
+            warehouse = (planning.location_dest_id or planning.source_location_id).warehouse_id
+            if len(locations) > 1 and warehouse:
+                locations = locations.filtered(lambda l: l.warehouse_id == warehouse) or locations
+        if len(locations) != 1:
+            raise UserError(_('Location "%(value)s": %(problem)s Use its full name (for example WH/Stock/Livestock).',
+                              value=value,
+                              problem=_('not found.') if not locations else _('several locations have this name.')))
+        return locations
+
     def _parse_date(self, value):
         if not value:
             return False
@@ -180,11 +197,7 @@ class ImportMonthlyPlanningWizard(models.TransientModel):
 
                 # Optional location (for livestock)
                 if tab_key == 'livestock' and location_val:
-                    loc = self.env['stock.location'].search(
-                        [('name', 'ilike', str(location_val).strip())], limit=1
-                    )
-                    if loc:
-                        vals['location_id'] = loc.id
+                    vals['location_id'] = self._import_location(mp, str(location_val).strip()).id
 
                 existing = Model.search([
                     ('monthly_planning_id', '=', mp.id),

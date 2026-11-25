@@ -16,13 +16,13 @@ class TestWelfare(TransactionCase):
         cls.cash = ref('bn_welfare.disbursement_category_Cash')
 
         def user(login, *groups):
-            return cls.env['res.users'].create({'name': login, 'login': login, 'groups_id': [
+            return cls.env['res.users'].create({'name': login, 'login': login, 'all_nodes': True, 'groups_id': [
                 (6, 0, [ref('base.group_user').id] + [ref('bn_welfare.%s' % g).id for g in groups])]})
         cls.user = user('wf_t_user', 'group_bn_welfare_user')
         cls.committee = user('wf_t_com', 'group_bn_welfare_committee')
         cls.hod = user('wf_t_hod', 'group_welfare_hod')
         cls.member = user('wf_t_mem', 'group_welfare_member')
-        cls.plain = cls.env['res.users'].create({'name': 'plain', 'login': 'wf_t_plain', 'groups_id': [(6, 0, [ref('base.group_user').id])]})
+        cls.plain = cls.env['res.users'].create({'name': 'plain', 'login': 'wf_t_plain', 'all_nodes': True, 'groups_id': [(6, 0, [ref('base.group_user').id])]})
 
     def _welfare(self, order_type='one_time', amount=100):
         welfare = self.env['welfare'].create({'donee_id': self.donee.id, 'order_type': order_type})

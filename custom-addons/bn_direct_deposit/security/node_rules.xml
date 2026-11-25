@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Branch / Site access (bn_stock_location): a user sees the documents of
+        their Branches / Sites (and everything under them), the city-wide
+        documents of the nodes above them (their zone, city, province); who created a document gives no access. Global (it narrows every
+        other rule of the model); All Branches / Sites and portal users: no effect.
+    -->
+    <record id="node_rule_direct_deposit" model="ir.rule">
+        <field name="name">Direct Deposit: Branch / Site</field>
+        <field name="model_id" ref="bn_direct_deposit.model_direct_deposit"/>
+        <field name="domain_force">[(1, '=', 1)] if (user.share or user.all_nodes) else ['|', ('node_id', 'in', user.node_scope_ids.ids), ('node_id', 'parent_of', user.allowed_node_ids.ids)]</field>
+        <field name="groups" eval="[(5, 0, 0)]"/>
+    </record>
+
+</odoo>

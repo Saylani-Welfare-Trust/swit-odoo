@@ -4,6 +4,9 @@ from odoo.exceptions import ValidationError
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
+# states in which RFQs are still created for the products not on an RFQ yet
+REMAINING_RFQ_STATES = ('rfq_sent', 'vendor_selected', 'cxo_approved', 'funds_check', 'in_progress', 'done')
+
 class PurchaseRequisition(models.Model):
     _inherit = 'purchase.requisition'
 
@@ -186,8 +189,18 @@ class PurchaseRequisition(models.Model):
                 subject=_('Purchase Request Assigned'),
             )
 
+    def _can_create_rfqs(self):
+        """The first RFQs in Procurement Manager Approval; later ones, for the
+        products not on an RFQ yet, from RFQ Sent on ("Create RFQs for Remaining
+        Products" shows in the same states)."""
+        self.ensure_one()
+        return self.state == 'procurement_approval' or (
+            self.state in REMAINING_RFQ_STATES and self.has_lines_to_rfq)
+
     def action_create_multi_vendor_rfqs(self):
         self._check_rfq_creator()
+        if not self._can_create_rfqs():
+            raise ValidationError(_('RFQs cannot be created for this request in its current state.'))
         return super().action_create_multi_vendor_rfqs()
 
     def action_procurement_approve(self):

@@ -1,6 +1,6 @@
 {
     'name': 'Qurbani',
-    'version': '17.0.1.7.2',
+    'version': '17.0.1.7.10',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -71,6 +71,10 @@
         'data/program_types.xml',
         'views/pos_link_views.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
+        'views/chatter_forms.xml',
+        'views/node_views.xml',
+        'security/node_rules.xml',
     ],
     'auto_install': False,
     'application': True,

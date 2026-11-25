@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_report_monthly_planning_line" model="ir.ui.view">
+        <field name="name">report.monthly.planning.line.search.filters</field>
+        <field name="model">report.monthly.planning.line</field>
+        <field name="inherit_id" ref="bn_planning.report_monthly_planning_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="transfer_picking_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

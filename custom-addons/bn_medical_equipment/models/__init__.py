@@ -12,3 +12,4 @@ from . import pos_cheque
 from . import pos_order
 from . import direct_deposit
 from . import program_types
+from . import res_company

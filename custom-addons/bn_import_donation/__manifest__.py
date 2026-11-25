@@ -1,6 +1,6 @@
 {
     'name': 'Import Donation',
-    'version': '17.0.1.7.3',
+    'version': '17.0.1.7.10',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
@@ -18,7 +18,6 @@
     'data': [
         'data/sequence.xml',
         'data/schedule_action.xml',
-        'data/server_action.xml',
         'data/ir_module_category.xml',
         'data/stock_location.xml',
         'data/stock_picking_type.xml',
@@ -26,6 +25,7 @@
         'security/group.xml',
         'security/ir.model.access.csv',
         'security/stock_scope_rule.xml',
+        'data/server_action.xml',
         
         'reports/import_donation.xml',
         'reports/api_donation.xml',
@@ -46,6 +46,10 @@
         'data/upgrade_hooks.xml',
         'data/program_types.xml',
         'views/search_views.xml',
+        'views/search_filters.xml',
+        'views/chatter_forms.xml',
+        'views/node_views.xml',
+        'security/node_rules.xml',
     ],
     'auto_install': False,
     'application': True,

@@ -5,6 +5,7 @@ from odoo import models, fields
 
 class BankChequeConfig(models.Model):
     _name = 'bank.cheque.config'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Bank Cheque Configuration'
     _order = 'bank_name asc'
     _rec_name = 'bank_name'

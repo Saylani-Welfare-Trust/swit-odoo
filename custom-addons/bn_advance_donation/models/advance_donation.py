@@ -51,7 +51,6 @@ class AdvanceDonation(models.Model):
     _name = 'advance.donation'
     _description = "Advance Donation"
     _inherit = ['step.activity.mixin', 'mail.thread', 'mail.activity.mixin']
-    # _table = 'advance_donation_new'   
 
     name = fields.Char(string="Name", required=True, copy=False, readonly=True, default=lambda self: _('New'))
     # only donors registered for Advance Donation (Record Search > Donor Account)
@@ -306,7 +305,6 @@ class AdvanceDonation(models.Model):
     def onchange_donor_id(self):
         """Refresh balance when donor changes"""
         self._compute_total_balance()
-        # self._compute_available_balance()
 
     @api.onchange('contract_start_date', 'contract_end_date', 'contract_frequency')
     def compute_no_of_days(self):
@@ -348,7 +346,6 @@ class AdvanceDonation(models.Model):
     def action_refresh_balance(self):
         """Refresh total balance computation"""
         self._compute_total_balance()
-        # self._compute_available_balance()
         return True
 
     def action_approved(self):
@@ -458,6 +455,7 @@ class AdvanceDonation(models.Model):
         
         # Create Customer Payment (Sent) for the cancelled amount
         if cancelled_amount > 0 and self.donor_id:
+            journal = self.env.company._get_advance_donation_journal()
             payment_vals = {
                 'payment_type': 'outbound',
                 'partner_type': 'customer',
@@ -466,13 +464,12 @@ class AdvanceDonation(models.Model):
                 'currency_id': self.currency_id.id,
                 'date': fields.Date.today(),
                 'ref': f'Cancelled payment for {self.name}',
-                'journal_id': self.env['account.journal'].search([
-                    ('type', '=', 'bank'),
-                    ('company_id', '=', self.env.company.id)
-                ], limit=1).id,
+                'journal_id': journal.id,
             }
-            
-            self.env['account.payment'].create(payment_vals)
+
+            # Advance Donation users cancel payments (the button's group) but have no
+            # accounting rights: the refund payment is created on their behalf
+            self.env['account.payment'].sudo().create(payment_vals)
         
         # Reload the form view
         return {

@@ -1,7 +1,7 @@
 import logging
 
 from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 from .sadqa_jariya_line import collection_point_selection
 
@@ -19,6 +19,7 @@ state_selection = [
 
 class SadqaJariyaRecurringLine(models.Model):
     _name = 'sadqa.jariya.recurring.line'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Sadqa e Jariya Recurring Line'
     _order = 'collection_date, id'
 
@@ -113,12 +114,13 @@ class SadqaJariyaRecurringLine(models.Model):
             return
         account = self.product_id.property_account_expense_id or self.product_id.categ_id.property_account_expense_categ_id
         if not account:
-            account = self.env['account.account'].search([('account_type', '=', 'expense')], limit=1)
+            raise UserError(_('Set an expense account on %s or its category.') % self.product_id.display_name)
         line_vals = {
             'product_id': self.product_id.id,
             'name': self.product_id.name or 'Sadqa e Jariya Payment',
             'quantity': self.quantity,
-            'price_unit': self.amount,
+            # amount is the total of the line (see action_create_recurring_order)
+            'price_unit': self.amount / self.quantity if self.quantity else self.amount,
             'account_id': account.id,
             # a disbursement, no vendor taxes from the product
             'tax_ids': [(6, 0, [])],
@@ -142,8 +144,9 @@ class SadqaJariyaRecurringLine(models.Model):
         for line in self.filtered(lambda l: l.disbursement_category_id.name == 'In Kind'):
             if line.state != 'draft':
                 raise ValidationError(_('A delivery is only created for a Draft line (%s).') % line.display_name)
-            # the Sadqa e Jariya Delivery operation type of the user's warehouse
-            picking_type = self.env['stock.warehouse']._get_program_type('sadqa_jariya')
+            # the Sadqa e Jariya Delivery operation type of the line's branch warehouse (else the user's)
+            picking_type = self.env['stock.warehouse']._get_program_type(
+                'sadqa_jariya', branch=line.pos_analytic_account_id or line.analytic_account_id)
             location_src = picking_type.default_location_src_id or picking_type.warehouse_id.lot_stock_id
             location_dest = picking_type.default_location_dest_id or self.env.ref('stock.stock_location_customers')
             picking = self.env['stock.picking'].create({

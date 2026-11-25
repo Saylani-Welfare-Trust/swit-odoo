@@ -11,10 +11,8 @@ from datetime import date as td
 class AdvanceDonationLine(models.Model):
     _name = 'advance.donation.lines'
     _description = "Advance Donation Line"
-    # _table = 'advance_donation_line_new'   
 
     advance_donation_id = fields.Many2one('advance.donation', 'Donation ID', ondelete='cascade', required=True)
-    # advance_donation_id = fields.Integer(string="Temp Fix")  # 👈 TEMP
     serial_no = fields.Char('Serial No.')
     product_id = fields.Many2one('product.product', 'Product', domain=[('is_advance_donation', '=', True)])
     description = fields.Char('Description')

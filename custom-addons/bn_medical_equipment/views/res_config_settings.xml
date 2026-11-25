@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_inherit_bn_medical_equipment" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.bn_medical_equipment</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Medical Equipment" string="Medical Equipment" name="bn_medical_equipment" groups="bn_medical_equipment.medical_equipment_admin_group">
+                    <block title="Accounting" name="bn_medical_equipment_accounting">
+                        <setting string="Medical Equipment Journal" help="Journal of the entry made when a security deposit is donated.">
+                            <field name="medical_equipment_journal_id" options="{'no_create': True}"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_bn_medical_equipment_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'bn_medical_equipment', 'bin_size': False}</field>
+    </record>
+
+    <menuitem id="menu_bn_medical_equipment_settings"
+              name="Medical Equipment Settings"
+              parent="bn_master_setup.master_setup_menu"
+              action="action_bn_medical_equipment_settings"
+              sequence="99"
+              groups="bn_medical_equipment.medical_equipment_admin_group"/>
+
+    <!-- Upgrade / install: the journal used so far becomes the configured one -->
+    <function model="res.company" name="_set_default_medical_equipment_journal_id"/>
+
+</odoo>

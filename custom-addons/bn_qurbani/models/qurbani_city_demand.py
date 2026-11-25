@@ -18,7 +18,7 @@ class QurbaniCityDemand(models.Model):
     total_demand = fields.Integer('Cumulative Demand', compute="_compute_total_demand", store=True, tracking=True)
     remaining_demand = fields.Integer('Remaining Demand', compute="_compute_remaining_demand", store=True, tracking=True)
 
-    slaughter_location_ids = fields.Many2many('stock.location', string="Slaughter Location")
+    slaughter_location_ids = fields.Many2many('stock.location', string="Slaughter Location", domain="[('is_slaughter_location', '=', True)]")
 
 
     # --------------------------------

@@ -28,7 +28,42 @@ class LivestockCutting(models.Model):
     state = fields.Selection(selection=state_selection, string="State", default='not_received')
 
     is_picking = fields.Boolean('Is Picking')
+    # the animal moves from its slaughter location to a cutting location (a warehouse may hold several of each)
+    slaughter_location_id = fields.Many2one(
+        'stock.location', string='Slaughter Location', domain="[('is_slaughter_location', '=', True)]",
+        default=lambda self: self._default_role_location('is_slaughter_location'),
+        help="Where the animal was slaughtered (a location marked Is Slaughter Location).")
+    cutting_location_id = fields.Many2one(
+        'stock.location', string='Cutting Location', domain="[('is_cutting_location', '=', True)]",
+        default=lambda self: self._default_role_location('is_cutting_location'),
+        help="Where the animal is cut (a location marked Is Cutting Location).")
+    warehouse_id = fields.Many2one(
+        'stock.warehouse', string='Warehouse', compute='_compute_warehouse_id', store=True, readonly=True,
+        help="The warehouse of the cutting location.")
 
+    @api.depends('cutting_location_id', 'slaughter_location_id')
+    def _compute_warehouse_id(self):
+        for record in self:
+            record.warehouse_id = (record.cutting_location_id.warehouse_id
+                                   or record.slaughter_location_id.warehouse_id or record.warehouse_id)
+
+    @api.onchange('slaughter_location_id')
+    def _onchange_slaughter_location_id(self):
+        warehouse = self.slaughter_location_id.warehouse_id
+        if warehouse and (not self.cutting_location_id or self.cutting_location_id.warehouse_id != warehouse):
+            self.cutting_location_id = self.env['stock.location']._single_role_location('is_cutting_location', warehouse)
+
+    @api.model
+    def _default_role_location(self, role):
+        """The only ``role`` location of the user's Branch / Site warehouse."""
+        user = self.env.user
+        try:
+            warehouse = self.env['stock.warehouse']._warehouse_for(
+                branch=user.employee_ids[:1].analytic_account_id, user=user)
+        except Exception:
+            # several warehouses without a default: the user chooses
+            return self.env['stock.location']
+        return self.env['stock.location']._single_role_location(role, warehouse)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -47,24 +82,24 @@ class LivestockCutting(models.Model):
         # once: a second run would create a second cutting material and transfer
         if self.is_picking:
             raise ValidationError(_('The picking of %s is already validated.') % self.name)
-        cutting_obj = self.env['livestock.cutting.material']
+        if not self.slaughter_location_id:
+            raise ValidationError(_('Please choose the slaughter location of %s.') % self.name)
+        if not self.cutting_location_id:
+            raise ValidationError(_('Please choose the cutting location of %s.') % self.name)
         product_pro = self.product_id
 
-        cutting_record = cutting_obj.create({
+        cutting_record = self.env['livestock.cutting.material'].create({
             'product_id': self.product_id.id,
             'quantity': self.quantity,
             'price': self.price,
             'code': self.code,
+            'cutting_location_id': self.cutting_location_id.id,
         })
 
-        cutting_location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
-        slaughter_location = self.env['stock.location'].search([('name', '=', 'Livestock Slaugther')], limit=1)
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock', slaughter_location or None)
-        if not cutting_location:
-            raise ValidationError("Slaughter Stock location not found. Please create it in Inventory > Configuration > Locations.")
-
-        if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        # from the slaughter location into the cutting location
+        slaughter_location = self.slaughter_location_id
+        cutting_location = self.cutting_location_id
+        picking_type = self.env['stock.warehouse']._get_program_type('livestock', cutting_location)
 
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Filters by status / date / archived and group-bys missing from the search views -->
+
+    <record id="search_filters_approval_request" model="ir.ui.view">
+        <field name="name">approval.request.search.filters</field>
+        <field name="model">approval.request</field>
+        <field name="inherit_id" ref="bn_approval_cycle.view_approval_request_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <separator/>
+                <filter name="bn_date_requested_date" string="Requested Date" date="requested_date"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

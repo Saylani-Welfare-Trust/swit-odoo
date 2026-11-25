@@ -3,6 +3,7 @@ from odoo import models, fields
 
 class PlanningType(models.Model):
     _name = 'planning.type'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Planning Type'
     _rec_name = 'name'
 

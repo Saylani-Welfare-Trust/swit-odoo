@@ -34,12 +34,13 @@
 
     <menuitem id="menu_medical_root" name="Medical &amp; Health" sequence="7"
               web_icon="bn_medical_pos,static/description/icon.png"
-              groups="bn_medical_pos.group_medical_user"/>
+              groups="bn_medical_pos.group_medical_menu,-bn_medical_pos.group_medical_user"/>
 
     <menuitem id="menu_medical_counters" name="Counters" parent="menu_medical_root"
-              action="action_mh_counters" sequence="1"/>
+              action="action_mh_counters" sequence="1" groups="bn_medical_pos.group_medical_user"/>
 
-    <menuitem id="menu_medical_patients" name="Patients" parent="menu_medical_root" sequence="10"/>
+    <menuitem id="menu_medical_patients" name="Patients" parent="menu_medical_root" sequence="10"
+              groups="bn_medical_pos.group_medical_user"/>
     <menuitem id="menu_medical_patients_list" name="Patients" parent="menu_medical_patients"
               action="action_mh_patients" sequence="1"/>
     <menuitem id="menu_medical_patient_register" name="Register Patient" parent="menu_medical_patients"

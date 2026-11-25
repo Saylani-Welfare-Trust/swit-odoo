@@ -124,7 +124,8 @@
                             <t t-set="pos_order_seq" t-value="order.pos_order_seq or '0000'"/>
                             <span class="fw-medium"><t t-esc="city_code"/>-C<t t-esc="counter"/>-<t t-esc="current_year"/>-<t t-esc="pos_order_seq"/></span>
                         </div>
-                        <div>
+                        <!-- name kept: other modules (Medical & Health) extend this line -->
+                        <div name="footer-custom-donor">
                             <strong>Donor Name:</strong>
                             <t t-if="order.favor"><t t-esc="order.favor"/></t>
                             <t t-else=""><t t-esc="partner.name"/></t>

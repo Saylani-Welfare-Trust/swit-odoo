@@ -14,7 +14,7 @@ class ResUsers(models.Model):
     city_access_ids = fields.Many2many(
         'account.analytic.account', string="Donation Box Cities", compute='_compute_city_access_ids',
         compute_sudo=True,
-        help="City of each analytic account in the user's scope (locations, warehouses and employee's Branch).")
+        help="City of each of the user's Branches / Sites.")
 
     @api.depends('scope_analytic_account_ids')
     @api.depends_context('company')

@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ShariahLawSyncLog(models.Model):
@@ -21,9 +21,8 @@ class ShariahLawSyncLog(models.Model):
     
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company)
 
-    def name_get(self):
-        result = []
+    @api.depends('module_name', 'sync_date')
+    def _compute_display_name(self):
+        # (Odoo 17 no longer calls name_get)
         for record in self:
-            name = f"{record.module_name} - {record.sync_date}"
-            result.append((record.id, name))
-        return result
+            record.display_name = f"{record.module_name or ''} - {record.sync_date or ''}"

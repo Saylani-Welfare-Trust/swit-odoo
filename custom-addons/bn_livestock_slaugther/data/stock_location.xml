@@ -7,30 +7,35 @@
             <field name="name">Livestock Slaugther</field>
             <field name="usage">transit</field>
             <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
+            <field name="is_slaughter_location" eval="True"/>
         </record>
         
         <record id="livestock_cutting_location" model="stock.location">
             <field name="name">Livestock Cutting</field>
             <field name="usage">transit</field>
             <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
+            <field name="is_cutting_location" eval="True"/>
         </record>
         
         <record id="meat_location" model="stock.location">
             <field name="name">Meat</field>
             <field name="usage">transit</field>
             <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
+            <field name="is_meat_location" eval="True"/>
         </record>
         
         <record id="goat_location" model="stock.location">
             <field name="name">Goat</field>
             <field name="usage">transit</field>
             <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
+            <field name="is_goat_location" eval="True"/>
         </record>
         
         <record id="chicken_location" model="stock.location">
             <field name="name">Chicken</field>
             <field name="usage">transit</field>
             <field name="location_id" model="stock.warehouse" eval="obj().env.ref('stock.warehouse0').view_location_id.id" />
+            <field name="is_chicken_location" eval="True"/>
         </record>
     
     </data>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Forms with the chatter for records that only had a list -->
+
+    <record id="chatter_form_master_cxo_approver" model="ir.ui.view">
+        <field name="name">master.cxo.approver.form</field>
+        <field name="model">master.cxo.approver</field>
+        <field name="arch" type="xml">
+            <form string="CXO Approver List">
+                <sheet>
+                    <group>
+                        <field name="employee_id"/>
+                        <field name="user_id"/>
+                        <field name="work_email"/>
+                        <field name="department_id"/>
+                        <field name="active" widget="boolean_toggle"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+</odoo>

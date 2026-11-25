@@ -4,6 +4,7 @@ from odoo import models, fields
 
 class MasterCxoApprover(models.Model):
     _name = 'master.cxo.approver'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'CXO Approver List'
     _rec_name = 'employee_id'
     _order = 'employee_id'

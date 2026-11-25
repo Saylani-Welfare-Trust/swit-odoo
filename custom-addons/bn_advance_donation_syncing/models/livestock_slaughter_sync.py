@@ -1,6 +1,4 @@
 from odoo import models, fields, _
-from odoo.exceptions import UserError
-from odoo.tools.misc import format_date
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -26,25 +24,6 @@ class LivestockSlaughterSync(models.Model):
         string="Advance Donation Amount",
         help="Amount from the advance donation line allocated to this slaughter",
     )
-    advance_donation_date = fields.Date(
-        related='advance_donation_line_id.date', string='Contract Line Date',
-        help="The animal of an advance donation line is slaughtered from the date of that line on.",
-    )
-
-    def action_confirm(self):
-        """Slaughtered: the advance donation line funding the animal is disbursed
-        (fully once all the animals of the line are slaughtered)."""
-        self.ensure_one()
-        was_draft = self.state == 'not_received'
-        line_date = self.advance_donation_date
-        if was_draft and line_date and line_date > fields.Date.context_today(self):
-            raise UserError(_("%(record)s can only be slaughtered from %(date)s, the date of its advance donation line.") % {
-                'record': self.name, 'date': format_date(self.env, line_date)})
-        res = super().action_confirm()
-        if was_draft and self.state != 'not_received' and self.advance_donation_line_id:
-            self.advance_donation_line_id.sudo()._register_disbursement(
-                self.advance_donation_amount, self.price, record_name=self.name)
-        return res
 
     def action_select_advance_donation(self):
         return {

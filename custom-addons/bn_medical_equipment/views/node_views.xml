@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="medical_equipment_view_search_search_node" model="ir.ui.view">
+        <field name="name">medical.equipment.view.search.node</field>
+        <field name="model">medical.equipment</field>
+        <field name="inherit_id" ref="bn_medical_equipment.medical_equipment_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="medical_equipment_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">medical.equipment.view.tree.node</field>
+        <field name="model">medical.equipment</field>
+        <field name="inherit_id" ref="bn_medical_equipment.medical_equipment_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="medical_equipment_view_form_form_node" model="ir.ui.view">
+        <field name="name">medical.equipment.view.form.node</field>
+        <field name="model">medical.equipment</field>
+        <field name="inherit_id" ref="bn_medical_equipment.medical_equipment_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="search_medical_security_deposit_search_node" model="ir.ui.view">
+        <field name="name">medical.security.deposit.search.node</field>
+        <field name="model">medical.security.deposit</field>
+        <field name="inherit_id" ref="bn_medical_equipment.search_medical_security_deposit"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="medical_security_deposit_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">medical.security.deposit.view.tree.node</field>
+        <field name="model">medical.security.deposit</field>
+        <field name="inherit_id" ref="bn_medical_equipment.medical_security_deposit_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_medical_security_deposit_form_node" model="ir.ui.view">
+        <field name="name">medical.security.deposit.form.node</field>
+        <field name="model">medical.security.deposit</field>
+        <field name="inherit_id" ref="bn_medical_equipment.chatter_form_medical_security_deposit"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

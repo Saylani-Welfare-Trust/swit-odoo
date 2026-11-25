@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="search_donation_home_service_search_node" model="ir.ui.view">
+        <field name="name">donation.home.service.search.node</field>
+        <field name="model">donation.home.service</field>
+        <field name="inherit_id" ref="bn_donation_home_service.search_donation_home_service"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_home_service_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">donation.home.service.view.tree.node</field>
+        <field name="model">donation.home.service</field>
+        <field name="inherit_id" ref="bn_donation_home_service.donation_home_service_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="donation_home_service_view_form_form_node" model="ir.ui.view">
+        <field name="name">donation.home.service.view.form.node</field>
+        <field name="model">donation.home.service</field>
+        <field name="inherit_id" ref="bn_donation_home_service.donation_home_service_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='donation_home_service_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

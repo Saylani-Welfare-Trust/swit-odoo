@@ -10,7 +10,7 @@ class QurbaniSlaughterSlotDemand(models.Model):
     
     day_id = fields.Many2one("qurbani.day", string="Day", tracking=True)
     hijri_id = fields.Many2one("hijri", string="Hijri", tracking=True, domain=[('approved', '=', True)])
-    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True)
+    slaughter_location_id = fields.Many2one('stock.location', string="Slaughter Location", tracking=True, domain="[('is_slaughter_location', '=', True)]")
     inventory_product_id = fields.Many2one('product.product', string='Inventory Product', tracking=True)
 
     start_time = fields.Float(string="Start Time", tracking=True)
@@ -25,7 +25,7 @@ class QurbaniSlaughterSlotDemand(models.Model):
     current_hissa = fields.Integer('Current Hissa', default=0, tracking=True)
     remaining_hissa = fields.Integer('Remaining Hissa', compute="_compute_remaining_hissa", store=True, tracking=True)
 
-    distribution_location_ids = fields.Many2many('stock.location', string="Distribution Locations")
+    distribution_location_ids = fields.Many2many('stock.location', string="Distribution Locations", domain="[('is_distribution_location', '=', True)]")
 
 
     @api.depends('total_hissa', 'booked_hissa')

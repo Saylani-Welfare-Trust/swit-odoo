@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="sadqa_jariya_view_search_search_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.view.search.node</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.view.tree.node</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_view_form_form_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.view.form.node</field>
+        <field name="model">sadqa.jariya</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='application_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_line_view_search_search_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.view.search.node</field>
+        <field name="model">sadqa.jariya.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_line_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.view.tree.node</field>
+        <field name="model">sadqa.jariya.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_line_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_sadqa_jariya_line_form_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.line.form.node</field>
+        <field name="model">sadqa.jariya.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.chatter_form_sadqa_jariya_line"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_recurring_line_view_search_search_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.view.search.node</field>
+        <field name="model">sadqa.jariya.recurring.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_recurring_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="sadqa_jariya_recurring_line_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.view.tree.node</field>
+        <field name="model">sadqa.jariya.recurring.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.sadqa_jariya_recurring_line_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="chatter_form_sadqa_jariya_recurring_line_form_node" model="ir.ui.view">
+        <field name="name">sadqa.jariya.recurring.line.form.node</field>
+        <field name="model">sadqa.jariya.recurring.line</field>
+        <field name="inherit_id" ref="bn_sadqa_e_jariya.chatter_form_sadqa_jariya_recurring_line"/>
+        <field name="arch" type="xml">
+            <xpath expr="(//sheet//field[@name='state'])[1]" position="after">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form_inherit_bn_welfare" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.bn_welfare</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Welfare" string="Welfare" name="bn_welfare" groups="bn_welfare.group_welfare_admin">
+                    <block title="Accounting" name="bn_welfare_accounting">
+                        <setting string="Welfare Return Journal" help="Cash / bank journal of the money a donee returns (Assigned Officer payments).">
+                            <field name="welfare_return_journal_id" options="{'no_create': True}"/>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_bn_welfare_settings" model="ir.actions.act_window">
+        <field name="name">Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'bn_welfare', 'bin_size': False}</field>
+    </record>
+
+    <menuitem id="menu_bn_welfare_settings"
+              name="Settings"
+              parent="bn_welfare.welfare_config_menu"
+              action="action_bn_welfare_settings"
+              sequence="99"
+              groups="bn_welfare.group_welfare_admin"/>
+
+    <!-- Upgrade / install: the journal used so far becomes the configured one -->
+    <function model="res.company" name="_set_default_welfare_return_journal_id"/>
+
+</odoo>

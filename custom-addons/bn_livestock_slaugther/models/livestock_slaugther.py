@@ -1,11 +1,11 @@
 from odoo import models, fields, _, api
-from odoo.exceptions import ValidationError, AccessError
+from odoo.exceptions import ValidationError, AccessError, UserError
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
 
 
 state_selection = [
     ('not_received', 'Draft'),
-    ('received', 'Received'),
+    ('slaughtered', 'Slaughtered'),
     ('cutting', 'Cutting'),
     ('material_request', 'Material Request'),
     ('done', 'Done')
@@ -35,8 +35,28 @@ class LivestockSlaughter(models.Model):
     currency_id = fields.Many2one('res.currency', 'Currency', default=lambda self: self.env.company.currency_id.id)
     transfer_location = fields.Many2one('stock.location', string='Destination Location')
     source_location_id = fields.Many2one('stock.location', string='Source Location')
+    # where Slaughtered puts the animal: a location marked "Is Slaughter Location",
+    # or for the Meat / Goat / Chicken departments "Is Meat / Goat / Chicken Location"
+    slaughter_location_id = fields.Many2one(
+        'stock.location', string='Slaughter Location', copy=False,
+        domain="[('id', 'in', slaughter_location_option_ids)]",
+        help="Where Slaughtered puts the animal: a location marked Is Slaughter Location, or for the "
+             "Meat / Goat / Chicken departments one marked Is Meat / Goat / Chicken Location. "
+             "Filled when the animal's warehouse has only one.")
+    slaughter_location_option_ids = fields.Many2many(
+        'stock.location', string='Slaughter Location Options', compute='_compute_location_options')
+    # where Cutting puts the animal: a location marked "Is Cutting Location"
+    cutting_location_id = fields.Many2one(
+        'stock.location', string='Cutting Location', copy=False,
+        domain="[('is_cutting_location', '=', True)]",
+        help="Where Cutting puts the animal (a location marked Is Cutting Location). "
+             "Filled when the warehouse has only one.")
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
+    truck_number = fields.Char('Truck Number', copy=False, readonly=True)
+    # Order Transfer (Draft lines): the animal is brought from this location into the POS location
+    order_transfer_location_id = fields.Many2one('stock.location', string='Order Transfer Location', copy=False, readonly=True)
+    order_transfer_picking_id = fields.Many2one('stock.picking', string='Order Transfer', copy=False, readonly=True)
 
     name = fields.Char('Name', default='New')
     code = fields.Char(related='product_id.default_code', string="Product Code", store=True)
@@ -102,7 +122,142 @@ class LivestockSlaughter(models.Model):
                     vals['name'] = self.env['ir.sequence'].next_by_code('goat_department') or ('New')
                 else:
                     vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for record in records.filtered(lambda r: not r.source_location_id):
+            location = record._pos_source_location()
+            if location:
+                record.sudo().source_location_id = location.id
+        records._init_destination()
+        records._fill_default_locations()
+        return records
+
+    def _init_destination(self):
+        """Source Location: the POS location the line came from (a line not from
+        a POS: where it waits for slaughter in its warehouse). The Destination
+        Location starts the same and changes with the Bulk Transfer; users see
+        the lines whose Destination Location has one of their analytic accounts."""
+        for record in self.sudo():
+            source = record.source_location_id
+            if not source:
+                try:
+                    source = record._slaughter_source_location()
+                except UserError:  # no warehouse to wait in
+                    continue
+                record.source_location_id = source
+            if source and not record.transfer_location:
+                record.transfer_location = source
+
+    def _slaughter_role(self):
+        """The location role the animal's Slaughtered destination must have."""
+        self.ensure_one()
+        return ('is_meat_location' if self.is_meat_depart else 'is_goat_location' if self.is_goat_depart
+                else 'is_chicken_location' if self.is_chicken_depart else 'is_slaughter_location')
+
+    @api.depends('is_meat_depart', 'is_goat_depart', 'is_chicken_depart')
+    def _compute_location_options(self):
+        Location = self.env['stock.location']
+        for record in self:
+            record.slaughter_location_option_ids = Location._role_locations(record._slaughter_role())
+
+    @api.onchange('slaughter_location_id')
+    def _onchange_slaughter_location_id(self):
+        if self.slaughter_location_id and (not self.cutting_location_id or
+                                           self.cutting_location_id.warehouse_id != self.slaughter_location_id.warehouse_id):
+            self.cutting_location_id = self.env['stock.location']._single_role_location(
+                'is_cutting_location', self.slaughter_location_id.warehouse_id)
+
+    def _fill_default_locations(self):
+        """Empty locations get their warehouse's only one of that role (several:
+        the user chooses on the record)."""
+        Location = self.env['stock.location']
+        for record in self.sudo():
+            if not record.slaughter_location_id and record.state == 'not_received':
+                try:
+                    warehouse = record._livestock_warehouse()
+                except Exception:
+                    warehouse = self.env['stock.warehouse']
+                record.slaughter_location_id = Location._single_role_location(record._slaughter_role(), warehouse)
+            if not record.cutting_location_id and record.state in ('not_received', 'slaughtered') \
+                    and not record.transfer_bool:
+                warehouse = record.slaughter_location_id.warehouse_id
+                record.cutting_location_id = Location._single_role_location('is_cutting_location', warehouse)
+
+    def _pos_source_location(self):
+        """The stock location of the POS the order was created at (empty for
+        a record that does not come from a POS). Read as superuser: livestock
+        users do not need access to the POS configuration."""
+        self.ensure_one()
+        record = self.sudo()
+        config = record.pos_order_id.config_id or record.pos_session_id.config_id or record.pos_config_id
+        return config.picking_type_id.default_location_src_id.with_env(self.env)
+
+    def _livestock_warehouse(self):
+        """The warehouse the animal is handled in: of its slaughter location,
+        else of the POS it was sold at, else of its Branch / Site (else the user's)."""
+        self.ensure_one()
+        record = self.sudo()
+        if record.slaughter_location_id.warehouse_id:
+            return record.slaughter_location_id.warehouse_id.sudo(False)
+        return self.env['stock.warehouse']._warehouse_for(
+            self._pos_source_location() or record.source_location_id or None, branch=self.node_id)
+
+    def _department_location(self):
+        """Where Slaughtered puts the animal: its Slaughter Location (for a
+        department animal, its Meat / Goat / Chicken location)."""
+        self.ensure_one()
+        if not self.slaughter_location_id:
+            raise ValidationError(_("Choose the Slaughter Location of %s.") % self.name)
+        role = self._slaughter_role()
+        if not self.slaughter_location_id[role]:
+            raise ValidationError(_("%(location)s is not marked %(role)s (%(record)s).",
+                                    location=self.slaughter_location_id.display_name,
+                                    role=self.env['stock.location']._fields[role].string, record=self.name))
+        return self.slaughter_location_id
+
+    def _slaughtered_location(self):
+        """Where the animal is now: the destination of its Slaughtered transfer
+        (records slaughtered before the per-warehouse locations included),
+        else its department location."""
+        self.ensure_one()
+        # (its Order Transfer, made before, and Bulk Transfer, made after, are not that transfer)
+        picking = self.env['stock.picking'].sudo().search([
+            ('source_record_ref', '=', '%s,%s' % (self._name, self.id)), ('state', '=', 'done'),
+            ('id', 'not in', (self.order_transfer_picking_id | self.transfer_picking_id).ids),
+            ('location_dest_id.usage', 'in', ('internal', 'transit'))], order='id', limit=1)
+        return picking.location_dest_id.sudo(False) or self._department_location()
+
+    def _slaughter_source_location(self):
+        """Where the animal waits for slaughter, and where Order Transfer brings it:
+        the location of the POS it was sold at, else the livestock operation
+        type's source location in its own warehouse."""
+        self.ensure_one()
+        return self._pos_source_location() or self.env['stock.warehouse']._get_program_type(
+            'livestock', branch=self.node_id, location=self._livestock_warehouse().lot_stock_id
+        ).default_location_src_id
+
+    def _check_transfer_ready(self, bulk):
+        """Order Transfer: Draft lines not order transferred yet.
+        Bulk Transfer: Slaughtered lines not bulk transferred yet."""
+        if not self:
+            raise ValidationError(_("Please select the records to transfer."))
+        state_labels = dict(self._fields['state']._description_selection(self.env))
+        not_ready = []
+        for rec in self:
+            if bulk and rec.transfer_bool:
+                reason = _('already bulk transferred')
+            elif not bulk and rec.order_transfer_picking_id:
+                reason = _('already order transferred')
+            elif rec.state != ('slaughtered' if bulk else 'not_received'):
+                reason = state_labels.get(rec.state, rec.state)
+            else:
+                continue
+            not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
+        if not_ready:
+            message = (_("Bulk Transfer is only for Slaughtered lines that are not bulk transferred yet.") if bulk
+                       else _("Order Transfer is only for Draft lines that are not order transferred yet."))
+            raise ValidationError(
+                _("%s Remove these lines from your selection:\n%s") % (message, "\n".join(not_ready))
+            )
 
     def action_confirm(self):
         self.ensure_one()
@@ -112,25 +267,11 @@ class LivestockSlaughter(models.Model):
         
         if self.state != 'not_received':
             return
-        # Retrieve the 'Slaughter Stock' location
-        location = None
-
-        if self.is_meat_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Meat')], limit=1)
-        elif self.is_goat_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Goat')], limit=1)
-        elif self.is_chicken_depart:
-            location = self.env['stock.location'].search([('name', '=', 'Chicken')], limit=1)
-        else:
-            location = self.env['stock.location'].search([('name', '=', 'Slaughter Stock')], limit=1)
-        
-        if not location:
-            raise ValidationError("Slaughter Stock, Meat or Chicken or Goat location not found. Please create it in Inventory > Configuration > Locations.")
-
-        # Retrieve the internal transfer operation type
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
-        if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        # the department location of the animal's own warehouse
+        location = self._department_location()
+        source_location = self._slaughter_source_location()
+        picking_type = self.env['stock.warehouse']._get_program_type(
+            'livestock', source_location, branch=self.node_id)
 
         # Retrieve the product based on the product code
         product = self.product_id
@@ -140,7 +281,7 @@ class LivestockSlaughter(models.Model):
         # Create the stock picking
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
-            'location_id': picking_type.default_location_src_id.id,
+            'location_id': source_location.id,
             'location_dest_id': location.id,
             'origin': self.name or 'Live Stock Slaughter',
             'source_record_ref': '%s,%s' % (self._name, self.id),
@@ -168,28 +309,33 @@ class LivestockSlaughter(models.Model):
         picking.button_validate()
 
         self.confirm_hide = True
-        self.state = 'received'
+        self.state = 'slaughtered'
 
     def action_cutting(self):
         self.ensure_one()
-        if self.state != 'received':
-            raise ValidationError("Cutting can only be started after confirmation.")
+        if self.state != 'slaughtered':
+            raise ValidationError("Cutting can only be started after the animal is slaughtered.")
+        if self.transfer_bool:
+            raise ValidationError(_("%s was sent away by Bulk Transfer: it cannot be cut here.") % self.name)
         if not self.product_id:
             raise ValidationError("Please select a product before starting cutting.")
+        self._check_cutting_bom()
 
-        location = self.env['stock.location'].search([('name', '=', 'Livestock Cutting')], limit=1)
-        if not location:
-            raise ValidationError("Livestock Cutting location not found. Please create it in Inventory > Configuration > Locations.")
-
-        picking_type = self.env['stock.warehouse']._get_program_type('livestock')
-        if not picking_type:
-            raise ValidationError("Internal Transfer operation type not found. Please configure it in Inventory > Configuration > Operation Types.")
+        # from the source location (the POS location the animal was sold at) into the Cutting location
+        source_location = self._slaughter_source_location()
+        if not self.cutting_location_id:
+            self._fill_default_locations()
+        if not self.cutting_location_id:
+            raise ValidationError(_("Choose the Cutting Location of %s.") % self.name)
+        location = self.cutting_location_id
+        picking_type = self.env['stock.warehouse']._get_program_type(
+            'livestock', source_location, branch=self.node_id)
 
         product = self.product_id
 
         picking = self.env['stock.picking'].create({
             'picking_type_id': picking_type.id,
-            'location_id': picking_type.default_location_src_id.id,
+            'location_id': source_location.id,
             'location_dest_id': location.id,
             'origin': self.name or '',
             'source_record_ref': '%s,%s' % (self._name, self.id),
@@ -210,72 +356,11 @@ class LivestockSlaughter(models.Model):
         picking.action_assign()
         picking.button_validate()
 
-        self.start_time = fields.Datetime.now()
-        self.state = 'cutting'
-        self.cutting_hide = True
-
-        cutting_record = self.cutting_material_id
-        if not cutting_record:
-            cutting_record = self.env['livestock.cutting.material'].create({
-                'product_id': self.product_id.id,
-                'quantity': self.quantity,
-                'price': self.price,
-                'code': self.code,
-                'state': 'received',
-                'start_time': self.start_time,
-                'livestock_slaughter_id': self.id,
-            })
-            self.cutting_material_id = cutting_record.id
-        else:
-            cutting_record.write({
-                'livestock_cutting_material_line_ids': [(5, 0, 0)],
-            })
-
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'livestock.cutting.material',
-            'res_id': cutting_record.id,
-            'view_mode': 'form',
-            'target': 'current',
-        }
-
-    def action_material_request(self):
-        self.ensure_one()
-        if self.state != 'cutting':
-            raise ValidationError("Material Request can only be opened during cutting.")
-        if not self.product_id:
-            raise ValidationError("Please select a product before opening the material request.")
-
-        material_request = self.material_request_id
-        if material_request == self.cutting_material_id:
-            material_request = self.env['livestock.cutting.material']
-        if not material_request:
-            material_request = self.env['livestock.cutting.material'].create({
-                'product_id': self.product_id.id,
-                'quantity': self.quantity,
-                'price': self.price,
-                'code': self.code,
-                'state': 'not_received',
-                'livestock_slaughter_id': self.id,
-            })
-            self.material_request_id = material_request.id
-        bom = material_request._get_product_bom()
-        if not bom:
-            material_request.unlink()
-            raise ValidationError(
-                "No BOM found for %s. Create the BOM for this exact product or its product template."
-                % self.product_id.display_name
-            )
-
-        material_request._populate_bom_lines(self)
-        if not material_request.livestock_cutting_material_line_ids:
-            material_request.unlink()
-            raise ValidationError(
-                "The BOM for %s has no component products. Add BOM lines first."
-                % self.product_id.display_name
-            )
-
+        # the material request is made with the cutting, from the product's BOM
         self.state = 'material_request'
+        self.cutting_hide = True
+        material_request = self._create_material_request()
+        self.cutting_material_id = material_request.id
 
         return {
             'type': 'ir.actions.act_window',
@@ -285,36 +370,106 @@ class LivestockSlaughter(models.Model):
             'target': 'current',
         }
 
-    def action_end_cutting(self):
+    def _check_cutting_bom(self):
+        """Cutting makes the material request from the product's BOM: lines whose
+        product has no BOM (with component products) are refused before anything moves."""
+        Material = self.env['livestock.cutting.material']
+        missing = self.filtered(
+            lambda r: not Material._bom_for_product(r.product_id).bom_line_ids.filtered('product_id'))
+        if missing:
+            raise ValidationError(
+                _("No BOM with component products found for: %s. Create the BOM of the product "
+                  "(or of its product template) first.")
+                % ', '.join(sorted(set(missing.mapped('product_id.display_name')))))
+
+    def _create_material_request(self):
+        """The material request of the cut animal: the components of its product's BOM."""
         self.ensure_one()
-        if self.state != 'material_request':
-            raise ValidationError("End Cutting is available only after creating the material request.")
+        material_request = self.material_request_id
+        if not material_request:
+            material_request = self.env['livestock.cutting.material'].create({
+                'product_id': self.product_id.id,
+                'quantity': self.quantity,
+                'price': self.price,
+                'code': self.code,
+                'state': 'not_received',
+                'livestock_slaughter_id': self.id,
+                'cutting_location_id': self.cutting_location_id.id,
+            })
+            self.material_request_id = material_request.id
+        if not material_request._get_product_bom():
+            raise ValidationError(
+                "No BOM found for %s. Create the BOM for this exact product or its product template."
+                % self.product_id.display_name
+            )
+        material_request._populate_bom_lines(self)
+        if not material_request.livestock_cutting_material_line_ids:
+            raise ValidationError(
+                "The BOM for %s has no component products. Add BOM lines first."
+                % self.product_id.display_name
+            )
+        return material_request
+
+    def action_bulk_cutting(self):
+        """List header: start Cutting for all the selected Slaughtered lines."""
+        if not self:
+            raise ValidationError(_("Please select the records to cut."))
+        state_labels = dict(self._fields['state']._description_selection(self.env))
+        not_ready = []
+        for rec in self:
+            if rec.transfer_bool:
+                reason = _('already bulk transferred')
+            elif rec.state != 'slaughtered':
+                reason = state_labels.get(rec.state, rec.state)
+            else:
+                continue
+            not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
+        if not_ready:
+            raise ValidationError(
+                _("Bulk Cutting is only for Slaughtered lines that are not bulk transferred. "
+                  "Remove these lines from your selection:\n%s") % "\n".join(not_ready))
+        self._fill_default_locations()
+        no_location = self.filtered(lambda r: not r.cutting_location_id)
+        if no_location:
+            raise ValidationError(_("Choose the Cutting Location of: %s") % ', '.join(no_location.mapped('name')))
+        self._check_cutting_bom()
+        for rec in self:
+            rec.action_cutting()
+        return {
+            'name': _('Cutting'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.cutting.material',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.mapped('material_request_id').ids)],
+            'target': 'current',
+        }
+
+    def action_material_request(self):
+        """Lines cut before the material request was made with the cutting."""
+        self.ensure_one()
+        if self.state != 'cutting':
+            raise ValidationError("Material Request can only be opened during cutting.")
         if not self.product_id:
-            raise ValidationError("Please select a product before ending cutting.")
-        if not self.material_request_id:
-            self.action_material_request()
-        elif not self.material_request_id.livestock_cutting_material_line_ids:
-            self.material_request_id._populate_bom_lines(self)
-            if not self.material_request_id.livestock_cutting_material_line_ids:
-                raise ValidationError("The selected product BOM has no component products.")
-        self.end_time = fields.Datetime.now()
-        self.state = 'done'
+            raise ValidationError("Please select a product before opening the material request.")
+        material_request = self._create_material_request()
+        self.state = 'material_request'
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.cutting.material',
-            'res_id': self.material_request_id.id,
+            'res_id': material_request.id,
             'view_mode': 'form',
             'target': 'current',
         }
 
     
     def action_open_wizard(self):
-        """Open a transient wizard to choose destination location"""
+        """Form: Order Transfer of this Draft line"""
         
         self.ensure_one()
-        
+        self._check_transfer_ready(bulk=False)
+
         return {
-            'name': _('Transfer from Slaughter Stock'),
+            'name': _('Order Transfer'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther.wizard',
             'view_mode': 'form',
@@ -322,19 +477,27 @@ class LivestockSlaughter(models.Model):
             'context': {'default_livestock_slaughter_id': self.id},
         }
 
-    def action_open_bulk_transfer(self):
-        """Open the transfer wizard for all selected records at once"""
-        if not self:
-            raise ValidationError(_("Please select the records to transfer."))
-        transferred = self.filtered('transfer_bool')
-        if transferred:
-            raise ValidationError(
-                _("These records are already transferred:\n%s")
-                % "\n".join(transferred.mapped(lambda r: '%s - %s' % (r.name, r.product_id.display_name)))
-            )
+    def action_open_order_transfer(self):
+        """List header: bring the selected Draft lines into their POS location (Send)"""
+        self._check_transfer_ready(bulk=False)
+        if len(self) == 1:
+            return self.action_open_wizard()
 
         return {
-            'name': _('Bulk Transfer from Slaughter Stock'),
+            'name': _('Order Transfer'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.slaugther.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_livestock_slaughter_ids': [(6, 0, self.ids)]},
+        }
+
+    def action_open_bulk_transfer(self):
+        """List header: send the selected Slaughtered lines out of their POS location and print the slip"""
+        self._check_transfer_ready(bulk=True)
+
+        return {
+            'name': _('Bulk Transfer'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.slaugther.wizard',
             'view_mode': 'form',

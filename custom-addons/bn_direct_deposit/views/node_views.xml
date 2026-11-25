@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Branch / Site of the document (bn_stock_location node.document.mixin) -->
+
+    <record id="direct_deposit_view_search_search_node" model="ir.ui.view">
+        <field name="name">direct.deposit.view.search.node</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.direct_deposit_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="/search" position="inside">
+                <field name="node_id"/>
+                <filter name="group_by_node_id" string="Branch / Site" context="{'group_by': 'node_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="direct_deposit_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">direct.deposit.view.tree.node</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.direct_deposit_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="pos_direct_deposit_view_tree_tree_node" model="ir.ui.view">
+        <field name="name">direct.deposit.view.tree.node</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.pos_direct_deposit_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="/tree" position="inside">
+                <field name="node_id" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="direct_deposit_view_form_form_node" model="ir.ui.view">
+        <field name="name">direct.deposit.view.form.node</field>
+        <field name="model">direct.deposit</field>
+        <field name="inherit_id" ref="bn_direct_deposit.direct_deposit_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='direct_deposit_col_1']" position="inside">
+                <field name="node_id"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -8,13 +8,12 @@ from odoo.tests import TransactionCase, tagged
 
 
 def _with_stock_scope(user):
-    """Like a configured user (bn_stock_location scope): every warehouse,
-    internal location and product category of the test database."""
-    if 'allowed_warehouse_ids' in user._fields:
+    """Like a configured user (bn_stock_location scope): every Branch / Site
+    (warehouse, location) and product category of the test database."""
+    if 'all_nodes' in user._fields:
         env = user.env
         user.write({
-            'allowed_warehouse_ids': [(6, 0, env['stock.warehouse'].search([]).ids)],
-            'allowed_location_ids': [(6, 0, env['stock.location'].search([('usage', '=', 'internal')]).ids)],
+            'all_nodes': True,
             'allowed_product_category_ids': [(6, 0, env['product.category'].search([]).ids)],
         })
     return user
@@ -205,6 +204,10 @@ class TestMicrofinance(TransactionCase):
         loan.action_proceed()
         self.assertEqual(loan.state, 'wfd')
         picking = loan.sudo().picking_ids.with_user(self.storekeeper)
+        # the warehouse's own Microfinance Delivery operation type, from the chosen location
+        self.assertEqual(picking.sudo().picking_type_id.program_type, 'microfinance_delivery')
+        self.assertEqual(picking.sudo().picking_type_id.warehouse_id, self.warehouse)
+        self.assertEqual(picking.sudo().location_id, self.warehouse.lot_stock_id)
         picking.move_ids.write({'quantity': 1, 'picked': True})
         picking.with_context(skip_sms=True).button_validate()
         self.assertEqual(loan.state, 'done')

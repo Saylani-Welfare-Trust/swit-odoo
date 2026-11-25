@@ -617,7 +617,8 @@ class MedicalEquipment(models.Model):
         if self.picking_id:
             raise UserError(_('%s is already validated.') % self.name)
 
-        operation_type = self.env['stock.warehouse']._get_program_type('medical_equipment')
+        operation_type = self.env['stock.warehouse']._get_program_type(
+            'medical_equipment', branch=self.pos_analytic_account_id)
         source = operation_type.default_location_src_id
         # the serials (reserved for this application when it was completed) must be in that location
         for line in self.medical_equipment_line_ids.filtered('lot_ids'):
@@ -1301,7 +1302,6 @@ class MedicalEquipment(models.Model):
    
     def _make_sadqa_api_call(self, endpoint, method='POST', data=None):
         """Make API call to Sadqa Jaria portal"""
-        # base_url = 'https://backend.switsjmm.com'
         url = f"{self.env.company.welfare_url}{endpoint}"
         headers = self._get_sadqa_api_headers()
 
@@ -1379,7 +1379,6 @@ class MedicalEquipment(models.Model):
                         all_media.append(f'<a href="{url}" target="_blank">View Image</a>')
                 if remarks:
                     all_remarks.append(remarks)
-        # raise UserError(f"media: {media}, proccessedMedia: {all_media}")
         if not application:
             message += f" | ⚠️ Application not found in portal search (officer {self.employee_id.barcode}, CNIC {self.cnic_no}, department medical): {search_note}"
         elif app_state != 'inquiry_complete':
@@ -1447,7 +1446,6 @@ class MedicalEquipment(models.Model):
 
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
-        # self.ensure_one()
         officer_code = (self.employee_id.barcode or '').strip()
         if not officer_code:
             raise UserError(_("Inquiry Officer %s has no Badge ID (barcode); the portal needs it.")
@@ -1462,7 +1460,6 @@ class MedicalEquipment(models.Model):
                 "actualDepositPercentage": line.actual_deposit_percentage,
                 "securityDeposit": line.security_deposit,
         })
-        # raise ValidationError(str(data_list))
         data = {
             "json": {
                 "applicationData": {
@@ -1499,7 +1496,6 @@ class MedicalEquipment(models.Model):
                 }
             }
         }
-        # raise UserError(str(data))
         result = self._make_sadqa_api_call(
             self.env.company.create_application_endpoint,  # endpoint from res.company
             'POST',
