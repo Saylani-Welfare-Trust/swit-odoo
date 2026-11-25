@@ -1289,13 +1289,21 @@ class Welfare(models.Model):
         # the certificate is printed on every Move to Member (also when it goes on to Final Approval)
         return self._print_approval_certificate()
 
-    def _print_approval_certificate(self):
-        return self.env.ref('bn_welfare.action_report_welfare_approval_certificate').report_action(self)
+    def _print_approval_certificate(self, skip_paid_hod=False):
+        # options travel in the report's data (the web client drops the action context when downloading a PDF)
+        data = {'skip_paid_hod': True} if skip_paid_hod else None
+        return self.env.ref('bn_welfare.action_report_welfare_approval_certificate').report_action(self, data=data)
 
-    def _approval_certificate_values(self):
-        """Welfare Approval Certificate: Cash lines are the Cash Disbursement, the other (In Kind) lines the Ration"""
+    def _approval_certificate_values(self, skip_paid_hod=False):
+        """Welfare Approval Certificate: Cash lines are the Cash Disbursement, the other (In Kind) lines the Ration.
+        Moved on to Final Approval (over the HOD limit): only the HOD lines are approved yet; approved: all lines,
+        less (Final Approve, ``skip_paid_hod``) the HOD lines already paid at the POS."""
         self.ensure_one()
         lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        if self.state == 'mem_approve':
+            lines = lines.filtered('is_hod')
+        elif skip_paid_hod:
+            lines = lines.filtered(lambda l: not (l.is_hod and l.state in ('disbursed', 'collected')))
         cash = lines.filtered('is_cash_category')
         ration = lines - cash
         recurring = self.order_type == 'recurring'
@@ -1328,8 +1336,9 @@ class Welfare(models.Model):
         # HOD lines may all have been disbursed from POS during Final Approval already
         self._auto_disburse_if_all_lines_delivered()
 
-        return self._print_approval_certificate()
-    
+        # HOD lines already paid at the POS during Final Approval are left off the certificate
+        return self._print_approval_certificate(skip_paid_hod=True)
+
 
     def action_reject(self):
         self._check_welfare_state(tuple(STEP_GROUPS), _('Reject and Close'))
