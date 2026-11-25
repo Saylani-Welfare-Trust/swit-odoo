@@ -1283,12 +1283,11 @@ class Welfare(models.Model):
                 raise ValidationError('Please enter HOD Remarks!')
             record.state = 'approve' if record._check_amount_within_hod_limit() else 'mem_approve'
         approved = self.filtered(lambda r: r.state == 'approve')
-        if not approved:
-            return
-        # HOD lines may all have been disbursed from POS already
-        approved._auto_disburse_if_all_lines_delivered()
-        # Approved within the HOD limit: print the certificate (Final Approval prints it otherwise)
-        return approved._print_approval_certificate()
+        if approved:
+            # HOD lines may all have been disbursed from POS already
+            approved._auto_disburse_if_all_lines_delivered()
+        # the certificate is printed on every Move to Member (also when it goes on to Final Approval)
+        return self._print_approval_certificate()
 
     def _print_approval_certificate(self):
         return self.env.ref('bn_welfare.action_report_welfare_approval_certificate').report_action(self)
