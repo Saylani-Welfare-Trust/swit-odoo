@@ -319,6 +319,7 @@ class LivestockSlaughter(models.Model):
             raise ValidationError(_("%s was sent away by Bulk Transfer: it cannot be cut here.") % self.name)
         if not self.product_id:
             raise ValidationError("Please select a product before starting cutting.")
+        self._check_cutting_bom()
 
         # from the source location (the POS location the animal was sold at) into the Cutting location
         source_location = self._slaughter_source_location()
@@ -368,6 +369,18 @@ class LivestockSlaughter(models.Model):
             'view_mode': 'form',
             'target': 'current',
         }
+
+    def _check_cutting_bom(self):
+        """Cutting makes the material request from the product's BOM: lines whose
+        product has no BOM (with component products) are refused before anything moves."""
+        Material = self.env['livestock.cutting.material']
+        missing = self.filtered(
+            lambda r: not Material._bom_for_product(r.product_id).bom_line_ids.filtered('product_id'))
+        if missing:
+            raise ValidationError(
+                _("No BOM with component products found for: %s. Create the BOM of the product "
+                  "(or of its product template) first.")
+                % ', '.join(sorted(set(missing.mapped('product_id.display_name')))))
 
     def _create_material_request(self):
         """The material request of the cut animal: the components of its product's BOM."""
@@ -419,6 +432,7 @@ class LivestockSlaughter(models.Model):
         no_location = self.filtered(lambda r: not r.cutting_location_id)
         if no_location:
             raise ValidationError(_("Choose the Cutting Location of: %s") % ', '.join(no_location.mapped('name')))
+        self._check_cutting_bom()
         for rec in self:
             rec.action_cutting()
         return {

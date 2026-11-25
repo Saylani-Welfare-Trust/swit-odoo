@@ -108,15 +108,20 @@ class LivestockCuttingMaterial(models.Model):
 
     def _get_product_bom(self):
         self.ensure_one()
-        if not self.product_id:
-            return self.env['mrp.bom']
+        return self._bom_for_product(self.product_id)
+
+    @api.model
+    def _bom_for_product(self, product):
+        """The BOM of ``product``: of the variant itself, else of its template."""
         bom_model = self.env['mrp.bom']
+        if not product:
+            return bom_model
         bom = bom_model.search([
-            ('product_id', '=', self.product_id.id),
+            ('product_id', '=', product.id),
         ], order='sequence, id', limit=1)
         if not bom:
             bom = bom_model.search([
-                ('product_tmpl_id', '=', self.product_id.product_tmpl_id.id),
+                ('product_tmpl_id', '=', product.product_tmpl_id.id),
                 ('product_id', '=', False),
             ], order='sequence, id', limit=1)
         return bom
