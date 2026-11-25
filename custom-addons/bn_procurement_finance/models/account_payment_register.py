@@ -45,6 +45,8 @@ class AccountPaymentRegister(models.TransientModel):
         return vals
 
     def _create_payments(self):
+        # Bills of a Purchase Order: confirmed by Finance and forwarded to Treasury first
+        self.line_ids.move_id._check_treasury_payable()
         # The amount is read-only on the form; this keeps it from being set another way.
         self.ensure_one()
         if self.amount_locked and self.can_edit_wizard:

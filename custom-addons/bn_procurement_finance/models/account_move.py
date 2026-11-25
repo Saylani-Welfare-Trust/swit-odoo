@@ -62,28 +62,55 @@ class AccountMove(models.Model):
             move.grn_reference = ', '.join(move.grn_ids.mapped('name')) if move.move_type == 'in_invoice' else False
 
     def action_finance_confirm_and_post(self):
-        """Finance matches the draft bill against the physical vendor invoice, then posts it."""
+        """Finance matches the bill against the physical vendor invoice, then
+        posts it (a draft bill) and forwards it to Treasury: only a bill of a
+        Purchase Order forwarded this way can be paid. A bill already posted
+        without the Finance check is confirmed and forwarded the same way."""
         self.ensure_one()
         if self.move_type != 'in_invoice':
             raise ValidationError(_('This action only applies to vendor bills.'))
-        if not self.env.user.has_group('bn_procurement_finance.group_finance'):
+        if not self.env.su and not self.env.user.has_group('bn_procurement_finance.group_finance'):
             raise ValidationError(_('Only Finance users can confirm vendor bills.'))
- 
+        if self.state == 'cancel':
+            raise UserError(_('%s is cancelled: it cannot be confirmed.') % self.display_name)
+        if self.finance_confirmed:
+            raise UserError(_('%s is already confirmed by Finance.') % self.display_name)
+
+        now = fields.Datetime.now()
         self.write({
             'finance_confirmed': True,
             'finance_confirmed_by': self.env.user.id,
-            'finance_confirmed_date': fields.Datetime.now(),
+            'finance_confirmed_date': now,
+            'forwarded_to_treasury': True,
+            'treasury_forwarded_by': self.env.user.id,
+            'treasury_forwarded_date': now,
         })
-        
+
         # Post a specific message to the chatter with the GRN reference
-        grn_msg = _("Finance Confirmed & Posted.")
+        grn_msg = _("Finance Confirmed & Posted, forwarded to Treasury.") if self.state == 'draft' \
+            else _("Finance Confirmed, forwarded to Treasury.")
         if self.grn_reference:
             grn_msg += _(" Linked GRN(s): %s", self.grn_reference)
-        
         self.message_post(body=grn_msg)
-        
-        self.action_post()
+
+        if self.state == 'draft':
+            self.action_post()
         return True
+
+    def _check_treasury_payable(self):
+        """A bill of a Purchase Order is paid only once Finance has confirmed it
+        and forwarded it to Treasury, and only by its assigned Treasury officer
+        when one is set."""
+        if self.env.su:
+            return
+        for bill in self.filtered(lambda m: m.move_type == 'in_invoice' and m._is_purchase_order_bill()):
+            if not bill.forwarded_to_treasury:
+                raise UserError(_(
+                    '%s is not confirmed by Finance yet: Finance must match it with the vendor invoice '
+                    '(Finance Confirm & Post) before it can be paid.') % bill.display_name)
+            if bill.treasury_user_id and bill.treasury_user_id != self.env.user:
+                raise UserError(_('%(bill)s is assigned to the Treasury officer %(user)s.',
+                                  bill=bill.display_name, user=bill.treasury_user_id.name))
 
     def action_view_grn(self):
         """Action to open the list of linked Goods Receipt Notes."""
