@@ -1,6 +1,6 @@
 {
     'name': 'Key Management',
-    'version': '17.0.1.6.4',
+    'version': '17.0.1.6.5',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

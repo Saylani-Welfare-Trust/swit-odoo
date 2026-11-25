@@ -229,8 +229,8 @@ class NodeSetup(models.AbstractModel):
                         [[c.display_name, c.analytic_account_id.display_name, c.warehouse_id.display_name,
                           c.node_id.display_name] for c in data['pos']])
         html += section(_('Users without any Branch / Site'),
-                        _('They see only the documents they created: give them Allowed Branches / Sites, '
-                          'or All Branches / Sites (Users > Inventory tab).'),
+                        _('They see no program document, not even the ones they create: give them Allowed '
+                          'Branches / Sites, or All Branches / Sites (Users > Inventory tab).'),
                         [_('User')], [[u.display_name] for u in data['without_nodes']])
         html += section(_('National users (All Branches / Sites)'),
                         _('They see every Branch / Site. Review this list: remove All Branches / Sites from anyone '
@@ -238,8 +238,8 @@ class NodeSetup(models.AbstractModel):
                         [_('User'), _('Allowed Branches / Sites when not national')],
                         [[u.display_name, names(u.allowed_node_ids)] for u in data['national']])
         html += section(_('Documents without a Branch / Site'),
-                        _('Their POS, location, warehouse and creator give none. Correct the set-up above, '
-                          'then press "Update documents".'),
+                        _('Their POS, location, warehouse and creator give none, so only national users see them. '
+                          'Correct the set-up above, then press "Update documents".'),
                         [_('Document'), _('Count')],
                         [[label, count] for label, count in data['documents']])
         return html + Markup('</div>')

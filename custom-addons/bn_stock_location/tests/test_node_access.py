@@ -114,3 +114,51 @@ class TestNodeAccess(TransactionCase):
         self.assertFalse(plain.all_nodes)
         plain.groups_id = [(4, self.env.ref('bn_stock_location.stock_scope_unrestricted_group').id)]
         self.assertTrue(plain.all_nodes, "given a national group later")
+
+    def test_no_access_by_creator(self):
+        """No Branch / Site or analytic-scope rule of the bn modules lets a user see
+        a record because they created it or are its user: the analytic account
+        (Branch / Site) decides. Role rules that only narrow what a user sees
+        inside their Branch / Site stay (own audit log, own requests, own POS shop,
+        a doctor's prescriptions, a slip of one's own session, a box one installs)."""
+        narrowing = {
+            'bn_audit_trail.rule_audit_trail_log_own', 'bn_audit_trail.rule_audit_trail_log_line_own',
+            'bn_material_request.material_request_rule_own', 'bn_material_request.material_request_line_rule_own',
+            'bn_pos_customization.pos_order_rule', 'bn_pos_customization.pos_payment_rule',
+            'bn_pos_customization.pos_session_rule', 'bn_pos_customization.pos_shop_rule',
+            'bn_medical_prescription.medical_prescription_doctor_rule',
+            'bn_medical_prescription.medical_prescription_doctor_group_rule',
+            'bn_medical_prescription.medical_prescription_line_doctor_rule',
+            'bn_medical_prescription.medical_prescription_line_doctor_group_rule',
+            'bn_closing_session.pos_session_slip_own_session_rule',
+            'bn_donation_box.donation_box_registration_own_city_rule',
+        }
+        data = self.env['ir.model.data'].search([('model', '=', 'ir.rule'), ('module', '=like', 'bn\\_%')])
+        offending = []
+        for xmlid in data:
+            rule = self.env['ir.rule'].browse(xmlid.res_id).exists()
+            name = '%s.%s' % (xmlid.module, xmlid.name)
+            if rule and name not in narrowing and (
+                    'create_uid' in rule.domain_force or 'user.id' in rule.domain_force):
+                offending.append(name)
+        self.assertFalse(offending, "rules giving access by creator / user")
+        for name in narrowing:
+            rule = self.env.ref(name)
+            self.assertTrue(rule.groups or 'user.has_group' in rule.domain_force,
+                            "%s narrows a role, it is not global for everyone" % name)
+
+    def test_creator_outside_branch(self):
+        """A user who created a document of another Branch / Site does not see it."""
+        if 'livestock.requisition' not in self.env:
+            self.skipTest('no program document model installed')
+        Doc = self.env['livestock.requisition']
+        groups = (self.env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group')
+                  | self.env.ref('bn_livestock_slaugther.livestock_slaugther_admin_group'))
+        (self.branch_user | self.national).groups_id |= groups
+        doc = Doc.with_user(self.branch_user).create({})
+        self.assertEqual(doc.node_id, self.gulshan, "no location: the creator's only Branch / Site")
+        self.assertTrue(Doc.with_user(self.branch_user).search([('id', '=', doc.id)]))
+        doc.sudo().destination_location_id = self.wh_lahore.lot_stock_id
+        self.assertEqual(doc.node_id, self.lahore)
+        self.assertFalse(Doc.with_user(self.branch_user).search([('id', '=', doc.id)]))
+        self.assertTrue(Doc.with_user(self.national).search([('id', '=', doc.id)]))

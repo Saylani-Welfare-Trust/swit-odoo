@@ -1,6 +1,6 @@
 {
     'name': 'Dashboard',
-    'version': '17.0.1.1.1',
+    'version': '17.0.1.1.2',
     'category': 'Accounting/BytesNode',
     'author': 'Abdul Hai',
     'website': 'https://bytesnode.com/',

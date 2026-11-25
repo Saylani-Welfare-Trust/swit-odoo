@@ -1,6 +1,6 @@
 {
     'name': 'Journal Transfer',
-    'version': '17.0.1.2.8',
+    'version': '17.0.1.2.9',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',

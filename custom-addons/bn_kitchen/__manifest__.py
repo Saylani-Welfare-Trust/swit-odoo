@@ -1,6 +1,6 @@
 {
     'name': 'Kitchen',
-    'version': '17.0.1.5.1',
+    'version': '17.0.1.5.2',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',
