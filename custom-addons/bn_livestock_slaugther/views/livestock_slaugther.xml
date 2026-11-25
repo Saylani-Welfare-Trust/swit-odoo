@@ -34,7 +34,7 @@
                 <field name="ref" />
                 <field name="state" widget="badge" decoration-warning="state == 'not_received'" decoration-success="state == 'slaughtered'" decoration-info="state == 'cutting' or state == 'material_request'" readonly="1" />
 
-                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Slaughtered" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
+                <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Slaughter" name="action_confirm" type="object" class="oe_highlight" invisible="confirm_hide or state != 'not_received'" />
                 <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Cutting" name="action_cutting" type="object" class="oe_highlight" invisible="cutting_hide or transfer_bool or state != 'slaughtered'" />
                 <button groups="bn_livestock_slaugther.livestock_slaugther_user_group" string="Material Request" name="action_material_request" type="object" class="oe_highlight" invisible="state != 'cutting'" />
             </tree>
@@ -79,8 +79,7 @@
                             <field name="price" />
                             <field name="source_location_id" readonly="1" invisible="not source_location_id" />
                             <field name="slaughter_location_option_ids" invisible="1"/>
-                            <field name="slaughter_location_id" options="{'no_create': True, 'no_edit': True}"
-                                   readonly="state != 'not_received'" required="state == 'not_received'"/>
+                            <field name="slaughter_location_id" readonly="1" invisible="not slaughter_location_id"/>
                             <field name="cutting_location_id" options="{'no_create': True, 'no_edit': True}"
                                    readonly="state not in ('not_received', 'slaughtered') or transfer_bool"
                                    required="state == 'slaughtered' and not transfer_bool"/>

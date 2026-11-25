@@ -40,9 +40,8 @@ class LivestockSlaughter(models.Model):
     slaughter_location_id = fields.Many2one(
         'stock.location', string='Slaughter Location', copy=False,
         domain="[('id', 'in', slaughter_location_option_ids)]",
-        help="Where Slaughtered puts the animal: a location marked Is Slaughter Location, or for the "
-             "Meat / Goat / Chicken departments one marked Is Meat / Goat / Chicken Location. "
-             "Filled when the animal's warehouse has only one.")
+        help="Where the animal was slaughtered: its Destination Location when Slaughtered "
+             "(a location marked Is Slaughter Location).")
     slaughter_location_option_ids = fields.Many2many(
         'stock.location', string='Slaughter Location Options', compute='_compute_location_options')
     # where Cutting puts the animal: a location marked "Is Cutting Location"
@@ -171,15 +170,10 @@ class LivestockSlaughter(models.Model):
         the user chooses on the record)."""
         Location = self.env['stock.location']
         for record in self.sudo():
-            if not record.slaughter_location_id and record.state == 'not_received':
-                try:
-                    warehouse = record._livestock_warehouse()
-                except Exception:
-                    warehouse = self.env['stock.warehouse']
-                record.slaughter_location_id = Location._single_role_location(record._slaughter_role(), warehouse)
+            # (the Slaughter Location is the Destination Location when Slaughtered)
             if not record.cutting_location_id and record.state in ('not_received', 'slaughtered') \
                     and not record.transfer_bool:
-                warehouse = record.slaughter_location_id.warehouse_id
+                warehouse = (record.slaughter_location_id or record.transfer_location).warehouse_id
                 record.cutting_location_id = Location._single_role_location('is_cutting_location', warehouse)
 
     def _pos_source_location(self):
@@ -267,8 +261,14 @@ class LivestockSlaughter(models.Model):
         
         if self.state != 'not_received':
             return
-        # the department location of the animal's own warehouse
-        location = self._department_location()
+        # slaughtered where it is: its Destination Location, a slaughter location
+        location = self.transfer_location
+        if not location.is_slaughter_location:
+            raise ValidationError(_(
+                "%(record)s can only be slaughtered at a location marked \"Is Slaughter Location\": "
+                "its Destination Location %(location)s is not one. Order Transfer it to a slaughter location first.",
+                record=self.name, location=location.display_name or _('(none)')))
+        self.slaughter_location_id = location
         source_location = self._slaughter_source_location()
         picking_type = self.env['stock.warehouse']._get_program_type(
             'livestock', source_location, branch=self.node_id)
@@ -361,6 +361,9 @@ class LivestockSlaughter(models.Model):
         self.cutting_hide = True
         material_request = self._create_material_request()
         self.cutting_material_id = material_request.id
+        # the Destination Location becomes the Cutting Location: written last, as the
+        # line may then belong to another Branch / Site than the user's
+        self.transfer_location = location
 
         return {
             'type': 'ir.actions.act_window',
@@ -433,14 +436,14 @@ class LivestockSlaughter(models.Model):
         if no_location:
             raise ValidationError(_("Choose the Cutting Location of: %s") % ', '.join(no_location.mapped('name')))
         self._check_cutting_bom()
-        for rec in self:
-            rec.action_cutting()
+        # (after its cutting a line may belong to another Branch / Site: not read again)
+        request_ids = [rec.action_cutting()['res_id'] for rec in self]
         return {
             'name': _('Cutting'),
             'type': 'ir.actions.act_window',
             'res_model': 'livestock.cutting.material',
             'view_mode': 'tree,form',
-            'domain': [('id', 'in', self.mapped('material_request_id').ids)],
+            'domain': [('id', 'in', request_ids)],
             'target': 'current',
         }
 
