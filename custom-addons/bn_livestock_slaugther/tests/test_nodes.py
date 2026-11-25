@@ -187,6 +187,7 @@ class TestLivestockNodes(TransactionCase):
             'livestock_slaughter_id': record.id, 'dest_location_id': pen.id,
         }).with_user(self.manager).action_do_transfer()
         self.assertEqual(record.order_transfer_picking_id.location_dest_id, waiting)
+        self.assertEqual(record.transfer_location, pen, "the Destination Location becomes the transfer's location")
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, waiting), 1)
         with self.assertRaises(ValidationError):
             record._check_transfer_ready(bulk=False)  # once
@@ -282,6 +283,27 @@ class TestLivestockNodes(TransactionCase):
         unsourced = Slaughter.create({'product_id': self.product.id, 'quantity': 1})
         self.assertTrue(unsourced.source_location_id, "a line not from a POS waits in its warehouse")
         self.assertEqual(unsourced.transfer_location, unsourced.source_location_id)
+
+    def test_bulk_cutting(self):
+        """Bulk Cutting starts the cutting of every selected Slaughtered line."""
+        Slaughter = self.env['livestock.slaugther']
+        goats = Slaughter.create([{'product_id': self.product.id, 'quantity': 1, 'is_goat_depart': True,
+                                   'source_location_id': self.wh_karachi.lot_stock_id.id} for _i in range(2)])
+        draft = Slaughter.create({'product_id': self.product.id, 'quantity': 1, 'is_goat_depart': True,
+                                  'source_location_id': self.wh_karachi.lot_stock_id.id})
+        for goat in goats:
+            goat.with_user(self.manager).action_confirm()
+        with self.assertRaisesRegex(ValidationError, 'Draft'):
+            (goats | draft).with_user(self.manager).action_bulk_cutting()
+        self.assertEqual(set(goats.mapped('state')), {'slaughtered'}, "nothing is cut when a line is refused")
+        action = goats.with_user(self.manager).action_bulk_cutting()
+        self.assertEqual(set(goats.mapped('state')), {'cutting'})
+        self.assertEqual(goats.mapped('cutting_location_id'), self.karachi_cutting)
+        self.assertEqual(len(goats.mapped('cutting_material_id')), 2)
+        self.assertEqual(action['domain'], [('id', 'in', goats.mapped('cutting_material_id').ids)])
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.karachi_cutting), 2)
+        with self.assertRaisesRegex(ValidationError, 'Cutting'):
+            goats.with_user(self.manager).action_bulk_cutting()
 
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites and their own."""

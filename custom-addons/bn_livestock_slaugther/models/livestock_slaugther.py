@@ -385,6 +385,39 @@ class LivestockSlaughter(models.Model):
             'target': 'current',
         }
 
+    def action_bulk_cutting(self):
+        """List header: start Cutting for all the selected Slaughtered lines."""
+        if not self:
+            raise ValidationError(_("Please select the records to cut."))
+        state_labels = dict(self._fields['state']._description_selection(self.env))
+        not_ready = []
+        for rec in self:
+            if rec.transfer_bool:
+                reason = _('already bulk transferred')
+            elif rec.state != 'slaughtered':
+                reason = state_labels.get(rec.state, rec.state)
+            else:
+                continue
+            not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
+        if not_ready:
+            raise ValidationError(
+                _("Bulk Cutting is only for Slaughtered lines that are not bulk transferred. "
+                  "Remove these lines from your selection:\n%s") % "\n".join(not_ready))
+        self._fill_default_locations()
+        no_location = self.filtered(lambda r: not r.cutting_location_id)
+        if no_location:
+            raise ValidationError(_("Choose the Cutting Location of: %s") % ', '.join(no_location.mapped('name')))
+        for rec in self:
+            rec.action_cutting()
+        return {
+            'name': _('Cutting'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'livestock.cutting.material',
+            'view_mode': 'tree,form',
+            'domain': [('id', 'in', self.mapped('cutting_material_id').ids)],
+            'target': 'current',
+        }
+
     def action_material_request(self):
         self.ensure_one()
         if self.state != 'cutting':

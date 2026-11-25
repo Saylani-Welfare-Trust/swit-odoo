@@ -163,5 +163,7 @@ class LivestockSlaugtherWizard(models.TransientModel):
             records.write({
                 'order_transfer_location_id': self.dest_location_id.id,
                 'order_transfer_picking_id': picking.id,
+                # the Destination Location becomes the location of the transfer
+                'transfer_location': self.dest_location_id.id,
             })
         return picking
