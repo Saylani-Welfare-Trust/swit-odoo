@@ -16,9 +16,11 @@ except ImportError:
 
 
 def _to_amount(value):
-    """Amount of a statement cell: 1,000.00, 1 000.00 or empty"""
+    """Amount of a statement cell: 1,000.00, 1 000.00 or empty. Some banks show amounts as negative
+    (-1,000.00, 1,000.00- or (1,000.00)): the sign is dropped, the Debit / Credit column already tells which it is"""
+    text = re.sub(r'[,\s]', '', str(value or 0)).strip('()').strip('+-')
     try:
-        return float(re.sub(r'[,\s]', '', str(value or 0)) or 0)
+        return abs(float(text or 0))
     except ValueError:
         return 0.0
 
