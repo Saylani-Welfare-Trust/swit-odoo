@@ -1,6 +1,7 @@
 from odoo import models, fields, _, api
 from odoo.exceptions import ValidationError, AccessError, UserError
 from odoo.addons.bn_profile_management.models.partner_tag_domain import tag_domain
+from odoo.tools.sql import constraint_definition
 
 
 state_selection = [
@@ -83,10 +84,14 @@ class LivestockSlaughter(models.Model):
 
     @api.model
     def _drop_line_unique_constraints(self):
+        # ALTER TABLE locks the whole table even when the constraint is already gone,
+        # and this runs on every upgrade: an upgrade made while the database is in
+        # use then deadlocks. Only drop the constraints that are still there.
         for name in ('unique_pos_order_line_id', 'unique_direct_deposit_line_id',
                      'unique_donation_id', 'unique_api_donation_item_id'):
-            self.env.cr.execute('ALTER TABLE livestock_slaugther DROP CONSTRAINT IF EXISTS %s'
-                                % ('livestock_slaugther_' + name))
+            constraint = 'livestock_slaugther_' + name
+            if constraint_definition(self.env.cr, self._table, constraint) is not None:
+                self.env.cr.execute('ALTER TABLE livestock_slaugther DROP CONSTRAINT IF EXISTS %s' % constraint)
 
     @api.model
     def _create_for_source(self, source_field, source, animals, total, vals):
