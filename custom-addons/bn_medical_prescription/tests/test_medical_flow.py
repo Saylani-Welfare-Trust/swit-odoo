@@ -19,7 +19,9 @@ class TestMedicalFlow(TransactionCase):
         Product = env['product.product']
         services = env['product.category'].create({'name': 'MH Services'})
         medicines = env['product.category'].create({'name': 'MH Medicines'})
-        pos_medical = env['pos.category'].create({'name': 'MH POS', 'mh_medical': True})
+        pos_medical = env['pos.category'].create({'name': 'MH POS', 'mh_medical': True, 'mh_prescription': True})
+        # sold at the counter, but not offered in the prescription lines
+        pos_counter_only = env['pos.category'].create({'name': 'MH Counter Only', 'mh_medical': True})
         pos_medicines = env['pos.category'].create({'name': 'MH POS Medicines', 'parent_id': pos_medical.id})
         cls.consultation = Product.create({
             'name': 'OPD Consultation', 'detailed_type': 'service', 'available_in_pos': True, 'lst_price': 200,
@@ -30,6 +32,9 @@ class TestMedicalFlow(TransactionCase):
         cls.medicine = Product.create({
             'name': 'Paracetamol', 'detailed_type': 'product', 'available_in_pos': True, 'lst_price': 50,
             'categ_id': medicines.id, 'pos_categ_ids': [(6, 0, pos_medicines.ids)]})
+        cls.counter_only = Product.create({
+            'name': 'Counter Only Item', 'detailed_type': 'consu', 'available_in_pos': True,
+            'categ_id': services.id, 'pos_categ_ids': [(6, 0, pos_counter_only.ids)]})
         cls.non_medical = Product.create({
             'name': 'Donation Item', 'detailed_type': 'consu', 'available_in_pos': True, 'categ_id': services.id})
         journal = env['account.journal'].create({'name': 'Cash MH', 'code': 'MHC', 'type': 'cash'})
@@ -171,12 +176,14 @@ class TestMedicalFlow(TransactionCase):
         _order, prescription = self._till()
         domain = safe_eval(self.env['medical.prescription.line']._fields['product_id'].domain)
         offered = self.env['product.product'].search(domain)
-        self.assertIn(self.medicine, offered, "in a sub-category of a Medical & Health category")
+        self.assertIn(self.medicine, offered, "in a sub-category of a Prescription category")
         self.assertNotIn(self.non_medical, offered)
+        self.assertNotIn(self.counter_only, offered, "Medical & Health without Prescription: counter only")
         # a doctor has no POS rights: the dropdown still has to work for them
         self.assertEqual(self.env['product.product'].with_user(self.doctor_user).search(domain) & self.medicine, self.medicine)
-        with self.assertRaises(ValidationError):
-            prescription.write({'line_ids': [(0, 0, {'product_id': self.non_medical.id, 'qty': 1})]})
+        for product in (self.non_medical, self.counter_only):
+            with self.assertRaises(ValidationError):
+                prescription.write({'line_ids': [(0, 0, {'product_id': product.id, 'qty': 1})]})
         self.assertFalse(prescription.line_ids)
 
     def test_number_restarts_every_day(self):

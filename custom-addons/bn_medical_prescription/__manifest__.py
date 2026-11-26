@@ -1,6 +1,6 @@
 {
     'name': 'Medical Prescription Billing',
-    'version': '1.10',
+    'version': '1.11',
     'summary': 'One Medical & Health counter: paid till with a doctor, prescription approved on stock, then its bill',
     'description': """
 Flow on a Medical & Health POS counter:
@@ -25,6 +25,7 @@ Flow on a Medical & Health POS counter:
         'data/sequence.xml',
 
         'views/medical_doctor.xml',
+        'views/pos_category.xml',
         'views/medical_prescription.xml',
         'views/pos_order.xml',
         'views/patient.xml',

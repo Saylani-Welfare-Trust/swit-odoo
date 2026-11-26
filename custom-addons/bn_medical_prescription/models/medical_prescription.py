@@ -302,8 +302,8 @@ class MedicalPrescriptionLine(models.Model):
     sequence = fields.Integer(default=10)
     product_id = fields.Many2one(
         'product.product', 'Product', required=True,
-        domain="[('sale_ok', '=', True), ('available_in_pos', '=', True), ('pos_categ_ids.mh_medical_scope', '=', True)]",
-        help="Products of the categories switched on in Medical & Health > Configuration > Categories.")
+        domain="[('sale_ok', '=', True), ('available_in_pos', '=', True), ('pos_categ_ids.mh_prescription_scope', '=', True)]",
+        help="Products of the categories with Prescription switched on in Medical & Health > Configuration > Categories.")
     qty = fields.Float('Quantity', required=True, default=1.0, digits='Product Unit of Measure')
     price_unit = fields.Float('Unit Price', digits='Product Price')
     discount = fields.Float('Discount (%)', digits='Discount')
@@ -389,9 +389,9 @@ class MedicalPrescriptionLine(models.Model):
         for line in self.sudo():
             product = line.product_id
             if not (product.sale_ok and product.available_in_pos
-                    and any(product.pos_categ_ids.mapped('mh_medical_scope'))):
+                    and any(product.pos_categ_ids.mapped('mh_prescription_scope'))):
                 raise ValidationError(_(
-                    "%s can't be prescribed: its Point of Sale category isn't switched on in "
+                    "%s can't be prescribed: Prescription isn't switched on for its category in "
                     "Medical & Health > Configuration > Categories.", product.display_name))
 
     @api.constrains('discount', 'price_unit')

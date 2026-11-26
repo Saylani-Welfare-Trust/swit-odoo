@@ -43,11 +43,11 @@
         <field name="groups" eval="[(4, ref('bn_medical_pos.group_medical_doctor'))]"/>
     </record>
 
-    <!-- ... nor Allowed Categories: a doctor can prescribe the products of the Medical & Health categories -->
+    <!-- ... nor Allowed Categories: a doctor reads the products of the Medical & Health and Prescription categories -->
     <record id="medical_doctor_product_rule" model="ir.rule">
         <field name="name">Product Variant: Medical &amp; Health categories (doctor)</field>
         <field name="model_id" ref="product.model_product_product"/>
-        <field name="domain_force">[('pos_categ_ids.mh_medical_scope', '=', True)]</field>
+        <field name="domain_force">['|', ('pos_categ_ids.mh_medical_scope', '=', True), ('pos_categ_ids.mh_prescription_scope', '=', True)]</field>
         <field name="groups" eval="[(4, ref('bn_medical_pos.group_medical_doctor'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
@@ -70,7 +70,7 @@
     <record id="medical_doctor_product_template_rule" model="ir.rule">
         <field name="name">Product: Medical &amp; Health categories (doctor)</field>
         <field name="model_id" ref="product.model_product_template"/>
-        <field name="domain_force">[('pos_categ_ids.mh_medical_scope', '=', True)]</field>
+        <field name="domain_force">['|', ('pos_categ_ids.mh_medical_scope', '=', True), ('pos_categ_ids.mh_prescription_scope', '=', True)]</field>
         <field name="groups" eval="[(4, ref('bn_medical_pos.group_medical_doctor'))]"/>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Medical & Health > Configuration > Categories: which products the prescription lines offer -->
+    <record id="mh_pos_category_view_tree_inherit_prescription" model="ir.ui.view">
+        <field name="name">pos.category.view.tree.mh.prescription</field>
+        <field name="model">pos.category</field>
+        <field name="inherit_id" ref="bn_medical_pos.mh_pos_category_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='mh_medical']" position="after">
+                <field name="mh_prescription" widget="boolean_toggle"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="mh_pos_category_view_search_inherit_prescription" model="ir.ui.view">
+        <field name="name">pos.category.view.search.mh.prescription</field>
+        <field name="model">pos.category</field>
+        <field name="inherit_id" ref="bn_medical_pos.mh_pos_category_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='filter_not_medical']" position="after">
+                <separator/>
+                <filter name="filter_prescription" string="Prescription" domain="[('mh_prescription', '=', True)]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
