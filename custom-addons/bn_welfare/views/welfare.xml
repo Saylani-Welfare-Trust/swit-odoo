@@ -8,6 +8,9 @@
             <tree>
                 <header>
                     <button string="Send for Inquiry" name="action_send_for_inquiry" type="object" class="oe_highlight"   invisible=" not context.get('default_is_individual')" groups="bn_welfare.group_bn_welfare_user"/>
+                    <!-- bulk changeInquiryOfficer: every selected application must be from Send for Inquiry to Final Approval -->
+                    <button string="Change Inquiry Officer" name="action_open_officer_wizard" type="object" context="{'officer_wizard_mode': 'change'}"
+                            groups="bn_welfare.group_bn_welfare_user"/>
                 </header>
                 <field name="name" />
                 <field name="donee_id" />
@@ -54,7 +57,7 @@
                     <button string="Check Portal Status" name="action_check_portal_status" type="object" class="oe_highlight" invisible="state != 'send_for_inquiry'" groups = "bn_welfare.group_bn_welfare_user"/>
                     <!-- the portal's changeInquiryOfficer (open report) / reopenInquiry (new report, maybe another officer) -->
                     <button string="Change Inquiry Officer" name="action_open_officer_wizard" type="object" context="{'officer_wizard_mode': 'change'}"
-                            invisible="state != 'send_for_inquiry'" groups="bn_welfare.group_bn_welfare_user"/>
+                            invisible="state not in ['send_for_inquiry', 'inquiry', 'committee_approval', 'hod_approve', 'mem_approve']" groups="bn_welfare.group_bn_welfare_user"/>
                     <button string="Reopen Inquiry" name="action_open_officer_wizard" type="object" context="{'officer_wizard_mode': 'reopen'}"
                             invisible="state not in ['inquiry', 'committee_approval', 'hod_approve']" groups="bn_welfare.group_bn_welfare_user"/>
                     <button string="Move to Committee Approval" name="action_committee_approval" type="object" class="oe_highlight" invisible="state != 'inquiry'" groups = "bn_welfare.group_bn_welfare_user"/>

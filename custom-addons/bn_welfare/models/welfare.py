@@ -1,5 +1,5 @@
 from markupsafe import Markup
-from odoo import models, fields, _, api
+from odoo import models, fields, _, api, Command
 from odoo.exceptions import AccessError, ValidationError, UserError
 
 import requests
@@ -29,6 +29,8 @@ WELFARE_OFFICER_ROUTES = {
 APPROVAL_CERTIFICATE_STATES = ('mem_approve', 'approve', 'recurring', 'disbursed')
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
+# the officer can be changed from Send for Inquiry up to the Final Approval (not once Approved / Rejected)
+WELFARE_CHANGE_OFFICER_STATES = ('send_for_inquiry', 'inquiry', 'committee_approval', 'hod_approve', 'mem_approve')
 # Who acts on a welfare in each status (send on, revert, reject).
 STEP_GROUPS = {
     'completed': WF % 'group_bn_welfare_user',
@@ -1033,7 +1035,7 @@ class Welfare(models.Model):
         
         self._message_log(body=message_body)
 
-    def _show_notification(self, title, message, type='info'):
+    def _show_notification(self, title, message, type='info', sticky=False):
         """Show notification to user"""
         return {
             'type': 'ir.actions.client',
@@ -1042,7 +1044,7 @@ class Welfare(models.Model):
                 'title': title,
                 'message': message,
                 'type': type,
-                'sticky': False,
+                'sticky': sticky,
                 'next': {'type': 'ir.actions.client', 'tag': 'reload'},
 
             }
@@ -1156,12 +1158,7 @@ class Welfare(models.Model):
         self.ensure_one()
         if not self.portal_application_id:
             raise UserError(_("%s has no Portal Application ID yet, send it for inquiry first.") % self.name)
-        if not officer.active:
-            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee first.") % officer.name)
-        employee_id = (officer.barcode or '').strip()
-        if not employee_id:
-            raise UserError(_("Inquiry Officer %s has no Badge ID, the portal identifies the officer by it.") % officer.name)
-        data = {'json': {'applicationId': self.portal_application_id, 'employeeId': employee_id}}
+        data = {'json': {'applicationId': self.portal_application_id, 'employeeId': officer.barcode.strip()}}
         try:
             return self._make_sadqa_api_call(self._welfare_inquiry_endpoint(operation), 'POST', data) or {}
         except Exception as e:
@@ -1174,37 +1171,77 @@ class Welfare(models.Model):
                 pass
             raise UserError(_("Portal %(operation)s: %(error)s", operation=operation, error=detail)) from e
 
+    def _officer_wizard_check(self, mode):
+        """Change Inquiry Officer / Reopen Inquiry is allowed for every selected application"""
+        action = _('Reopen Inquiry') if mode == 'reopen' else _('Change Inquiry Officer')
+        if not self:
+            raise UserError(_("Please select at least one record."))
+        self._check_welfare_group(WF % 'group_bn_welfare_user', action)
+        self._check_welfare_state(WELFARE_REOPEN_STATES if mode == 'reopen' else WELFARE_CHANGE_OFFICER_STATES, action)
+        return action
+
     def action_open_officer_wizard(self):
-        """Change Inquiry Officer / Reopen Inquiry: pick the officer first"""
-        self.ensure_one()
+        """Change Inquiry Officer / Reopen Inquiry for the selected applications (form or list): pick the officer first"""
         mode = self.env.context.get('officer_wizard_mode', 'reopen')
+        action = self._officer_wizard_check(mode)
         return {
             'type': 'ir.actions.act_window',
-            'name': _('Reopen Inquiry') if mode == 'reopen' else _('Change Inquiry Officer'),
+            'name': action,
             'res_model': 'welfare.officer.wizard',
             'view_mode': 'form',
             'target': 'new',
-            'context': {'default_welfare_id': self.id, 'default_mode': mode,
-                        'default_employee_id': self.employee_id.id if mode == 'reopen' else False},
+            'context': {'default_welfare_ids': [Command.set(self.ids)], 'default_mode': mode,
+                        'default_employee_id': self.employee_id.id if mode == 'reopen' and len(self) == 1 else False},
         }
 
-    def action_change_inquiry_officer(self, officer):
-        """changeInquiryOfficer: the open inquiry (same report) goes to ``officer``"""
+    @staticmethod
+    def _check_inquiry_officer(officer):
+        if not officer.active:
+            raise UserError(_("Inquiry Officer %s is archived. Reactivate the employee first.") % officer.name)
+        if not (officer.barcode or '').strip():
+            raise UserError(_("Inquiry Officer %s has no Badge ID, the portal identifies the officer by it.") % officer.name)
+
+    def _apply_officer_change(self, mode, officer, apply, done_message):
+        """Run ``apply`` on each application, each with its own portal call. In bulk one failure must not roll back
+        the others: the portal already took them. Returns the notification of the result."""
+        action = self._officer_wizard_check(mode)
+        self._check_inquiry_officer(officer)
+        if len(self) == 1:
+            apply(self)  # errors raise as they are
+            return self._show_notification(action, done_message, 'success')
+        errors = []
+        for rec in self:
+            try:
+                with self.env.cr.savepoint():
+                    apply(rec)
+            except UserError as e:
+                errors.append(f"{rec.name}: {e}")
+        if len(errors) == len(self):
+            # nothing changed on the portal, so nothing to keep
+            raise UserError(_("%(action)s failed for every selected application:\n%(errors)s",
+                              action=action, errors='\n'.join(errors)))
+        done = len(self) - len(errors)
+        if errors:
+            return self._show_notification(action, _("%(done)s of %(total)s applications moved to %(officer)s. Not changed: %(errors)s",
+                                                     done=done, total=len(self), officer=officer.name,
+                                                     errors=' | '.join(errors)), 'warning', sticky=True)
+        return self._show_notification(action, _("%(done)s applications moved to %(officer)s.",
+                                                 done=done, officer=officer.name), 'success')
+
+    def _change_inquiry_officer(self, officer):
         self.ensure_one()
-        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Change Inquiry Officer'))
-        self._check_welfare_state(('send_for_inquiry',), _('Change Inquiry Officer'))
         previous = self.employee_id
         self._welfare_officer_call('changeInquiryOfficer', officer)
         self.employee_id = officer
         self._message_log(body=_("👤 Inquiry officer changed on the portal: %s → %s") % (previous.name or '-', officer.name))
-        return self._show_notification(_('Change Inquiry Officer'), _('%s can now complete the inquiry.') % officer.name, 'success')
 
-    def action_reopen_inquiry(self, officer):
-        """reopenInquiry: a new inquiry report for ``officer``, the welfare goes back to Send for Inquiry
-        (Check Portal Status / the scheduled action import it again once completed)"""
+    def action_change_inquiry_officer(self, officer):
+        """changeInquiryOfficer: the inquiry (same report) of each application goes to ``officer``, the status stays"""
+        return self._apply_officer_change('change', officer, lambda rec: rec._change_inquiry_officer(officer),
+                                          _('%s can now complete the inquiry.') % officer.name)
+
+    def _reopen_inquiry(self, officer):
         self.ensure_one()
-        self._check_welfare_group(WF % 'group_bn_welfare_user', _('Reopen Inquiry'))
-        self._check_welfare_state(WELFARE_REOPEN_STATES, _('Reopen Inquiry'))
         self._welfare_officer_call('reopenInquiry', officer)
         # decided again on the new report: the previous remarks stay in the chatter
         previous = [(_('Committee Remarks'), self.committee_remarks), (_('HOD Remarks'), self.hod_remarks)]
@@ -1216,7 +1253,12 @@ class Welfare(models.Model):
         self.write({'state': 'send_for_inquiry', 'employee_id': officer.id,
                     'committee_remarks': False, 'hod_remarks': False})
         self._message_log(body=_("🔁 Inquiry reopened on the portal for %s.") % officer.name)
-        return self._show_notification(_('Reopen Inquiry'), _('Inquiry reopened, %s can complete a new report.') % officer.name, 'success')
+
+    def action_reopen_inquiry(self, officer):
+        """reopenInquiry: a new inquiry report for ``officer``, each welfare goes back to Send for Inquiry
+        (Check Portal Status / the scheduled action import it again once completed)"""
+        return self._apply_officer_change('reopen', officer, lambda rec: rec._reopen_inquiry(officer),
+                                          _('Inquiry reopened, %s can complete a new report.') % officer.name)
 
     def action_move_to_hod(self):
         """HOD Approval - Check required fields and documents"""
