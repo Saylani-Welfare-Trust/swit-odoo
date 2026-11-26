@@ -25,6 +25,7 @@
         'data/demo_data.xml',
         
         'reports/purchase_order_report.xml',
+        'reports/report_delivery_slip.xml',
         
         'views/livestock_variant.xml',
         'views/product_template.xml',

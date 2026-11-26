@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_delivery_slip_draft_watermark"
+              inherit_id="stock.report_delivery_document">
+
+        <xpath expr="//div[hasclass('page')]" position="inside">
+
+            <div t-if="o.state == 'draft'"
+                 style="
+                    position: fixed;
+                    top: 38%;
+                    left: 10%;
+                    width: 80%;
+                    text-align: center;
+                    transform: rotate(-35deg);
+                    font-size: 100px;
+                    font-weight: bold;
+                    color: #e6b3b3;
+                    opacity: 0.35;
+                    z-index: 9999;
+                    pointer-events: none;
+                 ">
+                DRAFT
+            </div>
+
+        </xpath>
+
+    </template>
+
+</odoo>
