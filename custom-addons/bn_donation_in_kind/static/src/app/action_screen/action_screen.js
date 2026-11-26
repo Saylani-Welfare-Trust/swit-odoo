@@ -63,6 +63,8 @@ patch(ActionScreen.prototype, {
 
             const payload = {
                 'donor_id': donor_id,
+                // the register name given with the Donor button, printed on the receipt instead of the donor's name
+                'favor': order.favor || false,
                 'order_lines': this.prepareOrderLines(orderLines),
             };
 

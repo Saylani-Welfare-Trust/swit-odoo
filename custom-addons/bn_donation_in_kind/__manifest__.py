@@ -1,6 +1,6 @@
 {
     'name': 'Donation In Kind',
-    'version': '17.0.1.5.12',
+    'version': '17.0.1.5.13',
     'author': 'Syed Owais Noor',
     'website': 'https://bytesnode.com',
     'license': 'LGPL-3',

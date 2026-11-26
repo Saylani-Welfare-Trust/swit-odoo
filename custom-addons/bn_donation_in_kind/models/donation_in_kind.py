@@ -45,6 +45,8 @@ class DonationInKind(models.Model):
         return False
     
     donor_id = fields.Many2one('res.partner', string="Donor", domain=tag_domain('donor'), tracking=True)
+    # the name the donation is registered in at the POS (Donor button): printed on the receipt instead of the donor's
+    favor = fields.Char('Register Name', tracking=True)
     product_id = fields.Many2one('product.product', string="Product", tracking=True, domain=[('is_donation_in_kind', '=', True)])
     picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'),
                                       domain=[('program_type', '=', 'donation_in_kind')])
@@ -627,9 +629,12 @@ May Allah bless you!
                           "Ask your administrator to set the POS warehouse."),
             }
 
+        favor = (data.get('favor') or '').strip() or False
+
         for line in data['order_lines']:
             din = self.create({
                 'donor_id': data['donor_id'],
+                'favor': favor,
                 'location_id': location.id,
                 'picking_type_id': self._din_picking_type(location).id,
                 'product_id': line['product_id'],
