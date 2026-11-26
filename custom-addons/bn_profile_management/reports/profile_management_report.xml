@@ -196,7 +196,7 @@
                                 <td><t t-esc="docs.nearest_land_mark"/></td>
                             </tr>
                             <tr>
-                                <td>Father Name:</td>
+                                <td>Father/Husband  Name:</td>
                                 <td><t t-esc="docs.father_name"/></td>
                                 <td>Cast</td>
                                 <td><t t-esc="docs.surname"/></td>
