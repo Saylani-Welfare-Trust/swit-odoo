@@ -4,6 +4,7 @@ from . import pos_cheque
 from . import direct_deposit
 from . import donation
 from . import api_donation
+from . import donation_home_service
 from . import livestock_cutting
 from . import livestock_requistion
 from . import livestock_requisition_line

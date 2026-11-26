@@ -7,6 +7,10 @@
             <field name="sequence">10</field>
             <field name="source">pos</field>
         </record>
+        <record id="livestock_source_dhs" model="livestock.source.location">
+            <field name="sequence">15</field>
+            <field name="source">dhs</field>
+        </record>
         <record id="livestock_source_direct_deposit" model="livestock.source.location">
             <field name="sequence">20</field>
             <field name="source">direct_deposit</field>

@@ -30,6 +30,9 @@ class LivestockSlaughter(models.Model):
     direct_deposit_line_id = fields.Many2one('direct.deposit.line', string="Direct Deposit Line", copy=False, index=True)
     donation_id = fields.Many2one('donation', string="Import Donation", copy=False, index=True)
     api_donation_item_id = fields.Many2one('api.donation.item', string="API Donation Item", copy=False, index=True)
+    # a Donation Home Service line: its animals come in once the service is Paid
+    dhs_line_id = fields.Many2one('donation.home.service.line', string="Donation Home Service Line",
+                                  copy=False, index='btree_not_null')
     cutting_material_id = fields.Many2one('livestock.cutting.material', string='Cutting Record', copy=False)
     cutting_line_ids = fields.One2many(
         related='cutting_material_id.livestock_cutting_material_line_ids',
@@ -237,6 +240,8 @@ class LivestockSlaughter(models.Model):
             return 'donation'
         if record.api_donation_item_id:
             return 'api_donation'
+        if record.dhs_line_id:
+            return 'dhs'
         if record.pos_order_line_id or record.pos_order_id or record.pos_session_id or record.pos_config_id:
             return 'pos'
         return False

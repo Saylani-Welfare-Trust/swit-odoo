@@ -56,6 +56,15 @@ class POSOrder(models.Model):
             return {'is_chicken_depart': True}
         return {}
 
+    def _paid_dhs(self):
+        """The Donation Home Service this order pays: the POS gives the order its
+        number as Source Document, and links it to the order once saved."""
+        self.ensure_one()
+        domain = [('pos_order_id', '=', self.id)]
+        if self.source_document:
+            domain = ['|', ('name', '=', self.source_document)] + domain
+        return self.env['donation.home.service'].sudo().search(domain)
+
     def _create_livestock_slaughter_records(self):
         slaughter_obj = self.env['livestock.slaugther'].sudo()
 
@@ -73,15 +82,23 @@ class POSOrder(models.Model):
             livestock_lines = order.lines.filtered(
                 lambda line: line.product_id.is_livestock and line.qty > 0
             )
+            services = self.env['donation.home.service']
+            if livestock_lines:
+                # an order paying a Donation Home Service: the service makes the
+                # records of its own products once Paid (donation.home.service)
+                services = order._paid_dhs()
+                service_products = services.donation_home_service_line_ids.product_id
+                livestock_lines = livestock_lines.filtered(lambda line: line.product_id not in service_products)
             if not livestock_lines:
                 continue
 
             if not order.dn_number:
                 dn_number = order._compute_dn_number()
-                order.write({
-                    'dn_number': dn_number,
-                    'source_document': dn_number,
-                })
+                vals = {'dn_number': dn_number}
+                # an order paying a Donation Home Service keeps its number as Source Document
+                if not services:
+                    vals['source_document'] = dn_number
+                order.write(vals)
 
             reference = order.source_document or order.dn_number
 

@@ -32,6 +32,14 @@ class DirectDeposit(models.Model):
             livestock_lines = deposit.direct_deposit_line_ids.filtered(
                 lambda line: line.product_id.is_livestock and line.quantity > 0
             )
+            # the lines of the Donation Home Services the deposit pays (or moved
+            # them into): the services make their records once Paid
+            services = deposit.sudo().dhs_ids
+            if deposit.source_model == 'donation_home_service':
+                services |= services.browse(deposit.source_record_id).exists()
+            service_products = services.donation_home_service_line_ids.product_id
+            livestock_lines -= deposit._get_non_donor_lines().filtered(
+                lambda line: line.product_id in service_products)
             if not livestock_lines:
                 continue
 

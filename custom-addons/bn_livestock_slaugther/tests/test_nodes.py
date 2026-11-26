@@ -397,7 +397,7 @@ class TestLivestockNodes(TransactionCase):
         its livestock lands and waits for slaughter; empty, the default location."""
         Rows = self.env['livestock.source.location']
         self.assertEqual(set(Rows.search([]).mapped('source')),
-                         {'pos', 'direct_deposit', 'donation', 'api_donation', 'advance_donation'})
+                         {'pos', 'dhs', 'direct_deposit', 'donation', 'api_donation', 'advance_donation'})
         self.assertEqual(self.env.ref('bn_livestock_slaugther.menu_livestock_locations').parent_id,
                          self.env.ref('bn_master_setup.master_setup_menu'))
         env = self.env

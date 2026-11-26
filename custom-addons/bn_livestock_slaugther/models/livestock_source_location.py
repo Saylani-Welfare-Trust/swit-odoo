@@ -3,6 +3,7 @@ from odoo import _, api, fields, models
 # where livestock lines come from (livestock.slaugther._livestock_source)
 LIVESTOCK_SOURCES = [
     ('pos', 'POS Order'),
+    ('dhs', 'Donation Home Service'),
     ('direct_deposit', 'Direct Deposit'),
     ('donation', 'Import Donation'),
     ('api_donation', 'API Donation'),
@@ -33,7 +34,7 @@ class LivestockSourceLocation(models.Model):
     def _compute_default_location(self):
         for row in self:
             row.default_location = (
-                _("The location of the POS shop") if row.source == 'pos'
+                _("The location of the POS shop") if row.source in ('pos', 'dhs')
                 else _("The Livestock Inflow Location of the warehouse (Livestock Warehouse Locations)"))
 
     @api.model
