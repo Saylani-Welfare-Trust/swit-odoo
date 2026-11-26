@@ -7,7 +7,6 @@
         <field name="arch" type="xml">
             <form string="Bulk Set Bill Date &amp; Reference">
                 <group>
-                    <field name="move_count" readonly="1"/>
                     <field name="invoice_date"/>
                     <field name="bill_reference"/>
                     <field name="set_custom_reference_too"
