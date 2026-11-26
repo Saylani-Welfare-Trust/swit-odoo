@@ -31,6 +31,10 @@ APPROVAL_CERTIFICATE_STATES = ('mem_approve', 'approve', 'recurring', 'disbursed
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
 # the officer can be changed from Send for Inquiry up to the Final Approval (not once Approved / Rejected)
 WELFARE_CHANGE_OFFICER_STATES = ('send_for_inquiry', 'inquiry', 'committee_approval', 'hod_approve', 'mem_approve')
+# Revert goes one status back along this flow
+WELFARE_FLOW = ('draft', 'completed', 'send_for_inquiry', 'inquiry', 'committee_approval', 'hod_approve',
+                'mem_approve', 'approve', 'recurring', 'disbursed')
+WELFARE_NO_REVERT_STATES = ('draft', 'disbursed', 'reject', 'recurring', 'approve')
 # Who acts on a welfare in each status (send on, revert, reject).
 STEP_GROUPS = {
     'completed': WF % 'group_bn_welfare_user',
@@ -169,6 +173,9 @@ class Welfare(models.Model):
     # Computed Html fields for display only — never written by the form
 
     state = fields.Selection(selection=state_selection, string="State", default='draft')
+    # {status: user id} of who moved the application into each status (a revert is not counted):
+    # that user is told when the application is reverted out of the status
+    state_approvers = fields.Json('Status Approvers', copy=False, readonly=True)
 
     welfare_line_ids = fields.One2many('welfare.line', 'welfare_id', string="Welfare Lines")
     welfare_recurring_line_ids = fields.One2many('welfare.recurring.line', 'welfare_id', string='Welfare Recurring Lines')
@@ -503,6 +510,9 @@ class Welfare(models.Model):
     def write(self, vals):
         self._check_count_values(vals)
         res = super().write(vals)
+        if vals.get('state') and not self.env.context.get('welfare_revert'):
+            for rec in self:
+                super(Welfare, rec).write({'state_approvers': {**(rec.state_approvers or {}), vals['state']: self.env.uid}})
         # Donee changed on an already saved application
         if vals.get('previous_welfare_source_id'):
             self._copy_previous_documents()
@@ -1481,28 +1491,29 @@ class Welfare(models.Model):
         }
         
     def action_reverse_state(self):
-        state_flow = [
-            'draft',
-            'completed',
-            'send_for_inquiry',
-            'inquiry',
-            'committee_approval',
-            'hod_approve',
-            'mem_approve',
-            'approve',
-            'recurring',
-            'disbursed',
-        ]
         self._check_step_group(_('Revert'))
         for rec in self:
-            if rec.state in ['draft', 'disbursed', 'reject','recurring','approve']:
+            if rec.state in WELFARE_NO_REVERT_STATES or rec.state not in WELFARE_FLOW:
                 continue
-            try:
-                idx = state_flow.index(rec.state)
-                if idx > 0:
-                    rec.state = state_flow[idx-1]
-            except Exception:
-                pass
+            rec._revert_to(WELFARE_FLOW[WELFARE_FLOW.index(rec.state) - 1])
+
+    def _revert_to(self, state):
+        """One status back; whoever moved the application into the reverted status is notified"""
+        self.ensure_one()
+        labels = dict(state_selection)
+        reverted = self.state
+        approvers = dict(self.state_approvers or {})
+        approver = self.env['res.users'].sudo().browse(approvers.pop(reverted, None) or []).exists()
+        self.with_context(welfare_revert=True).write({'state': state, 'state_approvers': approvers})
+        # nobody to tell: unknown (moved before this was recorded), the system (scheduled action) or the reverter
+        if approver and (approver == self.env.user or approver._is_superuser() or approver.share or not approver.active):
+            approver = approver.browse()
+        body = _("↩️ Reverted from %(from_state)s to %(to_state)s by %(user)s.",
+                 from_state=labels.get(reverted, reverted), to_state=labels.get(state, state), user=self.env.user.name)
+        if approver:
+            body += ' ' + _("%(approver)s, you moved it to %(from_state)s: please check.",
+                            approver=approver.name, from_state=labels.get(reverted, reverted))
+        self.message_post(body=body, partner_ids=approver.partner_id.ids, subtype_xmlid='mail.mt_note')
 
     # Add this method to your welfare model
 
