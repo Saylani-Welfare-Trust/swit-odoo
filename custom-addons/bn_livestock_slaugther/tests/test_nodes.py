@@ -42,7 +42,7 @@ class TestLivestockNodes(TransactionCase):
         cls.karachi_cutting = role('LN Karachi Cutting', cls.wh_karachi, 'is_cutting_location')
         cls.lahore_cutting = role('LN Lahore Cutting', cls.wh_lahore, 'is_cutting_location')
         cls.manager = env['res.users'].with_context(no_reset_password=True).create({
-            'name': 'ln manager', 'login': 'ln_manager',
+            'name': 'ln manager', 'login': 'ln_manager', 'email': 'ln.manager@example.com',
             'groups_id': [(6, 0, [env.ref('base.group_user').id, env.ref('stock.group_stock_manager').id,
                                   env.ref('bn_livestock_slaugther.livestock_slaugther_menu_group').id,
                                   env.ref('bn_livestock_slaugther.livestock_slaugther_admin_group').id,
@@ -367,10 +367,11 @@ class TestLivestockNodes(TransactionCase):
             'product_id': no_bom.id, 'quantity': 1, 'is_goat_depart': True,
             'source_location_id': self.karachi_slaughter.id})
         calf.with_user(self.manager).action_confirm()
+        before = qty(no_bom, cut_at)
         with self.assertRaisesRegex(ValidationError, 'No BOM'):
             calf.with_user(self.manager).action_cutting()
         self.assertEqual(calf.state, 'slaughtered')
-        self.assertEqual(qty(no_bom, cut_at), 0)
+        self.assertEqual(qty(no_bom, cut_at), before, "a refused cutting moves nothing")
 
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites, not the ones they
