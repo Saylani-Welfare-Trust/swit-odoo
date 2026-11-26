@@ -132,7 +132,8 @@ class LivestockSlaughter(models.Model):
                     vals['name'] = self.env['ir.sequence'].next_by_code('livestock_slaugther') or ('New')
         records = super().create(vals_list)
         for record in records.filtered(lambda r: not r.source_location_id):
-            location = record._pos_source_location()
+            # the location set for its module (Master Setup > Livestock Locations), else its POS's
+            location = record._configured_source_location() or record._pos_source_location()
             if location:
                 record.sudo().source_location_id = location.id
         records._init_destination()
@@ -226,12 +227,32 @@ class LivestockSlaughter(models.Model):
             ('location_dest_id.usage', 'in', ('internal', 'transit'))], order='id', limit=1)
         return picking.location_dest_id.sudo(False) or self._department_location()
 
+    def _livestock_source(self):
+        """The module the line comes from: a source of livestock.source.location."""
+        self.ensure_one()
+        record = self.sudo()
+        if record.direct_deposit_line_id:
+            return 'direct_deposit'
+        if record.donation_id:
+            return 'donation'
+        if record.api_donation_item_id:
+            return 'api_donation'
+        if record.pos_order_line_id or record.pos_order_id or record.pos_session_id or record.pos_config_id:
+            return 'pos'
+        return False
+
+    def _configured_source_location(self):
+        """The location set for the line's module (Master Setup > Livestock Locations)."""
+        self.ensure_one()
+        return self.env['livestock.source.location']._location_for(self._livestock_source())
+
     def _slaughter_source_location(self):
         """Where the animal waits for slaughter, and where Order Transfer brings it:
+        the location set for its module (Master Setup > Livestock Locations), else
         the location of the POS it was sold at, else the livestock operation
         type's source location in its own warehouse."""
         self.ensure_one()
-        return self._pos_source_location() or self.env['stock.warehouse']._get_program_type(
+        return self._configured_source_location() or self._pos_source_location() or self.env['stock.warehouse']._get_program_type(
             'livestock', branch=self.node_id, location=self._livestock_warehouse().lot_stock_id
         ).default_location_src_id
 

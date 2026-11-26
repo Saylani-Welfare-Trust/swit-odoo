@@ -41,6 +41,10 @@ class LivestockSlaughterSync(models.Model):
                 fields.Date.context_today(self, donation.create_date) if donation.create_date else False)
         return date
 
+    def _livestock_source(self):
+        """A line made for an advance donation contract (no other source)."""
+        return super()._livestock_source() or ('advance_donation' if self.sudo().advance_donation_line_id else False)
+
     def action_confirm(self):
         """Slaughter: not before the date of its advance donation line; then that
         line is disbursed (fully once all the animals of the line are slaughtered)."""

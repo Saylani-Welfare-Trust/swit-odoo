@@ -1,6 +1,6 @@
 {
     'name': 'Advance Donation Syncing',
-    'version': '17.0.1.3.0',
+    'version': '17.0.1.3.1',
     'description': 'Integration between Advance Donation and Welfare modules',
     'author': 'Muhammad Abdullah',
     'website': 'http://bytesnode.com',

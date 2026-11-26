@@ -389,8 +389,42 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual((record.source_location_id, record.transfer_location), (pen, pen))
         with self.assertRaises(ValidationError):
             warehouse.livestock_inflow_location_id = False
-        menu = self.env.ref('bn_livestock_slaugther.menu_livestock_locations')
+        menu = self.env.ref('bn_livestock_slaugther.menu_livestock_warehouse_locations')
         self.assertEqual(menu.parent_id, self.env.ref('bn_master_setup.master_setup_menu'))
+
+    def test_location_per_source_module(self):
+        """Master Setup > Livestock Locations: a location set for a module is where
+        its livestock lands and waits for slaughter; empty, the default location."""
+        Rows = self.env['livestock.source.location']
+        self.assertEqual(set(Rows.search([]).mapped('source')),
+                         {'pos', 'direct_deposit', 'donation', 'api_donation', 'advance_donation'})
+        self.assertEqual(self.env.ref('bn_livestock_slaugther.menu_livestock_locations').parent_id,
+                         self.env.ref('bn_master_setup.master_setup_menu'))
+        env = self.env
+        pos_location = env['stock.location'].create({'name': 'LN Shop', 'usage': 'internal',
+                                                     'location_id': self.wh_karachi.view_location_id.id})
+        picking_type = self.wh_karachi.out_type_id.copy({'name': 'LN Shop Orders', 'sequence_code': 'LNSH',
+                                                         'default_location_src_id': pos_location.id})
+        journal = env['account.journal'].create({'name': 'LN Shop Cash', 'code': 'LNSC', 'type': 'cash'})
+        method = env['pos.payment.method'].create({'name': 'LN Shop Cash', 'journal_id': journal.id})
+        config = env['pos.config'].create({'name': 'LN Shop', 'picking_type_id': picking_type.id,
+                                           'payment_method_ids': [(6, 0, method.ids)]})
+
+        def line():
+            return env['livestock.slaugther'].create({'product_id': self.product.id, 'quantity': 1,
+                                                      'pos_config_id': config.id})
+        default = line()
+        self.assertEqual(default._livestock_source(), 'pos')
+        self.assertEqual((default.source_location_id, default.transfer_location), (pos_location, pos_location),
+                         "nothing set: the POS shop's location")
+        pen = env['stock.location'].create({'name': 'LN Central Pen', 'usage': 'internal',
+                                            'location_id': self.wh_karachi.view_location_id.id})
+        Rows.search([('source', '=', 'pos')]).location_id = pen
+        sent = line()
+        self.assertEqual((sent.source_location_id, sent.transfer_location), (pen, pen), "the location set for POS")
+        self.assertEqual(sent._slaughter_source_location(), pen, "and it waits there for slaughter")
+        self.assertEqual(Rows.search([('source', '=', 'donation')])._location_for('donation'), env['stock.location'],
+                         "other modules keep their default")
 
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites, not the ones they

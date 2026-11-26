@@ -1,6 +1,6 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '17.0.1.18.0',
+    'version': '17.0.1.19.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -23,6 +23,7 @@
         
         'data/sequence.xml',
         'data/stock_location.xml',
+        'data/livestock_source_location.xml',
         
         'reports/livestock_bulk_transfer_report.xml',
         

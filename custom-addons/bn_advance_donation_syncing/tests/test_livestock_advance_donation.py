@@ -96,6 +96,15 @@ class TestLivestockAdvanceDonation(TransactionCase):
         self.assertEqual(tomorrows.state, 'not_received')
         self.assertFalse(tomorrow_line.disbursed_amount)
 
+    def test_contract_animals_land_in_the_location_set_for_advance_donation(self):
+        pen = self.env['stock.location'].create({'name': 'AD Pen', 'usage': 'internal',
+                                                 'location_id': self.env.ref('stock.warehouse0').view_location_id.id})
+        self.env.ref('bn_livestock_slaugther.livestock_source_advance_donation').location_id = pen
+        donation, animals = self._approved(self.goat)
+        self.assertEqual(animals.mapped('source_location_id'), pen)
+        self.assertEqual(animals.mapped('transfer_location'), pen)
+        self.assertEqual(animals[0]._livestock_source(), 'advance_donation')
+
     def test_not_livestock_and_open_contract(self):
         donation, animals = self._approved(self.rice)
         self.assertFalse(animals)
