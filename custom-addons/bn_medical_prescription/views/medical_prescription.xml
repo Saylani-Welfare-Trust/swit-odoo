@@ -19,7 +19,7 @@
                 <field name="pos_order_id" optional="show" groups="bn_medical_pos.group_medical_user"/>
                 <field name="billing_config_id" optional="hide" groups="bn_medical_pos.group_medical_user"/>
                 <field name="billed_date" optional="hide"/>
-                <field name="amount_total" sum="Total" decoration-bf="1"/>
+                <field name="amount_total" sum="Total" decoration-bf="1" groups="bn_medical_pos.group_medical_manager"/>
                 <field name="currency_id" column_invisible="True"/>
                 <field name="state" widget="badge" decoration-info="state == 'approved'" decoration-success="state == 'billed'"
                        decoration-muted="state == 'cancel'"/>
@@ -33,7 +33,7 @@
         <field name="arch" type="xml">
             <form string="Prescription">
                 <header>
-                    <button name="action_approve" type="object" string="Approve" class="btn-primary" invisible="state != 'draft'"
+                    <button name="action_approve" type="object" string="Prescribed" class="btn-primary" invisible="state != 'draft'"
                             groups="bn_medical_pos.group_medical_user,bn_medical_pos.group_medical_doctor"/>
                     <button name="action_cancel" type="object" string="Cancel" invisible="state not in ('draft', 'approved')"
                             groups="bn_medical_pos.group_medical_manager" confirm="Cancel this prescription?"/>
@@ -80,6 +80,7 @@
                         </group>
                         <group string="Doctor" name="desk">
                             <field name="doctor_id" readonly="has_till or state != 'draft'" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="location_id" readonly="state != 'draft'" options="{'no_create': True, 'no_open': True}"/>
                             <field name="doctor_name" readonly="1" invisible="doctor_id or not doctor_name"/>
                             <field name="category_name" invisible="not has_till"/>
                             <field name="category_product_ids" widget="many2many_tags" options="{'no_create': True}"
@@ -105,15 +106,19 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="product_id" options="{'no_create': True}"/>
                                     <field name="note" optional="show"/>
+                                    <field name="is_storable" column_invisible="True"/>
+                                    <field name="qty_on_hand" invisible="not is_storable"
+                                           decoration-danger="qty_on_hand &lt;= 0" decoration-success="qty_on_hand &gt; 0"/>
                                     <field name="qty"/>
                                     <field name="can_edit_price" column_invisible="True"/>
-                                    <field name="price_unit" readonly="not can_edit_price" force_save="1"/>
-                                    <field name="discount" optional="hide" readonly="not can_edit_price" force_save="1"/>
-                                    <field name="price_subtotal"/>
+                                    <!-- prices: Medical &amp; Health Administrators only -->
+                                    <field name="price_unit" readonly="not can_edit_price" force_save="1" groups="bn_medical_pos.group_medical_manager"/>
+                                    <field name="discount" optional="hide" readonly="not can_edit_price" force_save="1" groups="bn_medical_pos.group_medical_manager"/>
+                                    <field name="price_subtotal" groups="bn_medical_pos.group_medical_manager"/>
                                     <field name="currency_id" column_invisible="True"/>
                                 </tree>
                             </field>
-                            <group class="oe_subtotal_footer">
+                            <group class="oe_subtotal_footer" groups="bn_medical_pos.group_medical_manager">
                                 <field name="amount_total"/>
                             </group>
                         </page>

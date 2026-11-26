@@ -1,3 +1,4 @@
+from . import ir_sequence
 from . import medical_doctor
 from . import medical_prescription
 from . import pos_order

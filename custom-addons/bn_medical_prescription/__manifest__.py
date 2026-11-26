@@ -1,6 +1,6 @@
 {
     'name': 'Medical Prescription Billing',
-    'version': '1.9',
+    'version': '1.10',
     'summary': 'One Medical & Health counter: paid till with a doctor, prescription approved on stock, then its bill',
     'description': """
 Flow on a Medical & Health POS counter:

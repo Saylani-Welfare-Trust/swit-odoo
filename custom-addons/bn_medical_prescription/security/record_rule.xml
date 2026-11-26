@@ -55,6 +55,18 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
+    <!-- ... nor Allowed Locations: a doctor picks the location the products are given from -->
+    <record id="medical_doctor_location_rule" model="ir.rule">
+        <field name="name">Location: internal locations (Medical &amp; Health doctor)</field>
+        <field name="model_id" ref="stock.model_stock_location"/>
+        <field name="domain_force">[('usage', '=', 'internal')]</field>
+        <field name="groups" eval="[(4, ref('bn_medical_pos.group_medical_doctor'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
     <record id="medical_doctor_product_template_rule" model="ir.rule">
         <field name="name">Product: Medical &amp; Health categories (doctor)</field>
         <field name="model_id" ref="product.model_product_template"/>

@@ -22,7 +22,7 @@ WORKFLOW_FIELDS = {
 # fixed by the paid till: only an administrator corrects them
 TILL_FIELDS = {'partner_id', 'doctor_id', 'category_product_ids', 'company_id'}
 # what is worked on while the prescription is a draft
-DRAFT_FIELDS = {'line_ids', 'note', 'doctor_name'}
+DRAFT_FIELDS = {'line_ids', 'note', 'doctor_name', 'location_id'}
 
 
 class MedicalPrescription(models.Model):
@@ -49,6 +49,10 @@ class MedicalPrescription(models.Model):
     # shown as text: the user's Allowed Categories may not include the paid product
     category_name = fields.Char('Category', compute='_compute_category_name', store=True, compute_sudo=True)
     intake_order_id = fields.Many2one('pos.order', 'Till', readonly=True, copy=False, index='btree_not_null')
+    # chosen by the doctor (the counter's stock location by default): the on hand quantities and the stock check use it
+    location_id = fields.Many2one(
+        'stock.location', 'Location', tracking=True, domain="[('usage', '=', 'internal')]",
+        help="Where the products are given from: the On Hand quantities and the stock check of Prescribed use it.")
     # for the views: a doctor has no rights on the POS orders
     has_till = fields.Boolean(compute='_compute_has_till', compute_sudo=True)
     note = fields.Text('Remarks')
@@ -89,7 +93,9 @@ class MedicalPrescription(models.Model):
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get('name', _('New')) == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('medical.prescription') or _('New')
+                # the local date of the user (the counter), not the server's UTC date: restarts at local midnight
+                vals['name'] = self.env['ir.sequence'].next_by_code(
+                    'medical.prescription', sequence_date=fields.Date.context_today(self)) or _('New')
         return super().create(vals_list)
 
     def write(self, vals):
@@ -121,6 +127,7 @@ class MedicalPrescription(models.Model):
             'note': (note or '').strip() or False,
             'company_id': pos_order.company_id.id,
             'desk_config_id': pos_order.config_id.id,
+            'location_id': pos_order.config_id.picking_type_id.default_location_src_id.id,
             'intake_order_id': pos_order.id,
             'pos_session_id': pos_order.session_id.id,
             'pos_config_id': pos_order.config_id.id,
@@ -128,18 +135,24 @@ class MedicalPrescription(models.Model):
             'pos_cashier_id': pos_order.user_id.id,
         })
 
+    def _stock_products(self, products):
+        """The products with their on hand quantity at the prescription's location, else the counter's
+        stock location (anywhere in the company when there is neither)"""
+        self.ensure_one()
+        location = self.location_id or self.desk_config_id.picking_type_id.default_location_src_id
+        context = {'location': location.id, 'compute_child': True} if location else {}
+        return products.with_company(self.company_id).with_context(**context)
+
     def _check_on_hand(self):
-        """Stock-tracked products must be on hand at the counter's location (anywhere in the company without a counter)"""
+        """Stock-tracked products must be on hand at the counter's location"""
         for prescription in self.sudo():
-            location = prescription.desk_config_id.picking_type_id.default_location_src_id
-            context = {'location': location.id, 'compute_child': True} if location else {}
             products = prescription.line_ids.product_id.filtered(lambda p: p.detailed_type == 'product')
-            empty = products.with_company(prescription.company_id).with_context(**context).filtered(
-                lambda p: p.qty_available <= 0)
+            empty = prescription._stock_products(products).filtered(lambda p: p.qty_available <= 0)
             if empty:
                 raise UserError(_(
-                    "%(name)s can't be approved: no stock on hand for\n%(products)s",
+                    "%(name)s can't be marked Prescribed: no stock on hand at %(location)s for\n%(products)s",
                     name=prescription.name,
+                    location=(prescription.location_id or prescription.desk_config_id.picking_type_id.default_location_src_id).display_name or _('the company'),
                     products='\n'.join('- %s (on hand: %s)' % (p.display_name, p.qty_available) for p in empty),
                 ))
 
@@ -300,10 +313,28 @@ class MedicalPrescriptionLine(models.Model):
     company_id = fields.Many2one(related='prescription_id.company_id', store=True, index=True)
     currency_id = fields.Many2one(related='prescription_id.currency_id')
     can_edit_price = fields.Boolean(compute='_compute_can_edit_price')
+    # as superuser: a doctor has no stock rights
+    is_storable = fields.Boolean(compute='_compute_qty_on_hand', compute_sudo=True)
+    qty_on_hand = fields.Float(
+        'On Hand', compute='_compute_qty_on_hand', compute_sudo=True, digits='Product Unit of Measure',
+        help="On hand at the stock location of the counter of the prescription")
 
     _sql_constraints = [
         ('qty_positive', 'CHECK(qty > 0)', 'The prescribed quantity must be positive.'),
     ]
+
+    @api.depends('product_id', 'prescription_id.location_id', 'prescription_id.desk_config_id', 'prescription_id.company_id')
+    def _compute_qty_on_hand(self):
+        for prescription in self.prescription_id:
+            lines = self.filtered(lambda line: line.prescription_id == prescription)
+            stock = prescription._stock_products(lines.product_id.filtered(lambda p: p.detailed_type == 'product'))
+            on_hand = {product.id: product.qty_available for product in stock}
+            for line in lines:
+                line.is_storable = line.product_id.id in on_hand
+                line.qty_on_hand = on_hand.get(line.product_id.id, 0.0)
+        orphans = self.filtered(lambda line: not line.prescription_id)
+        orphans.is_storable = False
+        orphans.qty_on_hand = 0.0
 
     @api.depends_context('uid')
     def _compute_can_edit_price(self):

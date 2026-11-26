@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """One Medical & Health counter: paid till with a doctor, draft prescription filled and
 approved on stock by the doctor's side, then billed at the counter."""
+from datetime import date
+
 from odoo import fields
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tests import TransactionCase, tagged
@@ -176,6 +178,50 @@ class TestMedicalFlow(TransactionCase):
         with self.assertRaises(ValidationError):
             prescription.write({'line_ids': [(0, 0, {'product_id': self.non_medical.id, 'qty': 1})]})
         self.assertFalse(prescription.line_ids)
+
+    def test_number_restarts_every_day(self):
+        _order, prescription = self._till()
+        today = fields.Date.context_today(prescription).strftime('%d%m%Y')
+        self.assertRegex(prescription.name, r'^RX/%s/\d{4}$' % today)
+        Sequence = self.env['ir.sequence']
+        later = date(2099, 1, 1)
+        self.assertEqual(Sequence.next_by_code('medical.prescription', sequence_date=later), 'RX/01012099/0001')
+        self.assertEqual(Sequence.next_by_code('medical.prescription', sequence_date=later), 'RX/01012099/0002')
+        self.assertEqual(Sequence.next_by_code('medical.prescription', sequence_date=date(2099, 1, 2)), 'RX/02012099/0001')
+
+    def test_on_hand_shown_and_prices_hidden(self):
+        _order, prescription = self._till()
+        self._stock(7)
+        prescription.write({'line_ids': [(0, 0, {'product_id': self.medicine.id, 'qty': 1})]})
+        line = prescription.with_user(self.doctor_user).line_ids
+        self.assertTrue(line.is_storable)
+        self.assertEqual(line.qty_on_hand, 7)
+        view = self.env.ref('bn_medical_prescription.medical_prescription_view_form')
+        doctor_arch = self.env['medical.prescription'].with_user(self.doctor_user).get_view(view.id)['arch']
+        self.assertIn('qty_on_hand', doctor_arch)
+        for price in ('price_unit', 'price_subtotal', 'amount_total'):
+            self.assertNotIn('name="%s"' % price, doctor_arch)
+        manager = self.env['res.users'].create({
+            'name': 'MH Admin', 'login': 'mh_admin_view',
+            'groups_id': [(6, 0, [self.env.ref('base.group_user').id, self.env.ref('bn_medical_pos.group_medical_manager').id])]})
+        self.assertIn('name="price_unit"', self.env['medical.prescription'].with_user(manager).get_view(view.id)['arch'])
+
+    def test_doctor_chooses_the_location(self):
+        _order, prescription = self._till()
+        self.assertEqual(prescription.location_id, self.location, "the counter's stock location by default")
+        shelf = self.env['stock.location'].create({'name': 'MH Shelf', 'usage': 'internal', 'location_id': self.location.location_id.id})
+        self.assertIn(shelf, self.env['stock.location'].with_user(self.doctor_user).search([('usage', '=', 'internal')]))
+        as_doctor = prescription.with_user(self.doctor_user)
+        as_doctor.write({'location_id': shelf.id, 'line_ids': [(0, 0, {'product_id': self.medicine.id, 'qty': 1})]})
+        self._stock(5)  # at the counter's location, not on the shelf
+        self.assertEqual(as_doctor.line_ids.qty_on_hand, 0)
+        with self.assertRaises(UserError):
+            as_doctor.action_approve()
+        self.env['stock.quant']._update_available_quantity(self.medicine, shelf, 2)
+        as_doctor.invalidate_recordset()
+        self.assertEqual(as_doctor.line_ids.qty_on_hand, 2)
+        as_doctor.action_approve()
+        self.assertEqual(prescription.state, 'approved')
 
     def test_bill_of_the_approved_prescription(self):
         _order, prescription = self._till()
