@@ -12,6 +12,22 @@
         </field>
     </record>
 
+    <record id="view_invoice_tree_inherit_bulk_date_ref" model="ir.ui.view">
+        <field name="name">account.move.tree.inherit.bulk.date.ref</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_in_invoice_bill_tree"/>
+        <field name="arch" type="xml">
+            <tree position="inside">
+                <header>
+                    <button name="action_bulk_set_date_reference"
+                            string="Bulk Set Date &amp; Reference"
+                            type="object"
+                            groups="bn_procurement_finance.group_finance"/>
+                </header>
+            </tree>
+        </field>
+    </record>
+
     <record id="account_move_view_form_inherit_bn_procurement_finance" model="ir.ui.view">
         <field name="name">account.move.view.form.inherit.bn.procurement.finance</field>
         <field name="model">account.move</field>

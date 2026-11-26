@@ -28,6 +28,8 @@
         'views/account_payment_views.xml',
         'views/account_payment_register_views.xml',
         'views/purchase_order_views.xml',
+        
+        'wizard/bulk_bill_date_reference.xml',
     ],
     'installable': True,
     'auto_install': False,

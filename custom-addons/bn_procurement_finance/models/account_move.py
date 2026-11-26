@@ -97,6 +97,23 @@ class AccountMove(models.Model):
             self.action_post()
         return True
 
+    def action_bulk_set_date_reference(self):
+        """Open the wizard to set the bill date and vendor invoice reference on
+        all selected vendor bills in one go."""
+        if not self:
+            raise UserError(_('Please select at least one vendor bill first.'))
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Bulk Set Bill Date & Reference'),
+            'res_model': 'bulk.bill.date.reference.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_ids': self.ids,
+                'active_model': 'account.move',
+            },
+        }
+
     def _check_treasury_payable(self):
         """A bill of a Purchase Order is paid only once Finance has confirmed it
         and forwarded it to Treasury, and only by its assigned Treasury officer
