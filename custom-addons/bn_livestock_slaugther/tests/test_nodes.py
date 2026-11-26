@@ -155,22 +155,30 @@ class TestLivestockNodes(TransactionCase):
             'source_location_id': self.karachi_slaughter.id,
         })
         self.assertEqual(record._livestock_warehouse(), self.wh_karachi)
-        self.assertEqual(record.cutting_location_id, self.karachi_cutting, "the warehouse's only cutting location")
+        self.assertFalse(record.cutting_location_id, "set when cut")
         record.with_user(self.manager).action_confirm()
         slaughtered = self.karachi_slaughter
         self.assertEqual(record.slaughter_location_id, slaughtered, "its Destination Location")
         self.assertEqual(record._slaughtered_location(), slaughtered)
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, slaughtered), 1)
 
-        record.with_user(self.manager).action_cutting()
+        with self.assertRaisesRegex(ValidationError, 'Is Cutting Location'):
+            record.with_user(self.manager).action_cutting()  # the slaughter house is no cutting location
+        # sent to the cutting location, cut there
         cutting = self.karachi_cutting
-        self.assertEqual(record.transfer_location, cutting, "the Destination Location becomes the Cutting Location")
+        self.env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_ids': [(6, 0, record.ids)], 'is_bulk': True,
+            'dest_location_id': cutting.id, 'truck_number': 'LN-5',
+        }).with_user(self.manager).action_do_transfer()
+        self.assertEqual(record.transfer_location, cutting)
+        record.with_user(self.manager).action_cutting()
+        self.assertEqual((record.cutting_location_id, record.transfer_location), (cutting, cutting),
+                         "cut at its Destination Location")
         self.assertEqual(record._slaughter_source_location(), self.wh_karachi.lot_stock_id)
-        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, slaughtered), 1,
-                         "cutting takes the animal from the source location, not from where Slaughtered put it")
-        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, cutting), 1)
+        self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, cutting), 1,
+                         "the Bulk Transfer brought it: Cutting moves no stock")
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.wh_karachi.lot_stock_id, allow_negative=True), -2,
-                         "Slaughtered and Cutting both take from the source location")
+                         "Slaughter and Bulk Transfer take from the source location")
         material = record.cutting_material_id
         self.assertEqual(material.cutting_location_id, cutting)
         self.assertEqual((material.meat_location_id, material.goat_location_id), (self.karachi_meat, self.karachi_goat))
@@ -218,7 +226,7 @@ class TestLivestockNodes(TransactionCase):
         env = self.env
         # (the shop slaughters on site: its location is a slaughter location)
         pos_location = env['stock.location'].create({'name': 'LN Karachi POS', 'usage': 'internal',
-                                                     'is_slaughter_location': True,
+                                                     'is_slaughter_location': True, 'is_cutting_location': True,
                                                      'location_id': self.wh_karachi.view_location_id.id})
         picking_type = self.wh_karachi.out_type_id.copy({'name': 'LN POS Orders', 'sequence_code': 'LNPOS',
                                                          'default_location_src_id': pos_location.id})
@@ -239,13 +247,14 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(cut.slaughter_location_id, pos_location, "slaughtered at its Destination Location")
         self.assertEqual(qty(pos_location), 0, "Slaughtered: from the POS location, at the POS location")
         cut.with_user(self.manager).action_cutting()
-        self.assertEqual((qty(pos_location), qty(self.karachi_cutting)), (-1, 1), "Cutting: from the POS location")
+        self.assertEqual(cut.cutting_location_id, pos_location, "cut at its Destination Location")
+        self.assertEqual(qty(pos_location), 0, "Cutting moves no stock")
         env['livestock.slaugther.wizard'].create({
             'livestock_slaughter_ids': [(6, 0, sent.ids)], 'is_bulk': True,
             'dest_location_id': self.wh_lahore.lot_stock_id.id, 'truck_number': 'LN-2',
         }).with_user(self.manager).action_do_transfer()
         self.assertEqual(sent.transfer_picking_id.location_id, pos_location, "Bulk Transfer: from the POS location")
-        self.assertEqual(qty(pos_location), -2)
+        self.assertEqual(qty(pos_location), -1)
         self.assertEqual((cut.source_location_id, sent.source_location_id), (pos_location, pos_location),
                          "the Source Location stays the POS location")
 
@@ -310,10 +319,16 @@ class TestLivestockNodes(TransactionCase):
         with self.assertRaisesRegex(ValidationError, 'Draft'):
             (goats | draft).with_user(self.manager).action_bulk_cutting()
         self.assertEqual(set(goats.mapped('state')), {'slaughtered'}, "nothing is cut when a line is refused")
+        with self.assertRaisesRegex(ValidationError, 'not a cutting location'):
+            goats.with_user(self.manager).action_bulk_cutting()
+        self.env['livestock.slaugther.wizard'].create({
+            'livestock_slaughter_ids': [(6, 0, goats.ids)], 'is_bulk': True,
+            'dest_location_id': self.karachi_cutting.id, 'truck_number': 'LN-6',
+        }).with_user(self.manager).action_do_transfer()
         action = goats.with_user(self.manager).action_bulk_cutting()
         self.assertEqual(set(goats.mapped('state')), {'material_request'})
         self.assertEqual(goats.mapped('cutting_location_id'), self.karachi_cutting)
-        self.assertEqual(goats.mapped('transfer_location'), self.karachi_cutting, "Destination: the Cutting Location")
+        self.assertEqual(goats.mapped('transfer_location'), self.karachi_cutting, "cut at their Destination Location")
         self.assertEqual(len(goats.mapped('cutting_material_id')), 2)
         self.assertEqual(action['domain'], [('id', 'in', goats.mapped('material_request_id').ids)])
         self.assertEqual(self.env['stock.quant']._get_available_quantity(self.product, self.karachi_cutting), 2)
@@ -323,6 +338,8 @@ class TestLivestockNodes(TransactionCase):
     def test_cutting_makes_the_material_request(self):
         """No Start / End Cutting: cutting makes the material request from the BOM;
         Update Inventory uses up the animal, Send to Goat & Meat finishes it."""
+        self.karachi_slaughter.is_cutting_location = True  # cut where it is slaughtered
+        cut_at = self.karachi_slaughter
         record = self.env['livestock.slaugther'].create({
             'product_id': self.product.id, 'quantity': 1, 'is_goat_depart': True,
             'source_location_id': self.karachi_slaughter.id})
@@ -336,12 +353,12 @@ class TestLivestockNodes(TransactionCase):
 
         def qty(product, location):
             return self.env['stock.quant']._get_available_quantity(product, location, allow_negative=True)
-        self.assertEqual(qty(self.product, self.karachi_cutting), 1)
+        self.assertEqual(qty(self.product, cut_at), 1)
         request.with_user(self.manager).action_update_inventory()
-        self.assertEqual((qty(self.product, self.karachi_cutting), qty(self.meat, self.karachi_cutting)), (0, 10),
+        self.assertEqual((qty(self.product, cut_at), qty(self.meat, cut_at)), (0, 10),
                          "the animal is used up, its meat comes in")
         request.with_user(self.manager).action_send_to_goat_and_meat()
-        self.assertEqual((qty(self.meat, self.karachi_cutting), qty(self.meat, self.karachi_meat)), (0, 10))
+        self.assertEqual((qty(self.meat, cut_at), qty(self.meat, self.karachi_meat)), (0, 10))
         self.assertEqual((request.state, record.state), ('done', 'done'))
 
         # no BOM: nothing is cut
@@ -353,7 +370,7 @@ class TestLivestockNodes(TransactionCase):
         with self.assertRaisesRegex(ValidationError, 'No BOM'):
             calf.with_user(self.manager).action_cutting()
         self.assertEqual(calf.state, 'slaughtered')
-        self.assertEqual(qty(no_bom, self.karachi_cutting), 0)
+        self.assertEqual(qty(no_bom, cut_at), 0)
 
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites, not the ones they

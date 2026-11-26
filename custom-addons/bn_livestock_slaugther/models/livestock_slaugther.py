@@ -44,12 +44,12 @@ class LivestockSlaughter(models.Model):
              "(a location marked Is Slaughter Location).")
     slaughter_location_option_ids = fields.Many2many(
         'stock.location', string='Slaughter Location Options', compute='_compute_location_options')
-    # where Cutting puts the animal: a location marked "Is Cutting Location"
+    # where the animal was cut: its Destination Location, a location marked "Is Cutting Location"
     cutting_location_id = fields.Many2one(
         'stock.location', string='Cutting Location', copy=False,
         domain="[('is_cutting_location', '=', True)]",
-        help="Where Cutting puts the animal (a location marked Is Cutting Location). "
-             "Filled when the warehouse has only one.")
+        help="Where the animal was cut: its Destination Location when cut "
+             "(a location marked Is Cutting Location).")
     transfer_picking_id = fields.Many2one('stock.picking', string='Transfer', copy=False, readonly=True)
     transfer_remarks = fields.Text('Transfer Remarks', copy=False)
     truck_number = fields.Char('Truck Number', copy=False, readonly=True)
@@ -127,7 +127,6 @@ class LivestockSlaughter(models.Model):
             if location:
                 record.sudo().source_location_id = location.id
         records._init_destination()
-        records._fill_default_locations()
         return records
 
     def _init_destination(self):
@@ -158,23 +157,10 @@ class LivestockSlaughter(models.Model):
         for record in self:
             record.slaughter_location_option_ids = Location._role_locations(record._slaughter_role())
 
-    @api.onchange('slaughter_location_id')
-    def _onchange_slaughter_location_id(self):
-        if self.slaughter_location_id and (not self.cutting_location_id or
-                                           self.cutting_location_id.warehouse_id != self.slaughter_location_id.warehouse_id):
-            self.cutting_location_id = self.env['stock.location']._single_role_location(
-                'is_cutting_location', self.slaughter_location_id.warehouse_id)
-
     def _fill_default_locations(self):
-        """Empty locations get their warehouse's only one of that role (several:
-        the user chooses on the record)."""
-        Location = self.env['stock.location']
-        for record in self.sudo():
-            # (the Slaughter Location is the Destination Location when Slaughtered)
-            if not record.cutting_location_id and record.state in ('not_received', 'slaughtered') \
-                    and not record.transfer_bool:
-                warehouse = (record.slaughter_location_id or record.transfer_location).warehouse_id
-                record.cutting_location_id = Location._single_role_location('is_cutting_location', warehouse)
+        """Nothing to fill any more: Slaughter and Cutting take their location from
+        the Destination Location (kept for the 17.0.1.11.0 migration)."""
+        return
 
     def _pos_source_location(self):
         """The stock location of the POS the order was created at (empty for
@@ -315,55 +301,25 @@ class LivestockSlaughter(models.Model):
         self.ensure_one()
         if self.state != 'slaughtered':
             raise ValidationError("Cutting can only be started after the animal is slaughtered.")
-        if self.transfer_bool:
-            raise ValidationError(_("%s was sent away by Bulk Transfer: it cannot be cut here.") % self.name)
         if not self.product_id:
             raise ValidationError("Please select a product before starting cutting.")
         self._check_cutting_bom()
 
-        # from the source location (the POS location the animal was sold at) into the Cutting location
-        source_location = self._slaughter_source_location()
-        if not self.cutting_location_id:
-            self._fill_default_locations()
-        if not self.cutting_location_id:
-            raise ValidationError(_("Choose the Cutting Location of %s.") % self.name)
-        location = self.cutting_location_id
-        picking_type = self.env['stock.warehouse']._get_program_type(
-            'livestock', source_location, branch=self.node_id)
-
-        product = self.product_id
-
-        picking = self.env['stock.picking'].create({
-            'picking_type_id': picking_type.id,
-            'location_id': source_location.id,
-            'location_dest_id': location.id,
-            'origin': self.name or '',
-            'source_record_ref': '%s,%s' % (self._name, self.id),
-        })
-
-        self.env['stock.move'].create({
-            'name': product.display_name,
-            'product_id': product.id,
-            'product_uom_qty': self.quantity,
-            'quantity': self.quantity,
-            'product_uom': product.uom_id.id,
-            'picking_id': picking.id,
-            'location_id': picking.location_id.id,
-            'location_dest_id': picking.location_dest_id.id,
-        })
-
-        picking.action_confirm()
-        picking.action_assign()
-        picking.button_validate()
+        # cut where it is: its Destination Location, a cutting location. Slaughter or the
+        # Bulk Transfer already put the animal there: Cutting moves no stock.
+        location = self.transfer_location
+        if not location.is_cutting_location:
+            raise ValidationError(_(
+                "%(record)s can only be cut at a location marked \"Is Cutting Location\": "
+                "its Destination Location %(location)s is not one. Bulk Transfer it to a cutting location first.",
+                record=self.name, location=location.display_name or _('(none)')))
+        self.cutting_location_id = location
 
         # the material request is made with the cutting, from the product's BOM
         self.state = 'material_request'
         self.cutting_hide = True
         material_request = self._create_material_request()
         self.cutting_material_id = material_request.id
-        # the Destination Location becomes the Cutting Location: written last, as the
-        # line may then belong to another Branch / Site than the user's
-        self.transfer_location = location
 
         return {
             'type': 'ir.actions.act_window',
@@ -420,23 +376,18 @@ class LivestockSlaughter(models.Model):
         state_labels = dict(self._fields['state']._description_selection(self.env))
         not_ready = []
         for rec in self:
-            if rec.transfer_bool:
-                reason = _('already bulk transferred')
-            elif rec.state != 'slaughtered':
+            if rec.state != 'slaughtered':
                 reason = state_labels.get(rec.state, rec.state)
+            elif not rec.transfer_location.is_cutting_location:
+                reason = _('Destination %s is not a cutting location') % (rec.transfer_location.display_name or _('(none)'))
             else:
                 continue
             not_ready.append('%s - %s (%s)' % (rec.name, rec.product_id.display_name, reason))
         if not_ready:
             raise ValidationError(
-                _("Bulk Cutting is only for lines in Slaughter that are not bulk transferred. "
+                _("Bulk Cutting is only for lines in Slaughter whose Destination Location is a cutting location. "
                   "Remove these lines from your selection:\n%s") % "\n".join(not_ready))
-        self._fill_default_locations()
-        no_location = self.filtered(lambda r: not r.cutting_location_id)
-        if no_location:
-            raise ValidationError(_("Choose the Cutting Location of: %s") % ', '.join(no_location.mapped('name')))
         self._check_cutting_bom()
-        # (after its cutting a line may belong to another Branch / Site: not read again)
         request_ids = [rec.action_cutting()['res_id'] for rec in self]
         return {
             'name': _('Cutting'),
