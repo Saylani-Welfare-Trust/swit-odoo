@@ -14,7 +14,7 @@
                         type="object"
                         string="Select Advance Donation"
                         class="btn-primary"
-                        invisible="state != 'not_received'"/>
+                        invisible="state != 'not_received' or advance_donation_id"/>
             </xpath>
 
             <!-- Info fields inside the first group, after pos_order_id -->
