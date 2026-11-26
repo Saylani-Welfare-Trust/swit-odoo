@@ -913,6 +913,25 @@ class Welfare(models.Model):
         result = self._make_sadqa_api_call(self.env.company.create_donee_endpoint, 'POST', data)
         return result
 
+    def _portal_disbursement_info(self):
+        """Form number, collection date, products and their total for the portal (cancelled lines left out)"""
+        lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        dates = [d for d in lines.mapped('collection_date') if d]
+        return {
+            "formNumber": self.name,
+            # lines can have their own date: the first one here, each line's below
+            "collectionDate": str(min(dates)) if dates else None,
+            "totalAmount": sum(lines.mapped('total_amount')),
+            "products": [{
+                "productId": line.product_id.id,
+                "productName": line.product_id.display_name,
+                "quantity": line.quantity,
+                "amount": line.amount,
+                "totalAmount": line.total_amount,
+                "collectionDate": str(line.collection_date) if line.collection_date else None,
+            } for line in lines],
+        }
+
     def create_portal_application(self):
         """Create application in Sadqa Jaria portal"""
         data = {
@@ -954,7 +973,8 @@ class Welfare(models.Model):
                             "gasBill": self.gas_bill,
                             "electricityBill": self.electricity_bill,
                             "otherInfo": self.home_other_info
-                        }
+                        },
+                        "disbursementInfo": self._portal_disbursement_info(),
                     }
                 }
             }
