@@ -29,8 +29,9 @@ class TestLivestockAdvanceDonation(TransactionCase):
             group_ids = [ref(g, raise_if_not_found=False) for g in ('base.group_user',) + groups]
             return Users.create(dict(categories, name=login, login=login, email=login + '@example.com',
                                      groups_id=[(6, 0, [g.id for g in group_ids if g])], **extra))
-        cls.approver_1 = user('ls_ad_ap1', 'bn_advance_donation.group_adv_don_approval_1')
-        cls.approver_2 = user('ls_ad_ap2', 'bn_advance_donation.group_adv_don_approval_2')
+        # (national access: the test is about the contract, not about Branch / Site rules)
+        cls.approver_1 = user('ls_ad_ap1', 'bn_advance_donation.group_adv_don_approval_1', all_nodes=True)
+        cls.approver_2 = user('ls_ad_ap2', 'bn_advance_donation.group_adv_don_approval_2', all_nodes=True)
         cls.butcher = user('ls_ad_user', 'bn_livestock_slaugther.livestock_slaugther_user_group',
                            'stock.group_stock_user', 'bn_stock_location.stock_scope_unrestricted_group',
                            all_nodes=True)

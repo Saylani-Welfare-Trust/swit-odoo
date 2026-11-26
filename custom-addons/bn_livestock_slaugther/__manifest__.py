@@ -1,12 +1,13 @@
 {
     'name': 'Livestock Slaugther',
-    'version': '17.0.1.17.0',
+    'version': '17.0.1.18.0',
     'author': 'Syed Owais Noor',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
     'category': 'BytesNode/Livestock Slaugther',
     'depends': [
         'bn_stock_location',
+        'bn_master_setup',
         'bn_donation_home_service',
         'bn_pos_cheque',
         'bn_direct_deposit',
@@ -42,6 +43,7 @@
         'views/search_filters.xml',
         'views/node_views.xml',
         'security/node_rules.xml',
+        'views/livestock_locations.xml',
     ],
     'auto_install': False,
     'application': True,

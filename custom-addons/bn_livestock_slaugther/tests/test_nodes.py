@@ -373,6 +373,25 @@ class TestLivestockNodes(TransactionCase):
         self.assertEqual(calf.state, 'slaughtered')
         self.assertEqual(qty(no_bom, cut_at), before, "a refused cutting moves nothing")
 
+    def test_livestock_inflow_location(self):
+        """Master Setup > Livestock Locations: the warehouse's inflow location is its
+        Livestock Slaughter operation type's source, where donation lines land."""
+        warehouse = self.wh_karachi
+        self.assertEqual(warehouse.livestock_inflow_location_id, warehouse._program_type('livestock').default_location_src_id)
+        pen = self.env['stock.location'].create({'name': 'LN Inflow Pen', 'usage': 'internal',
+                                                 'location_id': warehouse.view_location_id.id})
+        warehouse.livestock_inflow_location_id = pen
+        self.assertEqual(warehouse._program_type('livestock').default_location_src_id, pen, "applied to the whole warehouse")
+        self.assertEqual(warehouse.livestock_inflow_location_id, pen)
+        # a line not from a POS, handled in this warehouse, lands there
+        record = self.env['livestock.slaugther'].create({
+            'product_id': self.product.id, 'quantity': 1, 'slaughter_location_id': self.karachi_slaughter.id})
+        self.assertEqual((record.source_location_id, record.transfer_location), (pen, pen))
+        with self.assertRaises(ValidationError):
+            warehouse.livestock_inflow_location_id = False
+        menu = self.env.ref('bn_livestock_slaugther.menu_livestock_locations')
+        self.assertEqual(menu.parent_id, self.env.ref('bn_master_setup.master_setup_menu'))
+
     def test_document_rule(self):
         """A user sees the documents of their Branches / Sites, not the ones they
         created elsewhere."""
