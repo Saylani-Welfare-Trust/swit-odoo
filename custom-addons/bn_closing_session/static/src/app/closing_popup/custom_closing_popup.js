@@ -175,8 +175,9 @@ export class CustomClosingPopup extends AbstractAwaitablePopup {
     }
 
     _getTypeLabel(type) {
-        if (type === "restricted") return this.pos.company.restricted_category;
-        if (type === "unrestricted") return this.pos.company.unrestricted_category;
+        // the category names of the company settings, else a plain label
+        if (type === "restricted") return this.pos.company.restricted_category || _t("Restricted");
+        if (type === "unrestricted") return this.pos.company.unrestricted_category || _t("Unrestricted");
         return _t("Non-Donation");
     }
 

@@ -68,10 +68,12 @@ patch(ActionScreen.prototype, {
 
             await this.orm.call('donation.in.kind', "create_din_record", [payload]).then((data) => {
                 if (data.status === 'error') {
+                    // nothing was recorded: keep the order so it can be corrected
                     this.popup.add(ErrorPopup, {
                         title: _t("Error"),
                         body: data.body,
                     });
+                    return;
                 }
                 
                 if (data.status === 'success') {

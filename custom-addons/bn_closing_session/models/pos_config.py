@@ -8,7 +8,10 @@ class POSConfig(models.Model):
 
     def open_ui(self):
 
-        if self.env['pos.session'].search([('config_id', '=', self.id), ('state', '=', 'closed')], limit=1).move_id.state == 'draft':
+        # cashiers cannot read journal entries: check the last session's as superuser
+        last_closed = self.env['pos.session'].sudo().search(
+            [('config_id', '=', self.id), ('state', '=', 'closed')], order='id desc', limit=1)
+        if last_closed.move_id.state == 'draft':
             raise ValidationError('Please communicate to your friendly administrator and post the previous session Journal Entry.')
         
         return super(POSConfig, self).open_ui()

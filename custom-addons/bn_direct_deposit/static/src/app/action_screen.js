@@ -49,7 +49,7 @@ patch(ActionScreen.prototype, {
 
         const amount = order.get_total_with_tax();
 
-        this.popup.add(ProvisionalPopup, {
+        await this.openActionPopup(ProvisionalPopup, {
             donor_id: donor.id,
             bank_id: bankList,
             donor_name: donor.name,

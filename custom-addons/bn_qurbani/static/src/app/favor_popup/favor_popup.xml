@@ -8,13 +8,14 @@
             </div>
             <main class="modal-body">
                 <div class="row mb-2 text-start">
-                    <div class="col-4 fw-semibold">Record Number</div>
+                    <div class="col-4 fw-semibold">Donor Name</div>
                     <div class="col-8">
-                        <input type="text-area" class="form-control form-control-sm"
-                            t-att-placeholder="props.placeholder"
+                        <input type="text" class="form-control form-control-sm"
+                            t-att-placeholder="placeholder"
+                            t-att-value="state.record_number"
                             id="record_number"
                             name="record_number"
-                            t-on-change="updateRecordNumber" required="1" />
+                            t-on-input="updateRecordNumber" required="1" />
                     </div>
                 </div>
             </main>

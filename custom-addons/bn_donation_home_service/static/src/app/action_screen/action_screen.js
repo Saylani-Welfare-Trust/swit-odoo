@@ -62,7 +62,7 @@ patch(ActionScreen.prototype, {
             const favor = order.favor;
 
             if (selectedOption === 'provisional_order') {
-                this.popup.add(ProvisionalPopup, {
+                await this.openActionPopup(ProvisionalPopup, {
                     donor_id: donor.id,
                     favor: favor,
                     donor_name: donor.name,
@@ -72,7 +72,7 @@ patch(ActionScreen.prototype, {
                     action_type: "dhs"
                 });
             } else {
-                this.popup.add(ReceivingPopup, {
+                await this.openActionPopup(ReceivingPopup, {
                     title: "Donation Home Service",
                     placeholder: "DHS/XX/XXXXX",
                     action_type: "dhs"

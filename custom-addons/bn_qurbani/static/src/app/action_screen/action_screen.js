@@ -33,7 +33,7 @@ patch(ActionScreen.prototype, {
             });
         }
 
-        this.popup.add(ReceivingPopup, {
+        await this.openActionPopup(ReceivingPopup, {
             title: "Qurbani Booking",
             placeholder: "QO/XX/XXXXX",
             action_type: "qb"

@@ -53,13 +53,13 @@ patch(ActionScreen.prototype, {
 
         if (confirmed) {
             if (selectedOption === 'provisional_order') {
-                this.popup.add(ProvisionalPopup, {
+                await this.openActionPopup(ProvisionalPopup, {
                     title: 'Security Deposit Details',
                     action_type: "me"
                 });
             }
             if (selectedOption === 'settle') {
-                this.popup.add(ReceivingPopup, {
+                await this.openActionPopup(ReceivingPopup, {
                     title: "Medical Equipment",
                     placeholder: "ME/XX/XXXXX",
                     action_type: "me"

@@ -6,8 +6,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.base_view_partner_form_inherit_bn_profile_management"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='microfinance']" position="attributes">
+                <attribute name="groups">bn_microfinance.microfinance_user_group,bn_microfinance.microfinance_pos_action_group,bn_microfinance.microfinance_audit_group,bn_microfinance.microfinance_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='microfinance']" position="inside">
-                <field name="microfinance_line_ids" readonly="1">
+                <field name="microfinance_line_ids" readonly="1" groups="bn_microfinance.microfinance_user_group,bn_microfinance.microfinance_pos_action_group,bn_microfinance.microfinance_audit_group,bn_microfinance.microfinance_admin_group">
                     <tree>
                         <field name="name" />
                         <field name="donee_id" />
@@ -25,8 +29,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='microfinance']" position="attributes">
+                <attribute name="groups">bn_microfinance.microfinance_user_group,bn_microfinance.microfinance_pos_action_group,bn_microfinance.microfinance_audit_group,bn_microfinance.microfinance_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='microfinance']" position="inside">
-                <field name="microfinance_line_ids" readonly="1">
+                <field name="microfinance_line_ids" readonly="1" groups="bn_microfinance.microfinance_user_group,bn_microfinance.microfinance_pos_action_group,bn_microfinance.microfinance_audit_group,bn_microfinance.microfinance_admin_group">
                     <tree>
                         <field name="name" />
                         <field name="donee_id" />

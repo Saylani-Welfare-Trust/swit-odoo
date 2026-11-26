@@ -6,8 +6,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='box']" position="attributes">
+                <attribute name="groups">bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group,bn_donation_box.donation_box_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='box']" position="inside">
-                <field name="donation_box_registration_installation_ids" readonly="1">
+                <field name="donation_box_registration_installation_ids" readonly="1" groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group,bn_donation_box.donation_box_admin_group">
                     <tree>
                         <field name="donor_id" string="Donor" />
                         <field name="installer_id" />
@@ -30,8 +34,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='box']" position="attributes">
+                <attribute name="groups">bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group,bn_donation_box.donation_box_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='box']" position="inside">
-                <field name="donation_box_registration_installation_ids" readonly="1">
+                <field name="donation_box_registration_installation_ids" readonly="1" groups="bn_donation_box.donation_box_user_group,bn_donation_box.donation_box_audit_group,bn_donation_box.donation_box_admin_group">
                     <tree>
                         <field name="donor_id" string="Donor" />
                         <field name="installer_id" />

@@ -6,8 +6,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.base_view_partner_form_inherit_bn_profile_management"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='import']" position="attributes">
+                <attribute name="groups">bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='import']" position="inside">
-                <field name="donation_ids" readonly="1">
+                <field name="donation_ids" readonly="1" groups="bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group">
                     <tree>
                         <field name="date" />
                         <field name="name" />
@@ -20,8 +24,12 @@
                 </field>
             </xpath>
             
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='online']" position="attributes">
+                <attribute name="groups">bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_manager_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='online']" position="inside">
-                <field name="api_donation_ids" readonly="1">
+                <field name="api_donation_ids" readonly="1" groups="bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_manager_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group">
                     <tree>
                         <field name="dn_number" />
                         <field name="name" />
@@ -43,8 +51,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='import']" position="attributes">
+                <attribute name="groups">bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='import']" position="inside">
-                <field name="donation_ids" readonly="1">
+                <field name="donation_ids" readonly="1" groups="bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group">
                     <tree>
                         <field name="date" />
                         <field name="name" />
@@ -57,8 +69,12 @@
                 </field>
             </xpath>
            
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='online']" position="attributes">
+                <attribute name="groups">bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_manager_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='online']" position="inside">
-                <field name="api_donation_ids" readonly="1">
+                <field name="api_donation_ids" readonly="1" groups="bn_import_donation.import_donation_user_group,bn_import_donation.import_donation_manager_group,bn_import_donation.import_donation_audit_group,bn_import_donation.import_donation_admin_group">
                     <tree>
                         <field name="dn_number" />
                         <field name="name" />

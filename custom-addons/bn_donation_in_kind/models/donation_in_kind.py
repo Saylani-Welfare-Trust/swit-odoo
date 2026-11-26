@@ -616,9 +616,22 @@ May Allah bless you!
                 "body": "No data receive."
             }
         
+        # the goods are received at this counter: its warehouse's stock, else the configured location
+        session = self._current_pos_session()
+        location = (session.config_id.warehouse_id.lot_stock_id
+                    or self.env['donation.in.kind.config'].sudo().search([], limit=1).location_id)
+        if not location:
+            return {
+                "status": "error",
+                "body": _("This POS has no warehouse and no Donation In Kind location is configured. "
+                          "Ask your administrator to set the POS warehouse."),
+            }
+
         for line in data['order_lines']:
             din = self.create({
                 'donor_id': data['donor_id'],
+                'location_id': location.id,
+                'picking_type_id': self._din_picking_type(location).id,
                 'product_id': line['product_id'],
                 'quantity': line['quantity'],
                 'donation_in_kind_line_ids': [(0, 0, {
@@ -626,6 +639,7 @@ May Allah bless you!
                     'quantity': line['quantity'],
                     # valued by the valuation committee when it has no cost
                     'avg_price': self.env['product.product'].browse(line['product_id']).standard_price,
+                    'location_id': location.id,
                     'remarks': line.get('remarks') or '',
                 })]
             })

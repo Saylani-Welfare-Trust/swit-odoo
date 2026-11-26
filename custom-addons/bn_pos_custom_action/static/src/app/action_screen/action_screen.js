@@ -29,6 +29,19 @@ export class ActionScreen extends AbstractAwaitablePopup {
         }
     }
 
+    /**
+     * Open the popup of an action and close this Actions menu once it is done:
+     * confirmed, or the order was recorded and replaced by a new one (the
+     * popups close themselves that way on success).
+     */
+    async openActionPopup(Popup, props) {
+        const order = this.pos.get_order();
+        const { confirmed } = await this.popup.add(Popup, props);
+        if (confirmed || this.pos.get_order() !== order) {
+            this.cancel();
+        }
+    }
+
     prepareOrderLines(orderLines) {
         return orderLines.map(line => ({
             product_id: line.product.id,

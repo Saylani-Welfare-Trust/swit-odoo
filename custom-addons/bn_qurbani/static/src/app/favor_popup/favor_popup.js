@@ -24,7 +24,8 @@ export class FavorPopup extends AbstractAwaitablePopup {
 
         // Initialize component state
         this.state = useState({
-            record_number: "",
+            // the name already given to this order, so it can be corrected
+            record_number: this.pos.get_order()?.get_favor() || "",
         });
     }
 
@@ -52,19 +53,18 @@ export class FavorPopup extends AbstractAwaitablePopup {
     }
 
     /**
-     * Main confirm method - handles medical equipment record processing
+     * Put the donor's name on the order (printed on the receipt)
      */
     async confirm() {
         const selectedOrder = this.pos.get_order();
+        const name = this.state.record_number.trim();
 
-        if (!this.state.record_number) {
-            this.notification.add(
-                "Please Enter a Number",
-                { type: 'info' }
-            );
+        if (!name) {
+            this.notification.add("Please enter the donor's name", { type: 'info' });
+            return;
         }
-        
-        selectedOrder.set_favor(this.state.record_number);
+
+        selectedOrder.set_favor(name);
 
         super.confirm();
     }

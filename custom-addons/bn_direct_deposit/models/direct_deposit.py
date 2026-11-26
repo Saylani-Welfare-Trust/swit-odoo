@@ -61,6 +61,8 @@ class DirectDeposit(models.Model):
     mobile = fields.Char(related='donor_id.mobile', string="Mobile No.", size=10)
 
     dhs_ids = fields.One2many('donation.home.service', 'direct_deposit_id', string="Donation Home Service Records")
+    # counted without Home Service rights, so Treasury can open the deposit
+    dhs_count = fields.Integer(string="DHS Records", compute='_compute_dhs_count')
 
     direct_deposit_line_ids = fields.One2many('direct.deposit.line', 'direct_deposit_id', string="Direct Deposit Lines")
     # program modules (bn_welfare, bn_medical_equipment) add their own type
@@ -559,6 +561,10 @@ May Allah bless you!
             "view_mode": "form",
             "res_id": self.picking_id.id,
         }
+
+    def _compute_dhs_count(self):
+        for rec in self:
+            rec.dhs_count = len(rec.sudo().dhs_ids)
 
     def action_show_dhs_records(self):
         self.ensure_one()

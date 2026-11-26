@@ -50,14 +50,14 @@ patch(ActionScreen.prototype, {
 
         if (confirmed) {
             if (selectedOption === 'one_time') {
-                this.popup.add(ReceivingPopup, {
+                await this.openActionPopup(ReceivingPopup, {
                     title: "Disbursement Number",
                     placeholder: "WF/XX/XXXXX",
                     action_type: "wf",
                     wf_request_type: "one_time"
                 });
             } else {
-                this.popup.add(ReceivingPopup, {
+                await this.openActionPopup(ReceivingPopup, {
                     title: "Disbursement Number",
                     placeholder: "WF/XX/XXXXX",
                     action_type: "wf",

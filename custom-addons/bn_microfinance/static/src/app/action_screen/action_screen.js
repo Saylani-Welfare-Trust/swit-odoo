@@ -28,20 +28,20 @@ patch(ActionScreen.prototype, {
 
         if (confirmed) {
             if (selectedOption === 'provisional_order') {
-                this.popup.add(ProvisionalPopup, {
+                await this.openActionPopup(ProvisionalPopup, {
                     title: 'Security Deposit Details',
                     action_type: "mf"
                 });
             }
             if (selectedOption === 'recovery') {
-                this.popup.add(ReceivingPopup, {
+                await this.openActionPopup(ReceivingPopup, {
                     title: "Microfinance Recovery",
                     placeholder: "MF/XX/XX/XXXXX",
                     action_type: "mf recovery"
                 });
             } 
             if (selectedOption === 'settle') {
-                this.popup.add(ReceivingPopup, {
+                await this.openActionPopup(ReceivingPopup, {
                     title: "Microfinance Installment",
                     placeholder: "MF/XX/XX/XXXXX",
                     action_type: "mf"

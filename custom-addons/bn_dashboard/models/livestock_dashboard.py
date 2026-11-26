@@ -9,7 +9,7 @@ from odoo.osv import expression
 NEXT_ACTION = {
     'not_received': 'Waiting for slaughter',
     'slaughtered': 'Start Cutting',
-    'cutting': 'Create Split',
+    'cutting': 'Create Material Request',
     'material_request': 'Send to Goat & Meat',
     'done': 'Completed',
 }

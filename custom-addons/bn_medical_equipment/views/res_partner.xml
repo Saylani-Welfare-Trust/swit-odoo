@@ -6,8 +6,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="bn_profile_management.profile_management_view_form"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='medical']" position="attributes">
+                <attribute name="groups">bn_medical_equipment.medical_equipment_user_group,bn_medical_equipment.medical_equipment_pos_action_group,bn_medical_equipment.medical_equipment_pos_security_deposit_action_group,bn_medical_equipment.medical_equipment_pos_settle_action_group,bn_medical_equipment.medical_equipment_audit_group,bn_medical_equipment.medical_equipment_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='medical']" position="inside">
-                <field name="medical_equipment_ids" readonly="1">
+                <field name="medical_equipment_ids" readonly="1" groups="bn_medical_equipment.medical_equipment_user_group,bn_medical_equipment.medical_equipment_pos_action_group,bn_medical_equipment.medical_equipment_pos_security_deposit_action_group,bn_medical_equipment.medical_equipment_pos_settle_action_group,bn_medical_equipment.medical_equipment_audit_group,bn_medical_equipment.medical_equipment_admin_group">
                     <tree>
                         <field name="name"/>
                         <field name="donee_id"/>
@@ -23,8 +27,12 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
+            <!-- only for users who can read these records: the form fails otherwise -->
+            <xpath expr="//page[@name='medical']" position="attributes">
+                <attribute name="groups">bn_medical_equipment.medical_equipment_user_group,bn_medical_equipment.medical_equipment_pos_action_group,bn_medical_equipment.medical_equipment_pos_security_deposit_action_group,bn_medical_equipment.medical_equipment_pos_settle_action_group,bn_medical_equipment.medical_equipment_audit_group,bn_medical_equipment.medical_equipment_admin_group</attribute>
+            </xpath>
             <xpath expr="//page[@name='medical']" position="inside">
-                <field name="medical_equipment_ids" readonly="1">
+                <field name="medical_equipment_ids" readonly="1" groups="bn_medical_equipment.medical_equipment_user_group,bn_medical_equipment.medical_equipment_pos_action_group,bn_medical_equipment.medical_equipment_pos_security_deposit_action_group,bn_medical_equipment.medical_equipment_pos_settle_action_group,bn_medical_equipment.medical_equipment_audit_group,bn_medical_equipment.medical_equipment_admin_group">
                     <tree>
                         <field name="name"/>
                         <field name="donee_id"/>

@@ -3,7 +3,7 @@ from odoo import models, fields
 
 class DonationHomeServiceLine(models.Model):
     _name = 'donation.home.service.line'
-    _description = "Donation Home Servcie Line"
+    _description = "Donation Home Service Line"
 
 
     donation_home_service_id = fields.Many2one('donation.home.service', string="Donation Home Service")

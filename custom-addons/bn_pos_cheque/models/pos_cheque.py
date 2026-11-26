@@ -1,6 +1,6 @@
 import logging
 
-from odoo import _, fields, models
+from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools.sql import column_exists
 
@@ -58,6 +58,11 @@ class POSCheque(models.Model):
              WHERE o.pos_cheque_id = c.id AND c.pos_order_id IS NULL
         """)
 
+    # computed again once the order is saved and linked: the cheque is created
+    # while the order is being made, before it exists
+    @api.depends('pos_order_id', 'pos_order_id.partner_id', 'pos_order_id.analytic_account_id',
+                 'pos_order_id.name', 'pos_order_id.date_order', 'pos_order_id.amount_total',
+                 'pos_order_id.payment_ids.amount', 'pos_order_id.payment_ids.payment_method_id')
     def _set_details(self):
         for rec in self:
             rec.donor_id = None
@@ -68,7 +73,9 @@ class POSCheque(models.Model):
             if pos_order:
                 rec.donor_id = pos_order.partner_id.id
                 rec.analytic_account_id = pos_order.analytic_account_id.id
-                rec.amount = pos_order.amount_total
+                # the part paid by cheque (an order can be split over methods)
+                payment = rec._cheque_payment(pos_order)
+                rec.amount = payment.amount if payment else pos_order.amount_total
                 branch_code = pos_order._branch_code()
                 company = pos_order.company_id.name[:3].upper()
                 order_date = pos_order.date_order and pos_order.date_order.year or ''
@@ -77,9 +84,20 @@ class POSCheque(models.Model):
 
     def _get_pos_order(self):
         self.ensure_one()
+        if self.pos_order_id:
+            return self.pos_order_id.sudo()
         if not self.id:
             return self.env['pos.order']
         return self.env['pos.order'].sudo().search([('pos_cheque_id', '=', self.id)], limit=1)
+
+    @api.model
+    def _cheque_payment(self, order):
+        """The payment of `order` made by cheque: a Cheque payment method,
+        else a bank-type one, else its only payment."""
+        payments = order.payment_ids
+        return (payments.filtered(lambda p: 'cheque' in (p.payment_method_id.name or '').lower())[:1]
+                or payments.filtered(lambda p: p.payment_method_id.type == 'bank')[:1]
+                or payments[:1])
 
     def action_show_pos_order(self):
         self.ensure_one()
@@ -164,9 +182,9 @@ class POSCheque(models.Model):
             return
 
         # the cheque payment of the order (an order can be split over methods)
-        cheque_payment = order.payment_ids.filtered(
-            lambda p: p.payment_method_id.type == 'bank' or 'cheque' in (p.payment_method_id.name or '').lower()
-        )[:1] or order.payment_ids[:1]
+        cheque_payment = self._cheque_payment(order)
+        if self.amount <= 0:
+            raise UserError(_('Cheque %s has no amount: check its POS order %s.') % (self.name, order.name))
 
         clearing_account = self._get_clearing_account(order, cheque_payment)
         bank_account = self.bank_id.default_account_id

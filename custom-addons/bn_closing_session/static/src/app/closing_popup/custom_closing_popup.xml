@@ -50,9 +50,7 @@
                                     <t t-foreach="['restricted','unrestricted','neutral']" t-as="type" t-key="type">
                                         <tr t-key="props.default_cash_details.id + '-' + type">
                                             <td>
-                                                <t t-if="type==='restricted'"><span t-esc="pos.company.restricted_category"/> Amount</t>
-                                                <t t-if="type==='unrestricted'"><span t-esc="pos.company.unrestricted_category"/> Amount</t>
-                                                <t t-if="type==='neutral'">Non-Donation Amount</t>
+                                                <t t-esc="_getTypeLabel(type)"/> Amount
                                             </td>
                                             <td t-esc="env.utils.formatCurrency(props.default_cash_details.breakdown[type])"/>
                                             <td></td>
@@ -153,9 +151,7 @@
                                     <t t-foreach="['restricted','unrestricted','neutral']" t-as="type" t-key="type">
                                         <tr t-key="pm.id+'-'+type">
                                             <td>
-                                                <t t-if="type==='restricted'"><span t-esc="pos.company.restricted_category"/> Amount</t>
-                                                <t t-if="type==='unrestricted'"><span t-esc="pos.company.unrestricted_category"/> Amount</t>
-                                                <t t-if="type==='neutral'">Non-Donation Amount</t>
+                                                <t t-esc="_getTypeLabel(type)"/> Amount
                                             </td>
                                             <td t-esc="env.utils.formatCurrency(pm.breakdown[type])"/>
                                             <td></td>
