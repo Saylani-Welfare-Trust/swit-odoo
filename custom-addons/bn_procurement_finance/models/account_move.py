@@ -98,8 +98,8 @@ class AccountMove(models.Model):
         return True
 
     def action_bulk_set_date_reference(self):
-        """Open the wizard to set the bill date and vendor invoice reference on
-        all selected vendor bills in one go. Draft bills only."""
+        """Open the wizard to set the bill date and vendor reference on all
+        selected vendor bills. Draft bills only."""
         if not self:
             raise UserError(_('Please select at least one vendor bill first.'))
 
@@ -110,16 +110,19 @@ class AccountMove(models.Model):
                 'The following bills are not draft: %s',
                 ', '.join(non_draft.mapped('display_name'))))
 
+        # Create the wizard now, with the selection baked in. This is the only
+        # reliable way to make move_ids visible on the freshly opened form.
+        wizard = self.env['bulk.bill.date.reference.wizard'].create({
+            'move_ids': [(6, 0, self.ids)],
+        })
+
         return {
             'type': 'ir.actions.act_window',
             'name': _('Bulk Set Bill Date & Reference'),
             'res_model': 'bulk.bill.date.reference.wizard',
+            'res_id': wizard.id,
             'view_mode': 'form',
             'target': 'new',
-            'context': {
-                'active_ids': self.ids,
-                'active_model': 'account.move',
-            },
         }
 
     def _check_treasury_payable(self):
