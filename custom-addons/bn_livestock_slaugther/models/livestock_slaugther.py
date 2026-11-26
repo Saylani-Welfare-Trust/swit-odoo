@@ -22,6 +22,10 @@ class LivestockSlaughter(models.Model):
     donee_id = fields.Many2one('res.partner', string="Donee", domain=tag_domain('donee'))
     product_id = fields.Many2one('product.product', string="Product")
     pos_order_id = fields.Many2one('pos.order', string="POS Order", copy=False, index=True)
+    # the date of the order the line comes from (POS order; advance donation: bn_advance_donation_syncing)
+    order_date = fields.Date(
+        'Order Date', compute='_compute_order_date', store=True, readonly=True,
+        help="Date of the order the line comes from: its POS order, or its advance donation.")
     pos_order_line_id = fields.Many2one('pos.order.line', string="POS Order Line", copy=False, index=True)
     direct_deposit_line_id = fields.Many2one('direct.deposit.line', string="Direct Deposit Line", copy=False, index=True)
     donation_id = fields.Many2one('donation', string="Import Donation", copy=False, index=True)
@@ -166,6 +170,17 @@ class LivestockSlaughter(models.Model):
         """Nothing to fill any more: Slaughter and Cutting take their location from
         the Destination Location (kept for the 17.0.1.11.0 migration)."""
         return
+
+    @api.depends('pos_order_id.date_order')
+    def _compute_order_date(self):
+        for record in self:
+            record.order_date = record._order_date()
+
+    def _order_date(self):
+        """Date of the order the line comes from (empty when there is none)."""
+        self.ensure_one()
+        order = self.sudo().pos_order_id
+        return fields.Date.context_today(self, order.date_order) if order.date_order else False
 
     def _pos_source_location(self):
         """The stock location of the POS the order was created at (empty for

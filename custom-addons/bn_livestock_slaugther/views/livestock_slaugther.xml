@@ -24,6 +24,7 @@
                 <field name="quantity" />
                 <field name="price" />
                 <field name="pos_order_id" optional="show" />
+                <field name="order_date" optional="hide" />
                 <field name="source_location_id" optional="hide" />
                 <field name="slaughter_location_id" optional="show" />
                 <field name="cutting_location_id" optional="hide" />

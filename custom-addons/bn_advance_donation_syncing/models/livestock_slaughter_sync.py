@@ -1,4 +1,4 @@
-from odoo import models, fields, _
+from odoo import api, models, fields, _
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -24,6 +24,20 @@ class LivestockSlaughterSync(models.Model):
         string="Advance Donation Amount",
         help="Amount from the advance donation line allocated to this slaughter",
     )
+
+    @api.depends('advance_donation_line_id.date', 'advance_donation_id.create_date')
+    def _compute_order_date(self):
+        return super()._compute_order_date()
+
+    def _order_date(self):
+        """A line funded by an advance donation: the date of its contract line (a
+        frequency contract: the day of that line), else the day the contract was made."""
+        date = super()._order_date()
+        donation = self.sudo().advance_donation_id
+        if not date and donation:
+            date = self.sudo().advance_donation_line_id.date or (
+                fields.Date.context_today(self, donation.create_date) if donation.create_date else False)
+        return date
 
     def action_select_advance_donation(self):
         return {
