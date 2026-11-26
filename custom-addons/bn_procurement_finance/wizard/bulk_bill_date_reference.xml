@@ -6,11 +6,18 @@
         <field name="model">bulk.bill.date.reference.wizard</field>
         <field name="arch" type="xml">
             <form string="Bulk Set Bill Date &amp; Reference">
+                <field name="currency_id" invisible="1"/>
                 <group>
-                    <field name="invoice_date"/>
-                    <field name="bill_reference"/>
-                    <field name="set_custom_reference_too"
-                           invisible="not bill_reference"/>
+                    <group string="Summary">
+                        <field name="move_count" readonly="1"/>
+                        <field name="total_amount" readonly="1"/>
+                    </group>
+                    <group string="Values to Apply">
+                        <field name="invoice_date"/>
+                        <field name="bill_reference"/>
+                        <field name="set_custom_reference_too"
+                               invisible="not bill_reference"/>
+                    </group>
                 </group>
                 <footer>
                     <button name="action_apply" string="Apply"

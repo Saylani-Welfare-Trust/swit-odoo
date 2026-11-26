@@ -99,9 +99,17 @@ class AccountMove(models.Model):
 
     def action_bulk_set_date_reference(self):
         """Open the wizard to set the bill date and vendor invoice reference on
-        all selected vendor bills in one go."""
+        all selected vendor bills in one go. Draft bills only."""
         if not self:
             raise UserError(_('Please select at least one vendor bill first.'))
+
+        non_draft = self.filtered(lambda m: m.state != 'draft')
+        if non_draft:
+            raise UserError(_(
+                'Bulk set is only allowed on draft bills. '
+                'The following bills are not draft: %s',
+                ', '.join(non_draft.mapped('display_name'))))
+
         return {
             'type': 'ir.actions.act_window',
             'name': _('Bulk Set Bill Date & Reference'),
