@@ -10,11 +10,17 @@
                     <field name="move_count" readonly="1"/>
                     <field name="invoice_date"/>
                     <field name="ref"/>
-                    <field name="set_custom_reference_too" attrs="{'invisible': [('ref', '=', False)]}"/>
+                    <field name="set_custom_reference_too"
+                           invisible="not ref"/>
                 </group>
                 <footer>
-                    <button name="action_apply" string="Apply" type="object" class="btn-primary"/>
-                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                    <button name="action_apply"
+                            string="Apply"
+                            type="object"
+                            class="btn-primary"/>
+                    <button string="Cancel"
+                            special="cancel"
+                            class="btn-secondary"/>
                 </footer>
             </form>
         </field>
