@@ -10,13 +10,15 @@ class BulkBillDateReferenceWizard(models.TransientModel):
     invoice_date = fields.Date(
         string='Bill Date',
         help='Leave blank to keep the existing date.')
-    ref = fields.Char(
+
+    bill_reference = fields.Char(
         string='Bill Reference',
-        help='Vendor bill number (Odoo field "ref"). '
-             'Leave blank to keep the existing reference.')
+        help='Value written to the standard "Bill Reference" field (ref) '
+             'of the selected vendor bills. Leave blank to skip.')
+
     set_custom_reference_too = fields.Boolean(
-        string='Also copy to Vendor Invoice No. (Finance field)',
-        help='If checked, the Bill Reference is also written into the '
+        string='Also write to Vendor Invoice No. (Finance field)',
+        help='If checked, the Bill Reference is also copied into the '
              'custom "Vendor Invoice No." field used by Finance matching.')
 
     move_count = fields.Integer(
@@ -27,10 +29,10 @@ class BulkBillDateReferenceWizard(models.TransientModel):
     def _compute_move_count(self):
         self.move_count = len(self.env.context.get('active_ids', []))
 
-    @api.constrains('invoice_date', 'ref')
+    @api.constrains('invoice_date', 'bill_reference')
     def _check_at_least_one(self):
         for wiz in self:
-            if not wiz.invoice_date and not wiz.ref:
+            if not wiz.invoice_date and not wiz.bill_reference:
                 raise ValidationError(
                     _('Please fill at least one of "Bill Date" or '
                       '"Bill Reference" to update.'))
@@ -42,7 +44,6 @@ class BulkBillDateReferenceWizard(models.TransientModel):
 
         moves = self.env['account.move'].browse(active_ids)
 
-        # Basic sanity checks
         for move in moves:
             if move.move_type != 'in_invoice':
                 raise UserError(_('%s is not a vendor bill.', move.display_name))
@@ -53,20 +54,19 @@ class BulkBillDateReferenceWizard(models.TransientModel):
         vals = {}
         if self.invoice_date:
             vals['invoice_date'] = self.invoice_date
-        if self.ref:
-            vals['ref'] = self.ref
+        if self.bill_reference:
+            vals['ref'] = self.bill_reference
             if self.set_custom_reference_too:
-                vals['vendor_invoice_reference'] = self.ref
+                vals['vendor_invoice_reference'] = self.bill_reference
 
         moves.write(vals)
 
-        # Audit trail on each bill
         for move in moves:
             changes = []
             if self.invoice_date:
                 changes.append(_('Bill Date set to %s', self.invoice_date))
-            if self.ref:
-                changes.append(_('Bill Reference set to %s', self.ref))
+            if self.bill_reference:
+                changes.append(_('Bill Reference set to %s', self.bill_reference))
             if changes:
                 move.message_post(body='Bulk update: ' + '; '.join(changes))
 
