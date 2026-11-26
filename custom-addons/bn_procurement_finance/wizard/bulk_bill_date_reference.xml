@@ -9,9 +9,9 @@
                 <group>
                     <field name="move_count" readonly="1"/>
                     <field name="invoice_date"/>
-                    <field name="bill_reference"/>
+                    <field name="ref"/>
                     <field name="set_custom_reference_too"
-                        attrs="{'invisible': [('bill_reference', '=', False)]}"/>
+                           invisible="not ref"/>
                 </group>
                 <footer>
                     <button name="action_apply"
