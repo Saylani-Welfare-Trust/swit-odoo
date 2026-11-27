@@ -23,15 +23,22 @@ class PurchaseRequisition(models.Model):
     defer_reason = fields.Text(string='Deferral Reason')
 
     # Who creates the RFQs: once someone is assigned, only they can select the
-    # vendors (Vendor Selection Wizard) for this request.
-    assigned_employee_id = fields.Many2one(
-        'hr.employee', string='Assigned To', tracking=True, copy=False,
+    # vendors (Vendor Selection Wizard) for this request. Chosen from the RFQ
+    # Assignee List (Master Setup), see allowed_assignee_employee_ids.
+    assigned_employee_ids = fields.Many2many(
+        'hr.employee', 'purchase_requisition_assigned_employee_rel', 'requisition_id', 'employee_id',
+        string='Assigned To', tracking=True, copy=False,
         domain=[('user_id', '!=', False)],
-        help='Employee who creates the RFQs of this request. Once set, only this '
-             'employee can select the vendors for its RFQs.')
+        help='Employees who create the RFQs of this request. Once set, only these '
+             'employees can select the vendors for its RFQs.')
     # Stored, so that users without HR access can be matched against it.
-    assigned_user_id = fields.Many2one(
-        related='assigned_employee_id.user_id', string='Assigned User', store=True)
+    assigned_user_ids = fields.Many2many(
+        'res.users', 'purchase_requisition_assigned_user_rel', 'requisition_id', 'user_id',
+        string='Assigned Users', compute='_compute_assigned_user_ids', store=True)
+    # The employees of the RFQ Assignee List: the ones "Assigned To" offers.
+    # An id domain, because users without HR access search hr.employee.public.
+    allowed_assignee_employee_ids = fields.Many2many(
+        'hr.employee', compute='_compute_allowed_assignee_employee_ids')
     assigned_by_id = fields.Many2one('res.users', string='Assigned By', readonly=True, copy=False)
     is_rfq_creator_allowed = fields.Boolean(
         compute='_compute_is_rfq_creator_allowed',
@@ -117,40 +124,51 @@ class PurchaseRequisition(models.Model):
                 insufficient_accounts |= insufficient_accounts.browse(analytic_id)
         return not insufficient_accounts, min(balances, default=0.0), insufficient_accounts
 
+    @api.depends('assigned_employee_ids.user_id')
+    def _compute_assigned_user_ids(self):
+        for requisition in self:
+            requisition.assigned_user_ids = requisition.assigned_employee_ids.user_id
+
+    def _compute_allowed_assignee_employee_ids(self):
+        employees = self.env['master.rfq.assignee'].search([]).employee_id
+        for requisition in self:
+            requisition.allowed_assignee_employee_ids = employees
+
     @api.depends_context('uid')
-    @api.depends('assigned_employee_id', 'assigned_user_id')
+    @api.depends('assigned_employee_ids', 'assigned_user_ids')
     def _compute_is_rfq_creator_allowed(self):
         for requisition in self:
             requisition.is_rfq_creator_allowed = (
-                not requisition.assigned_employee_id or requisition.assigned_user_id == self.env.user)
+                not requisition.assigned_employee_ids or self.env.user in requisition.assigned_user_ids)
 
     def _check_rfq_creator(self):
         for requisition in self:
             if not requisition.is_rfq_creator_allowed:
                 raise ValidationError(_(
-                    'Only %(employee)s, assigned to Purchase Request %(request)s, can select the vendors for its RFQs.',
-                    employee=requisition.sudo().assigned_employee_id.name, request=requisition.name))
+                    'Only %(employees)s, assigned to Purchase Request %(request)s, can select the vendors for its RFQs.',
+                    employees=', '.join(requisition.sudo().assigned_employee_ids.mapped('name')),
+                    request=requisition.name))
 
     @api.model_create_multi
     def create(self, vals_list):
-        for vals in vals_list:
-            if vals.get('assigned_employee_id'):
-                vals['assigned_by_id'] = self.env.uid
         requisitions = super().create(vals_list)
-        requisitions.filtered('assigned_user_id')._notify_assigned_user()
+        assigned = requisitions.filtered('assigned_employee_ids')
+        assigned.write({'assigned_by_id': self.env.uid})
+        assigned._notify_assigned_users()
         return requisitions
 
     def write(self, vals):
         old_users = {}
-        if 'assigned_employee_id' in vals:
-            vals = dict(vals, assigned_by_id=self.env.uid if vals['assigned_employee_id'] else False)
-            old_users = {requisition.id: requisition.assigned_user_id for requisition in self}
+        if 'assigned_employee_ids' in vals:
+            old_users = {requisition.id: requisition.assigned_user_ids for requisition in self}
         res = super().write(vals)
-        if 'assigned_employee_id' in vals:
-            self.filtered(
-                lambda requisition: requisition.assigned_user_id
-                and requisition.assigned_user_id != old_users.get(requisition.id)
-            )._notify_assigned_user()
+        if 'assigned_employee_ids' in vals:
+            # the field is written with x2many commands: whether anyone is
+            # still assigned is only known once they are applied
+            assigned = self.filtered('assigned_employee_ids')
+            assigned.write({'assigned_by_id': self.env.uid})
+            (self - assigned).write({'assigned_by_id': False})
+            self._notify_assigned_users(old_users)
         if 'picking_type_id' in vals:
             self._sync_operation_type_to_rfqs()
         return res
@@ -174,18 +192,25 @@ class PurchaseRequisition(models.Model):
             rfqs.with_context(skip_operation_type_sync=True).write(
                 {'picking_type_id': requisition.picking_type_id.id})
 
-    def _notify_assigned_user(self):
-        """A message in the assigned employee's Discuss inbox: the request now
-        waits for them to create its RFQs. Also sent to someone assigning
-        themselves (mail_notify_author: Odoo leaves the author out otherwise)."""
+    def _notify_assigned_users(self, old_users=None):
+        """A message in the Discuss inbox of each newly assigned employee: the
+        request now waits for them to create its RFQs. Also sent to someone
+        assigning themselves (mail_notify_author: Odoo leaves the author out
+        otherwise).
+
+        :param dict old_users: {requisition id: users assigned before}, who are
+            not notified again
+        """
+        old_users = old_users or {}
         for requisition in self:
-            user = requisition.assigned_user_id
+            users = requisition.assigned_user_ids - old_users.get(requisition.id, self.env['res.users'])
+            if not users:
+                continue
             # Inbox, so the message shows in Discuss rather than as an email.
-            # sudo: whoever assigns need not be allowed to edit other users.
             requisition.with_context(mail_notify_author=True).message_notify(
                 body=_('Purchase Request %(request)s has been assigned to you by %(user)s to create its RFQs.',
                        request=requisition.display_name, user=self.env.user.display_name),
-                partner_ids=user.partner_id.ids,
+                partner_ids=users.partner_id.ids,
                 subject=_('Purchase Request Assigned'),
             )
 

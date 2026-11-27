@@ -1,6 +1,6 @@
 {
     'name': 'Procurement Workflow',
-    'version': '17.0.1.3.3',
+    'version': '17.0.1.4.0',
     'author': 'BytesNode',
     'website': 'http://bytesnode.com',
     'license': 'LGPL-3',
@@ -33,6 +33,7 @@
         'views/stock_picking_views.xml',
         'views/rfq_price_wizard_views.xml',
         'views/master_cxo_approver_views.xml',
+        'views/master_rfq_assignee_views.xml',
         'views/search_views.xml',
         'views/search_filters.xml',
         'views/chatter_forms.xml',

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_master_rfq_assignee_tree" model="ir.ui.view">
+        <field name="name">master.rfq.assignee.tree</field>
+        <field name="model">master.rfq.assignee</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="employee_id"/>
+                <field name="user_id"/>
+                <field name="work_email"/>
+                <field name="department_id"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_master_rfq_assignee_form" model="ir.ui.view">
+        <field name="name">master.rfq.assignee.form</field>
+        <field name="model">master.rfq.assignee</field>
+        <field name="arch" type="xml">
+            <form string="RFQ Assignee List">
+                <sheet>
+                    <group>
+                        <field name="employee_id" options="{'no_create': True}"/>
+                        <field name="user_id"/>
+                        <field name="work_email"/>
+                        <field name="department_id"/>
+                        <field name="active" widget="boolean_toggle"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_master_rfq_assignee" model="ir.actions.act_window">
+        <field name="name">RFQ Assignees</field>
+        <field name="res_model">master.rfq.assignee</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Add the employees Purchase Requests can be assigned to</p>
+            <p>Only these employees show in the "Assigned To" field of a Purchase Request.</p>
+        </field>
+    </record>
+
+    <menuitem
+        id="menu_master_rfq_assignee"
+        name="RFQ Assignees List"
+        parent="bn_master_setup.master_setup_menu"
+        action="action_master_rfq_assignee"
+        sequence="11"/>
+</odoo>

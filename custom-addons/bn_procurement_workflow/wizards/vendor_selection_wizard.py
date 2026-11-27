@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, _
+from odoo import api, models, fields, _
 
 
 class VendorSelectionWizard(models.TransientModel):
@@ -11,9 +11,25 @@ class VendorSelectionWizard(models.TransientModel):
         help='If set, ONLY this user can give CXO approval to this RFQ.'
     )
 
+    @api.model
+    def default_get(self, fields_list):
+        """The "Procurement Manager Approval" page offers the lines of other
+        requests, whose vendors this user would select too: not of the
+        requests assigned to someone else."""
+        res = super().default_get(fields_list)
+        commands = res.get('procurement_line_ids')
+        if commands:
+            lines = self.env['purchase.requisition.line'].browse(
+                [vals['requisition_line_id'] for _command, _id, vals in commands])
+            allowed = lines.filtered(lambda line: line.requisition_id.is_rfq_creator_allowed)
+            res['procurement_line_ids'] = [
+                command for command in commands if command[2]['requisition_line_id'] in allowed.ids]
+        return res
+
     def action_create_rfqs(self):
         requisition = self.source_requisition_id
-        requisition._check_rfq_creator()
+        (requisition | self.procurement_line_ids.filtered('selected').requisition_line_id.requisition_id
+         )._check_rfq_creator()
         # RFQs can be created on the same Purchase Request more than once (a
         # batch at a time): the first batch in Procurement Manager Approval,
         # later ones in RFQ Sent or further along.
