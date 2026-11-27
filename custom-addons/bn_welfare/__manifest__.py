@@ -26,6 +26,7 @@
         
         'reports/report_welfare_collection_document.xml',
         'reports/report_welfare_approval_certificate.xml',
+        'reports/report_welfare_payment_voucher.xml',
         
         'views/welfare.xml',
         'views/product_product.xml',

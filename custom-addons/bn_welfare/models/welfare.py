@@ -1382,6 +1382,14 @@ class Welfare(models.Model):
             raise UserError(_("This welfare has no approved line yet: there is no Approval Certificate to print."))
         return self._print_approval_certificate(skip_paid_hod=self.state != 'mem_approve' and bool(self.member_remarks))
 
+    def action_print_payment_vouchers(self):
+        """Payment Voucher of every line of the application (cancelled ones left out), three to an A4 page"""
+        self.ensure_one()
+        lines = self.welfare_line_ids.filtered(lambda l: l.state != 'cancel')
+        if not lines:
+            raise UserError(_("%s has no disbursement line to print a payment voucher for.") % self.name)
+        return lines.action_print_payment_voucher()
+
     def _print_approval_certificate(self, skip_paid_hod=False):
         # options travel in the report's data (the web client drops the action context when downloading a PDF)
         data = {'skip_paid_hod': True} if skip_paid_hod else None

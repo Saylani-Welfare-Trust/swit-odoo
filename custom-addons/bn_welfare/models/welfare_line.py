@@ -29,6 +29,9 @@ state_selection = [
     ('cancel', 'Cancelled'),
 ]
 
+# a payment voucher is printed once the application is approved
+PAYMENT_VOUCHER_STATES = ('approve', 'recurring', 'disbursed')
+
 recurring_duration_selection = [
     ('3_M', '3 Months'),
     ('4_M', '4 Months'),
@@ -621,6 +624,17 @@ class WelfareLine(models.Model):
         _logger.info(f"Created return journal entry {move.name} for amount {self.total_amount}")
         
         return move
+
+    def _check_payment_voucher(self):
+        blocked = self.filtered(lambda l: l.welfare_id.state not in PAYMENT_VOUCHER_STATES or l.state == 'cancel')
+        if blocked:
+            raise UserError(_("A payment voucher is printed for the lines of an approved application, not cancelled ones: %s")
+                            % ', '.join('%s (%s)' % (l.welfare_id.name, l.product_id.display_name or '-') for l in blocked))
+
+    def action_print_payment_voucher(self):
+        """Payment Voucher of each line, three to an A4 page"""
+        self._check_payment_voucher()
+        return self.env.ref('bn_welfare.action_report_welfare_payment_voucher').report_action(self)
 
     def action_return_to_draft(self):
         """Allow returning a line to draft state and record state to hod approve for re-processing"""

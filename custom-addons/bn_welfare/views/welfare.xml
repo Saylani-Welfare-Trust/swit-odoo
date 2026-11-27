@@ -71,6 +71,7 @@
                     <button string="Reject and Close" name="action_reject" type="object" invisible="state in ['disbursed','draft']" groups="bn_welfare.group_bn_welfare_user,bn_welfare.group_bn_welfare_committee,bn_welfare.group_welfare_hod,bn_welfare.group_welfare_member"/>
                     <button string="Print Info" name="action_print_info" type="object" class="btn-secondary"/>
                     <button string="Approval Certificate" name="action_print_approval_certificate" type="object" class="btn-secondary" invisible="state not in ('mem_approve', 'approve', 'recurring', 'disbursed')"/>
+                    <button string="Payment Vouchers" name="action_print_payment_vouchers" type="object" class="btn-secondary" invisible="state not in ('approve', 'recurring', 'disbursed')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft, completed, send_for_inquiry, inquiry, committee_approval, hod_approve, mem_approve, approve, disbursed" />
                 </header>   
 
@@ -166,6 +167,8 @@
     
                                     <button name="action_delivered" type="object" string="Create Delivery" class="oe_highlight" column_invisible="1" groups="bn_welfare.group_bn_welfare_user"/>
                                     <field name="state" widget="badge" decoration-warning="state == 'draft'"  decoration-success="state == 'disbursed'" string="State" />
+                                    <button name="action_print_payment_voucher" type="object" icon="fa-print" title="Print Payment Voucher"
+                                            invisible="parent.state not in ('approve', 'recurring', 'disbursed') or state == 'cancel'"/>
 
                                 </tree>
                             </field>

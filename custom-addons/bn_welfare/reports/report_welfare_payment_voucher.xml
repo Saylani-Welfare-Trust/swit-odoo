@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- One voucher per disbursement line, three to an A4 page (cut along the dashed lines).
+         Printed from the line's print icon, the form's Payment Vouchers button or the Print menu of
+         All Welfare Lines, once the application is approved -->
+    <template id="report_welfare_payment_voucher">
+        <t t-call="web.basic_layout">
+            <style>
+                .pv-slot { height: 94mm; box-sizing: border-box; padding: 2.5mm 0; overflow: hidden;
+                           page-break-inside: avoid; border-bottom: 1px dashed #888; }
+                .pv-slot.pv-last { border-bottom: 0; }
+                .pv { position: relative; height: 100%; box-sizing: border-box; border: 1px solid #000;
+                      padding: 3mm 4mm; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; }
+                .pv table { width: 100%; border-collapse: collapse; border: 0; }
+                .pv td { border: 0; padding: 1px 0; vertical-align: top; }
+                .pv-wm { position: absolute; left: 50%; top: 50%; width: 46mm; height: 46mm; margin-left: -23mm;
+                         margin-top: -23mm; text-align: center; opacity: 0.1; }
+                .pv-wm img { max-width: 46mm; max-height: 46mm; }
+                .pv-company { font-size: 15px; font-weight: bold; text-transform: uppercase; }
+                .pv-addr { font-size: 9px; text-transform: uppercase; }
+                .pv-title { font-size: 13px; font-weight: bold; text-decoration: underline; margin-top: 2px; }
+                .pv-right { text-align: right; }
+                .pv-small { font-size: 9px; }
+                .pv-label { font-weight: bold; white-space: nowrap; width: 1%; padding-right: 6px !important; }
+                .pv-items { margin-top: 4px; }
+                .pv-items td { border-bottom: 1px solid #ccc; padding: 2px 0; }
+                .pv-items .pv-total td { border-bottom: 0; border-top: 1px solid #000; font-weight: bold; }
+                .pv-sign td { width: 33%; padding-top: 24px; }
+                .pv-sign span { display: inline-block; min-width: 40mm; border-top: 1px solid #000; padding-top: 2px;
+                                font-weight: bold; }
+            </style>
+            <t t-foreach="docs" t-as="line">
+                <t t-set="welfare" t-value="line.welfare_id"/>
+                <t t-set="company" t-value="line.company_id or welfare.env.company"/>
+                <t t-set="currency" t-value="line.currency_id or company.currency_id"/>
+                <t t-set="ref" t-value="voucher_refs[line.id]"/>
+                <div t-attf-class="pv-slot {{ 'pv-last' if line_index % 3 == 2 or line_last else '' }}">
+                    <div class="pv">
+                        <div class="pv-wm" t-if="company.logo"><img t-att-src="image_data_uri(company.logo)" alt=""/></div>
+                        <table>
+                            <tr>
+                                <td>
+                                    <div class="pv-company" t-esc="company.name"/>
+                                    <div class="pv-addr">
+                                        <t t-esc="', '.join(p for p in [company.street, company.street2, company.city, company.country_id.name] if p)"/>
+                                        <t t-if="company.phone"> PHONE: <t t-esc="company.phone"/></t>
+                                    </div>
+                                    <div class="pv-title"><span t-field="welfare.order_type"/> Payment Voucher</div>
+                                </td>
+                                <td class="pv-right" style="width: 40%;">
+                                    <span t-out="ref" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 600, 'height': 90, 'img_style': 'width: 55mm; height: 8mm;'}"/>
+                                    <div class="pv-small" t-esc="ref"/>
+                                    <div class="pv-small"><b>Printed On:</b> <t t-esc="printed_on"/></div>
+                                </td>
+                            </tr>
+                        </table>
+                        <table style="margin-top: 4px;">
+                            <tr>
+                                <td class="pv-label">Case #:</td><td style="font-weight: bold;" t-esc="welfare.name"/>
+                                <td class="pv-label">Date:</td><td t-esc="line.collection_date and line.collection_date.strftime('%d.%m.%Y') or ''"/>
+                            </tr>
+                            <tr>
+                                <td class="pv-label">Saail Name:</td><td t-esc="welfare.donee_id.name or ''"/>
+                                <td class="pv-label">Category:</td><td t-esc="line.disbursement_category_id.name or ''"/>
+                            </tr>
+                            <tr>
+                                <td class="pv-label">F / H Name:</td><td t-esc="welfare.father_name or ''"/>
+                                <td class="pv-label">Paid To:</td>
+                                <td t-esc="'Marfat: %s' % line.assigned_officer_id.name if line.payment_type == 'assigned_officer' and line.assigned_officer_id else 'Self'"/>
+                            </tr>
+                            <tr>
+                                <td class="pv-label">C.N.I.C #:</td><td t-esc="welfare.cnic_no or ''"/>
+                                <td class="pv-label">Collection Point:</td>
+                                <td t-esc="'Bank' if line.collection_point == 'bank' else (line.analytic_account_id.name or '')"/>
+                            </tr>
+                        </table>
+                        <table class="pv-items">
+                            <tr>
+                                <td class="pv-label">Item Name:</td>
+                                <td style="font-weight: bold;" t-esc="line.product_id.display_name or ''"/>
+                                <td class="pv-right" style="width: 18%;">Qty: <t t-esc="'%g' % line.quantity"/></td>
+                                <td class="pv-right" style="width: 22%;">Amount: <span t-esc="line.total_amount" t-options="{'widget': 'float', 'precision': 0}"/></td>
+                            </tr>
+                            <tr class="pv-total">
+                                <td colspan="3" class="pv-right">Total Amount:</td>
+                                <td class="pv-right"><span t-esc="line.total_amount" t-options="{'widget': 'monetary', 'display_currency': currency}"/></td>
+                            </tr>
+                        </table>
+                        <div style="margin-top: 3px;"><b>Amount in words:</b> <t t-esc="currency.amount_to_text(line.total_amount)"/></div>
+                        <table class="pv-sign">
+                            <tr>
+                                <td><span>Checked By</span></td>
+                                <td style="text-align: center;"><span>Approved By</span></td>
+                                <td class="pv-right"><span>Received By</span></td>
+                            </tr>
+                        </table>
+                        <div class="pv-small" style="margin-top: 3px;"><b>Printed By:</b> <t t-esc="printed_by"/></div>
+                    </div>
+                </div>
+                <div t-if="line_index % 3 == 2 and not line_last" style="page-break-after: always;"/>
+            </t>
+        </t>
+    </template>
+
+    <!-- 3 x 94 mm vouchers fill the 285 mm between the margins; dpi 96 without shrinking keeps mm as mm -->
+    <record id="paperformat_welfare_payment_voucher" model="report.paperformat">
+        <field name="name">A4 - Welfare Payment Voucher (3 per page)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">6</field>
+        <field name="margin_bottom">6</field>
+        <field name="margin_left">8</field>
+        <field name="margin_right">8</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="disable_shrinking" eval="True"/>
+        <field name="dpi">96</field>
+    </record>
+
+    <record id="action_report_welfare_payment_voucher" model="ir.actions.report">
+        <field name="name">Payment Voucher</field>
+        <field name="model">welfare.line</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">bn_welfare.report_welfare_payment_voucher</field>
+        <field name="report_file">bn_welfare.report_welfare_payment_voucher</field>
+        <field name="print_report_name">'Payment Voucher - %s' % (object.welfare_id.name or '').replace('/', '-')</field>
+        <field name="paperformat_id" ref="paperformat_welfare_payment_voucher"/>
+        <field name="binding_model_id" ref="model_welfare_line"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>
