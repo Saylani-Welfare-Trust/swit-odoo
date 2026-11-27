@@ -48,13 +48,8 @@ class DonationInKind(models.Model):
     # the name the donation is registered in at the POS (Donor button): printed on the receipt instead of the donor's
     favor = fields.Char('Register Name', tracking=True)
     product_id = fields.Many2one('product.product', string="Product", tracking=True, domain=[('is_donation_in_kind', '=', True)])
-    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure')
-    
-    # ADD THIS ONCHANGE METHOD:
-    @api.onchange('product_id')
-    def _onchange_product_id_uom(self):
-        if self.product_id:
-            self.product_uom_id = self.product_id.uom_id
+    # always the product's own unit: it is not chosen on the screen
+    product_uom_id = fields.Many2one('uom.uom', string='Unit of Measure', related='product_id.uom_id', store=True)
     picking_type_id = fields.Many2one('stock.picking.type', string='Operations Types', default=lambda self: self.default_set_value('picking_type_id'),
                                       domain=[('program_type', '=', 'donation_in_kind')])
     location_id = fields.Many2one('stock.location', string='Location', default=lambda self: self.default_set_value('location_id'))
@@ -650,11 +645,9 @@ May Allah bless you!
                 'location_id': location.id,
                 'picking_type_id': self._din_picking_type(location).id,
                 'product_id': line['product_id'],
-                'product_uom_id': self.env['product.product'].browse(line['product_id']).uom_id.id, # <--- ADD THIS
                 'quantity': line['quantity'],
                 'donation_in_kind_line_ids': [(0, 0, {
                     'product_id': line['product_id'],
-                    'product_uom_id': self.env['product.product'].browse(line['product_id']).uom_id.id, # <--- ADD THIS
                     'quantity': line['quantity'],
                     'avg_price': self.env['product.product'].browse(line['product_id']).standard_price,
                     'location_id': location.id,
