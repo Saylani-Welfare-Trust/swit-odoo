@@ -1,15 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- Print Info (welfare form): the inquiry officer's remarks from the portal's inquiry report(s), when there are any.
-         Urdu remarks need the Urdu font (urdu-row): the default one has no ہ ے ۔ and drops them -->
+         Their own section after the details table: a report section is never split, so long remarks inside the table
+         would push the whole table to the next page. Urdu remarks need the Urdu font (urdu-row): the default one has
+         no ہ ے ۔ and drops them -->
     <template id="user_profile_report_inquiry_remarks" inherit_id="bn_profile_management.user_profile_report_body">
-        <xpath expr="//section[@name='welfare_detail']/table/tr[td='Inquiry Officer']" position="after">
-            <tr t-if="welfare.portal_review_notes">
+        <xpath expr="//section[@name='welfare_detail']" position="after">
+            <section name="welfare_inquiry_remarks" t-if="welfare.portal_review_notes" style="margin-top: 8px;">
                 <t t-set="remarks_urdu" t-value="welfare._has_urdu_text(welfare.portal_review_notes)"/>
-                <td>Inquiry Officer Remarks</td>
-                <td colspan="3" t-att-class="'urdu-row' if remarks_urdu else None"
-                    t-att-style="'white-space: pre-line; font-size: 13.5px; line-height: 1.9;' if remarks_urdu else 'text-align: left; white-space: pre-line;'"><t t-esc="welfare.portal_review_notes.strip()"/></td>
-            </tr>
+                <table class="welfare-detail-table">
+                    <tr>
+                        <td style="background-color: #3b3591; color: #ffffff; font-weight: bold;">Inquiry Officer Remarks</td>
+                    </tr>
+                    <tr>
+                        <td t-att-class="'urdu-row' if remarks_urdu else None"
+                            t-att-style="'white-space: pre-line; font-size: 13.5px; line-height: 1.9;' if remarks_urdu else 'text-align: left; white-space: pre-line;'"><t t-esc="welfare.portal_review_notes.strip()"/></td>
+                    </tr>
+                </table>
+            </section>
         </xpath>
     </template>
 </odoo>
