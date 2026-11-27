@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- Print Info (welfare form): the inquiry officer's remarks from the portal's inquiry report(s), when there are any -->
+    <template id="user_profile_report_inquiry_remarks" inherit_id="bn_profile_management.user_profile_report">
+        <xpath expr="//section[@name='welfare_detail']/table/tr[td='Inquiry Officer']" position="after">
+            <tr t-if="welfare.portal_review_notes">
+                <td>Inquiry Officer Remarks</td>
+                <td colspan="3" dir="auto" style="text-align: left; white-space: pre-line;"><t t-esc="welfare.portal_review_notes"/></td>
+            </tr>
+        </xpath>
+    </template>
+</odoo>

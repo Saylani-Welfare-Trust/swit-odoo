@@ -14,7 +14,7 @@
                 .pv table { width: 100%; border-collapse: collapse; border: 0 !important; margin: 0; }
                 .pv thead, .pv tbody, .pv tr, .pv td { border: 0 !important; background: transparent !important; }
                 .pv td { padding: 2px 0; vertical-align: top; }
-                .pv-logo { max-height: 15mm; max-width: 55mm; }
+                .pv-logo { max-height: 13mm; max-width: 55mm; }
                 .pv-company { font-size: 19px; font-weight: bold; text-transform: uppercase; line-height: 1.1; }
                 .pv-addr { font-size: 10px; text-transform: uppercase; }
                 .pv-title { font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 3px; }
@@ -27,7 +27,7 @@
                 .pv-items tr.pv-total td { border-bottom: 0 !important; border-top: 1.5px solid #000 !important;
                                            font-weight: bold; font-size: 14px; }
                 .pv-words { margin-top: 5px; }
-                .pv-sign td { width: 33%; padding-top: 42px; }
+                .pv-sign td { width: 33%; padding-top: 30px; }
                 .pv-sign span { display: inline-block; min-width: 42mm; border-top: 1px solid #000; padding-top: 2px;
                                 font-weight: bold; }
             </style>
