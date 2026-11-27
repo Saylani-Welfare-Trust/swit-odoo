@@ -9,24 +9,26 @@
                 .pv-slot { height: 94mm; box-sizing: border-box; padding: 2.5mm 0; overflow: hidden;
                            page-break-inside: avoid; border-bottom: 1px dashed #888; }
                 .pv-slot.pv-last { border-bottom: 0; }
-                .pv { position: relative; height: 100%; box-sizing: border-box; border: 1px solid #000;
-                      padding: 3mm 4mm; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; }
-                .pv table { width: 100%; border-collapse: collapse; border: 0; }
-                .pv td { border: 0; padding: 1px 0; vertical-align: top; }
-                .pv-wm { position: absolute; left: 50%; top: 50%; width: 46mm; height: 46mm; margin-left: -23mm;
-                         margin-top: -23mm; text-align: center; opacity: 0.1; }
-                .pv-wm img { max-width: 46mm; max-height: 46mm; }
-                .pv-company { font-size: 15px; font-weight: bold; text-transform: uppercase; }
-                .pv-addr { font-size: 9px; text-transform: uppercase; }
-                .pv-title { font-size: 13px; font-weight: bold; text-decoration: underline; margin-top: 2px; }
+                .pv { position: relative; height: 100%; box-sizing: border-box; border: 1.5px solid #000;
+                      padding: 3.5mm 5mm; font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #000; }
+                .pv table { width: 100%; border-collapse: collapse; border: 0 !important; margin: 0; }
+                .pv thead, .pv tbody, .pv tr, .pv td { border: 0 !important; background: transparent !important; }
+                .pv td { padding: 2px 0; vertical-align: top; }
+                .pv-logo { max-height: 15mm; max-width: 55mm; }
+                .pv-company { font-size: 19px; font-weight: bold; text-transform: uppercase; line-height: 1.1; }
+                .pv-addr { font-size: 10px; text-transform: uppercase; }
+                .pv-title { font-size: 15px; font-weight: bold; text-decoration: underline; margin-top: 3px; }
                 .pv-right { text-align: right; }
-                .pv-small { font-size: 9px; }
-                .pv-label { font-weight: bold; white-space: nowrap; width: 1%; padding-right: 6px !important; }
-                .pv-items { margin-top: 4px; }
-                .pv-items td { border-bottom: 1px solid #ccc; padding: 2px 0; }
-                .pv-items .pv-total td { border-bottom: 0; border-top: 1px solid #000; font-weight: bold; }
-                .pv-sign td { width: 33%; padding-top: 24px; }
-                .pv-sign span { display: inline-block; min-width: 40mm; border-top: 1px solid #000; padding-top: 2px;
+                .pv-small { font-size: 10px; }
+                .pv-label { font-weight: bold; white-space: nowrap; width: 1%; padding-right: 8px !important; }
+                .pv-info td { padding: 3px 0; }
+                .pv-items { margin-top: 6px; }
+                .pv-items td { padding: 4px 0; border-bottom: 1px solid #bbb !important; }
+                .pv-items tr.pv-total td { border-bottom: 0 !important; border-top: 1.5px solid #000 !important;
+                                           font-weight: bold; font-size: 14px; }
+                .pv-words { margin-top: 5px; }
+                .pv-sign td { width: 33%; padding-top: 42px; }
+                .pv-sign span { display: inline-block; min-width: 42mm; border-top: 1px solid #000; padding-top: 2px;
                                 font-weight: bold; }
             </style>
             <t t-foreach="docs" t-as="line">
@@ -36,7 +38,6 @@
                 <t t-set="ref" t-value="voucher_refs[line.id]"/>
                 <div t-attf-class="pv-slot {{ 'pv-last' if line_index % 3 == 2 or line_last else '' }}">
                     <div class="pv">
-                        <div class="pv-wm" t-if="company.logo"><img t-att-src="image_data_uri(company.logo)" alt=""/></div>
                         <table>
                             <tr>
                                 <td>
@@ -48,13 +49,13 @@
                                     <div class="pv-title"><span t-field="welfare.order_type"/> Payment Voucher</div>
                                 </td>
                                 <td class="pv-right" style="width: 40%;">
-                                    <span t-out="ref" t-options="{'widget': 'barcode', 'symbology': 'Code128', 'width': 600, 'height': 90, 'img_style': 'width: 55mm; height: 8mm;'}"/>
-                                    <div class="pv-small" t-esc="ref"/>
-                                    <div class="pv-small"><b>Printed On:</b> <t t-esc="printed_on"/></div>
+                                    <img t-if="company.logo" class="pv-logo" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+                                    <div class="pv-small" style="margin-top: 2px;"><b>Voucher #:</b> <t t-esc="ref"/></div>
+                                    <div class="pv-small" style="margin-top: 3px;"><b>Printed On:</b> <t t-esc="printed_on"/></div>
                                 </td>
                             </tr>
                         </table>
-                        <table style="margin-top: 4px;">
+                        <table class="pv-info" style="margin-top: 6px;">
                             <tr>
                                 <td class="pv-label">Case #:</td><td style="font-weight: bold;" t-esc="welfare.name"/>
                                 <td class="pv-label">Date:</td><td t-esc="line.collection_date and line.collection_date.strftime('%d.%m.%Y') or ''"/>
@@ -86,7 +87,7 @@
                                 <td class="pv-right"><span t-esc="line.total_amount" t-options="{'widget': 'monetary', 'display_currency': currency}"/></td>
                             </tr>
                         </table>
-                        <div style="margin-top: 3px;"><b>Amount in words:</b> <t t-esc="currency.amount_to_text(line.total_amount)"/></div>
+                        <div class="pv-words"><b>Amount in words:</b> <t t-esc="currency.amount_to_text(line.total_amount)"/></div>
                         <table class="pv-sign">
                             <tr>
                                 <td><span>Checked By</span></td>
@@ -94,7 +95,7 @@
                                 <td class="pv-right"><span>Received By</span></td>
                             </tr>
                         </table>
-                        <div class="pv-small" style="margin-top: 3px;"><b>Printed By:</b> <t t-esc="printed_by"/></div>
+                        <div class="pv-small" style="margin-top: 4px;"><b>Printed By:</b> <t t-esc="printed_by"/></div>
                     </div>
                 </div>
                 <div t-if="line_index % 3 == 2 and not line_last" style="page-break-after: always;"/>

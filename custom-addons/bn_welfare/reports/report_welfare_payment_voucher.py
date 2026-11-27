@@ -11,7 +11,7 @@ class ReportWelfarePaymentVoucher(models.AbstractModel):
         # the Print menu too: only lines of an approved application
         lines._check_payment_voucher()
         lines = lines.sorted(lambda l: (l.welfare_id.id, l.id))
-        # <case number>-<line number on the application>, also the voucher's barcode
+        # Voucher #: <case number>-<line number on the application>
         refs = {}
         for welfare in lines.welfare_id:
             for number, line in enumerate(welfare.welfare_line_ids.sorted('id'), start=1):
