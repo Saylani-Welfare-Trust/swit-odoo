@@ -12,7 +12,7 @@
                     The portal opens a new inquiry report for this officer; the completed one stays on the application.
                 </div>
                 <div class="text-muted mb-2" invisible="mode != 'change'">
-                    The inquiry of each application moves to this officer, on the same report. The status does not change.
+                    Each open inquiry moves to this officer, who completes the same report.
                 </div>
                 <group>
                     <field name="welfare_ids" widget="many2many_tags"/>

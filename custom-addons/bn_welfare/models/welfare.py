@@ -29,8 +29,8 @@ WELFARE_OFFICER_ROUTES = {
 APPROVAL_CERTIFICATE_STATES = ('mem_approve', 'approve', 'recurring', 'disbursed')
 # a completed inquiry is reopened before the Final Approval
 WELFARE_REOPEN_STATES = ('inquiry', 'committee_approval', 'hod_approve')
-# the officer can be changed from Send for Inquiry up to the Final Approval (not once Approved / Rejected)
-WELFARE_CHANGE_OFFICER_STATES = ('send_for_inquiry', 'inquiry', 'committee_approval', 'hod_approve', 'mem_approve')
+# the portal's changeInquiryOfficer moves an open inquiry only: once completed, Reopen Inquiry
+WELFARE_CHANGE_OFFICER_STATES = ('send_for_inquiry',)
 # Revert goes one status back along this flow
 WELFARE_FLOW = ('draft', 'completed', 'send_for_inquiry', 'inquiry', 'committee_approval', 'hod_approve',
                 'mem_approve', 'approve', 'recurring', 'disbursed')
@@ -1266,7 +1266,7 @@ class Welfare(models.Model):
         self._message_log(body=_("👤 Inquiry officer changed on the portal: %s → %s") % (previous.name or '-', officer.name))
 
     def action_change_inquiry_officer(self, officer):
-        """changeInquiryOfficer: the inquiry (same report) of each application goes to ``officer``, the status stays"""
+        """changeInquiryOfficer: the open inquiry (same report) of each application goes to ``officer``"""
         return self._apply_officer_change('change', officer, lambda rec: rec._change_inquiry_officer(officer),
                                           _('%s can now complete the inquiry.') % officer.name)
 
