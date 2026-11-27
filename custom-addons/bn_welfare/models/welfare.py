@@ -1395,6 +1395,11 @@ class Welfare(models.Model):
         data = {'skip_paid_hod': True} if skip_paid_hod else None
         return self.env.ref('bn_welfare.action_report_welfare_approval_certificate').report_action(self, data=data)
 
+    @api.model
+    def _has_urdu_text(self, text):
+        """Urdu (Arabic script) in ``text``: reports print it right to left with the Urdu font"""
+        return any('\u0600' <= char <= '\u06ff' for char in text or '')
+
     def _approval_certificate_values(self, skip_paid_hod=False):
         """Welfare Approval Certificate: Cash lines are the Cash Disbursement, the other (In Kind) lines the Ration.
         Moved on to Final Approval (over the HOD limit): only the HOD lines are approved yet; approved: all lines,

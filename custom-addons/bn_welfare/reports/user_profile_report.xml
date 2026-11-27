@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
-    <!-- Print Info (welfare form): the inquiry officer's remarks from the portal's inquiry report(s), when there are any -->
+    <!-- Print Info (welfare form): the inquiry officer's remarks from the portal's inquiry report(s), when there are any.
+         Urdu remarks need the Urdu font (urdu-row): the default one has no ہ ے ۔ and drops them -->
     <template id="user_profile_report_inquiry_remarks" inherit_id="bn_profile_management.user_profile_report_body">
         <xpath expr="//section[@name='welfare_detail']/table/tr[td='Inquiry Officer']" position="after">
             <tr t-if="welfare.portal_review_notes">
+                <t t-set="remarks_urdu" t-value="welfare._has_urdu_text(welfare.portal_review_notes)"/>
                 <td>Inquiry Officer Remarks</td>
-                <td colspan="3" dir="auto" style="text-align: left; white-space: pre-line;"><t t-esc="welfare.portal_review_notes"/></td>
+                <td colspan="3" t-att-class="'urdu-row' if remarks_urdu else None"
+                    t-att-style="'white-space: pre-line; font-size: 13.5px; line-height: 1.9;' if remarks_urdu else 'text-align: left; white-space: pre-line;'"><t t-esc="welfare.portal_review_notes.strip()"/></td>
             </tr>
         </xpath>
     </template>
