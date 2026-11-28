@@ -216,7 +216,7 @@ class SadqaJariyaFetchLog(models.Model):
     def _import_inquiry_row(self, application, row):
         """Completed inquiry of a getCompletedInquiries row, True when imported now (False: imported before)"""
         inquiry = row.get('inquiry') or {}
-        if inquiry.get('id') and inquiry['id'] in application.inquiry_report_ids.mapped('external_id'):
+        if application._portal_row_imported(row):
             return False
         officer = inquiry.get('officer') or {}
         code = officer.get('employeeId')

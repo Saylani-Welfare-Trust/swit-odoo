@@ -109,16 +109,30 @@ class SadqaJariya(models.Model):
         """All rows of a pending export, page by page"""
         return [row for _page, rows in self._iter_portal_export_pages(operation) for row in rows]
 
-    def _find_portal_export_row(self, operation):
-        """Page through a pending export until this application's row is found (None: nothing pending for it)"""
+    def _portal_row_imported(self, row):
+        """True for a getCompletedInquiries row whose inquiry report was imported before"""
         self.ensure_one()
+        report_id = (row.get('inquiry') or {}).get('id')
+        return bool(report_id) and str(report_id) in self.inquiry_report_ids.mapped('external_id')
+
+    def _find_portal_export_rows(self, operation):
+        """This application's rows of a pending export, paged until one not imported yet is found.
+
+        Rows imported before (their acknowledgement never reached the portal) come along too:
+        they are acknowledged again so they leave the export.
+        """
+        self.ensure_one()
+        found, checked, pending_ids = [], 0, set()
         for page, rows in self._iter_portal_export_pages(operation):
-            for row in rows:
-                if str(row.get('odooId')) == str(self.id):
-                    _logger.info("Sadqa e Jariya %s: %s row found on page %s", self.name, operation, page)
-                    return row
-        _logger.info("Sadqa e Jariya %s: no %s row pending", self.name, operation)
-        return None
+            checked += len(rows)
+            pending_ids.update(str(row.get('odooId')) for row in rows)
+            found += [row for row in rows if str(row.get('odooId')) == str(self.id)]
+            if any(not self._portal_row_imported(row) for row in found):
+                _logger.info("Sadqa e Jariya %s: %s row found on page %s", self.name, operation, page)
+                return found
+        _logger.info("Sadqa e Jariya %s (odooId %s): nothing new in %s, %s rows on the portal, %s of them imported before; "
+                     "odooIds pending: %s", self.name, self.id, operation, checked, len(found), sorted(pending_ids)[:100])
+        return found
 
     def _generate_portal_password(self):
         alphabet = string.ascii_letters + string.digits
@@ -404,8 +418,7 @@ class SadqaJariya(models.Model):
             if only_application:
                 if only_application.state != waiting_state:
                     continue
-                found = only_application._find_portal_export_row(export)
-                rows = [found] if found else []
+                rows = only_application._find_portal_export_rows(export)
             else:
                 rows = self._portal_export(export)
             for row in rows:
@@ -459,6 +472,11 @@ class SadqaJariya(models.Model):
         mine = [line for line in (log.errors or '').splitlines() if f"[{self.name}]" in line]
         if mine:
             return self._show_notification(_('Check Portal Status'), '\n'.join(mine), 'danger')
-        message = _('The donee has not submitted the form yet.') if state == 'form_sent' \
-            else _('The inquiry officer has not completed the inquiry yet.')
+        if state == 'form_sent':
+            message = _('The portal has no submitted form waiting for this application yet.')
+        elif self in log.record_ids:
+            message = _('The portal only returned an inquiry report imported before, not the current one (report %s).') \
+                % (self.portal_report_id or '-')
+        else:
+            message = _('The portal has no completed inquiry waiting for this application yet.')
         return self._show_notification(_('Check Portal Status'), message, 'warning')
