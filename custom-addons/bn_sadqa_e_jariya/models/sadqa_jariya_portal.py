@@ -20,6 +20,7 @@ _logger = logging.getLogger(__name__)
 # Sadqa Jaria institutional integration: POST <portal>/rpc/odoo/institutional/<operation>, {"json": ...} envelope
 INSTITUTIONAL_RPC = '/rpc/odoo/institutional/'
 EXPORT_PAGE_SIZE = 50
+EXPORT_MAX_PAGES = 200  # safety stop (up to 10,000 rows) so paging can never loop forever
 
 
 # Portal flow: completed -> Send Form (createApplication) -> form_sent -> Portal Sync imports the submitted form
@@ -81,19 +82,43 @@ class SadqaJariya(models.Model):
         return result.get('json')
 
     @api.model
-    def _portal_export(self, operation):
-        """All rows of a pending export (getSubmittedForms / getCompletedInquiries), page by page"""
-        rows, cursor, seen = [], None, set()
-        while True:
+    def _iter_portal_export_pages(self, operation):
+        """Yield (page number, rows) for each page of a pending export (getSubmittedForms / getCompletedInquiries).
+
+        Each page is asked with {"limit", "cursor"}, the cursor being the previous page's nextCursor
+        (none for the first page). Paging stops when there is no nextCursor or it repeats;
+        callers stop early by breaking out of the loop.
+        """
+        cursor, seen = None, set()
+        for page in range(1, EXPORT_MAX_PAGES + 1):
             payload = {'limit': EXPORT_PAGE_SIZE}
             if cursor:
                 payload['cursor'] = cursor
-            page = self._portal_call(operation, payload) or {}
-            rows += page.get('data') or []
-            cursor = page.get('nextCursor')
+            result = self._portal_call(operation, payload) or {}
+            rows = result.get('data') or []
+            _logger.info("Sadqa e Jariya %s page %s (cursor=%r): %s rows", operation, page, cursor, len(rows))
+            yield page, rows
+            cursor = result.get('nextCursor')
             if not cursor or cursor in seen:
-                return rows
+                return
             seen.add(cursor)
+        _logger.warning("Sadqa e Jariya %s stopped after %s pages", operation, EXPORT_MAX_PAGES)
+
+    @api.model
+    def _portal_export(self, operation):
+        """All rows of a pending export, page by page"""
+        return [row for _page, rows in self._iter_portal_export_pages(operation) for row in rows]
+
+    def _find_portal_export_row(self, operation):
+        """Page through a pending export until this application's row is found (None: nothing pending for it)"""
+        self.ensure_one()
+        for page, rows in self._iter_portal_export_pages(operation):
+            for row in rows:
+                if str(row.get('odooId')) == str(self.id):
+                    _logger.info("Sadqa e Jariya %s: %s row found on page %s", self.name, operation, page)
+                    return row
+        _logger.info("Sadqa e Jariya %s: no %s row pending", self.name, operation)
+        return None
 
     def _generate_portal_password(self):
         alphabet = string.ascii_letters + string.digits
@@ -360,19 +385,30 @@ class SadqaJariya(models.Model):
         return self._show_notification(_('Change Inquiry Officer'), _('%s can now complete the inquiry.') % officer.name, 'success')
 
     @api.model
-    def _sync_portal(self, from_cron=False):
-        """Import the submitted forms and completed inquiries waiting on the portal, then acknowledge them"""
+    def _sync_portal(self, from_cron=False, only_application=None):
+        """Import the submitted forms and completed inquiries waiting on the portal, then acknowledge them.
+
+        With ``only_application`` (Check Portal Status) only its row is imported, from the export its state
+        waits on, and paging stops on the page that holds it.
+        """
         Log = self.env['sadqa.jariya.fetch.log']
         if from_cron and not self._portal_configured():
             return Log
         stages = [
-            # export, ACK, ACK field, import
-            ('getSubmittedForms', 'acknowledgeDoneeForm', 'form_acknowledged_at', Log._import_form_row),
-            ('getCompletedInquiries', 'acknowledgeInquiry', 'inquiry_acknowledged_at', Log._import_inquiry_row),
+            # application state, export, ACK, ACK field, import
+            ('form_sent', 'getSubmittedForms', 'acknowledgeDoneeForm', 'form_acknowledged_at', Log._import_form_row),
+            ('send_for_inquiry', 'getCompletedInquiries', 'acknowledgeInquiry', 'inquiry_acknowledged_at', Log._import_inquiry_row),
         ]
         counts, errors, applications, to_acknowledge = [0, 0], [], self.browse(), []
-        for index, (export, ack, ack_field, import_row) in enumerate(stages):
-            for row in self._portal_export(export):
+        for index, (waiting_state, export, ack, ack_field, import_row) in enumerate(stages):
+            if only_application:
+                if only_application.state != waiting_state:
+                    continue
+                found = only_application._find_portal_export_row(export)
+                rows = [found] if found else []
+            else:
+                rows = self._portal_export(export)
+            for row in rows:
                 try:
                     application = self.browse(int(row.get('odooId') or 0)).exists()
                 except (TypeError, ValueError):
@@ -412,10 +448,10 @@ class SadqaJariya(models.Model):
         })
 
     def action_check_portal_status(self):
-        """Portal Sync, then tell what changed for this application"""
+        """Portal Sync of this application only, then tell what changed"""
         self.ensure_one()
         state = self.state
-        log = self._sync_portal()
+        log = self._sync_portal(only_application=self)
         if self.state != state:
             message = _('Form imported, you can now Send for Inquiry.') if self.state == 'form_filled' \
                 else _('Inquiry imported, moved to Inquiry Officer.')
